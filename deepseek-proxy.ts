@@ -1,0 +1,645 @@
+/**
+ * DeepSeek ↔ Anthropic Proxy for Claude Code
+ * Full support: text, tool use, streaming, tool results
+ *
+ * Usage:
+ *   bun run deepseek-proxy.ts
+ *   ANTHROPIC_BASE_URL=http://localhost:8082  ANTHROPIC_API_KEY=placeholder
+ */
+
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-6bcf4f90150144c38ebfb16127d06294'
+const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1'
+const PORT = parseInt(process.env.PROXY_PORT || '8082', 10)
+
+// DeepSeek model limits (官方: https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+// deepseek-chat     (V3) : context 128K, max_output 8K
+// deepseek-reasoner (R1) : context 128K, max_output 64K (另有 32K CoT 不占 output)
+const MAX_OUTPUT_TOKENS: Record<string, number> = {
+  'deepseek-chat':     8192,
+  'deepseek-reasoner': 65536,
+}
+
+// ── Context Budget Guard (规划书 第十四部分) ─────────────────────────────
+// 防止 prompt_tokens + max_tokens > 128K 触发 HTTP 400
+const CTX_MAX = 128_000
+const SAFETY_MARGIN = 2_000
+
+/** 近似 tokenizer:中文 ≈ 0.4 tok/char, 英文/JSON ≈ 0.25 tok/char。
+ *  不依赖 tiktoken(避免新增依赖),精度 ±10% 足够做预算守卫。*/
+function estimateTokens(s: string): number {
+  if (!s) return 0
+  let zh = 0, other = 0
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i)
+    if (c >= 0x4e00 && c <= 0x9fff) zh++
+    else other++
+  }
+  return Math.ceil(zh * 0.6 + other * 0.28)
+}
+
+function estimateMessagesTokens(messages: any[], tools?: any[]): number {
+  let t = 0
+  for (const m of messages) {
+    t += 4 // role overhead
+    if (typeof m.content === 'string') t += estimateTokens(m.content)
+    else if (Array.isArray(m.content)) {
+      for (const b of m.content) t += estimateTokens(JSON.stringify(b))
+    }
+    if (m.tool_calls) t += estimateTokens(JSON.stringify(m.tool_calls))
+    if (m.tool_call_id) t += estimateTokens(m.tool_call_id)
+  }
+  if (tools?.length) t += estimateTokens(JSON.stringify(tools))
+  return t
+}
+
+/** 舍弃旧的大 tool result,保留最近 N 轮。保留 system/最后一条 user。*/
+function dropOldToolResults(messages: any[], keepLastN = 6): { messages: any[], dropped: number } {
+  let dropped = 0
+  // 找到最后 N 条非 system 消息的起点
+  const nonSystem = messages.filter(m => m.role !== 'system')
+  const cutIdx = Math.max(0, nonSystem.length - keepLastN)
+  const cutMsg = nonSystem[cutIdx]
+  let reachedCut = false
+  const out = messages.map(m => {
+    if (m === cutMsg) reachedCut = true
+    if (!reachedCut && m.role === 'tool' && typeof m.content === 'string' && m.content.length > 200) {
+      dropped += m.content.length
+      return { ...m, content: '[Old tool result cleared by budget guard]' }
+    }
+    return m
+  })
+  return { messages: out, dropped }
+}
+
+/** 硬截断:只保留 system + tools 定义 + 最后 3 轮。兜底,数据可能丢。*/
+function hardTruncate(messages: any[], keepLastRounds = 3): any[] {
+  const systems = messages.filter(m => m.role === 'system')
+  const rest = messages.filter(m => m.role !== 'system')
+  const tail = rest.slice(-keepLastRounds * 2) // user+assistant 算一轮
+  return [...systems, ...tail]
+}
+
+type BudgetResult = { action: string; promptTok: number; maxTok: number; ctxMax: number }
+
+function applyBudget(oaiBody: any): BudgetResult {
+  const modelMax = MAX_OUTPUT_TOKENS[oaiBody.model] ?? 8192
+  let maxTok = Math.min(oaiBody.max_tokens ?? modelMax, modelMax)
+  let promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
+  let action = 'passthrough'
+
+  // L1/L2 · 压缩旧 tool result
+  if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
+    const r = dropOldToolResults(oaiBody.messages, 6)
+    oaiBody.messages = r.messages
+    promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
+    if (r.dropped > 0) action = 'compacted'
+  }
+
+  // L3 · 缩小 output 配额
+  if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
+    const newMax = Math.max(1024, CTX_MAX - promptTok - SAFETY_MARGIN)
+    if (newMax < maxTok) {
+      maxTok = newMax
+      action = action === 'compacted' ? 'compacted+shrunk' : 'output_shrunk'
+    }
+  }
+
+  // L4 · 硬截断
+  if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
+    oaiBody.messages = hardTruncate(oaiBody.messages, 3)
+    promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
+    action = 'truncated'
+  }
+
+  oaiBody.max_tokens = maxTok
+  return { action, promptTok, maxTok, ctxMax: CTX_MAX }
+}
+
+const MODEL_MAP: Record<string, string> = {
+  'claude-opus-4-6':            'deepseek-reasoner',
+  'claude-sonnet-4-6':          'deepseek-chat',
+  'claude-haiku-4-5-20251001':  'deepseek-chat',
+  'claude-3-5-sonnet-20241022': 'deepseek-chat',
+  'claude-3-5-haiku-20241022':  'deepseek-chat',
+  'claude-3-opus-20240229':     'deepseek-reasoner',
+}
+
+function mapModel(model: string): string {
+  return MODEL_MAP[model] ?? 'deepseek-chat'
+}
+
+// ── Anthropic → OpenAI conversion ─────────────────────────────────────────
+
+// M1-P0 #6: 确定性键排序 —— 保护 DeepSeek prompt cache
+// 同一个 tool schema 每次序列化出的字节序列必须完全一致,否则缓存 miss
+function sortKeysDeep(v: any): any {
+  if (v === null || typeof v !== 'object') return v
+  if (Array.isArray(v)) return v.map(sortKeysDeep)
+  const out: any = {}
+  for (const k of Object.keys(v).sort()) out[k] = sortKeysDeep(v[k])
+  return out
+}
+
+function convertTools(anthropicTools: any[]): any[] {
+  // 先按 name 排序,确保数组顺序跨请求稳定(Claude Code 偶尔会乱序)
+  const sortedTools = [...anthropicTools].sort((a, b) =>
+    (a.name ?? '').localeCompare(b.name ?? ''),
+  )
+  return sortedTools.map(tool => {
+    const fn = {
+      name: tool.name,
+      description: tool.description ?? '',
+      parameters: sortKeysDeep(tool.input_schema ?? { type: 'object', properties: {} }),
+      // DeepSeek Strict Mode: 服务器端校验 JSON Schema,防止工具调用崩
+      strict: true,
+    }
+    return { type: 'function', function: fn }
+  })
+}
+
+// M1-P0 #6: system prompt whitespace 标准化(保留语义,稳定字节序)
+function normalizeSystemPrompt(s: string): string {
+  return s
+    .replace(/\r\n/g, '\n')       // CRLF → LF
+    .replace(/[ \t]+\n/g, '\n')   // 行尾空白
+    .replace(/\n{3,}/g, '\n\n')   // 三空行压缩为两
+    .trimEnd()
+}
+
+function convertToolChoice(tc: any): any {
+  if (!tc) return undefined
+  if (tc.type === 'auto') return 'auto'
+  if (tc.type === 'any') return 'required'
+  if (tc.type === 'tool') return { type: 'function', function: { name: tc.name } }
+  return 'auto'
+}
+
+function extractTextContent(content: any): string {
+  if (typeof content === 'string') return content
+  if (Array.isArray(content)) {
+    return content
+      .filter((b: any) => b.type === 'text')
+      .map((b: any) => b.text ?? '')
+      .join('\n')
+  }
+  return ''
+}
+
+/**
+ * M1-P0 #4: 检测最后一条消息是否为"新用户问题"。
+ * 如果是,按 DeepSeek R1 官方规则,应清除历史 assistant 的 reasoning_content。
+ * 如果最后是 tool_result(延续性 tool-use 循环),则必须保留 reasoning_content。
+ */
+function isNewUserQuestion(messages: any[]): boolean {
+  if (messages.length === 0) return false
+  const last = messages[messages.length - 1]
+  if (last.role !== 'user') return false
+  if (typeof last.content === 'string') return last.content.trim().length > 0
+  if (Array.isArray(last.content)) {
+    // 只含 tool_result 说明是 tool 循环的延续,不是新问题
+    const hasText = last.content.some((b: any) => b.type === 'text')
+    const onlyToolResults = last.content.every((b: any) => b.type === 'tool_result')
+    return hasText && !onlyToolResults
+  }
+  return false
+}
+
+/**
+ * Converts an Anthropic messages array to OpenAI messages array.
+ * Handles: text, tool_use, tool_result, thinking, multi-content blocks.
+ * tool_result blocks (inside user messages) become standalone role=tool messages.
+ */
+function convertMessages(
+  anthropicMessages: any[],
+  system?: any,
+): any[] {
+  const result: any[] = []
+  // M1-P0 #4: 新用户问题到来 → 清除历史 reasoning_content(DeepSeek 官方规则)
+  const clearOldReasoning = isNewUserQuestion(anthropicMessages)
+
+  // System prompt(#6: 字节序标准化,保护 cache hit)
+  if (system) {
+    const text = Array.isArray(system)
+      ? system.map((s: any) => s.text ?? '').join('\n')
+      : String(system)
+    const normalized = normalizeSystemPrompt(text)
+    if (normalized) result.push({ role: 'system', content: normalized })
+  }
+
+  for (const msg of anthropicMessages) {
+    const content = msg.content
+
+    if (msg.role === 'user') {
+      // User message may contain tool_result blocks mixed with text
+      if (Array.isArray(content)) {
+        const toolResults = content.filter((b: any) => b.type === 'tool_result')
+        const textBlocks = content.filter((b: any) => b.type !== 'tool_result')
+
+        // Text parts become a normal user message
+        if (textBlocks.length > 0) {
+          const text = textBlocks
+            .filter((b: any) => b.type === 'text')
+            .map((b: any) => b.text ?? '')
+            .join('\n')
+          if (text.trim()) result.push({ role: 'user', content: text })
+        }
+
+        // tool_result → role=tool messages
+        for (const tr of toolResults) {
+          const toolContent = Array.isArray(tr.content)
+            ? tr.content.map((c: any) => c.text ?? '').join('\n')
+            : typeof tr.content === 'string'
+              ? tr.content
+              : JSON.stringify(tr.content ?? '')
+          result.push({
+            role: 'tool',
+            tool_call_id: tr.tool_use_id,
+            content: toolContent,
+          })
+        }
+      } else {
+        result.push({ role: 'user', content: extractTextContent(content) })
+      }
+    } else if (msg.role === 'assistant') {
+      // Assistant message may contain text/tool_use/thinking blocks
+      if (Array.isArray(content)) {
+        const textBlocks = content.filter((b: any) => b.type === 'text')
+        const toolUseBlocks = content.filter((b: any) => b.type === 'tool_use')
+        // M1-P0 #4: R1 thinking block 回传 —— 维持 R1 多轮思维链,否则每步失忆
+        const thinkingBlocks = content.filter((b: any) => b.type === 'thinking')
+
+        const text = textBlocks.map((b: any) => b.text ?? '').join('\n')
+        const toolCalls = toolUseBlocks.map((b: any) => ({
+          id: b.id,
+          type: 'function',
+          function: {
+            name: b.name,
+            arguments: JSON.stringify(b.input ?? {}),
+          },
+        }))
+        const reasoning = thinkingBlocks.map((b: any) => b.thinking ?? '').join('\n')
+
+        const oaiMsg: any = { role: 'assistant' }
+        if (text) oaiMsg.content = text
+        if (toolCalls.length > 0) oaiMsg.tool_calls = toolCalls
+        // #4: 仅在同一问题的 tool 循环中保留,新用户问题进来清空
+        if (reasoning && !clearOldReasoning) oaiMsg.reasoning_content = reasoning
+        result.push(oaiMsg)
+      } else {
+        result.push({ role: 'assistant', content: extractTextContent(content) })
+      }
+    }
+  }
+
+  return result
+}
+
+// M1-P0 #5: R1 指令 hint(官方最佳实践:指令放 user role + 鼓励并行工具)
+// 安全版:不动 system prompt(保护 cache),只在最后一条 user 消息前追加一小段 hint
+const R1_HINT =
+  '[DeepSeek-R1 hints: (1) Think step by step internally; (2) Be explicit about ' +
+  'the output format; (3) When reading or searching multiple files, prefer parallel ' +
+  'tool calls (up to 8 per turn) instead of sequential ones; (4) If a previous ' +
+  'attempt failed, try a completely different approach.]\n\n'
+
+function injectR1Hint(messages: any[]): void {
+  // 仅对 reasoner 路由生效,由调用方判断
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.role !== 'user') continue
+    if (typeof m.content === 'string') {
+      // 避免重复注入
+      if (m.content.startsWith('[DeepSeek-R1 hints:')) return
+      m.content = R1_HINT + m.content
+      return
+    }
+    // tool_result-only 的 user 消息跳过,往前找真正的文本型 user 消息
+  }
+}
+
+function anthropicToOpenAI(body: any): { oaiBody: any; budget: BudgetResult } {
+  const dsModel = mapModel(body.model)
+  const maxLimit = MAX_OUTPUT_TOKENS[dsModel] ?? 8192
+  const oaiBody: any = {
+    model: dsModel,
+    messages: convertMessages(body.messages, body.system),
+    max_tokens: Math.min(body.max_tokens ?? maxLimit, maxLimit),
+    stream: body.stream ?? false,
+  }
+  if (body.temperature !== undefined) oaiBody.temperature = body.temperature
+  if (body.tools?.length) {
+    oaiBody.tools = convertTools(body.tools)
+    if (body.tool_choice) oaiBody.tool_choice = convertToolChoice(body.tool_choice)
+  }
+  if (body.stop_sequences?.length) oaiBody.stop = body.stop_sequences
+
+  // #5: R1 路由时注入指令 hint
+  if (dsModel === 'deepseek-reasoner') injectR1Hint(oaiBody.messages)
+
+  // ── Token Budget Guard ──
+  const budget = applyBudget(oaiBody)
+  return { oaiBody, budget }
+}
+
+// ── OpenAI → Anthropic conversion ─────────────────────────────────────────
+
+function openAIToAnthropic(oaiResp: any, originalModel: string) {
+  const choice = oaiResp.choices?.[0]
+  const content: any[] = []
+
+  // R1 思维链 → Anthropic thinking block(M1-P0-1)
+  const reasoning = choice?.message?.reasoning_content
+  if (reasoning) content.push({ type: 'thinking', thinking: reasoning, signature: '' })
+
+  const text = choice?.message?.content
+  if (text) content.push({ type: 'text', text })
+
+  const toolCalls = choice?.message?.tool_calls
+  if (toolCalls?.length) {
+    for (const tc of toolCalls) {
+      let input: any = {}
+      try { input = JSON.parse(tc.function?.arguments ?? '{}') } catch {}
+      content.push({
+        type: 'tool_use',
+        id: tc.id,
+        name: tc.function?.name,
+        input,
+      })
+    }
+  }
+
+  const finishReason = choice?.finish_reason
+  const stopReason =
+    finishReason === 'tool_calls' ? 'tool_use'
+    : finishReason === 'stop' ? 'end_turn'
+    : finishReason ?? 'end_turn'
+
+  return {
+    id: oaiResp.id ?? `msg_${Date.now()}`,
+    type: 'message',
+    role: 'assistant',
+    model: originalModel,
+    content,
+    stop_reason: stopReason,
+    stop_sequence: null,
+    usage: {
+      input_tokens: oaiResp.usage?.prompt_tokens ?? 0,
+      output_tokens: oaiResp.usage?.completion_tokens ?? 0,
+    },
+  }
+}
+
+// ── Streaming ──────────────────────────────────────────────────────────────
+
+function sseEvent(type: string, data: unknown): string {
+  return `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`
+}
+
+async function streamDeepSeekToAnthropic(
+  oaiBody: any,
+  originalModel: string,
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+) {
+  const enc = new TextEncoder()
+  const write = (s: string) => writer.write(enc.encode(s))
+
+  const resp = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({ ...oaiBody, stream: true }),
+  })
+
+  if (!resp.ok) {
+    const err = await resp.text()
+    console.error('[proxy] DeepSeek stream error:', resp.status, err)
+    write(sseEvent('error', { type: 'error', error: { type: 'api_error', message: err } }))
+    await writer.close()
+    return
+  }
+
+  const msgId = `msg_${Date.now()}`
+  let inputTokens = 0
+  let outputTokens = 0
+  let blockIndex = 0
+  let openBlocks: Set<number> = new Set()
+
+  // Track streaming tool calls: index → {id, name, argsBuf}
+  const toolCallBufs: Map<number, { id: string; name: string; args: string }> = new Map()
+
+  write(sseEvent('message_start', {
+    type: 'message_start',
+    message: {
+      id: msgId, type: 'message', role: 'assistant', content: [],
+      model: originalModel, stop_reason: null, stop_sequence: null,
+      usage: { input_tokens: 0, output_tokens: 0 },
+    },
+  }))
+  write(sseEvent('ping', { type: 'ping' }))
+
+  // We'll open a text block lazily on first text delta
+  let textBlockOpen = false
+  const textBlockIdx = blockIndex++
+
+  // R1 thinking block opens lazily on first reasoning_content delta (M1-P0-1)
+  let thinkingBlockOpen = false
+  let thinkingBlockIdx = -1
+
+  const reader = resp.body!.getReader()
+  const dec = new TextDecoder()
+  let buf = ''
+  let finishReason = 'end_turn'
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += dec.decode(value, { stream: true })
+    const lines = buf.split('\n')
+    buf = lines.pop() ?? ''
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed.startsWith('data:')) continue
+      const payload = trimmed.slice(5).trim()
+      if (payload === '[DONE]') continue
+
+      let chunk: any
+      try { chunk = JSON.parse(payload) } catch { continue }
+
+      const delta = chunk.choices?.[0]?.delta
+      if (!delta) continue
+
+      // R1 reasoning delta → Anthropic thinking block (M1-P0-1)
+      if (delta.reasoning_content) {
+        if (!thinkingBlockOpen) {
+          thinkingBlockIdx = blockIndex++
+          // 思维链块必须在文本块之前 — 如果文本块还没开,我们提前占位
+          write(sseEvent('content_block_start', {
+            type: 'content_block_start', index: thinkingBlockIdx,
+            content_block: { type: 'thinking', thinking: '' },
+          }))
+          openBlocks.add(thinkingBlockIdx)
+          thinkingBlockOpen = true
+        }
+        write(sseEvent('content_block_delta', {
+          type: 'content_block_delta', index: thinkingBlockIdx,
+          delta: { type: 'thinking_delta', thinking: delta.reasoning_content },
+        }))
+      }
+
+      // Text delta
+      if (delta.content) {
+        if (!textBlockOpen) {
+          write(sseEvent('content_block_start', {
+            type: 'content_block_start', index: textBlockIdx,
+            content_block: { type: 'text', text: '' },
+          }))
+          openBlocks.add(textBlockIdx)
+          textBlockOpen = true
+        }
+        write(sseEvent('content_block_delta', {
+          type: 'content_block_delta', index: textBlockIdx,
+          delta: { type: 'text_delta', text: delta.content },
+        }))
+        outputTokens++
+      }
+
+      // Tool call deltas
+      if (delta.tool_calls) {
+        for (const tc of delta.tool_calls) {
+          const tcIdx = tc.index ?? 0
+          if (!toolCallBufs.has(tcIdx)) {
+            // New tool call block
+            const toolBlockIdx = blockIndex++
+            toolCallBufs.set(tcIdx, { id: tc.id ?? `call_${tcIdx}`, name: tc.function?.name ?? '', args: '' })
+            // Store block index mapping
+            ;(toolCallBufs.get(tcIdx) as any)._blockIdx = toolBlockIdx
+            write(sseEvent('content_block_start', {
+              type: 'content_block_start', index: toolBlockIdx,
+              content_block: { type: 'tool_use', id: tc.id ?? `call_${tcIdx}`, name: tc.function?.name ?? '', input: {} },
+            }))
+            openBlocks.add(toolBlockIdx)
+          }
+          const tcBuf = toolCallBufs.get(tcIdx)!
+          if (tc.function?.name && !tcBuf.name) tcBuf.name = tc.function.name
+          if (tc.id && !tcBuf.id) tcBuf.id = tc.id
+          if (tc.function?.arguments) {
+            tcBuf.args += tc.function.arguments
+            write(sseEvent('content_block_delta', {
+              type: 'content_block_delta', index: (tcBuf as any)._blockIdx,
+              delta: { type: 'input_json_delta', partial_json: tc.function.arguments },
+            }))
+          }
+        }
+      }
+
+      const fr = chunk.choices?.[0]?.finish_reason
+      if (fr) finishReason = fr === 'tool_calls' ? 'tool_use' : fr === 'stop' ? 'end_turn' : fr
+
+      if (chunk.usage) {
+        inputTokens = chunk.usage.prompt_tokens ?? inputTokens
+        outputTokens = chunk.usage.completion_tokens ?? outputTokens
+      }
+    }
+  }
+
+  // Close all open blocks
+  for (const idx of [...openBlocks].sort((a, b) => a - b)) {
+    write(sseEvent('content_block_stop', { type: 'content_block_stop', index: idx }))
+  }
+
+  write(sseEvent('message_delta', {
+    type: 'message_delta',
+    delta: { stop_reason: finishReason, stop_sequence: null },
+    usage: { output_tokens: outputTokens },
+  }))
+  write(sseEvent('message_stop', { type: 'message_stop' }))
+  await writer.close()
+}
+
+// ── Request handler ────────────────────────────────────────────────────────
+
+async function handleMessages(req: Request): Promise<Response> {
+  let body: any
+  try { body = await req.json() } catch {
+    return new Response('Bad JSON', { status: 400 })
+  }
+
+  const { oaiBody, budget } = anthropicToOpenAI(body)
+  const originalModel: string = body.model
+
+  console.log(
+    `[proxy] ${originalModel} → ${oaiBody.model}  ` +
+    `stream=${body.stream}  max_tokens=${oaiBody.max_tokens}  ` +
+    `tools=${body.tools?.length ?? 0}  msgs=${oaiBody.messages.length}  ` +
+    `budget=${budget.action}(in≈${budget.promptTok} out≤${budget.maxTok})`,
+  )
+
+  if (body.stream) {
+    const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
+    const writer = writable.getWriter()
+    streamDeepSeekToAnthropic(oaiBody, originalModel, writer).catch(e => {
+      console.error('[proxy] stream error:', e)
+      writer.close().catch(() => {})
+    })
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      },
+    })
+  }
+
+  // Non-streaming
+  const resp = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify(oaiBody),
+  })
+
+  if (!resp.ok) {
+    const err = await resp.text()
+    console.error('[proxy] DeepSeek error:', resp.status, err)
+    return new Response(err, { status: resp.status })
+  }
+
+  const oaiResp = await resp.json()
+  return Response.json(openAIToAnthropic(oaiResp, originalModel))
+}
+
+// ── Server ─────────────────────────────────────────────────────────────────
+
+Bun.serve({
+  port: PORT,
+  async fetch(req) {
+    const url = new URL(req.url)
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } })
+    }
+    if (req.method === 'POST' && url.pathname === '/v1/messages') return handleMessages(req)
+    if (req.method === 'GET' && url.pathname === '/health') return Response.json({ status: 'ok', port: PORT })
+    return new Response('Not found', { status: 404 })
+  },
+})
+
+console.log(`
+╔══════════════════════════════════════════════╗
+║   DeepSeek ↔ Anthropic Proxy  :${PORT}        ║
+║   Full tool use + streaming support          ║
+╚══════════════════════════════════════════════╝
+Model map:
+  claude-sonnet-*  → deepseek-chat     (8192 out)
+  claude-opus-*    → deepseek-reasoner (8000 out)
+  claude-haiku-*   → deepseek-chat     (8192 out)
+
+Set env:
+  ANTHROPIC_BASE_URL=http://localhost:${PORT}
+  ANTHROPIC_API_KEY=placeholder
+`)
