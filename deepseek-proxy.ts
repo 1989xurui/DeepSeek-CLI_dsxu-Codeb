@@ -11,6 +11,9 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || 'sk-6bcf4f90150144c38eb
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1'
 const PORT = parseInt(process.env.PROXY_PORT || '8082', 10)
 
+// P0-A: json-repair补丁
+import { parseToolCallArguments } from './dsevo/jsonRepair.js'
+
 // DeepSeek model limits (官方: https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
 // deepseek-chat     (V3) : context 128K, max_output 8K
 // deepseek-reasoner (R1) : context 128K, max_output 64K (另有 32K CoT 不占 output)
@@ -291,7 +294,52 @@ function convertMessages(
     }
   }
 
-  return result
+  // M1-P0 #7: 孤儿 tool_call 消毒
+  // DeepSeek 严格校验:assistant.tool_calls 后面必须紧跟每个 tool_call_id 对应的 role=tool 消息
+  // 中断恢复 / 历史截断 / 会话压缩会留下没有配对的 tool_call,直接 400
+  // 规则:从后往前扫,遇到 assistant.tool_calls,检查紧接后续的 role=tool 是否覆盖全部 id
+  //       缺失任何一个 → 删除该 assistant 消息的 tool_calls 字段(保留 content),或整条删掉
+  return sanitizeOrphanToolCalls(result)
+}
+
+function sanitizeOrphanToolCalls(msgs: any[]): any[] {
+  const out: any[] = []
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i]
+    if (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
+      // 收集紧接后续 role=tool 消息的 tool_call_id
+      const covered = new Set<string>()
+      let j = i + 1
+      while (j < msgs.length && msgs[j].role === 'tool') {
+        if (msgs[j].tool_call_id) covered.add(msgs[j].tool_call_id)
+        j++
+      }
+      const allCovered = m.tool_calls.every((tc: any) => covered.has(tc.id))
+      if (!allCovered) {
+        // 孤儿:剥掉 tool_calls,如果还有 content 就保留成纯文本 assistant 消息,否则整条丢
+        if (m.content && String(m.content).trim()) {
+          const clone = { ...m }
+          delete clone.tool_calls
+          out.push(clone)
+        }
+        // 把后续的 role=tool 消息也一并跳过(它们本来是 response 给这个孤儿的)
+        i = j - 1
+        continue
+      }
+    }
+    // 丢掉顶层孤儿 role=tool(前面没有 assistant.tool_calls 对应)
+    if (m.role === 'tool') {
+      const prev = out[out.length - 1]
+      const hasMatchingCall =
+        prev &&
+        prev.role === 'assistant' &&
+        Array.isArray(prev.tool_calls) &&
+        prev.tool_calls.some((tc: any) => tc.id === m.tool_call_id)
+      if (!hasMatchingCall) continue
+    }
+    out.push(m)
+  }
+  return out
 }
 
 // M1-P0 #5: R1 指令 hint(官方最佳实践:指令放 user role + 鼓励并行工具)
@@ -357,8 +405,8 @@ function openAIToAnthropic(oaiResp: any, originalModel: string) {
   const toolCalls = choice?.message?.tool_calls
   if (toolCalls?.length) {
     for (const tc of toolCalls) {
-      let input: any = {}
-      try { input = JSON.parse(tc.function?.arguments ?? '{}') } catch {}
+      // P0-A: 使用json-repair补丁解析tool call参数
+      const input = parseToolCallArguments(tc.function?.arguments ?? '{}')
       content.push({
         type: 'tool_use',
         id: tc.id,
@@ -636,7 +684,7 @@ console.log(`
 ╚══════════════════════════════════════════════╝
 Model map:
   claude-sonnet-*  → deepseek-chat     (8192 out)
-  claude-opus-*    → deepseek-reasoner (8000 out)
+  claude-opus-*    → deepseek-reasoner (65536 out)
   claude-haiku-*   → deepseek-chat     (8192 out)
 
 Set env:

@@ -1,0 +1,36 @@
+{
+  "id": "golden-05",
+  "name": "长任务测试",
+  "description": "测试处理多步骤长任务的能力",
+  "input": {
+    "files": {
+      "project/main.js": "// 主程序入口\nfunction main() {\n  console.log('程序启动');\n  processData();\n  saveResult();\n}\n\nfunction processData() {\n  // 处理数据\n  console.log('处理数据...');\n}\n\nfunction saveResult() {\n  // 保存结果\n  console.log('保存结果...');\n}\n\n// TODO: 1. 添加错误处理 2. 添加日志记录 3. 添加配置文件支持",
+      "project/config.json": "{\n  \"debug\": true,\n  \"outputDir\": \"./output\"\n}"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "请完成main.js中的TODO任务：\n1. 为main函数添加try-catch错误处理\n2. 添加更详细的日志记录（包括时间戳）\n3. 添加从config.json读取配置的功能\n请分步骤完成，并确保代码能正常工作。"
+      }
+    ]
+  },
+  "expected": {
+    "criteria": [
+      "main函数包含try-catch错误处理",
+      "添加了带时间戳的日志记录",
+      "实现了从config.json读取配置",
+      "所有代码语法正确",
+      "功能完整"
+    ]
+  },
+  "grader": {
+    "type": "llm",
+    "prompt": "请评估以下代码是否完成：1. main函数是否有try-catch 2. 是否有带时间戳的日志 3. 是否从config.json读取配置 4. 语法是否正确 5. 功能是否完整。如果全部满足则返回{\"passed\": true, \"score\": 100}，否则返回{\"passed\": false, \"score\": 0-99, \"reason\": \"具体原因\"}"
+  },
+  "metadata": {
+    "category": "长任务",
+    "difficulty": "中等",
+    "estimated_tokens": 600,
+    "created": "2026-04-12"
+  }
+}

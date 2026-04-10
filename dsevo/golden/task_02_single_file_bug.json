@@ -1,0 +1,38 @@
+{
+  "id": "golden-02",
+  "name": "单文件bug修复",
+  "description": "测试在单个文件中修复bug的能力",
+  "input": {
+    "files": {
+      "calculator.js": "function add(a, b) {\n  return a + b;\n}\n\nfunction subtract(a, b) {\n  return a - b;\n}\n\nfunction multiply(a, b) {\n  return a * b;\n}\n\nfunction divide(a, b) {\n  // BUG: 这里缺少对b为0的检查\n  return a / b;\n}\n\nfunction calculate(operation, a, b) {\n  switch(operation) {\n    case 'add': return add(a, b);\n    case 'subtract': return subtract(a, b);\n    case 'multiply': return multiply(a, b);\n    case 'divide': return divide(a, b);\n    default: throw new Error('未知操作');\n  }\n}"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "请修复calculator.js中的bug：divide函数缺少对除数为0的检查。请添加适当的错误处理。"
+      }
+    ]
+  },
+  "expected": {
+    "files": {
+      "calculator.js": {
+        "must_contain": [
+          "if (b === 0)",
+          "throw new Error",
+          "除数不能为零",
+          "return a / b"
+        ]
+      }
+    }
+  },
+  "grader": {
+    "type": "script",
+    "command": "node -e \"const fs = require('fs'); const code = fs.readFileSync('calculator.js', 'utf8'); const hasZeroCheck = code.includes('if (b === 0)') || code.includes('b === 0'); const hasThrow = code.includes('throw') && (code.includes('除数') || code.includes('zero') || code.includes('Zero')); console.log(JSON.stringify({passed: hasZeroCheck && hasThrow, score: (hasZeroCheck && hasThrow) ? 100 : 0}))\""
+  },
+  "metadata": {
+    "category": "单文件bug修复",
+    "difficulty": "简单",
+    "estimated_tokens": 300,
+    "created": "2026-04-12"
+  }
+}

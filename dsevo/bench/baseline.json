@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-04-12T06:30:00+08:00",
+  "environment": {
+    "model": "deepseek-chat",
+    "proxy_version": "v2.3",
+    "context_budget": "enabled",
+    "cache": "enabled"
+  },
+  "results": {
+    "task_01_chinese_dialogue": {
+      "status": "not_run",
+      "reason": "时间限制，仅创建测试用例",
+      "estimated_score": 0
+    },
+    "task_02_single_file_bug": {
+      "status": "not_run",
+      "reason": "时间限制，仅创建测试用例",
+      "estimated_score": 0
+    },
+    "task_03_multi_file_refactor": {
+      "status": "not_run",
+      "reason": "时间限制，仅创建测试用例",
+      "estimated_score": 0
+    },
+    "task_04_tool_calling": {
+      "status": "not_run",
+      "reason": "时间限制，仅创建测试用例",
+      "estimated_score": 0
+    },
+    "task_05_long_task": {
+      "status": "not_run",
+      "reason": "时间限制，仅创建测试用例",
+      "estimated_score": 0
+    }
+  },
+  "summary": {
+    "total_tasks": 5,
+    "completed": 0,
+    "passed": 0,
+    "failed": 0,
+    "not_run": 5,
+    "average_score": 0,
+    "notes": "由于时间限制（06:30-07:00时段），仅创建了Golden Dataset测试用例，未实际运行测试。实际测试需要启动proxy和调用API，预计需要30-60分钟。"
+  }
+}

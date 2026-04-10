@@ -1,0 +1,35 @@
+{
+  "id": "golden-03",
+  "name": "多文件重构",
+  "description": "测试跨多个文件的重构能力",
+  "input": {
+    "files": {
+      "src/user.js": "class User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n  }\n  \n  getName() {\n    return this.name;\n  }\n  \n  getEmail() {\n    return this.email;\n  }\n  \n  // TODO: 这个方法应该移到auth.js中\n  validatePassword(password) {\n    return password.length >= 8;\n  }\n}",
+      "src/auth.js": "// 认证相关功能\nclass Auth {\n  static login(username, password) {\n    // 验证逻辑\n    return true;\n  }\n  \n  static logout() {\n    // 登出逻辑\n  }\n  \n  // TODO: 这里缺少密码验证方法\n}"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "请重构代码：将User类中的validatePassword方法移动到Auth类中，并确保两个文件都能正常工作。"
+      }
+    ]
+  },
+  "expected": {
+    "criteria": [
+      "User类中不再包含validatePassword方法",
+      "Auth类中添加了validatePassword方法",
+      "两个文件的语法都正确",
+      "方法功能保持不变"
+    ]
+  },
+  "grader": {
+    "type": "llm",
+    "prompt": "请检查以下重构是否完成：1. User类中是否没有validatePassword方法 2. Auth类中是否有validatePassword方法 3. 两个文件语法是否正确 4. 方法功能是否一致。如果全部满足则返回{\"passed\": true, \"score\": 100}，否则返回{\"passed\": false, \"score\": 0-99, \"reason\": \"具体原因\"}"
+  },
+  "metadata": {
+    "category": "多文件重构",
+    "difficulty": "中等",
+    "estimated_tokens": 400,
+    "created": "2026-04-12"
+  }
+}
