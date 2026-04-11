@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run scripts/guards/check-protected.ts",
+            "env": {
+              "GUARD_FILE_PATH": "${tool.file_path}"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
