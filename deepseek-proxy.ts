@@ -14,6 +14,10 @@ const PORT = parseInt(process.env.PROXY_PORT || '8082', 10)
 // P0-A: json-repair补丁
 import { parseToolCallArguments } from './dsevo/jsonRepair.js'
 
+// TASK-INFRA-1/2: 文件系统操作
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
 // DeepSeek model limits (官方: https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
 // deepseek-chat     (V3) : context 128K, max_output 8K
 // deepseek-reasoner (R1) : context 128K, max_output 64K (另有 32K CoT 不占 output)
@@ -26,6 +30,27 @@ const MAX_OUTPUT_TOKENS: Record<string, number> = {
 // 防止 prompt_tokens + max_tokens > 128K 触发 HTTP 400
 const CTX_MAX = 128_000
 const SAFETY_MARGIN = 2_000
+
+// TASK-INFRA-1: Trim 日志记录
+const TRIM_LOG_DIR = '.dsevo';
+const TRIM_LOG_FILE = join(TRIM_LOG_DIR, 'proxy-trim.log');
+
+// 确保日志目录存在
+if (!existsSync(TRIM_LOG_DIR)) {
+  mkdirSync(TRIM_LOG_DIR, { recursive: true });
+}
+
+function logTrim(action: string, originalTokens: number, finalTokens: number, droppedRounds: number, details?: string) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${action}: original=${originalTokens}, final=${finalTokens}, droppedRounds=${droppedRounds}, details=${details || ''}\n`;
+
+  try {
+    writeFileSync(TRIM_LOG_FILE, logEntry, { flag: 'a' });
+    console.log(`[proxy-trim] ${action}: ${originalTokens} → ${finalTokens} tokens (dropped ${droppedRounds} rounds)`);
+  } catch (logError) {
+    console.error(`[proxy-trim] 无法写入trim日志: ${logError.message}`);
+  }
+}
 
 /** 近似 tokenizer:中文 ≈ 0.4 tok/char, 英文/JSON ≈ 0.25 tok/char。
  *  不依赖 tiktoken(避免新增依赖),精度 ±10% 足够做预算守卫。*/
@@ -74,8 +99,8 @@ function dropOldToolResults(messages: any[], keepLastN = 6): { messages: any[], 
   return { messages: out, dropped }
 }
 
-/** 硬截断:只保留 system + tools 定义 + 最后 3 轮。兜底,数据可能丢。*/
-function hardTruncate(messages: any[], keepLastRounds = 3): any[] {
+/** 硬截断:只保留 system + tools 定义 + 最后 8 轮。兜底,数据可能丢。*/
+function hardTruncate(messages: any[], keepLastRounds = 8): any[] {
   const systems = messages.filter(m => m.role === 'system')
   const rest = messages.filter(m => m.role !== 'system')
   const tail = rest.slice(-keepLastRounds * 2) // user+assistant 算一轮
@@ -87,34 +112,52 @@ type BudgetResult = { action: string; promptTok: number; maxTok: number; ctxMax:
 function applyBudget(oaiBody: any): BudgetResult {
   const modelMax = MAX_OUTPUT_TOKENS[oaiBody.model] ?? 8192
   let maxTok = Math.min(oaiBody.max_tokens ?? modelMax, modelMax)
-  let promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
+  const originalPromptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
+  let promptTok = originalPromptTok
   let action = 'passthrough'
+  let droppedRounds = 0
 
   // L1/L2 · 压缩旧 tool result
   if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
     const r = dropOldToolResults(oaiBody.messages, 6)
     oaiBody.messages = r.messages
     promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
-    if (r.dropped > 0) action = 'compacted'
+    if (r.dropped > 0) {
+      action = 'compacted'
+      logTrim('compacted', originalPromptTok, promptTok, 0, `dropped ${r.dropped} chars from tool results`)
+    }
   }
 
   // L3 · 缩小 output 配额
   if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
     const newMax = Math.max(1024, CTX_MAX - promptTok - SAFETY_MARGIN)
     if (newMax < maxTok) {
+      const oldMax = maxTok
       maxTok = newMax
       action = action === 'compacted' ? 'compacted+shrunk' : 'output_shrunk'
+      logTrim('output_shrunk', originalPromptTok, promptTok, 0, `max_tokens ${oldMax} → ${maxTok}`)
     }
   }
 
-  // L4 · 硬截断
+  // L4 · 硬截断 (保留最后8轮对话)
   if (promptTok + maxTok + SAFETY_MARGIN > CTX_MAX) {
-    oaiBody.messages = hardTruncate(oaiBody.messages, 3)
+    const originalMessages = [...oaiBody.messages]
+    const originalCount = originalMessages.length
+    oaiBody.messages = hardTruncate(oaiBody.messages, 8)
+    const finalCount = oaiBody.messages.length
     promptTok = estimateMessagesTokens(oaiBody.messages, oaiBody.tools)
     action = 'truncated'
+    droppedRounds = Math.floor((originalCount - finalCount) / 2) // 估算丢弃的轮数
+    logTrim('truncated', originalPromptTok, promptTok, droppedRounds, `messages ${originalCount} → ${finalCount}, keep last 8 rounds`)
   }
 
   oaiBody.max_tokens = maxTok
+
+  // 记录任何trim操作
+  if (action !== 'passthrough') {
+    console.log(`[proxy-budget] ${action}: ${originalPromptTok} → ${promptTok} tokens, max_tokens=${maxTok}`);
+  }
+
   return { action, promptTok, maxTok, ctxMax: CTX_MAX }
 }
 
