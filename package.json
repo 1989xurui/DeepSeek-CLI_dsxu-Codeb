@@ -9,7 +9,9 @@
   "scripts": {
     "claude-haha": "bun run ./bin/claude-haha",
     "start": "bun run ./bin/claude-haha",
-    "deepseek-proxy": "bun run deepseek-proxy.ts"
+    "deepseek-proxy": "bun run deepseek-proxy.ts",
+    "lint-schema": "bun run src/tools/schema-lint.ts --fail-on-error",
+    "prebuild": "bun run lint-schema"
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "^0.0.44",
