@@ -866,6 +866,8 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('[proxy-crash] 未处理的 Promise 拒绝:', reason);
   logCrash('unhandledRejection', reason);
 
-  // 注意：不立即退出，让应用继续运行
-  // 但记录到日志以便调试
+  // 给一点时间让日志写入
+  setTimeout(() => {
+    process.exit(1);
+  }, 100);
 });
