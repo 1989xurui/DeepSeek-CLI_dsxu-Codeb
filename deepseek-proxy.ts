@@ -131,6 +131,89 @@ function mapModel(model: string): string {
   return MODEL_MAP[model] ?? 'deepseek-chat'
 }
 
+// ── TASK-INFRA-3: History Auto-Summary ──────────────────────────────────
+
+/**
+ * 自动摘要历史消息
+ * 当消息超过 80K tokens 时，将最早的 N 轮对话摘要为单条 system message
+ */
+function autoSummarizeHistory(messages: any[]): any[] {
+  if (messages.length <= 10) {
+    // 消息太少，不需要摘要
+    return messages;
+  }
+
+  // 保留最后的 5 轮对话（10条消息，user+assistant 各一条算一轮）
+  const keepRounds = 5;
+  const keepCount = keepRounds * 2; // 每轮2条消息
+
+  if (messages.length <= keepCount) {
+    return messages;
+  }
+
+  // 分离 system 消息和其他消息
+  const systemMessages = messages.filter(m => m.role === 'system');
+  const otherMessages = messages.filter(m => m.role !== 'system');
+
+  // 保留最后的 keepCount 条非 system 消息
+  const recentMessages = otherMessages.slice(-keepCount);
+
+  // 需要摘要的早期消息
+  const earlyMessages = otherMessages.slice(0, otherMessages.length - keepCount);
+
+  if (earlyMessages.length === 0) {
+    return [...systemMessages, ...recentMessages];
+  }
+
+  // 创建摘要消息
+  const summaryMessage = {
+    role: 'system',
+    content: createHistorySummary(earlyMessages)
+  };
+
+  return [...systemMessages, summaryMessage, ...recentMessages];
+}
+
+/**
+ * 创建历史对话摘要
+ */
+function createHistorySummary(messages: any[]): string {
+  // 统计对话轮次
+  let rounds = 0;
+  let lastRole = '';
+
+  for (const msg of messages) {
+    if (msg.role === 'user' || msg.role === 'assistant') {
+      if (msg.role !== lastRole) {
+        if (msg.role === 'user') {
+          rounds++;
+        }
+        lastRole = msg.role;
+      }
+    }
+  }
+
+  // 提取关键信息：工具调用次数
+  const toolCalls = messages.filter(m =>
+    m.role === 'assistant' &&
+    Array.isArray(m.tool_calls) &&
+    m.tool_calls.length > 0
+  ).length;
+
+  // 创建摘要
+  const summary = [
+    '=== 历史对话摘要 ===',
+    `总对话轮次: ${rounds}`,
+    `工具调用次数: ${toolCalls}`,
+    `消息总数: ${messages.length}`,
+    '',
+    '（早期对话已自动摘要以节省上下文空间，',
+    '如需查看完整历史，请告知助手。）'
+  ].join('\n');
+
+  return summary;
+}
+
 // ── Anthropic → OpenAI conversion ─────────────────────────────────────────
 
 // M1-P0 #6: 确定性键排序 —— 保护 DeepSeek prompt cache
@@ -383,6 +466,13 @@ function anthropicToOpenAI(body: any): { oaiBody: any; budget: BudgetResult } {
 
   // #5: R1 路由时注入指令 hint
   if (dsModel === 'deepseek-reasoner') injectR1Hint(oaiBody.messages)
+
+  // ── TASK-INFRA-3: History Auto-Summary ──
+  // 当 messages 累计 > 80K tokens，自动把最早的 N 轮摘要替换为单条 system message
+  const estimatedTokens = estimateMessagesTokens(oaiBody.messages, oaiBody.tools);
+  if (estimatedTokens > 80000) {
+    oaiBody.messages = autoSummarizeHistory(oaiBody.messages);
+  }
 
   // ── Token Budget Guard ──
   const budget = applyBudget(oaiBody)
@@ -691,3 +781,48 @@ Set env:
   ANTHROPIC_BASE_URL=http://localhost:${PORT}
   ANTHROPIC_API_KEY=placeholder
 `)
+
+// ── Crash Handler (TASK-INFRA-2) ────────────────────────────────────────
+
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
+
+const CRASH_LOG_DIR = '.dsevo';
+const CRASH_LOG_FILE = join(CRASH_LOG_DIR, 'proxy-crash.log');
+
+// 确保日志目录存在
+if (!existsSync(CRASH_LOG_DIR)) {
+  mkdirSync(CRASH_LOG_DIR, { recursive: true });
+}
+
+function logCrash(type: string, error: any) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${type}: ${error?.stack || error?.message || String(error)}\n\n`;
+
+  try {
+    writeFileSync(CRASH_LOG_FILE, logEntry, { flag: 'a' });
+    console.error(`[proxy-crash] 崩溃已记录到 ${CRASH_LOG_FILE}`);
+  } catch (logError) {
+    console.error(`[proxy-crash] 无法写入崩溃日志: ${logError.message}`);
+  }
+}
+
+// 未捕获异常处理器
+process.on('uncaughtException', (error) => {
+  console.error('[proxy-crash] 未捕获异常:', error);
+  logCrash('uncaughtException', error);
+
+  // 给一点时间让日志写入
+  setTimeout(() => {
+    process.exit(1);
+  }, 100);
+});
+
+// 未处理的 Promise 拒绝处理器
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[proxy-crash] 未处理的 Promise 拒绝:', reason);
+  logCrash('unhandledRejection', reason);
+
+  // 注意：不立即退出，让应用继续运行
+  // 但记录到日志以便调试
+});
