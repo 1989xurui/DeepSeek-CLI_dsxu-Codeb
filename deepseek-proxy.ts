@@ -503,7 +503,31 @@ function sanitizeOrphanToolCalls(msgs: any[]): any[] {
     }
     out.push(m)
   }
-  return out
+
+  // [INFRA-5-v2] 最终兜底:暴力验证每条 tool 消息的前驱合法性
+  // 不管 sanitizer 内部逻辑如何,最终输出必须满足 DeepSeek 严格规则:
+  //   - role='tool' 只能出现在 role='assistant'(有 tool_calls)之后
+  //   - 或紧跟另一条 role='tool'（同一组连续 tool）
+  const validated: any[] = []
+  for (let k = 0; k < out.length; k++) {
+    const msg = out[k]
+    if (msg.role === 'tool') {
+      const prev = validated[validated.length - 1]
+      const prevIsAssistantWithCalls = prev?.role === 'assistant' && Array.isArray(prev.tool_calls) && prev.tool_calls.length > 0
+      const prevIsTool = prev?.role === 'tool'
+      if (!prevIsAssistantWithCalls && !prevIsTool) {
+        // 非法位置的 tool 消息,丢弃
+        try {
+          require('fs').appendFileSync('.dsevo/tool-orphan.log',
+            `[${new Date().toISOString()}] FINAL-GATE dropped tool msg at pos ${k}, ` +
+            `tool_call_id=${msg.tool_call_id}, prev_role=${prev?.role}\n`)
+        } catch { /* noop */ }
+        continue
+      }
+    }
+    validated.push(msg)
+  }
+  return validated
 }
 
 // M1-P0 #5: R1 指令 hint(官方最佳实践:指令放 user role + 鼓励并行工具)
@@ -634,6 +658,13 @@ async function streamDeepSeekToAnthropic(
   if (!resp.ok) {
     const err = await resp.text()
     console.error('[proxy] DeepSeek stream error:', resp.status, err)
+    // [INFRA-5-v2] 400 诊断 dump:保存触发 400 的完整请求
+    if (resp.status === 400) {
+      try {
+        const dump = JSON.stringify({ ts: new Date().toISOString(), status: 400, error: err, messageCount: oaiBody.messages?.length, messages: oaiBody.messages?.map((m: any) => ({ role: m.role, hasToolCalls: !!m.tool_calls, toolCallIds: m.tool_calls?.map((tc: any) => tc.id), tool_call_id: m.tool_call_id, contentLen: typeof m.content === 'string' ? m.content.length : 0 })) }, null, 2)
+        require('fs').appendFileSync('.dsevo/deepseek-400.log', dump + '\n---\n')
+      } catch { /* noop */ }
+    }
     write(sseEvent('error', { type: 'error', error: { type: 'api_error', message: err } }))
     await writer.close()
     return
@@ -826,6 +857,13 @@ async function handleMessages(req: Request): Promise<Response> {
   if (!resp.ok) {
     const err = await resp.text()
     console.error('[proxy] DeepSeek error:', resp.status, err)
+    // [INFRA-5-v2] 400 诊断 dump
+    if (resp.status === 400) {
+      try {
+        const dump = JSON.stringify({ ts: new Date().toISOString(), status: 400, error: err, messageCount: oaiBody.messages?.length, messages: oaiBody.messages?.map((m: any) => ({ role: m.role, hasToolCalls: !!m.tool_calls, toolCallIds: m.tool_calls?.map((tc: any) => tc.id), tool_call_id: m.tool_call_id, contentLen: typeof m.content === 'string' ? m.content.length : 0 })) }, null, 2)
+        require('fs').appendFileSync('.dsevo/deepseek-400.log', dump + '\n---\n')
+      } catch { /* noop */ }
+    }
     return new Response(err, { status: resp.status })
   }
 
