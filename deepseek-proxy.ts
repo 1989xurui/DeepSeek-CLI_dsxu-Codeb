@@ -15,7 +15,7 @@ const PORT = parseInt(process.env.PROXY_PORT || '8082', 10)
 import { parseToolCallArguments } from './dsevo/jsonRepair.js'
 
 // TASK-INFRA-1/2: 文件系统操作
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { join } from 'path';
 
 // DeepSeek model limits (官方: https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
@@ -199,10 +199,17 @@ function autoSummarizeHistory(messages: any[]): any[] {
   const otherMessages = messages.filter(m => m.role !== 'system');
 
   // 保留最后的 keepCount 条非 system 消息
-  const recentMessages = otherMessages.slice(-keepCount);
+  // [INFRA-5-v3] 截断点不能切在 assistant(tool_calls) 和 tool 之间
+  // 向前扩展 recentMessages 直到第一条不是孤儿 tool
+  let cutIdx = Math.max(0, otherMessages.length - keepCount);
+  // 如果截断点后的第一条是 tool，往前找到它的 assistant
+  while (cutIdx > 0 && otherMessages[cutIdx]?.role === 'tool') {
+    cutIdx--;
+  }
+  const recentMessages = otherMessages.slice(cutIdx);
 
   // 需要摘要的早期消息
-  const earlyMessages = otherMessages.slice(0, otherMessages.length - keepCount);
+  const earlyMessages = otherMessages.slice(0, cutIdx);
 
   if (earlyMessages.length === 0) {
     return [...systemMessages, ...recentMessages];
@@ -214,7 +221,19 @@ function autoSummarizeHistory(messages: any[]): any[] {
     content: createHistorySummary(earlyMessages)
   };
 
-  return [...systemMessages, summaryMessage, ...recentMessages];
+  // [INFRA-5-v3] 摘要后再跑一遍孤儿清理，兜底
+  const merged = [...systemMessages, summaryMessage, ...recentMessages];
+  const cleaned: any[] = [];
+  for (const msg of merged) {
+    if (msg.role === 'tool') {
+      const prev = cleaned[cleaned.length - 1];
+      const ok = (prev?.role === 'assistant' && Array.isArray(prev.tool_calls) && prev.tool_calls.length > 0)
+                 || prev?.role === 'tool';
+      if (!ok) continue; // 丢弃孤儿 tool
+    }
+    cleaned.push(msg);
+  }
+  return cleaned;
 }
 
 /**
@@ -807,6 +826,10 @@ async function streamDeepSeekToAnthropic(
   }))
   write(sseEvent('message_stop', { type: 'message_stop' }))
   await writer.close()
+
+  // TASK-INFRA-6: 记录流式请求成本
+  const cacheHit = false; // 流式响应通常没有缓存信息
+  logCostToLedger(oaiBody.model, inputTokens, outputTokens, cacheHit);
 }
 
 // ── Request handler ────────────────────────────────────────────────────────
@@ -819,6 +842,16 @@ async function handleMessages(req: Request): Promise<Response> {
 
   const { oaiBody, budget } = anthropicToOpenAI(body)
   const originalModel: string = body.model
+
+  // TASK-INFRA-6: 检查日预算
+  const budgetCheck = checkDailyBudget();
+  if (budgetCheck.exceeded) {
+    console.error(`[proxy] 日预算超限: ¥${budgetCheck.dailyTotal.toFixed(2)} > ¥50`);
+    return Response.json(
+      { error: { type: 'daily_budget_exceeded', message: 'DAILY_BUDGET_EXCEEDED' } },
+      { status: 402 }
+    );
+  }
 
   console.log(
     `[proxy] ${originalModel} → ${oaiBody.model}  ` +
@@ -868,7 +901,15 @@ async function handleMessages(req: Request): Promise<Response> {
   }
 
   const oaiResp = await resp.json()
-  return Response.json(openAIToAnthropic(oaiResp, originalModel))
+  const anthropicResp = openAIToAnthropic(oaiResp, originalModel)
+
+  // TASK-INFRA-6: 记录成本到账本
+  const inputTokens = oaiResp.usage?.prompt_tokens || 0;
+  const outputTokens = oaiResp.usage?.completion_tokens || 0;
+  const cacheHit = oaiResp.cached === true; // DeepSeek 可能返回 cached 字段
+  logCostToLedger(oaiBody.model, inputTokens, outputTokens, cacheHit);
+
+  return Response.json(anthropicResp)
 }
 
 // ── Server ─────────────────────────────────────────────────────────────────
@@ -947,3 +988,170 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
   }, 100);
 });
+
+// ── TASK-INFRA-6: Cost Ledger ──────────────────────────────────────────────
+
+// DeepSeek 定价 (CNY per 1M tokens)
+const PRICING: Record<string, { input: number; output: number }> = {
+  'deepseek-chat': { input: 0.14, output: 0.56 },
+  'deepseek-reasoner': { input: 0.28, output: 1.12 },
+};
+
+// 成本账本文件路径
+const COST_LEDGER_FILE = join(CRASH_LOG_DIR, 'cost-ledger.jsonl');
+const BUDGET_OVERRIDE_FILE = join(CRASH_LOG_DIR, 'budget-override');
+
+// 确保账本目录存在
+if (!existsSync(CRASH_LOG_DIR)) {
+  mkdirSync(CRASH_LOG_DIR, { recursive: true });
+}
+
+/**
+ * 计算请求成本
+ */
+function calculateCost(model: string, inputTokens: number, outputTokens: number, cacheHit: boolean): number {
+  const price = PRICING[model] || PRICING['deepseek-chat'];
+
+  // 缓存命中时，输入 tokens 不计费
+  const billedInputTokens = cacheHit ? 0 : inputTokens;
+
+  const inputCost = (billedInputTokens / 1_000_000) * price.input;
+  const outputCost = (outputTokens / 1_000_000) * price.output;
+
+  return parseFloat((inputCost + outputCost).toFixed(6)); // 保留6位小数精度
+}
+
+/**
+ * 记录成本到账本
+ */
+function logCostToLedger(
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+  cacheHit: boolean = false
+): void {
+  try {
+    const cost = calculateCost(model, inputTokens, outputTokens, cacheHit);
+    const timestamp = new Date().toISOString();
+
+    const entry = {
+      ts: timestamp,
+      model,
+      in_tokens: inputTokens,
+      out_tokens: outputTokens,
+      cache_hit: cacheHit,
+      cost_cny: cost,
+    };
+
+    appendFileSync(COST_LEDGER_FILE, JSON.stringify(entry) + '\n');
+    console.log(`[cost-ledger] 记录: ${model} ${inputTokens}+${outputTokens} tokens = ¥${cost.toFixed(4)}`);
+
+  } catch (error) {
+    console.error('[cost-ledger] 记录失败:', error.message);
+  }
+}
+
+/**
+ * 检查日预算是否超限
+ * 返回: { exceeded: boolean, dailyTotal: number }
+ */
+function checkDailyBudget(): { exceeded: boolean; dailyTotal: number } {
+  try {
+    // 检查是否有预算覆盖文件
+    if (existsSync(BUDGET_OVERRIDE_FILE)) {
+      console.log('[cost-ledger] 预算覆盖文件存在，跳过预算检查');
+      return { exceeded: false, dailyTotal: 0 };
+    }
+
+    if (!existsSync(COST_LEDGER_FILE)) {
+      return { exceeded: false, dailyTotal: 0 };
+    }
+
+    // 读取账本文件
+    const fs = require('fs');
+    const data = fs.readFileSync(COST_LEDGER_FILE, 'utf8');
+    const lines = data.trim().split('\n').filter(line => line.trim());
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    let dailyTotal = 0;
+
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        const entryDate = entry.ts.split('T')[0];
+
+        if (entryDate === today) {
+          dailyTotal += entry.cost_cny;
+        }
+      } catch (e) {
+        // 跳过解析错误的行
+        continue;
+      }
+    }
+
+    const exceeded = dailyTotal > 50; // ¥50 日预算
+    console.log(`[cost-ledger] 今日累计: ¥${dailyTotal.toFixed(2)} ${exceeded ? '(超限!)' : ''}`);
+
+    return { exceeded, dailyTotal };
+
+  } catch (error) {
+    console.error('[cost-ledger] 预算检查失败:', error.message);
+    return { exceeded: false, dailyTotal: 0 };
+  }
+}
+
+/**
+ * 获取账本汇总统计
+ */
+function getLedgerSummary(): {
+  today: { cost: number; requests: number };
+  thisMonth: { cost: number; requests: number };
+} {
+  try {
+    if (!existsSync(COST_LEDGER_FILE)) {
+      return { today: { cost: 0, requests: 0 }, thisMonth: { cost: 0, requests: 0 } };
+    }
+
+    const fs = require('fs');
+    const data = fs.readFileSync(COST_LEDGER_FILE, 'utf8');
+    const lines = data.trim().split('\n').filter(line => line.trim());
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const monthStr = now.toISOString().substring(0, 7); // YYYY-MM
+
+    let todayCost = 0;
+    let todayRequests = 0;
+    let monthCost = 0;
+    let monthRequests = 0;
+
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        const entryDate = entry.ts.substring(0, 10); // YYYY-MM-DD
+        const entryMonth = entry.ts.substring(0, 7); // YYYY-MM
+
+        if (entryDate === todayStr) {
+          todayCost += entry.cost_cny;
+          todayRequests++;
+        }
+
+        if (entryMonth === monthStr) {
+          monthCost += entry.cost_cny;
+          monthRequests++;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return {
+      today: { cost: todayCost, requests: todayRequests },
+      thisMonth: { cost: monthCost, requests: monthRequests },
+    };
+
+  } catch (error) {
+    console.error('[cost-ledger] 汇总统计失败:', error.message);
+    return { today: { cost: 0, requests: 0 }, thisMonth: { cost: 0, requests: 0 } };
+  }
+}
