@@ -33,6 +33,8 @@ interface TestResult {
 // 创建 mockSpawn 函数
 function createMockSpawn(mockToolOutput: any) {
   return async (cmd: string, args: string[], timeoutMs: number): Promise<SpawnResult> => {
+    console.log(`[mockSpawn] cmd: ${cmd}, args: ${JSON.stringify(args)}`);
+
     // 确定工具类型
     let toolType: string;
     if (cmd.includes('ast-grep') || args.some(arg => arg.includes('ast-grep'))) {
@@ -45,8 +47,11 @@ function createMockSpawn(mockToolOutput: any) {
       toolType = 'unknown';
     }
 
+    console.log(`[mockSpawn] toolType: ${toolType}`);
+
     const mock = mockToolOutput[toolType];
     if (!mock) {
+      console.log(`[mockSpawn] no mock for ${toolType}, returning success`);
       return {
         exitCode: 0,
         stdout: '',

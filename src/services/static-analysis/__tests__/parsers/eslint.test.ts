@@ -34,30 +34,32 @@ describe('ESLint Parser', () => {
       },
     ]);
 
-    const issues = parseEslintOutput(jsonOutput, cwd);
+    const issues = parseEslintOutput(jsonOutput, cwd, ['src/test.js']);
 
     expect(issues).toHaveLength(2);
 
     // 检查第一个问题（error）
     expect(issues[0]).toEqual({
-      tool: 'eslint',
+      source: 'eslint',
       severity: 'error',
       file: 'src/test.js',
       line: 10,
-      col: 5,
-      ruleId: 'no-console',
+      column: 5,
+      rule: 'no-console',
       message: 'Unexpected console statement',
+      suggestion: expect.any(String),
     });
 
     // 检查第二个问题（warning）
     expect(issues[1]).toEqual({
-      tool: 'eslint',
+      source: 'eslint',
       severity: 'warning',
       file: 'src/test.js',
       line: 20,
-      col: 12,
-      ruleId: 'eqeqeq',
+      column: 12,
+      rule: 'eqeqeq',
       message: 'Expected === and instead saw ==',
+      suggestion: expect.any(String),
     });
   });
 
@@ -77,7 +79,7 @@ describe('ESLint Parser', () => {
       },
     ]);
 
-    const issues = parseEslintOutput(jsonOutput, cwd);
+    const issues = parseEslintOutput(jsonOutput, cwd, ['src/test.js']);
 
     expect(issues[0].severity).toBe('info'); // severity 0 -> info
     expect(issues[1].severity).toBe('warning'); // severity 1 -> warning
@@ -98,7 +100,7 @@ describe('ESLint Parser', () => {
       },
     ]);
 
-    const issues = parseEslintOutput(jsonOutput, cwd);
+    const issues = parseEslintOutput(jsonOutput, cwd, ['src/test.js']);
     expect(issues[0].file).toBe('src/utils.js'); // 移除了 /project 前缀
   });
 
@@ -117,7 +119,7 @@ describe('ESLint Parser', () => {
       },
     ]);
 
-    const issues = parseEslintOutput(jsonOutput, windowsCwd);
+    const issues = parseEslintOutput(jsonOutput, windowsCwd, ['src/app.js']);
     expect(issues[0].file).toBe('src/app.js'); // 统一为正斜杠
   });
 
@@ -127,7 +129,7 @@ describe('ESLint Parser', () => {
 /project/src/test.js:20:12: Expected === and instead saw == (eqeqeq)
     `.trim();
 
-    const issues = parseEslintOutput(textOutput, cwd);
+    const issues = parseEslintOutput(textOutput, cwd, ['src/test.js']);
 
     expect(issues).toHaveLength(2);
     expect(issues[0].tool).toBe('eslint');

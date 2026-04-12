@@ -13,30 +13,32 @@ src/test.ts(10,5): error TS2322: Type 'string' is not assignable to type 'number
 src/utils.ts(20,12): warning TS6133: 'unused' is declared but its value is never read.
     `.trim();
 
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts', 'src/utils.ts']);
 
     expect(issues).toHaveLength(2);
 
     // 检查第一个问题（error）
     expect(issues[0]).toEqual({
-      tool: 'tsc',
+      source: 'tsc',
       severity: 'error',
       file: 'src/test.ts',
       line: 10,
-      col: 5,
-      ruleId: 'TS2322',
+      column: 5,
+      rule: 'TS2322',
       message: "Type 'string' is not assignable to type 'number'.",
+      suggestion: expect.any(String),
     });
 
     // 检查第二个问题（warning）
     expect(issues[1]).toEqual({
-      tool: 'tsc',
+      source: 'tsc',
       severity: 'warning',
       file: 'src/utils.ts',
       line: 20,
-      col: 12,
-      ruleId: 'TS6133',
+      column: 12,
+      rule: 'TS6133',
       message: "'unused' is declared but its value is never read.",
+      suggestion: expect.any(String),
     });
   });
 
@@ -47,7 +49,7 @@ test.ts(2,2): warning TS0002: warning message
 test.ts(3,3): info TS0003: info message
     `.trim();
 
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues[0].severity).toBe('error');
     expect(issues[1].severity).toBe('warning');
@@ -56,14 +58,14 @@ test.ts(3,3): info TS0003: info message
 
   test('应该处理未知 severity', () => {
     const output = 'test.ts(1,1): unknown TS0000: unknown message';
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues[0].severity).toBe('info'); // 默认
   });
 
   test('应该规范化文件路径', () => {
     const output = '/project/src/app.ts(1,1): error TS0000: test';
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues[0].file).toBe('src/app.ts'); // 移除了 /project 前缀
   });
@@ -78,7 +80,7 @@ test.ts(3,3): info TS0003: info message
 
   test('应该处理相对路径', () => {
     const output = 'src/app.ts(1,1): error TS0000: test';
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues[0].file).toBe('src/app.ts'); // 保持不变
   });
@@ -90,13 +92,13 @@ src/test.ts(1,1): error TS0000: test
 src/test.ts(2,2): warning TS0001: test2
     `.trim();
 
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
     expect(issues).toHaveLength(2);
   });
 
   test('应该处理没有行号列号的情况', () => {
     const output = 'src/test.ts: error TS0000: test';
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues[0].line).toBe(0);
     expect(issues[0].col).toBe(0);
@@ -104,7 +106,7 @@ src/test.ts(2,2): warning TS0001: test2
 
   test('应该处理部分匹配的行', () => {
     const output = 'Some other text that does not match the pattern';
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues).toHaveLength(0);
   });
@@ -121,7 +123,7 @@ src/test.ts(10,5): error TS2322: Type 'string' is not assignable to type 'number
   The expected type comes from property 'value' which is declared here on type 'Props'
     `.trim();
 
-    const issues = parseTscOutput(output, cwd);
+    const issues = parseTscOutput(output, cwd, ['src/test.ts']);
 
     expect(issues).toHaveLength(1);
     expect(issues[0].message).toContain("Type 'string' is not assignable to type 'number'.");

@@ -115,13 +115,32 @@ describe('Static Gate Runner (New)', () => {
   });
 
   test('应该处理 skipLayers 选项', async () => {
-    const result = await runStaticGate(['package.json'], {
-      skipLayers: ['tsc', 'eslint'],
-    });
+    // 创建一个临时的TypeScript文件用于测试（不在__tests__目录中）
+    const tempFile = 'src/services/static-analysis/temp-skip-test.ts';
+    const fs = require('fs');
+    const path = require('path');
 
-    expect(result.layers.tsc.skipped).toBe(true);
-    expect(result.layers.eslint.skipped).toBe(true);
-    expect(result.layers.astGrep.skipped).toBe(true); // ast-grep 默认禁用
+    // 确保目录存在
+    const dir = path.dirname(tempFile);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(tempFile, 'const x: number = 1;');
+
+    try {
+      const result = await runStaticGate([tempFile], {
+        skipLayers: ['tsc', 'eslint'],
+      });
+
+      expect(result.layers.tsc.skipped).toBe(true);
+      expect(result.layers.eslint.skipped).toBe(true);
+      expect(result.layers.astGrep.skipped).toBe(true); // ast-grep 默认禁用
+    } finally {
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    }
   });
 
   test('应该处理 shortCircuitOnError 选项', async () => {
