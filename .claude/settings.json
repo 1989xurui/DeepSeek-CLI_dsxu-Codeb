@@ -1,4 +1,43 @@
 {
+  "permissions": {
+    "deny": [
+      "Write(D:\\DSXU-code\\package.json)",
+      "Write(D:\\DSXU-code\\package-lock.json)",
+      "Write(D:\\DSXU-code\\bun.lockb)",
+      "Write(D:\\DSXU-code\\tsconfig.json)",
+      "Write(D:\\DSXU-code\\deepseek-proxy.ts)",
+      "Write(D:\\DSXU-code\\.gitignore)",
+      "Write(D:\\DSXU-code\\.env)",
+      "Write(D:\\DSXU-code\\bin\\claude-haha)",
+      "Write(D:\\DSXU-code\\src\\entrypoints\\cli.tsx)",
+      "Edit(D:\\DSXU-code\\package.json)",
+      "Edit(D:\\DSXU-code\\package-lock.json)",
+      "Edit(D:\\DSXU-code\\bun.lockb)",
+      "Edit(D:\\DSXU-code\\tsconfig.json)",
+      "Edit(D:\\DSXU-code\\bin\\claude-haha)",
+      "Edit(D:\\DSXU-code\\src\\entrypoints\\cli.tsx)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -r:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git checkout .)",
+      "Bash(git clean -f:*)",
+      "Bash(git branch -D:*)"
+    ],
+    "ask": [
+      "Edit(D:\\DSXU-code\\deepseek-proxy.ts)",
+      "Edit(D:\\DSXU-code\\.gitignore)",
+      "Edit(D:\\DSXU-code\\.claude\\settings.json)",
+      "Write(D:\\DSXU-code\\.claude\\*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)",
+      "Bash(npm publish:*)",
+      "Bash(bun publish:*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
