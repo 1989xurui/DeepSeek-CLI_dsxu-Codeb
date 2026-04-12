@@ -1,94 +1,225 @@
 /**
- * R5-22 · 静态分析前置桥
- *
- * 每次 Executor 出 patch 后，强制跑 tsc --noEmit + eslint + semgrep --config=p/security
- * 错误以结构化 JSON 回灌到 Critic prompt
+ * R5-22 Static Pre-Gate — 实现
+ * 符合蒸馏协议 contract.ts 的接口
  */
 
 import { spawn } from 'child_process';
 import { promisify } from 'util';
-import { readFile } from 'fs/promises';
-import { join, relative } from 'path';
+import { join, relative, basename, extname } from 'path';
+import { existsSync } from 'fs';
+import {
+  StaticIssue,
+  StaticIssueSource,
+  StaticIssueSeverity,
+  LayerResult,
+  StaticGateResult,
+  StaticGateOptions,
+  runStaticGate,
+  formatGateReport,
+  shouldScan,
+} from './contract';
+
+import { parseAstGrepOutput } from './parsers/ast-grep';
 import { parseTscOutput } from './parsers/tsc';
 import { parseEslintOutput } from './parsers/eslint';
-import { parseSemgrepOutput } from './parsers/semgrep';
 
 const exec = promisify(spawn);
 
-export interface StaticIssue {
-  tool: 'tsc' | 'eslint' | 'semgrep';
-  severity: 'error' | 'warning' | 'info';
-  file: string;
-  line: number;
-  col: number;
-  ruleId?: string;
-  message: string;
-}
-
-export interface AnalysisResult {
-  issues: StaticIssue[];
-  durationMs: number;
-  toolsRun: string[];
-  failed: string[];   // 工具运行失败的列表
-}
-
-export interface ToolConfig {
+// 工具配置接口
+interface ToolConfig {
   enabled: boolean;
   command: string;
   args: string[];
-  parser: (output: string, cwd: string) => StaticIssue[];
+  parser: (output: string, cwd: string, filePaths: string[]) => StaticIssue[];
   timeoutMs: number;
+  source: StaticIssueSource;
 }
 
-// 工具配置
-const TOOLS: Record<string, ToolConfig> = {
+// 默认工具配置
+const DEFAULT_TOOLS: Record<StaticIssueSource, ToolConfig> = {
+  'ast-grep': {
+    enabled: false, // 暂时禁用，需要先创建 ast-grep 规则文件
+    command: 'npx',
+    args: ['@ast-grep/cli', 'scan', '--json', '--config', 'scripts/ast-grep-rules.yml'],
+    parser: parseAstGrepOutput,
+    timeoutMs: 3000,
+    source: 'ast-grep',
+  },
   tsc: {
     enabled: true,
     command: 'npx',
-    args: ['tsc', '--noEmit', '--pretty', 'false'],
+    args: ['tsc', '--noEmit', '--strict', '--noImplicitAny', '--strictNullChecks', '--pretty', 'false'],
     parser: parseTscOutput,
-    timeoutMs: 30000,
+    timeoutMs: 5000,
+    source: 'tsc',
   },
   eslint: {
     enabled: true,
     command: 'npx',
     args: ['eslint', '--format', 'json', '--no-eslintrc', '--config', '.eslintrc.json'],
     parser: parseEslintOutput,
-    timeoutMs: 30000,
-  },
-  semgrep: {
-    enabled: true,
-    command: 'semgrep',
-    args: ['--config', 'p/security', '--json'],
-    parser: parseSemgrepOutput,
-    timeoutMs: 60000,
+    timeoutMs: 3000,
+    source: 'eslint',
   },
 };
 
+// 默认选项
+const DEFAULT_OPTIONS: Required<StaticGateOptions> = {
+  astGrepRulesPath: 'scripts/ast-grep-rules.yml',
+  tscConfigPath: 'tsconfig.json',
+  eslintConfigPath: '.eslintrc.gate.json',
+  skipLayers: [],
+  maxDurationMs: 10000,
+  shortCircuitOnError: true,
+};
+
 /**
- * 运行静态分析工具
+ * 运行静态分析门
  */
-async function runTool(
-  toolName: string,
-  config: ToolConfig,
-  filePaths: string[],
-  cwd: string
-): Promise<StaticIssue[]> {
-  if (!config.enabled) {
-    console.log(`[static-analysis] ${toolName} 已禁用，跳过`);
-    return [];
+export async function runStaticGateImpl(
+  targetFiles: string[],
+  options?: StaticGateOptions
+): Promise<StaticGateResult> {
+  const startTime = Date.now();
+  const cwd = process.cwd();
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+
+  // 过滤文件
+  const filesToScan = targetFiles.filter(shouldScan);
+  if (filesToScan.length === 0) {
+    return createEmptyResult(startTime);
   }
 
+  // 初始化各层结果
+  const layers: StaticGateResult['layers'] = {
+    astGrep: { passed: true, issues: [], durationMs: 0 },
+    tsc: { passed: true, issues: [], durationMs: 0 },
+    eslint: { passed: true, issues: [], durationMs: 0 },
+  };
+
+  const allIssues: StaticIssue[] = [];
+  let shouldShortCircuit = false;
+
+  // 按顺序运行各层
+  const layerOrder: StaticIssueSource[] = ['ast-grep', 'tsc', 'eslint'];
+
+  for (const layer of layerOrder) {
+    if (opts.skipLayers?.includes(layer)) {
+      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+        passed: true,
+        issues: [],
+        durationMs: 0,
+        skipped: true,
+        skipReason: 'explicitly skipped via options',
+      };
+      continue;
+    }
+
+    if (shouldShortCircuit && opts.shortCircuitOnError) {
+      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+        passed: false,
+        issues: [],
+        durationMs: 0,
+        skipped: true,
+        skipReason: 'short-circuited due to error in previous layer',
+      };
+      continue;
+    }
+
+    const toolConfig = DEFAULT_TOOLS[layer];
+    if (!toolConfig.enabled) {
+      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+        passed: true,
+        issues: [],
+        durationMs: 0,
+        skipped: true,
+        skipReason: 'tool disabled',
+      };
+      continue;
+    }
+
+    try {
+      const layerStart = Date.now();
+      const issues = await runTool(layer, toolConfig, filesToScan, cwd, opts);
+      const duration = Date.now() - layerStart;
+
+      const hasErrors = issues.some(issue => issue.severity === 'error');
+      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+        passed: !hasErrors,
+        issues,
+        durationMs: duration,
+      };
+
+      allIssues.push(...issues);
+
+      if (hasErrors && opts.shortCircuitOnError) {
+        shouldShortCircuit = true;
+      }
+
+    } catch (error: any) {
+      // 工具执行失败
+      const errorIssue: StaticIssue = {
+        severity: 'error',
+        source: layer,
+        file: '',
+        line: 0,
+        column: 0,
+        rule: `gate.tool-error`,
+        message: `${layer} execution failed: ${error.message}`,
+      };
+
+      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+        passed: false,
+        issues: [errorIssue],
+        durationMs: 0,
+      };
+
+      allIssues.push(errorIssue);
+      shouldShortCircuit = true;
+    }
+  }
+
+  // 统计结果
+  const errors = allIssues.filter(issue => issue.severity === 'error').length;
+  const warnings = allIssues.filter(issue => issue.severity === 'warning').length;
+  const totalDuration = Date.now() - startTime;
+
+  // 按文件、行号排序
+  allIssues.sort((a, b) => {
+    if (a.file !== b.file) return a.file.localeCompare(b.file);
+    if (a.line !== b.line) return a.line - b.line;
+    return a.column - b.column;
+  });
+
+  return {
+    passed: errors === 0,
+    totalIssues: allIssues.length,
+    errors,
+    warnings,
+    issues: allIssues,
+    durationMs: totalDuration,
+    layers,
+  };
+}
+
+/**
+ * 运行单个工具
+ */
+async function runTool(
+  layer: StaticIssueSource,
+  config: ToolConfig,
+  filePaths: string[],
+  cwd: string,
+  options: Required<StaticGateOptions>
+): Promise<StaticIssue[]> {
   const startTime = Date.now();
   const args = [...config.args];
 
-  // 如果是 eslint 或 tsc，添加文件路径
-  if (toolName === 'eslint' || toolName === 'tsc') {
+  // 添加文件路径参数
+  if (layer === 'tsc' || layer === 'eslint') {
     args.push(...filePaths);
   }
-  // semgrep 会自动扫描目录，不需要指定文件
-
-  console.log(`[static-analysis] 运行 ${toolName}: ${config.command} ${args.join(' ')}`);
+  // ast-grep 使用 --pattern 或扫描目录
 
   try {
     const { stdout, stderr } = await exec(config.command, args, {
@@ -99,173 +230,155 @@ async function runTool(
     });
 
     const output = stdout.toString() + stderr.toString();
-    const issues = config.parser(output, cwd);
-    const duration = Date.now() - startTime;
-
-    console.log(`[static-analysis] ${toolName} 完成: ${duration}ms, 发现 ${issues.length} 个问题`);
-    return issues;
+    return config.parser(output, cwd, filePaths);
 
   } catch (error: any) {
-    // 工具执行失败（如未安装、超时等）
-    console.error(`[static-analysis] ${toolName} 执行失败:`, error.message);
-
-    // 如果是 semgrep 未安装，返回空数组而不是失败
-    if (toolName === 'semgrep' && error.message.includes('command not found')) {
-      console.warn('[static-analysis] semgrep 未安装，跳过安全检查');
-      return [];
+    // 超时处理
+    if (error.code === 'ETIMEDOUT' || error.signal === 'SIGTERM') {
+      return [{
+        severity: 'error',
+        source: layer,
+        file: '',
+        line: 0,
+        column: 0,
+        rule: 'gate.timeout',
+        message: `${layer} timed out after ${config.timeoutMs}ms`,
+      }];
     }
 
-    // 其他错误，抛出异常
-    throw new Error(`${toolName} 执行失败: ${error.message}`);
+    // 工具未安装
+    if (error.message.includes('command not found') || error.message.includes('ENOENT')) {
+      return [{
+        severity: 'error',
+        source: layer,
+        file: '',
+        line: 0,
+        column: 0,
+        rule: 'gate.tool-missing',
+        message: `${layer} is not installed or not in PATH`,
+      }];
+    }
+
+    throw error;
   }
 }
 
 /**
- * 检查工具是否可用
+ * 创建空结果
  */
-async function checkToolAvailability(toolName: string, config: ToolConfig): Promise<boolean> {
-  if (!config.enabled) return true;
+function createEmptyResult(startTime: number): StaticGateResult {
+  const duration = Date.now() - startTime;
+  const emptyLayer = { passed: true, issues: [], durationMs: 0 };
 
-  try {
-    // 简单版本检查
-    await exec(config.command, ['--version'], {
-      stdio: 'pipe',
-      timeout: 5000,
-      shell: true,
+  return {
+    passed: true,
+    totalIssues: 0,
+    errors: 0,
+    warnings: 0,
+    issues: [],
+    durationMs: duration,
+    layers: {
+      astGrep: emptyLayer,
+      tsc: emptyLayer,
+      eslint: emptyLayer,
+    },
+  };
+}
+
+
+/**
+ * 格式化报告
+ */
+export function formatGateReportImpl(result: StaticGateResult): string {
+  if (result.passed) {
+    return `## ✅ Static Analysis PASSED\n\n` +
+           `- **Duration**: ${result.durationMs}ms\n` +
+           `- **Issues**: ${result.totalIssues} total (${result.errors} errors, ${result.warnings} warnings)\n` +
+           `- **Layers**:\n` +
+           `  - ast-grep: ${result.layers.astGrep.passed ? '✅' : '❌'} (${result.layers.astGrep.issues.length} issues, ${result.layers.astGrep.durationMs}ms)\n` +
+           `  - tsc: ${result.layers.tsc.passed ? '✅' : '❌'} (${result.layers.tsc.issues.length} issues, ${result.layers.tsc.durationMs}ms)\n` +
+           `  - eslint: ${result.layers.eslint.passed ? '✅' : '❌'} (${result.layers.eslint.issues.length} issues, ${result.layers.eslint.durationMs}ms)`;
+  }
+
+  // 失败报告
+  const errorIssues = result.issues.filter(issue => issue.severity === 'error');
+  const warningIssues = result.issues.filter(issue => issue.severity === 'warning');
+  const infoIssues = result.issues.filter(issue => issue.severity === 'info');
+
+  let report = `## ❌ Static Analysis FAILED\n\n`;
+  report += `- **Duration**: ${result.durationMs}ms\n`;
+  report += `- **Issues**: ${result.totalIssues} total (${result.errors} errors, ${result.warnings} warnings, ${infoIssues.length} info)\n\n`;
+
+  if (errorIssues.length > 0) {
+    report += `### Errors (${errorIssues.length})\n\n`;
+    errorIssues.slice(0, 20).forEach(issue => {
+      report += `- **${issue.file}:${issue.line}:${issue.column}** [${issue.source}/${issue.rule}]\n`;
+      report += `  ${issue.message}\n`;
+      if (issue.suggestion) {
+        report += `  💡 Suggestion: ${issue.suggestion}\n`;
+      }
+      report += `\n`;
     });
-    return true;
-  } catch (error) {
-    console.warn(`[static-analysis] ${toolName} 不可用:`, error);
+
+    if (errorIssues.length > 20) {
+      report += `... and ${errorIssues.length - 20} more errors\n\n`;
+    }
+  }
+
+  if (warningIssues.length > 0) {
+    const warningsToShow = warningIssues.slice(0, 5);
+    report += `### Top Warnings (${warningsToShow.length} of ${warningIssues.length})\n\n`;
+    warningsToShow.forEach(issue => {
+      report += `- **${issue.file}:${issue.line}:${issue.column}** [${issue.source}/${issue.rule}]\n`;
+      report += `  ${issue.message}\n\n`;
+    });
+  }
+
+  return report;
+}
+
+/**
+ * 判断文件是否应该扫描
+ */
+export function shouldScanImpl(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/g, '/');
+
+  // 检查扩展名
+  const ext = extname(normalized).toLowerCase();
+  const validExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
+  if (!validExtensions.includes(ext)) {
     return false;
   }
-}
 
-/**
- * 运行静态分析
- */
-export async function runStaticAnalysis(filePaths: string[]): Promise<AnalysisResult> {
-  const startTime = Date.now();
-  const cwd = process.cwd();
-  const issues: StaticIssue[] = [];
-  const toolsRun: string[] = [];
-  const failed: string[] = [];
+  // 排除目录
+  const excludedPatterns = [
+    '/node_modules/',
+    '/dist/',
+    '/build/',
+    '/.trash/',
+    '/__tests__/',
+    '/test/',
+    '/tests/',
+    '/.dsxu/',
+    '/.dsevo/',
+    '/.git/',
+    '/coverage/',
+  ];
 
-  console.log(`[static-analysis] 开始分析 ${filePaths.length} 个文件`);
-
-  // 检查工具可用性
-  const availableTools: string[] = [];
-  for (const [toolName, config] of Object.entries(TOOLS)) {
-    const isAvailable = await checkToolAvailability(toolName, config);
-    if (isAvailable) {
-      availableTools.push(toolName);
-    } else {
-      failed.push(toolName);
-      console.warn(`[static-analysis] ${toolName} 不可用，跳过`);
+  for (const pattern of excludedPatterns) {
+    if (normalized.includes(pattern)) {
+      return false;
     }
   }
 
-  // 运行可用工具
-  for (const toolName of availableTools) {
-    const config = TOOLS[toolName];
-    try {
-      const toolIssues = await runTool(toolName, config, filePaths, cwd);
-      issues.push(...toolIssues);
-      toolsRun.push(toolName);
-    } catch (error: any) {
-      failed.push(toolName);
-      console.error(`[static-analysis] ${toolName} 分析失败:`, error.message);
-    }
+  // 排除隐藏文件（以 . 开头）
+  const fileName = basename(normalized);
+  if (fileName.startsWith('.')) {
+    return false;
   }
 
-  const durationMs = Date.now() - startTime;
-
-  // 按严重性排序：error > warning > info
-  issues.sort((a, b) => {
-    const severityOrder = { error: 0, warning: 1, info: 2 };
-    return severityOrder[a.severity] - severityOrder[b.severity];
-  });
-
-  const result: AnalysisResult = {
-    issues,
-    durationMs,
-    toolsRun,
-    failed,
-  };
-
-  console.log(`[static-analysis] 分析完成: ${durationMs}ms, 工具: ${toolsRun.join(', ')}, 问题: ${issues.length}, 失败: ${failed.length}`);
-  return result;
+  return true;
 }
 
-/**
- * 格式化分析结果供 Critic prompt 使用
- */
-export function formatForCriticPrompt(result: AnalysisResult): string {
-  if (result.issues.length === 0) {
-    return '静态分析: 未发现问题 ✅';
-  }
-
-  const sections: string[] = [];
-  sections.push('# 静态分析报告');
-
-  // 按工具分组
-  const byTool: Record<string, StaticIssue[]> = {};
-  for (const issue of result.issues) {
-    if (!byTool[issue.tool]) byTool[issue.tool] = [];
-    byTool[issue.tool].push(issue);
-  }
-
-  for (const [tool, toolIssues] of Object.entries(byTool)) {
-    sections.push(`\n## ${tool.toUpperCase()}`);
-
-    // 按严重性分组
-    const bySeverity: Record<string, StaticIssue[]> = {};
-    for (const issue of toolIssues) {
-      if (!bySeverity[issue.severity]) bySeverity[issue.severity] = [];
-      bySeverity[issue.severity].push(issue);
-    }
-
-    for (const [severity, severityIssues] of Object.entries(bySeverity)) {
-      const emoji = severity === 'error' ? '❌' : severity === 'warning' ? '⚠️' : 'ℹ️';
-      sections.push(`\n### ${emoji} ${severity.toUpperCase()} (${severityIssues.length})`);
-
-      for (const issue of severityIssues.slice(0, 10)) { // 最多显示10个
-        const location = issue.line > 0 ? `:${issue.line}:${issue.col}` : '';
-        const ruleInfo = issue.ruleId ? ` [${issue.ruleId}]` : '';
-        sections.push(`- \`${issue.file}${location}\`${ruleInfo}: ${issue.message}`);
-      }
-
-      if (severityIssues.length > 10) {
-        sections.push(`- ... 还有 ${severityIssues.length - 10} 个 ${severity} 未显示`);
-      }
-    }
-  }
-
-  // 统计信息
-  sections.push('\n## 统计信息');
-  sections.push(`- 运行工具: ${result.toolsRun.join(', ') || '无'}`);
-  sections.push(`- 失败工具: ${result.failed.join(', ') || '无'}`);
-  sections.push(`- 总问题数: ${result.issues.length}`);
-  sections.push(`- 错误: ${result.issues.filter(i => i.severity === 'error').length}`);
-  sections.push(`- 警告: ${result.issues.filter(i => i.severity === 'warning').length}`);
-  sections.push(`- 信息: ${result.issues.filter(i => i.severity === 'info').length}`);
-  sections.push(`- 耗时: ${result.durationMs}ms`);
-
-  // 建议
-  sections.push('\n## 修复建议');
-  sections.push('1. 优先修复 ❌ 错误（阻止编译/运行的问题）');
-  sections.push('2. 处理 ⚠️ 警告（潜在问题、代码风格）');
-  sections.push('3. 检查 ℹ️ 信息（建议性改进）');
-  sections.push('4. 对于安全相关问题（semgrep），必须立即处理');
-
-  return sections.join('\n');
-}
-
-/**
- * 获取严重问题数量（用于决策是否阻止提交）
- */
-export function getCriticalIssueCount(result: AnalysisResult): number {
-  return result.issues.filter(issue =>
-    issue.severity === 'error' ||
-    (issue.tool === 'semgrep' && issue.severity === 'warning')
-  ).length;
-}
+// 导出实现
+export { runStaticGateImpl as runStaticGate, formatGateReportImpl as formatGateReport, shouldScanImpl as shouldScan };

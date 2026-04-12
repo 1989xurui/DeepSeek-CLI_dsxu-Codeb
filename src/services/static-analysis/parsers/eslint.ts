@@ -1,9 +1,9 @@
 /**
- * eslint 输出解析器
- * 解析 eslint --format json 的输出
+ * ESLint 输出解析器（新版本）
+ * 符合蒸馏协议 StaticIssue 接口
  */
 
-import { StaticIssue } from '../runner';
+import { StaticIssue, StaticIssueSource } from '../contract';
 
 interface EslintMessage {
   ruleId: string;
@@ -36,10 +36,15 @@ interface EslintFileResult {
 }
 
 /**
- * 解析 eslint JSON 输出
+ * 解析 ESLint JSON 输出
  */
-export function parseEslintOutput(output: string, cwd: string): StaticIssue[] {
+export function parseEslintOutput(output: string, cwd: string, filePaths: string[]): StaticIssue[] {
   const issues: StaticIssue[] = [];
+
+  // 处理空输出
+  if (!output.trim()) {
+    return issues;
+  }
 
   try {
     // eslint 输出可能是 JSON 数组
@@ -52,30 +57,34 @@ export function parseEslintOutput(output: string, cwd: string): StaticIssue[] {
         if (message.severity === 2) severity = 'error';
         else if (message.severity === 1) severity = 'warning';
 
+        // 规范化文件路径
+        const normalizedFile = normalizePath(result.filePath, cwd);
+
         issues.push({
-          tool: 'eslint',
           severity,
-          file: normalizePath(result.filePath, cwd),
-          line: message.line || 0,
-          col: message.column || 0,
-          ruleId: message.ruleId || 'unknown',
+          source: 'eslint' as StaticIssueSource,
+          file: normalizedFile,
+          line: message.line || 1,
+          column: message.column || 1,
+          rule: message.ruleId || 'unknown',
           message: message.message,
+          suggestion: generateSuggestion(message),
         });
       }
     }
   } catch (error) {
     // 如果不是 JSON 格式，尝试解析文本输出
-    console.warn('[static-analysis] eslint 输出不是 JSON 格式，尝试解析文本:', error);
-    return parseEslintTextOutput(output, cwd);
+    console.warn('[static-analysis] ESLint 输出不是 JSON 格式，尝试解析文本:', error);
+    return parseEslintTextOutput(output, cwd, filePaths);
   }
 
   return issues;
 }
 
 /**
- * 解析 eslint 文本输出（fallback）
+ * 解析 ESLint 文本输出（fallback）
  */
-function parseEslintTextOutput(output: string, cwd: string): StaticIssue[] {
+function parseEslintTextOutput(output: string, cwd: string, filePaths: string[]): StaticIssue[] {
   const issues: StaticIssue[] = [];
   const lines = output.split('\n');
 
@@ -97,18 +106,54 @@ function parseEslintTextOutput(output: string, cwd: string): StaticIssue[] {
       else if (lowerMessage.includes('warning')) severity = 'warning';
 
       issues.push({
-        tool: 'eslint',
         severity,
+        source: 'eslint' as StaticIssueSource,
         file: normalizePath(file, cwd),
-        line: parseInt(lineStr, 10),
-        col: parseInt(colStr, 10),
-        ruleId,
+        line: parseInt(lineStr, 10) || 1,
+        column: parseInt(colStr, 10) || 1,
+        rule: ruleId || 'unknown',
         message: message.trim(),
       });
     }
   }
 
   return issues;
+}
+
+/**
+ * 生成修复建议
+ */
+function generateSuggestion(message: EslintMessage): string | undefined {
+  const ruleSuggestions: Record<string, string> = {
+    'no-console': 'Remove console statement or use a proper logging library',
+    'eqeqeq': 'Use === instead of == for strict equality comparison',
+    'no-var': 'Use let or const instead of var',
+    'prefer-const': 'Use const for variables that are not reassigned',
+    'no-unused-vars': 'Remove unused variable or use it',
+    '@typescript-eslint/no-explicit-any': 'Use proper type instead of any',
+    '@typescript-eslint/no-unused-vars': 'Remove unused variable or use it',
+    'semi': 'Add missing semicolon',
+    'quotes': 'Use consistent quotes (single or double)',
+    'indent': 'Fix indentation',
+    'comma-dangle': 'Add or remove trailing comma',
+    'space-before-function-paren': 'Add or remove space before function parentheses',
+    'keyword-spacing': 'Add or remove spacing around keywords',
+    'space-infix-ops': 'Add spacing around operators',
+    'no-trailing-spaces': 'Remove trailing spaces',
+    'eol-last': 'Add newline at end of file',
+  };
+
+  const suggestion = ruleSuggestions[message.ruleId];
+  if (suggestion) {
+    return suggestion;
+  }
+
+  // 通用建议
+  if (message.fix) {
+    return 'ESLint can automatically fix this issue. Run eslint --fix.';
+  }
+
+  return 'Check ESLint documentation for this rule.';
 }
 
 /**
@@ -122,5 +167,12 @@ function normalizePath(filePath: string, cwd: string): string {
   }
 
   // 统一使用正斜杠
-  return normalized.replace(/\\/g, '/');
+  normalized = normalized.replace(/\\/g, '/');
+
+  // 移除开头的 ./
+  if (normalized.startsWith('./')) {
+    normalized = normalized.substring(2);
+  }
+
+  return normalized;
 }

@@ -4,4 +4,4 @@
  */
 
 export * from './contract';
-export { runStaticGate, formatGateReport, shouldScan } from './runner-new';
+export { runStaticGate, formatGateReport, shouldScan } from './runner';

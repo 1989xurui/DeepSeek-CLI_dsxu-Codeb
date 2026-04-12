@@ -1,9 +1,9 @@
 /**
- * R5-22 · 静态分析前置桥
- * 集成到 Executor 流程中
+ * R5-22 · 静态分析前置桥（新版本）
+ * 集成到 Executor 流程中，使用蒸馏协议接口
  */
 
-import { runStaticAnalysis, formatForCriticPrompt, getCriticalIssueCount, AnalysisResult } from './runner';
+import { runStaticGate, formatGateReport, StaticGateResult, StaticGateOptions } from './index';
 
 export interface PatchInfo {
   filePaths: string[];
@@ -17,26 +17,21 @@ export interface StaticAnalysisBridgeOptions {
   enabled: boolean;
   failOnCritical?: boolean;  // 严重问题是否阻止提交
   maxCriticalIssues?: number; // 允许的最大严重问题数
-  tools?: {
-    tsc?: boolean;
-    eslint?: boolean;
-    semgrep?: boolean;
-  };
+  gateOptions?: StaticGateOptions; // 传递给 runStaticGate 的选项
 }
 
 const DEFAULT_OPTIONS: StaticAnalysisBridgeOptions = {
   enabled: true,
   failOnCritical: true,
   maxCriticalIssues: 0, // 默认不允许任何严重问题
-  tools: {
-    tsc: true,
-    eslint: true,
-    semgrep: true,
+  gateOptions: {
+    shortCircuitOnError: true,
+    maxDurationMs: 10000,
   },
 };
 
 /**
- * 静态分析桥接器
+ * 静态分析桥接器（新版本）
  */
 export class StaticAnalysisBridge {
   private options: StaticAnalysisBridgeOptions;
@@ -49,15 +44,16 @@ export class StaticAnalysisBridge {
    * 在 Executor 生成 patch 后运行静态分析
    */
   async analyzeAfterPatch(patchInfo: PatchInfo): Promise<{
-    result: AnalysisResult;
+    result: StaticGateResult;
     criticPrompt: string;
     shouldBlock: boolean;
     blockReason?: string;
   }> {
     if (!this.options.enabled) {
       console.log('[static-analysis] 静态分析已禁用，跳过');
+      const emptyResult = await this.createEmptyResult();
       return {
-        result: { issues: [], durationMs: 0, toolsRun: [], failed: [] },
+        result: emptyResult,
         criticPrompt: '静态分析: 已禁用',
         shouldBlock: false,
       };
@@ -66,11 +62,11 @@ export class StaticAnalysisBridge {
     console.log(`[static-analysis] 开始分析 patch，涉及文件: ${patchInfo.filePaths.join(', ')}`);
 
     try {
-      // 运行静态分析
-      const result = await runStaticAnalysis(patchInfo.filePaths);
+      // 运行静态分析门
+      const result = await runStaticGate(patchInfo.filePaths, this.options.gateOptions);
 
       // 格式化供 Critic prompt 使用
-      const criticPrompt = formatForCriticPrompt(result);
+      const criticPrompt = this.formatForCriticPrompt(result);
 
       // 检查是否需要阻止提交
       const { shouldBlock, blockReason } = this.checkShouldBlock(result);
@@ -89,13 +85,9 @@ export class StaticAnalysisBridge {
       const shouldBlock = this.options.failOnCritical ?? true;
       const blockReason = shouldBlock ? '静态分析执行失败' : undefined;
 
+      const errorResult = await this.createErrorResult(error);
       return {
-        result: {
-          issues: [],
-          durationMs: 0,
-          toolsRun: [],
-          failed: ['all'],
-        },
+        result: errorResult,
         criticPrompt: `静态分析: 执行失败 ❌\n错误: ${error.message}`,
         shouldBlock,
         blockReason,
@@ -106,7 +98,7 @@ export class StaticAnalysisBridge {
   /**
    * 检查是否需要阻止提交
    */
-  private checkShouldBlock(result: AnalysisResult): {
+  private checkShouldBlock(result: StaticGateResult): {
     shouldBlock: boolean;
     blockReason?: string;
   } {
@@ -114,26 +106,27 @@ export class StaticAnalysisBridge {
       return { shouldBlock: false };
     }
 
-    const criticalCount = getCriticalIssueCount(result);
+    const criticalCount = result.errors;
     const maxCritical = this.options.maxCriticalIssues ?? 0;
 
     if (criticalCount > maxCritical) {
       return {
         shouldBlock: true,
-        blockReason: `发现 ${criticalCount} 个严重问题（超过阈值 ${maxCritical}）`,
+        blockReason: `发现 ${criticalCount} 个错误级别问题（超过阈值 ${maxCritical}）`,
       };
     }
 
-    // 检查是否有工具完全失败
-    const criticalTools = ['tsc', 'semgrep'];
-    const failedCriticalTools = result.failed.filter(tool =>
-      criticalTools.includes(tool) && this.options.tools?.[tool as keyof typeof this.options.tools]
-    );
+    // 检查是否有关键层完全失败
+    const criticalLayers = ['tsc', 'eslint'] as const;
+    const failedCriticalLayers = criticalLayers.filter(layer => {
+      const layerResult = result.layers[layer];
+      return !layerResult.passed && layerResult.issues.some(issue => issue.severity === 'error');
+    });
 
-    if (failedCriticalTools.length > 0) {
+    if (failedCriticalLayers.length > 0) {
       return {
         shouldBlock: true,
-        blockReason: `关键工具失败: ${failedCriticalTools.join(', ')}`,
+        blockReason: `关键分析层失败: ${failedCriticalLayers.join(', ')}`,
       };
     }
 
@@ -141,22 +134,118 @@ export class StaticAnalysisBridge {
   }
 
   /**
-   * 获取分析摘要（用于日志/报告）
+   * 格式化供 Critic prompt 使用
    */
-  getAnalysisSummary(result: AnalysisResult): string {
-    const errorCount = result.issues.filter(i => i.severity === 'error').length;
-    const warningCount = result.issues.filter(i => i.severity === 'warning').length;
-    const infoCount = result.issues.filter(i => i.severity === 'info').length;
-
-    const parts: string[] = [];
-    parts.push(`工具: ${result.toolsRun.join(', ') || '无'}`);
-
-    if (result.failed.length > 0) {
-      parts.push(`失败: ${result.failed.join(', ')}`);
+  private formatForCriticPrompt(result: StaticGateResult): string {
+    if (result.passed) {
+      return `静态分析: 通过 ✅\n` +
+             `- 耗时: ${result.durationMs}ms\n` +
+             `- 问题: ${result.totalIssues} 个（${result.errors} 错误, ${result.warnings} 警告）`;
     }
 
-    parts.push(`问题: ${result.issues.length} (❌${errorCount} ⚠️${warningCount} ℹ️${infoCount})`);
-    parts.push(`耗时: ${result.durationMs}ms`);
+    const errorIssues = result.issues.filter(issue => issue.severity === 'error');
+    const warningIssues = result.issues.filter(issue => issue.severity === 'warning');
+
+    let prompt = `静态分析: 失败 ❌\n`;
+    prompt += `- 耗时: ${result.durationMs}ms\n`;
+    prompt += `- 问题: ${result.totalIssues} 个（${result.errors} 错误, ${result.warnings} 警告）\n\n`;
+
+    if (errorIssues.length > 0) {
+      prompt += `### 错误问题（前 ${Math.min(errorIssues.length, 5)} 个）\n`;
+      errorIssues.slice(0, 5).forEach((issue, i) => {
+        prompt += `${i + 1}. **${issue.file}:${issue.line}:${issue.column}** [${issue.source}/${issue.rule}]\n`;
+        prompt += `   ${issue.message}\n`;
+        if (issue.suggestion) {
+          prompt += `   💡 建议: ${issue.suggestion}\n`;
+        }
+        prompt += `\n`;
+      });
+    }
+
+    if (warningIssues.length > 0 && errorIssues.length < 5) {
+      const warningsToShow = Math.min(warningIssues.length, 5 - errorIssues.length);
+      prompt += `### 警告问题（前 ${warningsToShow} 个）\n`;
+      warningIssues.slice(0, warningsToShow).forEach((issue, i) => {
+        prompt += `${i + 1}. **${issue.file}:${issue.line}:${issue.column}** [${issue.source}/${issue.rule}]\n`;
+        prompt += `   ${issue.message}\n\n`;
+      });
+    }
+
+    return prompt;
+  }
+
+  /**
+   * 创建空结果
+   */
+  private async createEmptyResult(): Promise<StaticGateResult> {
+    const startTime = Date.now();
+    const emptyLayer = { passed: true, issues: [], durationMs: 0 };
+
+    return {
+      passed: true,
+      totalIssues: 0,
+      errors: 0,
+      warnings: 0,
+      issues: [],
+      durationMs: Date.now() - startTime,
+      layers: {
+        astGrep: emptyLayer,
+        tsc: emptyLayer,
+        eslint: emptyLayer,
+      },
+    };
+  }
+
+  /**
+   * 创建错误结果
+   */
+  private async createErrorResult(error: Error): Promise<StaticGateResult> {
+    const startTime = Date.now();
+    const errorLayer = {
+      passed: false,
+      issues: [{
+        severity: 'error' as const,
+        source: 'eslint' as const, // 任意源
+        file: '',
+        line: 0,
+        column: 0,
+        rule: 'gate.execution-error',
+        message: `Static analysis execution failed: ${error.message}`,
+      }],
+      durationMs: 0,
+    };
+
+    return {
+      passed: false,
+      totalIssues: 1,
+      errors: 1,
+      warnings: 0,
+      issues: errorLayer.issues,
+      durationMs: Date.now() - startTime,
+      layers: {
+        astGrep: errorLayer,
+        tsc: errorLayer,
+        eslint: errorLayer,
+      },
+    };
+  }
+
+  /**
+   * 获取分析摘要（用于日志/报告）
+   */
+  getAnalysisSummary(result: StaticGateResult): string {
+    const parts: string[] = [];
+
+    // 各层状态
+    const layerStatus = Object.entries(result.layers).map(([layer, data]) => {
+      const status = data.passed ? '✅' : '❌';
+      const skipped = data.skipped ? '(skipped)' : '';
+      return `${layer}: ${status}${skipped}`;
+    }).join(', ');
+
+    parts.push(`Layers: ${layerStatus}`);
+    parts.push(`Issues: ${result.totalIssues} (❌${result.errors} ⚠️${result.warnings})`);
+    parts.push(`Duration: ${result.durationMs}ms`);
 
     return parts.join(' | ');
   }
@@ -204,8 +293,8 @@ export async function quickAnalyze(
   const { result, criticPrompt, shouldBlock } = await bridge.analyzeAfterPatch(patchInfo);
 
   return {
-    success: result.failed.length === 0,
-    issues: result.issues.length,
+    success: result.passed,
+    issues: result.totalIssues,
     criticPrompt,
     shouldBlock,
   };

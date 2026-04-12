@@ -1,105 +1,136 @@
 /**
- * 静态分析 runner 测试
+ * Runner 测试（新版本）
+ * 测试符合蒸馏协议的 runner
  */
 
-import { runStaticAnalysis, formatForCriticPrompt, getCriticalIssueCount } from '../runner';
+import { runStaticGate, formatGateReport, shouldScan } from '../index';
 
-describe('Static Analysis Runner', () => {
-  // 模拟文件路径
-  const mockFiles = ['src/test.ts', 'src/utils.js'];
+describe('Static Gate Runner (New)', () => {
+  test('应该处理空文件列表', async () => {
+    const result = await runStaticGate([]);
 
-  test('runStaticAnalysis 应该返回正确结构', async () => {
-    // 由于实际运行需要工具，这里主要测试函数签名和错误处理
-    const result = await runStaticAnalysis(mockFiles);
+    expect(result.passed).toBe(true);
+    expect(result.totalIssues).toBe(0);
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.issues).toHaveLength(0);
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
 
-    expect(result).toHaveProperty('issues');
-    expect(result).toHaveProperty('durationMs');
-    expect(result).toHaveProperty('toolsRun');
-    expect(result).toHaveProperty('failed');
-
-    expect(Array.isArray(result.issues)).toBe(true);
-    expect(typeof result.durationMs).toBe('number');
-    expect(Array.isArray(result.toolsRun)).toBe(true);
-    expect(Array.isArray(result.failed)).toBe(true);
+    // 检查各层
+    expect(result.layers.astGrep.passed).toBe(true);
+    expect(result.layers.tsc.passed).toBe(true);
+    expect(result.layers.eslint.passed).toBe(true);
   });
 
-  test('formatForCriticPrompt 应该格式化输出', () => {
-    const mockResult = {
+  test('应该跳过 node_modules 文件', async () => {
+    const result = await runStaticGate(['node_modules/package/index.js']);
+
+    // 由于 shouldScan 过滤，应该没有实际扫描
+    expect(result.passed).toBe(true);
+    expect(result.totalIssues).toBe(0);
+  });
+
+  test('应该生成报告', () => {
+    const passedResult = {
+      passed: true,
+      totalIssues: 0,
+      errors: 0,
+      warnings: 0,
+      issues: [],
+      durationMs: 100,
+      layers: {
+        astGrep: { passed: true, issues: [], durationMs: 0 },
+        tsc: { passed: true, issues: [], durationMs: 0 },
+        eslint: { passed: true, issues: [], durationMs: 0 },
+      },
+    };
+
+    const report = formatGateReport(passedResult);
+    expect(report).toContain('PASSED');
+    expect(report.length).toBeLessThan(5000);
+  });
+
+  test('应该生成失败报告', () => {
+    const failedResult = {
+      passed: false,
+      totalIssues: 2,
+      errors: 2,
+      warnings: 0,
       issues: [
         {
-          tool: 'tsc' as const,
           severity: 'error' as const,
+          source: 'ast-grep' as const,
           file: 'src/test.ts',
-          line: 10,
-          col: 5,
-          ruleId: 'TS2322',
-          message: 'Type string is not assignable to type number',
+          line: 1,
+          column: 1,
+          rule: 'no-any-cast',
+          message: 'Avoid using any type',
+          suggestion: 'Use proper type instead',
         },
         {
-          tool: 'eslint' as const,
-          severity: 'warning' as const,
-          file: 'src/utils.js',
-          line: 20,
-          col: 3,
-          ruleId: 'no-console',
-          message: 'Unexpected console statement',
+          severity: 'error' as const,
+          source: 'tsc' as const,
+          file: 'src/test2.ts',
+          line: 2,
+          column: 2,
+          rule: 'TS2304',
+          message: 'Cannot find name',
         },
       ],
-      durationMs: 1234,
-      toolsRun: ['tsc', 'eslint'],
-      failed: [],
+      durationMs: 200,
+      layers: {
+        astGrep: { passed: false, issues: [], durationMs: 0 },
+        tsc: { passed: false, issues: [], durationMs: 0 },
+        eslint: { passed: true, issues: [], durationMs: 0 },
+      },
     };
 
-    const prompt = formatForCriticPrompt(mockResult);
-
-    expect(prompt).toContain('# 静态分析报告');
-    expect(prompt).toContain('## TSC');
-    expect(prompt).toContain('## ESLINT');
-    expect(prompt).toContain('❌ ERROR');
-    expect(prompt).toContain('⚠️ WARNING');
-    expect(prompt).toContain('统计信息');
-    expect(prompt).toContain('修复建议');
+    const report = formatGateReport(failedResult);
+    expect(report).toContain('FAILED');
+    expect(report).toContain('no-any-cast');
+    expect(report).toContain('TS2304');
+    expect(report.length).toBeLessThan(5000);
   });
 
-  test('formatForCriticPrompt 无问题时显示成功', () => {
-    const mockResult = {
-      issues: [],
-      durationMs: 500,
-      toolsRun: ['tsc', 'eslint'],
-      failed: [],
-    };
+  test('shouldScan 应该正确过滤文件', () => {
+    // 应该扫描的文件
+    expect(shouldScan('src/test.ts')).toBe(true);
+    expect(shouldScan('src/test.js')).toBe(true);
+    expect(shouldScan('src/test.tsx')).toBe(true);
+    expect(shouldScan('src/test.jsx')).toBe(true);
+    expect(shouldScan('src/test.mjs')).toBe(true);
+    expect(shouldScan('src/test.cjs')).toBe(true);
 
-    const prompt = formatForCriticPrompt(mockResult);
-    expect(prompt).toBe('静态分析: 未发现问题 ✅');
+    // 不应该扫描的文件
+    expect(shouldScan('node_modules/package/index.js')).toBe(false);
+    expect(shouldScan('dist/app.js')).toBe(false);
+    expect(shouldScan('.trash/file.ts')).toBe(false);
+    expect(shouldScan('__tests__/test.ts')).toBe(false);
+    expect(shouldScan('.dsxu/config.ts')).toBe(false);
+    expect(shouldScan('.dsevo/log.md')).toBe(false);
+    expect(shouldScan('.git/config')).toBe(false);
+    expect(shouldScan('README.md')).toBe(false); // 非代码文件
+    expect(shouldScan('.env')).toBe(false); // 隐藏文件
+    expect(shouldScan('src/.test.ts')).toBe(false); // 隐藏文件
   });
 
-  test('getCriticalIssueCount 应该计算严重问题', () => {
-    const mockResult = {
-      issues: [
-        { tool: 'tsc', severity: 'error', file: 'a.ts', line: 1, col: 1, message: 'error' },
-        { tool: 'eslint', severity: 'warning', file: 'b.js', line: 2, col: 2, message: 'warning' },
-        { tool: 'semgrep', severity: 'warning', file: 'c.py', line: 3, col: 3, message: 'security warning' },
-        { tool: 'tsc', severity: 'info', file: 'd.ts', line: 4, col: 4, message: 'info' },
-      ],
-      durationMs: 0,
-      toolsRun: [],
-      failed: [],
-    };
+  test('应该处理 skipLayers 选项', async () => {
+    const result = await runStaticGate(['package.json'], {
+      skipLayers: ['tsc', 'eslint'],
+    });
 
-    const count = getCriticalIssueCount(mockResult);
-    // tsc error + semgrep warning = 2 个严重问题
-    expect(count).toBe(2);
+    expect(result.layers.tsc.skipped).toBe(true);
+    expect(result.layers.eslint.skipped).toBe(true);
+    expect(result.layers.astGrep.skipped).toBe(true); // ast-grep 默认禁用
   });
 
-  test('getCriticalIssueCount 应该处理空数组', () => {
-    const mockResult = {
-      issues: [],
-      durationMs: 0,
-      toolsRun: [],
-      failed: [],
-    };
+  test('应该处理 shortCircuitOnError 选项', async () => {
+    // 这个测试需要实际有错误的文件，这里只是测试选项传递
+    const result = await runStaticGate(['package.json'], {
+      shortCircuitOnError: false,
+    });
 
-    const count = getCriticalIssueCount(mockResult);
-    expect(count).toBe(0);
+    // 确保函数没有抛出异常
+    expect(result).toBeDefined();
   });
 });
