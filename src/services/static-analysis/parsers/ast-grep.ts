@@ -35,23 +35,42 @@ export function parseAstGrepOutput(output: string, cwd: string, filePaths: strin
   }
 
   try {
-    const result = JSON.parse(output);
+    // 首先尝试解析为 NDJSON（每行一个 JSON 对象）- ast-grep v2 格式
+    const lines = output.trim().split('\n');
+    let hasValidLines = false;
 
-    // ast-grep 输出格式可能不同，这里处理两种常见格式
-    if (Array.isArray(result)) {
-      // 格式1: 数组格式
-      for (const match of result) {
-        issues.push(convertAstGrepMatch(match, cwd));
+    for (const line of lines) {
+      if (line.trim()) {
+        try {
+          const match = JSON.parse(line.trim());
+          issues.push(convertAstGrepMatch(match, cwd));
+          hasValidLines = true;
+        } catch (e) {
+          // 忽略无法解析的行
+        }
       }
-    } else if (result.matches && Array.isArray(result.matches)) {
-      // 格式2: 包含 matches 字段的对象
-      for (const match of result.matches) {
-        issues.push(convertAstGrepMatch(match, cwd));
-      }
-    } else if (result.results && Array.isArray(result.results)) {
-      // 格式3: 包含 results 字段的对象
-      for (const match of result.results) {
-        issues.push(convertAstGrepMatch(match, cwd));
+    }
+
+    // 如果没有有效的 NDJSON 行，尝试解析为完整的 JSON
+    if (!hasValidLines) {
+      const result = JSON.parse(output);
+
+      // ast-grep 输出格式可能不同，这里处理两种常见格式
+      if (Array.isArray(result)) {
+        // 格式1: 数组格式
+        for (const match of result) {
+          issues.push(convertAstGrepMatch(match, cwd));
+        }
+      } else if (result.matches && Array.isArray(result.matches)) {
+        // 格式2: 包含 matches 字段的对象
+        for (const match of result.matches) {
+          issues.push(convertAstGrepMatch(match, cwd));
+        }
+      } else if (result.results && Array.isArray(result.results)) {
+        // 格式3: 包含 results 字段的对象
+        for (const match of result.results) {
+          issues.push(convertAstGrepMatch(match, cwd));
+        }
       }
     }
   } catch (error) {

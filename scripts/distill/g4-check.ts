@@ -80,32 +80,51 @@ function createMockSpawn(mockToolOutput: any) {
   };
 }
 
+// 解析 dotted-path 键（如 "issues[0].source"）为路径段数组
+function resolvePath(obj: any, pathStr: string): any {
+  const parts: string[] = [];
+  let current = '';
+  let inBracket = false;
+  for (let i = 0; i < pathStr.length; i++) {
+    const ch = pathStr[i];
+    if (ch === '[') {
+      if (current) { parts.push(current); current = ''; }
+      inBracket = true;
+    } else if (ch === ']') {
+      if (current) { parts.push(current); current = ''; }
+      inBracket = false;
+    } else if (ch === '.' && !inBracket) {
+      if (current) { parts.push(current); current = ''; }
+    } else {
+      current += ch;
+    }
+  }
+  if (current) parts.push(current);
+
+  let value = obj;
+  for (const part of parts) {
+    if (value === undefined || value === null) return undefined;
+    value = /^\d+$/.test(part) ? value[parseInt(part)] : value[part];
+  }
+  return value;
+}
+
 // 深度比较辅助函数
 function deepCompare(actual: any, expected: any, path: string = ''): { match: boolean; message?: string } {
   if (expected === undefined) {
     return { match: true };
   }
 
-  if (typeof expected === 'string' && expected.startsWith('[') && expected.endsWith(']')) {
-    // 数组索引访问，如 "issues[0].source"
-    const parts = expected.split(/\[|\]|\./).filter(Boolean);
-    let value = actual;
-    for (const part of parts) {
-      if (value === undefined || value === null) {
-        return { match: false, message: `${path}${expected} is undefined` };
-      }
-      if (part.match(/^\d+$/)) {
-        value = value[parseInt(part)];
-      } else {
-        value = value[part];
-      }
-    }
-    return { match: value !== undefined && value !== null };
-  }
-
   if (typeof expected === 'object' && !Array.isArray(expected)) {
     for (const key in expected) {
-      const result = deepCompare(actual[key], expected[key], path ? `${path}.${key}` : key);
+      // 关键修复：如果 key 包含 . 或 []，按路径导航 actual
+      let resolvedActual: any;
+      if (key.includes('.') || key.includes('[')) {
+        resolvedActual = resolvePath(actual, key);
+      } else {
+        resolvedActual = actual?.[key];
+      }
+      const result = deepCompare(resolvedActual, expected[key], path ? `${path}.${key}` : key);
       if (!result.match) {
         return result;
       }
