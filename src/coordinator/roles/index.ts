@@ -15,6 +15,9 @@ export { orchestrate, setRoleFactory } from './orchestrator';
 // 导出角色实现
 export { createRole, formatOrchestrationReport, recommendMode } from './role-implementations';
 
+// 导出消息工具函数
+export { createEnvelope, filterInbox, extractPayload } from './message';
+
 // 初始化角色工厂
 import { setRoleFactory } from './orchestrator';
 import { createRole } from './role-implementations';
