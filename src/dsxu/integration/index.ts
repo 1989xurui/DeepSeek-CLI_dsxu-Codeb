@@ -2,12 +2,13 @@
  * DSxu 模块集成层
  *
  * 将 M1-M5 各模块连接起来。每个 wire*() 创建一个模块间的连接，
- * wireAll() 一次性构建完整的运行时上下文。
+ * createRuntime() 一次性构建完整的运行时上下文。
  *
  * 设计原则：
  * - 每个模块独立可用（mock 模式）
  * - 集成层只负责 "连线"，不引入新逻辑
  * - 所有真实依赖通过 config 注入，方便测试
+ * - Claude Code 原有功能通过直接 import 复用（不造轮子）
  */
 
 import { VectorStore } from '../../services/embedding/store';
@@ -16,8 +17,32 @@ import { search } from '../../utils/search';
 import { createAllAdapters, type McpAdapterConfig } from '../../services/mcp/adapters';
 import { runMutationTests } from '../../services/mutation';
 import { suggestProperties, runPbt } from '../../services/pbt';
+import { CostTracker } from '../cost';
 import type { VectorStoreConfig } from '../../services/embedding/contract';
 import type { ExperienceStoreConfig } from '../../services/experience/types';
+
+// Claude Code 原有功能 — 直接 import 复用
+let _scanMemoryFiles: ((dir: string, signal: AbortSignal) => Promise<any[]>) | null = null;
+let _getAutoMemPath: (() => string | null) | null = null;
+let _createBudgetTracker: (() => any) | null = null;
+let _parseFrontmatter: ((text: string) => any) | null = null;
+
+try {
+  const scan = await import('../../memdir/memoryScan');
+  const paths = await import('../../memdir/paths');
+  _scanMemoryFiles = scan.scanMemoryFiles;
+  _getAutoMemPath = paths.getAutoMemPath;
+} catch { /* memdir 不可用 */ }
+
+try {
+  const budget = await import('../../query/tokenBudget');
+  _createBudgetTracker = budget.createBudgetTracker;
+} catch { /* tokenBudget 不可用 */ }
+
+try {
+  const fm = await import('../../utils/frontmatterParser');
+  _parseFrontmatter = fm.parseFrontmatter;
+} catch { /* frontmatterParser 不可用 */ }
 
 // ── Runtime context ──
 export interface DsxuRuntime {
@@ -27,12 +52,21 @@ export interface DsxuRuntime {
   mcpAdapters: ReturnType<typeof createAllAdapters>;
   mutation: typeof runMutationTests;
   pbt: { suggest: typeof suggestProperties; run: typeof runPbt };
+  // Claude Code 复用
+  costTracker: CostTracker;
+  memdir: {
+    scan: () => Promise<any[]>;
+    path: string | null;
+  };
+  tokenBudget: { create: () => any } | null;
+  frontmatter: { parse: (text: string) => any } | null;
 }
 
 export interface DsxuRuntimeConfig {
   vectorStore?: VectorStoreConfig;
   experience?: ExperienceStoreConfig;
   mcp?: McpAdapterConfig;
+  costLedgerPath?: string;
 }
 
 /**
@@ -42,6 +76,9 @@ export function createRuntime(config?: DsxuRuntimeConfig): DsxuRuntime {
   const vectorStore = new VectorStore(config?.vectorStore);
   const experienceStore = new ExperienceStore(config?.experience);
   const mcpAdapters = createAllAdapters(config?.mcp);
+  const costTracker = new CostTracker(config?.costLedgerPath);
+
+  const memdirPath = _getAutoMemPath?.() ?? null;
 
   return {
     vectorStore,
@@ -50,6 +87,17 @@ export function createRuntime(config?: DsxuRuntimeConfig): DsxuRuntime {
     mcpAdapters,
     mutation: runMutationTests,
     pbt: { suggest: suggestProperties, run: runPbt },
+    // Claude Code 复用
+    costTracker,
+    memdir: {
+      scan: async () => {
+        if (!_scanMemoryFiles || !memdirPath) return [];
+        return _scanMemoryFiles(memdirPath, new AbortController().signal);
+      },
+      path: memdirPath,
+    },
+    tokenBudget: _createBudgetTracker ? { create: _createBudgetTracker } : null,
+    frontmatter: _parseFrontmatter ? { parse: _parseFrontmatter } : null,
   };
 }
 
