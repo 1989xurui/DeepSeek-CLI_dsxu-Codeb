@@ -4,7 +4,6 @@
  */
 
 import { spawn } from 'child_process';
-import { promisify } from 'util';
 import { join, relative, basename, extname } from 'path';
 import { existsSync } from 'fs';
 import {
@@ -14,16 +13,48 @@ import {
   LayerResult,
   StaticGateResult,
   StaticGateOptions,
-  runStaticGate,
-  formatGateReport,
-  shouldScan,
+  SpawnResult,
 } from './contract';
 
 import { parseAstGrepOutput } from './parsers/ast-grep';
 import { parseTscOutput } from './parsers/tsc';
 import { parseEslintOutput } from './parsers/eslint';
 
-const exec = promisify(spawn);
+// 包装 spawn 为 Promise，支持超时
+function spawnAsync(command: string, args: string[], options: any): Promise<{ stdout: Buffer; stderr: Buffer; code: number | null }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, options);
+
+    let stdout = Buffer.from('');
+    let stderr = Buffer.from('');
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (options.timeout) {
+      timeoutId = setTimeout(() => {
+        child.kill('SIGTERM');
+        reject(new Error(`Command timed out after ${options.timeout}ms`));
+      }, options.timeout);
+    }
+
+    child.stdout?.on('data', (data) => {
+      stdout = Buffer.concat([stdout, data]);
+    });
+
+    child.stderr?.on('data', (data) => {
+      stderr = Buffer.concat([stderr, data]);
+    });
+
+    child.on('close', (code) => {
+      if (timeoutId) clearTimeout(timeoutId);
+      resolve({ stdout, stderr, code });
+    });
+
+    child.on('error', (err) => {
+      if (timeoutId) clearTimeout(timeoutId);
+      reject(err);
+    });
+  });
+}
 
 // 工具配置接口
 interface ToolConfig {
@@ -85,7 +116,7 @@ export async function runStaticGateImpl(
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
   // 过滤文件
-  const filesToScan = targetFiles.filter(shouldScan);
+  const filesToScan = targetFiles.filter(shouldScanImpl);
   if (filesToScan.length === 0) {
     return createEmptyResult(startTime);
   }
@@ -104,8 +135,10 @@ export async function runStaticGateImpl(
   const layerOrder: StaticIssueSource[] = ['ast-grep', 'tsc', 'eslint'];
 
   for (const layer of layerOrder) {
+    const layerKey = layer === 'ast-grep' ? 'astGrep' : layer;
+
     if (opts.skipLayers?.includes(layer)) {
-      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+      layers[layerKey] = {
         passed: true,
         issues: [],
         durationMs: 0,
@@ -116,7 +149,7 @@ export async function runStaticGateImpl(
     }
 
     if (shouldShortCircuit && opts.shortCircuitOnError) {
-      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+      layers[layerKey] = {
         passed: false,
         issues: [],
         durationMs: 0,
@@ -144,7 +177,7 @@ export async function runStaticGateImpl(
       const duration = Date.now() - layerStart;
 
       const hasErrors = issues.some(issue => issue.severity === 'error');
-      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+      layers[layerKey] = {
         passed: !hasErrors,
         issues,
         durationMs: duration,
@@ -168,7 +201,7 @@ export async function runStaticGateImpl(
         message: `${layer} execution failed: ${error.message}`,
       };
 
-      layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
+      layers[layerKey] = {
         passed: false,
         issues: [errorIssue],
         durationMs: 0,
@@ -222,14 +255,52 @@ async function runTool(
   // ast-grep 使用 --pattern 或扫描目录
 
   try {
-    const { stdout, stderr } = await exec(config.command, args, {
-      cwd,
-      timeout: config.timeoutMs,
-      stdio: 'pipe',
-      shell: true,
-    });
+    let spawnResult;
+    if (options.mockSpawn) {
+      spawnResult = await options.mockSpawn(config.command, args, config.timeoutMs);
+    } else {
+      const { stdout, stderr, code } = await spawnAsync(config.command, args, {
+        cwd,
+        timeout: config.timeoutMs,
+        stdio: 'pipe',
+        shell: true,
+      });
+      spawnResult = {
+        exitCode: code || 0,
+        stdout: stdout.toString(),
+        stderr: stderr.toString(),
+        durationMs: Date.now() - startTime,
+      };
+    }
 
-    const output = stdout.toString() + stderr.toString();
+    // 处理超时
+    if (spawnResult.timedOut) {
+      return [{
+        severity: 'error',
+        source: layer,
+        file: '',
+        line: 0,
+        column: 0,
+        rule: 'gate.timeout',
+        message: `${layer} timed out after ${config.timeoutMs}ms`,
+      }];
+    }
+
+    // 处理工具错误
+    if (spawnResult.exitCode !== 0 && spawnResult.exitCode !== 1) {
+      // exitCode 0 = 成功, 1 = 有issues, 其他 = 工具错误
+      return [{
+        severity: 'error',
+        source: layer,
+        file: '',
+        line: 0,
+        column: 0,
+        rule: 'gate.tool-error',
+        message: `${layer} failed with exit code ${spawnResult.exitCode}: ${spawnResult.stderr}`,
+      }];
+    }
+
+    const output = spawnResult.stdout + spawnResult.stderr;
     return config.parser(output, cwd, filePaths);
 
   } catch (error: any) {
@@ -352,15 +423,15 @@ export function shouldScanImpl(filePath: string): boolean {
 
   // 排除目录
   const excludedPatterns = [
-    '/node_modules/',
-    '/dist/',
-    '/build/',
-    '/.trash/',
-    '/__tests__/',
-    '/test/',
-    '/tests/',
-    '/.dsxu/',
-    '/.dsevo/',
+    'node_modules/',
+    'dist/',
+    'build/',
+    '.trash/',
+    '__tests__/',
+    'test/',
+    'tests/',
+    '.dsxu/',
+    '.dsevo/',
     '/.git/',
     '/coverage/',
   ];

@@ -119,7 +119,7 @@ export class StaticAnalysisBridge {
     // 检查是否有关键层完全失败
     const criticalLayers = ['tsc', 'eslint'] as const;
     const failedCriticalLayers = criticalLayers.filter(layer => {
-      const layerResult = result.layers[layer];
+      const layerResult = layer === 'tsc' ? result.layers.tsc : result.layers.eslint;
       return !layerResult.passed && layerResult.issues.some(issue => issue.severity === 'error');
     });
 

@@ -45,6 +45,14 @@ export interface StaticGateResult {
   };
 }
 
+export interface SpawnResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  timedOut?: boolean;
+  durationMs?: number;
+}
+
 export interface StaticGateOptions {
   astGrepRulesPath?: string;
   tscConfigPath?: string;
@@ -52,6 +60,7 @@ export interface StaticGateOptions {
   skipLayers?: Array<StaticIssueSource>;
   maxDurationMs?: number;
   shortCircuitOnError?: boolean;
+  mockSpawn?: (cmd: string, args: string[], timeoutMs: number) => Promise<SpawnResult>;
 }
 
 /**
@@ -87,4 +96,7 @@ export function formatGateReport(result: StaticGateResult): string;
  *   - node_modules / dist / .trash / __tests__ 返回 false
  *   - .dsxu / .dsevo 返回 false
  */
-export function shouldScan(filePath: string): boolean;
+export function shouldScan(filePath: string): boolean {
+  // 这是一个声明，实际实现在 runner.ts 中
+  throw new Error('shouldScan should be implemented in runner.ts');
+}

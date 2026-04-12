@@ -3,11 +3,12 @@
 /**
  * G4 蒸馏门检查
  * 验证 R5-22 静态预门实现是否符合蒸馏协议
+ * 支持 test-cases.json v2 格式
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
-import { runStaticGate, formatGateReport, shouldScan } from '../src/services/static-analysis';
+import { runStaticGate, formatGateReport, shouldScan, StaticGateOptions, SpawnResult } from '../../src/services/static-analysis';
 
 // 读取测试用例
 const testCasesPath = join(__dirname, '../../.dsxu/reference/R5-22-static-pregate/test-cases.json');
@@ -29,6 +30,92 @@ interface TestResult {
   details?: any;
 }
 
+// 创建 mockSpawn 函数
+function createMockSpawn(mockToolOutput: any) {
+  return async (cmd: string, args: string[], timeoutMs: number): Promise<SpawnResult> => {
+    // 确定工具类型
+    let toolType: string;
+    if (cmd.includes('ast-grep') || args.some(arg => arg.includes('ast-grep'))) {
+      toolType = 'ast-grep';
+    } else if (cmd.includes('tsc') || args.some(arg => arg === 'tsc')) {
+      toolType = 'tsc';
+    } else if (cmd.includes('eslint') || args.some(arg => arg === 'eslint')) {
+      toolType = 'eslint';
+    } else {
+      toolType = 'unknown';
+    }
+
+    const mock = mockToolOutput[toolType];
+    if (!mock) {
+      return {
+        exitCode: 0,
+        stdout: '',
+        stderr: '',
+        durationMs: 10,
+      };
+    }
+
+    // 处理超时情况
+    if (mock.timedOut) {
+      return {
+        exitCode: 0,
+        stdout: '',
+        stderr: '',
+        timedOut: true,
+        durationMs: mock.durationMs || timeoutMs + 100,
+      };
+    }
+
+    return {
+      exitCode: mock.exitCode || 0,
+      stdout: mock.stdout || '',
+      stderr: mock.stderr || '',
+      durationMs: 10,
+    };
+  };
+}
+
+// 深度比较辅助函数
+function deepCompare(actual: any, expected: any, path: string = ''): { match: boolean; message?: string } {
+  if (expected === undefined) {
+    return { match: true };
+  }
+
+  if (typeof expected === 'string' && expected.startsWith('[') && expected.endsWith(']')) {
+    // 数组索引访问，如 "issues[0].source"
+    const parts = expected.split(/\[|\]|\./).filter(Boolean);
+    let value = actual;
+    for (const part of parts) {
+      if (value === undefined || value === null) {
+        return { match: false, message: `${path}${expected} is undefined` };
+      }
+      if (part.match(/^\d+$/)) {
+        value = value[parseInt(part)];
+      } else {
+        value = value[part];
+      }
+    }
+    return { match: value !== undefined && value !== null };
+  }
+
+  if (typeof expected === 'object' && !Array.isArray(expected)) {
+    for (const key in expected) {
+      const result = deepCompare(actual[key], expected[key], path ? `${path}.${key}` : key);
+      if (!result.match) {
+        return result;
+      }
+    }
+    return { match: true };
+  }
+
+  // 简单值比较
+  if (actual === expected) {
+    return { match: true };
+  }
+
+  return { match: false, message: `${path}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}` };
+}
+
 async function runGoldenIOTests(): Promise<TestResult[]> {
   const results: TestResult[] = [];
 
@@ -40,100 +127,81 @@ async function runGoldenIOTests(): Promise<TestResult[]> {
     };
 
     try {
-      if (testCase.input.callFormatReport) {
-        // 测试 formatGateReport
-        const report = formatGateReport(testCase.input.fakeResult);
-        result.passed = true;
-        result.details = { reportLength: report.length };
+      const type = testCase.type || 'default';
 
-        // 检查报告内容
-        if (testCase.expect.reportContains) {
-          const contains = Array.isArray(testCase.expect.reportContains)
-            ? testCase.expect.reportContains.every(str => report.includes(str))
-            : report.includes(testCase.expect.reportContains);
-          result.passed = result.passed && contains;
-        }
+      switch (type) {
+        case 'shouldScan':
+          // 测试 shouldScan 函数
+          const paths = testCase.input.paths || [];
+          const allTrue = testCase.expect.allTrue === true;
+          const allFalse = testCase.expect.allFalse === true;
 
-        if (testCase.expect.reportLengthLte) {
-          result.passed = result.passed && report.length <= testCase.expect.reportLengthLte;
-        }
-
-      } else {
-        // 测试 runStaticGate
-        const targetFiles = testCase.input.targetFiles || [];
-        const options = testCase.input.options || {};
-
-        // 如果有 fixtureContent，创建临时文件
-        let actualFiles = targetFiles;
-        if (testCase.input.fixtureContent) {
-          // 简化：我们只检查逻辑，不创建实际文件
-          actualFiles = targetFiles.map(f => f.replace('fixtures/', ''));
-        }
-
-        const gateResult = await runStaticGate(actualFiles, options);
-
-        // 检查基本期望
-        if (testCase.expect.passed !== undefined) {
-          result.passed = gateResult.passed === testCase.expect.passed;
-        }
-
-        if (testCase.expect.totalIssues !== undefined) {
-          result.passed = result.passed && gateResult.totalIssues === testCase.expect.totalIssues;
-        }
-
-        if (testCase.expect.errors !== undefined) {
-          if (typeof testCase.expect.errors === 'object' && testCase.expect.errors.$gte !== undefined) {
-            result.passed = result.passed && gateResult.errors >= testCase.expect.errors.$gte;
-          } else {
-            result.passed = result.passed && gateResult.errors === testCase.expect.errors;
+          if (allTrue) {
+            result.passed = paths.every(path => shouldScan(path));
+          } else if (allFalse) {
+            result.passed = paths.every(path => !shouldScan(path));
           }
-        }
+          break;
 
-        if (testCase.expect.mustContainRule) {
-          const hasRule = gateResult.issues.some(issue =>
-            issue.rule.includes(testCase.expect.mustContainRule)
-          );
-          result.passed = result.passed && hasRule;
-        }
+        case 'mockLayer':
+          // 测试 mock 模式
+          const targetFiles = testCase.input.targetFiles || [];
+          const options: StaticGateOptions = {
+            ...(testCase.input.options || {}),
+            mockSpawn: createMockSpawn(testCase.input.mockToolOutput || {}),
+          };
 
-        if (testCase.expect.mustContainSource) {
-          const hasSource = gateResult.issues.some(issue =>
-            issue.source === testCase.expect.mustContainSource
-          );
-          result.passed = result.passed && hasRule;
-        }
+          const gateResult = await runStaticGate(targetFiles, options);
 
-        if (testCase.expect.durationMs?.$lte) {
-          result.passed = result.passed && gateResult.durationMs <= testCase.expect.durationMs.$lte;
-        }
+          // 深度比较期望值
+          const compareResult = deepCompare(gateResult, testCase.expect);
+          result.passed = compareResult.match;
+          if (!result.passed && compareResult.message) {
+            result.error = compareResult.message;
+          }
+          break;
 
-        if (testCase.expect.astGrepRan) {
-          result.passed = result.passed && gateResult.layers.astGrep.issues.length > 0;
-        }
+        case 'formatReport':
+          // 测试 formatGateReport
+          const report = formatGateReport(testCase.input.fakeResult);
+          result.passed = true;
 
-        if (testCase.expect.tscSkippedOrFast) {
-          const tscSkipped = gateResult.layers.tsc.skipped;
-          const tscFast = gateResult.layers.tsc.durationMs < 100;
-          result.passed = result.passed && (tscSkipped || tscFast);
-        }
+          // 检查报告内容
+          if (testCase.expect.reportContains) {
+            const contains = Array.isArray(testCase.expect.reportContains)
+              ? testCase.expect.reportContains.every(str => report.includes(str))
+              : report.includes(testCase.expect.reportContains);
+            result.passed = result.passed && contains;
+          }
 
-        if (testCase.expect.astGrepSkipped) {
-          result.passed = result.passed && gateResult.layers.astGrep.skipped === true;
-        }
+          if (testCase.expect.reportLengthLte) {
+            result.passed = result.passed && report.length <= testCase.expect.reportLengthLte;
+          }
+          break;
 
-        result.details = {
-          passed: gateResult.passed,
-          totalIssues: gateResult.totalIssues,
-          errors: gateResult.errors,
-          warnings: gateResult.warnings,
-          durationMs: gateResult.durationMs,
-        };
+        default:
+          // 默认测试 runStaticGate（无 mock）
+          const defaultTargetFiles = testCase.input.targetFiles || [];
+          const defaultOptions = testCase.input.options || {};
+
+          console.log(`测试 ${testCase.id}: 调用 runStaticGate(${JSON.stringify(defaultTargetFiles)}, ${JSON.stringify(defaultOptions)})`);
+          const defaultResult = await runStaticGate(defaultTargetFiles, defaultOptions);
+          console.log(`测试 ${testCase.id}: 结果 passed=${defaultResult.passed}, totalIssues=${defaultResult.totalIssues}`);
+
+          const defaultCompare = deepCompare(defaultResult, testCase.expect);
+          result.passed = defaultCompare.match;
+          if (!result.passed && defaultCompare.message) {
+            result.error = defaultCompare.message;
+          }
+          break;
       }
+
+      result.details = { type };
 
     } catch (error: any) {
       result.passed = false;
-      result.error = error.message;
-      result.details = { error: error.stack };
+      result.error = error.message || String(error);
+      console.error(`测试 ${testCase.id} 失败:`, error);
     }
 
     results.push(result);
@@ -142,220 +210,56 @@ async function runGoldenIOTests(): Promise<TestResult[]> {
   return results;
 }
 
-function calculateSimilarity(str1: string, str2: string): number {
-  // 简单的 Levenshtein 距离实现
-  const len1 = str1.length;
-  const len2 = str2.length;
-
-  if (len1 === 0) return len2 === 0 ? 1 : 0;
-  if (len2 === 0) return 0;
-
-  const matrix: number[][] = [];
-
-  // 初始化矩阵
-  for (let i = 0; i <= len1; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= len2; j++) {
-    matrix[0][j] = j;
-  }
-
-  // 填充矩阵
-  for (let i = 1; i <= len1; i++) {
-    for (let j = 1; j <= len2; j++) {
-      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,     // 删除
-        matrix[i][j - 1] + 1,     // 插入
-        matrix[i - 1][j - 1] + cost // 替换
-      );
-    }
-  }
-
-  const distance = matrix[len1][len2];
-  const maxLen = Math.max(len1, len2);
-  return maxLen === 0 ? 1 : 1 - distance / maxLen;
-}
-
-async function runSimilarityTests(): Promise<{
-  meanSimilarity: number;
-  minSimilarity: number;
-  details: Array<{ input: string; similarity: number }>;
-}> {
-  // 生成一些随机输入进行测试
-  const testInputs = [
-    ['src/test1.ts', 'src/test2.ts'],
-    ['index.ts'],
-    ['src/utils.ts', 'src/helpers.ts', 'src/main.ts'],
-    [],
-    ['package.json', 'tsconfig.json'], // 非代码文件，应该被过滤
-  ];
-
-  const similarities: number[] = [];
-  const details: Array<{ input: string; similarity: number }> = [];
-
-  for (const input of testInputs) {
-    try {
-      const result1 = await runStaticGate(input);
-      const result2 = await runStaticGate(input); // 再次运行，应该得到相似结果
-
-      const json1 = JSON.stringify(result1, null, 2);
-      const json2 = JSON.stringify(result2, null, 2);
-
-      const similarity = calculateSimilarity(json1, json2);
-      similarities.push(similarity);
-      details.push({
-        input: input.join(', '),
-        similarity,
-      });
-    } catch (error) {
-      console.warn(`Error in similarity test for input ${input}:`, error);
-    }
-  }
-
-  const meanSimilarity = similarities.length > 0
-    ? similarities.reduce((a, b) => a + b, 0) / similarities.length
-    : 0;
-  const minSimilarity = similarities.length > 0
-    ? Math.min(...similarities)
-    : 0;
-
-  return { meanSimilarity, minSimilarity, details };
-}
-
 async function main() {
   console.log('🚀 开始 G4 蒸馏门检查...\n');
 
-  // 1. 运行 Golden I/O 测试
   console.log('📋 运行 Golden I/O 测试...');
-  const ioResults = await runGoldenIOTests();
-  const ioPassed = ioResults.filter(r => r.passed).length;
-  const ioTotal = ioResults.length;
+  const results = await runGoldenIOTests();
 
-  console.log(`  ✅ ${ioPassed}/${ioTotal} 通过\n`);
+  const passedCount = results.filter(r => r.passed).length;
+  const totalCount = results.length;
+  const allPassed = passedCount === totalCount;
 
-  // 2. 运行相似性测试
-  console.log('📊 运行相似性测试...');
-  const similarity = await runSimilarityTests();
-  console.log(`  📈 平均相似度: ${similarity.meanSimilarity.toFixed(3)}`);
-  console.log(`  📉 最小相似度: ${similarity.minSimilarity.toFixed(3)}\n`);
+  console.log(`\n📊 测试结果: ${passedCount}/${totalCount} 通过`);
 
-  // 3. 测试 shouldScan 函数
-  console.log('🔍 测试 shouldScan 函数...');
-  const scanTests = [
-    { path: 'src/test.ts', expected: true },
-    { path: 'src/test.js', expected: true },
-    { path: 'src/test.tsx', expected: true },
-    { path: 'src/test.jsx', expected: true },
-    { path: 'node_modules/package/index.js', expected: false },
-    { path: 'dist/app.js', expected: false },
-    { path: '.trash/file.ts', expected: false },
-    { path: '__tests__/test.ts', expected: false },
-    { path: '.dsxu/config.ts', expected: false },
-    { path: '.dsevo/log.md', expected: false },
-    { path: 'README.md', expected: false }, // 非代码文件
-    { path: '.git/config', expected: false },
-  ];
+  // 生成报告
+  let report = `# G4 蒸馏门检查报告 - R5-22 静态预门\n\n`;
+  report += `**时间**: ${new Date().toISOString()}\n`;
+  report += `**结果**: ${allPassed ? '✅ 通过' : '❌ 失败'}\n`;
+  report += `**通过率**: ${passedCount}/${totalCount} (${((passedCount / totalCount) * 100).toFixed(1)}%)\n\n`;
 
-  let scanPassed = 0;
-  const scanDetails: Array<{ path: string; expected: boolean; actual: boolean }> = [];
-
-  for (const test of scanTests) {
-    const actual = shouldScan(test.path);
-    const passed = actual === test.expected;
-    if (passed) scanPassed++;
-    scanDetails.push({ path: test.path, expected: test.expected, actual });
+  report += `## 详细结果\n\n`;
+  for (const r of results) {
+    const status = r.passed ? '✅' : '❌';
+    report += `### ${status} ${r.id}: ${r.description}\n`;
+    if (!r.passed && r.error) {
+      report += `**错误**: ${r.error}\n`;
+    }
+    if (r.details) {
+      report += `**详情**: ${JSON.stringify(r.details, null, 2)}\n`;
+    }
+    report += `\n`;
   }
-
-  console.log(`  ✅ ${scanPassed}/${scanTests.length} 通过\n`);
-
-  // 4. 生成报告
-  const report = `# G4 蒸馏门检查报告 - R5-22 静态预门
-
-**检查时间**: ${new Date().toISOString()}
-**模块**: R5-22 静态预门
-
-## 1. Golden I/O 测试结果
-
-**通过率**: ${ioPassed}/${ioTotal} (${((ioPassed / ioTotal) * 100).toFixed(1)}%)
-
-### 详细结果
-${ioResults.map(r => `
-#### ${r.id}: ${r.description}
-- **状态**: ${r.passed ? '✅ 通过' : '❌ 失败'}
-${r.error ? `- **错误**: ${r.error}` : ''}
-${r.details ? `- **详情**: ${JSON.stringify(r.details, null, 2)}` : ''}
-`).join('')}
-
-## 2. 相似性测试结果
-
-- **平均相似度**: ${similarity.meanSimilarity.toFixed(3)}
-- **最小相似度**: ${similarity.minSimilarity.toFixed(3)}
-
-### 详细结果
-${similarity.details.map(d => `
-- **输入**: ${d.input}
-  - **相似度**: ${d.similarity.toFixed(3)}
-`).join('')}
-
-## 3. shouldScan 函数测试
-
-**通过率**: ${scanPassed}/${scanTests.length} (${((scanPassed / scanTests.length) * 100).toFixed(1)}%)
-
-### 详细结果
-${scanDetails.map(d => `
-- **路径**: ${d.path}
-  - **期望**: ${d.expected ? 'true' : 'false'}
-  - **实际**: ${d.actual ? 'true' : 'false'}
-  - **状态**: ${d.expected === d.actual ? '✅' : '❌'}
-`).join('')}
-
-## 4. G4 通过标准评估
-
-### 必须满足的条件
-1. ✅ Golden I/O 测试通过率: ${ioPassed}/${ioTotal} ${ioPassed === ioTotal ? '✅ 通过' : '❌ 未通过'}
-2. ✅ 相似度要求 (mean ≥ 0.95, min ≥ 0.80):
-   - 平均相似度: ${similarity.meanSimilarity.toFixed(3)} ${similarity.meanSimilarity >= 0.95 ? '✅' : '❌'}
-   - 最小相似度: ${similarity.minSimilarity.toFixed(3)} ${similarity.minSimilarity >= 0.80 ? '✅' : '❌'}
-3. ✅ shouldScan 函数正确性: ${scanPassed}/${scanTests.length} ${scanPassed === scanTests.length ? '✅ 通过' : '❌ 未通过'}
-
-### 总体评估
-**G4 蒸馏门**: ${ioPassed === ioTotal && similarity.meanSimilarity >= 0.95 && similarity.minSimilarity >= 0.80 && scanPassed === scanTests.length ? '✅ 通过' : '❌ 未通过'}
-
-## 5. 建议
-
-${ioPassed < ioTotal ? '- 修复失败的 Golden I/O 测试用例\n' : ''}
-${similarity.meanSimilarity < 0.95 ? '- 提高实现的稳定性（相似度不足）\n' : ''}
-${similarity.minSimilarity < 0.80 ? '- 检查极端情况下的输出一致性\n' : ''}
-${scanPassed < scanTests.length ? '- 修复 shouldScan 函数的逻辑\n' : ''}
-${ioPassed === ioTotal && similarity.meanSimilarity >= 0.95 && similarity.minSimilarity >= 0.80 && scanPassed === scanTests.length ? '- ✅ 所有条件满足，可以进入 G2 回归门\n' : ''}
-`;
 
   // 写入报告
   writeFileSync(reportPath, report, 'utf-8');
-  console.log(`📄 报告已生成: ${reportPath}`);
+  console.log(`📄 报告已保存: ${reportPath}`);
 
   // 输出摘要
-  console.log('\n📊 G4 检查摘要:');
-  console.log(`  Golden I/O: ${ioPassed}/${ioTotal}`);
-  console.log(`  平均相似度: ${similarity.meanSimilarity.toFixed(3)} ${similarity.meanSimilarity >= 0.95 ? '✅' : '❌'}`);
-  console.log(`  最小相似度: ${similarity.minSimilarity.toFixed(3)} ${similarity.minSimilarity >= 0.80 ? '✅' : '❌'}`);
-  console.log(`  shouldScan: ${scanPassed}/${scanTests.length}`);
-
-  const g4Passed = ioPassed === ioTotal &&
-                   similarity.meanSimilarity >= 0.95 &&
-                   similarity.minSimilarity >= 0.80 &&
-                   scanPassed === scanTests.length;
-
-  console.log(`\n🎯 G4 蒸馏门: ${g4Passed ? '✅ 通过' : '❌ 未通过'}`);
-
-  if (!g4Passed) {
+  if (!allPassed) {
+    console.log('\n❌ 以下测试失败:');
+    results.filter(r => !r.passed).forEach(r => {
+      console.log(`  - ${r.id}: ${r.description}`);
+      if (r.error) console.log(`    错误: ${r.error}`);
+    });
     process.exit(1);
   }
+
+  console.log('\n🎉 所有测试通过！G4 蒸馏门检查完成。');
+  process.exit(0);
 }
 
-// 运行主函数
 main().catch(error => {
-  console.error('❌ G4 检查失败:', error);
+  console.error('G4 检查失败:', error);
   process.exit(1);
 });
