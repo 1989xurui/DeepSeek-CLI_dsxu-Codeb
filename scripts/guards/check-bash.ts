@@ -40,7 +40,7 @@ const PIPELINE_ALLOWLIST = new Set([
   'node',
   'powershell',
   'findstr',
-  'Select-Object'
+  'select-object'
 ])
 
 

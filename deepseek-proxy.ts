@@ -906,7 +906,7 @@ async function handleMessages(req: Request): Promise<Response> {
   // TASK-INFRA-6: 记录成本到账本
   const inputTokens = oaiResp.usage?.prompt_tokens || 0;
   const outputTokens = oaiResp.usage?.completion_tokens || 0;
-  const cacheHit = oaiResp.cached === true; // DeepSeek 可能返回 cached 字段
+  const cacheHit = (oaiResp.usage?.prompt_cache_hit_tokens ?? 0) > 0; // DeepSeek V3 返回 prompt_cache_hit_tokens
   logCostToLedger(oaiBody.model, inputTokens, outputTokens, cacheHit);
 
   return Response.json(anthropicResp)
