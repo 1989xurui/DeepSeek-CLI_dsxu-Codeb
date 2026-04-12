@@ -364,27 +364,34 @@ function convertMessages(
         const toolResults = content.filter((b: any) => b.type === 'tool_result')
         const textBlocks = content.filter((b: any) => b.type !== 'tool_result')
 
-        // Text parts become a normal user message
-        if (textBlocks.length > 0) {
-          const text = textBlocks
-            .filter((b: any) => b.type === 'text')
-            .map((b: any) => b.text ?? '')
-            .join('\n')
-          if (text.trim()) result.push({ role: 'user', content: text })
-        }
-
-        // tool_result → role=tool messages
+        // [INFRA-5-EMERGENCY 2026-04-12] 重排序修复 DeepSeek 400 孤儿 tool_calls
+        // DeepSeek 严格要求 assistant.tool_calls 后必须紧跟所有 tool 消息,中间不能插入 user
+        // 因此先 emit tool 消息(配对前一条 assistant.tool_calls),再 emit user 文本
         for (const tr of toolResults) {
           const toolContent = Array.isArray(tr.content)
             ? tr.content.map((c: any) => c.text ?? '').join('\n')
             : typeof tr.content === 'string'
               ? tr.content
               : JSON.stringify(tr.content ?? '')
+          // [R-SHELL-SANITIZE] 把 exit 127 / command not found 降级为标准错误,避免污染上下文
+          const sanitizedContent =
+            /^(?:exit 127|.*command not found|bash: .* not found)/i.test(toolContent.trim())
+              ? '[R-SHELL-VIOLATION] GNU tool not available in bun shell; use Read/Grep/Glob tools instead'
+              : toolContent
           result.push({
             role: 'tool',
             tool_call_id: tr.tool_use_id,
-            content: toolContent,
+            content: sanitizedContent,
           })
+        }
+
+        // Text parts become a normal user message (pushed AFTER tool messages)
+        if (textBlocks.length > 0) {
+          const text = textBlocks
+            .filter((b: any) => b.type === 'text')
+            .map((b: any) => b.text ?? '')
+            .join('\n')
+          if (text.trim()) result.push({ role: 'user', content: text })
         }
       } else {
         result.push({ role: 'user', content: extractTextContent(content) })
@@ -429,31 +436,62 @@ function convertMessages(
 }
 
 function sanitizeOrphanToolCalls(msgs: any[]): any[] {
+  // [INFRA-5-EMERGENCY 2026-04-12] 两遍扫描加固版
+  // 遍 1:对每个 assistant.tool_calls,在整个剩余序列里搜索匹配的 tool 消息,
+  //       允许它们被 user/assistant 文本消息间隔,然后在输出里强制重排成
+  //       assistant → tool → tool ... → 其它,满足 DeepSeek 严格顺序要求。
+  // 遍 2:丢弃任何没有前驱配对的顶层 tool 消息。
   const out: any[] = []
+  const consumedToolIdx = new Set<number>()
+
   for (let i = 0; i < msgs.length; i++) {
+    if (consumedToolIdx.has(i)) continue
     const m = msgs[i]
+
     if (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
-      // 收集紧接后续 role=tool 消息的 tool_call_id
-      const covered = new Set<string>()
-      let j = i + 1
-      while (j < msgs.length && msgs[j].role === 'tool') {
-        if (msgs[j].tool_call_id) covered.add(msgs[j].tool_call_id)
-        j++
-      }
-      const allCovered = m.tool_calls.every((tc: any) => covered.has(tc.id))
-      if (!allCovered) {
-        // 孤儿:剥掉 tool_calls,如果还有 content 就保留成纯文本 assistant 消息,否则整条丢
-        if (m.content && String(m.content).trim()) {
-          const clone = { ...m }
-          delete clone.tool_calls
-          out.push(clone)
+      // 在 [i+1, 下一个 assistant 之前] 范围里搜集所有 tool 消息
+      const needed = new Set<string>(m.tool_calls.map((tc: any) => tc.id))
+      const matchedToolMsgs: any[] = []
+      const matchedIdx: number[] = []
+
+      for (let j = i + 1; j < msgs.length; j++) {
+        if (msgs[j].role === 'assistant') break
+        if (msgs[j].role === 'tool' && msgs[j].tool_call_id && needed.has(msgs[j].tool_call_id)) {
+          matchedToolMsgs.push(msgs[j])
+          matchedIdx.push(j)
+          needed.delete(msgs[j].tool_call_id)
+          if (needed.size === 0) break
         }
-        // 把后续的 role=tool 消息也一并跳过(它们本来是 response 给这个孤儿的)
-        i = j - 1
+      }
+
+      if (needed.size === 0) {
+        // 全部配对:push assistant + 重排后的 tool 消息
+        out.push(m)
+        for (const tm of matchedToolMsgs) out.push(tm)
+        for (const idx of matchedIdx) consumedToolIdx.add(idx)
         continue
       }
+
+      // 部分或全部孤儿:剥 tool_calls,保留文本
+      try {
+        const log =
+          `[${new Date().toISOString()}] orphan tool_calls stripped: ` +
+          `missing=${[...needed].join(',')} at msg index ${i}\n`
+        require('fs').appendFileSync('.dsevo/tool-orphan.log', log)
+      } catch {
+        /* noop */
+      }
+      if (m.content && String(m.content).trim()) {
+        const clone = { ...m }
+        delete clone.tool_calls
+        out.push(clone)
+      }
+      // 已配上的 tool 消息也算数(下一轮 assistant 不会再用),丢弃
+      for (const idx of matchedIdx) consumedToolIdx.add(idx)
+      continue
     }
-    // 丢掉顶层孤儿 role=tool(前面没有 assistant.tool_calls 对应)
+
+    // 顶层 role=tool 必须有前驱 assistant.tool_calls 配对,否则丢
     if (m.role === 'tool') {
       const prev = out[out.length - 1]
       const hasMatchingCall =
