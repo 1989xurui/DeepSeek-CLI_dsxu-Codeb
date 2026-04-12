@@ -51,6 +51,18 @@
             }
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun run scripts/guards/check-bash.ts",
+            "env": {
+              "GUARD_BASH_COMMAND": "${tool.command}"
+            }
+          }
+        ]
       }
     ]
   }
