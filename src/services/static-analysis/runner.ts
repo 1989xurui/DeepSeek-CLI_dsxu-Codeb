@@ -161,7 +161,7 @@ export async function runStaticGateImpl(
 
     const toolConfig = DEFAULT_TOOLS[layer];
     // 如果有 mockSpawn，即使 enabled: false 也运行（用于测试）
-    if (!toolConfig.enabled && !options.mockSpawn) {
+    if (!toolConfig.enabled && !opts.mockSpawn) {
       layers[layer === 'ast-grep' ? 'astGrep' : layer] = {
         passed: true,
         issues: [],
