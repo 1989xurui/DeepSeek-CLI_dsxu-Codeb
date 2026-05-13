@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   buildReleaseClosureBoard,
@@ -13,6 +13,7 @@ import { buildMainlineDirtyReview } from '../../engine/mainline-dirty-review-v1'
 import { buildLegacyMainlineDirtyReview } from '../../engine/legacy-mainline-dirty-review-v1'
 import { buildToolRuntimeDirtyReview } from '../../engine/tool-runtime-dirty-review-v1'
 import { buildToolRuntimeDuplicationDecision } from '../../engine/tool-runtime-duplication-decision-v1'
+import { buildReleaseSurfaceSourcePolicyReviewState } from '../../engine/release-surface-source-policy-review-v1'
 
 export type ReleaseClosureBoardHarnessResult = ReleaseClosureBoard & {
   evidencePath: string
@@ -23,9 +24,19 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }
 
+async function readJsonIfExists(path: string): Promise<unknown | null> {
+  try {
+    return JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, ''))
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') return null
+    throw error
+  }
+}
+
 export async function runReleaseClosureBoardHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  releaseSurfaceSourcePolicyReviewManifestPath?: string
 } = {}): Promise<ReleaseClosureBoardHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'release-closure-board-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -50,9 +61,19 @@ export async function runReleaseClosureBoardHarness(options: {
   const legacyMainlineReview = buildLegacyMainlineDirtyReview(dirtyLedger)
   const toolRuntimeReview = buildToolRuntimeDirtyReview(dirtyLedger)
   const toolRuntimeDuplicationDecision = buildToolRuntimeDuplicationDecision(toolRuntimeReview)
+  const releaseSurfaceSourcePolicyReviewManifestPath = options.releaseSurfaceSourcePolicyReviewManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'release-surface-source-policy-review-v1', 'release-surface-source-policy-review-manifest.json')
+  const releaseSurfaceSourcePolicyReview = buildReleaseSurfaceSourcePolicyReviewState(
+    packageGate.cleanExportManifest.filter(entry => entry.releasePolicy === 'rewrite-or-exclude'),
+    await readJsonIfExists(releaseSurfaceSourcePolicyReviewManifestPath),
+  )
   const cleanExportReadiness = buildCleanExportReadiness({
     releaseBlockerCount: packageGate.releaseBlockerCount,
     rewriteOrExcludeCount: packageGate.cleanExportSummary.rewriteOrExcludeCount,
+    releaseSurfaceSourcePolicyReviewStatus: releaseSurfaceSourcePolicyReview.status,
+    releaseSurfaceSourcePolicyReviewedCount: releaseSurfaceSourcePolicyReview.reviewedCount,
+    releaseSurfaceSourcePolicyRequiredCount: releaseSurfaceSourcePolicyReview.requiredCount,
+    releaseSurfaceSourcePolicyRedlines: releaseSurfaceSourcePolicyReview.redlines,
     pendingDeletionCount: packageGate.pendingDeletionCount,
     pendingDeletionByRule: packageGate.pendingDeletionClosure.byRule,
     dirtyTotal: dirtyLedger.total,
@@ -84,6 +105,7 @@ export async function runReleaseClosureBoardHarness(options: {
       join(evidenceDir, 'tool-runtime-duplication-decision.evidence.json'),
       rawComparison.evidencePath,
       rawComparison.deltaReportPath,
+      releaseSurfaceSourcePolicyReviewManifestPath,
     ],
   })
 
@@ -96,6 +118,8 @@ export async function runReleaseClosureBoardHarness(options: {
     unknownDirtyCount: dirtyLedger.countsByCategory.unknown,
     releaseSurfaceBlockerCount: packageGate.releaseBlockerCount,
     sourcePolicyReviewCount: packageGate.cleanExportSummary.rewriteOrExcludeCount,
+    releaseSurfaceSourcePolicyReviewStatus: releaseSurfaceSourcePolicyReview.status,
+    releaseSurfaceSourcePolicyRedlines: releaseSurfaceSourcePolicyReview.redlines,
     cleanExportReady: packageGate.cleanExportReady,
     p12RawStatus: rawComparison.status,
     p12PairedRawLogCount: rawComparison.pairedRawLogCount,
@@ -114,6 +138,7 @@ export async function runReleaseClosureBoardHarness(options: {
       join(evidenceDir, 'tool-runtime-duplication-decision.evidence.json'),
       rawComparison.evidencePath,
       rawComparison.deltaReportPath,
+      releaseSurfaceSourcePolicyReviewManifestPath,
     ],
   })
   const result: ReleaseClosureBoardHarnessResult = {
@@ -127,7 +152,7 @@ export async function runReleaseClosureBoardHarness(options: {
   await writeJson(join(evidenceDir, 'legacy-mainline-dirty-review.evidence.json'), legacyMainlineReview)
   await writeJson(join(evidenceDir, 'tool-runtime-dirty-review.evidence.json'), toolRuntimeReview)
   await writeJson(join(evidenceDir, 'tool-runtime-duplication-decision.evidence.json'), toolRuntimeDuplicationDecision)
-  await writeJson(tracePath, { packageGate, dirtyLedger, dirtyWorktreeReview, mainlineDirtyReview, legacyMainlineReview, toolRuntimeReview, toolRuntimeDuplicationDecision, rawComparison, realReplayStatus, cleanExportReadiness, board })
+  await writeJson(tracePath, { packageGate, dirtyLedger, dirtyWorktreeReview, mainlineDirtyReview, legacyMainlineReview, toolRuntimeReview, toolRuntimeDuplicationDecision, releaseSurfaceSourcePolicyReview, rawComparison, realReplayStatus, cleanExportReadiness, board })
   await writeJson(evidencePath, result)
   return result
 }

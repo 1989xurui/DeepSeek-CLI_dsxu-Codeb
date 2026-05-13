@@ -21,6 +21,8 @@ export type ReleaseClosureInput = {
   unknownDirtyCount: number
   releaseSurfaceBlockerCount: number
   sourcePolicyReviewCount: number
+  releaseSurfaceSourcePolicyReviewStatus?: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_PROVIDED'
+  releaseSurfaceSourcePolicyRedlines?: readonly string[]
   cleanExportReady: boolean
   p12RawStatus: 'PASS' | 'PARTIAL' | 'BLOCKED'
   p12PairedRawLogCount: number
@@ -68,6 +70,12 @@ export function buildReleaseClosureBoard(input: ReleaseClosureInput): ReleaseClo
   const batches: ReleaseClosureBatch[] = []
   const p12ReplayFamilyGapCount = input.p12ReplayFamilyGapCount ?? 0
   const p12UnmappedPairedRawLogCount = input.p12UnmappedPairedRawLogCount ?? 0
+  const releaseSurfaceSourcePolicyReviewStatus = input.releaseSurfaceSourcePolicyReviewStatus ?? 'NOT_PROVIDED'
+  const releaseSurfaceSourcePolicyReady = input.sourcePolicyReviewCount === 0 ||
+    releaseSurfaceSourcePolicyReviewStatus === 'PASS'
+  const releaseSurfaceSourcePolicyRedlines = releaseSurfaceSourcePolicyReviewStatus === 'BLOCKED'
+    ? input.releaseSurfaceSourcePolicyRedlines ?? ['release surface source policy review is blocked']
+    : []
 
   batches.push({
     id: 'RC-01',
@@ -145,21 +153,29 @@ export function buildReleaseClosureBoard(input: ReleaseClosureInput): ReleaseClo
     id: 'RC-05',
     name: 'release surface',
     status: statusFromRedlines(
-      input.releaseSurfaceBlockerCount > 0
-        ? ['release surface has blockers']
-        : [],
-      input.sourcePolicyReviewCount > 0,
+      [
+        ...(input.releaseSurfaceBlockerCount > 0
+          ? ['release surface has blockers']
+          : []),
+        ...releaseSurfaceSourcePolicyRedlines,
+      ],
+      !releaseSurfaceSourcePolicyReady,
     ),
     action: 'keep-mainline',
     owner: 'Release Surface',
     evidence: input.evidencePaths,
-    redlines: input.releaseSurfaceBlockerCount > 0
-      ? ['release surface has blockers']
-      : [],
+    redlines: [
+      ...(input.releaseSurfaceBlockerCount > 0
+        ? ['release surface has blockers']
+        : []),
+      ...releaseSurfaceSourcePolicyRedlines,
+    ],
     nextAction: input.releaseSurfaceBlockerCount > 0
       ? 'fix release surface blockers before export'
-      : input.sourcePolicyReviewCount > 0
+      : input.sourcePolicyReviewCount > 0 && releaseSurfaceSourcePolicyReviewStatus !== 'PASS'
         ? 'review source policy findings before export copy is prepared'
+        : input.sourcePolicyReviewCount > 0
+          ? 'source policy findings are signed for rewrite/exclude during export preparation'
         : 'release surface is clear for export preparation',
   })
 

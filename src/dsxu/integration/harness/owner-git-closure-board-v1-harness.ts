@@ -13,6 +13,7 @@ import { buildPendingDeletionReview } from '../../engine/pending-deletion-review
 import { buildReleaseClosureBoard } from '../../engine/release-closure-board-v1'
 import { buildToolRuntimeDirtyReview } from '../../engine/tool-runtime-dirty-review-v1'
 import { buildToolRuntimeDuplicationDecision } from '../../engine/tool-runtime-duplication-decision-v1'
+import { buildReleaseSurfaceSourcePolicyReviewState } from '../../engine/release-surface-source-policy-review-v1'
 import {
   WORKSPACE_PERMISSION_BLOCKED_RESIDUES,
   validateWorkspacePermissionResidueClosureManifest,
@@ -128,6 +129,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
   deferredEvalRawLiveManifestPath?: string
   permissionResidueClosureManifestPath?: string
   deferredProductReviewManifestPath?: string
+  releaseSurfaceSourcePolicyReviewManifestPath?: string
 } = {}): Promise<OwnerGitClosureBoardHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'owner-git-closure-board-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -181,6 +183,12 @@ export async function runOwnerGitClosureBoardHarness(options: {
   })
   const toolRuntimeReview = buildToolRuntimeDirtyReview(dirtyLedger)
   const toolRuntimeDuplicationDecision = buildToolRuntimeDuplicationDecision(toolRuntimeReview)
+  const releaseSurfaceSourcePolicyReviewManifestPath = options.releaseSurfaceSourcePolicyReviewManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'release-surface-source-policy-review-v1', 'release-surface-source-policy-review-manifest.json')
+  const releaseSurfaceSourcePolicyReview = buildReleaseSurfaceSourcePolicyReviewState(
+    packageGate.cleanExportManifest.filter(entry => entry.releasePolicy === 'rewrite-or-exclude'),
+    await readJsonIfExists(releaseSurfaceSourcePolicyReviewManifestPath),
+  )
   const pendingDeletionReplacementEvidenceStatus = pendingDeletionReview.batches.some(batch => batch.replacementEvidenceStatus === 'MISSING')
     ? 'MISSING'
     : pendingDeletionReview.batches.some(batch => batch.replacementEvidenceStatus === 'READY_FOR_REVIEW')
@@ -191,6 +199,10 @@ export async function runOwnerGitClosureBoardHarness(options: {
   const cleanExportReadiness = buildCleanExportReadiness({
     releaseBlockerCount: packageGate.releaseBlockerCount,
     rewriteOrExcludeCount: packageGate.cleanExportSummary.rewriteOrExcludeCount,
+    releaseSurfaceSourcePolicyReviewStatus: releaseSurfaceSourcePolicyReview.status,
+    releaseSurfaceSourcePolicyReviewedCount: releaseSurfaceSourcePolicyReview.reviewedCount,
+    releaseSurfaceSourcePolicyRequiredCount: releaseSurfaceSourcePolicyReview.requiredCount,
+    releaseSurfaceSourcePolicyRedlines: releaseSurfaceSourcePolicyReview.redlines,
     pendingDeletionCount: packageGate.pendingDeletionCount,
     pendingDeletionByRule: packageGate.pendingDeletionClosure.byRule,
     pendingDeletionReviewStatus: pendingDeletionReview.status,
@@ -220,6 +232,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
       dirtyLedger.evidencePath,
       rawComparison.evidencePath,
       rawComparison.deltaReportPath,
+      releaseSurfaceSourcePolicyReviewManifestPath,
     ],
   })
   const realReplayStatus = rawComparison.cases.every(item => item.dsxu.status === 'PASS')
@@ -236,6 +249,8 @@ export async function runOwnerGitClosureBoardHarness(options: {
     unknownDirtyCount: dirtyLedger.countsByCategory.unknown,
     releaseSurfaceBlockerCount: packageGate.releaseBlockerCount,
     sourcePolicyReviewCount: packageGate.cleanExportSummary.rewriteOrExcludeCount,
+    releaseSurfaceSourcePolicyReviewStatus: releaseSurfaceSourcePolicyReview.status,
+    releaseSurfaceSourcePolicyRedlines: releaseSurfaceSourcePolicyReview.redlines,
     cleanExportReady: packageGate.cleanExportReady,
     p12RawStatus: rawComparison.status,
     p12PairedRawLogCount: rawComparison.pairedRawLogCount,
@@ -250,6 +265,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
       rawComparison.evidencePath,
       rawComparison.deltaReportPath,
       cleanExportReadiness.evidencePaths[0] ?? '',
+      releaseSurfaceSourcePolicyReviewManifestPath,
     ].filter(Boolean),
   })
   const pendingDeletionSubSlices = pendingDeletionReview.batches.flatMap(batch => batch.subSlices)
@@ -409,6 +425,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     legacyMainlineReview,
     toolRuntimeReview,
     toolRuntimeDuplicationDecision,
+    releaseSurfaceSourcePolicyReview,
     deferredProductAbsorptionReview,
     permissionResidueExternalClosure,
     deferredEvalRawLiveManifest,

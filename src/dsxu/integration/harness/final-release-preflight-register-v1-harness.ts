@@ -21,6 +21,7 @@ export async function runFinalReleasePreflightRegisterHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
   deferredEvalRawLiveManifestPath?: string
+  releaseSurfaceSourcePolicyReviewManifestPath?: string
 } = {}): Promise<FinalReleasePreflightRegisterHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'final-release-preflight-register-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -32,14 +33,17 @@ export async function runFinalReleasePreflightRegisterHarness(options: {
       evidenceDir: join(evidenceDir, 'owner-git-closure-board'),
       targetReferenceManifestPath: options.targetReferenceManifestPath,
       deferredEvalRawLiveManifestPath: options.deferredEvalRawLiveManifestPath,
+      releaseSurfaceSourcePolicyReviewManifestPath: options.releaseSurfaceSourcePolicyReviewManifestPath,
     }),
     runCleanExportReadinessHarness({
       evidenceDir: join(evidenceDir, 'clean-export-readiness'),
       targetReferenceManifestPath: options.targetReferenceManifestPath,
+      releaseSurfaceSourcePolicyReviewManifestPath: options.releaseSurfaceSourcePolicyReviewManifestPath,
     }),
     runReleaseClosureBoardHarness({
       evidenceDir: join(evidenceDir, 'release-closure-board'),
       targetReferenceManifestPath: options.targetReferenceManifestPath,
+      releaseSurfaceSourcePolicyReviewManifestPath: options.releaseSurfaceSourcePolicyReviewManifestPath,
     }),
   ])
   const register = buildFinalReleasePreflightRegister({

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   buildCleanExportReadiness,
@@ -10,6 +10,7 @@ import { buildLegacyMainlineDirtyReview } from '../../engine/legacy-mainline-dir
 import { buildToolRuntimeDirtyReview } from '../../engine/tool-runtime-dirty-review-v1'
 import { buildToolRuntimeDuplicationDecision } from '../../engine/tool-runtime-duplication-decision-v1'
 import { buildPendingDeletionReview } from '../../engine/pending-deletion-review-v1'
+import { buildReleaseSurfaceSourcePolicyReviewState } from '../../engine/release-surface-source-policy-review-v1'
 import { runP12RawComparisonHarness } from './phase12-raw-comparison-v1-harness'
 import { runV18DirtyQuarantineLedgerHarness } from '../../engine/v18-dirty-quarantine-ledger'
 import { runV18OpenSourcePackageGateHarness } from '../../engine/v18-open-source-package-gate'
@@ -23,9 +24,19 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }
 
+async function readJsonIfExists(path: string): Promise<unknown | null> {
+  try {
+    return JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, ''))
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') return null
+    throw error
+  }
+}
+
 export async function runCleanExportReadinessHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  releaseSurfaceSourcePolicyReviewManifestPath?: string
 } = {}): Promise<CleanExportReadinessHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'clean-export-readiness-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -41,6 +52,12 @@ export async function runCleanExportReadinessHarness(options: {
     }),
   ])
   const pendingDeletionReview = buildPendingDeletionReview(packageGate.pendingDeletionClosure)
+  const releaseSurfaceSourcePolicyReviewManifestPath = options.releaseSurfaceSourcePolicyReviewManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'release-surface-source-policy-review-v1', 'release-surface-source-policy-review-manifest.json')
+  const releaseSurfaceSourcePolicyReview = buildReleaseSurfaceSourcePolicyReviewState(
+    packageGate.cleanExportManifest.filter(entry => entry.releasePolicy === 'rewrite-or-exclude'),
+    await readJsonIfExists(releaseSurfaceSourcePolicyReviewManifestPath),
+  )
   const dirtyWorktreeReview = buildDirtyWorktreeReview(dirtyLedger)
   const mainlineDirtyReview = buildMainlineDirtyReview(dirtyLedger)
   const legacyMainlineReview = buildLegacyMainlineDirtyReview(dirtyLedger)
@@ -57,6 +74,10 @@ export async function runCleanExportReadinessHarness(options: {
   const readiness = buildCleanExportReadiness({
     releaseBlockerCount: packageGate.releaseBlockerCount,
     rewriteOrExcludeCount: packageGate.cleanExportSummary.rewriteOrExcludeCount,
+    releaseSurfaceSourcePolicyReviewStatus: releaseSurfaceSourcePolicyReview.status,
+    releaseSurfaceSourcePolicyReviewedCount: releaseSurfaceSourcePolicyReview.reviewedCount,
+    releaseSurfaceSourcePolicyRequiredCount: releaseSurfaceSourcePolicyReview.requiredCount,
+    releaseSurfaceSourcePolicyRedlines: releaseSurfaceSourcePolicyReview.redlines,
     pendingDeletionCount: packageGate.pendingDeletionCount,
     pendingDeletionByRule: packageGate.pendingDeletionClosure.byRule,
     pendingDeletionReviewStatus: pendingDeletionReview.status,
@@ -91,6 +112,7 @@ export async function runCleanExportReadinessHarness(options: {
       join(evidenceDir, 'tool-runtime-duplication-decision.evidence.json'),
       rawComparison.evidencePath,
       rawComparison.deltaReportPath,
+      releaseSurfaceSourcePolicyReviewManifestPath,
     ],
   })
   const result: CleanExportReadinessHarnessResult = {
@@ -104,7 +126,7 @@ export async function runCleanExportReadinessHarness(options: {
   await writeJson(join(evidenceDir, 'legacy-mainline-dirty-review.evidence.json'), legacyMainlineReview)
   await writeJson(join(evidenceDir, 'tool-runtime-dirty-review.evidence.json'), toolRuntimeReview)
   await writeJson(join(evidenceDir, 'tool-runtime-duplication-decision.evidence.json'), toolRuntimeDuplicationDecision)
-  await writeJson(tracePath, { packageGate, dirtyLedger, dirtyWorktreeReview, mainlineDirtyReview, legacyMainlineReview, toolRuntimeReview, toolRuntimeDuplicationDecision, rawComparison, pendingDeletionReview, readiness })
+  await writeJson(tracePath, { packageGate, dirtyLedger, dirtyWorktreeReview, mainlineDirtyReview, legacyMainlineReview, toolRuntimeReview, toolRuntimeDuplicationDecision, rawComparison, pendingDeletionReview, releaseSurfaceSourcePolicyReview, readiness })
   await writeJson(evidencePath, result)
   return result
 }

@@ -86,6 +86,26 @@ describe('RC-06 - Clean Export Readiness V1', () => {
     expect(readiness.releaseBlockers.join('\n')).toContain('destructive action requested')
   })
 
+  test('requires signed source policy review for rewrite-or-exclude release surface entries', () => {
+    const partial = buildCleanExportReadiness({
+      ...readyInput,
+      rewriteOrExcludeCount: 1,
+    })
+    const signed = buildCleanExportReadiness({
+      ...readyInput,
+      rewriteOrExcludeCount: 1,
+      releaseSurfaceSourcePolicyReviewStatus: 'PASS',
+      releaseSurfaceSourcePolicyReviewedCount: 1,
+      releaseSurfaceSourcePolicyRequiredCount: 1,
+    })
+
+    expect(partial.status).toBe('PARTIAL')
+    expect(partial.gates.find(gate => gate.id === 'CER-01')?.status).toBe('PARTIAL')
+    expect(signed.status).toBe('PASS')
+    expect(signed.gates.find(gate => gate.id === 'CER-01')?.status).toBe('PASS')
+    expect(signed.precheckSummary.releaseSurfaceSourcePolicyReviewStatus).toBe('PASS')
+  })
+
   test('writes current readiness evidence without exporting files', async () => {
     const readiness = await runCleanExportReadinessHarness()
 

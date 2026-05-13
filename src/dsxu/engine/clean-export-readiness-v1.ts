@@ -10,6 +10,10 @@ export type CleanExportReadinessGateId =
 export type CleanExportReadinessInput = {
   releaseBlockerCount: number
   rewriteOrExcludeCount: number
+  releaseSurfaceSourcePolicyReviewStatus?: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_PROVIDED'
+  releaseSurfaceSourcePolicyReviewedCount?: number
+  releaseSurfaceSourcePolicyRequiredCount?: number
+  releaseSurfaceSourcePolicyRedlines?: readonly string[]
   pendingDeletionCount: number
   pendingDeletionByRule: Readonly<Record<string, number>>
   pendingDeletionReviewStatus?: 'PASS' | 'PARTIAL' | 'BLOCKED'
@@ -71,6 +75,9 @@ export type CleanExportReadiness = {
     toolRuntimeReviewBatchCount: number
     toolRuntimeDuplicationDecisionStatus: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_RUN'
     toolRuntimeDuplicationDecisionBatchCount: number
+    releaseSurfaceSourcePolicyReviewStatus: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_PROVIDED'
+    releaseSurfaceSourcePolicyReviewedCount: number
+    releaseSurfaceSourcePolicyRequiredCount: number
     p12RawNextAction: string
   }
   safeguards: readonly string[]
@@ -92,20 +99,34 @@ export function buildCleanExportReadiness(input: CleanExportReadinessInput): Cle
   const gates: CleanExportReadinessGate[] = []
   const p12ReplayFamilyGapCount = input.p12ReplayFamilyGapCount ?? 0
   const p12UnmappedPairedRawLogCount = input.p12UnmappedPairedRawLogCount ?? 0
+  const releaseSurfaceSourcePolicyReviewStatus = input.releaseSurfaceSourcePolicyReviewStatus ?? 'NOT_PROVIDED'
+  const releaseSurfaceSourcePolicyReady = input.rewriteOrExcludeCount === 0 ||
+    releaseSurfaceSourcePolicyReviewStatus === 'PASS'
+  const releaseSurfaceSourcePolicyRedlines = releaseSurfaceSourcePolicyReviewStatus === 'BLOCKED'
+    ? input.releaseSurfaceSourcePolicyRedlines ?? ['release surface source policy review is blocked']
+    : []
 
   gates.push({
     id: 'CER-01',
     name: 'release surface policy',
     status: gateStatus(
-      input.releaseBlockerCount > 0 ? ['release surface has present blockers'] : [],
-      input.rewriteOrExcludeCount > 0,
+      [
+        ...(input.releaseBlockerCount > 0 ? ['release surface has present blockers'] : []),
+        ...releaseSurfaceSourcePolicyRedlines,
+      ],
+      !releaseSurfaceSourcePolicyReady,
     ),
     owner: 'Release Surface',
-    redlines: input.releaseBlockerCount > 0 ? ['release surface has present blockers'] : [],
+    redlines: [
+      ...(input.releaseBlockerCount > 0 ? ['release surface has present blockers'] : []),
+      ...releaseSurfaceSourcePolicyRedlines,
+    ],
     requiredAction: input.releaseBlockerCount > 0
       ? 'remove present release surface blockers before export'
-      : input.rewriteOrExcludeCount > 0
+      : input.rewriteOrExcludeCount > 0 && releaseSurfaceSourcePolicyReviewStatus !== 'PASS'
         ? 'review rewrite-or-exclude source policy before export copy'
+        : input.rewriteOrExcludeCount > 0
+          ? 'apply signed rewrite/exclude source policy during export artifact preparation'
         : 'surface policy is clear',
   })
 
@@ -219,6 +240,9 @@ export function buildCleanExportReadiness(input: CleanExportReadinessInput): Cle
       toolRuntimeReviewBatchCount: input.toolRuntimeReviewBatchCount ?? 0,
       toolRuntimeDuplicationDecisionStatus: input.toolRuntimeDuplicationDecisionStatus ?? 'NOT_RUN',
       toolRuntimeDuplicationDecisionBatchCount: input.toolRuntimeDuplicationDecisionBatchCount ?? 0,
+      releaseSurfaceSourcePolicyReviewStatus,
+      releaseSurfaceSourcePolicyReviewedCount: input.releaseSurfaceSourcePolicyReviewedCount ?? 0,
+      releaseSurfaceSourcePolicyRequiredCount: input.releaseSurfaceSourcePolicyRequiredCount ?? input.rewriteOrExcludeCount,
       p12RawNextAction: input.p12RawNextAction ?? 'not-recorded',
     },
     safeguards: [

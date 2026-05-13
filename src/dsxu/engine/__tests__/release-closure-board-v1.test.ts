@@ -70,6 +70,23 @@ describe('WP-08 - Release Closure Board V1', () => {
     expect(board.safeguards.join('\n')).toContain('does not delete')
   })
 
+  test('closes release surface source policy once rewrite-or-exclude findings are signed', () => {
+    const partial = buildReleaseClosureBoard({
+      ...baseInput,
+      sourcePolicyReviewCount: 1,
+    })
+    const signed = buildReleaseClosureBoard({
+      ...baseInput,
+      sourcePolicyReviewCount: 1,
+      releaseSurfaceSourcePolicyReviewStatus: 'PASS',
+    })
+
+    expect(partial.status).toBe('PRECHECK_PARTIAL')
+    expect(partial.batches.find(batch => batch.id === 'RC-05')?.status).toBe('PARTIAL')
+    expect(signed.status).toBe('READY_FOR_ACTUAL_CLEANUP')
+    expect(signed.batches.find(batch => batch.id === 'RC-05')?.status).toBe('PASS')
+  })
+
   test('writes current release closure evidence without staging or deleting files', async () => {
     const board = await runReleaseClosureBoardHarness()
 
