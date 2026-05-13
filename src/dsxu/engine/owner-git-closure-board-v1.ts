@@ -66,6 +66,7 @@ export type OwnerGitClosureBoardInput = {
   p12RawNextAction: string
   deferredEvalIds: readonly string[]
   deferredProductIds: readonly string[]
+  deferredProductAbsorptionStatus?: OwnerGitClosureStatus | 'NOT_PROVIDED'
   localArtifactPolicyKnown: boolean
   permissionBlockedResidualCount: number
   permissionResidueExternalClosureStatus?: OwnerGitClosureStatus | 'NOT_PROVIDED'
@@ -147,6 +148,7 @@ export function buildOwnerGitClosureBoard(
   const legacyMainlineKeepOwnerSliceCount = input.legacyMainlineKeepOwnerSliceCount ?? 0
   const legacyMainlineReviewBeforeKeepCount = input.legacyMainlineReviewBeforeKeepCount ?? 0
   const legacyMainlineReplaceDeleteCandidateCount = input.legacyMainlineReplaceDeleteCandidateCount ?? 0
+  const deferredProductAbsorptionStatus = input.deferredProductAbsorptionStatus ?? 'NOT_PROVIDED'
   const permissionResidueExternalClosureStatus = input.permissionResidueExternalClosureStatus ?? 'NOT_PROVIDED'
   const ownerDirtyBlocking = [
     ...(input.unknownDirtyCount > 0 ? ['unknown dirty paths remain'] : []),
@@ -172,6 +174,9 @@ export function buildOwnerGitClosureBoard(
   const workspaceBlocking = [
     ...(input.localArtifactPolicyKnown ? [] : ['local artifact policy is not recorded']),
     ...(permissionResidueExternalClosureStatus === 'BLOCKED' ? ['permission residue external closure is blocked'] : []),
+  ]
+  const productBlocking = [
+    ...(deferredProductAbsorptionStatus === 'BLOCKED' ? ['deferred product absorption review is blocked'] : []),
   ]
   const finalBlocking = [
     ...(input.cleanExportReady ? [] : ['clean export is not ready']),
@@ -250,17 +255,21 @@ export function buildOwnerGitClosureBoard(
     {
       id: 'OGC-04',
       name: 'deferred product absorption',
-      status: laneStatus([], input.deferredProductIds.length > 0),
+      status: laneStatus(
+        productBlocking,
+        input.deferredProductIds.length > 0 && deferredProductAbsorptionStatus !== 'PASS',
+      ),
       owner: 'Product Runtime Owners',
       scope: 'deferred product and adapter surfaces mapped back to query-loop/tool/permission/agent/evidence owners',
       currentEvidence: [
         `deferredProductIds=${input.deferredProductIds.join(',')}`,
+        `deferredProductAbsorptionStatus=${deferredProductAbsorptionStatus}`,
       ],
       signoffCondition: 'deferred product surfaces are absorbed by original mainline owners or kept deferred; no standalone runtime remains',
-      nextAction: input.deferredProductIds.length > 0
+      nextAction: input.deferredProductIds.length > 0 && deferredProductAbsorptionStatus !== 'PASS'
         ? 'review deferred product surfaces against original-side owners before implementation'
         : 'deferred product absorption is closed',
-      redlines: [],
+      redlines: productBlocking,
     },
     {
       id: 'OGC-05',

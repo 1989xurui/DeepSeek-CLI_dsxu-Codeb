@@ -17,6 +17,10 @@ import {
   WORKSPACE_PERMISSION_BLOCKED_RESIDUES,
   validateWorkspacePermissionResidueClosureManifest,
 } from '../../engine/workspace-artifact-policy-register-v1'
+import {
+  buildDeferredProductAbsorptionReviewState,
+  validateDeferredProductAbsorptionReviewManifest,
+} from '../../engine/deferred-product-absorption-register-v1'
 import { runP12RawComparisonHarness } from './phase12-raw-comparison-v1-harness'
 import { runV18DirtyQuarantineLedgerHarness } from '../../engine/v18-dirty-quarantine-ledger'
 import { runV18OpenSourcePackageGateHarness } from '../../engine/v18-open-source-package-gate'
@@ -119,6 +123,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
   permissionResidueClosureManifestPath?: string
+  deferredProductReviewManifestPath?: string
 } = {}): Promise<OwnerGitClosureBoardHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'owner-git-closure-board-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -137,6 +142,16 @@ export async function runOwnerGitClosureBoardHarness(options: {
     join(process.cwd(), '.dsxu', 'trace', 'workspace-permission-residue-closure-v1', 'workspace-permission-residue-closure-manifest.json')
   const permissionResidueExternalClosure = buildPermissionResidueExternalClosureState(
     await readJsonIfExists(permissionResidueClosureManifestPath),
+  )
+  const deferredProductReviewManifestPath = options.deferredProductReviewManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'deferred-product-absorption-reviewed-v1', 'deferred-product-absorption-review-manifest.json')
+  const deferredProductReviewInput = await readJsonIfExists(deferredProductReviewManifestPath)
+  const deferredProductReviewManifest = deferredProductReviewInput
+    ? validateDeferredProductAbsorptionReviewManifest(deferredProductReviewInput)
+    : undefined
+  const deferredProductAbsorptionReview = buildDeferredProductAbsorptionReviewState(
+    DEFERRED_PRODUCT_IDS,
+    deferredProductReviewManifest,
   )
 
   const pendingDeletionReview = buildPendingDeletionReview(packageGate.pendingDeletionClosure)
@@ -331,6 +346,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     p12RawNextAction: rawComparison.nextAction,
     deferredEvalIds: DEFERRED_EVAL_IDS,
     deferredProductIds: DEFERRED_PRODUCT_IDS,
+    deferredProductAbsorptionStatus: deferredProductAbsorptionReview.status,
     localArtifactPolicyKnown: true,
     permissionBlockedResidualCount: 5,
     permissionResidueExternalClosureStatus: permissionResidueExternalClosure.status,
@@ -375,6 +391,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     legacyMainlineReview,
     toolRuntimeReview,
     toolRuntimeDuplicationDecision,
+    deferredProductAbsorptionReview,
     permissionResidueExternalClosure,
     rawComparison,
     cleanExportReadiness,

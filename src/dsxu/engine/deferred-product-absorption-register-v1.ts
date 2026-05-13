@@ -10,6 +10,45 @@ export type DeferredProductDisposition =
   | 'defer-product-surface-boundary'
   | 'blocked-unknown-product-surface'
 
+export type DeferredProductAbsorptionReviewDecision = 'defer' | 'reject' | 'adjust'
+
+export type DeferredProductAbsorptionReview = {
+  productId: string
+  decision: DeferredProductAbsorptionReviewDecision
+  reviewer: string
+  reviewedAt: string
+  mainlineOwner: string
+  boundary: string
+  notes: string
+}
+
+export type DeferredProductAbsorptionReviewManifest = {
+  schemaVersion: 'dsxu.deferred-product-absorption-review-manifest.v1'
+  laneId: 'OGC-04'
+  decisions: readonly DeferredProductAbsorptionReview[]
+}
+
+export type DeferredProductAbsorptionReviewManifestValidation = {
+  schemaVersion: 'dsxu.deferred-product-absorption-review-manifest-validation.v1'
+  status: OwnerGitClosureStatus
+  acceptedDecisions: readonly DeferredProductAbsorptionReview[]
+  rejectedDecisions: readonly {
+    index: number
+    redlines: readonly string[]
+  }[]
+  redlines: readonly string[]
+}
+
+export type DeferredProductAbsorptionReviewState = {
+  status: OwnerGitClosureStatus | 'NOT_PROVIDED'
+  signedCount: number
+  rejectedCount: number
+  adjustRequestedCount: number
+  staleCount: number
+  unsignedCount: number
+  redlines: readonly string[]
+}
+
 export type DeferredProductAbsorptionEntry = {
   id: string
   status: OwnerGitClosureStatus
@@ -33,6 +72,12 @@ export type DeferredProductAbsorptionRegister = {
   adapterBoundaryCount: number
   productSurfaceBoundaryCount: number
   standaloneRuntimeCandidateCount: number
+  reviewManifestStatus: OwnerGitClosureStatus | 'NOT_PROVIDED'
+  reviewSignedCount: number
+  reviewRejectedCount: number
+  reviewAdjustRequestedCount: number
+  reviewStaleCount: number
+  reviewUnsignedCount: number
   boardAuthorizesMutation: false
   mustNotImplementRuntimeShortcut: boolean
   entries: readonly DeferredProductAbsorptionEntry[]
@@ -160,6 +205,92 @@ const specs: Record<DeferredProductId, Omit<DeferredProductAbsorptionEntry, 'sta
   },
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isReviewDecision(value: unknown): value is DeferredProductAbsorptionReviewDecision {
+  return value === 'defer' || value === 'reject' || value === 'adjust'
+}
+
+function parseReviewDecision(input: unknown, index: number): {
+  decision: DeferredProductAbsorptionReview | null
+  redlines: readonly string[]
+} {
+  if (!isRecord(input)) return { decision: null, redlines: [`decision ${index}: entry is not an object`] }
+  const redlines: string[] = []
+  const productId = typeof input.productId === 'string' ? input.productId : ''
+  const decision = isReviewDecision(input.decision) ? input.decision : null
+  const reviewer = typeof input.reviewer === 'string' ? input.reviewer : ''
+  const reviewedAt = typeof input.reviewedAt === 'string' ? input.reviewedAt : ''
+  const mainlineOwner = typeof input.mainlineOwner === 'string' ? input.mainlineOwner : ''
+  const boundary = typeof input.boundary === 'string' ? input.boundary : ''
+  const notes = typeof input.notes === 'string' ? input.notes : ''
+
+  if (!productId.trim()) redlines.push('missing productId')
+  if (!decision) redlines.push('missing or invalid decision')
+  if (!reviewer.trim()) redlines.push('missing reviewer')
+  if (!reviewedAt.trim()) redlines.push('missing reviewedAt')
+  if (!mainlineOwner.trim()) redlines.push('missing mainlineOwner')
+  if (!boundary.trim()) redlines.push('missing boundary')
+  if (!notes.trim()) redlines.push('missing notes')
+  if (redlines.length > 0 || !decision) return { decision: null, redlines }
+  return {
+    decision: {
+      productId,
+      decision,
+      reviewer,
+      reviewedAt,
+      mainlineOwner,
+      boundary,
+      notes,
+    },
+    redlines,
+  }
+}
+
+export function validateDeferredProductAbsorptionReviewManifest(
+  input: unknown,
+): DeferredProductAbsorptionReviewManifestValidation {
+  const redlines: string[] = []
+  if (!isRecord(input)) {
+    return {
+      schemaVersion: 'dsxu.deferred-product-absorption-review-manifest-validation.v1',
+      status: 'BLOCKED',
+      acceptedDecisions: [],
+      rejectedDecisions: [{ index: -1, redlines: ['manifest is not an object'] }],
+      redlines: ['manifest is not an object'],
+    }
+  }
+  if (input.schemaVersion !== 'dsxu.deferred-product-absorption-review-manifest.v1') {
+    redlines.push('manifest schemaVersion mismatch')
+  }
+  if (input.laneId !== 'OGC-04') redlines.push('manifest laneId must be OGC-04')
+  const decisions = Array.isArray(input.decisions) ? input.decisions : []
+  if (!Array.isArray(input.decisions)) redlines.push('manifest decisions must be an array')
+  const parsed = decisions.map((item, index) => ({ index, ...parseReviewDecision(item, index) }))
+  const acceptedDecisions = parsed
+    .map(item => item.decision)
+    .filter((item): item is DeferredProductAbsorptionReview => item !== null)
+  const rejectedDecisions = parsed
+    .filter(item => item.redlines.length > 0)
+    .map(item => ({ index: item.index, redlines: item.redlines }))
+  const seen = new Set<string>()
+  for (const decision of acceptedDecisions) {
+    if (seen.has(decision.productId)) redlines.push(`duplicate decision for product ${decision.productId}`)
+    seen.add(decision.productId)
+  }
+  redlines.push(...rejectedDecisions.flatMap(item => item.redlines.map(line => `decision ${item.index}: ${line}`)))
+
+  return {
+    schemaVersion: 'dsxu.deferred-product-absorption-review-manifest-validation.v1',
+    status: redlines.length > 0 ? 'BLOCKED' : 'PASS',
+    acceptedDecisions,
+    rejectedDecisions,
+    redlines,
+  }
+}
+
 function deferredProductIdsFromBoard(board: OwnerGitClosureBoard): readonly string[] {
   const lane = board.lanes.find(item => item.id === 'OGC-04')
   const value = lane?.currentEvidence
@@ -170,12 +301,40 @@ function deferredProductIdsFromBoard(board: OwnerGitClosureBoard): readonly stri
   return value.split(',').map(item => item.trim()).filter(Boolean)
 }
 
-function buildEntry(id: string): DeferredProductAbsorptionEntry {
+function reviewRedlines(
+  id: DeferredProductId,
+  reviewManifest?: DeferredProductAbsorptionReviewManifestValidation,
+): readonly string[] {
+  const decision = reviewManifest?.acceptedDecisions.find(item => item.productId === id)
+  if (!decision) return []
+  const spec = specs[id]
+  return [
+    ...(decision.mainlineOwner !== spec.mainlineOwner
+      ? [`${id}: reviewed mainlineOwner does not match current owner mapping`]
+      : []),
+    ...(decision.boundary !== spec.boundary
+      ? [`${id}: reviewed boundary does not match current boundary mapping`]
+      : []),
+    ...(decision.decision === 'reject' ? [`${id}: deferred product owner review rejected this surface`] : []),
+    ...(decision.decision === 'adjust' ? [`${id}: deferred product owner review requested adjustment`] : []),
+  ]
+}
+
+function buildEntry(
+  id: string,
+  reviewManifest?: DeferredProductAbsorptionReviewManifestValidation,
+): DeferredProductAbsorptionEntry {
   if (id in specs) {
+    const decision = reviewManifest?.acceptedDecisions.find(item => item.productId === id)
+    const redlines = reviewRedlines(id as DeferredProductId, reviewManifest)
     return {
       ...specs[id as DeferredProductId],
-      status: 'PARTIAL',
-      redlines: [],
+      status: redlines.length > 0
+        ? 'BLOCKED'
+        : decision?.decision === 'defer'
+          ? 'PASS'
+          : 'PARTIAL',
+      redlines,
     }
   }
 
@@ -197,20 +356,91 @@ function buildEntry(id: string): DeferredProductAbsorptionEntry {
   }
 }
 
+export function buildDeferredProductAbsorptionReviewState(
+  deferredProductIds: readonly string[],
+  reviewManifest?: DeferredProductAbsorptionReviewManifestValidation,
+): DeferredProductAbsorptionReviewState {
+  if (!reviewManifest) {
+    return {
+      status: 'NOT_PROVIDED',
+      signedCount: 0,
+      rejectedCount: 0,
+      adjustRequestedCount: 0,
+      staleCount: 0,
+      unsignedCount: deferredProductIds.length,
+      redlines: [],
+    }
+  }
+  if (reviewManifest.status === 'BLOCKED') {
+    return {
+      status: 'BLOCKED',
+      signedCount: 0,
+      rejectedCount: 0,
+      adjustRequestedCount: 0,
+      staleCount: 0,
+      unsignedCount: deferredProductIds.length,
+      redlines: reviewManifest.redlines,
+    }
+  }
+  const states = deferredProductIds.map(id => {
+    const decision = reviewManifest.acceptedDecisions.find(item => item.productId === id)
+    const stale = id in specs
+      ? reviewRedlines(id as DeferredProductId, reviewManifest)
+          .some(redline => /does not match/.test(redline))
+      : false
+    return { id, decision, stale }
+  })
+  const signedCount = states.filter(item => item.decision?.decision === 'defer' && !item.stale).length
+  const rejectedCount = states.filter(item => item.decision?.decision === 'reject').length
+  const adjustRequestedCount = states.filter(item => item.decision?.decision === 'adjust').length
+  const staleCount = states.filter(item => item.stale).length
+  const unsignedCount = states.filter(item => !item.decision).length
+  const redlines = [
+    ...states.flatMap(item => item.id in specs
+      ? reviewRedlines(item.id as DeferredProductId, reviewManifest)
+      : []),
+  ]
+  const status = signedCount === deferredProductIds.length &&
+    rejectedCount === 0 &&
+    adjustRequestedCount === 0 &&
+    staleCount === 0 &&
+    unsignedCount === 0
+    ? 'PASS'
+    : rejectedCount > 0 || adjustRequestedCount > 0 || staleCount > 0
+      ? 'BLOCKED'
+      : 'PARTIAL'
+
+  return {
+    status,
+    signedCount,
+    rejectedCount,
+    adjustRequestedCount,
+    staleCount,
+    unsignedCount,
+    redlines,
+  }
+}
+
 export function buildDeferredProductAbsorptionRegister(
   board: OwnerGitClosureBoard,
+  options: {
+    reviewManifest?: DeferredProductAbsorptionReviewManifestValidation
+  } = {},
 ): DeferredProductAbsorptionRegister {
-  const entries = deferredProductIdsFromBoard(board).map(buildEntry)
+  const deferredProductIds = deferredProductIdsFromBoard(board)
+  const entries = deferredProductIds.map(id => buildEntry(id, options.reviewManifest))
+  const reviewState = buildDeferredProductAbsorptionReviewState(deferredProductIds, options.reviewManifest)
   const unknownDeferredProductCount = entries.filter(entry => entry.disposition === 'blocked-unknown-product-surface').length
   const adapterBoundaryCount = entries.filter(entry => entry.disposition === 'defer-product-adapter-boundary').length
   const productSurfaceBoundaryCount = entries.filter(entry => entry.disposition === 'defer-product-surface-boundary').length
   const standaloneRuntimeCandidateCount = entries.filter(entry => entry.redlines.some(redline => /standalone runtime|unknown/i.test(redline))).length
   const blockers = [
     ...(unknownDeferredProductCount > 0 ? ['deferred product surfaces include unknown owners'] : []),
+    ...(reviewState.status === 'BLOCKED' ? reviewState.redlines : []),
   ]
   const status: OwnerGitClosureStatus = blockers.length > 0
     ? 'BLOCKED'
-    : entries.length > 0
+    : entries.some(entry => entry.status === 'PARTIAL') || reviewState.status === 'PARTIAL' || reviewState.status === 'NOT_PROVIDED'
       ? 'PARTIAL'
       : 'PASS'
 
@@ -224,6 +454,12 @@ export function buildDeferredProductAbsorptionRegister(
     adapterBoundaryCount,
     productSurfaceBoundaryCount,
     standaloneRuntimeCandidateCount,
+    reviewManifestStatus: reviewState.status,
+    reviewSignedCount: reviewState.signedCount,
+    reviewRejectedCount: reviewState.rejectedCount,
+    reviewAdjustRequestedCount: reviewState.adjustRequestedCount,
+    reviewStaleCount: reviewState.staleCount,
+    reviewUnsignedCount: reviewState.unsignedCount,
     boardAuthorizesMutation: false,
     mustNotImplementRuntimeShortcut: status !== 'PASS',
     entries,
@@ -236,7 +472,7 @@ export function buildDeferredProductAbsorptionRegister(
     ],
     nextAction: blockers.length > 0
       ? 'fix-unknown-deferred-product-surface'
-      : entries.length > 0
+      : status === 'PARTIAL'
         ? 'deferred-product-owner-review-required'
         : 'deferred-product-absorption-closed',
   }
