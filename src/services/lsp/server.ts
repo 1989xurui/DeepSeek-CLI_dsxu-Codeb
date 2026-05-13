@@ -1,6 +1,5 @@
-/**
- * R5-31 LSP Server — 主入口
- */
+﻿/**
+ * R5-31 LSP Server - main entry. */
 
 import type { LspRequest, LspResponse, LspServerConfig, LspMethod } from './contract';
 

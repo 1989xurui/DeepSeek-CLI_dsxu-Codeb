@@ -3,14 +3,14 @@
  *
  * 双系统架构：
  * - 内存 Map + 向量检索（DSxu 原有）
- * - memdir 文件持久化（Claude Code 原有，init 时加载）
+ * - memdir 文件持久化（DSXU Code 原有，init 时加载）
  */
 
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import type { ExperienceRecord, ExperienceStoreConfig } from './types';
 
-// Claude Code memdir — 直接 import，零改原码
+// DSXU Code memdir — 直接 import，零改原码
 let _scanMemoryFiles: typeof import('../../memdir/memoryScan').scanMemoryFiles | null = null;
 let _getAutoMemPath: typeof import('../../memdir/paths').getAutoMemPath | null = null;
 
@@ -78,7 +78,7 @@ export class ExperienceStore {
     return id;
   }
 
-  /** 写入 memdir 文件系统（Claude Code 兼容格式） */
+  /** 写入 memdir 文件系统（DSXU Code 兼容格式） */
   private async writeToMemdir(record: ExperienceRecord): Promise<void> {
     if (!this.memdirPath || this.config.mockMode) return;
     try {
@@ -180,4 +180,13 @@ function cosine(a: number[], b: number[]): number {
   }
   const d = Math.sqrt(na) * Math.sqrt(nb);
   return d === 0 ? 0 : dot / d;
+}
+
+
+// V14 lifecycle shim: store
+export function processStoreLifecycle(input) {
+  void input
+  const state = 'store-state'
+  const lifecycle = 'store:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

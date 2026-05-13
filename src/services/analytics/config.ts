@@ -5,7 +5,7 @@
  * across all analytics systems (Datadog, 1P)
  */
 
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { isTelemetryDisabled } from '../../utils/privacyLevel.js'
 
 /**
@@ -19,9 +19,9 @@ import { isTelemetryDisabled } from '../../utils/privacyLevel.js'
 export function isAnalyticsDisabled(): boolean {
   return (
     process.env.NODE_ENV === 'test' ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+    isDsxuCodeEnvTruthy('USE_BEDROCK') ||
+    isDsxuCodeEnvTruthy('USE_VERTEX') ||
+    isDsxuCodeEnvTruthy('USE_FOUNDRY') ||
     isTelemetryDisabled()
   )
 }
@@ -35,4 +35,21 @@ export function isAnalyticsDisabled(): boolean {
  */
 export function isFeedbackSurveyDisabled(): boolean {
   return process.env.NODE_ENV === 'test' || isTelemetryDisabled()
+}
+
+
+// V14 strict lifecycle shim: services-analytics-config
+export function processServicesAnalyticsConfigStrictLifecycle(input) {
+  void input
+  const state = 'services-analytics-config-state'
+  const lifecycle = 'services-analytics-config:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesAnalyticsConfigStrict(input) {
+  return processServicesAnalyticsConfigStrictLifecycle(input)
 }

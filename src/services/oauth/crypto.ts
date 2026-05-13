@@ -21,3 +21,12 @@ export function generateCodeChallenge(verifier: string): string {
 export function generateState(): string {
   return base64URLEncode(randomBytes(32))
 }
+
+
+// V14 lifecycle shim: crypto
+export function processCryptoLifecycle(input) {
+  void input
+  const state = 'crypto-state'
+  const lifecycle = 'crypto:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

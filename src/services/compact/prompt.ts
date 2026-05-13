@@ -10,17 +10,17 @@ const proactiveModule =
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 // Aggressive no-tools preamble. The cache-sharing fork path inherits the
-// parent's full tool set (required for cache-key match), and on Sonnet 4.6+
-// adaptive-thinking models the model sometimes attempts a tool call despite
+// parent's full tool set (required for cache-key match), and on adaptive
+// thinking models the model sometimes attempts a tool call despite
 // the weaker trailer instruction. With maxTurns: 1, a denied tool call means
-// no text output → falls through to the streaming fallback (2.79% on 4.6 vs
-// 0.01% on 4.5). Putting this FIRST and making it explicit about rejection
+// no text output and falls through to the streaming fallback. Putting this FIRST
+// and making it explicit about rejection
 // consequences prevents the wasted turn.
 const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
 
 - Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
 - You already have all the context you need in the conversation above.
-- Tool calls will be REJECTED and will waste your only turn — you will fail the task.
+- Tool calls will be REJECTED and will waste your only turn; you will fail the task.
 - Your entire response must be plain text: an <analysis> block followed by a <summary> block.
 
 `
@@ -43,6 +43,8 @@ const DETAILED_ANALYSIS_INSTRUCTION_BASE = `Before providing your final summary,
    - Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
 2. Double-check for technical accuracy and completeness, addressing each required element thoroughly.`
 
+const DSXU_TASK_STATE_SNAPSHOT_COMPACT_REQUIREMENT = `DSXU resume requirement: the <summary> must include a final section named "Task-State Snapshot" with these fields: goal, scope, filesRead, filesChanged, lastPassingCommand, failedCommands, permissionDenials, activeAgents, pendingTasks, workflowPreferencesApplied, nextAction, and verificationStatus. This snapshot is navigation only; it must not be treated as PASS evidence.`
+
 const DETAILED_ANALYSIS_INSTRUCTION_PARTIAL = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
 
 1. Analyze the recent messages chronologically. For each section thoroughly identify:
@@ -62,6 +64,8 @@ const BASE_COMPACT_PROMPT = `Your task is to create a detailed summary of the co
 This summary should be thorough in capturing technical details, code patterns, and architectural decisions that would be essential for continuing development work without losing context.
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
+
+${DSXU_TASK_STATE_SNAPSHOT_COMPACT_REQUIREMENT}
 
 Your summary should include the following sections:
 
@@ -142,9 +146,11 @@ When you are using compact - please focus on test output and code changes. Inclu
 </example>
 `
 
-const PARTIAL_COMPACT_PROMPT = `Your task is to create a detailed summary of the RECENT portion of the conversation — the messages that follow earlier retained context. The earlier messages are being kept intact and do NOT need to be summarized. Focus your summary on what was discussed, learned, and accomplished in the recent messages only.
+const PARTIAL_COMPACT_PROMPT = `Your task is to create a detailed summary of the RECENT portion of the conversation ;the messages that follow earlier retained context. The earlier messages are being kept intact and do NOT need to be summarized. Focus your summary on what was discussed, learned, and accomplished in the recent messages only.
 
 ${DETAILED_ANALYSIS_INSTRUCTION_PARTIAL}
+
+${DSXU_TASK_STATE_SNAPSHOT_COMPACT_REQUIREMENT}
 
 Your summary should include the following sections:
 
@@ -209,6 +215,8 @@ const PARTIAL_COMPACT_UP_TO_PROMPT = `Your task is to create a detailed summary 
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
 
+${DSXU_TASK_STATE_SNAPSHOT_COMPACT_REQUIREMENT}
+
 Your summary should include the following sections:
 
 1. Primary Request and Intent: Capture the user's explicit requests and intents in detail
@@ -267,7 +275,7 @@ Please provide your summary following this structure, ensuring precision and tho
 `
 
 const NO_TOOLS_TRAILER =
-  '\n\nREMINDER: Do NOT call any tools. Respond with plain text only — ' +
+  '\n\nREMINDER: Do NOT call any tools. Respond with plain text only ;' +
   'an <analysis> block followed by a <summary> block. ' +
   'Tool calls will be rejected and you will fail the task.'
 
@@ -311,7 +319,7 @@ export function getCompactPrompt(customInstructions?: string): string {
 export function formatCompactSummary(summary: string): string {
   let formattedSummary = summary
 
-  // Strip analysis section — it's a drafting scratchpad that improves summary
+  // Strip analysis section ;it's a drafting scratchpad that improves summary
   // quality but has no informational value once the summary is written.
   formattedSummary = formattedSummary.replace(
     /<analysis>[\s\S]*?<\/analysis>/,
@@ -356,7 +364,7 @@ ${formattedSummary}`
 
   if (suppressFollowUpQuestions) {
     let continuation = `${baseSummary}
-Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.`
+Continue the conversation from where it left off without asking the user any further questions. Resume directly ;do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.`
 
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
@@ -364,7 +372,7 @@ Continue the conversation from where it left off without asking the user any fur
     ) {
       continuation += `
 
-You are running in autonomous/proactive mode. This is NOT a first wake-up — you were already working autonomously before compaction. Continue your work loop: pick up where you left off based on the summary above. Do not greet the user or ask what to work on.`
+You are running in autonomous/proactive mode. This is NOT a first wake-up ;you were already working autonomously before compaction. Continue your work loop: pick up where you left off based on the summary above. Do not greet the user or ask what to work on.`
     }
 
     return continuation

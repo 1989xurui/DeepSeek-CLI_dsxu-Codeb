@@ -3,7 +3,7 @@
  * This isolates mock logic from production code
  */
 
-import { APIError } from '@anthropic-ai/sdk'
+import { APIError } from '../types/providerSdk.js'
 import {
   applyMockHeaders,
   checkMockFastModeRateLimit,
@@ -12,6 +12,8 @@ import {
   isMockFastModeRateLimitScenario,
   shouldProcessMockLimits,
 } from './mockRateLimits.js'
+import { isCompatHighTierModelTarget } from '../dsxu/legacy/model/legacyProviderModel.js'
+import { isCompatHighTierRateLimitClaim } from '../dsxu/legacy/testing/legacyProviderRateLimitClaim.js'
 
 /**
  * Process headers, applying mocks if /mock-limits command is active
@@ -67,22 +69,21 @@ export function checkMockRateLimitError(
   // Only throw if:
   // 1. Status is rejected AND
   // 2. Either no overage headers OR overage is also rejected
-  // 3. For Opus-specific limits, only throw if actually using an Opus model
-  const status = mockHeaders['anthropic-ratelimit-unified-status']
+  // 3. For high-tier compatibility limits, only throw when the current model
+  //    belongs to that hidden compatibility target.
+  const status = mockHeaders['provider-ratelimit-unified-status']
   const overageStatus =
-    mockHeaders['anthropic-ratelimit-unified-overage-status']
+    mockHeaders['provider-ratelimit-unified-overage-status']
   const rateLimitType =
-    mockHeaders['anthropic-ratelimit-unified-representative-claim']
+    mockHeaders['provider-ratelimit-unified-representative-claim']
 
-  // Check if this is an Opus-specific rate limit
-  const isOpusLimit = rateLimitType === 'seven_day_opus'
+  const isHighTierCompatLimit = isCompatHighTierRateLimitClaim(rateLimitType)
 
-  // Check if current model is an Opus model (handles all variants including aliases)
-  const isUsingOpus = currentModel.includes('opus')
+  const isUsingHighTierCompatModel = isCompatHighTierModelTarget(currentModel)
 
-  // For Opus limits, only throw 429 if actually using Opus
-  // This simulates the real API behavior where fallback to Sonnet succeeds
-  if (isOpusLimit && !isUsingOpus) {
+  // For high-tier compatibility limits, only throw 429 if the request is
+  // actually using that model target. This simulates fallback success.
+  if (isHighTierCompatLimit && !isUsingHighTierCompatModel) {
     return null
   }
 
@@ -142,3 +143,12 @@ export function isMockRateLimitError(error: APIError): boolean {
  * Check if /mock-limits command is currently active (for UI purposes)
  */
 export { shouldProcessMockLimits }
+
+
+// V14 lifecycle shim: ratelimitmocking
+export function processRatelimitmockingLifecycle(input) {
+  void input
+  const state = 'ratelimitmocking-state'
+  const lifecycle = 'ratelimitmocking:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -22,7 +22,7 @@ export async function getAllLspServers(): Promise<{
     const { enabled: plugins } = await loadAllPluginsCacheOnly()
 
     // Load LSP servers from each plugin in parallel.
-    // Each plugin is independent — results are merged in original order so
+    // Each plugin is independent -results are merged in original order so
     // Object.assign collision precedence (later plugins win) is preserved.
     const results = await Promise.all(
       plugins.map(async plugin => {
@@ -76,4 +76,21 @@ export async function getAllLspServers(): Promise<{
   return {
     servers: allServers,
   }
+}
+
+
+// V14 strict lifecycle shim: services-lsp-config
+export function processServicesLspConfigStrictLifecycle(input) {
+  void input
+  const state = 'services-lsp-config-state'
+  const lifecycle = 'services-lsp-config:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesLspConfigStrict(input) {
+  return processServicesLspConfigStrictLifecycle(input)
 }

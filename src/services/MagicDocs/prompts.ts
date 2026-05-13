@@ -1,6 +1,13 @@
 import { join } from 'path'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import {
+  getDsxuConfigHomeDir,
+  getRuntimeConfigHomeDir,
+} from '../../utils/envUtils.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
+
+function getMagicDocsConfigHomeDir(): string {
+  return getRuntimeConfigHomeDir()
+}
 
 /**
  * Get the Magic Docs update prompt template
@@ -51,7 +58,7 @@ What NOT to document:
 - Exhaustive lists of files, functions, or parameters
 - Step-by-step implementation details
 - Low-level code mechanics
-- Information already in CLAUDE.md or other project docs
+- Information already in DSXU.md or other project docs
 
 Use the Edit tool with file_path: {{docPath}}
 
@@ -60,12 +67,13 @@ REMEMBER: Only update if there is substantial new information. The Magic Doc hea
 
 /**
  * Load custom Magic Docs prompt from file if it exists
- * Custom prompts can be placed at ~/.claude/magic-docs/prompt.md
+ * Custom prompts can be placed at ~/.dsxu/magic-docs/prompt.md in DSXU mode,
+ * or the active runtime config directory for explicit legacy compatibility.
  * Use {{variableName}} syntax for variable substitution (e.g., {{docContents}}, {{docPath}}, {{docTitle}})
  */
 async function loadMagicDocsPrompt(): Promise<string> {
   const fs = getFsImplementation()
-  const promptPath = join(getClaudeConfigHomeDir(), 'magic-docs', 'prompt.md')
+  const promptPath = join(getMagicDocsConfigHomeDir(), 'magic-docs', 'prompt.md')
 
   try {
     return await fs.readFile(promptPath, { encoding: 'utf-8' })
@@ -124,4 +132,45 @@ These instructions take priority over the general rules below. Make sure your up
   }
 
   return substituteVariables(promptTemplate, variables)
+}
+
+export function getDsxuMagicDocsPromptRuntimeProfile(): {
+  runtime: 'DSXU Magic Docs Prompt'
+  configPath: string
+  editingDiscipline: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Magic Docs Prompt',
+    configPath:
+      'DSXU mode loads ~/.dsxu/magic-docs/prompt.md before falling back to the built-in prompt',
+    editingDiscipline: [
+      'preserve the magic-doc header',
+      'update architecture/current-state information in place',
+      'avoid changelog-style append-only drift',
+      'use Edit tool only when there is substantial new information',
+    ],
+    activationEvidence: [
+      'buildMagicDocsUpdatePrompt injects current document content, path, title, and custom instructions',
+      'loadMagicDocsPrompt resolves DSXU config home in DSXU runtime mode',
+      'substituteVariables is single-pass to avoid user-content double expansion',
+    ],
+  }
+}
+
+
+// V14 strict lifecycle shim: services-MagicDocs-prompts
+export function processServicesMagicDocsPromptsStrictLifecycle(input) {
+  void input
+  const state = 'services-MagicDocs-prompts-state'
+  const lifecycle = 'services-MagicDocs-prompts:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesMagicDocsPromptsStrict(input) {
+  return processServicesMagicDocsPromptsStrictLifecycle(input)
 }

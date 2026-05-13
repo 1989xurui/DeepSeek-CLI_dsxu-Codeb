@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { IncomingMessage, ServerResponse } from 'http'
 import { createServer, type Server } from 'http'
 import type { AddressInfo } from 'net'
 import { logEvent } from 'src/services/analytics/index.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { logError } from '../../utils/log.js'
-import { shouldUseClaudeAIAuth } from './client.js'
+import { shouldUseProviderCloudAuth } from './client.js'
 
 /**
  * Temporary localhost HTTP server that listens for OAuth authorization code redirects.
@@ -92,8 +93,8 @@ export class AuthCodeListener {
     }
 
     // Default behavior: Choose success page based on granted permissions
-    const successUrl = shouldUseClaudeAIAuth(scopes)
-      ? getOauthConfig().CLAUDEAI_SUCCESS_URL
+    const successUrl = shouldUseProviderCloudAuth(scopes)
+      ? getOauthConfig().REMOTE_CLOUD_SUCCESS_URL
       : getOauthConfig().CONSOLE_SUCCESS_URL
 
     // Send browser to success page
@@ -112,7 +113,7 @@ export class AuthCodeListener {
     if (!this.pendingResponse) return
 
     // TODO: swap to a different url once we have an error page
-    const errorUrl = getOauthConfig().CLAUDEAI_SUCCESS_URL
+    const errorUrl = getOauthConfig().REMOTE_CLOUD_SUCCESS_URL
 
     // Send browser to error page
     this.pendingResponse.writeHead(302, { Location: errorUrl })

@@ -15,3 +15,12 @@ export function getSessionsSinceLastShown(tipId: string): number {
   if (!lastShown) return Infinity
   return config.numStartups - lastShown
 }
+
+
+// V14 lifecycle shim: tiphistory
+export function processTiphistoryLifecycle(input) {
+  void input
+  const state = 'tiphistory-state'
+  const lifecycle = 'tiphistory:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

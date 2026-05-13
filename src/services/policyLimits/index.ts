@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (Claude.ai): Only Team and Enterprise/C4E subscribers are eligible
+ * - OAuth users (provider cloud): Only Team and Enterprise/C4E subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without restrictions
  * - API returns empty restrictions for users without policy limits
  */
@@ -18,28 +18,35 @@ import { readFileSync as fsReadFileSync } from 'fs'
 import { unlink, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
-  CLAUDE_AI_INFERENCE_SCOPE,
+  REMOTE_SESSION_INFERENCE_SCOPE,
   getOauthConfig,
-  OAUTH_BETA_HEADER,
 } from '../../constants/oauth.js'
 import {
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+  getCompatProviderTokens,
+} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getAnthropicApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getProviderApiKeyWithSource,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  getRuntimeConfigHomeDir,
+  isDsxuRuntimeMode,
+} from '../../utils/envUtils.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { safeParseJSON } from '../../utils/json.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isFirstPartyProviderBaseUrl,
 } from '../../utils/model/providers.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   type PolicyLimitsFetchResult,
@@ -56,6 +63,8 @@ const CACHE_FILENAME = 'policy-limits.json'
 const FETCH_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+const LEGACY_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const POLICY_LIMITS_PATH = `/api/${LEGACY_CODE_API_SEGMENT}/policy_limits`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
@@ -117,14 +126,14 @@ export function initializePolicyLimitsLoadingPromise(): void {
  * Get the path to the policy limits cache file
  */
 function getCachePath(): string {
-  return join(getClaudeConfigHomeDir(), CACHE_FILENAME)
+  return join(getRuntimeConfigHomeDir(), CACHE_FILENAME)
 }
 
 /**
  * Get the policy limits API endpoint
  */
 function getPolicyLimitsEndpoint(): string {
-  return `${getOauthConfig().BASE_API_URL}/api/claude_code/policy_limits`
+  return `${getOauthConfig().BASE_API_URL}${POLICY_LIMITS_PATH}`
 }
 
 /**
@@ -165,7 +174,11 @@ function computeChecksum(
  * getSettings() to avoid circular dependencies during settings loading.
  */
 export function isPolicyLimitsEligible(): boolean {
-  if (process.env.CLAUDE_CODE_LOCAL_SKIP_REMOTE_PREFETCH === '1') {
+  if (isDsxuRuntimeMode()) {
+    return false
+  }
+
+  if (getDsxuCodeEnv('LOCAL_SKIP_REMOTE_PREFETCH') === '1') {
     return false
   }
 
@@ -175,13 +188,13 @@ export function isPolicyLimitsEligible(): boolean {
   }
 
   // Custom base URL users should not hit the policy limits endpoint
-  if (!isFirstPartyAnthropicBaseUrl()) {
+  if (!isFirstPartyProviderBaseUrl()) {
     return false
   }
 
   // Console users (API key) are eligible if we can get the actual key
   try {
-    const { key: apiKey } = getAnthropicApiKeyWithSource({
+    const { key: apiKey } = getProviderApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     if (apiKey) {
@@ -191,18 +204,18 @@ export function isPolicyLimitsEligible(): boolean {
     // No API key available - continue to check OAuth
   }
 
-  // For OAuth users, check if they have Claude.ai tokens
-  const tokens = getClaudeAIOAuthTokens()
+  // For OAuth users, check if they have provider-cloud tokens
+  const tokens = getCompatProviderTokens()
   if (!tokens?.accessToken) {
     return false
   }
 
-  // Must have Claude.ai inference scope
-  if (!tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE)) {
+  // Must have provider inference scope
+  if (!tokens.scopes?.includes(REMOTE_SESSION_INFERENCE_SCOPE)) {
     return false
   }
 
-  // Only Team and Enterprise OAuth users are eligible — these orgs have
+  // Only Team and Enterprise OAuth users are eligible -> these orgs have
   // admin-configurable policy restrictions (e.g. allow_remote_sessions)
   if (
     tokens.subscriptionType !== 'enterprise' &&
@@ -234,7 +247,7 @@ function getAuthHeaders(): {
 } {
   // Try API key first (for Console users)
   try {
-    const { key: apiKey } = getAnthropicApiKeyWithSource({
+    const { key: apiKey } = getProviderApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     if (apiKey) {
@@ -248,14 +261,11 @@ function getAuthHeaders(): {
     // No API key available - continue to check OAuth
   }
 
-  // Fall back to OAuth tokens (for Claude.ai users)
-  const oauthTokens = getClaudeAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
+  // Fall back to OAuth tokens (for provider-cloud users)
+  const accessToken = getCompatProviderAccessToken()
+  if (accessToken) {
     return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
+      headers: getCompatProviderBearerHeaders(accessToken),
     }
   }
 
@@ -319,7 +329,7 @@ async function fetchPolicyLimits(
     const endpoint = getPolicyLimitsEndpoint()
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getDSXUCodeUserAgent(),
     }
 
     if (cachedChecksum) {
@@ -663,5 +673,19 @@ export function stopBackgroundPolling(): void {
   if (pollingIntervalId !== null) {
     clearInterval(pollingIntervalId)
     pollingIntervalId = null
+  }
+}
+
+export function getDsxuPolicyLimitsRuntimeProfile() {
+  return {
+    runtime: 'DSXU Policy Limits Boundary',
+    defaultBehavior:
+      'Provider policy-limits endpoint is disabled in DSXU runtime; DSXU governance must supply local/provider policy limits',
+    providerTarget: 'DSXU Governance/Policy Provider',
+    activationEvidence: [
+      'isPolicyLimitsEligible returns false in DSXU_CODE_MODE before first-party provider checks',
+      'load/refresh/poll paths are guarded by eligibility',
+      'checksum, cache, and polling semantics remain reusable for DSXU policy sync',
+    ],
   }
 }

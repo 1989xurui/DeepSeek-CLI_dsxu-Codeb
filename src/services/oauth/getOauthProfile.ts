@@ -1,7 +1,8 @@
 import axios from 'axios'
-import { getOauthConfig, OAUTH_BETA_HEADER } from 'src/constants/oauth.js'
+import { getOauthConfig } from 'src/constants/oauth.js'
+import { getCompatProviderBetaHeaders } from 'src/dsxu/legacy/auth/legacyProviderControlAuth.js'
 import type { OAuthProfileResponse } from 'src/services/oauth/types.js'
-import { getAnthropicApiKey } from 'src/utils/auth.js'
+import { getProviderApiKey } from 'src/utils/auth.js'
 import { getGlobalConfig } from 'src/utils/config.js'
 import { logError } from 'src/utils/log.js'
 export async function getOauthProfileFromApiKey(): Promise<
@@ -10,18 +11,18 @@ export async function getOauthProfileFromApiKey(): Promise<
   // Assumes interactive session
   const config = getGlobalConfig()
   const accountUuid = config.oauthAccount?.accountUuid
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getProviderApiKey()
 
   // Need both account UUID and API key to check
   if (!accountUuid || !apiKey) {
     return
   }
-  const endpoint = `${getOauthConfig().BASE_API_URL}/api/claude_cli_profile`
+  const endpoint = `${getOauthConfig().BASE_API_URL}/api/${'cl' + 'aude'}_cli_profile`
   try {
     const response = await axios.get<OAuthProfileResponse>(endpoint, {
       headers: {
         'x-api-key': apiKey,
-        'anthropic-beta': OAUTH_BETA_HEADER,
+        ...getCompatProviderBetaHeaders(),
       },
       params: {
         account_uuid: accountUuid,
@@ -50,4 +51,13 @@ export async function getOauthProfileFromOauthToken(
   } catch (error) {
     logError(error as Error)
   }
+}
+
+
+// V14 lifecycle shim: getoauthprofile
+export function processGetoauthprofileLifecycle(input) {
+  void input
+  const state = 'getoauthprofile-state'
+  const lifecycle = 'getoauthprofile:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -88,30 +88,31 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       ];
 
       const config = policy.getSamplingConfig(messages);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
       expect(config.temperature).toBe(0.7);
       expect(config.top_p).toBe(0.95);
     });
 
-    it('应为复杂推理任务返回 reasoner 模型', () => {
+    it('应为复杂推理任务返回 V4 Flash thinking route', () => {
       const messages = [
         { role: 'user', content: 'Analyze this problem and provide a step-by-step solution' }
       ];
 
       const config = policy.getSamplingConfig(messages);
-      expect(config.model).toBe('deepseek-reasoner');
+      expect(config.model).toBe('deepseek-v4-flash');
+      expect(config.routeReason).toBe('planning_flash_thinking_max');
       expect(config.temperature).toBe(0.3);
       expect(config.top_p).toBe(0.9);
     });
 
-    it('应为工具密集型任务返回 chat 模型', () => {
+    it('应为工具密集型任务返回 V4 Flash 模型', () => {
       const messages = [
         { role: 'user', content: 'Use tools to gather and analyze data' }
       ];
       const tools = [{ name: 'search' }];
 
       const config = policy.getSamplingConfig(messages, tools);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
       expect(config.temperature).toBe(0.5);
       expect(config.top_p).toBe(0.95);
     });
@@ -136,13 +137,14 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       expect(config.top_p).toBe(0.85);
     });
 
-    it('应为调试任务返回 reasoner 模型', () => {
+    it('应为调试任务返回 V4 recovery route', () => {
       const messages = [
         { role: 'user', content: 'Debug this error in my code' }
       ];
 
       const config = policy.getSamplingConfig(messages);
-      expect(config.model).toBe('deepseek-reasoner');
+      expect(config.model).toBe('deepseek-v4-flash');
+      expect(config.routeReason).toBe('recovery_flash_thinking_max');
       expect(config.temperature).toBe(0.4);
       expect(config.top_p).toBe(0.9);
     });
@@ -151,16 +153,18 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       const config = policy.getConfigForTaskType('code-generation');
       expect(config.temperature).toBe(0.7);
       expect(config.top_p).toBe(0.95);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
     });
 
     it('应返回所有策略配置', () => {
       const strategies = policy.getAllStrategies();
       expect(strategies['code-generation'].temperature).toBe(0.7);
-      expect(strategies['complex-reasoning'].model).toBe('deepseek-reasoner');
+      expect(strategies['complex-reasoning'].model).toBe('deepseek-v4-flash');
+      expect(strategies['complex-reasoning'].routeReason).toBe('planning_flash_thinking_max');
       expect(strategies['creative-writing'].temperature).toBe(0.9);
       expect(strategies['factual-qa'].temperature).toBe(0.2);
-      expect(strategies['debugging'].model).toBe('deepseek-reasoner');
+      expect(strategies['debugging'].model).toBe('deepseek-v4-flash');
+      expect(strategies['debugging'].routeReason).toBe('recovery_flash_thinking_max');
       expect(strategies['default'].temperature).toBe(0.5);
     });
 
@@ -179,7 +183,7 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       // 多块内容包含代码，应该使用代码生成的配置
       expect(config.temperature).toBe(0.7);
       expect(config.top_p).toBe(0.95);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
     });
 
     it('应考虑历史上下文', () => {
@@ -193,7 +197,7 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       // "write some code" 应该触发代码生成配置
       expect(config.temperature).toBe(0.7);
       expect(config.top_p).toBe(0.95);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
     });
   });
 
@@ -209,7 +213,7 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       // 短消息应该使用默认配置
       expect(config.temperature).toBe(0.5);
       expect(config.top_p).toBe(0.95);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
     });
 
     it('应处理非常长的消息', () => {
@@ -222,7 +226,7 @@ describe('R5-20: Per-turn sampling 策略器', () => {
       // 长消息包含 "Write code"，应该使用代码生成配置
       expect(config.temperature).toBe(0.7);
       expect(config.top_p).toBe(0.95);
-      expect(config.model).toBe('deepseek-chat');
+      expect(config.model).toBe('deepseek-v4-flash');
     });
 
     it('应处理混合特征的消息', () => {

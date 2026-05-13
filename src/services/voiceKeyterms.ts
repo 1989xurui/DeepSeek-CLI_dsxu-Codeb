@@ -12,7 +12,7 @@ import { getBranch } from '../utils/git.js'
 
 const GLOBAL_KEYTERMS: readonly string[] = [
   // Terms Deepgram consistently mangles without keyword hints.
-  // Note: "Claude" and "Anthropic" are already server-side base keyterms.
+  // Note: provider brand terms are already server-side base keyterms.
   // Avoid terms nobody speaks aloud as-spelled (stdout → "standard out").
   'MCP',
   'symlink',
@@ -65,7 +65,7 @@ export async function getVoiceKeyterms(
 ): Promise<string[]> {
   const terms = new Set<string>(GLOBAL_KEYTERMS)
 
-  // Project root basename as a single term — users say "claude CLI internal"
+  // Project root basename as a single term — users say product and repo names aloud
   // as a phrase, not isolated words. Keeping the whole basename lets the
   // STT's keyterm boosting match the phrase regardless of separator.
   try {
@@ -103,4 +103,13 @@ export async function getVoiceKeyterms(
   }
 
   return [...terms].slice(0, MAX_KEYTERMS)
+}
+
+
+// V14 lifecycle shim: voicekeyterms
+export function processVoicekeytermsLifecycle(input) {
+  void input
+  const state = 'voicekeyterms-state'
+  const lifecycle = 'voicekeyterms:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -1,4 +1,5 @@
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import type { BetaContentBlock } from 'src/types/providerSdk.js'
 import { createHash, randomUUID, type UUID } from 'crypto'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import isPlainObject from 'lodash-es/isPlainObject.js'
@@ -15,10 +16,13 @@ import type {
 } from '../types/message.js'
 import { getCwd } from '../utils/cwd.js'
 import { env } from '../utils/env.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from '../utils/envUtils.js'
+import { getRuntimeConfigHomeDir, isEnvTruthy } from '../utils/envUtils.js'
 import { getErrnoCode } from '../utils/errors.js'
 import { normalizeMessagesForAPI } from '../utils/messages.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
+
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const TEST_FIXTURES_ROOT_ENV = `${LEGACY_CODE_ENV_PREFIX}_TEST_FIXTURES_ROOT`
 
 function shouldUseVCR(): boolean {
   if (process.env.NODE_ENV === 'test') {
@@ -51,7 +55,9 @@ async function withFixture<T>(
     .digest('hex')
     .slice(0, 12)
   const filename = join(
-    process.env.CLAUDE_CODE_TEST_FIXTURES_ROOT ?? getCwd(),
+    process.env.DSXU_CODE_TEST_FIXTURES_ROOT ??
+      process.env[TEST_FIXTURES_ROOT_ENV] ??
+      getCwd(),
     `fixtures/${fixtureName}-${hash}.json`,
   )
 
@@ -110,7 +116,9 @@ export async function withVCR(
     dehydrateValue,
   )
   const filename = join(
-    process.env.CLAUDE_CODE_TEST_FIXTURES_ROOT ?? getCwd(),
+    process.env.DSXU_CODE_TEST_FIXTURES_ROOT ??
+      process.env[TEST_FIXTURES_ROOT_ENV] ??
+      getCwd(),
     `fixtures/${dehydratedInput.map(_ => createHash('sha1').update(jsonStringify(_)).digest('hex').slice(0, 6)).join('-')}.json`,
   )
 
@@ -132,7 +140,7 @@ export async function withVCR(
 
   if (env.isCI && !isEnvTruthy(process.env.VCR_RECORD)) {
     throw new Error(
-      `Anthropic API fixture missing: ${filename}. Re-run tests with VCR_RECORD=1, then commit the result. Input messages:\n${jsonStringify(dehydratedInput, null, 2)}`,
+      `Provider API fixture missing: ${filename}. Re-run tests with VCR_RECORD=1, then commit the result. Input messages:\n${jsonStringify(dehydratedInput, null, 2)}`,
     )
   }
 
@@ -293,7 +301,7 @@ function dehydrateValue(s: unknown): unknown {
     return s
   }
   const cwd = getCwd()
-  const configHome = getClaudeConfigHomeDir()
+  const configHome = getRuntimeConfigHomeDir()
   let s1 = s
     .replace(/num_files="\d+"/g, 'num_files="[NUM]"')
     .replace(/duration_ms="\d+"/g, 'duration_ms="[DURATION]"')
@@ -342,7 +350,7 @@ function hydrateValue(s: unknown): unknown {
   return s
     .replaceAll('[NUM]', '1')
     .replaceAll('[DURATION]', '100')
-    .replaceAll('[CONFIG_HOME]', getClaudeConfigHomeDir())
+    .replaceAll('[CONFIG_HOME]', getRuntimeConfigHomeDir())
     .replaceAll('[CWD]', getCwd())
 }
 

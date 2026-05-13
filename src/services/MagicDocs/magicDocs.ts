@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Magic Docs automatically maintains markdown documentation files marked with special headers.
  * When a file with "# MAGIC DOC: [title]" is read, it runs periodically in the background
@@ -10,6 +11,7 @@ import type { Tool, ToolUseContext } from '../../Tool.js'
 import type { BuiltInAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
+import { getCompatDefaultTierModelId } from '../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
 import {
   FileReadTool,
   type Output as FileReadToolOutput,
@@ -101,7 +103,10 @@ function getMagicDocsAgent(): BuiltInAgentDefinition {
     agentType: 'magic-docs',
     whenToUse: 'Update Magic Docs',
     tools: [FILE_EDIT_TOOL_NAME], // Only allow Edit
-    model: 'sonnet',
+    model:
+      process.env.DSXU_CODE_MODE === '1'
+        ? 'flash'
+        : getCompatDefaultTierModelId(),
     source: 'built-in',
     baseDir: 'built-in',
     getSystemPrompt: () => '', // Will use override systemPrompt
@@ -120,7 +125,7 @@ async function updateMagicDoc(
 
   // Clone the FileStateCache to isolate Magic Docs operations. Delete this
   // doc's entry so FileReadTool's dedup doesn't return a file_unchanged
-  // stub — we need the actual content to re-detect the header.
+  // stub ...we need the actual content to re-detect the header.
   const clonedReadFileState = cloneFileStateCache(toolUseContext.readFileState)
   clonedReadFileState.delete(docInfo.path)
   const clonedToolUseContext: ToolUseContext = {

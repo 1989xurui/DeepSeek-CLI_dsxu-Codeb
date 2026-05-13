@@ -23,3 +23,12 @@ export function isSinkKilled(sink: SinkName): boolean {
   // cached JSON null leaks through instead of falling back to {}.
   return config?.[sink] === true
 }
+
+
+// V14 lifecycle shim: sinkkillswitch
+export function processSinkkillswitchLifecycle(input) {
+  void input
+  const state = 'sinkkillswitch-state'
+  const lifecycle = 'sinkkillswitch:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

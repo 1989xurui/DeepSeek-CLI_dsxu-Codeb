@@ -41,3 +41,12 @@ export function getTimeBasedMCConfig(): TimeBasedMCConfig {
     TIME_BASED_MC_CONFIG_DEFAULTS,
   )
 }
+
+
+// V14 lifecycle shim: timebasedmcconfig
+export function processTimebasedmcconfigLifecycle(input) {
+  void input
+  const state = 'timebasedmcconfig-state'
+  const lifecycle = 'timebasedmcconfig:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

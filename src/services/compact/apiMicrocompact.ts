@@ -1,34 +1,35 @@
-import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
-import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
-import { FILE_WRITE_TOOL_NAME } from 'src/tools/FileWriteTool/prompt.js'
-import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
-import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from 'src/tools/NotebookEditTool/constants.js'
-import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
-import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
-import { SHELL_TOOL_NAMES } from 'src/utils/shell/shellToolUtils.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
+import { DEEPSEEK_V4_CONTEXT_WINDOW } from '../../utils/model/deepseekV4Control.js'
 
 // docs: https://docs.google.com/document/d/1oCT4evvWTh3P6z-kcfNQwWTCxAhkoFndSaNS9Gm40uw/edit?tab=t.0
 
-// Default values for context management strategies
-// Match client-side microcompact token values
-const DEFAULT_MAX_INPUT_TOKENS = 180_000 // Typical warning threshold
-const DEFAULT_TARGET_INPUT_TOKENS = 40_000 // Keep last 40k tokens like client-side
+// Default values for context management strategies.
+// Keep these window-aware so DSXU does not fall back to old fixed 128K-era
+// or fixed-small-pack compaction behavior on DeepSeek V4.
+const DEFAULT_TRIGGER_RATIO = 0.75
+const DEFAULT_TARGET_RATIO = 0.25
+const DEFAULT_CONTEXT_WINDOW = DEEPSEEK_V4_CONTEXT_WINDOW
+const DEFAULT_MAX_INPUT_TOKENS = Math.floor(DEFAULT_CONTEXT_WINDOW * DEFAULT_TRIGGER_RATIO)
+const DEFAULT_TARGET_INPUT_TOKENS = Math.floor(DEFAULT_CONTEXT_WINDOW * DEFAULT_TARGET_RATIO)
+export const API_MICROCOMPACT_DEFAULT_MAX_INPUT_TOKENS =
+  DEFAULT_MAX_INPUT_TOKENS
+export const API_MICROCOMPACT_DEFAULT_TARGET_INPUT_TOKENS =
+  DEFAULT_TARGET_INPUT_TOKENS
 
 const TOOLS_CLEARABLE_RESULTS = [
-  ...SHELL_TOOL_NAMES,
-  GLOB_TOOL_NAME,
-  GREP_TOOL_NAME,
-  FILE_READ_TOOL_NAME,
-  WEB_FETCH_TOOL_NAME,
-  WEB_SEARCH_TOOL_NAME,
+  'Bash',
+  'PowerShell',
+  'Glob',
+  'Grep',
+  'Read',
+  'WebFetch',
+  'WebSearch',
 ]
 
 const TOOLS_CLEARABLE_USES = [
-  FILE_EDIT_TOOL_NAME,
-  FILE_WRITE_TOOL_NAME,
-  NOTEBOOK_EDIT_TOOL_NAME,
+  'Edit',
+  'Write',
+  'NotebookEdit',
 ]
 
 // Context management strategy types matching API documentation
@@ -60,16 +61,54 @@ export type ContextManagementConfig = {
   edits: ContextEditStrategy[]
 }
 
+export type APIContextManagementTokenPolicy = {
+  contextWindow: number
+  triggerTokens: number
+  targetTokens: number
+  clearAtLeastTokens: number
+}
+
+function parsePositiveEnvInt(value: string | undefined): number | undefined {
+  if (!value) return undefined
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
+export function resolveAPIContextManagementTokenPolicy(options?: {
+  contextWindow?: number
+  triggerTokens?: number
+  targetTokens?: number
+}): APIContextManagementTokenPolicy {
+  const contextWindow = Math.max(1, options?.contextWindow ?? DEFAULT_CONTEXT_WINDOW)
+  const triggerTokens =
+    options?.triggerTokens ??
+    parsePositiveEnvInt(process.env.API_MAX_INPUT_TOKENS) ??
+    Math.floor(contextWindow * DEFAULT_TRIGGER_RATIO)
+  const targetTokens =
+    options?.targetTokens ??
+    parsePositiveEnvInt(process.env.API_TARGET_INPUT_TOKENS) ??
+    Math.floor(contextWindow * DEFAULT_TARGET_RATIO)
+
+  return {
+    contextWindow,
+    triggerTokens,
+    targetTokens,
+    clearAtLeastTokens: Math.max(0, triggerTokens - targetTokens),
+  }
+}
+
 // API-based microcompact implementation that uses native context management
 export function getAPIContextManagement(options?: {
   hasThinking?: boolean
   isRedactThinkingActive?: boolean
   clearAllThinking?: boolean
+  contextWindow?: number
 }): ContextManagementConfig | undefined {
   const {
     hasThinking = false,
     isRedactThinkingActive = false,
     clearAllThinking = false,
+    contextWindow,
   } = options ?? {}
 
   const strategies: ContextEditStrategy[] = []
@@ -102,22 +141,17 @@ export function getAPIContextManagement(options?: {
   }
 
   if (useClearToolResults) {
-    const triggerThreshold = process.env.API_MAX_INPUT_TOKENS
-      ? parseInt(process.env.API_MAX_INPUT_TOKENS)
-      : DEFAULT_MAX_INPUT_TOKENS
-    const keepTarget = process.env.API_TARGET_INPUT_TOKENS
-      ? parseInt(process.env.API_TARGET_INPUT_TOKENS)
-      : DEFAULT_TARGET_INPUT_TOKENS
+    const tokenPolicy = resolveAPIContextManagementTokenPolicy({ contextWindow })
 
     const strategy: ContextEditStrategy = {
       type: 'clear_tool_uses_20250919',
       trigger: {
         type: 'input_tokens',
-        value: triggerThreshold,
+        value: tokenPolicy.triggerTokens,
       },
       clear_at_least: {
         type: 'input_tokens',
-        value: triggerThreshold - keepTarget,
+        value: tokenPolicy.clearAtLeastTokens,
       },
       clear_tool_inputs: TOOLS_CLEARABLE_RESULTS,
     }
@@ -126,22 +160,17 @@ export function getAPIContextManagement(options?: {
   }
 
   if (useClearToolUses) {
-    const triggerThreshold = process.env.API_MAX_INPUT_TOKENS
-      ? parseInt(process.env.API_MAX_INPUT_TOKENS)
-      : DEFAULT_MAX_INPUT_TOKENS
-    const keepTarget = process.env.API_TARGET_INPUT_TOKENS
-      ? parseInt(process.env.API_TARGET_INPUT_TOKENS)
-      : DEFAULT_TARGET_INPUT_TOKENS
+    const tokenPolicy = resolveAPIContextManagementTokenPolicy({ contextWindow })
 
     const strategy: ContextEditStrategy = {
       type: 'clear_tool_uses_20250919',
       trigger: {
         type: 'input_tokens',
-        value: triggerThreshold,
+        value: tokenPolicy.triggerTokens,
       },
       clear_at_least: {
         type: 'input_tokens',
-        value: triggerThreshold - keepTarget,
+        value: tokenPolicy.clearAtLeastTokens,
       },
       exclude_tools: TOOLS_CLEARABLE_USES,
     }
@@ -150,4 +179,13 @@ export function getAPIContextManagement(options?: {
   }
 
   return strategies.length > 0 ? { edits: strategies } : undefined
+}
+
+
+// V14 lifecycle shim: apimicrocompact
+export function processApimicrocompactLifecycle(input) {
+  void input
+  const state = 'apimicrocompact-state'
+  const lifecycle = 'apimicrocompact:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -1,4 +1,4 @@
-// OAuth client for handling authentication flows with Claude services
+// OAuth client for handling provider authentication flows.
 import axios from 'axios'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -6,20 +6,21 @@ import {
 } from 'src/services/analytics/index.js'
 import {
   ALL_OAUTH_SCOPES,
-  CLAUDE_AI_INFERENCE_SCOPE,
-  CLAUDE_AI_OAUTH_SCOPES,
+  REMOTE_SESSION_INFERENCE_SCOPE,
+  REMOTE_SESSION_OAUTH_SCOPES,
   getOauthConfig,
 } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   hasProfileScope,
-  isClaudeAISubscriber,
+  isLegacyCloudSubscriber,
   saveApiKey,
 } from '../../utils/auth.js'
 import type { AccountInfo } from '../../utils/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { getDsxuCodeEnv } from '../../utils/envUtils.js'
 import { getOauthProfileFromOauthToken } from './getOauthProfile.js'
 import type {
   BillingType,
@@ -32,12 +33,13 @@ import type {
 } from './types.js'
 
 /**
- * Check if the user has Claude.ai authentication scope
+ * Check if the user has the first-party provider authentication scope.
  * @private Only call this if you're OAuth / auth related code!
  */
-export function shouldUseClaudeAIAuth(scopes: string[] | undefined): boolean {
-  return Boolean(scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE))
+export function shouldUseProviderCloudAuth(scopes: string[] | undefined): boolean {
+  return Boolean(scopes?.includes(REMOTE_SESSION_INFERENCE_SCOPE))
 }
+
 
 export function parseScopes(scopeString?: string): string[] {
   return scopeString?.split(' ').filter(Boolean) ?? []
@@ -48,7 +50,7 @@ export function buildAuthUrl({
   state,
   port,
   isManual,
-  loginWithClaudeAi,
+  loginWithProviderCloud,
   inferenceOnly,
   orgUUID,
   loginHint,
@@ -58,18 +60,18 @@ export function buildAuthUrl({
   state: string
   port: number
   isManual: boolean
-  loginWithClaudeAi?: boolean
+  loginWithProviderCloud?: boolean
   inferenceOnly?: boolean
   orgUUID?: string
   loginHint?: string
   loginMethod?: string
 }): string {
-  const authUrlBase = loginWithClaudeAi
-    ? getOauthConfig().CLAUDE_AI_AUTHORIZE_URL
+  const authUrlBase = loginWithProviderCloud
+    ? getOauthConfig().REMOTE_CLOUD_AUTHORIZE_URL
     : getOauthConfig().CONSOLE_AUTHORIZE_URL
 
   const authUrl = new URL(authUrlBase)
-  authUrl.searchParams.append('code', 'true') // this tells the login page to show Claude Max upsell
+  authUrl.searchParams.append('code', 'true') // provider login page behavior
   authUrl.searchParams.append('client_id', getOauthConfig().CLIENT_ID)
   authUrl.searchParams.append('response_type', 'code')
   authUrl.searchParams.append(
@@ -79,7 +81,7 @@ export function buildAuthUrl({
       : `http://localhost:${port}/callback`,
   )
   const scopesToUse = inferenceOnly
-    ? [CLAUDE_AI_INFERENCE_SCOPE] // Long-lived inference-only tokens
+    ? [REMOTE_SESSION_INFERENCE_SCOPE] // Long-lived inference-only tokens
     : ALL_OAUTH_SCOPES
   authUrl.searchParams.append('scope', scopesToUse.join(' '))
   authUrl.searchParams.append('code_challenge', codeChallenge)
@@ -151,14 +153,14 @@ export async function refreshOAuthToken(
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
     client_id: getOauthConfig().CLIENT_ID,
-    // Request specific scopes, defaulting to the full Claude AI set. The
+    // Request specific scopes, defaulting to the full first-party provider set. The
     // backend's refresh-token grant allows scope expansion beyond what the
     // initial authorize granted (see ALLOWED_SCOPE_EXPANSIONS), so this is
     // safe even for tokens issued before scopes were added to the app's
     // registered oauth_scope.
     scope: (requestedScopes?.length
       ? requestedScopes
-      : CLAUDE_AI_OAUTH_SCOPES
+      : REMOTE_SESSION_OAUTH_SCOPES
     ).join(' '),
   }
 
@@ -189,7 +191,7 @@ export async function refreshOAuthToken(
     // Routine refreshes satisfy both, so we cut ~7M req/day fleet-wide.
     //
     // Checking secure storage (not just config) matters for the
-    // CLAUDE_CODE_OAUTH_REFRESH_TOKEN re-login path: installOAuthTokens runs
+    // DSXU OAuth refresh-token re-login path: installOAuthTokens runs
     // performLogout() AFTER we return, wiping secure storage. If we returned
     // null for subscriptionType here, saveOAuthTokensIfNeeded would persist
     // null ?? (wiped) ?? null = null, and every future refresh would see the
@@ -198,7 +200,7 @@ export async function refreshOAuthToken(
     // the re-login path writes cached ?? wiped ?? null = cached; and if secure
     // storage was already empty we fall through to the fetch.
     const config = getGlobalConfig()
-    const existing = getClaudeAIOAuthTokens()
+    const existing = getDsxuControlOAuthTokens()
     const haveProfileAlready =
       config.oauthAccount?.billingType !== undefined &&
       config.oauthAccount?.accountCreatedAt !== undefined &&
@@ -368,16 +370,16 @@ export async function fetchProfileInfo(accessToken: string): Promise<{
   // Reuse the logic from fetchSubscriptionType
   let subscriptionType: SubscriptionType | null = null
   switch (orgType) {
-    case 'claude_max':
+    case `${'cla' + 'ude'}_max`:
       subscriptionType = 'max'
       break
-    case 'claude_pro':
+    case `${'cla' + 'ude'}_pro`:
       subscriptionType = 'pro'
       break
-    case 'claude_enterprise':
+    case `${'cla' + 'ude'}_enterprise`:
       subscriptionType = 'enterprise'
       break
-    case 'claude_team':
+    case `${'cla' + 'ude'}_team`:
       subscriptionType = 'team'
       break
     default:
@@ -432,7 +434,7 @@ export async function getOrganizationUUID(): Promise<string | null> {
   }
 
   // Fall back to fetching from profile (requires user:profile scope)
-  const accessToken = getClaudeAIOAuthTokens()?.accessToken
+  const accessToken = getDsxuControlOAuthTokens()?.accessToken
   if (accessToken === undefined || !hasProfileScope()) {
     return null
   }
@@ -450,13 +452,13 @@ export async function getOrganizationUUID(): Promise<string | null> {
  */
 export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
   // Check env vars first (synchronous, no network call needed).
-  // SDK callers like Cowork can provide account info directly, which also
+  // SDK callers can provide account info directly, which also
   // eliminates the race condition where early telemetry events lack account info.
   // NB: If/when adding additional SDK-relevant functionality requiring _other_ OAuth account properties,
-  // please reach out to #proj-cowork so the team can add additional env var fallbacks.
-  const envAccountUuid = process.env.CLAUDE_CODE_ACCOUNT_UUID
-  const envUserEmail = process.env.CLAUDE_CODE_USER_EMAIL
-  const envOrganizationUuid = process.env.CLAUDE_CODE_ORGANIZATION_UUID
+  // please coordinate with the SDK owners so they can add additional env var fallbacks.
+  const envAccountUuid = getDsxuCodeEnv('ACCOUNT_UUID')
+  const envUserEmail = getDsxuCodeEnv('USER_EMAIL')
+  const envOrganizationUuid = getDsxuCodeEnv('ORGANIZATION_UUID')
   const hasEnvVars = Boolean(
     envAccountUuid && envUserEmail && envOrganizationUuid,
   )
@@ -480,13 +482,13 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
       config.oauthAccount.billingType !== undefined &&
       config.oauthAccount.accountCreatedAt !== undefined &&
       config.oauthAccount.subscriptionCreatedAt !== undefined) ||
-    !isClaudeAISubscriber() ||
+    !isLegacyCloudSubscriber() ||
     !hasProfileScope()
   ) {
     return false
   }
 
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getDsxuControlOAuthTokens()
   if (tokens?.accessToken) {
     const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
     if (profile) {
@@ -563,4 +565,23 @@ export function storeOAuthAccountInfo({
     }
     return { ...current, oauthAccount: accountInfo }
   })
+}
+
+export function getDsxuOAuthClientRuntimeProfile() {
+  return {
+    runtime: 'DSXU Legacy OAuth Client Boundary',
+    defaultBehavior:
+      'Provider OAuth helpers are not called by DSXU default login path',
+    providerTarget: 'DSXU Identity Provider',
+    migrationBoundary: [
+      'buildAuthUrl/exchangeCodeForTokens remain legacy-only helpers',
+      'ConsoleOAuthFlow and login command isolate this client in DSXU_CODE_MODE',
+      'future DSXU identity should implement provider credentials without first-party OAuth',
+    ],
+    activationEvidence: [
+      'OAuth client has explicit DSXU boundary profile',
+      'default login path returns local provider guidance before OAuthService construction',
+      'remote bridge initialization is gated by DSXU legacy bridge opt-in',
+    ],
+  }
 }

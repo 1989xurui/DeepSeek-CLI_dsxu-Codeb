@@ -112,3 +112,12 @@ export function initializeAnalyticsSink(): void {
     logEventAsync: logEventAsyncImpl,
   })
 }
+
+
+// V14 lifecycle shim: sink
+export function processSinkLifecycle(input) {
+  void input
+  const state = 'sink-state'
+  const lifecycle = 'sink:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

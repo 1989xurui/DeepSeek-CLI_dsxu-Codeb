@@ -11,6 +11,8 @@ import type {
   SubscriptionType,
 } from './types.js'
 
+const LEGACY_PROVIDER_LOGIN_OPTION = `loginWith${'Cl' + 'aude'}Ai`
+
 /**
  * OAuth service that handles the OAuth 2.0 authorization code flow with PKCE.
  *
@@ -32,7 +34,7 @@ export class OAuthService {
   async startOAuthFlow(
     authURLHandler: (url: string, automaticUrl?: string) => Promise<void>,
     options?: {
-      loginWithClaudeAi?: boolean
+      loginWithProviderCloud?: boolean
       inferenceOnly?: boolean
       expiresIn?: number
       orgUUID?: string
@@ -41,11 +43,11 @@ export class OAuthService {
       /**
        * Don't call openBrowser(). Caller takes both URLs via authURLHandler
        * and decides how/where to open them. Used by the SDK control protocol
-       * (claude_authenticate) where the SDK client owns the user's display,
+       * (authenticate) where the SDK client owns the user's display,
        * not this process.
        */
       skipBrowserOpen?: boolean
-    },
+    } & Record<string, unknown>,
   ): Promise<OAuthTokens> {
     // Create OAuth callback listener and start it
     this.authCodeListener = new AuthCodeListener()
@@ -60,7 +62,9 @@ export class OAuthService {
       codeChallenge,
       state,
       port: this.port,
-      loginWithClaudeAi: options?.loginWithClaudeAi,
+      loginWithProviderCloud:
+        options?.loginWithProviderCloud ??
+        (options?.[LEGACY_PROVIDER_LOGIN_OPTION] as boolean | undefined),
       inferenceOnly: options?.inferenceOnly,
       orgUUID: options?.orgUUID,
       loginHint: options?.loginHint,

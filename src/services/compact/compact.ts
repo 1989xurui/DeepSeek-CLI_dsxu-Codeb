@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import uniqBy from 'lodash-es/uniqBy.js'
@@ -7,7 +8,7 @@ const sessionTranscriptModule = feature('KAIROS')
   ? (require('../sessionTranscript/sessionTranscript.js') as typeof import('../sessionTranscript/sessionTranscript.js'))
   : null
 
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { DSXUUserAbortError } from '../api/dsxu-model.js'
 import { markPostCompaction } from 'src/bootstrap/state.js'
 import { getInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import type { QuerySource } from '../../constants/querySource.js'
@@ -58,6 +59,7 @@ import {
 import { logError } from '../../utils/log.js'
 import { MEMORY_TYPE_VALUES } from '../../utils/memory/types.js'
 import {
+  createAssistantMessage,
   createCompactBoundaryMessage,
   createUserMessage,
   getAssistantMessageText,
@@ -80,6 +82,10 @@ import {
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
+import {
+  createDsxuTaskStateSnapshotFromMessages,
+  renderDsxuTaskStateSnapshotForResume,
+} from '../../dsxu/engine/task-governance.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
 import { getTaskOutputPath } from '../../utils/task/diskOutput.js'
 import {
@@ -99,7 +105,7 @@ import {
 import {
   getMaxOutputTokensForModel,
   queryModelWithStreaming,
-} from '../api/claude.js'
+} from '../api/dsxu-model.js'
 import {
   getPromptTooLongTokenGap,
   PROMPT_TOO_LONG_ERROR_MESSAGE,
@@ -122,13 +128,104 @@ import {
 export const POST_COMPACT_MAX_FILES_TO_RESTORE = 5
 export const POST_COMPACT_TOKEN_BUDGET = 50_000
 export const POST_COMPACT_MAX_TOKENS_PER_FILE = 5_000
-// Skills can be large (verify=18.7KB, claude-api=20.1KB). Previously re-injected
+// Skills can be large (verify=18.7KB, dsxu-api=20.1KB). Previously re-injected
 // unbounded on every compact → 5-10K tok/compact. Per-skill truncation beats
 // dropping — instructions at the top of a skill file are usually the critical
 // part. Budget sized to hold ~5 skills at the per-skill cap.
 export const POST_COMPACT_MAX_TOKENS_PER_SKILL = 5_000
 export const POST_COMPACT_SKILLS_TOKEN_BUDGET = 25_000
 const MAX_COMPACT_STREAMING_RETRIES = 2
+const DSXU_COMPACT_TIMEOUT_MS = Number.parseInt(
+  process.env.DSXU_COMPACT_TIMEOUT_MS ?? '25000',
+  10,
+)
+
+function isDsxuCodeCompactFallbackEnabled(): boolean {
+  return (
+    process.env.DSXU_CODE_MODE === '1' &&
+    process.env.DSXU_COMPACT_DETERMINISTIC_FALLBACK !== '0'
+  )
+}
+
+function createDsxuDeterministicCompactSummary(
+  messages: Message[],
+  preCompactTokenCount: number,
+  reason: string,
+): AssistantMessage {
+  const taskSnapshot = createDsxuTaskStateSnapshotFromMessages(messages, {
+    scope: 'visible pre-compact transcript',
+  })
+  const taskSnapshotText = renderDsxuTaskStateSnapshotForResume({
+    ...taskSnapshot,
+    createdAt: undefined,
+  })
+  const visibleText = messages
+    .map(message => {
+      if (message.type === 'user' || message.type === 'assistant') {
+        return getAssistantMessageText(
+          createAssistantMessage({
+            content: typeof message.message.content === 'string'
+              ? message.message.content
+              : message.message.content
+                  .map(block =>
+                    block.type === 'text' ? block.text : `[${block.type}]`,
+                  )
+                  .join('\n'),
+          }),
+        )
+      }
+      return ''
+    })
+    .filter(Boolean)
+    .join('\n')
+    .slice(0, 12_000)
+
+  return createAssistantMessage({
+    content: [
+      '# DSXU Code Compact Summary',
+      '',
+      `Fallback reason: ${reason}`,
+      `Pre-compact token estimate: ${preCompactTokenCount}`,
+      '',
+      '## Preserved working transcript',
+      visibleText || 'No visible transcript text was available.',
+      '',
+      taskSnapshotText,
+      '',
+      '## Resume discipline',
+      '- Continue from this summary without re-reading dropped transcript unless needed.',
+      '- Preserve active task goal, file evidence, tool constraints, and verification state.',
+      '- For DeepSeek weak-model stability, prefer small steps, evidence-first edits, and verify-after-write.',
+    ].join('\n'),
+    usage: {
+      input_tokens: preCompactTokenCount,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: Math.max(1, Math.ceil(visibleText.length / 4)),
+    },
+  })
+}
+
+async function withDsxuCompactTimeout<T>(
+  operation: Promise<T>,
+  label: string,
+): Promise<T> {
+  if (!isDsxuCodeCompactFallbackEnabled() || DSXU_COMPACT_TIMEOUT_MS <= 0) {
+    return operation
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`DSXU_COMPACT_TIMEOUT:${label}`)),
+      DSXU_COMPACT_TIMEOUT_MS,
+    )
+  })
+  try {
+    return await Promise.race([operation, timeout])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
 
 /**
  * Strip image blocks from user messages before sending for compaction.
@@ -1148,6 +1245,17 @@ async function streamCompactSummary({
   preCompactTokenCount: number
   cacheSafeParams: CacheSafeParams
 }): Promise<AssistantMessage> {
+  if (
+    isDsxuCodeCompactFallbackEnabled() &&
+    process.env.DSXU_COMPACT_FORCE_DETERMINISTIC === '1'
+  ) {
+    return createDsxuDeterministicCompactSummary(
+      messages,
+      preCompactTokenCount,
+      'DSXU_COMPACT_FORCE_DETERMINISTIC',
+    )
+  }
+
   // When prompt cache sharing is enabled, use forked agent to reuse the
   // main conversation's cached prefix (system prompt, tools, context messages).
   // Falls back to regular streaming path on failure.
@@ -1181,11 +1289,11 @@ async function streamCompactSummary({
         // DO NOT set maxOutputTokens here. The fork piggybacks on the main thread's
         // prompt cache by sending identical cache-key params (system, tools, model,
         // messages prefix, thinking config). Setting maxOutputTokens would clamp
-        // budget_tokens via Math.min(budget, maxOutputTokens-1) in claude.ts,
+        // budget_tokens via Math.min(budget, maxOutputTokens-1) in dsxu-model.ts,
         // creating a thinking config mismatch that invalidates the cache.
         // The streaming fallback path (below) can safely set maxOutputTokensOverride
         // since it doesn't share cache with the main thread.
-        const result = await runForkedAgent({
+        const result = await withDsxuCompactTimeout(runForkedAgent({
           promptMessages: [summaryRequest],
           cacheSafeParams,
           canUseTool: createCompactCanUseTool(),
@@ -1197,13 +1305,13 @@ async function streamCompactSummary({
           // fork — same signal the streaming fallback uses at
           // `signal: context.abortController.signal` below.
           overrides: { abortController: context.abortController },
-        })
+        }), 'forked-agent')
         const assistantMsg = getLastAssistantMessage(result.messages)
         const assistantText = assistantMsg
           ? getAssistantMessageText(assistantMsg)
           : null
         // Guard isApiErrorMessage: query() catches API errors (including
-        // APIUserAbortError on ESC) and yields them as synthetic assistant
+        // DSXUUserAbortError on ESC) and yields them as synthetic assistant
         // messages. Without this check, an aborted compact "succeeds" with
         // "Request was aborted." as the summary — the text doesn't start with
         // "API Error" so the caller's startsWithApiErrorPrefix guard misses it.
@@ -1325,7 +1433,10 @@ async function streamCompactSummary({
         },
       })
       const streamIter = streamingGen[Symbol.asyncIterator]()
-      let next = await streamIter.next()
+      let next = await withDsxuCompactTimeout(
+        streamIter.next(),
+        'streaming-next',
+      )
 
       while (!next.done) {
         const event = next.value
@@ -1353,7 +1464,10 @@ async function streamCompactSummary({
           response = event
         }
 
-        next = await streamIter.next()
+        next = await withDsxuCompactTimeout(
+          streamIter.next(),
+          'streaming-next',
+        )
       }
 
       if (response) {
@@ -1367,7 +1481,7 @@ async function streamCompactSummary({
           hasStartedStreaming,
         })
         await sleep(getRetryDelay(attempt), context.abortController.signal, {
-          abortError: () => new APIUserAbortError(),
+          abortError: () => new DSXUUserAbortError(),
         })
         continue
       }
@@ -1390,6 +1504,25 @@ async function streamCompactSummary({
 
     // This should never be reached due to the throw above, but TypeScript needs it
     throw new Error(ERROR_MESSAGE_INCOMPLETE_RESPONSE)
+  } catch (error) {
+    if (
+      isDsxuCodeCompactFallbackEnabled() &&
+      error instanceof Error &&
+      (error.message.startsWith('DSXU_COMPACT_TIMEOUT:') ||
+        process.env.DSXU_COMPACT_FALLBACK_ON_MODEL_ERROR === '1')
+    ) {
+      logEvent('tengu_compact_dsxu_timeout_fallback', {
+        reason:
+          error.message as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        preCompactTokenCount,
+      })
+      return createDsxuDeterministicCompactSummary(
+        messages,
+        preCompactTokenCount,
+        error.message,
+      )
+    }
+    throw error
   } finally {
     clearInterval(activityInterval)
   }
@@ -1686,9 +1819,9 @@ function shouldExcludeFromPostCompactRestore(
     // If we can't get plan file path, continue with other checks
   }
 
-  // Exclude all types of claude.md files
-  // TODO: Refactor to use isMemoryFilePath() from claudemd.ts for consistency
-  // and to also match child directory memory files (.claude/rules/*.md, etc.)
+  // Exclude all types of DSXU instruction files
+  // TODO: Refactor to use isMemoryFilePath() from dsxu instruction files for consistency
+  // and to also match child directory memory files ( .dsxu/rules/*.md, etc.)
   try {
     const normalizedMemoryPaths = new Set(
       MEMORY_TYPE_VALUES.map(type => expandPath(getMemoryPath(type))),

@@ -14,3 +14,12 @@ export function useCompactWarningSuppression(): boolean {
     compactWarningStore.getState,
   )
 }
+
+
+// V14 lifecycle shim: compactwarninghook
+export function processCompactwarninghookLifecycle(input) {
+  void input
+  const state = 'compactwarninghook-state'
+  const lifecycle = 'compactwarninghook:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

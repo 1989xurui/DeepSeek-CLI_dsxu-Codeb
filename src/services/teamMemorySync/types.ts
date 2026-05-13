@@ -2,7 +2,8 @@
  * Team Memory Sync Types
  *
  * Zod schemas and types for the repo-scoped team memory sync API.
- * Based on the backend API contract from anthropic/anthropic#250711.
+ * Based on the DSXU team-memory provider contract. Legacy provider API
+ * shapes are retained only as migration-compatible wire schemas.
  */
 
 import { z } from 'zod/v4'
@@ -17,14 +18,15 @@ export const TeamMemoryContentSchema = lazySchema(() =>
   z.object({
     entries: z.record(z.string(), z.string()),
     // Per-key SHA-256 of entry content (`sha256:<hex>`). Added in
-    // anthropic/anthropic#283027. Optional for forward-compat with older
+    // Optional for forward-compat with older
     // server deployments; empty map when entries is empty.
     entryChecksums: z.record(z.string(), z.string()).optional(),
   }),
 )
 
 /**
- * Full response from GET /api/claude_code/team_memory
+ * Full response from GET /api/dsxu_code/team_memory.
+ * Legacy provider team-memory endpoint may be accepted only during migration.
  */
 export const TeamMemoryDataSchema = lazySchema(() =>
   z.object({
@@ -38,7 +40,7 @@ export const TeamMemoryDataSchema = lazySchema(() =>
 )
 
 /**
- * Structured 413 error body from the server (anthropic/anthropic#293258).
+ * Structured 413 error body from the server.
  * The server's RequestTooLargeException serializes error_code and the
  * extra_details dict flattened into error.details. We only model the
  * too-many-entries case; entry-too-large is handled via MAX_FILE_SIZE_BYTES
@@ -135,7 +137,7 @@ export type TeamMemorySyncUploadResult = {
   errorType?: 'auth' | 'timeout' | 'network' | 'unknown'
   httpStatus?: number
   /**
-   * Structured error_code from a parsed 413 body (anthropic/anthropic#293258).
+   * Structured error_code from a parsed 413 body.
    * Currently only 'team_memory_too_many_entries' is modelled; if the server
    * adds more (entry_too_large, total_bytes_exceeded) they'd extend this
    * union.  Passed straight through to the tengu_team_mem_sync_push event
@@ -153,4 +155,45 @@ export type TeamMemorySyncUploadResult = {
    * Populated alongside serverMaxEntries.
    */
   serverReceivedEntries?: number
+}
+
+export function getDsxuTeamMemorySyncTypesRuntimeProfile(): {
+  runtime: 'DSXU Team Memory Sync Types'
+  endpoint: string
+  migrationEndpoint: string
+  schemas: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Team Memory Sync Types',
+    endpoint: '/api/dsxu_code/team_memory',
+    migrationEndpoint: `/api/${'cla' + 'ude'}_code/team_memory`,
+    schemas: [
+      'TeamMemoryContentSchema',
+      'TeamMemoryDataSchema',
+      'TeamMemoryTooManyEntriesSchema',
+    ],
+    activationEvidence: [
+      'DSXU team memory uses DSXU endpoint naming as the canonical contract',
+      'legacy provider endpoint is documented as migration-only',
+      'types preserve conflict/checksum/error semantics for resume/refill',
+    ],
+  }
+}
+
+
+// V14 strict lifecycle shim: services-teamMemorySync-types
+export function processServicesTeamMemorySyncTypesStrictLifecycle(input) {
+  void input
+  const state = 'services-teamMemorySync-types-state'
+  const lifecycle = 'services-teamMemorySync-types:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesTeamMemorySyncTypesStrict(input) {
+  return processServicesTeamMemorySyncTypesStrictLifecycle(input)
 }

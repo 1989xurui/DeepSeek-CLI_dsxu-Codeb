@@ -35,7 +35,7 @@ export async function sendNotification(
   })
 }
 
-const DEFAULT_TITLE = 'Claude Code'
+const DEFAULT_TITLE = 'DSXU Code'
 
 async function sendToChannel(
   channel: string,
@@ -153,4 +153,13 @@ async function isAppleTerminalBellDisabled(): Promise<boolean> {
     logError(error)
     return false
   }
+}
+
+
+// V14 lifecycle shim: notifier
+export function processNotifierLifecycle(input) {
+  void input
+  const state = 'notifier-state'
+  const lifecycle = 'notifier:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

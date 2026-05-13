@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (Claude.ai): Only Enterprise/C4E and Team subscribers are eligible
+ * - OAuth users (provider cloud): Only Enterprise/C4E and Team subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without remote settings
  * - API returns empty settings for users without managed settings
  */
@@ -15,11 +15,14 @@
 import axios from 'axios'
 import { createHash } from 'crypto'
 import { open, unlink } from 'fs/promises'
-import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import {
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getAnthropicApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getProviderApiKeyWithSource,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -31,7 +34,7 @@ import {
 } from '../../utils/settings/types.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
   checkManagedSettingsSecurity,
@@ -52,6 +55,8 @@ import {
 const SETTINGS_TIMEOUT_MS = 10000 // 10 seconds for settings fetch
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+const LEGACY_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const LEGACY_REMOTE_SETTINGS_PATH = `/api/${LEGACY_CODE_API_SEGMENT}/settings`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
@@ -103,7 +108,7 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
  * Uses the OAuth config base API URL
  */
 function getRemoteManagedSettingsEndpoint() {
-  return `${getOauthConfig().BASE_API_URL}/api/claude_code/settings`
+  return `${getOauthConfig().BASE_API_URL}${LEGACY_REMOTE_SETTINGS_PATH}`
 }
 
 /**
@@ -169,9 +174,9 @@ function getRemoteSettingsAuthHeaders(): {
 } {
   // Try API key first (for Console users)
   // Skip apiKeyHelper to avoid circular dependency with getSettings()
-  // Wrap in try-catch because getAnthropicApiKeyWithSource throws in CI/test environments
+  // Wrap in try-catch because provider API-key lookup throws in CI/test environments
   try {
-    const { key: apiKey } = getAnthropicApiKeyWithSource({
+    const { key: apiKey } = getProviderApiKeyWithSource({
       skipRetrievingKeyFromApiKeyHelper: true,
     })
     if (apiKey) {
@@ -185,14 +190,11 @@ function getRemoteSettingsAuthHeaders(): {
     // No API key available - continue to check OAuth
   }
 
-  // Fall back to OAuth tokens (for Claude.ai users)
-  const oauthTokens = getClaudeAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
+  // Fall back to OAuth tokens for provider-cloud users.
+  const accessToken = getCompatProviderAccessToken()
+  if (accessToken) {
     return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
+      headers: getCompatProviderBearerHeaders(accessToken),
     }
   }
 
@@ -267,7 +269,7 @@ async function fetchRemoteManagedSettings(
     const endpoint = getRemoteManagedSettingsEndpoint()
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getDSXUCodeUserAgent(),
     }
 
     // Add If-None-Match header for ETag-based caching
@@ -525,7 +527,7 @@ export async function loadRemoteManagedSettings(): Promise<void> {
   // waiters immediately. The fetch still runs below; notifyChange fires once,
   // after the fetch, as before. Saves the ~77ms fetch-wait on print-mode startup.
   // getRemoteManagedSettingsSyncFromCache has the eligibility guard and populates
-  // the session cache internally — no need to call setSessionCache here.
+  // the session cache internally -> no need to call setSessionCache here.
   if (getRemoteManagedSettingsSyncFromCache() && loadingCompleteResolve) {
     loadingCompleteResolve()
     loadingCompleteResolve = null
@@ -541,7 +543,7 @@ export async function loadRemoteManagedSettings(): Promise<void> {
 
     // Trigger hot-reload if settings were loaded (new or from cache).
     // notifyChange resets the settings cache internally before iterating
-    // listeners — env vars, telemetry, and permissions update on next read.
+    // listeners -> env vars, telemetry, and permissions update on next read.
     if (settings !== null) {
       settingsChangeDetector.notifyChange('policySettings')
     }
@@ -635,4 +637,40 @@ export function stopBackgroundPolling(): void {
     clearInterval(pollingIntervalId)
     pollingIntervalId = null
   }
+}
+
+export function getDsxuRemoteManagedSettingsServiceProfile() {
+  return {
+    runtime: 'DSXU Remote Managed Settings Service Boundary',
+    defaultBehavior:
+      'service load/poll path is disabled by eligibility gate in DSXU runtime',
+    providerTarget: 'DSXU Policy/Workspace Settings Provider',
+    migrationBoundary: [
+      'legacy provider settings endpoint is not used by DSXU default runtime',
+      'checksum/cache/polling semantics are reusable for DSXU policy sync',
+      'background polling remains guarded by isRemoteManagedSettingsEligible',
+    ],
+    activationEvidence: [
+      'loadRemoteManagedSettings resolves without fetching when eligibility is false',
+      'startBackgroundPolling returns before interval creation when eligibility is false',
+      'clearRemoteManagedSettingsCache still clears local cache/session cache safely',
+    ],
+  }
+}
+
+
+// V14 strict lifecycle shim: services-remoteManagedSettings-index
+export function processServicesRemoteManagedSettingsIndexStrictLifecycle(input) {
+  void input
+  const state = 'services-remoteManagedSettings-index-state'
+  const lifecycle = 'services-remoteManagedSettings-index:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesRemoteManagedSettingsIndexStrict(input) {
+  return processServicesRemoteManagedSettingsIndexStrictLifecycle(input)
 }

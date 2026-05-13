@@ -219,3 +219,12 @@ export function generateMutations(
 
   return all;
 }
+
+
+// V14 lifecycle shim: operators
+export function processOperatorsLifecycle(input) {
+  void input
+  const state = 'operators-state'
+  const lifecycle = 'operators:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

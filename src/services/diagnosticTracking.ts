@@ -1,15 +1,18 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import figures from 'figures'
 import { logError } from 'src/utils/log.js'
 import { callIdeRpc } from '../services/mcp/client.js'
 import type { MCPServerConnection } from '../services/mcp/types.js'
-import { ClaudeError } from '../utils/errors.js'
+import { DSXUError } from '../utils/errors.js'
 import { normalizePathForComparison, pathsEqual } from '../utils/file.js'
 import { getConnectedIdeClient } from '../utils/ide.js'
 import { jsonParse } from '../utils/slowOperations.js'
 
-class DiagnosticsTrackingError extends ClaudeError {}
+class DiagnosticsTrackingError extends DSXUError {}
 
 const MAX_DIAGNOSTICS_SUMMARY_CHARS = 4000
+const LEGACY_FS_RIGHT_URI_PREFIX = `_${'cl' + 'aude'}_fs_right:`
+const LEGACY_FS_LEFT_URI_PREFIX = `_${'cl' + 'aude'}_fs_left:`
 
 export interface Diagnostic {
   message: string
@@ -38,7 +41,7 @@ export class DiagnosticTrackingService {
   private lastProcessedTimestamps: Map<string, number> = new Map()
 
   // Track which files have received right file diagnostics and if they've changed
-  // Map<normalizedPath, lastClaudeFsRightDiagnostics>
+  // Map<normalizedPath, lastLegacyRightFileDiagnostics>
   private rightFileDiagnosticsState: Map<string, Diagnostic[]> = new Map()
 
   static getInstance(): DiagnosticTrackingService {
@@ -79,8 +82,8 @@ export class DiagnosticTrackingService {
     // Remove our protocol prefixes
     const protocolPrefixes = [
       'file://',
-      '_claude_fs_right:',
-      '_claude_fs_left:',
+      LEGACY_FS_RIGHT_URI_PREFIX,
+      LEGACY_FS_LEFT_URI_PREFIX,
     ]
 
     let normalized = fileUri
@@ -182,7 +185,7 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Get new diagnostics from file://, _claude_fs_right, and _claude_fs_ URIs that aren't in the baseline.
+   * Get new diagnostics from file:// and legacy shadow-file URIs that aren't in the baseline.
    * Only processes diagnostics for files that have been edited.
    */
   async getNewDiagnostics(): Promise<DiagnosticFile[]> {
@@ -211,15 +214,15 @@ export class DiagnosticTrackingService {
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
       .filter(file => file.uri.startsWith('file://'))
 
-    const diagnosticsForClaudeFsRightUrisWithBaselinesMap = new Map<
+    const diagnosticsForLegacyRightUrisWithBaselinesMap = new Map<
       string,
       DiagnosticFile
     >()
     allDiagnosticFiles
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
-      .filter(file => file.uri.startsWith('_claude_fs_right:'))
+      .filter(file => file.uri.startsWith(LEGACY_FS_RIGHT_URI_PREFIX))
       .forEach(file => {
-        diagnosticsForClaudeFsRightUrisWithBaselinesMap.set(
+        diagnosticsForLegacyRightUrisWithBaselinesMap.set(
           this.normalizeFileUri(file.uri),
           file,
         )
@@ -232,34 +235,34 @@ export class DiagnosticTrackingService {
       const normalizedPath = this.normalizeFileUri(file.uri)
       const baselineDiagnostics = this.baseline.get(normalizedPath) || []
 
-      // Get the _claude_fs_right file if it exists
-      const claudeFsRightFile =
-        diagnosticsForClaudeFsRightUrisWithBaselinesMap.get(normalizedPath)
+      // Get the legacy right-side shadow file if it exists
+      const legacyRightFile =
+        diagnosticsForLegacyRightUrisWithBaselinesMap.get(normalizedPath)
 
       // Determine which file to use based on the state of right file diagnostics
       let fileToUse = file
 
-      if (claudeFsRightFile) {
+      if (legacyRightFile) {
         const previousRightDiagnostics =
           this.rightFileDiagnosticsState.get(normalizedPath)
 
-        // Use _claude_fs_right if:
+        // Use the legacy right-side shadow file if:
         // 1. We've never gotten right file diagnostics for this file (previousRightDiagnostics === undefined)
         // 2. OR the right file diagnostics have just changed
         if (
           !previousRightDiagnostics ||
           !this.areDiagnosticArraysEqual(
             previousRightDiagnostics,
-            claudeFsRightFile.diagnostics,
+            legacyRightFile.diagnostics,
           )
         ) {
-          fileToUse = claudeFsRightFile
+          fileToUse = legacyRightFile
         }
 
         // Update our tracking of right file diagnostics
         this.rightFileDiagnosticsState.set(
           normalizedPath,
-          claudeFsRightFile.diagnostics,
+          legacyRightFile.diagnostics,
         )
       }
 

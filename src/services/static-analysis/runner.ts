@@ -432,7 +432,7 @@ export function shouldScanImpl(filePath: string): boolean {
     'test/',
     'tests/',
     '.dsxu/',
-    '.dsevo/',
+    '非dsxu-code项目文件/',
     '/.git/',
     '/coverage/',
   ];

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 // Background memory consolidation. Fires the /dream prompt as a forked
 // subagent when time-gate passes AND enough sessions have accumulated.
@@ -144,7 +145,7 @@ export function initAutoDream(): void {
     const sinceScanMs = Date.now() - lastSessionScanAt
     if (!force && sinceScanMs < SESSION_SCAN_INTERVAL_MS) {
       logForDebugging(
-        `[autoDream] scan throttle — time-gate passed but last scan was ${Math.round(sinceScanMs / 1000)}s ago`,
+        `[autoDream] scan throttle ...time-gate passed but last scan was ${Math.round(sinceScanMs / 1000)}s ago`,
       )
       return
     }
@@ -165,13 +166,13 @@ export function initAutoDream(): void {
     sessionIds = sessionIds.filter(id => id !== currentSession)
     if (!force && sessionIds.length < cfg.minSessions) {
       logForDebugging(
-        `[autoDream] skip — ${sessionIds.length} sessions since last consolidation, need ${cfg.minSessions}`,
+        `[autoDream] skip ...${sessionIds.length} sessions since last consolidation, need ${cfg.minSessions}`,
       )
       return
     }
 
     // --- Lock ---
-    // Under force, skip acquire entirely — use the existing mtime so
+    // Under force, skip acquire entirely ...use the existing mtime so
     // kill's rollback is a no-op (rewinds to where it already is).
     // The lock file stays untouched; next non-force turn sees it as-is.
     let priorMtime: number | null
@@ -190,7 +191,7 @@ export function initAutoDream(): void {
     }
 
     logForDebugging(
-      `[autoDream] firing — ${hoursSince.toFixed(1)}h since last, ${sessionIds.length} sessions to review`,
+      `[autoDream] firing ...${hoursSince.toFixed(1)}h since last, ${sessionIds.length} sessions to review`,
     )
     logEvent('tengu_auto_dream_fired', {
       hours_since: Math.round(hoursSince),
@@ -210,12 +211,11 @@ export function initAutoDream(): void {
     try {
       const memoryRoot = getAutoMemPath()
       const transcriptDir = getProjectDir(getOriginalCwd())
-      // Tool constraints note goes in `extra`, not the shared prompt body —
-      // manual /dream runs in the main loop with normal permissions and this
+      // Tool constraints note goes in `extra`, not the shared prompt body ...      // manual /dream runs in the main loop with normal permissions and this
       // would be misleading there.
       const extra = `
 
-**Tool constraints for this run:** Bash is restricted to read-only commands (\`ls\`, \`find\`, \`grep\`, \`cat\`, \`stat\`, \`wc\`, \`head\`, \`tail\`, and similar). Anything that writes, redirects to a file, or modifies state will be denied. Plan your exploration with this in mind — no need to probe.
+**Tool constraints for this run:** Bash is restricted to read-only commands (\`ls\`, \`find\`, \`grep\`, \`cat\`, \`stat\`, \`wc\`, \`head\`, \`tail\`, and similar). Anything that writes, redirects to a file, or modifies state will be denied. Plan your exploration with this in mind ...no need to probe.
 
 Sessions since last consolidation (${sessionIds.length}):
 ${sessionIds.map(id => `- ${id}`).join('\n')}`
@@ -247,7 +247,7 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
         })
       }
       logForDebugging(
-        `[autoDream] completed — cache: read=${result.totalUsage.cache_read_input_tokens} created=${result.totalUsage.cache_creation_input_tokens}`,
+        `[autoDream] completed ...cache: read=${result.totalUsage.cache_read_input_tokens} created=${result.totalUsage.cache_creation_input_tokens}`,
       )
       logEvent('tengu_auto_dream_completed', {
         cache_read: result.totalUsage.cache_read_input_tokens,
@@ -274,7 +274,7 @@ ${sessionIds.map(id => `- ${id}`).join('\n')}`
 
 /**
  * Watch the forked agent's messages. For each assistant turn, extracts any
- * text blocks (the agent's reasoning/summary — what the user wants to see)
+ * text blocks (the agent's reasoning/summary ...what the user wants to see)
  * and collapses tool_use blocks to a count. Edit/Write file_paths are
  * collected for phase-flip + the inline completion message.
  */

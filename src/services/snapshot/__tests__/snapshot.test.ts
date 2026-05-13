@@ -41,6 +41,10 @@ describe('R5-29 Snapshot/Restore', () => {
   });
 
   test('listSnapshots returns created snapshots', async () => {
+    await createSnapshot(
+      { description: 'List seed snapshot', milestone: 'M4', r5Id: 'R5-29', files: ['a.ts'] },
+      config
+    );
     const list = await listSnapshots(undefined, config);
     expect(list.length).toBeGreaterThanOrEqual(1);
     expect(list[0].id).toContain('dsxu-snapshot');
@@ -53,6 +57,10 @@ describe('R5-29 Snapshot/Restore', () => {
   });
 
   test('restoreSnapshot dry-run returns file count', async () => {
+    await createSnapshot(
+      { description: 'Restore seed snapshot', milestone: 'M4', r5Id: 'R5-29', files: ['a.ts', 'b.ts'] },
+      config
+    );
     const list = await listSnapshots(undefined, config);
     const snap = list[0];
     const result = await restoreSnapshot(snap.id, { dryRun: true }, config);

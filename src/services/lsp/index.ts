@@ -1,2 +1,2 @@
-export * from './contract';
+﻿export * from './contract';
 export { handleRequest } from './server';

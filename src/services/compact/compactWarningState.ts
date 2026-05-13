@@ -16,3 +16,12 @@ export function suppressCompactWarning(): void {
 export function clearCompactWarningSuppression(): void {
   compactWarningStore.setState(() => false)
 }
+
+
+// V14 lifecycle shim: compactwarningstate
+export function processCompactwarningstateLifecycle(input) {
+  void input
+  const state = 'compactwarningstate-state'
+  const lifecycle = 'compactwarningstate:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

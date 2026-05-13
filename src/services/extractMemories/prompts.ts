@@ -152,3 +152,20 @@ export function buildExtractCombinedPrompt(
     ...howToSave,
   ].join('\n')
 }
+
+
+// V14 strict lifecycle shim: services-extractMemories-prompts
+export function processServicesExtractMemoriesPromptsStrictLifecycle(input) {
+  void input
+  const state = 'services-extractMemories-prompts-state'
+  const lifecycle = 'services-extractMemories-prompts:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesExtractMemoriesPromptsStrict(input) {
+  return processServicesExtractMemoriesPromptsStrictLifecycle(input)
+}

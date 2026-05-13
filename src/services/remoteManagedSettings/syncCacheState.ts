@@ -16,13 +16,13 @@
  * null), false (ineligible — return null), true (proceed). managedEnv.ts
  * calls isRemoteManagedSettingsEligible() just before the policySettings
  * read — after userSettings/flagSettings env vars are applied, so the check
- * sees config-provided CLAUDE_CODE_USE_BEDROCK/ANTHROPIC_BASE_URL. That call
+ * sees config-provided DSXU_CODE_USE_BEDROCK/provider base URL. That call
  * computes once and mirrors the result here via setEligibility(). Every
  * subsequent read hits the cached bool instead of re-running the auth chain.
  */
 
 import { join } from 'path'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import { getRuntimeConfigHomeDir } from '../../utils/envUtils.js'
 import { readFileSync } from '../../utils/fileRead.js'
 import { stripBOM } from '../../utils/jsonRead.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
@@ -49,7 +49,7 @@ export function setEligibility(v: boolean): boolean {
 }
 
 export function getSettingsPath(): string {
-  return join(getClaudeConfigHomeDir(), SETTINGS_FILENAME)
+  return join(getRuntimeConfigHomeDir(), SETTINGS_FILENAME)
 }
 
 // sync IO — settings pipeline is sync. fileRead and jsonRead are leaves;
@@ -93,4 +93,26 @@ export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
     return cachedSettings
   }
   return null
+}
+
+
+// V14 lifecycle shim: synccachestate
+export function processSynccachestateLifecycle(input) {
+  void input
+  const state = 'synccachestate-state'
+  const lifecycle = 'synccachestate:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuRemoteManagedSettingsCacheProfile() {
+  return {
+    runtime: 'DSXU Remote Managed Settings Cache',
+    defaultBehavior: 'cache only becomes visible after DSXU/legacy eligibility gate sets eligible=true',
+    providerTarget: 'DSXU Policy/Workspace Settings Provider',
+    activationEvidence: [
+      'tri-state eligibility prevents accidental remote settings reads before provider decision',
+      'session cache and disk cache are separated for startup safety',
+      'settings cache reset preserves hot-reload semantics for DSXU policy settings',
+    ],
+  }
 }

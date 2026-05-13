@@ -1,7 +1,7 @@
 /**
  * Tool Use Summary Generator
  *
- * Generates human-readable summaries of completed tool batches using Haiku.
+ * Generates human-readable summaries of completed tool batches using the compact model.
  * Used by the SDK to provide high-level progress updates to clients.
  */
 
@@ -10,7 +10,7 @@ import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { queryHaiku } from '../api/claude.js'
+import { queryCompatSmallModel } from '../../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
 
 const TOOL_USE_SUMMARY_SYSTEM_PROMPT = `Write a short summary label describing what these tool calls accomplished. It appears as a single-line row in a mobile app and truncates around 30 characters, so think git-commit-subject, not sentence.
 
@@ -27,6 +27,12 @@ type ToolInfo = {
   name: string
   input: unknown
   output: unknown
+}
+
+export type ToolUseSummaryPromptItem = {
+  name: string
+  input: string
+  output: string
 }
 
 export type GenerateToolUseSummaryParams = {
@@ -54,19 +60,16 @@ export async function generateToolUseSummary({
 
   try {
     // Build a concise representation of what tools did
-    const toolSummaries = tools
-      .map(tool => {
-        const inputStr = truncateJson(tool.input, 300)
-        const outputStr = truncateJson(tool.output, 300)
-        return `Tool: ${tool.name}\nInput: ${inputStr}\nOutput: ${outputStr}`
-      })
+    const promptItems = buildToolUseSummaryPromptItems(tools)
+    const toolSummaries = promptItems
+      .map(tool => `Tool: ${tool.name}\nInput: ${tool.input}\nOutput: ${tool.output}`)
       .join('\n\n')
 
     const contextPrefix = lastAssistantText
       ? `User's intent (from assistant's last message): ${lastAssistantText.slice(0, 200)}\n\n`
       : ''
 
-    const response = await queryHaiku({
+    const response = await queryCompatSmallModel({
       systemPrompt: asSystemPrompt([TOOL_USE_SUMMARY_SYSTEM_PROMPT]),
       userPrompt: `${contextPrefix}Tools completed:\n\n${toolSummaries}\n\nLabel:`,
       signal,
@@ -92,8 +95,45 @@ export async function generateToolUseSummary({
     const err = toError(error)
     err.cause = { errorId: E_TOOL_USE_SUMMARY_GENERATION_FAILED }
     logError(err)
-    return null
+    return createDeterministicToolUseSummary(tools)
   }
+}
+
+export function buildToolUseSummaryPromptItems(tools: ToolInfo[]): ToolUseSummaryPromptItem[] {
+  return tools.map(tool => ({
+    name: tool.name,
+    input: truncateJson(redactSummaryValue(tool.input), 300),
+    output: truncateJson(redactSummaryValue(tool.output), 300),
+  }))
+}
+
+export function createDeterministicToolUseSummary(tools: ToolInfo[]): string | null {
+  const first = tools[0]
+  if (!first) return null
+  if (tools.length === 1) return `Ran ${first.name}`
+  const uniqueNames = Array.from(new Set(tools.map(tool => tool.name))).slice(0, 3)
+  return `Ran ${tools.length} tools: ${uniqueNames.join(', ')}`
+}
+
+function redactSummaryValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactSummaryValue)
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = isSensitiveSummaryKey(key) ? '[redacted]' : redactSummaryValue(child)
+    }
+    return out
+  }
+  if (typeof value === 'string') {
+    return value
+      .replace(/(sk-[A-Za-z0-9_-]{12,})/g, '[redacted]')
+      .replace(/(Bearer\s+)[A-Za-z0-9._-]+/gi, '$1[redacted]')
+  }
+  return value
+}
+
+function isSensitiveSummaryKey(key: string): boolean {
+  return /token|secret|password|passwd|api[_-]?key|authorization|credential|cookie/i.test(key)
 }
 
 /**
@@ -109,4 +149,13 @@ function truncateJson(value: unknown, maxLength: number): string {
   } catch {
     return '[unable to serialize]'
   }
+}
+
+
+// V14 lifecycle shim: toolusesummarygenerator
+export function processToolusesummarygeneratorLifecycle(input) {
+  void input
+  const state = 'toolusesummarygenerator-state'
+  const lifecycle = 'toolusesummarygenerator:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

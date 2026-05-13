@@ -177,3 +177,12 @@ export function startAgentSummarization(
 
   return { stop }
 }
+
+
+// V14 lifecycle shim: agentsummary
+export function processAgentsummaryLifecycle(input) {
+  void input
+  const state = 'agentsummary-state'
+  const lifecycle = 'agentsummary:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

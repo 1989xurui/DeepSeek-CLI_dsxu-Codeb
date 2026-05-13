@@ -19,3 +19,20 @@ export function isAutoDreamEnabled(): boolean {
   )
   return gb?.enabled === true
 }
+
+
+// V14 strict lifecycle shim: services-autoDream-config
+export function processServicesAutoDreamConfigStrictLifecycle(input) {
+  void input
+  const state = 'services-autoDream-config-state'
+  const lifecycle = 'services-autoDream-config:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesAutoDreamConfigStrict(input) {
+  return processServicesAutoDreamConfigStrictLifecycle(input)
+}

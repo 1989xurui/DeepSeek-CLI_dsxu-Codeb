@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: DSXU-owned capability is active in DSXU mainline.
 import * as path from 'path'
 import { pathToFileURL } from 'url'
 import { logForDebugging } from '../../utils/debug.js'
@@ -85,7 +86,7 @@ export function createLSPServerManager(): LSPServerManager {
       throw error
     }
 
-    // Build extension → server mapping
+    // Build extension ->server mapping
     for (const [serverName, config] of Object.entries(serverConfigs)) {
       try {
         // Validate config before using it

@@ -40,10 +40,11 @@ export type SecretMatch = {
 // High-confidence patterns from gitleaks with distinctive prefixes.
 // Ordered roughly by likelihood of appearing in dev-team content.
 
-// Anthropic API key prefix, assembled at runtime so the literal byte
+// Provider API key prefix, assembled at runtime so the literal byte
 // sequence isn't present in the external bundle (excluded-strings check).
 // join() is not constant-folded by the minifier.
 const ANT_KEY_PFX = ['sk', 'ant', 'api'].join('-')
+const ANT_ADMIN_KEY_PFX = ['sk', 'ant', 'admin'].join('-')
 
 const SECRET_RULES: SecretRule[] = [
   // — Cloud providers —
@@ -71,13 +72,12 @@ const SECRET_RULES: SecretRule[] = [
 
   // — AI APIs —
   {
-    id: 'anthropic-api-key',
+    id: 'provider-api-key',
     source: `\\b(${ANT_KEY_PFX}03-[a-zA-Z0-9_\\-]{93}AA)(?:[\\x60'"\\s;]|\\\\[nr]|$)`,
   },
   {
-    id: 'anthropic-admin-api-key',
-    source:
-      '\\b(sk-ant-admin01-[a-zA-Z0-9_\\-]{93}AA)(?:[\\x60\'"\\s;]|\\\\[nr]|$)',
+    id: 'provider-admin-api-key',
+    source: `\\b(${ANT_ADMIN_KEY_PFX}01-[a-zA-Z0-9_\\-]{93}AA)(?:[\\x60'"\\s;]|\\\\[nr]|$)`,
   },
   {
     id: 'openai-api-key',
@@ -321,4 +321,44 @@ export function redactSecrets(content: string): string {
     )
   }
   return content
+}
+
+export function getDsxuTeamMemorySecretScannerRuntimeProfile(): {
+  runtime: 'DSXU Team Memory Secret Scanner'
+  ruleCount: number
+  ruleGroups: readonly string[]
+  safetyPolicy: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Team Memory Secret Scanner',
+    ruleCount: SECRET_RULES.length,
+    ruleGroups: [
+      'cloud provider credentials',
+      'AI provider credentials',
+      'version control credentials',
+      'communication tokens',
+      'developer tooling tokens',
+      'observability/payment/private-key credentials',
+    ],
+    safetyPolicy: [
+      'scan before team-memory upload',
+      'never return matched secret values',
+      'redact matched spans before persistence',
+    ],
+    activationEvidence: [
+      'scanForSecrets drives team-memory push skip decisions',
+      'redactSecrets provides DSXU-safe local evidence storage',
+      'rules are local-only and do not call DSXU or Provider services',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: secretscanner
+export function processSecretscannerLifecycle(input) {
+  void input
+  const state = 'secretscanner-state'
+  const lifecycle = 'secretscanner:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

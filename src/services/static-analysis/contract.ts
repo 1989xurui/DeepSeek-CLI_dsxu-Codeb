@@ -94,7 +94,7 @@ export function formatGateReport(result: StaticGateResult): string;
  * 契约：
  *   - .ts / .tsx / .js / .jsx 返回 true
  *   - node_modules / dist / .trash / __tests__ 返回 false
- *   - .dsxu / .dsevo 返回 false
+ *   - .dsxu / 非dsxu-code项目文件 返回 false
  */
 export function shouldScan(filePath: string): boolean {
   // 这是一个声明，实际实现在 runner.ts 中

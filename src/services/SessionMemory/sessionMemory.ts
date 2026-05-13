@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Session Memory automatically maintains a markdown file with notes about the current conversation.
  * It runs periodically in the background using a forked subagent to extract key information
@@ -180,6 +181,31 @@ export function shouldExtractMemory(messages: Message[]): boolean {
   return false
 }
 
+export function getDsxuSessionMemoryRuntimeProfile(): {
+  runtime: 'DSXU Session Memory'
+  triggerSignals: readonly string[]
+  extractionPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Session Memory',
+    triggerSignals: [
+      'context token threshold',
+      'tool call threshold',
+      'safe assistant turn without pending tool calls',
+      'auto-compact enabled state',
+    ],
+    extractionPolicy:
+      'session notes are maintained by a forked DSXU subagent using Read/Edit only, then stored under the DSXU session-memory path for resume/refill',
+    activationEvidence: [
+      'shouldExtractMemory checks initialization and update thresholds before scheduling extraction',
+      'tool-call counting gates updates on real tool usage rather than time alone',
+      'session memory prompt receives current notes and writes through FileEditTool',
+      'post-sampling hook integrates memory extraction into the main conversation lifecycle',
+    ],
+  }
+}
+
 async function setupSessionMemoryFile(
   toolUseContext: ToolUseContext,
 ): Promise<{ memoryPath: string; currentMemory: string }> {
@@ -212,7 +238,7 @@ async function setupSessionMemoryFile(
   }
 
   // Drop any cached entry so FileReadTool's dedup doesn't return a
-  // file_unchanged stub — we need the actual content. The Read repopulates it.
+  // file_unchanged stub ...we need the actual content. The Read repopulates it.
   toolUseContext.readFileState.delete(memoryPath)
   const result = await FileReadTool.call(
     { file_path: memoryPath },

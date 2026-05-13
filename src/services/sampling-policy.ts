@@ -5,19 +5,30 @@
  * 接入点：QueryEngine.ts 的 getMainLoopModel() 周边
  *
  * 7种任务类型及其采样策略：
- * 1. 代码生成/修复：temperature=0.7, top_p=0.95, model=deepseek-chat
- * 2. 复杂推理/规划：temperature=0.3, top_p=0.9, model=deepseek-reasoner
- * 3. 工具调用密集型：temperature=0.5, top_p=0.95, model=deepseek-chat
- * 4. 创意写作：temperature=0.9, top_p=0.99, model=deepseek-chat
- * 5. 事实问答：temperature=0.2, top_p=0.85, model=deepseek-chat
- * 6. 调试/错误分析：temperature=0.4, top_p=0.9, model=deepseek-reasoner
- * 7. 默认/未知：temperature=0.5, top_p=0.95, model=deepseek-chat
+ * 1. 代码生成/修复：temperature=0.7, top_p=0.95, model=deepseek-v4-flash
+ * 2. 复杂推理/规划：temperature=0.3, top_p=0.9, model=deepseek-v4-flash thinking max
+ * 3. 工具调用密集型：temperature=0.5, top_p=0.95, model=deepseek-v4-flash
+ * 4. 创意写作：temperature=0.9, top_p=0.99, model=deepseek-v4-flash
+ * 5. 事实问答：temperature=0.2, top_p=0.85, model=deepseek-v4-flash
+ * 6. 调试/错误分析：temperature=0.4, top_p=0.9, model=deepseek-v4-flash thinking max
+ * 7. 默认/未知：temperature=0.5, top_p=0.95, model=deepseek-v4-flash
  */
+
+import {
+  decideDeepSeekV4Route,
+  formatDeepSeekV4ModelEvidence,
+  type DeepSeekV4Model,
+  type DeepSeekV4PolicyReason,
+  type DeepSeekV4RouteInput,
+} from '../utils/model/deepseekV4Control'
 
 export interface SamplingConfig {
   temperature: number;
   top_p: number;
-  model: 'deepseek-chat' | 'deepseek-reasoner';
+  model: DeepSeekV4Model;
+  routeReason: DeepSeekV4PolicyReason;
+  maxTokens: number;
+  modelEvidence: string;
 }
 
 export type TaskType =
@@ -38,42 +49,49 @@ export interface TaskClassification {
 /**
  * 采样策略配置
  */
-const SAMPLING_STRATEGIES: Record<TaskType, SamplingConfig> = {
-  'code-generation': {
-    temperature: 0.7,
-    top_p: 0.95,
-    model: 'deepseek-chat'
-  },
-  'complex-reasoning': {
-    temperature: 0.3,
-    top_p: 0.9,
-    model: 'deepseek-reasoner'
-  },
-  'tool-intensive': {
-    temperature: 0.5,
-    top_p: 0.95,
-    model: 'deepseek-chat'
-  },
-  'creative-writing': {
-    temperature: 0.9,
-    top_p: 0.99,
-    model: 'deepseek-chat'
-  },
-  'factual-qa': {
-    temperature: 0.2,
-    top_p: 0.85,
-    model: 'deepseek-chat'
-  },
-  'debugging': {
-    temperature: 0.4,
-    top_p: 0.9,
-    model: 'deepseek-reasoner'
-  },
-  'default': {
-    temperature: 0.5,
-    top_p: 0.95,
-    model: 'deepseek-chat'
+function createSamplingConfig(
+  base: { temperature: number; top_p: number },
+  routeInput: DeepSeekV4RouteInput,
+): SamplingConfig {
+  const decision = decideDeepSeekV4Route(routeInput)
+  return {
+    ...base,
+    model: decision.model,
+    routeReason: decision.reason,
+    maxTokens: decision.maxTokens,
+    modelEvidence: formatDeepSeekV4ModelEvidence(decision),
   }
+}
+
+const SAMPLING_STRATEGIES: Record<TaskType, SamplingConfig> = {
+  'code-generation': createSamplingConfig(
+    { temperature: 0.7, top_p: 0.95 },
+    { workflowKind: 'feature', role: 'coder' },
+  ),
+  'complex-reasoning': createSamplingConfig(
+    { temperature: 0.3, top_p: 0.9 },
+    { workflowKind: 'planning', role: 'planner' },
+  ),
+  'tool-intensive': createSamplingConfig(
+    { temperature: 0.5, top_p: 0.95 },
+    { workflowKind: 'bugfix', role: 'coder' },
+  ),
+  'creative-writing': createSamplingConfig(
+    { temperature: 0.9, top_p: 0.99 },
+    { workflowKind: 'generic_chat', latencySensitive: true },
+  ),
+  'factual-qa': createSamplingConfig(
+    { temperature: 0.2, top_p: 0.85 },
+    { workflowKind: 'generic_chat', forceNonThinkingJson: true },
+  ),
+  'debugging': createSamplingConfig(
+    { temperature: 0.4, top_p: 0.9 },
+    { workflowKind: 'recovery', role: 'recovery' },
+  ),
+  'default': createSamplingConfig(
+    { temperature: 0.5, top_p: 0.95 },
+    { workflowKind: 'generic_chat' },
+  ),
 };
 
 /**

@@ -1,7 +1,9 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
 import { createHash } from 'crypto'
 import memoize from 'lodash-es/memoize.js'
 import { getOrCreateUserID } from '../../utils/config.js'
+import { getDsxuCodeEnv } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { getCanonicalName } from '../../utils/model/model.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
@@ -233,7 +235,7 @@ export async function trackDatadogEvent(
 
     // Build ddtags with high-cardinality fields for filtering.
     // event:<name> is prepended so the event name is searchable via the
-    // log search API — the `message` field (where eventName also lives)
+    // log search API ...the `message` field (where eventName also lives)
     // is a DD reserved field and is NOT queryable from dashboard widget
     // queries or the aggregation API. See scripts/release/MONITORING.md.
     const allDataRecord = allData
@@ -249,8 +251,8 @@ export async function trackDatadogEvent(
       ddsource: 'nodejs',
       ddtags: tags.join(','),
       message: eventName,
-      service: 'claude-code',
-      hostname: 'claude-code',
+      service: 'dsxu-code',
+      hostname: 'dsxu-code',
       env: process.env.USER_TYPE,
     }
 
@@ -301,7 +303,7 @@ const getUserBucket = memoize((): number => {
 function getFlushIntervalMs(): number {
   // Allow tests to override to not block on the default flush interval.
   return (
-    parseInt(process.env.CLAUDE_CODE_DATADOG_FLUSH_INTERVAL_MS || '', 10) ||
+    parseInt(getDsxuCodeEnv('DATADOG_FLUSH_INTERVAL_MS') || '', 10) ||
     DEFAULT_FLUSH_INTERVAL_MS
   )
 }

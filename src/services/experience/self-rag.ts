@@ -1,50 +1,53 @@
 /**
- * R5-26 self-RAG — 经验注入
+ * Legacy ExperienceStore self-RAG compatibility.
+ *
+ * This path is not the DSXU query-loop mainline. Keep it safe if older
+ * callers use it: bounded, read-only, and explicit about source truth.
  */
 
-import type { ExperienceRecord } from './types';
-import { ExperienceStore } from './store';
+import type { ExperienceRecord } from './types'
+import { ExperienceStore } from './store'
 
-/**
- * 从 ExperienceStore 检索相似经验，注入到 system prompt
- */
 export async function injectExperienceContext(
   store: ExperienceStore,
   taskDescription: string,
   baseSystemPrompt: string,
-  k: number = 3
+  k: number = 3,
 ): Promise<string> {
-  const records = await store.retrieve(taskDescription, k);
+  const records = await store.retrieve(taskDescription, k)
 
   if (records.length === 0) {
-    return baseSystemPrompt;
+    return baseSystemPrompt
   }
 
-  const context = formatExperienceContext(records);
-  return `${baseSystemPrompt}\n\n${context}`;
+  const context = formatExperienceContext(records)
+  return `${baseSystemPrompt}\n\n${context}`
 }
 
 function formatExperienceContext(records: ExperienceRecord[]): string {
   const lines: string[] = [
-    `[ExperienceStore Context — 来自 ${records.length} 次相似历史任务]`,
+    `[ExperienceStore Context - ${records.length} similar historical task(s), read-only]`,
+    'Policy: use these records as hints only. Current source files, tests, and tool output always win.',
     '',
-  ];
+  ]
 
   for (let i = 0; i < records.length; i++) {
-    const r = records[i];
-    const label = r.outcome === 'success' ? `成功，分数 ${r.finalScore}` : `失败，分数 ${r.finalScore}`;
-    lines.push(`历史任务 ${i + 1}（${label}）：`);
-    lines.push(`  - 任务：${r.taskDescription.slice(0, 200)}`);
-    lines.push(`  - 关键决策：${r.plan.slice(0, 200)}`);
+    const record = records[i]
+    const label = `${record.outcome}; score=${record.finalScore}`
+    lines.push(`Historical task ${i + 1} (${label}):`)
+    lines.push(`  - Task: ${record.taskDescription.slice(0, 200)}`)
+    lines.push(`  - Prior plan: ${record.plan.slice(0, 200)}`)
 
-    if (r.outcome === 'failure' && r.criticReason) {
-      lines.push(`  - **避免**：${r.criticReason}`);
-    } else if (r.outcome === 'success') {
-      lines.push(`  - 教训：${r.criticReason || '按计划执行成功'}`);
+    if (record.outcome === 'failure' && record.criticReason) {
+      lines.push(`  - Avoid repeating: ${record.criticReason.slice(0, 200)}`)
+    } else if (record.outcome === 'success') {
+      lines.push(
+        `  - Lesson: ${(record.criticReason || 'The prior plan completed successfully.').slice(0, 200)}`,
+      )
     }
-    lines.push('');
+    lines.push('')
   }
 
-  lines.push('请参考但不要照搬。当前任务有自身上下文。');
-  return lines.join('\n');
+  lines.push('Reread current source truth before editing. Do not claim success without current verification.')
+  return lines.join('\n')
 }

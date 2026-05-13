@@ -107,7 +107,7 @@ describe('Static Gate Runner (New)', () => {
     expect(shouldScan('.trash/file.ts')).toBe(false);
     expect(shouldScan('__tests__/test.ts')).toBe(false);
     expect(shouldScan('.dsxu/config.ts')).toBe(false);
-    expect(shouldScan('.dsevo/log.md')).toBe(false);
+    expect(shouldScan('非dsxu-code项目文件/log.ts')).toBe(false);
     expect(shouldScan('.git/config')).toBe(false);
     expect(shouldScan('README.md')).toBe(false); // 非代码文件
     expect(shouldScan('.env')).toBe(false); // 隐藏文件

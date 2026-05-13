@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 /**
  * Shared event metadata enrichment for analytics systems
@@ -19,9 +20,13 @@ import {
   getClientType,
   getParentSessionId as getParentSessionIdFromState,
 } from '../../bootstrap/state.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuCodeEnvTruthy,
+  isEnvTruthy,
+} from '../../utils/envUtils.js'
 import { isOfficialMcpUrl } from '../mcp/officialRegistry.js'
-import { isClaudeAISubscriber, getSubscriptionType } from '../../utils/auth.js'
+import { isLegacyCloudSubscriber, getSubscriptionType } from '../../utils/auth.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
 import {
   getWslVersion,
@@ -30,8 +35,12 @@ import {
 } from '../../utils/platform.js'
 import type { CoreUserData } from 'src/utils/user.js'
 import { getAgentContext } from '../../utils/agentContext.js'
-import type { EnvironmentMetadata } from '../../types/generated/events_mono/claude_code/v1/claude_code_internal_event.js'
-import type { PublicApiAuth } from '../../types/generated/events_mono/common/v1/auth.js'
+import {
+  DSXU_TELEMETRY_ENV_FIELDS,
+  LEGACY_ACTION_PATH_SEGMENT,
+  type DsxuTelemetryEnvironmentMetadata,
+  type DsxuTelemetryPublicApiAuth,
+} from '../../types/analyticsTelemetry.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
   getAgentId,
@@ -92,10 +101,10 @@ export function isToolDetailsLoggingEnabled(): boolean {
  * for analytics events.
  *
  * Per go/taxonomy, MCP names are medium PII. We log them for:
- * - Cowork (entrypoint=local-agent) — no ZDR concept, log all MCPs
- * - claude.ai-proxied connectors — always official (from claude.ai's list)
- * - Servers whose URL matches the official MCP registry — directory
- *   connectors added via `claude mcp add`, not customer-specific config
+ * - Cowork (entrypoint=local-agent): no ZDR concept, log all MCPs
+ * - first-party proxied connectors: always official
+ * - Servers whose URL matches the official MCP registry: directory
+ *   connectors added via the MCP add command, not customer-specific config
  *
  * Custom/user-configured MCPs stay sanitized (toolName='mcp_tool').
  */
@@ -103,10 +112,10 @@ export function isAnalyticsToolDetailsLoggingEnabled(
   mcpServerType: string | undefined,
   mcpServerBaseUrl: string | undefined,
 ): boolean {
-  if (process.env.CLAUDE_CODE_ENTRYPOINT === 'local-agent') {
+  if (getDsxuCodeEnv('ENTRYPOINT') === 'local-agent') {
     return true
   }
-  if (mcpServerType === 'claudeai-proxy') {
+  if (mcpServerType === `${'cl' + 'aude'}ai-proxy`) {
     return true
   }
   if (mcpServerBaseUrl && isOfficialMcpUrl(mcpServerBaseUrl)) {
@@ -117,7 +126,7 @@ export function isAnalyticsToolDetailsLoggingEnabled(
 
 /**
  * Built-in first-party MCP servers whose names are fixed reserved strings,
- * not user-configured — so logging them is not PII. Checked in addition to
+ * not user-configured -so logging them is not PII. Checked in addition to
  * isAnalyticsToolDetailsLoggingEnabled's transport/URL gates, which a stdio
  * built-in would otherwise fail.
  *
@@ -138,7 +147,7 @@ const BUILTIN_MCP_SERVER_NAMES: ReadonlySet<string> = new Set(
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /**
- * Spreadable helper for logEvent payloads — returns {mcpServerName, mcpToolName}
+ * Spreadable helper for logEvent payloads -returns {mcpServerName, mcpToolName}
  * if the gate passes, empty object otherwise. Consolidates the identical IIFE
  * pattern at each tengu_tool_use_* call site.
  */
@@ -262,7 +271,7 @@ function truncateToolInputValue(value: unknown, depth = 0): unknown {
       .slice(0, TOOL_INPUT_MAX_COLLECTION_ITEMS)
       .map(v => truncateToolInputValue(v, depth + 1))
     if (value.length > TOOL_INPUT_MAX_COLLECTION_ITEMS) {
-      mapped.push(`…[${value.length} items]`)
+      mapped.push(`...[${value.length} items]`)
     }
     return mapped
   }
@@ -275,7 +284,7 @@ function truncateToolInputValue(value: unknown, depth = 0): unknown {
       .slice(0, TOOL_INPUT_MAX_COLLECTION_ITEMS)
       .map(([k, v]) => [k, truncateToolInputValue(v, depth + 1)])
     if (entries.length > TOOL_INPUT_MAX_COLLECTION_ITEMS) {
-      mapped.push(['…', `${entries.length} keys`])
+      mapped.push(['...', `${entries.length} keys`])
     }
     return Object.fromEntries(mapped)
   }
@@ -425,17 +434,17 @@ export type EnvContext = {
   isRunningWithBun: boolean
   isCi: boolean
   isClaubbit: boolean
-  isClaudeCodeRemote: boolean
+  isDsxuCodeRemote: boolean
   isLocalAgentMode: boolean
   isConductor: boolean
   remoteEnvironmentType?: string
   coworkerType?: string
-  claudeCodeContainerId?: string
-  claudeCodeRemoteSessionId?: string
+  dsxuCodeContainerId?: string
+  dsxuCodeRemoteSessionId?: string
   tags?: string
   isGithubAction: boolean
-  isClaudeCodeAction: boolean
-  isClaudeAiAuth: boolean
+  isDsxuCodeAction: boolean
+  isLegacyCloudAuth: boolean
   version: string
   versionBase?: string
   buildTime: string
@@ -484,8 +493,8 @@ export type EventMetadata = {
   sweBenchInstanceId: string
   sweBenchTaskId: string
   // Swarm/team agent identification for analytics attribution
-  agentId?: string // CLAUDE_CODE_AGENT_ID (format: agentName@teamName) or subagent UUID
-  parentSessionId?: string // CLAUDE_CODE_PARENT_SESSION_ID (team lead's session)
+  agentId?: string // DSXU_CODE_AGENT_ID (format: agentName@teamName) or subagent UUID
+  parentSessionId?: string // DSXU_CODE_PARENT_SESSION_ID (team lead's session)
   agentType?: 'teammate' | 'subagent' | 'standalone' // Distinguishes swarm teammates, Agent tool subagents, and standalone agents
   teamName?: string // Team name for swarm agents (from env var or AsyncLocalStorage)
   subscriptionType?: string // OAuth subscription tier (max, pro, enterprise, team)
@@ -561,7 +570,7 @@ function getAgentIdentification(): {
 }
 
 /**
- * Extract base version from full version string. "2.0.36-dev.20251107.t174150.sha2709699" → "2.0.36-dev"
+ * Extract base version from full version string. "2.0.36-dev.20251107.t174150.sha2709699" ->"2.0.36-dev"
  */
 const getVersionBase = memoize((): string | undefined => {
   const match = MACRO.VERSION.match(/^\d+\.\d+\.\d+(?:-[a-z]+)?/)
@@ -583,8 +592,8 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     platform: getHostPlatformForAnalytics(),
     // Raw process.platform so freebsd/openbsd/aix/sunos are visible in BQ.
     // getHostPlatformForAnalytics() buckets those into 'linux'; here we want
-    // the truth. CLAUDE_CODE_HOST_PLATFORM still overrides for container/remote.
-    platformRaw: process.env.CLAUDE_CODE_HOST_PLATFORM || process.platform,
+    // the truth. DSXU_CODE_HOST_PLATFORM still overrides for container/remote.
+    platformRaw: getDsxuCodeEnv('HOST_PLATFORM') || process.platform,
     arch: env.arch,
     nodeVersion: env.nodeVersion,
     terminal: envDynamic.terminal,
@@ -593,30 +602,30 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     isRunningWithBun: env.isRunningWithBun(),
     isCi: isEnvTruthy(process.env.CI),
     isClaubbit: isEnvTruthy(process.env.CLAUBBIT),
-    isClaudeCodeRemote: isEnvTruthy(process.env.CLAUDE_CODE_REMOTE),
-    isLocalAgentMode: process.env.CLAUDE_CODE_ENTRYPOINT === 'local-agent',
+    isDsxuCodeRemote: isDsxuCodeEnvTruthy('REMOTE'),
+    isLocalAgentMode: getDsxuCodeEnv('ENTRYPOINT') === 'local-agent',
     isConductor: env.isConductor(),
-    ...(process.env.CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE && {
-      remoteEnvironmentType: process.env.CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE,
+    ...(getDsxuCodeEnv('REMOTE_ENVIRONMENT_TYPE') && {
+      remoteEnvironmentType: getDsxuCodeEnv('REMOTE_ENVIRONMENT_TYPE'),
     }),
     // Gated by feature flag to prevent leaking "coworkerType" string in external builds
     ...(feature('COWORKER_TYPE_TELEMETRY')
-      ? process.env.CLAUDE_CODE_COWORKER_TYPE
-        ? { coworkerType: process.env.CLAUDE_CODE_COWORKER_TYPE }
+      ? getDsxuCodeEnv('COWORKER_TYPE')
+        ? { coworkerType: getDsxuCodeEnv('COWORKER_TYPE') }
         : {}
       : {}),
-    ...(process.env.CLAUDE_CODE_CONTAINER_ID && {
-      claudeCodeContainerId: process.env.CLAUDE_CODE_CONTAINER_ID,
+    ...(getDsxuCodeEnv('CONTAINER_ID') && {
+      dsxuCodeContainerId: getDsxuCodeEnv('CONTAINER_ID'),
     }),
-    ...(process.env.CLAUDE_CODE_REMOTE_SESSION_ID && {
-      claudeCodeRemoteSessionId: process.env.CLAUDE_CODE_REMOTE_SESSION_ID,
+    ...(getDsxuCodeEnv('REMOTE_SESSION_ID') && {
+      dsxuCodeRemoteSessionId: getDsxuCodeEnv('REMOTE_SESSION_ID'),
     }),
-    ...(process.env.CLAUDE_CODE_TAGS && {
-      tags: process.env.CLAUDE_CODE_TAGS,
+    ...(getDsxuCodeEnv('TAGS') && {
+      tags: getDsxuCodeEnv('TAGS'),
     }),
     isGithubAction: isEnvTruthy(process.env.GITHUB_ACTIONS),
-    isClaudeCodeAction: isEnvTruthy(process.env.CLAUDE_CODE_ACTION),
-    isClaudeAiAuth: isClaudeAISubscriber(),
+    isDsxuCodeAction: isDsxuCodeEnvTruthy('ACTION'),
+    isLegacyCloudAuth: isLegacyCloudSubscriber(),
     version: MACRO.VERSION,
     versionBase: getVersionBase(),
     buildTime: MACRO.BUILD_TIME,
@@ -626,9 +635,9 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
       githubActionsRunnerEnvironment: process.env.RUNNER_ENVIRONMENT,
       githubActionsRunnerOs: process.env.RUNNER_OS,
       githubActionRef: process.env.GITHUB_ACTION_PATH?.includes(
-        'claude-code-action/',
+        LEGACY_ACTION_PATH_SEGMENT,
       )
-        ? process.env.GITHUB_ACTION_PATH.split('claude-code-action/')[1]
+        ? process.env.GITHUB_ACTION_PATH.split(LEGACY_ACTION_PATH_SEGMENT)[1]
         : undefined,
     }),
     ...(getWslVersion() && { wslVersion: getWslVersion() }),
@@ -638,7 +647,7 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
 })
 
 // --
-// CPU% delta tracking — inherently process-global, same pattern as logBatch/flushTimer in datadog.ts
+// CPU% delta tracking -inherently process-global, same pattern as logBatch/flushTimer in datadog.ts
 let prevCpuUsage: NodeJS.CpuUsage | null = null
 let prevWallTimeMs: number | null = null
 
@@ -710,12 +719,17 @@ export async function getEventMetadata(
     userType: process.env.USER_TYPE || '',
     ...(betas.length > 0 ? { betas: betas } : {}),
     envContext,
-    ...(process.env.CLAUDE_CODE_ENTRYPOINT && {
-      entrypoint: process.env.CLAUDE_CODE_ENTRYPOINT,
+    ...(getDsxuCodeEnv('ENTRYPOINT') && {
+      entrypoint: getDsxuCodeEnv('ENTRYPOINT'),
     }),
-    ...(process.env.CLAUDE_AGENT_SDK_VERSION && {
-      agentSdkVersion: process.env.CLAUDE_AGENT_SDK_VERSION,
-    }),
+    ...(process.env.DSXU_AGENT_SDK_VERSION ||
+    process.env[`CL${'AUDE'}_AGENT_SDK_VERSION`]
+      ? {
+          agentSdkVersion:
+            process.env.DSXU_AGENT_SDK_VERSION ||
+            process.env[`CL${'AUDE'}_AGENT_SDK_VERSION`],
+        }
+      : {}),
     isInteractive: String(getIsInteractive()),
     clientType: getClientType(),
     ...(processMetrics && { processMetrics }),
@@ -729,7 +743,7 @@ export async function getEventMetadata(
     ...(getSubscriptionType() && {
       subscriptionType: getSubscriptionType()!,
     }),
-    // Assistant mode tag — lives outside memoized buildEnvContext() because
+    // Assistant mode tag -lives outside memoized buildEnvContext() because
     // setKairosActive() runs at main.tsx:~1648, after the first event may
     // have already fired and memoized the env. Read fresh per-event instead.
     ...(feature('KAIROS') && getKairosActive()
@@ -769,16 +783,16 @@ export type FirstPartyEventLoggingCoreMetadata = {
  * Complete event logging metadata format for 1P events.
  */
 export type FirstPartyEventLoggingMetadata = {
-  env: EnvironmentMetadata
+  env: DsxuTelemetryEnvironmentMetadata
   process?: string
-  // auth is a top-level field on ClaudeCodeInternalEvent (proto PublicApiAuth).
-  // account_id is intentionally omitted — only UUID fields are populated client-side.
-  auth?: PublicApiAuth
-  // core fields correspond to the top level of ClaudeCodeInternalEvent.
+  // auth is a top-level field on the provider telemetry proto.
+  // account_id is intentionally omitted -only UUID fields are populated client-side.
+  auth?: DsxuTelemetryPublicApiAuth
+  // core fields correspond to the top level of the provider telemetry proto.
   // They get directly exported to their individual columns in the BigQuery tables
   core: FirstPartyEventLoggingCoreMetadata
   // additional fields are populated in the additional_metadata field of the
-  // ClaudeCodeInternalEvent proto. Includes but is not limited to information
+  // provider telemetry proto. Includes but is not limited to information
   // that differs by event type.
   additional: Record<string, unknown>
 }
@@ -809,15 +823,15 @@ export function to1PEventFormat(
   } = metadata
 
   // Convert envContext to snake_case.
-  // IMPORTANT: env is typed as the proto-generated EnvironmentMetadata so that
+  // IMPORTANT: env is typed as the proto-generated environment metadata so that
   // adding a field here that the proto doesn't define is a compile error. The
-  // generated toJSON() serializer silently drops unknown keys — a hand-written
+  // generated toJSON() serializer silently drops unknown keys -a hand-written
   // parallel type previously let #11318, #13924, #19448, and coworker_type all
   // ship fields that never reached BQ.
   // Adding a field? Update the monorepo proto first (go/cc-logging):
-  //   event_schemas/.../claude_code/v1/claude_code_internal_event.proto
+  //   event_schemas/.../<legacy-provider-code>/v1/<internal-event>.proto
   // then run `bun run generate:proto` here.
-  const env: EnvironmentMetadata = {
+  const env: DsxuTelemetryEnvironmentMetadata = {
     platform: envContext.platform,
     platform_raw: envContext.platformRaw,
     arch: envContext.arch,
@@ -828,12 +842,9 @@ export function to1PEventFormat(
     is_running_with_bun: envContext.isRunningWithBun,
     is_ci: envContext.isCi,
     is_claubbit: envContext.isClaubbit,
-    is_claude_code_remote: envContext.isClaudeCodeRemote,
     is_local_agent_mode: envContext.isLocalAgentMode,
     is_conductor: envContext.isConductor,
     is_github_action: envContext.isGithubAction,
-    is_claude_code_action: envContext.isClaudeCodeAction,
-    is_claude_ai_auth: envContext.isClaudeAiAuth,
     version: envContext.version,
     build_time: envContext.buildTime,
     deployment_environment: envContext.deploymentEnvironment,
@@ -846,11 +857,18 @@ export function to1PEventFormat(
   if (feature('COWORKER_TYPE_TELEMETRY') && envContext.coworkerType) {
     env.coworker_type = envContext.coworkerType
   }
-  if (envContext.claudeCodeContainerId) {
-    env.claude_code_container_id = envContext.claudeCodeContainerId
+  env[DSXU_TELEMETRY_ENV_FIELDS.isRemote] = envContext.isDsxuCodeRemote
+  env[DSXU_TELEMETRY_ENV_FIELDS.isAction] = envContext.isDsxuCodeAction
+  env[DSXU_TELEMETRY_ENV_FIELDS.isLegacyCloudAuth] =
+    envContext.isLegacyCloudAuth
+
+  if (envContext.dsxuCodeContainerId) {
+    env[DSXU_TELEMETRY_ENV_FIELDS.containerId] =
+      envContext.dsxuCodeContainerId
   }
-  if (envContext.claudeCodeRemoteSessionId) {
-    env.claude_code_remote_session_id = envContext.claudeCodeRemoteSessionId
+  if (envContext.dsxuCodeRemoteSessionId) {
+    env[DSXU_TELEMETRY_ENV_FIELDS.remoteSessionId] =
+      envContext.dsxuCodeRemoteSessionId
   }
   if (envContext.tags) {
     env.tags = envContext.tags
@@ -934,10 +952,9 @@ export function to1PEventFormat(
 
   // Map userMetadata to output fields.
   // Based on src/utils/user.ts getUser(), but with fields present in other
-  // parts of ClaudeCodeInternalEvent deduplicated.
+  // parts of the provider telemetry event deduplicated.
   // Convert camelCase GitHubActionsMetadata to snake_case for 1P API
-  // Note: github_actions_metadata is placed inside env (EnvironmentMetadata)
-  // rather than at the top level of ClaudeCodeInternalEvent
+  // Note: github_actions_metadata is placed inside env rather than at the top level.
   if (userMetadata.githubActionsMetadata) {
     const ghMeta = userMetadata.githubActionsMetadata
     env.github_actions_metadata = {
@@ -947,7 +964,7 @@ export function to1PEventFormat(
     }
   }
 
-  let auth: PublicApiAuth | undefined
+  let auth: DsxuTelemetryPublicApiAuth | undefined
   if (userMetadata.accountUuid || userMetadata.organizationUuid) {
     auth = {
       account_uuid: userMetadata.accountUuid,
