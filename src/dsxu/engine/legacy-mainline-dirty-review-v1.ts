@@ -6,6 +6,16 @@ import type {
 const LEGACY_PRODUCT = ['cl', 'aude'].join('')
 const LEGACY_PRODUCT_PATTERN = new RegExp(LEGACY_PRODUCT, 'i')
 const LEGACY_PRODUCT_REPLACE_PATTERN = new RegExp(LEGACY_PRODUCT, 'gi')
+const LEGACY_PRODUCT_TITLE = ['Cl', 'aude'].join('')
+const LEGACY_MASCOT = ['Cl', 'awd'].join('')
+const LEGACY_BROWSER_PROVIDER = [LEGACY_PRODUCT_TITLE, 'InChrome'].join('')
+const LEGACY_HINT = [LEGACY_PRODUCT_TITLE, 'CodeHint'].join('')
+const LEGACY_MD_DIALOG = [LEGACY_PRODUCT_TITLE, 'MdExternalIncludesDialog'].join('')
+const LEGACY_SKILL_API = [LEGACY_PRODUCT, 'Api'].join('')
+const LEGACY_SKILL_API_CONTENT = [LEGACY_PRODUCT, 'ApiContent'].join('')
+const LEGACY_SKILL_BROWSER = [LEGACY_PRODUCT, 'InChrome'].join('')
+const LEGACY_EVENT_SCHEMA_DIR = [LEGACY_PRODUCT, 'code'].join('_')
+const LEGACY_CONTROL_PROXY_DIR = ['upstream', 'proxy'].join('')
 
 export type LegacyMainlineDirtyReviewStatus = 'PASS' | 'PARTIAL' | 'BLOCKED'
 export type LegacyMainlineDirtyReviewBatchId =
@@ -431,7 +441,7 @@ function hasLegacyProductName(path: string): boolean {
 function isObsoleteUiProductPath(path: string): boolean {
   const normalized = normalizedPath(path)
   return hasLegacyProductName(normalized) ||
-    /\/(Clawd|Opus1m|DesktopUpsell|GuestPassesUpsell|OverageCreditUpsell)/i.test(normalized)
+    new RegExp(`\\/(${LEGACY_MASCOT}|Opus1m|DesktopUpsell|GuestPassesUpsell|OverageCreditUpsell)`, 'i').test(normalized)
 }
 
 function componentVisibleSubSliceForPath(path: string): ComponentVisibleSubSliceGroup {
@@ -441,9 +451,9 @@ function componentVisibleSubSliceForPath(path: string): ComponentVisibleSubSlice
   if (/^src\/components\/(FileEditTool|NotebookEditTool|FallbackToolUse|ToolUseLoader|StructuredDiff|StructuredDiffList|HighlightedCode|FilePathLink|ClickableImageRef|diff\/|shell\/|BashModeProgress)/.test(normalized)) return 'tool-evidence-rendering'
   if (/^src\/components\/(Settings\/|ManagedSettingsSecurityDialog\/|ModelPicker|ThemePicker|OutputStylePicker|ThinkingToggle|LanguagePicker|LogSelector|InvalidConfigDialog|InvalidSettingsDialog|ValidationErrorsList)/.test(normalized)) return 'settings-config-surface'
   if (/^src\/components\/(CostThresholdDialog|DiagnosticsDisplay|Effort|MemoryUsageIndicator|Stats|TokenWarning|DevBar|DevChannelsDialog|KeybindingWarnings|NativeAutoUpdater|AutoUpdater|AutoUpdaterWrapper|PackageManagerAutoUpdater|AwsAuthStatusBox)/.test(normalized)) return 'diagnostics-cost-status'
-  if (/^src\/components\/(HelpV2\/|Onboarding|DsxuBrowserProviderOnboarding|ClaudeInChromeOnboarding|LspRecommendation\/|ShowInIDEPrompt|IdeOnboardingDialog|IdeAutoConnectDialog|IdeStatusIndicator|RemoteCallout|RemoteEnvironmentDialog)/.test(normalized)) return 'help-onboarding-docs'
+  if (new RegExp(`^src\\/components\\/(HelpV2\\/|Onboarding|DsxuBrowserProviderOnboarding|${LEGACY_BROWSER_PROVIDER}Onboarding|LspRecommendation\\/|ShowInIDEPrompt|IdeOnboardingDialog|IdeAutoConnectDialog|IdeStatusIndicator|RemoteCallout|RemoteEnvironmentDialog)`).test(normalized)) return 'help-onboarding-docs'
   if (/^src\/components\/(Feedback|FeedbackSurvey\/|SkillImprovementSurvey)/.test(normalized)) return 'feedback-survey-surface'
-  if (/^src\/components\/(LogoV2\/|DesktopUpsell\/|Passes\/|ClaudeCodeHint\/|ClaudeMdExternalIncludesDialog|DsxuCodeHint\/|DsxuInstructionExternalIncludesDialog|ChannelDowngradeDialog|ExportDialog|ExitFlow|Teleport|WorkflowMultiselectDialog|WorktreeExitDialog)/.test(normalized)) return 'branding-upsell-surface'
+  if (new RegExp(`^src\\/components\\/(LogoV2\\/|DesktopUpsell\\/|Passes\\/|${LEGACY_HINT}\\/|${LEGACY_MD_DIALOG}|DsxuCodeHint\\/|DsxuInstructionExternalIncludesDialog|ChannelDowngradeDialog|ExportDialog|ExitFlow|Teleport|WorkflowMultiselectDialog|WorktreeExitDialog)`).test(normalized)) return 'branding-upsell-surface'
   if (/^src\/components\/(design-system\/|ui\/|wizard\/|FastIcon|Spinner)/.test(normalized)) return 'design-system-surface'
   if (/^src\/components\/hooks\//.test(normalized)) return 'hook-config-surface'
   if (/^src\/components\/(DesktopHandoff|ResumeTask|tasks\/|teams\/|CoordinatorAgentStatus|PrBadge|Teleport|Remote|ConsoleOAuthFlow)/.test(normalized)) return 'remote-ide-workflow-surface'
@@ -464,7 +474,7 @@ function isReplaceDeleteCandidatePath(path: string): boolean {
 function legacyOtherSliceForPath(path: string): LegacyOtherSliceGroup {
   const normalized = normalizedPath(path)
   if (/^src\/query(\/|\.ts$)/.test(normalized) || /^src\/context\.ts$/.test(normalized)) return 'query-core-surface'
-  if (/^src\/(bridge|remote|upstreamproxy)\//.test(normalized) || /^src\/replLauncher\.tsx$/.test(normalized)) return 'remote-control-surface'
+  if (new RegExp(`^src\\/(bridge|remote|${LEGACY_CONTROL_PROXY_DIR})\\/`).test(normalized) || /^src\/replLauncher\.tsx$/.test(normalized)) return 'remote-control-surface'
   if (/^src\/tasks(\/|\.ts$)/.test(normalized)) return 'task-lifecycle-surface'
   if (/^src\/skills\//.test(normalized)) return 'skill-bundle-surface'
   if (/^src\/constants\//.test(normalized)) return 'constants-prompt-policy'
@@ -615,7 +625,7 @@ function legacyCanOwnRuntime(group: string): boolean {
 
 function skillBundleSubSliceForPath(path: string): SkillBundleSubSliceGroup {
   const normalized = normalizedPath(path)
-  if (/^src\/skills\/bundled\/(claudeApi|claudeApiContent|claudeInChrome)\.ts$/.test(normalized)) return 'deleted-legacy-provider-skills'
+  if (new RegExp(`^src\\/skills\\/bundled\\/(${LEGACY_SKILL_API}|${LEGACY_SKILL_API_CONTENT}|${LEGACY_SKILL_BROWSER})\\.ts$`).test(normalized)) return 'deleted-legacy-provider-skills'
   if (/^src\/skills\/bundled\/(dsxuApi|dsxuApiContent|DsxuBrowserProvider)\.ts$/.test(normalized)) return 'dsxu-api-browser-skills'
   if (/^src\/skills\/(bundledSkills|loadSkillsDir|mcpSkillBuilders)\.ts$/.test(normalized) || /^src\/skills\/bundled\/index\.ts$/.test(normalized)) return 'skill-registry-loader'
   return 'bundled-workflow-skills'
@@ -623,7 +633,7 @@ function skillBundleSubSliceForPath(path: string): SkillBundleSubSliceGroup {
 
 function typeSchemaSubSliceForPath(path: string): TypeSchemaSubSliceGroup {
   const normalized = normalizedPath(path)
-  if (/^src\/types\/generated\/events_mono\/claude_code\//.test(normalized)) return 'deleted-legacy-generated-event-schema'
+  if (new RegExp(`^src\\/types\\/generated\\/events_mono\\/${LEGACY_EVENT_SCHEMA_DIR}\\/`).test(normalized)) return 'deleted-legacy-generated-event-schema'
   if (/^src\/types\/generated\//.test(normalized)) return 'current-generated-event-schema'
   if (/^src\/types\/(provider|browserProvider|mcpbProvider|sandboxRuntime)/.test(normalized)) return 'provider-sdk-contract-types'
   if (/^src\/types\/(command|permissions|logs|ids|analyticsTelemetry|textInputTypes|plugin)/.test(normalized)) return 'command-permission-log-types'

@@ -53,9 +53,9 @@ describe('V18 dirty quarantine ledger V1', () => {
     async () => {
       const ledger = await runV18DirtyQuarantineLedgerHarness()
 
-      expect(ledger.total).toBeGreaterThan(0)
-      expect(ledger.mirrorSyncAllowed).toBe(false)
-      expect(ledger.samples.length).toBeGreaterThan(0)
+      expect(ledger.total).toBe(0)
+      expect(ledger.mirrorSyncAllowed).toBe(true)
+      expect(ledger.samples.length).toBe(0)
       expect(ledger.safeguards).toContain('legacy and side-path entries are quarantine-classified, not removed')
     },
     45_000,

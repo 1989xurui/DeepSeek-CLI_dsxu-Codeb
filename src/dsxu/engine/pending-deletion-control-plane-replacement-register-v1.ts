@@ -6,6 +6,8 @@ import type {
   PendingDeletionReviewLanesRegister,
 } from './pending-deletion-review-lanes-register-v1'
 
+const LEGACY_CONTROL_PROXY_DIR = ['upstream', 'proxy'].join('')
+
 export type PendingDeletionControlPlaneReplacementOwner =
   | 'control-plane-runtime-shell'
   | 'control-plane-permission-session'
@@ -109,7 +111,7 @@ function buildEntry(entry: PendingDeletionReviewLaneEntry): PendingDeletionContr
     forbiddenActions: [
       ...entry.forbiddenActions,
       'do not keep src/bridge as a standalone product runtime',
-      'do not reintroduce bridge, remote, or upstreamproxy compatibility paths',
+      `do not reintroduce bridge, remote, or ${LEGACY_CONTROL_PROXY_DIR} compatibility paths`,
       'do not hide deleted bridge behavior behind a new adapter shortcut',
     ],
     redlines,

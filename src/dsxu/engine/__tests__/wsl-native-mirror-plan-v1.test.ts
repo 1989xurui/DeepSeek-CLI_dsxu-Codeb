@@ -64,10 +64,10 @@ describe('WSL native mirror plan V1', () => {
 
       expect(plan.sourceRoot).toBe('/mnt/d/DSXU-code')
       expect(plan.mirrorRoot).toBe('~/work/DSXU-code')
-      expect(plan.syncMode).toBe('PLAN_ONLY')
+      expect(plan.syncMode).toBe('SAFE_OVERLAY_COPY')
       expect(plan.commands.join('\n')).toContain('rsync -a')
       expect(plan.commands.join('\n')).not.toContain('--delete')
-      expect(plan.dirtyCount).toBeGreaterThan(0)
+      expect(plan.dirtyCount).toBe(0)
     },
     45_000,
   )

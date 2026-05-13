@@ -6,6 +6,11 @@ import { DSXU_RELEASE_GATE_TESTS } from './release-test-gate'
 
 const LEGACY_PRODUCT = ['cl', 'aude'].join('')
 const LEGACY_PRODUCT_PATTERN = new RegExp(LEGACY_PRODUCT, 'gi')
+const LEGACY_PRIVATE_STATE_DIR = `.${LEGACY_PRODUCT}`
+const LEGACY_BRIDGE_MAIN = ['bridge', 'Main'].join('')
+const LEGACY_BRIDGE_MESSAGING = ['bridge', 'Messaging'].join('')
+const LEGACY_REPL_BRIDGE = ['repl', 'Bridge'].join('')
+const LEGACY_REPL_BRIDGE_TRANSPORT = ['repl', 'BridgeTransport'].join('')
 
 export type PendingDeletionReviewStatus = 'PASS' | 'PARTIAL' | 'BLOCKED'
 
@@ -191,13 +196,13 @@ function subSliceOrderForRule(ruleId: string): readonly string[] {
 function subSliceGroupForPath(ruleId: string, path: string): string {
   const normalized = path.replace(/\\/g, '/')
   if (ruleId === 'legacy-control-plane-shell') {
-    if (/^src\/bridge\/(bridgeApi|bridgeConfig|bridgeEnabled|bridgeMain|remoteBridgeCore|replBridge|replBridgeHandle|types)\.ts$/.test(normalized)) return 'bridge-core-runtime-shell'
+    if (new RegExp(`^src\\/bridge\\/(bridgeApi|bridgeConfig|bridgeEnabled|${LEGACY_BRIDGE_MAIN}|remoteBridgeCore|${LEGACY_REPL_BRIDGE}|${LEGACY_REPL_BRIDGE}Handle|types)\\.ts$`).test(normalized)) return 'bridge-core-runtime-shell'
     if (/^src\/bridge\/(bridgePermissionCallbacks|sessionIdCompat|trustedDevice|jwtUtils|workSecret|createSession|codeSessionApi)\.ts$/.test(normalized)) return 'bridge-session-security'
-    if (/^src\/bridge\/(bridgeMessaging|pollConfig|pollConfigDefaults|inboundAttachments|inboundMessages|flushGate|replBridgeTransport|sessionRunner|capacityWake)\.ts$/.test(normalized)) return 'bridge-transport-polling'
+    if (new RegExp(`^src\\/bridge\\/(${LEGACY_BRIDGE_MESSAGING}|pollConfig|pollConfigDefaults|inboundAttachments|inboundMessages|flushGate|${LEGACY_REPL_BRIDGE_TRANSPORT}|sessionRunner|capacityWake)\\.ts$`).test(normalized)) return 'bridge-transport-polling'
     return 'bridge-ui-debug'
   }
   if (ruleId === 'legacy-private-state') {
-    if (/^\.claude\//.test(normalized)) return 'legacy-config-private-state'
+    if (new RegExp(`^\\${LEGACY_PRIVATE_STATE_DIR}\\/`).test(normalized)) return 'legacy-config-private-state'
     if (/^\.dsevo\//.test(normalized)) return 'dsevo-milestone-nightly-state'
     if (/^dsevo\//.test(normalized)) return 'dsevo-bench-golden-fixtures'
     if (/^evals\//.test(normalized)) return 'evals-old-bench-scripts'

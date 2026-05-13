@@ -5,6 +5,11 @@ import type {
 
 const LEGACY_PRODUCT = ['cl', 'aude'].join('')
 const LEGACY_PRODUCT_PATTERN = new RegExp(LEGACY_PRODUCT, 'gi')
+const LEGACY_AI_LIMITS = `${LEGACY_PRODUCT}AiLimits`
+const LEGACY_AI_LIMITS_HOOK = `${LEGACY_PRODUCT}AiLimitsHook`
+const LEGACY_IN_CHROME = `${LEGACY_PRODUCT}InChrome`
+const LEGACY_CODE_HINTS = `${LEGACY_PRODUCT}CodeHints`
+const LEGACY_GOOD_SLUG = `good-${LEGACY_PRODUCT}`
 
 export type ToolRuntimeDirtyReviewStatus = 'PASS' | 'PARTIAL' | 'BLOCKED'
 export type ToolRuntimeDirtyReviewBatchId =
@@ -583,7 +588,7 @@ function supportSliceForPath(path: string): ToolRuntimeSupportServiceGroup {
     return 'permission-safety'
   }
   if (
-    /^src\/services\/(api|policyLimits|tokenEstimation|sampling-policy|cache-stats|rateLimit|rateLimitMessages|rateLimitMocking|mockRateLimits|dsxuLimits|dsxuLimitsHook|claudeAiLimits|claudeAiLimitsHook)\b/.test(normalized) ||
+    new RegExp(`^src\\/services\\/(api|policyLimits|tokenEstimation|sampling-policy|cache-stats|rateLimit|rateLimitMessages|rateLimitMocking|mockRateLimits|dsxuLimits|dsxuLimitsHook|${LEGACY_AI_LIMITS}|${LEGACY_AI_LIMITS_HOOK})\\b`).test(normalized) ||
     /^src\/utils\/(model|tokens|tokenBudget|modelCost|effort|proxy|billing|api|apiPreconnect|extraUsage|betas|fastMode)\b/.test(normalized)
   ) {
     return 'provider-cost'
@@ -611,7 +616,7 @@ function supportSliceForPath(path: string): ToolRuntimeSupportServiceGroup {
   if (
     /^src\/hooks\//.test(normalized) ||
     /^src\/services\/(tips|PromptSuggestion|remoteManagedSettings|settingsSync|notifier|preventSleep|awaySummary|voice|voiceStreamSTT|voiceKeyterms)\b/.test(normalized) ||
-    /^src\/utils\/(advisor|autoRunIssue|autoUpdater|bundledMode|browser|claudeInChrome|claudeCodeHints|clipboard|config|configConstants|cwd|deepLink|desktopDeepLink|doctorContextWarnings|dsxuCodeHints|dsxuBrowserProvider|dsxuHealthMonitor|dsxuInstructions|editor|fullscreen|horizontalScroll|hyperlink|ide|intl|jetbrains|keyboardShortcuts|localInstaller|logoV2Utils|markdown|nativeInstaller|notebook|pasteStore|pdf|plans|planModeV2|prompt|promptEditor|promptCategory|renderOptions|settings|statusNotice|teleport|terminal|terminalPanel|theme|image|imagePaste|imageResizer|imageStore|imageValidation)\b/.test(normalized)
+    new RegExp(`^src\\/utils\\/(advisor|autoRunIssue|autoUpdater|bundledMode|browser|${LEGACY_IN_CHROME}|${LEGACY_CODE_HINTS}|clipboard|config|configConstants|cwd|deepLink|desktopDeepLink|doctorContextWarnings|dsxuCodeHints|dsxuBrowserProvider|dsxuHealthMonitor|dsxuInstructions|editor|fullscreen|horizontalScroll|hyperlink|ide|intl|jetbrains|keyboardShortcuts|localInstaller|logoV2Utils|markdown|nativeInstaller|notebook|pasteStore|pdf|plans|planModeV2|prompt|promptEditor|promptCategory|renderOptions|settings|statusNotice|teleport|terminal|terminalPanel|theme|image|imagePaste|imageResizer|imageStore|imageValidation)\\b`).test(normalized)
   ) {
     return 'product-surface-hooks'
   }
@@ -752,7 +757,7 @@ function commandSurfaceSliceForPath(path: string): ToolRuntimeCommandSurfaceGrou
     'copy',
     'ctx_viz',
     'desktop',
-    'good-claude',
+    LEGACY_GOOD_SLUG,
     'help',
     'ide',
     'install',

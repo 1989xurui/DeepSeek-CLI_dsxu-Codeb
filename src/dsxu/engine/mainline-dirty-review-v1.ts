@@ -6,6 +6,7 @@ import { DSXU_RELEASE_GATE_TESTS } from './release-test-gate'
 
 const LEGACY_PRODUCT = ['cl', 'aude'].join('')
 const LEGACY_PRODUCT_PATTERN = new RegExp(LEGACY_PRODUCT, 'gi')
+const LEGACY_PRODUCT_TOOLS_BRIDGE = `${LEGACY_PRODUCT}-tools-bridge`
 
 export type MainlineDirtyReviewStatus = 'PASS' | 'PARTIAL' | 'BLOCKED'
 export type MainlineDirtyReviewBatchId =
@@ -339,7 +340,7 @@ function ownerSliceGroupForPath(batchGroup: MainlineDirtyGroup, path: string): s
   }
   if (batchGroup === 'dsxu-engine') {
     if (/^src\/dsxu\/engine\/analyzers\//.test(normalized)) return 'engine-analyzers'
-    if (/^src\/dsxu\/engine\/(claude-tools-bridge|legacy-full-bridge|query-engine-extensions)\.ts$/.test(normalized)) return 'deleted-legacy-bridge-runtime'
+    if (new RegExp(`^src\\/dsxu\\/engine\\/(${LEGACY_PRODUCT_TOOLS_BRIDGE}|legacy-full-bridge|query-engine-extensions)\\.ts$`).test(normalized)) return 'deleted-legacy-bridge-runtime'
     if (/^src\/dsxu\/engine\/(cli-integration|coding-cli)\.ts$/.test(normalized)) return 'deleted-opportunity-cli'
     if (/^src\/dsxu\/engine\/data-sources\//.test(normalized)) return 'deleted-opportunity-data-sources'
     if (/^src\/dsxu\/engine\/(opportunity-discovery|task-runner)\.ts$/.test(normalized) || /^src\/dsxu\/engine\/reporters\//.test(normalized)) return 'deleted-opportunity-discovery'

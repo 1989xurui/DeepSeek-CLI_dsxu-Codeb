@@ -90,7 +90,7 @@ describe('release surface V1', () => {
     expect(gate.pendingDeletionClosure.safeguards.join('\n')).toContain('does not stage')
   })
 
-  test('phase 10 focused-close audit leaves only pending deletion as export residual', async () => {
+  test('phase 10 focused-close audit has no pending deletion export residual', async () => {
     const publicModel = buildV18ModelPublicSurfaceGate({
       items: collectDsxuModelPublicSurfaceItems(),
       nowIso: '2026-05-09T00:00:00.000Z',
@@ -112,14 +112,10 @@ describe('release surface V1', () => {
     expect(proprietary.reviewCount).toBe(0)
     expect(proprietary.publicSurfaceReviewCount).toBe(0)
     expect(packageGate.releaseBlockerCount).toBe(0)
-    expect(packageGate.cleanExportReady).toBe(false)
-    expect(packageGate.cleanExportStatus).toBe('PENDING_DELETION_REVIEW')
-    expect(packageGate.pendingDeletionCount).toBe(69)
-    expect(packageGate.pendingDeletionClosure.byRule).toMatchObject({
-      'legacy-control-plane-shell': 37,
-      'legacy-private-state': 24,
-      'old-root-shims': 8,
-    })
+    expect(packageGate.cleanExportReady).toBe(true)
+    expect(packageGate.cleanExportStatus).toBe('READY_FOR_CLEAN_EXPORT')
+    expect(packageGate.pendingDeletionCount).toBe(0)
+    expect(packageGate.pendingDeletionClosure.byRule).toEqual({})
     expect(packageGate.pendingDeletionClosure.safeguards.join('\n')).toContain('does not stage')
   })
 })

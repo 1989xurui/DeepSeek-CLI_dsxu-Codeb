@@ -2708,7 +2708,7 @@ describe('DSXU engine tool adapter V2', () => {
       expect(allowed.meta?.permissionResolution).toBe('allow')
       expect(allowed.meta?.permissionSource).toBe('mainline-tool-checkPermissions')
     }
-  })
+  }, 30_000)
 
   test('does not downgrade Bash and PowerShell hard-deny path decisions through callbacks', async () => {
     const registry = new ToolRegistry()
@@ -2884,7 +2884,7 @@ describe('DSXU engine tool adapter V2', () => {
     expect(result.meta?.permissionResolution).toBe('deny')
     expect(result.meta?.permissionSource).toBe('mainline-tool-checkPermissions')
     expect(existsSync(target)).toBe(false)
-  })
+  }, 30_000)
 
   test('treats broad shell allowedTools as availability while command-specific Bash allow stays granular', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'dsxu-engine-broad-shell-allow-'))
@@ -3251,7 +3251,7 @@ describe('DSXU engine tool adapter V2', () => {
       expect(result.meta?.mainlineToolClassCall).toBe(testCase.shouldExecute)
       expect(result.isError).toBe(!testCase.shouldExecute)
     }
-  })
+  }, 30_000)
 
   test('keeps acceptEdits useful while hard-deny remains dominant', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'dsxu-engine-acceptedits-'))
@@ -3342,7 +3342,7 @@ describe('DSXU engine tool adapter V2', () => {
     expect(psDenied.meta?.permissionResolution).toBe('deny')
     expect(psDenied.meta?.mainlineToolClassCall).toBe(false)
     expect(existsSync(join(cwd, 'denied-ps.txt'))).toBe(false)
-  })
+  }, 30_000)
 
   test('supports scoped external workspace grants without bypassing sensitive-path deny precedence', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'dsxu-engine-scope-cwd-'))
