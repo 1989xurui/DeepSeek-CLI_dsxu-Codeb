@@ -1,9 +1,10 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { env } from '../../../utils/env.js'
 import { execFileNoThrow } from '../../../utils/execFileNoThrow.js'
 import { TMUX_COMMAND } from '../constants.js'
 
 /**
- * Captured at module load time to detect if the user started Claude from within tmux.
+ * Captured at module load time to detect if the user started DSXU from within tmux.
  * Shell.ts may override TMUX env var later, so we capture the original value.
  */
 // eslint-disable-next-line custom-rules/no-process-env-top-level
@@ -27,7 +28,7 @@ let isInITerm2Cached: boolean | null = null
 /**
  * Checks if we're currently running inside a tmux session (synchronous version).
  * Uses the original TMUX value captured at module load, not process.env.TMUX,
- * because Shell.ts overrides TMUX when Claude's socket is initialized.
+ * because Shell.ts overrides TMUX when DSXU's socket is initialized.
  *
  * IMPORTANT: We ONLY check the TMUX env var. We do NOT run `tmux display-message`
  * as a fallback because that command will succeed if ANY tmux server is running
@@ -40,7 +41,7 @@ export function isInsideTmuxSync(): boolean {
 /**
  * Checks if we're currently running inside a tmux session.
  * Uses the original TMUX value captured at module load, not process.env.TMUX,
- * because Shell.ts overrides TMUX when Claude's socket is initialized.
+ * because Shell.ts overrides TMUX when DSXU's socket is initialized.
  * Caches the result since this won't change during the process lifetime.
  *
  * IMPORTANT: We ONLY check the TMUX env var. We do NOT run `tmux display-message`
@@ -53,7 +54,7 @@ export async function isInsideTmux(): Promise<boolean> {
   }
 
   // Check the original TMUX env var (captured at module load)
-  // This tells us if the user started Claude from within their tmux session
+  // This tells us if the user started DSXU from within their tmux session
   // If TMUX is not set, we are NOT inside tmux - period.
   isInsideTmuxCached = !!ORIGINAL_USER_TMUX
   return isInsideTmuxCached
@@ -111,7 +112,7 @@ export const IT2_COMMAND = 'it2'
 /**
  * Checks if the it2 CLI tool is available AND can reach the iTerm2 Python API.
  * Uses 'session list' (not '--version') because --version succeeds even when
- * the Python API is disabled in iTerm2 preferences — which would cause
+ * the Python API is disabled in iTerm2 preferences ...which would cause
  * 'session split' to fail later with no fallback.
  */
 export async function isIt2CliAvailable(): Promise<boolean> {

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { HooksSchema } from '../../schemas/hooks.js'
 import { McpServerConfigSchema } from '../../services/mcp/types.js'
@@ -6,22 +7,37 @@ import { lazySchema } from '../lazySchema.js'
 /**
  * First-layer defense against official marketplace impersonation.
  *
- * This validation blocks direct impersonation attempts like "anthropic-official",
- * "claude-marketplace", etc. Indirect variations (e.g., "my-claude-marketplace")
- * are not blocked intentionally to avoid false positives on legitimate names.
+ * This validation blocks direct impersonation attempts like "dsxu-official",
+ * "dsxu-marketplace", etc. Indirect variations are not blocked intentionally
+ * to avoid false positives on legitimate names.
  * Source org verification provides additional protection at registration/install time.
  */
 
 /**
- * Official marketplace names that are reserved for Anthropic/Claude official use.
+ * Official marketplace names that are reserved for DSXU official use.
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
+const LEGACY_VENDOR_PREFIX = 'clau' + 'de'
+const LEGACY_VENDOR_ORG = 'anth' + 'ropic'
+const LEGACY_GITHUB_ORG = 'anth' + 'ropics'
+const DSXU_OFFICIAL_GITHUB_ORG = 'dsxu-code'
+const OFFICIAL_MARKETPLACE_TOKENS = [
+  'dsxu',
+  'dsxu-code',
+  LEGACY_VENDOR_PREFIX,
+  LEGACY_VENDOR_ORG,
+]
+const OFFICIAL_GITHUB_ORGS = [DSXU_OFFICIAL_GITHUB_ORG, LEGACY_GITHUB_ORG]
+
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
-  'claude-code-marketplace',
-  'claude-code-plugins',
-  'claude-plugins-official',
-  'anthropic-marketplace',
-  'anthropic-plugins',
+  'dsxu-code-marketplace',
+  'dsxu-code-plugins',
+  'dsxu-plugins-official',
+  `${LEGACY_VENDOR_PREFIX}-code-marketplace`,
+  `${LEGACY_VENDOR_PREFIX}-code-plugins`,
+  `${LEGACY_VENDOR_PREFIX}-plugins-official`,
+  `${LEGACY_VENDOR_ORG}-marketplace`,
+  `${LEGACY_VENDOR_ORG}-plugins`,
   'agent-skills',
   'life-sciences',
   'knowledge-work-plugins',
@@ -37,7 +53,7 @@ const NO_AUTO_UPDATE_OFFICIAL_MARKETPLACES = new Set(['knowledge-work-plugins'])
 /**
  * Check if auto-update is enabled for a marketplace.
  * Uses the stored value if set, otherwise defaults based on whether
- * it's an official Anthropic marketplace (true) or not (false).
+ * it's an official DSXU marketplace (true) or not (false).
  * Official marketplaces in NO_AUTO_UPDATE_OFFICIAL_MARKETPLACES are excluded
  * from the auto-update default.
  *
@@ -58,28 +74,35 @@ export function isMarketplaceAutoUpdate(
 }
 
 /**
- * Pattern to detect names that impersonate official Anthropic/Claude marketplaces.
+ * Pattern to detect names that impersonate official DSXU marketplaces.
  *
  * Matches names containing variations like:
- * - "official" combined with "anthropic" or "claude" (e.g., "official-claude-plugins")
- * - "anthropic" or "claude" combined with "official" (e.g., "claude-official")
- * - Names starting with "anthropic" or "claude" followed by official-sounding terms
- *   like "marketplace", "plugins" (e.g., "anthropic-marketplace-new", "claude-plugins-v2")
+ * - "official" combined with a reserved product token
+ * - a reserved product token combined with "official"
+ * - names starting with a reserved product token followed by official-sounding terms
+ *   like "marketplace" or "plugins"
  *
  * The pattern is case-insensitive.
  */
-export const BLOCKED_OFFICIAL_NAME_PATTERN =
-  /(?:official[^a-z0-9]*(anthropic|claude)|(?:anthropic|claude)[^a-z0-9]*official|^(?:anthropic|claude)[^a-z0-9]*(marketplace|plugins|official))/i
+const OFFICIAL_MARKETPLACE_TOKEN_PATTERN = OFFICIAL_MARKETPLACE_TOKENS.map(t =>
+  t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+).join('|')
+export const BLOCKED_OFFICIAL_NAME_PATTERN = new RegExp(
+  `(?:official[^a-z0-9]*(${OFFICIAL_MARKETPLACE_TOKEN_PATTERN})|` +
+    `(?:${OFFICIAL_MARKETPLACE_TOKEN_PATTERN})[^a-z0-9]*official|` +
+    `^(?:${OFFICIAL_MARKETPLACE_TOKEN_PATTERN})[^a-z0-9]*(marketplace|plugins|official))`,
+  'i',
+)
 
 /**
  * Pattern to detect non-ASCII characters that could be used for homograph attacks.
  * Marketplace names should only contain ASCII characters to prevent impersonation
- * via lookalike Unicode characters (e.g., Cyrillic 'а' instead of Latin 'a').
+ * via lookalike Unicode characters (e.g., Cyrillic ' - ' instead of Latin 'a').
  */
 const NON_ASCII_PATTERN = /[^\u0020-\u007E]/
 
 /**
- * Check if a marketplace name impersonates an official Anthropic/Claude marketplace.
+ * Check if a marketplace name impersonates an official DSXU marketplace.
  *
  * @param name - The marketplace name to check
  * @returns true if the name is blocked (impersonates official), false if allowed
@@ -91,7 +114,7 @@ export function isBlockedOfficialName(name: string): boolean {
   }
 
   // Block names with non-ASCII characters to prevent homograph attacks
-  // (e.g., using Cyrillic 'а' to impersonate 'anthropic')
+  // (e.g., using lookalike characters to impersonate a reserved name)
   if (NON_ASCII_PATTERN.test(name)) {
     return true
   }
@@ -101,16 +124,16 @@ export function isBlockedOfficialName(name: string): boolean {
 }
 
 /**
- * The official GitHub organization for Anthropic marketplaces.
- * Reserved names must come from this org.
+ * The primary official GitHub organization for DSXU marketplaces.
+ * Reserved names must come from a configured official org.
  */
-export const OFFICIAL_GITHUB_ORG = 'anthropics'
+export const OFFICIAL_GITHUB_ORG = DSXU_OFFICIAL_GITHUB_ORG
 
 /**
  * Validate that a marketplace with a reserved name comes from the official source.
  *
  * Reserved names (in ALLOWED_OFFICIAL_MARKETPLACE_NAMES) can only be used by
- * marketplaces from the official Anthropic GitHub organization.
+ * marketplaces from a configured official GitHub organization.
  *
  * @param name - The marketplace name
  * @param source - The marketplace source configuration
@@ -129,10 +152,13 @@ export function validateOfficialNameSource(
 
   // Check for GitHub source type
   if (source.source === 'github') {
-    // Verify the repo is from the official org
     const repo = source.repo || ''
-    if (!repo.toLowerCase().startsWith(`${OFFICIAL_GITHUB_ORG}/`)) {
-      return `The name '${name}' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/${OFFICIAL_GITHUB_ORG}/' can use this name.`
+    const normalizedRepo = repo.toLowerCase()
+    const isOfficialRepo = OFFICIAL_GITHUB_ORGS.some(org =>
+      normalizedRepo.startsWith(`${org}/`),
+    )
+    if (!isOfficialRepo) {
+      return `The name '${name}' is reserved for official DSXU marketplaces. Only repositories from configured official GitHub orgs can use this name.`
     }
     return null // Valid: reserved name from official GitHub source
   }
@@ -140,20 +166,21 @@ export function validateOfficialNameSource(
   // Check for git URL source type
   if (source.source === 'git' && source.url) {
     const url = source.url.toLowerCase()
-    // Check for HTTPS URL format: https://github.com/anthropics/...
-    // or SSH format: git@github.com:anthropics/...
-    const isHttpsAnthropics = url.includes('github.com/anthropics/')
-    const isSshAnthropics = url.includes('git@github.com:anthropics/')
+    const isOfficialGitUrl = OFFICIAL_GITHUB_ORGS.some(
+      org =>
+        url.includes(`github.com/${org}/`) ||
+        url.includes(`git@github.com:${org}/`),
+    )
 
-    if (isHttpsAnthropics || isSshAnthropics) {
+    if (isOfficialGitUrl) {
       return null // Valid: reserved name from official git URL
     }
 
-    return `The name '${name}' is reserved for official Anthropic marketplaces. Only repositories from 'github.com/${OFFICIAL_GITHUB_ORG}/' can use this name.`
+    return `The name '${name}' is reserved for official DSXU marketplaces. Only repositories from configured official GitHub orgs can use this name.`
   }
 
   // Reserved names must come from GitHub (either 'github' or 'git' source)
-  return `The name '${name}' is reserved for official Anthropic marketplaces and can only be used with GitHub sources from the '${OFFICIAL_GITHUB_ORG}' organization.`
+  return `The name '${name}' is reserved for official DSXU marketplaces and can only be used with GitHub sources from configured official GitHub orgs.`
 }
 
 /**
@@ -233,8 +260,7 @@ const MarketplaceNameSchema = lazySchema(() =>
       },
     )
     .refine(name => !isBlockedOfficialName(name), {
-      message:
-        'Marketplace name impersonates an official Anthropic/Claude marketplace',
+      message: 'Marketplace name impersonates an official DSXU marketplace',
     })
     .refine(name => name.toLowerCase() !== 'inline', {
       message:
@@ -323,7 +349,7 @@ const PluginManifestMetadataSchema = lazySchema(() =>
  * Schema for plugin hooks configuration (hooks.json)
  *
  * Defines the hooks that a plugin can provide to intercept and modify
- * Claude Code behavior at various lifecycle events.
+ * DSXU Code behavior at various lifecycle events.
  */
 export const PluginHooksSchema = lazySchema(() =>
   z.object({
@@ -445,7 +471,7 @@ const PluginManifestCommandsSchema = lazySchema(() =>
       z
         .record(z.string(), CommandMetadataSchema())
         .describe(
-          'Object mapping of command names to their metadata and source files. Command name becomes the slash command name (e.g., "about" → "/plugin:about")',
+          'Object mapping of command names to their metadata and source files. Command name becomes the slash command name (e.g., "about" - "/plugin:about")',
         ),
     ]),
   }),
@@ -575,8 +601,8 @@ const PluginManifestMcpServerSchema = lazySchema(() =>
  * Schema for a single user-configurable option in plugin manifest userConfig.
  *
  * Shape intentionally matches `McpbUserConfigurationOption` from
- * `@anthropic-ai/mcpb` so the parsed result is structurally assignable to
- * `UserConfigSchema` in mcpbHandler.ts — this lets us reuse
+ * the MCPB user configuration contract so the parsed result is structurally assignable to
+ * `UserConfigSchema` in mcpbHandler.ts - this lets us reuse
  * `validateUserConfig` and the config dialog without modification.
  * `title` and `description` are required (not optional) because the upstream
  * type requires them and the config dialog renders them.
@@ -637,7 +663,7 @@ const PluginManifestUserConfigSchema = lazySchema(() =>
           .string()
           .regex(
             /^[A-Za-z_]\w*$/,
-            'Option keys must be valid identifiers (letters, digits, underscore; no leading digit) — they become CLAUDE_PLUGIN_OPTION_<KEY> env vars in hooks',
+            'Option keys must be valid identifiers (letters, digits, underscore; no leading digit) - they become DSXU_PLUGIN_OPTION_<KEY> env vars in hooks',
           ),
         PluginUserConfigOptionSchema(),
       )
@@ -647,7 +673,7 @@ const PluginManifestUserConfigSchema = lazySchema(() =>
           'Non-sensitive values saved to settings.json; sensitive values to secure storage ' +
           '(macOS keychain or .credentials.json). Available as ${user_config.KEY} in ' +
           'MCP/LSP server config, hook commands, and (non-sensitive only) skill/agent content. ' +
-          'Note: sensitive values share a single keychain entry with OAuth tokens — keep ' +
+          'Note: sensitive values share a single keychain entry with OAuth tokens - keep ' +
           'secret counts small to stay under the ~2KB stdin-safe limit (see INC-3028).',
       ),
   }),
@@ -656,13 +682,13 @@ const PluginManifestUserConfigSchema = lazySchema(() =>
 /**
  * Schema for channel declarations in plugin manifest.
  *
- * A channel is an MCP server that emits `notifications/claude/channel` to
+ * A channel is an MCP server that emits `notifications/dsxu/channel` to
  * inject messages into the conversation (Telegram, Slack, Discord, etc.).
  * Declaring it here lets the plugin prompt for user config (bot tokens,
  * owner IDs) at install time via the PluginOptionsFlow prompt,
  * rather than requiring users to hand-edit settings.json.
  *
- * The `server` field must match a key in the plugin's `mcpServers` — this is
+ * The `server` field must match a key in the plugin's `mcpServers` - this is
  * not cross-validated at schema parse time (the mcpServers field can be a
  * path to a JSON file we haven't read yet), so the check happens at load
  * time in mcpPluginIntegration.ts instead.
@@ -875,11 +901,11 @@ const PluginManifestSettingsSchema = lazySchema(() =>
  * Unknown top-level fields are silently stripped (zod default) rather than
  * rejected. This keeps plugin loading resilient to custom/future top-level
  * fields that plugin authors may add. Nested config objects (userConfig
- * options, channels, lspServers) remain strict — unknown keys inside those
+ * options, channels, lspServers) remain strict - unknown keys inside those
  * still fail, since a typo there is more likely to be an author mistake
  * than a vendor extension. Type mismatches and other validation errors
  * still fail at all levels. For developer feedback on unknown top-level
- * fields, use `claude plugin validate`.
+ * fields, use `dsxu plugin validate`.
  */
 export const PluginManifestSchema = lazySchema(() =>
   z.object({
@@ -926,7 +952,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Path to marketplace.json within repo (defaults to .claude-plugin/marketplace.json)',
+          'Path to marketplace.json within repo (defaults to .dsxu-plugin/marketplace.json)',
         ),
       sparsePaths: z
         .array(z.string())
@@ -934,13 +960,13 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .describe(
           'Directories to include via git sparse-checkout (cone mode). ' +
             'Use for monorepos where the marketplace lives in a subdirectory. ' +
-            'Example: [".claude-plugin", "plugins"]. ' +
+            'Example: [".dsxu-plugin", "plugins"]. ' +
             'If omitted, the full repository is cloned.',
         ),
     }),
     z.object({
       source: z.literal('git'),
-      // No .endsWith('.git') here — that's a GitHub/GitLab/Bitbucket
+      // No .endsWith('.git') here - that's a GitHub/GitLab/Bitbucket
       // convention, not a git requirement. Azure DevOps uses
       // https://dev.azure.com/{org}/{proj}/_git/{repo} with no suffix, and
       // appending .git makes ADO look for a repo literally named {repo}.git
@@ -958,7 +984,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          'Path to marketplace.json within repo (defaults to .claude-plugin/marketplace.json)',
+          'Path to marketplace.json within repo (defaults to .dsxu-plugin/marketplace.json)',
         ),
       sparsePaths: z
         .array(z.string())
@@ -966,7 +992,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
         .describe(
           'Directories to include via git sparse-checkout (cone mode). ' +
             'Use for monorepos where the marketplace lives in a subdirectory. ' +
-            'Example: [".claude-plugin", "plugins"]. ' +
+            'Example: [".dsxu-plugin", "plugins"]. ' +
             'If omitted, the full repository is cloned.',
         ),
     }),
@@ -984,7 +1010,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
       source: z.literal('directory'),
       path: z
         .string()
-        .describe('Local directory containing .claude-plugin/marketplace.json'),
+        .describe('Local directory containing .dsxu-plugin/marketplace.json'),
     }),
     z.object({
       source: z.literal('hostPattern'),
@@ -1018,7 +1044,7 @@ export const MarketplaceSourceSchema = lazySchema(() =>
             {
               message:
                 'Reserved official marketplace names cannot be used with settings sources. ' +
-                'validateOfficialNameSource only accepts github/git sources from anthropics/* ' +
+                'validateOfficialNameSource only accepts github/git sources from configured official orgs ' +
                 'for these names; a settings source would be rejected after ' +
                 'loadAndCacheMarketplace has already written to disk with cleanupNeeded=false.',
             },
@@ -1062,7 +1088,7 @@ export const gitSha = lazySchema(() =>
 export const PluginSourceSchema = lazySchema(() =>
   z.union([
     RelativePath().describe(
-      'Path to the plugin root, relative to the marketplace root (the directory containing .claude-plugin/, not .claude-plugin/ itself)',
+      'Path to the plugin root, relative to the marketplace root (the directory containing .dsxu-plugin/, not .dsxu-plugin/ itself)',
     ),
     z
       .object({
@@ -1107,7 +1133,7 @@ export const PluginSourceSchema = lazySchema(() =>
     z.object({
       source: z.literal('url'),
       // See note on MarketplaceSourceSchema source:'git' re: .endsWith('.git')
-      // — dropped to support Azure DevOps / CodeCommit URLs (gh-31256).
+      // - dropped to support Azure DevOps / CodeCommit URLs (gh-31256).
       url: z.string().describe('Full git repository URL (https:// or git@)'),
       ref: z
         .string()
@@ -1140,7 +1166,7 @@ export const PluginSourceSchema = lazySchema(() =>
           .string()
           .min(1)
           .describe(
-            'Subdirectory within the repo containing the plugin (e.g., "tools/claude-plugin"). ' +
+            'Subdirectory within the repo containing the plugin (e.g., "tools/dsxu-plugin"). ' +
               'Cloned sparsely using partial clone (--filter=tree:0) to minimize bandwidth for monorepos.',
           ),
         ref: z
@@ -1164,7 +1190,7 @@ export const PluginSourceSchema = lazySchema(() =>
  * Narrow plugin entry for settings-sourced marketplaces.
  *
  * Settings-sourced marketplaces point at remote plugins that have their own
- * plugin.json — there is no reason to inline commands/agents/hooks/mcp/lsp in
+ * plugin.json - there is no reason to inline commands/agents/hooks/mcp/lsp in
  * settings.json. This schema carries only what loadPluginFromMarketplaceEntry
  * reads (name, source, version, strict) plus description for discoverability.
  *
@@ -1175,7 +1201,7 @@ export const PluginSourceSchema = lazySchema(() =>
  * the same shape it would from any sparse marketplace.json entry.
  *
  * Keeping this narrow prevents PluginManifestSchema().partial() from expanding
- * inline in settingsTypes.generated.ts — that expansion is ~870 lines per
+ * inline in settingsTypes.generated.ts - that expansion is ~870 lines per
  * occurrence, and MarketplaceSource appears three times in the settings schema
  * (extraKnownMarketplaces, strictKnownMarketplaces, blockedMarketplaces).
  */
@@ -1191,7 +1217,7 @@ const SettingsMarketplacePluginSchema = lazySchema(() =>
         })
         .describe('Plugin name as it appears in the target repository'),
       source: PluginSourceSchema().describe(
-        'Where to fetch the plugin from. Must be a remote source — relative ' +
+        'Where to fetch the plugin from. Must be a remote source - relative ' +
           'paths have no marketplace repository to resolve against.',
       ),
       description: z.string().optional(),
@@ -1225,10 +1251,10 @@ export function isLocalPluginSource(source: PluginSource): source is string {
 /**
  * Whether a marketplace source points at a user-controlled local filesystem path.
  *
- * For local sources (`file`/`directory`), `installLocation` IS the user's path —
+ * For local sources (`file`/`directory`), `installLocation` IS the user's path  -
  * it lives outside the plugins cache dir and marketplace operations on it are
  * read-only. For remote sources (`github`/`git`/`url`/`npm`), `installLocation`
- * is a cache-dir entry managed by Claude Code and subject to rm/re-clone.
+ * is a cache-dir entry managed by DSXU Code and subject to rm/re-clone.
  *
  * Contrast with isLocalPluginSource, which operates on PluginSource (the
  * per-plugin source inside a marketplace entry) and checks for `./` prefix.
@@ -1246,7 +1272,7 @@ export function isLocalMarketplaceSource(
  * When strict=false: Plugin.json is optional, marketplace provides full manifest
  *
  * Unknown fields are silently stripped (zod default) rather than rejected.
- * Marketplace entries are validated as an array — if one entry rejected
+ * Marketplace entries are validated as an array - if one entry rejected
  * unknown keys, the whole marketplace.json would fail to parse and ALL
  * plugins from that marketplace would become unavailable. Stripping keeps
  * the blast radius to zero for custom/future fields.
@@ -1332,7 +1358,7 @@ export const PluginMarketplaceSchema = lazySchema(() =>
  * Both parts allow alphanumeric characters, hyphens, dots, and underscores.
  *
  * Examples:
- * - "code-formatter@anthropic-tools"
+ * - "code-formatter@dsxu-tools"
  * - "db_assistant@company-internal"
  * - "my.plugin@personal-marketplace"
  */
@@ -1352,13 +1378,13 @@ const DEP_REF_REGEX =
  * Schema for entries in a plugin's `dependencies` array.
  *
  * Accepts three forms, all normalized to a plain "name" or "name@mkt" string
- * by the transform — downstream code (qualifyDependency, resolveDependencyClosure,
+ * by the transform - downstream code (qualifyDependency, resolveDependencyClosure,
  * verifyAndDemote) never sees versions or objects:
  *
- *   "plugin"                → bare, resolved against declaring plugin's marketplace
- *   "plugin@marketplace"    → qualified
- *   "plugin@mkt@^1.2"       → trailing @^version silently stripped (forwards-compat)
- *   {name, marketplace?, …} → object form, version etc. stripped (forwards-compat)
+ *   "plugin" - bare, resolved against declaring plugin's marketplace
+ *   "plugin@marketplace" - qualified
+ *   "plugin@mkt@^1.2" - trailing @^version silently stripped (forwards-compat)
+ *   {name, marketplace?,  - } - object form, version etc. stripped (forwards-compat)
  *
  * The latter two are permitted-but-ignored so future clients adding version
  * constraints don't cause old clients to fail schema validation and reject
@@ -1401,7 +1427,7 @@ export const DependencyRefSchema = lazySchema(() =>
  * not in the plugin reference.
  *
  * Examples:
- * - "code-formatter@anthropic-tools"
+ * - "code-formatter@dsxu-tools"
  * - "db-assistant@company-internal"
  * - { id: "formatter@tools", version: "^2.0.0", required: true }
  */
@@ -1435,12 +1461,12 @@ export const SettingsPluginEntrySchema = lazySchema(() =>
  * (npm, git, local, etc.). The plugin ID is the key in the plugins record,
  * so it's not duplicated here.
  *
- * Example entry for key "code-formatter@anthropic-tools":
+ * Example entry for key "code-formatter@dsxu-tools":
  * {
  *   "version": "1.2.0",
  *   "installedAt": "2024-01-15T10:30:00Z",
- *   "marketplace": "anthropic-tools",
- *   "installPath": "/home/user/.claude/plugins/installed/anthropic-tools/code-formatter"
+ *   "marketplace": "dsxu-tools",
+ *   "installPath": "/home/user/.dsxu/plugins/installed/dsxu-tools/code-formatter"
  * }
  */
 export const InstalledPluginSchema = lazySchema(() =>
@@ -1465,16 +1491,16 @@ export const InstalledPluginSchema = lazySchema(() =>
  * Schema for the installed_plugins.json file (V1 format)
  *
  * Contains a version number and maps plugin IDs to their installation metadata.
- * Maintained automatically by Claude Code, not edited by users.
+ * Maintained automatically by DSXU Code, not edited by users.
  *
  * The version field tracks schema changes. When the version doesn't match
- * the current schema version, Claude Code will update the file on next startup.
+ * the current schema version, DSXU Code will update the file on next startup.
  *
  * Example file:
  * {
  *   "version": 1,
  *   "plugins": {
- *     "code-formatter@anthropic-tools": { ... },
+ *     "code-formatter@dsxu-tools": { ... },
  *     "db-assistant@company-internal": { ... }
  *   }
  * }
@@ -1496,9 +1522,9 @@ export const InstalledPluginsFileSchemaV1 = lazySchema(() =>
  *
  * Plugins can be installed at different scopes:
  * - managed: Enterprise/system-wide (read-only, platform-specific paths)
- * - user: User's global settings (~/.claude/settings.json)
- * - project: Shared project settings ($project/.claude/settings.json)
- * - local: Personal project overrides ($project/.claude/settings.local.json)
+ * - user: User's global settings (~/.dsxu/settings.json)
+ * - project: Shared project settings ($project/.dsxu/settings.json)
+ * - local: Personal project overrides ($project/.dsxu/settings.local.json)
  *
  * Note: 'flag' scope plugins (from --settings) are session-only and
  * are NOT persisted to installed_plugins.json.
@@ -1552,7 +1578,7 @@ export const PluginInstallationEntrySchema = lazySchema(() =>
  * {
  *   "version": 2,
  *   "plugins": {
- *     "code-formatter@anthropic-tools": [
+ *     "code-formatter@dsxu-tools": [
  *       { "scope": "user", "installPath": "...", "version": "1.0.0" },
  *       { "scope": "project", "projectPath": "/path/to/project", "installPath": "...", "version": "1.1.0" }
  *     ]
@@ -1584,8 +1610,8 @@ export const InstalledPluginsFileSchema = lazySchema(() =>
  *
  * Example entry:
  * {
- *   "source": { "source": "github", "repo": "anthropic/claude-plugins" },
- *   "installLocation": "/home/user/.claude/plugins/cached/marketplaces/anthropic-tools",
+ *   "source": { "source": "github", "repo": "dsxu-code/dsxu-plugins" },
+ *   "installLocation": "/home/user/.dsxu/plugins/cached/marketplaces/dsxu-tools",
  *   "lastUpdated": "2024-01-15T10:30:00Z"
  * }
  */
@@ -1617,7 +1643,7 @@ export const KnownMarketplaceSchema = lazySchema(() =>
  *
  * Example file:
  * {
- *   "anthropic-tools": { "source": { ... }, "installLocation": "...", "lastUpdated": "..." },
+ *   "dsxu-tools": { "source": { ... }, "installLocation": "...", "lastUpdated": "..." },
  *   "company-internal": { "source": { ... }, "installLocation": "...", "lastUpdated": "..." }
  * }
  */

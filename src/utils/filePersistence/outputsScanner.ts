@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Outputs directory scanner for file persistence
  *
@@ -10,6 +11,7 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { logForDebugging } from '../debug.js'
+import { getDsxuCodeEnv } from '../envUtils.js'
 import type { EnvironmentKind } from '../teleport/environments.js'
 import type { TurnStartTime } from './types.js'
 
@@ -19,12 +21,12 @@ export function logDebug(message: string): void {
 }
 
 /**
- * Get the environment kind from CLAUDE_CODE_ENVIRONMENT_KIND.
+ * Get the environment kind from DSXU_CODE_ENVIRONMENT_KIND.
  * Returns null if not set or not a recognized value.
  */
 export function getEnvironmentKind(): EnvironmentKind | null {
-  const kind = process.env.CLAUDE_CODE_ENVIRONMENT_KIND
-  if (kind === 'byoc' || kind === 'anthropic_cloud') {
+  const kind = getDsxuCodeEnv('ENVIRONMENT_KIND')
+  if (kind === 'byoc' || kind === 'provider_cloud') {
     return kind
   }
   return null

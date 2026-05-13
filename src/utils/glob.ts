@@ -1,3 +1,4 @@
+import { stat } from 'fs/promises'
 import { basename, dirname, isAbsolute, join, sep } from 'path'
 import type { ToolPermissionContext } from '../Tool.js'
 import { isEnvTruthy } from './envUtils.js'
@@ -8,6 +9,10 @@ import {
 import { getPlatform } from './platform.js'
 import { getGlobExclusionsForPluginCache } from './plugins/orphanedPluginFilter.js'
 import { ripGrep } from './ripgrep.js'
+
+function hasGlobSpecialCharacters(pattern: string): boolean {
+  return /[*?[{]/.test(pattern)
+}
 
 /**
  * Extracts the static base directory from a glob pattern.
@@ -70,6 +75,22 @@ export async function glob(
   abortSignal: AbortSignal,
   toolPermissionContext: ToolPermissionContext,
 ): Promise<{ files: string[]; truncated: boolean }> {
+  if (!hasGlobSpecialCharacters(filePattern)) {
+    const literalPath = isAbsolute(filePattern) ? filePattern : join(cwd, filePattern)
+    try {
+      const literalStat = await stat(literalPath)
+      if (!literalStat.isFile()) {
+        return { files: [], truncated: false }
+      }
+      return {
+        files: offset === 0 && limit > 0 ? [literalPath] : [],
+        truncated: offset + limit < 1,
+      }
+    } catch {
+      return { files: [], truncated: false }
+    }
+  }
+
   let searchDir = cwd
   let searchPattern = filePattern
 
@@ -92,11 +113,11 @@ export async function glob(
   // --files: list files instead of searching content
   // --glob: filter by pattern
   // --sort=modified: sort by modification time (oldest first)
-  // --no-ignore: don't respect .gitignore (default true, set CLAUDE_CODE_GLOB_NO_IGNORE=false to respect .gitignore)
-  // --hidden: include hidden files (default true, set CLAUDE_CODE_GLOB_HIDDEN=false to exclude)
+  // --no-ignore: don't respect .gitignore (default true, set DSXU_CODE_GLOB_NO_IGNORE=false to respect .gitignore)
+  // --hidden: include hidden files (default true, set DSXU_CODE_GLOB_HIDDEN=false to exclude)
   // Note: use || instead of ?? to treat empty string as unset (defaulting to true)
-  const noIgnore = isEnvTruthy(process.env.CLAUDE_CODE_GLOB_NO_IGNORE || 'true')
-  const hidden = isEnvTruthy(process.env.CLAUDE_CODE_GLOB_HIDDEN || 'true')
+  const noIgnore = isEnvTruthy(process.env.DSXU_CODE_GLOB_NO_IGNORE || 'true')
+  const hidden = isEnvTruthy(process.env.DSXU_CODE_GLOB_HIDDEN || 'true')
   const args = [
     '--files',
     '--glob',
@@ -127,4 +148,18 @@ export async function glob(
   const files = absolutePaths.slice(offset, offset + limit)
 
   return { files, truncated }
+}
+
+
+export function getDsxuGlobRuntimeProfile() {
+  return {
+    runtime: 'DSXU Glob Search Kernel',
+    defaultBehavior: 'ripgrep-backed file discovery honors DSXU filesystem permissions, ignore patterns, and plugin-cache exclusions',
+    providerTarget: 'DSXU File/Search Tool Runtime',
+    activationEvidence: [
+      'absolute patterns are converted into base directory plus relative glob',
+      'permission ignore patterns are normalized before rg invocation',
+      'results are absolute, offset/limit bounded, and truncation-aware',
+    ],
+  }
 }

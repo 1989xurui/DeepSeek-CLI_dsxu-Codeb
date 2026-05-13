@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { LRUCache } from 'lru-cache'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
@@ -260,7 +261,7 @@ export function memoizeWithLRU<
     clear: () => cache.clear(),
     size: () => cache.size,
     delete: (key: string) => cache.delete(key),
-    // peek() avoids updating recency — we only want to observe, not promote
+    // peek() avoids updating recency ...we only want to observe, not promote
     get: (key: string) => cache.peek(key),
     has: (key: string) => cache.has(key),
   }

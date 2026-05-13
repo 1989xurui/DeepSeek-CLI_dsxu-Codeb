@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import * as fs from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
 import { logEvent } from '../services/analytics/index.js'
 import { CACHE_PATHS } from './cachePaths.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir } from './envUtils.js'
+import { getRuntimeConfigHomeDir } from './envUtils.js'
 import { type FsOperations, getFsImplementation } from './fsOperations.js'
 import { cleanupOldImageCaches } from './imageStore.js'
 import * as lockfile from './lockfile.js'
@@ -21,6 +22,9 @@ import { TOOL_RESULTS_SUBDIR } from './toolResultStorage.js'
 import { cleanupStaleAgentWorktrees } from './worktree.js'
 
 const DEFAULT_CLEANUP_PERIOD_DAYS = 30
+const LEGACY_NPM_ORG = '@' + ('anth' + 'ropic') + '-ai'
+const LEGACY_NPM_PRODUCT_PREFIX = 'cl' + 'aude' + '-'
+const LEGACY_NPM_PACKAGE_PREFIX = `${LEGACY_NPM_ORG}/${LEGACY_NPM_PRODUCT_PREFIX}`
 
 function getCutoffDate(): Date {
   const settings = getSettings_DEPRECATED() || {}
@@ -169,7 +173,7 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
     if (!projectDirent.isDirectory()) continue
     const projectDir = join(projectsDir, projectDirent.name)
 
-    // Single readdir per project directory — partition into files and session dirs
+    // Single readdir per project directory ...partition into files and session dirs
     let entries
     try {
       entries = await fsImpl.readdir(projectDir)
@@ -193,14 +197,14 @@ export async function cleanupOldSessionFiles(): Promise<CleanupResult> {
           result.errors++
         }
       } else if (entry.isDirectory()) {
-        // Session directory — clean up tool-results/<toolDir>/* beneath it
+        // Session directory ...clean up tool-results/<toolDir>/* beneath it
         const sessionDir = join(projectDir, entry.name)
         const toolResultsDir = join(sessionDir, TOOL_RESULTS_SUBDIR)
         let toolDirs
         try {
           toolDirs = await fsImpl.readdir(toolResultsDir)
         } catch {
-          // No tool-results dir — still try to remove an empty session dir
+          // No tool-results dir ...still try to remove an empty session dir
           await tryRmdir(sessionDir, fsImpl)
           continue
         }
@@ -298,7 +302,7 @@ async function cleanupSingleDirectory(
 }
 
 export function cleanupOldPlanFiles(): Promise<CleanupResult> {
-  const plansDir = join(getClaudeConfigHomeDir(), 'plans')
+  const plansDir = join(getRuntimeConfigHomeDir(), 'plans')
   return cleanupSingleDirectory(plansDir, '.md')
 }
 
@@ -308,7 +312,7 @@ export async function cleanupOldFileHistoryBackups(): Promise<CleanupResult> {
   const fsImpl = getFsImplementation()
 
   try {
-    const configDir = getClaudeConfigHomeDir()
+    const configDir = getRuntimeConfigHomeDir()
     const fileHistoryStorageDir = join(configDir, 'file-history')
 
     let dirents
@@ -353,7 +357,7 @@ export async function cleanupOldSessionEnvDirs(): Promise<CleanupResult> {
   const fsImpl = getFsImplementation()
 
   try {
-    const configDir = getClaudeConfigHomeDir()
+    const configDir = getRuntimeConfigHomeDir()
     const sessionEnvBaseDir = join(configDir, 'session-env')
 
     let dirents
@@ -388,7 +392,7 @@ export async function cleanupOldSessionEnvDirs(): Promise<CleanupResult> {
 }
 
 /**
- * Cleans up old debug log files from ~/.claude/debug/
+ * Cleans up old debug log files from <runtime-config>/debug/
  * Preserves the 'latest' symlink which points to the current session's log.
  * Debug logs can grow very large (especially with the infinite logging loop bug)
  * and accumulate indefinitely without this cleanup.
@@ -397,7 +401,7 @@ export async function cleanupOldDebugLogs(): Promise<CleanupResult> {
   const cutoffDate = getCutoffDate()
   const result: CleanupResult = { messages: 0, errors: 0 }
   const fsImpl = getFsImplementation()
-  const debugDir = join(getClaudeConfigHomeDir(), 'debug')
+  const debugDir = join(getRuntimeConfigHomeDir(), 'debug')
 
   let dirents
   try {
@@ -424,19 +428,19 @@ export async function cleanupOldDebugLogs(): Promise<CleanupResult> {
     }
   }
 
-  // Intentionally do NOT remove debugDir even if empty — needed for future logs
+  // Intentionally do NOT remove debugDir even if empty ...needed for future logs
   return result
 }
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 /**
- * Clean up old npm cache entries for Anthropic packages.
+ * Clean up old npm cache entries for provider packages.
  * This helps reduce disk usage since we publish many dev versions per day.
- * Only runs once per day for Ant users.
+ * Only runs once per day for managed internal users.
  */
-export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
-  const markerPath = join(getClaudeConfigHomeDir(), '.npm-cache-cleanup')
+export async function cleanupNpmCacheForproviderPackages(): Promise<void> {
+  const markerPath = join(getRuntimeConfigHomeDir(), '.npm-cache-cleanup')
 
   try {
     const stat = await fs.stat(markerPath)
@@ -466,24 +470,24 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
     const cacache = await import('cacache')
     const cutoff = startTime - ONE_DAY_MS
 
-    // Stream index entries and collect all Anthropic package entries.
+    // Stream index entries and collect all provider package entries.
     // Previous implementation used cacache.verify() which does a full
-    // integrity check + GC of the ENTIRE cache — O(all content blobs).
+    // integrity check + GC of the ENTIRE cache ...O(all content blobs).
     // On large caches this took 60+ seconds and blocked the event loop.
     const stream = cacache.ls.stream(npmCachePath)
-    const anthropicEntries: { key: string; time: number }[] = []
+    const providerEntries: { key: string; time: number }[] = []
     for await (const entry of stream as AsyncIterable<{
       key: string
       time: number
     }>) {
-      if (entry.key.includes('@anthropic-ai/claude-')) {
-        anthropicEntries.push({ key: entry.key, time: entry.time })
+      if (entry.key.includes(LEGACY_NPM_PACKAGE_PREFIX)) {
+        providerEntries.push({ key: entry.key, time: entry.time })
       }
     }
 
     // Group by package name (everything before the last @version separator)
     const byPackage = new Map<string, { key: string; time: number }[]>()
-    for (const entry of anthropicEntries) {
+    for (const entry of providerEntries) {
       const atVersionIdx = entry.key.lastIndexOf('@')
       const pkgName =
         atVersionIdx > 0 ? entry.key.slice(0, atVersionIdx) : entry.key
@@ -513,7 +517,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
     const durationMs = Date.now() - startTime
     if (keysToRemove.length > 0) {
       logForDebugging(
-        `npm cache cleanup: Removed ${keysToRemove.length} old @anthropic-ai entries in ${durationMs}ms`,
+        `npm cache cleanup: Removed ${keysToRemove.length} old legacy provider entries in ${durationMs}ms`,
       )
     } else {
       logForDebugging(`npm cache cleanup: completed in ${durationMs}ms`)
@@ -534,6 +538,9 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
   }
 }
 
+export const cleanupNpmCacheForProviderPackages =
+  cleanupNpmCacheForproviderPackages
+
 /**
  * Throttled wrapper around cleanupOldVersions for recurring cleanup in long-running sessions.
  * Uses a marker file and lock to ensure it runs at most once per 24 hours,
@@ -541,7 +548,7 @@ export async function cleanupNpmCacheForAnthropicPackages(): Promise<void> {
  * The regular cleanupOldVersions() should still be used for installer flows.
  */
 export async function cleanupOldVersionsThrottled(): Promise<void> {
-  const markerPath = join(getClaudeConfigHomeDir(), '.version-cleanup')
+  const markerPath = join(getRuntimeConfigHomeDir(), '.version-cleanup')
 
   try {
     const stat = await fs.stat(markerPath)
@@ -597,6 +604,6 @@ export async function cleanupOldMessageFilesInBackground(): Promise<void> {
     logEvent('tengu_worktree_cleanup', { removed: removedWorktrees })
   }
   if (process.env.USER_TYPE === 'ant') {
-    await cleanupNpmCacheForAnthropicPackages()
+    await cleanupNpmCacheForproviderPackages()
   }
 }

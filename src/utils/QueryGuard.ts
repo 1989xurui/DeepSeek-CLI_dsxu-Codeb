@@ -1,18 +1,19 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Synchronous state machine for the query lifecycle, compatible with
  * React's `useSyncExternalStore`.
  *
  * Three states:
- *   idle        → no query, safe to dequeue and process
- *   dispatching → an item was dequeued, async chain hasn't reached onQuery yet
- *   running     → onQuery called tryStart(), query is executing
+ *   idle         -> no query, safe to dequeue and process
+ *   dispatching  -> an item was dequeued, async chain hasn't reached onQuery yet
+ *   running      -> onQuery called tryStart(), query is executing
  *
  * Transitions:
- *   idle → dispatching  (reserve)
- *   dispatching → running  (tryStart)
- *   idle → running  (tryStart, for direct user submissions)
- *   running → idle  (end / forceEnd)
- *   dispatching → idle  (cancelReservation, when processQueueIfReady fails)
+ *   idle  -> dispatching  (reserve)
+ *   dispatching  -> running  (tryStart)
+ *   idle  -> running  (tryStart, for direct user submissions)
+ *   running  -> idle  (end / forceEnd)
+ *   dispatching  -> idle  (cancelReservation, when processQueueIfReady fails)
  *
  * `isActive` returns true for both dispatching and running, preventing
  * re-entry from the queue processor during the async gap.
@@ -25,14 +26,12 @@
  *   )
  */
 import { createSignal } from './signal.js'
-
 export class QueryGuard {
   private _status: 'idle' | 'dispatching' | 'running' = 'idle'
   private _generation = 0
   private _changed = createSignal()
-
   /**
-   * Reserve the guard for queue processing. Transitions idle → dispatching.
+   * Reserve the guard for queue processing. Transitions idle  -> dispatching.
    * Returns false if not idle (another query or dispatch in progress).
    */
   reserve(): boolean {
@@ -41,17 +40,15 @@ export class QueryGuard {
     this._notify()
     return true
   }
-
   /**
    * Cancel a reservation when processQueueIfReady had nothing to process.
-   * Transitions dispatching → idle.
+   * Transitions dispatching  -> idle.
    */
   cancelReservation(): void {
     if (this._status !== 'dispatching') return
     this._status = 'idle'
     this._notify()
   }
-
   /**
    * Start a query. Returns the generation number on success,
    * or null if a query is already running (concurrent guard).
@@ -65,7 +62,6 @@ export class QueryGuard {
     this._notify()
     return this._generation
   }
-
   /**
    * End a query. Returns true if this generation is still current
    * (meaning the caller should perform cleanup). Returns false if a
@@ -78,7 +74,6 @@ export class QueryGuard {
     this._notify()
     return true
   }
-
   /**
    * Force-end the current query regardless of generation.
    * Used by onCancel where any running query should be terminated.
@@ -91,30 +86,24 @@ export class QueryGuard {
     ++this._generation
     this._notify()
   }
-
   /**
    * Is the guard active (dispatching or running)?
-   * Always synchronous — not subject to React state batching delays.
+   * Always synchronous ...not subject to React state batching delays.
    */
   get isActive(): boolean {
     return this._status !== 'idle'
   }
-
   get generation(): number {
     return this._generation
   }
-
   // --
   // useSyncExternalStore interface
-
-  /** Subscribe to state changes. Stable reference — safe as useEffect dep. */
+  /** Subscribe to state changes. Stable reference ...safe as useEffect dep. */
   subscribe = this._changed.subscribe
-
   /** Snapshot for useSyncExternalStore. Returns `isActive`. */
   getSnapshot = (): boolean => {
     return this._status !== 'idle'
   }
-
   private _notify(): void {
     this._changed.emit()
   }

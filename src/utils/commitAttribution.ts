@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { createHash, randomUUID, type UUID } from 'crypto'
 import { stat } from 'fs/promises'
 import { isAbsolute, join, relative, sep } from 'path'
@@ -16,63 +17,22 @@ import { findGitRoot, gitExe } from './git.js'
 import { logError } from './log.js'
 import { getCanonicalName, type ModelName } from './model/model.js'
 import { sequential } from './sequential.js'
+import {
+  getCompatDsxuContribution,
+  getCompatLegacyEntrypoint,
+  isCompatInternalModelRepoRemote,
+  sanitizeCompatModelName,
+} from '../dsxu/legacy/git/legacyProviderAttribution.js'
 
 /**
  * List of repos where internal model names are allowed in trailers.
  * Includes both SSH and HTTPS URL formats.
  *
  * NOTE: This is intentionally a repo allowlist, not an org-wide check.
- * The anthropics and anthropic-experimental orgs contain PUBLIC repos
- * (e.g. anthropics/claude-code, anthropic-experimental/sandbox-runtime).
+ * Some compatibility upstream and experimental orgs contain public repos.
  * Undercover mode must stay ON in those to prevent codename leaks.
  * Only add repos here that are confirmed PRIVATE.
  */
-const INTERNAL_MODEL_REPOS = [
-  'github.com:anthropics/claude-cli-internal',
-  'github.com/anthropics/claude-cli-internal',
-  'github.com:anthropics/anthropic',
-  'github.com/anthropics/anthropic',
-  'github.com:anthropics/apps',
-  'github.com/anthropics/apps',
-  'github.com:anthropics/casino',
-  'github.com/anthropics/casino',
-  'github.com:anthropics/dbt',
-  'github.com/anthropics/dbt',
-  'github.com:anthropics/dotfiles',
-  'github.com/anthropics/dotfiles',
-  'github.com:anthropics/terraform-config',
-  'github.com/anthropics/terraform-config',
-  'github.com:anthropics/hex-export',
-  'github.com/anthropics/hex-export',
-  'github.com:anthropics/feedback-v2',
-  'github.com/anthropics/feedback-v2',
-  'github.com:anthropics/labs',
-  'github.com/anthropics/labs',
-  'github.com:anthropics/argo-rollouts',
-  'github.com/anthropics/argo-rollouts',
-  'github.com:anthropics/starling-configs',
-  'github.com/anthropics/starling-configs',
-  'github.com:anthropics/ts-tools',
-  'github.com/anthropics/ts-tools',
-  'github.com:anthropics/ts-capsules',
-  'github.com/anthropics/ts-capsules',
-  'github.com:anthropics/feldspar-testing',
-  'github.com/anthropics/feldspar-testing',
-  'github.com:anthropics/trellis',
-  'github.com/anthropics/trellis',
-  'github.com:anthropics/claude-for-hiring',
-  'github.com/anthropics/claude-for-hiring',
-  'github.com:anthropics/forge-web',
-  'github.com/anthropics/forge-web',
-  'github.com:anthropics/infra-manifests',
-  'github.com/anthropics/infra-manifests',
-  'github.com:anthropics/mycro_manifests',
-  'github.com/anthropics/mycro_manifests',
-  'github.com:anthropics/mycro_configs',
-  'github.com/anthropics/mycro_configs',
-  'github.com:anthropics/mobile-apps',
-  'github.com/anthropics/mobile-apps',
-]
 
 /**
  * Get the repo root for attribution operations.
@@ -86,7 +46,7 @@ export function getAttributionRepoRoot(): string {
 }
 
 // Cache for repo classification result. Primed once per process.
-// 'internal' = remote matches INTERNAL_MODEL_REPOS allowlist
+// 'internal' = remote matches the compatibility private repo allowlist
 // 'external' = has a remote, not on allowlist (public/open-source repo)
 // 'none'     = no remote URL (not a git repo, or no remote configured)
 let repoClassCache: 'internal' | 'external' | 'none' | null = null
@@ -123,7 +83,7 @@ export const isInternalModelRepo = sequential(async (): Promise<boolean> => {
     repoClassCache = 'none'
     return false
   }
-  const isInternal = INTERNAL_MODEL_REPOS.some(repo => remoteUrl.includes(repo))
+  const isInternal = isCompatInternalModelRepoRemote(remoteUrl)
   repoClassCache = isInternal ? 'internal' : 'external'
   return isInternal
 })
@@ -133,7 +93,7 @@ export const isInternalModelRepo = sequential(async (): Promise<boolean> => {
  * Converts internal model variants to their public equivalents.
  */
 export function sanitizeSurfaceKey(surfaceKey: string): string {
-  // Split surface key into surface and model parts (e.g., "cli/opus-4-5-fast" -> ["cli", "opus-4-5-fast"])
+  // Split surface key into surface and model parts (e.g., "cli/model-fast" -> ["cli", "model-fast"])
   const slashIndex = surfaceKey.lastIndexOf('/')
   if (slashIndex === -1) {
     return surfaceKey
@@ -152,23 +112,11 @@ export function sanitizeSurfaceKey(surfaceKey: string): string {
  * Maps internal variants to their public names based on model family.
  */
 export function sanitizeModelName(shortName: string): string {
-  // Map internal variants to public equivalents based on model family
-  if (shortName.includes('opus-4-6')) return 'claude-opus-4-6'
-  if (shortName.includes('opus-4-5')) return 'claude-opus-4-5'
-  if (shortName.includes('opus-4-1')) return 'claude-opus-4-1'
-  if (shortName.includes('opus-4')) return 'claude-opus-4'
-  if (shortName.includes('sonnet-4-6')) return 'claude-sonnet-4-6'
-  if (shortName.includes('sonnet-4-5')) return 'claude-sonnet-4-5'
-  if (shortName.includes('sonnet-4')) return 'claude-sonnet-4'
-  if (shortName.includes('sonnet-3-7')) return 'claude-sonnet-3-7'
-  if (shortName.includes('haiku-4-5')) return 'claude-haiku-4-5'
-  if (shortName.includes('haiku-3-5')) return 'claude-haiku-3-5'
-  // Unknown models get a generic name
-  return 'claude'
+  return sanitizeCompatModelName(shortName)
 }
 
 /**
- * Attribution state for tracking Claude's contributions to files.
+ * Attribution state for tracking DSXU contributions to files.
  */
 export type AttributionState = {
   // File states keyed by relative path (from cwd)
@@ -192,11 +140,11 @@ export type AttributionState = {
 }
 
 /**
- * Summary of Claude's contribution for a commit.
+ * Summary of DSXU contribution for a commit.
  */
 export type AttributionSummary = {
-  claudePercent: number
-  claudeChars: number
+  dsxuPercent: number
+  dsxuChars: number
   humanChars: number
   surfaces: string[]
 }
@@ -205,7 +153,7 @@ export type AttributionSummary = {
  * Per-file attribution details for git notes.
  */
 export type FileAttribution = {
-  claudeChars: number
+  dsxuChars: number
   humanChars: number
   percent: number
   surface: string
@@ -218,7 +166,7 @@ export type AttributionData = {
   version: 1
   summary: AttributionSummary
   files: Record<string, FileAttribution>
-  surfaceBreakdown: Record<string, { claudeChars: number; percent: number }>
+  surfaceBreakdown: Record<string, { dsxuChars: number; percent: number }>
   excludedGenerated: string[]
   sessions: string[]
 }
@@ -227,12 +175,12 @@ export type AttributionData = {
  * Get the current client surface from environment.
  */
 export function getClientSurface(): string {
-  return process.env.CLAUDE_CODE_ENTRYPOINT ?? 'cli'
+  return process.env.DSXU_CODE_ENTRYPOINT ?? getCompatLegacyEntrypoint() ?? 'cli'
 }
 
 /**
  * Build a surface key that includes the model name.
- * Format: "surface/model" (e.g., "cli/claude-sonnet")
+ * Format: "surface/model".
  */
 export function buildSurfaceKey(surface: string, model: ModelName): string {
   return `${surface}/${getCanonicalName(model)}`
@@ -332,16 +280,16 @@ function computeFileModificationState(
   const normalizedPath = normalizeFilePath(filePath)
 
   try {
-    // Calculate Claude's character contribution
-    let claudeContribution: number
+    // Calculate DSXU's character contribution
+    let dsxuContribution: number
 
     if (oldContent === '' || newContent === '') {
       // New file or full deletion - contribution is the content length
-      claudeContribution =
+      dsxuContribution =
         oldContent === '' ? newContent.length : oldContent.length
     } else {
       // Find actual changed region via common prefix/suffix matching.
-      // This correctly handles same-length replacements (e.g., "Esc" → "esc")
+      // This correctly handles same-length replacements (e.g., "Esc" 锟?"esc")
       // where Math.abs(newLen - oldLen) would be 0.
       const minLen = Math.min(oldContent.length, newContent.length)
       let prefixEnd = 0
@@ -361,16 +309,16 @@ function computeFileModificationState(
       }
       const oldChangedLen = oldContent.length - prefixEnd - suffixLen
       const newChangedLen = newContent.length - prefixEnd - suffixLen
-      claudeContribution = Math.max(oldChangedLen, newChangedLen)
+      dsxuContribution = Math.max(oldChangedLen, newChangedLen)
     }
 
     // Get current file state if it exists
     const existingState = existingFileStates.get(normalizedPath)
-    const existingContribution = existingState?.claudeContribution ?? 0
+    const existingContribution = getCompatDsxuContribution(existingState)
 
     return {
       contentHash: computeContentHash(newContent),
-      claudeContribution: existingContribution + claudeContribution,
+      dsxuContribution: existingContribution + dsxuContribution,
       mtime,
     }
   } catch (error) {
@@ -396,7 +344,7 @@ export async function getFileMtime(filePath: string): Promise<number> {
 }
 
 /**
- * Track a file modification by Claude.
+ * Track a file modification by DSXU.
  * Called after Edit/Write tool completes.
  */
 export function trackFileModification(
@@ -423,7 +371,7 @@ export function trackFileModification(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+    `Attribution: Tracked ${newFileState.dsxuContribution} chars for ${normalizedPath}`,
   )
 
   return {
@@ -433,8 +381,8 @@ export function trackFileModification(
 }
 
 /**
- * Track a file creation by Claude (e.g., via bash command).
- * Used when Claude creates a new file through a non-tracked mechanism.
+ * Track a file creation by DSXU (for example, via bash command).
+ * Used when DSXU creates a new file through a non-tracked mechanism.
  */
 export function trackFileCreation(
   state: AttributionState,
@@ -447,8 +395,8 @@ export function trackFileCreation(
 }
 
 /**
- * Track a file deletion by Claude (e.g., via bash rm command).
- * Used when Claude deletes a file through a non-tracked mechanism.
+ * Track a file deletion by DSXU (for example, via bash rm command).
+ * Used when DSXU deletes a file through a non-tracked mechanism.
  */
 export function trackFileDeletion(
   state: AttributionState,
@@ -457,12 +405,12 @@ export function trackFileDeletion(
 ): AttributionState {
   const normalizedPath = normalizeFilePath(filePath)
   const existingState = state.fileStates.get(normalizedPath)
-  const existingContribution = existingState?.claudeContribution ?? 0
+  const existingContribution = getCompatDsxuContribution(existingState)
   const deletedChars = oldContent.length
 
   const newFileState: FileAttributionState = {
     contentHash: '', // Empty hash for deleted files
-    claudeContribution: existingContribution + deletedChars,
+    dsxuContribution: existingContribution + deletedChars,
     mtime: Date.now(),
   }
 
@@ -470,7 +418,7 @@ export function trackFileDeletion(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.claudeContribution})`,
+    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.dsxuContribution})`,
   )
 
   return {
@@ -483,7 +431,7 @@ export function trackFileDeletion(
 
 /**
  * Track multiple file changes in bulk, mutating a single Map copy.
- * This avoids the O(n²) cost of copying the Map per file when processing
+ * This avoids the O(n虏) cost of copying the Map per file when processing
  * large git diffs (e.g., jj operations that touch hundreds of thousands of files).
  */
 export function trackBulkFileChanges(
@@ -504,12 +452,12 @@ export function trackBulkFileChanges(
     if (change.type === 'deleted') {
       const normalizedPath = normalizeFilePath(change.path)
       const existingState = newFileStates.get(normalizedPath)
-      const existingContribution = existingState?.claudeContribution ?? 0
+      const existingContribution = getCompatDsxuContribution(existingState)
       const deletedChars = change.oldContent.length
 
       newFileStates.set(normalizedPath, {
         contentHash: '',
-        claudeContribution: existingContribution + deletedChars,
+        dsxuContribution: existingContribution + deletedChars,
         mtime,
       })
 
@@ -529,7 +477,7 @@ export function trackBulkFileChanges(
         newFileStates.set(normalizedPath, newFileState)
 
         logForDebugging(
-          `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+          `Attribution: Tracked ${newFileState.dsxuContribution} chars for ${normalizedPath}`,
         )
       }
     }
@@ -557,7 +505,7 @@ export async function calculateCommitAttribution(
   const surfaces = new Set<string>()
   const surfaceCounts: Record<string, number> = {}
 
-  let totalClaudeChars = 0
+  let totalDsxuChars = 0
   let totalHumanChars = 0
 
   // Merge file states from all sessions
@@ -604,8 +552,8 @@ export async function calculateCommitAttribution(
       if (existing) {
         mergedFileStates.set(path, {
           ...fileState,
-          claudeContribution:
-            existing.claudeContribution + fileState.claudeContribution,
+          dsxuContribution:
+            getCompatDsxuContribution(existing) + getCompatDsxuContribution(fileState),
         })
       } else {
         mergedFileStates.set(path, fileState)
@@ -628,7 +576,7 @@ export async function calculateCommitAttribution(
       // Get the surface for this file
       const fileSurface = states[0]!.surface
 
-      let claudeChars = 0
+      let dsxuChars = 0
       let humanChars = 0
 
       // Check if file was deleted
@@ -637,8 +585,8 @@ export async function calculateCommitAttribution(
       if (deleted) {
         // File was deleted
         if (fileState) {
-          // Claude deleted this file (tracked deletion)
-          claudeChars = fileState.claudeContribution
+          // DSXU deleted this file (tracked deletion)
+          dsxuChars = getCompatDsxuContribution(fileState)
           humanChars = 0
         } else {
           // Human deleted this file (untracked deletion)
@@ -655,14 +603,14 @@ export async function calculateCommitAttribution(
 
           if (fileState) {
             // We have tracked modifications for this file
-            claudeChars = fileState.claudeContribution
+            dsxuChars = getCompatDsxuContribution(fileState)
             humanChars = 0
           } else if (baseline) {
             // File was modified but not tracked - human modification
             const diffSize = await getGitDiffSize(file)
             humanChars = diffSize > 0 ? diffSize : stats.size
           } else {
-            // New file not created by Claude
+            // New file not created by DSXU
             humanChars = stats.size
           }
         } catch {
@@ -672,16 +620,16 @@ export async function calculateCommitAttribution(
       }
 
       // Ensure non-negative values
-      claudeChars = Math.max(0, claudeChars)
+      dsxuChars = Math.max(0, dsxuChars)
       humanChars = Math.max(0, humanChars)
 
-      const total = claudeChars + humanChars
-      const percent = total > 0 ? Math.round((claudeChars / total) * 100) : 0
+      const total = dsxuChars + humanChars
+      const percent = total > 0 ? Math.round((dsxuChars / total) * 100) : 0
 
       return {
         type: 'file' as const,
         file,
-        claudeChars,
+        dsxuChars,
         humanChars,
         percent,
         surface: fileSurface,
@@ -699,39 +647,39 @@ export async function calculateCommitAttribution(
     }
 
     files[result.file] = {
-      claudeChars: result.claudeChars,
+      dsxuChars: result.dsxuChars,
       humanChars: result.humanChars,
       percent: result.percent,
       surface: result.surface,
     }
 
-    totalClaudeChars += result.claudeChars
+    totalDsxuChars += result.dsxuChars
     totalHumanChars += result.humanChars
 
     surfaceCounts[result.surface] =
-      (surfaceCounts[result.surface] ?? 0) + result.claudeChars
+      (surfaceCounts[result.surface] ?? 0) + result.dsxuChars
   }
 
-  const totalChars = totalClaudeChars + totalHumanChars
-  const claudePercent =
-    totalChars > 0 ? Math.round((totalClaudeChars / totalChars) * 100) : 0
+  const totalChars = totalDsxuChars + totalHumanChars
+  const dsxuPercent =
+    totalChars > 0 ? Math.round((totalDsxuChars / totalChars) * 100) : 0
 
   // Calculate surface breakdown (percentage of total content per surface)
   const surfaceBreakdown: Record<
     string,
-    { claudeChars: number; percent: number }
+    { dsxuChars: number; percent: number }
   > = {}
   for (const [surface, chars] of Object.entries(surfaceCounts)) {
     // Calculate what percentage of TOTAL content this surface contributed
     const percent = totalChars > 0 ? Math.round((chars / totalChars) * 100) : 0
-    surfaceBreakdown[surface] = { claudeChars: chars, percent }
+    surfaceBreakdown[surface] = { dsxuChars: chars, percent }
   }
 
   return {
     version: 1,
     summary: {
-      claudePercent,
-      claudeChars: totalClaudeChars,
+      dsxuPercent,
+      dsxuChars: totalDsxuChars,
       humanChars: totalHumanChars,
       surfaces: Array.from(surfaces),
     },
@@ -902,9 +850,9 @@ export function restoreAttributionStateFromSnapshots(
   const state = createEmptyAttributionState()
 
   // Snapshots are full-state dumps (see stateToSnapshotMessage), not deltas.
-  // The last snapshot has the most recent count for every path — fileStates
+  // The last snapshot has the most recent count for every path ...fileStates
   // never shrinks. Iterating and SUMMING counts across snapshots causes
-  // quadratic growth on restore (837 snapshots × 280 files → 1.15 quadrillion
+  // quadratic growth on restore (837 snapshots 脳 280 files 锟?1.15 quadrillion
   // "chars" tracked for a 5KB file over a 5-day session).
   const lastSnapshot = snapshots[snapshots.length - 1]
   if (!lastSnapshot) {

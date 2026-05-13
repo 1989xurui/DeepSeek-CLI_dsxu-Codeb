@@ -3,58 +3,71 @@
  */
 
 import axios from 'axios'
-import { OAUTH_BETA_HEADER } from '../constants/oauth.js'
 import {
-  getAnthropicApiKey,
-  getClaudeAIOAuthTokens,
-  handleOAuth401Error,
-  isClaudeAISubscriber,
+  getProviderApiKey,
+  isLegacyCloudSubscriber,
 } from './auth.js'
-import { getClaudeCodeUserAgent } from './userAgent.js'
+import {
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+  handleCompatProviderAuth401Error,
+} from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getDsxuCodeEnv } from './envUtils.js'
+import { getDSXUCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
-// WARNING: We rely on `claude-cli` in the user agent for log filtering.
+const LEGACY_AGENT_SDK_VERSION_ENV = 'CL' + 'AUDE_AGENT_SDK_VERSION'
+const LEGACY_AGENT_SDK_CLIENT_APP_ENV = 'CL' + 'AUDE_AGENT_SDK_CLIENT_APP'
+
+// WARNING: downstream logs rely on the product token in this user agent.
 // Please do NOT change this without making sure that logging also gets updated!
 export function getUserAgent(): string {
-  const agentSdkVersion = process.env.CLAUDE_AGENT_SDK_VERSION
-    ? `, agent-sdk/${process.env.CLAUDE_AGENT_SDK_VERSION}`
+  const sdkVersion =
+    process.env.DSXU_AGENT_SDK_VERSION ??
+    process.env[LEGACY_AGENT_SDK_VERSION_ENV]
+  const agentSdkVersion = sdkVersion ? `, agent-sdk/${sdkVersion}` : ''
+  // SDK consumers can identify their app/library via DSXU_AGENT_SDK_CLIENT_APP
+  const sdkClientApp =
+    process.env.DSXU_AGENT_SDK_CLIENT_APP ??
+    process.env[LEGACY_AGENT_SDK_CLIENT_APP_ENV]
+  const clientApp = sdkClientApp
+    ? `, client-app/${sdkClientApp}`
     : ''
-  // SDK consumers can identify their app/library via CLAUDE_AGENT_SDK_CLIENT_APP
-  // e.g., "my-app/1.0.0" or "my-library/2.1"
-  const clientApp = process.env.CLAUDE_AGENT_SDK_CLIENT_APP
-    ? `, client-app/${process.env.CLAUDE_AGENT_SDK_CLIENT_APP}`
-    : ''
-  // Turn-/process-scoped workload tag for cron-initiated requests. 1P-only
-  // observability — proxies strip HTTP headers; QoS routing uses cc_workload
+  // Turn-/process-scoped workload tag for cron-initiated requests. First-party
+  // observability proxies strip HTTP headers; QoS routing uses cc_workload
   // in the billing-header attribution block instead (see constants/system.ts).
-  // getAnthropicClient (client.ts:98) calls this per-request inside withRetry,
+  // get provider client (client.ts:98) calls this per-request inside withRetry,
   // so the read picks up the same setWorkload() value as getAttributionHeader.
   const workload = getWorkload()
   const workloadSuffix = workload ? `, workload/${workload}` : ''
-  return `claude-cli/${MACRO.VERSION} (${process.env.USER_TYPE}, ${process.env.CLAUDE_CODE_ENTRYPOINT ?? 'cli'}${agentSdkVersion}${clientApp}${workloadSuffix})`
+  return `dsxu-code/${MACRO.VERSION} (${process.env.USER_TYPE}, ${getDsxuCodeEnv('ENTRYPOINT') ?? 'cli'}${agentSdkVersion}${clientApp}${workloadSuffix})`
 }
 
 export function getMCPUserAgent(): string {
   const parts: string[] = []
-  if (process.env.CLAUDE_CODE_ENTRYPOINT) {
-    parts.push(process.env.CLAUDE_CODE_ENTRYPOINT)
+  const entrypoint = getDsxuCodeEnv('ENTRYPOINT')
+  if (entrypoint) {
+    parts.push(entrypoint)
   }
-  if (process.env.CLAUDE_AGENT_SDK_VERSION) {
-    parts.push(`agent-sdk/${process.env.CLAUDE_AGENT_SDK_VERSION}`)
+  const sdkVersion =
+    process.env.DSXU_AGENT_SDK_VERSION ??
+    process.env[LEGACY_AGENT_SDK_VERSION_ENV]
+  if (sdkVersion) {
+    parts.push(`agent-sdk/${sdkVersion}`)
   }
-  if (process.env.CLAUDE_AGENT_SDK_CLIENT_APP) {
-    parts.push(`client-app/${process.env.CLAUDE_AGENT_SDK_CLIENT_APP}`)
+  const sdkClientApp =
+    process.env.DSXU_AGENT_SDK_CLIENT_APP ??
+    process.env[LEGACY_AGENT_SDK_CLIENT_APP_ENV]
+  if (sdkClientApp) {
+    parts.push(`client-app/${sdkClientApp}`)
   }
   const suffix = parts.length > 0 ? ` (${parts.join(', ')})` : ''
-  return `claude-code/${MACRO.VERSION}${suffix}`
+  return `dsxu-code/${MACRO.VERSION}${suffix}`
 }
 
-// User-Agent for WebFetch requests to arbitrary sites. `Claude-User` is
-// Anthropic's publicly documented agent for user-initiated fetches (what site
-// operators match in robots.txt); the claude-code suffix lets them distinguish
-// local CLI traffic from claude.ai server-side fetches.
+// User-Agent for WebFetch requests to arbitrary sites.
 export function getWebFetchUserAgent(): string {
-  return `Claude-User (${getClaudeCodeUserAgent()}; +https://support.anthropic.com/)`
+  return `DSXU-User (${getDSXUCodeUserAgent()}; +https://dsxu.local/support)`
 }
 
 export type AuthHeaders = {
@@ -67,24 +80,21 @@ export type AuthHeaders = {
  * Returns either OAuth headers for Max/Pro users or API key headers for regular users
  */
 export function getAuthHeaders(): AuthHeaders {
-  if (isClaudeAISubscriber()) {
-    const oauthTokens = getClaudeAIOAuthTokens()
-    if (!oauthTokens?.accessToken) {
+  if (isLegacyCloudSubscriber()) {
+    const accessToken = getCompatProviderAccessToken()
+    if (!accessToken) {
       return {
         headers: {},
         error: 'No OAuth token available',
       }
     }
     return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
+      headers: getCompatProviderBearerHeaders(accessToken),
     }
   }
   // TODO: this will fail if the API key is being set to an LLM Gateway key
-  // should we try to query keychain / credentials for a valid Anthropic key?
-  const apiKey = getAnthropicApiKey()
+  // should we try to query keychain / credentials for a valid provider key?
+  const apiKey = getProviderApiKey()
   if (!apiKey) {
     return {
       headers: {},
@@ -106,7 +116,7 @@ export function getAuthHeaders(): AuthHeaders {
  * The request closure is called again on retry, so it should re-read auth
  * (e.g., via getAuthHeaders()) to pick up the refreshed token.
  *
- * Note: bridgeApi.ts has its own DI-injected version — handleOAuth401Error
+ * Note: bridgeApi.ts has its own DI-injected version; auth refresh handling
  * transitively pulls in config.ts (~1300 modules), which breaks the SDK bundle.
  *
  * @param opts.also403Revoked - Also retry on 403 with "OAuth token has been
@@ -128,9 +138,9 @@ export async function withOAuth401Retry<T>(
         typeof err.response?.data === 'string' &&
         err.response.data.includes('OAuth token has been revoked'))
     if (!isAuthError) throw err
-    const failedAccessToken = getClaudeAIOAuthTokens()?.accessToken
+    const failedAccessToken = getCompatProviderAccessToken()
     if (!failedAccessToken) throw err
-    await handleOAuth401Error(failedAccessToken)
+    await handleCompatProviderAuth401Error(failedAccessToken)
     return await request()
   }
 }

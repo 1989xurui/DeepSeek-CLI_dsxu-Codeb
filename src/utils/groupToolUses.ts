@@ -1,5 +1,5 @@
-import type { BetaToolUseBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/messages/messages.mjs'
+import type { BetaToolUseBlock } from 'src/types/providerSdk.js'
+import type { ToolResultBlockParam } from 'src/types/providerSdk.js'
 import type { Tools } from '../Tool.js'
 import type {
   GroupedToolUseMessage,
@@ -179,4 +179,25 @@ export function applyGrouping(
   }
 
   return { messages: result }
+}
+
+export function getDsxuGroupToolUsesRuntimeProfile(): {
+  runtime: 'DSXU Grouped Tool Rendering'
+  groupingRules: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Grouped Tool Rendering',
+    groupingRules: [
+      'verbose mode disables grouping',
+      'only tools with renderGroupedToolUse opt in',
+      'groups require two or more tool uses of the same type from one assistant message',
+      'matching tool_result messages are attached to the grouped renderable message',
+    ],
+    activationEvidence: [
+      'WeakMap caches groupable tool names by Tools array reference',
+      'grouped tool results are removed from the normal render stream',
+      'non-grouped messages preserve original order',
+    ],
+  }
 }

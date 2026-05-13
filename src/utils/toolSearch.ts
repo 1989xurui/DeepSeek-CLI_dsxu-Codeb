@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Tool Search utilities for dynamically discovering deferred tools.
  *
@@ -33,13 +34,19 @@ import { count } from './array.js'
 import { getMergedBetas } from './betas.js'
 import { getContextWindowForModel } from './context.js'
 import { logForDebugging } from './debug.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuCodeEnvTruthy,
+  isEnvDefinedFalsy,
+  isEnvTruthy,
+} from './envUtils.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isFirstPartyProviderBaseUrl,
 } from './model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
+import { getCompatUnsupportedToolReferencePatterns } from '../dsxu/legacy/model/legacyProviderToolSearchModel.js'
 
 /**
  * Default percentage of context window at which to auto-enable tool search.
@@ -118,7 +125,7 @@ export function getAutoToolSearchCharThreshold(model: string): number {
 
 /**
  * Get the total token count for all deferred tools using the token counting API.
- * Memoized by deferred tool names — cache is invalidated when MCP servers connect/disconnect.
+ * Memoized by deferred tool names ...cache is invalidated when MCP servers connect/disconnect.
  * Returns null if the API is unavailable (caller should fall back to char heuristic).
  */
 const getDeferredToolTokenCount = memoize(
@@ -154,9 +161,9 @@ const getDeferredToolTokenCount = memoize(
 /**
  * Tool search mode. Determines how deferrable tools (MCP + shouldDefer) are
  * surfaced:
- *   - 'tst': Tool Search Tool — deferred tools discovered via ToolSearchTool (always enabled)
- *   - 'tst-auto': auto — tools deferred only when they exceed threshold
- *   - 'standard': tool search disabled — all tools exposed inline
+ *   - 'tst': Tool Search Tool ...deferred tools discovered via ToolSearchTool (always enabled)
+ *   - 'tst-auto': auto ...tools deferred only when they exceed threshold
+ *   - 'standard': tool search disabled ...all tools exposed inline
  */
 export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
 
@@ -170,15 +177,15 @@ export type ToolSearchMode = 'tst' | 'tst-auto' | 'standard'
  *   (unset)               tst (default: always defer MCP and shouldDefer tools)
  */
 export function getToolSearchMode(): ToolSearchMode {
-  // CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
+  // DSXU_CODE_DISABLE_EXPERIMENTAL_BETAS is a kill switch for beta API
   // features. Tool search emits defer_loading on tool definitions and
-  // tool_reference content blocks — both require the API to accept a beta
+  // tool_reference content blocks ...both require the API to accept a beta
   // header. When the kill switch is set, force 'standard' so no beta shapes
   // reach the wire, even if ENABLE_TOOL_SEARCH is also set. This is the
   // explicit escape hatch for proxy gateways that the heuristic in
   // isToolSearchEnabledOptimistic doesn't cover.
-  // github.com/anthropics/claude-code/issues/20031
-  if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS)) {
+  // Upstream provider issue tracker #20031
+  if (isDsxuCodeEnvTruthy('DISABLE_EXPERIMENTAL_BETAS')) {
     return 'standard'
   }
 
@@ -201,7 +208,8 @@ export function getToolSearchMode(): ToolSearchMode {
  * Default patterns for models that do NOT support tool_reference.
  * New models are assumed to support tool_reference unless explicitly listed here.
  */
-const DEFAULT_UNSUPPORTED_MODEL_PATTERNS = ['haiku']
+const DEFAULT_UNSUPPORTED_MODEL_PATTERNS =
+  getCompatUnsupportedToolReferencePatterns()
 
 /**
  * Get the list of model patterns that do NOT support tool_reference.
@@ -230,7 +238,7 @@ function getUnsupportedToolReferencePatterns(): string[] {
  * UNLESS they match a pattern in the unsupported list. This ensures new
  * models work by default without code changes.
  *
- * Currently, Haiku models do NOT support tool_reference. This can be
+ * Currently, some lightweight compatibility models do not support tool_reference. This can be
  * updated via GrowthBook feature 'tengu_tool_search_unsupported_models'.
  *
  * @param model The model name to check
@@ -268,43 +276,44 @@ export function modelSupportsToolReference(model: string): boolean {
 let loggedOptimistic = false
 
 export function isToolSearchEnabledOptimistic(): boolean {
+  if (isEnvTruthy(process.env.DSXU_CODE_MODE)) {
+    return true
+  }
   const mode = getToolSearchMode()
   if (mode === 'standard') {
     if (!loggedOptimistic) {
       loggedOptimistic = true
       logForDebugging(
-        `[ToolSearch:optimistic] mode=${mode}, ENABLE_TOOL_SEARCH=${process.env.ENABLE_TOOL_SEARCH}, result=false`,
+        `[ToolSearch:optimistic] mode=${mode}, ENABLE_TOOL_SEARCH=${process.env.ENABLE_TOOL_SEARCH}, DSXU_CODE_DISABLE_EXPERIMENTAL_BETAS=${getDsxuCodeEnv('DISABLE_EXPERIMENTAL_BETAS')}, result=false`,
       )
     }
     return false
   }
 
   // tool_reference is a beta content type that third-party API gateways
-  // (ANTHROPIC_BASE_URL proxies) typically don't support. When the provider
+  // (legacy provider base URL proxies) typically don't support. When the provider
   // is 'firstParty' but the base URL points elsewhere, the proxy will reject
-  // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected —
-  // they have their own endpoints and beta headers.
-  // https://github.com/anthropics/claude-code/issues/30912
+  // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected ...  // they have their own endpoints and beta headers.
+  // Upstream provider issue tracker #30912
   //
   // HOWEVER: some proxies DO support tool_reference (LiteLLM passthrough,
   // Cloudflare AI Gateway, corp gateways that forward beta headers). The
-  // blanket disable breaks defer_loading for those users — all MCP tools
+  // blanket disable breaks defer_loading for those users ...all MCP tools
   // loaded into main context instead of on-demand (gh-31936 / CC-457,
   // likely the real cause of CC-330 "v2.1.70 defer_loading regression").
   // This gate only applies when ENABLE_TOOL_SEARCH is unset/empty (default
-  // behavior). Setting any non-empty value — 'true', 'auto', 'auto:N' —
-  // means the user is explicitly configuring tool search and asserts their
+  // behavior). Setting any non-empty value ...'true', 'auto', 'auto:N' ...  // means the user is explicitly configuring tool search and asserts their
   // setup supports it. The falsy check (rather than === undefined) aligns
   // with getToolSearchMode(), which also treats "" as unset.
   if (
     !process.env.ENABLE_TOOL_SEARCH &&
     getAPIProvider() === 'firstParty' &&
-    !isFirstPartyAnthropicBaseUrl()
+    !isFirstPartyProviderBaseUrl()
   ) {
     if (!loggedOptimistic) {
       loggedOptimistic = true
       logForDebugging(
-        `[ToolSearch:optimistic] disabled: ANTHROPIC_BASE_URL=${process.env.ANTHROPIC_BASE_URL} is not a first-party Anthropic host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
+        `[ToolSearch:optimistic] disabled: provider base URL is not a first-party legacy host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
       )
     }
     return false
@@ -369,7 +378,7 @@ async function calculateDeferredToolDescriptionChars(
  *
  * This is the definitive check that includes:
  * - MCP mode (Tst, TstAuto, McpCli, Standard)
- * - Model compatibility (haiku doesn't support tool_reference)
+ * - Model compatibility (some lightweight routes do not support tool_reference)
  * - ToolSearchTool availability (must be in tools list)
  * - Threshold check for TstAuto mode
  *
@@ -405,7 +414,7 @@ export async function isToolSearchEnabled(
         reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       // Log the actual model being checked, not the session's main model.
       // This is important for debugging subagent tool search decisions where
-      // the subagent model (e.g., haiku) differs from the session model (e.g., opus).
+      // the subagent route differs from the session route.
       checkedModel:
         model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       mcpToolCount,
@@ -419,7 +428,7 @@ export async function isToolSearchEnabled(
   if (!modelSupportsToolReference(model)) {
     logForDebugging(
       `Tool search disabled for model '${model}': model does not support tool_reference blocks. ` +
-        `This feature is only available on Claude Sonnet 4+, Opus 4+, and newer models.`,
+        `This feature is only available on DSXU-compatible models with tool_reference support.`,
     )
     logModeDecision(false, 'standard', 'model_unsupported')
     return false
@@ -548,7 +557,7 @@ export function extractDiscoveredToolNames(messages: Message[]): Set<string> {
 
   for (const msg of messages) {
     // Compact boundary carries the pre-compact discovered set. Inline type
-    // check rather than isCompactBoundaryMessage — utils/messages.ts imports
+    // check rather than isCompactBoundaryMessage ...utils/messages.ts imports
     // from this file, so importing back would be circular.
     if (msg.type === 'system' && msg.subtype === 'compact_boundary') {
       const carried = msg.compactMetadata?.preCompactDiscoveredTools
@@ -602,12 +611,12 @@ export type DeferredToolsDelta = {
  * Call-site discriminator for the tengu_deferred_tools_pool_change event.
  * The scan runs from several sites with different expected-prior semantics
  * (inc-4747):
- *   - attachments_main: main-thread getAttachments → prior=0 is a BUG on fire-2+
- *   - attachments_subagent: subagent getAttachments → prior=0 is EXPECTED
+ *   - attachments_main: main-thread getAttachments -?prior=0 is a BUG on fire-2+
+ *   - attachments_subagent: subagent getAttachments -?prior=0 is EXPECTED
  *     (fresh conversation, initialMessages has no DTD)
- *   - compact_full: compact.ts passes [] → prior=0 is EXPECTED
- *   - compact_partial: compact.ts passes messagesToKeep → depends on what survived
- *   - reactive_compact: reactiveCompact.ts passes preservedMessages → same
+ *   - compact_full: compact.ts passes [] -?prior=0 is EXPECTED
+ *   - compact_partial: compact.ts passes messagesToKeep -?depends on what survived
+ *   - reactive_compact: reactiveCompact.ts passes preservedMessages -?same
  * Without this the 96%-prior=0 stat is dominated by EXPECTED buckets and
  * the real main-thread cross-turn bug (if any) is invisible in BQ.
  */
@@ -622,8 +631,8 @@ export type DeferredToolsDeltaScanContext = {
 }
 
 /**
- * True → announce deferred tools via persisted delta attachments.
- * False → claude.ts keeps its per-call <available-deferred-tools>
+ * True -?announce deferred tools via persisted delta attachments.
+ * False - the main loop keeps its per-call <available-deferred-tools>
  * header prepend (the attachment does not fire).
  */
 export function isDeferredToolsDeltaEnabled(): boolean {
@@ -638,8 +647,8 @@ export function isDeferredToolsDeltaEnabled(): boolean {
  * announced in this conversation (reconstructed by scanning for prior
  * deferred_tools_delta attachments). Returns null if nothing changed.
  *
- * A name that was announced but has since stopped being deferred — yet
- * is still in the base pool — is NOT reported as removed. It's now
+ * A name that was announced but has since stopped being deferred ...yet
+ * is still in the base pool ...is NOT reported as removed. It's now
  * loaded directly, so telling the model "no longer available" would be
  * wrong.
  */
@@ -671,7 +680,7 @@ export function getDeferredToolsDelta(
   for (const n of announced) {
     if (deferredNames.has(n)) continue
     if (!poolNames.has(n)) removed.push(n)
-    // else: undeferred — silent
+    // else: undeferred ...silent
   }
 
   if (added.length === 0 && removed.length === 0) return null

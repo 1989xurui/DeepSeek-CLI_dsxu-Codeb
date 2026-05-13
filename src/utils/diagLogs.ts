@@ -1,5 +1,7 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { dirname } from 'path'
 import { getFsImplementation } from './fsOperations.js'
+import { getDsxuCodeEnv } from './envUtils.js'
 import { jsonStringify } from './slowOperations.js'
 
 type DiagnosticLogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -57,7 +59,7 @@ export function logForDiagnosticsNoPII(
 }
 
 function getDiagnosticLogFile(): string | undefined {
-  return process.env.CLAUDE_CODE_DIAGNOSTICS_FILE
+  return getDsxuCodeEnv('DIAGNOSTICS_FILE')
 }
 
 /**

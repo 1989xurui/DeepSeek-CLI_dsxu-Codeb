@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Tree-sitter AST analysis utilities for bash command security validation.
  *
@@ -6,9 +7,8 @@
  * parsing. Each function takes a root node and command string, and returns
  * structured data that can be used by security validators.
  *
- * The native NAPI parser returns plain JS objects — no cleanup needed.
+ * The native NAPI parser returns plain JS objects ...no cleanup needed.
  */
-
 type TreeSitterNode = {
   type: string
   text: string
@@ -17,7 +17,6 @@ type TreeSitterNode = {
   children: TreeSitterNode[]
   childCount: number
 }
-
 export type QuoteContext = {
   /** Command text with single-quoted content removed (double-quoted content preserved) */
   withDoubleQuotes: string
@@ -26,7 +25,6 @@ export type QuoteContext = {
   /** Like fullyUnquoted but preserves quote characters (', ") */
   unquotedKeepQuoteChars: string
 }
-
 export type CompoundStructure = {
   /** Whether the command has compound operators (&&, ||, ;) at the top level */
   hasCompoundOperators: boolean
@@ -41,7 +39,6 @@ export type CompoundStructure = {
   /** Individual command segments split by compound operators */
   segments: string[]
 }
-
 export type DangerousPatterns = {
   /** Has $() or backtick command substitution (outside quotes that would make it safe) */
   hasCommandSubstitution: boolean
@@ -54,22 +51,19 @@ export type DangerousPatterns = {
   /** Has comment */
   hasComment: boolean
 }
-
 export type TreeSitterAnalysis = {
   quoteContext: QuoteContext
   compoundStructure: CompoundStructure
-  /** Whether actual operator nodes (;, &&, ||) exist — if false, \; is just a word argument */
+  /** Whether actual operator nodes (;, &&, ||) exist ...if false, \; is just a word argument */
   hasActualOperatorNodes: boolean
   dangerousPatterns: DangerousPatterns
 }
-
 type QuoteSpans = {
   raw: Array<[number, number]> // raw_string (single-quoted)
   ansiC: Array<[number, number]> // ansi_c_string ($'...')
   double: Array<[number, number]> // string (double-quoted)
   heredoc: Array<[number, number]> // quoted heredoc_redirect
 }
-
 /**
  * Single-pass collection of all quote-related spans.
  * Previously this was 5 separate tree walks (one per type-set plus
@@ -83,7 +77,7 @@ type QuoteSpans = {
  * into $()/${} bodies to pick up inner raw_string/ansi_c_string.
  *
  * raw_string / ansi_c_string / quoted-heredoc bodies are literal text
- * in bash (no expansion), so no nested quote nodes exist — return early.
+ * in bash (no expansion), so no nested quote nodes exist ...return early.
  */
 function collectQuoteSpans(
   node: TreeSitterNode,
@@ -99,7 +93,7 @@ function collectQuoteSpans(
       return // literal body
     case 'string':
       // Only collect the outermost string (matches old per-type walk
-      // which stops at first match). Recurse regardless — a nested
+      // which stops at first match). Recurse regardless ...a nested
       // $(cmd 'x') inside "..." has a real inner raw_string.
       if (!inDouble) out.double.push([node.startIndex, node.endIndex])
       for (const child of node.children) {
@@ -108,7 +102,7 @@ function collectQuoteSpans(
       return
     case 'heredoc_redirect': {
       // Quoted heredocs (<<'EOF', <<"EOF", <<\EOF): literal body.
-      // Unquoted (<<EOF) expands $()/${} — the body can contain
+      // Unquoted (<<EOF) expands $()/${} ...the body can contain
       // $(cmd 'x') whose inner '...' IS a real raw_string node.
       // Detection: heredoc_start text starts with '/"/\\
       // Matches sync path's extractHeredocs({ quotedOnly: true }).
@@ -124,18 +118,15 @@ function collectQuoteSpans(
         out.heredoc.push([node.startIndex, node.endIndex])
         return // literal body, no nested quote nodes
       }
-      // Unquoted: recurse into heredoc_body → command_substitution →
-      // inner quote nodes. The original per-type walks did NOT stop at
+      // Unquoted: recurse into heredoc_body  -> command_substitution -> // inner quote nodes. The original per-type walks did NOT stop at
       // heredoc_redirect (not in their type sets), so they recursed here.
       break
     }
   }
-
   for (const child of node.children) {
     if (child) collectQuoteSpans(child, out, inDouble)
   }
 }
-
 /**
  * Builds a Set of all character positions covered by the given spans.
  */
@@ -148,11 +139,10 @@ function buildPositionSet(spans: Array<[number, number]>): Set<number> {
   }
   return set
 }
-
 /**
  * Drops spans that are fully contained within another span, keeping only the
  * outermost. Nested quotes (e.g., `"$(echo 'hi')"`) yield overlapping spans
- * — the inner raw_string is found by recursing into the outer string node.
+ * ...the inner raw_string is found by recursing into the outer string node.
  * Processing overlapping spans corrupts indices since removing/replacing the
  * outer span shifts the inner span's start/end into stale positions.
  */
@@ -170,14 +160,12 @@ function dropContainedSpans<T extends readonly [number, number, ...unknown[]]>(
       ),
   )
 }
-
 /**
  * Removes spans from a string, returning the string with those character
  * ranges removed.
  */
 function removeSpans(command: string, spans: Array<[number, number]>): string {
   if (spans.length === 0) return command
-
   // Drop inner spans that are fully contained in an outer one, then sort by
   // start index descending so we can splice without offset shifts.
   const sorted = dropContainedSpans(spans).sort((a, b) => b[0] - a[0])
@@ -187,7 +175,6 @@ function removeSpans(command: string, spans: Array<[number, number]>): string {
   }
   return result
 }
-
 /**
  * Replaces spans with just the quote delimiters (preserving ' and " characters).
  */
@@ -196,7 +183,6 @@ function replaceSpansKeepQuotes(
   spans: Array<[number, number, string, string]>,
 ): string {
   if (spans.length === 0) return command
-
   const sorted = dropContainedSpans(spans).sort((a, b) => b[0] - a[0])
   let result = command
   for (const [start, end, open, close] of sorted) {
@@ -205,7 +191,6 @@ function replaceSpansKeepQuotes(
   }
   return result
 }
-
 /**
  * Extract quote context from the tree-sitter AST.
  * Replaces the manual character-by-character extractQuotedContent() function.
@@ -213,9 +198,8 @@ function replaceSpansKeepQuotes(
  * Tree-sitter node types:
  * - raw_string: single-quoted ('...')
  * - string: double-quoted ("...")
- * - ansi_c_string: ANSI-C quoting ($'...') — span includes the leading $
- * - heredoc_redirect: QUOTED heredocs only (<<'EOF', <<"EOF", <<\EOF) —
- *   the full redirect span (<<, delimiters, body, newlines) is stripped
+ * - ansi_c_string: ANSI-C quoting ($'...') ...span includes the leading $
+ * - heredoc_redirect: QUOTED heredocs only (<<'EOF', <<"EOF", <<\EOF) ... *   the full redirect span (<<, delimiters, body, newlines) is stripped
  *   since the body is literal text in bash (no expansion). UNQUOTED
  *   heredocs (<<EOF) are left in place since bash expands $(...)/${...}
  *   inside them, and validators need to see those patterns. Matches the
@@ -238,7 +222,6 @@ export function extractQuoteContext(
     ...doubleQuoteSpans,
     ...quotedHeredocSpans,
   ]
-
   // Build a set of positions that should be excluded for each output variant.
   // For withDoubleQuotes: remove single-quoted spans entirely, plus the
   // opening/closing `"` delimiters of double-quoted spans (but keep the
@@ -260,10 +243,8 @@ export function extractQuoteContext(
     if (doubleQuoteDelimSet.has(i)) continue
     withDoubleQuotes += command[i]
   }
-
   // fullyUnquoted: remove all quoted content
   const fullyUnquoted = removeSpans(command, allQuoteSpans)
-
   // unquotedKeepQuoteChars: remove content but keep delimiter chars
   const spansWithQuoteChars: Array<[number, number, string, string]> = []
   for (const [start, end] of singleQuoteSpans) {
@@ -278,17 +259,15 @@ export function extractQuoteContext(
     spansWithQuoteChars.push([start, end, '"', '"'])
   }
   for (const [start, end] of quotedHeredocSpans) {
-    // Heredoc redirect spans have no inline quote delimiters — strip entirely.
+    // Heredoc redirect spans have no inline quote delimiters ...strip entirely.
     spansWithQuoteChars.push([start, end, '', ''])
   }
   const unquotedKeepQuoteChars = replaceSpansKeepQuotes(
     command,
     spansWithQuoteChars,
   )
-
   return { withDoubleQuotes, fullyUnquoted, unquotedKeepQuoteChars }
 }
-
 /**
  * Extract compound command structure from the AST.
  * Replaces isUnsafeCompoundCommand() and splitCommand() for tree-sitter path.
@@ -303,12 +282,10 @@ export function extractCompoundStructure(
   let hasSubshell = false
   let hasCommandGroup = false
   let hasPipeline = false
-
   // Walk top-level children of the program node
   function walkTopLevel(node: TreeSitterNode): void {
     for (const child of node.children) {
       if (!child) continue
-
       if (child.type === 'list') {
         // list nodes contain && and || operators
         for (const listChild of child.children) {
@@ -319,10 +296,9 @@ export function extractCompoundStructure(
             listChild.type === 'list' ||
             listChild.type === 'redirected_statement'
           ) {
-            // Nested list, or redirected_statement wrapping a list/pipeline —
-            // recurse so inner operators/pipelines are detected. For
+            // Nested list, or redirected_statement wrapping a list/pipeline ...            // recurse so inner operators/pipelines are detected. For
             // `cmd1 && cmd2 2>/dev/null && cmd3`, the redirected_statement
-            // wraps `list(cmd1 && cmd2)` — the inner `&&` would be missed
+            // wraps `list(cmd1 && cmd2)` ...the inner `&&` would be missed
             // without recursion.
             walkTopLevel({ ...node, children: [listChild] } as TreeSitterNode)
           } else if (listChild.type === 'pipeline') {
@@ -356,9 +332,8 @@ export function extractCompoundStructure(
       ) {
         segments.push(child.text)
       } else if (child.type === 'redirected_statement') {
-        // `cd ~/src && find path 2>/dev/null` — tree-sitter wraps the ENTIRE
-        // compound in a redirected_statement: program → redirected_statement →
-        // (list → cmd1, &&, cmd2) + file_redirect. Same for `cmd1 | cmd2 > out`
+        // `cd ~/src && find path 2>/dev/null` ...tree-sitter wraps the ENTIRE
+        // compound in a redirected_statement: program  -> redirected_statement -> // (list  -> cmd1, &&, cmd2) + file_redirect. Same for `cmd1 | cmd2 > out`
         // (wraps pipeline) and `(cmd) > out` (wraps subshell). Recurse to
         // detect the inner structure; skip file_redirect children (redirects
         // don't affect compound/pipeline classification).
@@ -373,7 +348,7 @@ export function extractCompoundStructure(
           segments.push(child.text)
         }
       } else if (child.type === 'negated_command') {
-        // `! cmd` — recurse into the inner command so its structure is
+        // `! cmd` ...recurse into the inner command so its structure is
         // classified (pipeline/subshell/etc.), but also record the full
         // negated text as a segment so segments.length stays meaningful.
         segments.push(child.text)
@@ -392,14 +367,11 @@ export function extractCompoundStructure(
       }
     }
   }
-
   walkTopLevel(n)
-
   // If no segments found, the whole command is one segment
   if (segments.length === 0) {
     segments.push(command)
   }
-
   return {
     hasCompoundOperators: operators.length > 0,
     hasPipeline,
@@ -409,7 +381,6 @@ export function extractCompoundStructure(
     segments,
   }
 }
-
 /**
  * Check whether the AST contains actual operator nodes (;, &&, ||).
  *
@@ -420,28 +391,23 @@ export function extractCompoundStructure(
  */
 export function hasActualOperatorNodes(rootNode: unknown): boolean {
   const n = rootNode as TreeSitterNode
-
   function walk(node: TreeSitterNode): boolean {
     // Check for operator types that indicate compound commands
     if (node.type === ';' || node.type === '&&' || node.type === '||') {
       // Verify this is a child of a list or program, not inside a command
       return true
     }
-
     if (node.type === 'list') {
       // A list node means there are compound operators
       return true
     }
-
     for (const child of node.children) {
       if (child && walk(child)) return true
     }
     return false
   }
-
   return walk(n)
 }
-
 /**
  * Extract dangerous pattern information from the AST.
  */
@@ -452,7 +418,6 @@ export function extractDangerousPatterns(rootNode: unknown): DangerousPatterns {
   let hasParameterExpansion = false
   let hasHeredoc = false
   let hasComment = false
-
   function walk(node: TreeSitterNode): void {
     switch (node.type) {
       case 'command_substitution':
@@ -471,14 +436,11 @@ export function extractDangerousPatterns(rootNode: unknown): DangerousPatterns {
         hasComment = true
         break
     }
-
     for (const child of node.children) {
       if (child) walk(child)
     }
   }
-
   walk(n)
-
   return {
     hasCommandSubstitution,
     hasProcessSubstitution,
@@ -487,7 +449,6 @@ export function extractDangerousPatterns(rootNode: unknown): DangerousPatterns {
     hasComment,
   }
 }
-
 /**
  * Perform complete tree-sitter analysis of a command.
  * Extracts all security-relevant data from the AST in one pass.

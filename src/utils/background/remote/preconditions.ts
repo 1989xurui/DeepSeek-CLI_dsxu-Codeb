@@ -4,24 +4,26 @@ import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
-  isClaudeAISubscriber,
+  isLegacyCloudSubscriber,
 } from '../../auth.js'
+import { getCompatProviderAccessToken } from '../../../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import { getCwd } from '../../cwd.js'
 import { logForDebugging } from '../../debug.js'
 import { detectCurrentRepository } from '../../detectRepository.js'
+import { isDsxuRuntimeMode } from '../../envUtils.js'
 import { errorMessage } from '../../errors.js'
 import { findGitRoot, getIsClean } from '../../git.js'
 import { getOAuthHeaders } from '../../teleport/api.js'
 import { fetchEnvironments } from '../../teleport/environments.js'
 
 /**
- * Checks if user needs to log in with Claude.ai
+ * Checks if user needs to log in with the legacy cloud provider
  * Extracted from getTeleportErrors() in TeleportError.tsx
  * @returns true if login is required, false otherwise
  */
-export async function checkNeedsClaudeAiLogin(): Promise<boolean> {
-  if (!isClaudeAISubscriber()) {
+export async function checkNeedsLegacyCloudLogin(): Promise<boolean> {
+  if (isDsxuRuntimeMode()) return false
+  if (!isLegacyCloudSubscriber()) {
     return false
   }
   return checkAndRefreshOAuthTokenIfNeeded()
@@ -43,6 +45,7 @@ export async function checkIsGitClean(): Promise<boolean> {
  * @returns true if user has remote environments, false otherwise
  */
 export async function checkHasRemoteEnvironment(): Promise<boolean> {
+  if (isDsxuRuntimeMode()) return true
   try {
     const environments = await fetchEnvironments()
     return environments.length > 0
@@ -54,7 +57,7 @@ export async function checkHasRemoteEnvironment(): Promise<boolean> {
 
 /**
  * Checks if current directory is inside a git repository (has .git/).
- * Distinct from checkHasGitRemote — a local-only repo passes this but not that.
+ * Distinct from checkHasGitRemote   a local-only repo passes this but not that.
  */
 export function checkIsInGitRepo(): boolean {
   return findGitRoot(getCwd()) !== null
@@ -71,8 +74,8 @@ export async function checkHasGitRemote(): Promise<boolean> {
 
 /**
  * Checks if GitHub app is installed on a specific repository
- * @param owner The repository owner (e.g., "anthropics")
- * @param repo The repository name (e.g., "claude-cli-internal")
+ * @param owner The repository owner
+ * @param repo The repository name
  * @returns true if GitHub app is installed, false otherwise
  */
 export async function checkGithubAppInstalled(
@@ -80,8 +83,14 @@ export async function checkGithubAppInstalled(
   repo: string,
   signal?: AbortSignal,
 ): Promise<boolean> {
+  if (isDsxuRuntimeMode()) {
+    void owner
+    void repo
+    void signal
+    return false
+  }
   try {
-    const accessToken = getClaudeAIOAuthTokens()?.accessToken
+    const accessToken = getCompatProviderAccessToken()
     if (!accessToken) {
       logForDebugging(
         'checkGithubAppInstalled: No access token found, assuming app not installed',
@@ -162,8 +171,9 @@ export async function checkGithubAppInstalled(
  * @returns true if GitHub token is synced, false otherwise
  */
 export async function checkGithubTokenSynced(): Promise<boolean> {
+  if (isDsxuRuntimeMode()) return false
   try {
-    const accessToken = getClaudeAIOAuthTokens()?.accessToken
+    const accessToken = getCompatProviderAccessToken()
     if (!accessToken) {
       logForDebugging('checkGithubTokenSynced: No access token found')
       return false
@@ -216,7 +226,7 @@ type RepoAccessMethod = 'github-app' | 'token-sync' | 'none'
  * Tiered check for whether a GitHub repo is accessible for remote operations.
  * 1. GitHub App installed on the repo
  * 2. GitHub token synced via /web-setup
- * 3. Neither — caller should prompt user to set up access
+ * 3. Neither   caller should prompt user to set up access
  */
 export async function checkRepoForRemoteAccess(
   owner: string,
@@ -232,4 +242,19 @@ export async function checkRepoForRemoteAccess(
     return { hasAccess: true, method: 'token-sync' }
   }
   return { hasAccess: false, method: 'none' }
+}
+
+
+export function getDsxuRemotePreconditionsRuntimeProfile() {
+  return {
+    runtime: 'DSXU Remote Preconditions',
+    defaultBehavior: 'Legacy cloud OAuth/GitHub preconditions are bypassed in DSXU mode and replaced by DSXU provider/workspace readiness checks',
+    providerTarget: 'DSXU Remote Session Provider',
+    activationEvidence: [
+      'checkNeedsLegacyCloudLogin returns false in DSXU mode',
+      'checkHasRemoteEnvironment returns true for local/provider-backed DSXU mode',
+      'GitHub app/token sync probes do not call legacy cloud OAuth endpoints in DSXU mode',
+      'git cleanliness, repo detection, and remote access semantics remain reusable for DSXU workflows',
+    ],
+  }
 }

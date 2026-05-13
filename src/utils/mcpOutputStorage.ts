@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
@@ -28,7 +29,7 @@ export function getFormatDescription(
 }
 
 /**
- * Generates instruction text for Claude to read from a saved output file.
+ * Generates instruction text for DSXU to read from a saved output file.
  *
  * @param rawOutputPath - Path to the saved output file
  * @param contentLength - Length of the content in characters
@@ -174,8 +175,8 @@ export async function persistBinaryContent(
 }
 
 /**
- * Build a short message telling Claude where binary content was saved.
- * Just states the path — no prescriptive hint, since what the model can
+ * Build a short message telling DSXU where binary content was saved.
+ * Just states the path ...no prescriptive hint, since what the model can
  * actually do with the file depends on provider/tooling.
  */
 export function getBinaryBlobSavedMessage(

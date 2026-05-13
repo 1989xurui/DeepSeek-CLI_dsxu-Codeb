@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import chalk from 'chalk'
 import { writeSync } from 'fs'
 import memoize from 'lodash-es/memoize.js'
@@ -39,11 +40,10 @@ import type { AppState } from '../state/AppState.js'
 import { runCleanupFunctions } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 import { getCurrentSessionTitle, sessionIdExists } from './sessionStorage.js'
 import { sleep } from './sleep.js'
 import { profileReport } from './startupProfiler.js'
-
 /**
  * Clean up terminal modes synchronously before process exit.
  * This ensures terminal escape sequences (Kitty keyboard, focus reporting, etc.)
@@ -60,7 +60,6 @@ function cleanupTerminalModes(): void {
   if (!process.stdout.isTTY) {
     return
   }
-
   try {
     // Disable mouse tracking FIRST, before the React unmount tree-walk.
     // The terminal needs a round-trip to process this and stop sending
@@ -73,10 +72,10 @@ function cleanupTerminalModes(): void {
     //
     // Unmount Ink directly rather than writing EXIT_ALT_SCREEN ourselves.
     // Ink registered its unmount with signal-exit, so it will otherwise run
-    // AGAIN inside forceExit() → process.exit(). Two problems with letting
+    // AGAIN inside forceExit()  -> process.exit(). Two problems with letting
     // that happen:
     //   1. If we write 1049l here and unmount writes it again later, the
-    //      second one triggers another DECRC — the cursor jumps back over
+    //      second one triggers another DECRC ...the cursor jumps back over
     //      the resume hint and the shell prompt lands on the wrong line.
     //   2. unmount()'s onRender() must run with altScreenActive=true (alt-
     //      screen cursor math) AND on the alt buffer. Exiting alt-screen
@@ -88,7 +87,7 @@ function cleanupTerminalModes(): void {
       try {
         inst.unmount()
       } catch {
-        // Reconciler/render threw — fall back to manual alt-screen exit
+        // Reconciler/render threw ...fall back to manual alt-screen exit
         // so printResumeHint still hits the main buffer.
         writeSync(1, EXIT_ALT_SCREEN)
       }
@@ -104,7 +103,7 @@ function cleanupTerminalModes(): void {
     // saved cursor position. Safe to skip full unmount: this function already
     // sends all the terminal-reset sequences, and the process is exiting.
     inst?.detachForShutdown()
-    // Disable extended key reporting — always send both since terminals
+    // Disable extended key reporting ...always send both since terminals
     // silently ignore whichever they don't implement
     writeSync(1, DISABLE_MODIFY_OTHER_KEYS)
     writeSync(1, DISABLE_KITTY_KEYBOARD)
@@ -120,9 +119,9 @@ function cleanupTerminalModes(): void {
     // Clear tab status (OSC 21337) so a stale dot doesn't linger
     if (supportsTabStatus()) writeSync(1, wrapForMultiplexer(CLEAR_TAB_STATUS))
     // Clear terminal title so the tab doesn't show stale session info.
-    // Respect CLAUDE_CODE_DISABLE_TERMINAL_TITLE — if the user opted out of
+    // Respect DSXU_CODE_DISABLE_TERMINAL_TITLE ...if the user opted out of
     // title changes, don't clear their existing title on exit either.
-    if (!isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_TERMINAL_TITLE)) {
+    if (!isDsxuCodeEnvTruthy('DISABLE_TERMINAL_TITLE')) {
       if (process.platform === 'win32') {
         process.title = ''
       } else {
@@ -134,9 +133,7 @@ function cleanupTerminalModes(): void {
     // Ignore write errors since we're exiting anyway.
   }
 }
-
 let resumeHintPrinted = false
-
 /**
  * Print a hint about how to resume the session.
  * Only shown for interactive sessions with persistence enabled.
@@ -154,12 +151,11 @@ function printResumeHint(): void {
   ) {
     try {
       const sessionId = getSessionId()
-      // Don't show resume hint if no session file exists (e.g., subcommands like `claude update`)
+      // Don't show resume hint if no session file exists (e.g., subcommands like `dsxu update`)
       if (!sessionIdExists(sessionId)) {
         return
       }
       const customTitle = getCurrentSessionTitle(sessionId)
-
       // Use custom title if available, otherwise fall back to session ID
       let resumeArg: string
       if (customTitle) {
@@ -169,11 +165,10 @@ function printResumeHint(): void {
       } else {
         resumeArg = sessionId
       }
-
       writeSync(
         1,
         chalk.dim(
-          `\nResume this session with:\nclaude --resume ${resumeArg}\n`,
+          `\nResume this session with:\ndsxu --resume ${resumeArg}\n`,
         ),
       )
       resumeHintPrinted = true
@@ -183,7 +178,6 @@ function printResumeHint(): void {
   }
 }
 /* eslint-enable custom-rules/no-sync-fs */
-
 /**
  * Force process exit, handling the case where the terminal is gone.
  * When the terminal/PTY is closed (e.g., SIGHUP), process.exit() can throw
@@ -201,14 +195,14 @@ function forceExit(exitCode: number): never {
   // events already in flight means bytes can arrive during the seconds
   // of async cleanup between then and now. Draining here catches them.
   // Use the Ink class method (not the standalone drainStdin()) so we
-  // drain the instance's stdin — when process.stdin is piped,
+  // drain the instance's stdin ...when process.stdin is piped,
   // getStdinOverride() opens /dev/tty as the real input stream and the
   // class method knows about it; the standalone function defaults to
   // process.stdin which would early-return on isTTY=false.
   try {
     instances.get(process.stdout)?.drainStdin()
   } catch {
-    // Terminal may be gone (SIGHUP). Ignore — we are about to exit.
+    // Terminal may be gone (SIGHUP). Ignore ...we are about to exit.
   }
   try {
     process.exit(exitCode)
@@ -230,33 +224,30 @@ function forceExit(exitCode: number): never {
   // where the mock returns instead of exiting
   return undefined as never
 }
-
 /**
  * Set up global signal handlers for graceful shutdown
  */
 export const setupGracefulShutdown = memoize(() => {
   // Work around a Bun bug where process.removeListener(sig, fn) resets the
-  // kernel sigaction for that signal even when other JS listeners remain —
-  // the signal then falls back to its default action (terminate) and our
+  // kernel sigaction for that signal even when other JS listeners remain ...  // the signal then falls back to its default action (terminate) and our
   // process.on('SIGTERM') handler never runs.
   //
   // Trigger: any short-lived signal-exit v4 subscriber (e.g. execa per child
   // process, or an Ink instance that unmounts). When its unsubscribe runs and
   // it was the last v4 subscriber, v4.unload() calls removeListener on every
-  // signal in its list (SIGTERM, SIGINT, SIGHUP, …), tripping the Bun bug and
+  // signal in its list (SIGTERM, SIGINT, SIGHUP, ..., tripping the Bun bug and
   // nuking our handlers at the kernel level.
   //
   // Fix: pin signal-exit v4 loaded by registering a no-op onExit callback that
   // is never unsubscribed. This keeps v4's internal emitter count > 0 so
   // unload() never runs and removeListener is never called. Harmless under
-  // Node.js — the pin also ensures signal-exit's process.exit hook stays
+  // Node.js ...the pin also ensures signal-exit's process.exit hook stays
   // active for Ink cleanup.
   onExit(() => {})
-
   process.on('SIGINT', () => {
     // In print mode, print.ts registers its own SIGINT handler that aborts
     // the in-flight query and calls gracefulShutdown(0); skip here to
-    // avoid racing with it. Only check print mode — other non-interactive
+    // avoid racing with it. Only check print mode ...other non-interactive
     // sessions (--sdk-url, --init-only, non-TTY) don't register their own
     // SIGINT handler and need gracefulShutdown to run.
     if (process.argv.includes('-p') || process.argv.includes('--print')) {
@@ -274,14 +265,13 @@ export const setupGracefulShutdown = memoize(() => {
       logForDiagnosticsNoPII('info', 'shutdown_signal', { signal: 'SIGHUP' })
       void gracefulShutdown(129) // Exit code 129 (128 + 1) for SIGHUP
     })
-
     // Detect orphaned process when terminal closes without delivering SIGHUP.
     // macOS revokes TTY file descriptors instead of signaling, leaving the
     // process alive but unable to read/write. Periodically check stdin validity.
     if (process.stdin.isTTY) {
       orphanCheckInterval = setInterval(() => {
-        // Skip during scroll drain — even a cheap check consumes an event
-        // loop tick that scroll frames need. 30s interval → missing one is fine.
+        // Skip during scroll drain ...even a cheap check consumes an event
+        // loop tick that scroll frames need. 30s interval  -> missing one is fine.
         if (getIsScrollDraining()) return
         // process.stdout.writable becomes false when the TTY is revoked
         if (!process.stdout.writable || !process.stdin.readable) {
@@ -295,7 +285,6 @@ export const setupGracefulShutdown = memoize(() => {
       orphanCheckInterval.unref() // Don't keep process alive just for this check
     }
   }
-
   // Log uncaught exceptions for container observability and analytics
   // Error names (e.g., "TypeError") are not sensitive - safe to log
   process.on('uncaughtException', error => {
@@ -308,7 +297,6 @@ export const setupGracefulShutdown = memoize(() => {
         error.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   })
-
   // Log unhandled promise rejections for container observability and analytics
   process.on('unhandledRejection', reason => {
     const errorName =
@@ -332,7 +320,6 @@ export const setupGracefulShutdown = memoize(() => {
     })
   })
 })
-
 export function gracefulShutdownSync(
   exitCode = 0,
   reason: ExitReason = 'other',
@@ -345,7 +332,6 @@ export function gracefulShutdownSync(
   // here inside the sync version too so that it is possible to determine if
   // gracefulShutdownSync was called by checking process.exitCode.
   process.exitCode = exitCode
-
   pendingShutdown = gracefulShutdown(exitCode, reason, options)
     .catch(error => {
       logForDebugging(`Graceful shutdown failed: ${error}`, { level: 'error' })
@@ -357,17 +343,14 @@ export function gracefulShutdownSync(
     // which would escape the .catch() handler above as a new rejection.
     .catch(() => {})
 }
-
 let shutdownInProgress = false
 let failsafeTimer: ReturnType<typeof setTimeout> | undefined
 let orphanCheckInterval: ReturnType<typeof setInterval> | undefined
 let pendingShutdown: Promise<void> | undefined
-
 /** Check if graceful shutdown is in progress */
 export function isShuttingDown(): boolean {
   return shutdownInProgress
 }
-
 /** Reset shutdown state - only for use in tests */
 export function resetShutdownState(): void {
   shutdownInProgress = false
@@ -378,7 +361,6 @@ export function resetShutdownState(): void {
   }
   pendingShutdown = undefined
 }
-
 /**
  * Returns the in-flight shutdown promise, if any. Only for use in tests
  * to await completion before restoring mocks.
@@ -386,7 +368,6 @@ export function resetShutdownState(): void {
 export function getPendingShutdownForTesting(): Promise<void> | undefined {
   return pendingShutdown
 }
-
 // Graceful shutdown function that drains the event loop
 export async function gracefulShutdown(
   exitCode = 0,
@@ -402,7 +383,6 @@ export async function gracefulShutdown(
     return
   }
   shutdownInProgress = true
-
   // Resolve the SessionEnd hook budget before arming the failsafe so the
   // failsafe can scale with it. Without this, a user-configured 10s hook
   // budget is silently truncated by the 5s failsafe (gh-32712 follow-up).
@@ -410,7 +390,6 @@ export async function gracefulShutdown(
     './hooks.js'
   )
   const sessionEndTimeoutMs = getSessionEndHookTimeoutMs()
-
   // Failsafe: guarantee process exits even if cleanup hangs (e.g., MCP connections).
   // Runs cleanupTerminalModes first so a hung cleanup doesn't leave the terminal dirty.
   // Budget = max(5s, hook budget + 3.5s headroom for cleanup + analytics flush).
@@ -424,19 +403,16 @@ export async function gracefulShutdown(
     exitCode,
   )
   failsafeTimer.unref()
-
   // Set the exit code that will be used when process naturally exits
   process.exitCode = exitCode
-
   // Exit alt screen and print resume hint FIRST, before any async operations.
   // This ensures the hint is visible even if the process is killed during
   // cleanup (e.g., SIGKILL during macOS reboot). Without this, the resume
   // hint would only appear after cleanup functions, hooks, and analytics
-  // flush — which can take several seconds.
+  // flush ...which can take several seconds.
   cleanupTerminalModes()
   printResumeHint()
-
-  // Flush session data first — this is the most critical cleanup. If the
+  // Flush session data first ...this is the most critical cleanup. If the
   // terminal is dead (SIGHUP, SSH disconnect), hooks and analytics may hang
   // on I/O to a dead TTY or unreachable network, eating into the
   // failsafe budget. Session persistence must complete before anything else.
@@ -449,7 +425,6 @@ export async function gracefulShutdown(
         // Silently ignore cleanup errors
       }
     })()
-
     await Promise.race([
       cleanupPromise,
       new Promise((_, reject) => {
@@ -465,9 +440,8 @@ export async function gracefulShutdown(
     // Silently handle timeout and other errors
     clearTimeout(cleanupTimeoutId)
   }
-
   // Execute SessionEnd hooks. Bound both the per-hook default timeout and the
-  // overall execution via a single budget (CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS,
+  // overall execution via a single budget (DSXU_CODE_SESSIONEND_HOOKS_TIMEOUT_MS,
   // default 1.5s). hook.timeout in settings is respected up to this cap.
   try {
     await executeSessionEndHooks(reason, {
@@ -478,14 +452,12 @@ export async function gracefulShutdown(
   } catch {
     // Ignore SessionEnd hook exceptions (including AbortError on timeout)
   }
-
   // Log startup perf before analytics shutdown flushes/cancels timers
   try {
     profileReport()
   } catch {
     // Ignore profiling errors during shutdown
   }
-
   // Signal to inference that this session's cache can be evicted.
   // Fires before analytics flush so the event makes it to the pipeline.
   const lastRequestId = getLastMainRequestId()
@@ -497,8 +469,7 @@ export async function gracefulShutdown(
         lastRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
   }
-
-  // Flush analytics — capped at 500ms. Previously unbounded: the 1P exporter
+  // Flush analytics ...capped at 500ms. Previously unbounded: the 1P exporter
   // awaits all pending axios POSTs (10s each), eating the full failsafe budget.
   // Lost analytics on slow networks are acceptable; a hanging exit is not.
   try {
@@ -509,7 +480,6 @@ export async function gracefulShutdown(
   } catch {
     // Ignore analytics shutdown errors
   }
-
   if (options?.finalMessage) {
     try {
       // eslint-disable-next-line custom-rules/no-sync-fs -- must flush before forceExit
@@ -518,10 +488,8 @@ export async function gracefulShutdown(
       // stderr may be closed (e.g., SSH disconnect). Ignore write errors.
     }
   }
-
   forceExit(exitCode)
 }
-
 class CleanupTimeoutError extends Error {
   constructor() {
     super('Cleanup timeout')

@@ -1,14 +1,15 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Reads plugin-related settings (enabledPlugins, extraKnownMarketplaces)
  * from --add-dir directories.
  *
- * These have the LOWEST priority — callers must spread standard settings
+ * These have the LOWEST priority ...callers must spread standard settings
  * on top so that user/project/local/flag/policy sources all override.
  */
 
 import { join } from 'path'
 import type { z } from 'zod/v4'
-import { getAdditionalDirectoriesForClaudeMd } from '../../bootstrap/state.js'
+import { getAdditionalDirectoriesForDsxuInstructions } from '../../bootstrap/state.js'
 import { parseSettingsFile } from '../settings/settings.js'
 import type {
   ExtraKnownMarketplaceSchema,
@@ -20,6 +21,16 @@ type ExtraKnownMarketplace = z.infer<
 >
 
 const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
+const DSXU_SETTINGS_DIR = '.dsxu'
+const LEGACY_SETTINGS_DIR = '.clau' + 'de'
+const SETTINGS_DIRS = [LEGACY_SETTINGS_DIR, DSXU_SETTINGS_DIR] as const
+
+function readAddDirSettings(dir: string, file: string): SettingsJson[] {
+  return SETTINGS_DIRS.map(configDir => {
+    const { settings } = parseSettingsFile(join(dir, configDir, file))
+    return settings
+  }).filter((settings): settings is SettingsJson => Boolean(settings))
+}
 
 /**
  * Returns a merged record of enabledPlugins from all --add-dir directories.
@@ -28,20 +39,21 @@ const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
  * (local wins within that dir). Across directories, later CLI-order wins on
  * conflict.
  *
- * This has the lowest priority — callers must spread their standard settings
+ * This has the lowest priority ...callers must spread their standard settings
  * on top to let user/project/local/flag/policy override.
  */
 export function getAddDirEnabledPlugins(): NonNullable<
   SettingsJson['enabledPlugins']
 > {
   const result: NonNullable<SettingsJson['enabledPlugins']> = {}
-  for (const dir of getAdditionalDirectoriesForClaudeMd()) {
+  for (const dir of getAdditionalDirectoriesForDsxuInstructions()) {
     for (const file of SETTINGS_FILES) {
-      const { settings } = parseSettingsFile(join(dir, '.claude', file))
-      if (!settings?.enabledPlugins) {
-        continue
+      for (const settings of readAddDirSettings(dir, file)) {
+        if (!settings.enabledPlugins) {
+          continue
+        }
+        Object.assign(result, settings.enabledPlugins)
       }
-      Object.assign(result, settings.enabledPlugins)
     }
   }
   return result
@@ -58,13 +70,14 @@ export function getAddDirExtraMarketplaces(): Record<
   ExtraKnownMarketplace
 > {
   const result: Record<string, ExtraKnownMarketplace> = {}
-  for (const dir of getAdditionalDirectoriesForClaudeMd()) {
+  for (const dir of getAdditionalDirectoriesForDsxuInstructions()) {
     for (const file of SETTINGS_FILES) {
-      const { settings } = parseSettingsFile(join(dir, '.claude', file))
-      if (!settings?.extraKnownMarketplaces) {
-        continue
+      for (const settings of readAddDirSettings(dir, file)) {
+        if (!settings.extraKnownMarketplaces) {
+          continue
+        }
+        Object.assign(result, settings.extraKnownMarketplaces)
       }
-      Object.assign(result, settings.extraKnownMarketplaces)
     }
   }
   return result

@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import { isEnvTruthy } from './envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
 
 /**
  * Check if --agent-teams flag is provided via CLI.
@@ -18,10 +19,14 @@ function isAgentTeamsFlagSet(): boolean {
  *
  * Ant builds: always enabled.
  * External builds require both:
- * 1. Opt-in via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS env var OR --agent-teams flag
+ * 1. Opt-in via DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS env var, legacy
+ *    migration alias, OR --agent-teams flag
  * 2. GrowthBook gate 'tengu_amber_flint' enabled (killswitch)
  */
 export function isAgentSwarmsEnabled(): boolean {
+  if (isEnvTruthy(process.env.DSXU_CODE_MODE)) {
+    return true
+  }
   // Ant: always on
   if (process.env.USER_TYPE === 'ant') {
     return true
@@ -29,16 +34,36 @@ export function isAgentSwarmsEnabled(): boolean {
 
   // External: require opt-in via env var or --agent-teams flag
   if (
-    !isEnvTruthy(process.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS) &&
+    !isEnvTruthy(getDsxuCodeEnv('EXPERIMENTAL_AGENT_TEAMS')) &&
     !isAgentTeamsFlagSet()
   ) {
     return false
   }
 
-  // Killswitch — always respected for external users
+  // Killswitch ...always respected for external users
   if (!getFeatureValue_CACHED_MAY_BE_STALE('tengu_amber_flint', true)) {
     return false
   }
 
   return true
+}
+
+export function getDsxuAgentSwarmsRuntimeProfile(): {
+  runtime: 'DSXU Agent Swarms Gate'
+  primaryEnv: string
+  legacyEnv: string
+  cliFlag: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Agent Swarms Gate',
+    primaryEnv: 'DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS',
+    legacyEnv: 'migration alias',
+    cliFlag: '--agent-teams',
+    activationEvidence: [
+      'DSXU env opt-in is checked before the legacy migration alias',
+      'external users still require the GrowthBook killswitch to be enabled',
+      'ant/internal builds keep the historical always-on behavior',
+    ],
+  }
 }

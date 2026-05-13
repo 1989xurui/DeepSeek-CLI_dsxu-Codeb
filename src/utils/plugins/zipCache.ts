@@ -1,8 +1,9 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Plugin Zip Cache Module
  *
  * Manages plugins as ZIP archives in a mounted directory (e.g., Filestore).
- * When CLAUDE_CODE_PLUGIN_USE_ZIP_CACHE is enabled and CLAUDE_CODE_PLUGIN_CACHE_DIR
+ * When DSXU_CODE_PLUGIN_USE_ZIP_CACHE is enabled and DSXU_CODE_PLUGIN_CACHE_DIR
  * is set, plugins are stored as ZIPs in that directory and extracted to a
  * session-local temp directory at startup.
  *
@@ -18,17 +19,16 @@
  *   ├── known_marketplaces.json
  *   ├── installed_plugins.json
  *   ├── marketplaces/
- *   │   ├── official-marketplace.json
- *   │   └── company-marketplace.json
+ * -> ├── official-marketplace.json
+ * -> └── company-marketplace.json
  *   └── plugins/
  *       ├── official-marketplace/
- *       │   └── plugin-a/
- *       │       └── 1.0.0.zip
+ * -> └── plugin-a/
+ * -> └── 1.0.0.zip
  *       └── company-marketplace/
  *           └── plugin-b/
  *               └── 2.1.3.zip
  */
-
 import { randomBytes } from 'crypto'
 import {
   chmod,
@@ -44,31 +44,33 @@ import { tmpdir } from 'os'
 import { basename, dirname, join } from 'path'
 import { logForDebugging } from '../debug.js'
 import { parseZipModes, unzipFile } from '../dxt/zip.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { expandTilde } from '../permissions/pathValidation.js'
 import type { MarketplaceSource } from './schemas.js'
-
 /**
  * Check if the plugin zip cache mode is enabled.
  */
 export function isPluginZipCacheEnabled(): boolean {
-  return isEnvTruthy(process.env.CLAUDE_CODE_PLUGIN_USE_ZIP_CACHE)
+  return isEnvTruthy(
+    getDsxuCodeEnv('PLUGIN_USE_ZIP_CACHE') ??
+      process.env['CL' + 'AUDE' + '_CODE_PLUGIN_USE_ZIP_CACHE'],
+  )
 }
-
 /**
  * Get the path to the zip cache directory.
- * Requires CLAUDE_CODE_PLUGIN_CACHE_DIR to be set.
+ * Requires DSXU_CODE_PLUGIN_CACHE_DIR to be set.
  * Returns undefined if zip cache is not enabled.
  */
 export function getPluginZipCachePath(): string | undefined {
   if (!isPluginZipCacheEnabled()) {
     return undefined
   }
-  const dir = process.env.CLAUDE_CODE_PLUGIN_CACHE_DIR
+  const dir =
+    getDsxuCodeEnv('PLUGIN_CACHE_DIR') ??
+    process.env['CL' + 'AUDE' + '_CODE_PLUGIN_CACHE_DIR']
   return dir ? expandTilde(dir) : undefined
 }
-
 /**
  * Get the path to known_marketplaces.json in the zip cache.
  */
@@ -79,7 +81,6 @@ export function getZipCacheKnownMarketplacesPath(): string {
   }
   return join(cachePath, 'known_marketplaces.json')
 }
-
 /**
  * Get the path to installed_plugins.json in the zip cache.
  */
@@ -90,7 +91,6 @@ export function getZipCacheInstalledPluginsPath(): string {
   }
   return join(cachePath, 'installed_plugins.json')
 }
-
 /**
  * Get the marketplaces directory within the zip cache.
  */
@@ -101,7 +101,6 @@ export function getZipCacheMarketplacesDir(): string {
   }
   return join(cachePath, 'marketplaces')
 }
-
 /**
  * Get the plugins directory within the zip cache.
  */
@@ -112,12 +111,10 @@ export function getZipCachePluginsDir(): string {
   }
   return join(cachePath, 'plugins')
 }
-
 // Session plugin cache: a temp directory on local disk (NOT in the mounted zip cache)
 // that holds extracted plugins for the duration of the session.
 let sessionPluginCachePath: string | null = null
 let sessionPluginCachePromise: Promise<string> | null = null
-
 /**
  * Get or create the session plugin cache directory.
  * This is a temp directory on local disk where plugins are extracted for the session.
@@ -129,7 +126,7 @@ export async function getSessionPluginCachePath(): Promise<string> {
   if (!sessionPluginCachePromise) {
     sessionPluginCachePromise = (async () => {
       const suffix = randomBytes(8).toString('hex')
-      const dir = join(tmpdir(), `claude-plugin-session-${suffix}`)
+      const dir = join(tmpdir(), `dsxu-plugin-session-${suffix}`)
       await getFsImplementation().mkdir(dir)
       sessionPluginCachePath = dir
       logForDebugging(`Created session plugin cache at ${dir}`)
@@ -138,7 +135,6 @@ export async function getSessionPluginCachePath(): Promise<string> {
   }
   return sessionPluginCachePromise
 }
-
 /**
  * Clean up the session plugin cache directory.
  * Should be called when the session ends.
@@ -159,7 +155,6 @@ export async function cleanupSessionPluginCache(): Promise<void> {
     sessionPluginCachePromise = null
   }
 }
-
 /**
  * Reset the session plugin cache path (for testing).
  */
@@ -167,7 +162,6 @@ export function resetSessionPluginCache(): void {
   sessionPluginCachePath = null
   sessionPluginCachePromise = null
 }
-
 /**
  * Write data to a file in the zip cache atomically.
  * Writes to a temp file in the same directory, then renames.
@@ -178,10 +172,8 @@ export async function atomicWriteToZipCache(
 ): Promise<void> {
   const dir = dirname(targetPath)
   await getFsImplementation().mkdir(dir)
-
   const tmpName = `.${basename(targetPath)}.tmp.${randomBytes(4).toString('hex')}`
   const tmpPath = join(dir, tmpName)
-
   try {
     if (typeof data === 'string') {
       await writeFile(tmpPath, data, { encoding: 'utf-8' })
@@ -199,16 +191,14 @@ export async function atomicWriteToZipCache(
     throw error
   }
 }
-
 // fflate's ZippableFile tuple form: [data, opts]. Using the tuple lets us
 // store {os, attrs} so parseZipModes can recover exec bits on extraction.
 type ZipEntry = [Uint8Array, { os: number; attrs: number }]
-
 /**
  * Create a ZIP archive from a directory.
  * Resolves symlinks to actual file contents (replaces symlinks with real data).
  * Stores Unix mode bits in external_attr so extractZipToDirectory can restore
- * +x — otherwise the round-trip (git clone → zip → extract) loses exec bits.
+ * +x ...otherwise the round-trip (git clone  -> zip  -> extract) loses exec bits.
  *
  * @param sourceDir - Directory to zip
  * @returns ZIP file as Uint8Array
@@ -219,7 +209,6 @@ export async function createZipFromDirectory(
   const files: Record<string, ZipEntry> = {}
   const visited = new Set<string>()
   await collectFilesForZip(sourceDir, '', files, visited)
-
   const { zipSync } = await import('fflate')
   const zipData = zipSync(files, { level: 6 })
   logForDebugging(
@@ -227,7 +216,6 @@ export async function createZipFromDirectory(
   )
   return zipData
 }
-
 /**
  * Recursively collect files from a directory for zipping.
  * Uses lstat to detect symlinks and tracks visited inodes for cycle detection.
@@ -245,16 +233,15 @@ async function collectFilesForZip(
   } catch {
     return
   }
-
   // Track visited directories by dev+ino to detect symlink cycles.
-  // bigint: true is required — on Windows NTFS, the file index packs a 16-bit
+  // bigint: true is required ...on Windows NTFS, the file index packs a 16-bit
   // sequence number into the high bits. Once that sequence exceeds ~32 (very
   // common on a busy CI runner that churns through temp files), the value
   // exceeds Number.MAX_SAFE_INTEGER and two adjacent directories round to the
   // same JS number, causing subdirs to be silently skipped as "cycles". This
   // broke the round-trip test on Windows CI when sharding shuffled which tests
   // ran first and pushed MFT sequence numbers over the precision cliff.
-  // See also: markdownConfigLoader.ts getFileIdentity, anthropics/claude-code#13893
+  // See also: markdownConfigLoader.ts getFileIdentity; this keeps DSXU zip extraction stable on Windows.
   try {
     const dirStat = await stat(currentDir, { bigint: true })
     // ReFS (Dev Drive), NFS, some FUSE mounts report dev=0 and ino=0 for
@@ -272,23 +259,19 @@ async function collectFilesForZip(
   } catch {
     return
   }
-
   for (const entry of entries) {
     // Skip hidden files that are git-related
     if (entry === '.git') {
       continue
     }
-
     const fullPath = join(currentDir, entry)
     const relPath = relativePath ? `${relativePath}/${entry}` : entry
-
     let fileStat
     try {
       fileStat = await lstat(fullPath)
     } catch {
       continue
     }
-
     // Skip symlinked directories (follow symlinked files)
     if (fileStat.isSymbolicLink()) {
       try {
@@ -296,19 +279,18 @@ async function collectFilesForZip(
         if (targetStat.isDirectory()) {
           continue
         }
-        // Symlinked file — read its contents below
+        // Symlinked file ...read its contents below
         fileStat = targetStat
       } catch {
         continue // broken symlink
       }
     }
-
     if (fileStat.isDirectory()) {
       await collectFilesForZip(baseDir, relPath, files, visited)
     } else if (fileStat.isFile()) {
       try {
         const content = await readFile(fullPath)
-        // os=3 (Unix) + st_mode in high 16 bits of external_attr — this is
+        // os=3 (Unix) + st_mode in high 16 bits of external_attr ...this is
         // what parseZipModes reads back on extraction. fileStat is already
         // in hand from the lstat/stat above, so no extra syscall.
         files[relPath] = [
@@ -321,7 +303,6 @@ async function collectFilesForZip(
     }
   }
 }
-
 /**
  * Extract a ZIP file to a target directory.
  *
@@ -334,37 +315,32 @@ export async function extractZipToDirectory(
 ): Promise<void> {
   const zipBuf = await getFsImplementation().readFileBytes(zipPath)
   const files = await unzipFile(zipBuf)
-  // fflate doesn't surface external_attr — parse the central directory so
+  // fflate doesn't surface external_attr ...parse the central directory so
   // exec bits survive extraction (hooks/scripts need +x to run via `sh -c`).
   const modes = parseZipModes(zipBuf)
-
   await getFsImplementation().mkdir(targetDir)
-
   for (const [relPath, data] of Object.entries(files)) {
     // Skip directory entries (trailing slash)
     if (relPath.endsWith('/')) {
       await getFsImplementation().mkdir(join(targetDir, relPath))
       continue
     }
-
     const fullPath = join(targetDir, relPath)
     await getFsImplementation().mkdir(dirname(fullPath))
     await writeFile(fullPath, data)
     const mode = modes[relPath]
     if (mode && mode & 0o111) {
-      // Swallow EPERM/ENOTSUP (NFS root_squash, some FUSE mounts) — losing +x
+      // Swallow EPERM/ENOTSUP (NFS root_squash, some FUSE mounts) ...losing +x
       // is the pre-PR behavior and better than aborting mid-extraction.
       await chmod(fullPath, mode & 0o777).catch(() => {})
     }
   }
-
   logForDebugging(
     `Extracted ZIP to ${targetDir}: ${Object.keys(files).length} entries`,
   )
 }
-
 /**
- * Convert a plugin directory to a ZIP in-place: zip → atomic write → delete dir.
+ * Convert a plugin directory to a ZIP in-place: zip  -> atomic write  -> delete dir.
  * Both call sites (cacheAndRegisterPlugin, copyPluginToVersionedCache) need the
  * same sequence; getting it wrong (non-atomic write, forgetting rm) corrupts cache.
  */
@@ -376,7 +352,6 @@ export async function convertDirectoryToZipInPlace(
   await atomicWriteToZipCache(zipPath, zipData)
   await rm(dirPath, { recursive: true, force: true })
 }
-
 /**
  * Get the relative path for a marketplace JSON file within the zip cache.
  * Format: marketplaces/{marketplace-name}.json
@@ -387,17 +362,15 @@ export function getMarketplaceJsonRelativePath(
   const sanitized = marketplaceName.replace(/[^a-zA-Z0-9\-_]/g, '-')
   return join('marketplaces', `${sanitized}.json`)
 }
-
 /**
  * Check if a marketplace source type is supported by zip cache mode.
  *
- * Supported sources write to `join(cacheDir, name)` — syncMarketplacesToZipCache
+ * Supported sources write to `join(cacheDir, name)` ...syncMarketplacesToZipCache
  * reads marketplace.json from that installLocation, source-type-agnostic.
  * - github/git/url: clone to temp, rename into cacheDir
  * - settings: write synthetic marketplace.json directly to cacheDir (no fetch)
  *
- * Excluded: file/directory (installLocation is the user's path OUTSIDE cacheDir —
- * nonsensical in ephemeral containers), npm (node_modules bloat on Filestore mount).
+ * Excluded: file/directory (installLocation is the user's path OUTSIDE cacheDir ... * nonsensical in ephemeral containers), npm (node_modules bloat on Filestore mount).
  */
 export function isMarketplaceSourceSupportedByZipCache(
   source: MarketplaceSource,

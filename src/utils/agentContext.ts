@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Agent context for analytics attribution using AsyncLocalStorage.
  *
@@ -10,8 +11,8 @@
  * 2. In-process teammates: Part of a swarm with team coordination.
  *    Context: TeammateAgentContext with agentType: 'teammate'
  *
- * For swarm teammates in separate processes (tmux/iTerm2), use environment
- * variables instead: CLAUDE_CODE_AGENT_ID, CLAUDE_CODE_PARENT_SESSION_ID
+ * For swarm teammates in separate processes (tmux/iTerm2), use DSXU agent
+ * environment variables instead.
  *
  * WHY AsyncLocalStorage (not AppState):
  * When agents are backgrounded (ctrl+b), multiple agents can run concurrently
@@ -32,7 +33,7 @@ import { isAgentSwarmsEnabled } from './agentSwarmsEnabled.js'
 export type SubagentContext = {
   /** The subagent's UUID (from createAgentId()) */
   agentId: string
-  /** The team lead's session ID (from CLAUDE_CODE_PARENT_SESSION_ID env var), undefined for main REPL subagents */
+  /** The team lead's session ID from the DSXU agent env, undefined for main REPL subagents */
   parentSessionId?: string
   /** Agent type - 'subagent' for Agent tool agents */
   agentType: 'subagent'
@@ -41,8 +42,7 @@ export type SubagentContext = {
   /** Whether this is a built-in agent (vs user-defined custom agent) */
   isBuiltIn?: boolean
   /** The request_id in the invoking agent that spawned or resumed this agent.
-   *  For nested subagents this is the immediate invoker, not the root —
-   *  session_id already bundles the whole tree. Updated on each resume. */
+   *  For nested subagents this is the immediate invoker, not the root ...   *  session_id already bundles the whole tree. Updated on each resume. */
   invokingRequestId?: string
   /** Whether this invocation is the initial spawn or a subsequent resume
    *  via SendMessage. Undefined when invokingRequestId is absent. */
@@ -151,7 +151,7 @@ export function getSubagentLogName():
 }
 
 /**
- * Get the invoking request_id for the current agent context — once per
+ * Get the invoking request_id for the current agent context ...once per
  * invocation. Returns the id on the first call after a spawn/resume, then
  * undefined until the next boundary. Also undefined on the main thread or
  * when the spawn path had no request_id.
@@ -174,5 +174,25 @@ export function consumeInvokingRequestId():
   return {
     invokingRequestId: context.invokingRequestId,
     invocationKind: context.invocationKind,
+  }
+}
+
+export function getDsxuAgentContextRuntimeProfile(): {
+  runtime: 'DSXU Agent Context'
+  contextTypes: readonly string[]
+  storagePolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Agent Context',
+    contextTypes: ['subagent', 'teammate'],
+    storagePolicy:
+      'AsyncLocalStorage isolates concurrent agent attribution without mutating shared AppState',
+    activationEvidence: [
+      'runWithAgentContext scopes analytics/task metadata to a single async execution chain',
+      'getSubagentLogName maps built-in agents to stable names and user agents to user-defined',
+      'consumeInvokingRequestId emits spawn/resume edge metadata exactly once per invocation',
+      'teammate context remains gated by DSXU swarm enablement',
+    ],
   }
 }

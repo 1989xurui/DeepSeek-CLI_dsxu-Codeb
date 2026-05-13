@@ -1,4 +1,5 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { randomUUID } from 'crypto'
 import { setPromptId } from 'src/bootstrap/state.js'
 import type {
@@ -39,7 +40,7 @@ export function processTextPrompt(
 
   // Emit user_prompt OTEL event for both string (CLI) and array (SDK/VS Code)
   // input shapes. Previously gated on `typeof input === 'string'`, so VS Code
-  // sessions never emitted user_prompt (anthropics/claude-code#33301).
+  // sessions never emitted user_prompt.
   // For array input, use the LAST text block: createUserContent pushes the
   // user's message last (after any <ide_selection>/attachment context blocks),
   // so .findLast gets the actual prompt. userPromptText (first block) is kept

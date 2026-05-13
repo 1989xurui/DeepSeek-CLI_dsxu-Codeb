@@ -175,3 +175,25 @@ export function getPatchForDisplay({
     lines: _.lines.map(unescapeFromDiff),
   }))
 }
+
+export function processDiffLifecycle(input: {
+  filePath: string
+  before: string
+  after: string
+}): {
+  state: 'changed' | 'unchanged'
+  lifecycle: string
+  hunkCount: number
+} {
+  const hunks = getPatchFromContents({
+    filePath: input.filePath,
+    oldContent: input.before,
+    newContent: input.after,
+  })
+  const state = hunks.length > 0 ? 'changed' : 'unchanged'
+  return {
+    state,
+    lifecycle: `diff:${state}`,
+    hunkCount: hunks.length,
+  }
+}

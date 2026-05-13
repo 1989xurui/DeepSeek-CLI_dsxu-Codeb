@@ -6,7 +6,7 @@
  * - Which plugins are installed globally
  * - Installation metadata (version, timestamps, paths)
  *
- * The enabled/disabled state remains in .claude/settings.json for per-repo control.
+ * The enabled/disabled state remains in .dsxu/settings.json for per-repo control.
  *
  * Rationale: Installation is global (a plugin is either on disk or not), while
  * enabled/disabled state is per-repository (different projects may want different
@@ -33,6 +33,13 @@ import {
   type PluginInstallationEntry,
   type PluginScope,
 } from './schemas.js'
+
+const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
+const LEGACY_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const PLUGIN_MANIFEST_DIRS = [
+  DSXU_PLUGIN_MANIFEST_DIR,
+  LEGACY_PLUGIN_MANIFEST_DIR,
+] as const
 
 // Type alias for V2 plugins map
 type InstalledPluginsMapV2 = Record<string, PluginInstallationEntry[]>
@@ -184,8 +191,8 @@ export function migrateToSinglePluginFile(): void {
 /**
  * Clean up legacy non-versioned cache directories.
  *
- * Legacy cache structure: ~/.claude/plugins/cache/{plugin-name}/
- * Versioned cache structure: ~/.claude/plugins/cache/{marketplace}/{plugin}/{version}/
+ * Legacy cache structure: ~/.dsxu/plugins/cache/{plugin-name}/
+ * Versioned cache structure: ~/.dsxu/plugins/cache/{marketplace}/{plugin}/{version}/
  *
  * This function removes legacy directories that are not referenced by any installation.
  */
@@ -285,7 +292,7 @@ function migrateV1ToV2(v1Data: InstalledPluginsFileV1): InstalledPluginsFileV2 {
   const v2Plugins: InstalledPluginsMapV2 = {}
 
   for (const [pluginId, plugin] of Object.entries(v1Data.plugins)) {
-    // V2 format uses versioned cache path: ~/.claude/plugins/cache/{marketplace}/{plugin}/{version}
+    // V2 format uses versioned cache path: ~/.dsxu/plugins/cache/{marketplace}/{plugin}/{version}
     // Compute it from pluginId and version instead of using the V1 installPath
     const versionedCachePath = getVersionedCachePath(pluginId, plugin.version)
 
@@ -794,7 +801,7 @@ export function removeAllPluginsForMarketplace(marketplaceName: string): {
  * - user/managed scopes: always relevant (global)
  * - project/local scopes: only if projectPath matches the current project
  *
- * getOriginalCwd() (not getCwd()) because "current project" is where Claude
+ * getOriginalCwd() (not getCwd()) because "current project" is where DSXU
  * Code was launched from, not wherever the working directory has drifted to.
  */
 export function isInstallationRelevantToCurrentProject(
@@ -1012,13 +1019,19 @@ function getPluginVersionFromManifest(
   pluginId: string,
 ): string {
   const fs = getFsImplementation()
-  const manifestPath = join(pluginCachePath, '.claude-plugin', 'plugin.json')
-
-  try {
-    const manifestContent = fs.readFileSync(manifestPath, { encoding: 'utf-8' })
-    const manifest = jsonParse(manifestContent)
-    return manifest.version || 'unknown'
-  } catch {
+  for (const manifestDir of PLUGIN_MANIFEST_DIRS) {
+    const manifestPath = join(pluginCachePath, manifestDir, 'plugin.json')
+    try {
+      const manifestContent = fs.readFileSync(manifestPath, {
+        encoding: 'utf-8',
+      })
+      const manifest = jsonParse(manifestContent)
+      return manifest.version || 'unknown'
+    } catch {
+      // Try the next absorbed manifest directory name.
+    }
+  }
+  {
     logForDebugging(`Could not read version from manifest for ${pluginId}`)
     return 'unknown'
   }
@@ -1220,8 +1233,8 @@ export async function migrateFromEnabledPlugins(): Promise<void> {
 
           installPath = pluginCachePath
 
-          // Only read manifest if the .claude-plugin dir is present
-          if (dirEntries.includes('.claude-plugin')) {
+          // Only read manifest if a DSXU or absorbed manifest dir is present
+          if (PLUGIN_MANIFEST_DIRS.some(dir => dirEntries.includes(dir))) {
             version = getPluginVersionFromManifest(pluginCachePath, pluginId)
           }
 

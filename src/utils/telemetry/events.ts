@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Attributes } from '@opentelemetry/api'
 import { getEventLogger, getPromptId } from 'src/bootstrap/state.js'
 import { logForDebugging } from '../debug.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import { getTelemetryAttributes } from '../telemetryAttributes.js'
 
 // Monotonically increasing counter for ordering events within a session
@@ -52,10 +53,9 @@ export async function logOTelEvent(
     attributes['prompt.id'] = promptId
   }
 
-  // Workspace directory from the desktop app (host path). Events only —
-  // filesystem paths are too high-cardinality for metric dimensions, and
+  // Workspace directory from the desktop app (host path). Events only ...  // filesystem paths are too high-cardinality for metric dimensions, and
   // the BQ metrics pipeline must never see them.
-  const workspaceDir = process.env.CLAUDE_CODE_WORKSPACE_HOST_PATHS
+  const workspaceDir = getDsxuCodeEnv('WORKSPACE_HOST_PATHS')
   if (workspaceDir) {
     attributes['workspace.host_paths'] = workspaceDir.split('|')
   }
@@ -69,7 +69,7 @@ export async function logOTelEvent(
 
   // Emit log record as an event
   eventLogger.emit({
-    body: `claude_code.${eventName}`,
+    body: `dsxu_code.${eventName}`,
     attributes,
   })
 }

@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { Permutations } from 'src/types/utils.js'
 import { getSessionId } from '../bootstrap/state.js'
 import type { AppState } from '../state/AppState.js'
@@ -40,7 +41,7 @@ function logOperation(operation: QueueOperation, content?: string): void {
 // ============================================================================
 // Unified command queue (module-level, independent of React state)
 //
-// All commands — user input, task notifications, orphaned permissions — go
+// All commands ...user input, task notifications, orphaned permissions ...go
 // through this single queue. React components subscribe via
 // useSyncExternalStore (subscribeToCommandQueue / getCommandQueueSnapshot).
 // Non-React code (print.ts streaming loop) reads directly via
@@ -51,7 +52,7 @@ function logOperation(operation: QueueOperation, content?: string): void {
 // ============================================================================
 
 const commandQueue: QueuedCommand[] = []
-/** Frozen snapshot — recreated on every mutation for useSyncExternalStore. */
+/** Frozen snapshot ...recreated on every mutation for useSyncExternalStore. */
 let snapshot: readonly QueuedCommand[] = Object.freeze([])
 const queueChanged = createSignal()
 
@@ -214,7 +215,7 @@ export function dequeueAll(): QueuedCommand[] {
 
 /**
  * Return the highest-priority command without removing it, or undefined if empty.
- * Accepts an optional `filter` — only commands passing the predicate are considered.
+ * Accepts an optional `filter` ...only commands passing the predicate are considered.
  */
 export function peek(
   filter?: (cmd: QueuedCommand) => boolean,
@@ -362,7 +363,7 @@ export function isQueuedCommandEditable(cmd: QueuedCommand): boolean {
 
 /**
  * Whether this queued command should render in the queue preview under the
- * prompt. Superset of editable — channel messages show (so the keyboard user
+ * prompt. Superset of editable ...channel messages show (so the keyboard user
  * sees what arrived) but stay non-editable (raw XML).
  */
 export function isQueuedCommandVisible(cmd: QueuedCommand): boolean {
@@ -484,7 +485,7 @@ export function popAllEditable(
 }
 
 // ============================================================================
-// Backward-compatible aliases (deprecated — prefer new names)
+// Backward-compatible aliases (deprecated ...prefer new names)
 // ============================================================================
 
 /** @deprecated Use subscribeToCommandQueue */
@@ -531,12 +532,102 @@ export function getCommandsByMaxPriority(
   )
 }
 
+export type QueuedCommandBoundaryDeferReason =
+  | 'priority_below_threshold'
+  | 'slash_command'
+  | 'different_agent'
+  | 'system_command_deferred_by_human_turn'
+
+export type QueuedCommandBoundaryDecision = {
+  attachable: QueuedCommand[]
+  deferred: Array<{
+    command: QueuedCommand
+    reason: QueuedCommandBoundaryDeferReason
+  }>
+  deferredReasonCounts: Partial<Record<QueuedCommandBoundaryDeferReason, number>>
+}
+
+function isForCurrentQueryThread(
+  cmd: QueuedCommand,
+  input: {
+    isMainThread: boolean
+    currentAgentId?: QueuedCommand['agentId']
+  },
+): boolean {
+  if (input.isMainThread) return cmd.agentId === undefined
+  return cmd.mode === 'task-notification' && cmd.agentId === input.currentAgentId
+}
+
+function isSystemGeneratedQueuedCommand(cmd: QueuedCommand): boolean {
+  return (
+    cmd.mode === 'task-notification' ||
+    cmd.isMeta === true ||
+    (cmd.origin !== undefined && cmd.origin.kind !== 'human')
+  )
+}
+
+function incrementReason(
+  counts: Partial<Record<QueuedCommandBoundaryDeferReason, number>>,
+  reason: QueuedCommandBoundaryDeferReason,
+): void {
+  counts[reason] = (counts[reason] ?? 0) + 1
+}
+
+export function selectQueuedCommandsForQueryTurn(
+  commands: QueuedCommand[],
+  input: {
+    maxPriority: QueuePriority
+    isMainThread: boolean
+    currentAgentId?: QueuedCommand['agentId']
+    allowSystemNotifications: boolean
+  },
+): QueuedCommandBoundaryDecision {
+  const threshold = PRIORITY_ORDER[input.maxPriority]
+  const attachable: QueuedCommand[] = []
+  const deferred: QueuedCommandBoundaryDecision['deferred'] = []
+  const deferredReasonCounts: QueuedCommandBoundaryDecision['deferredReasonCounts'] =
+    {}
+
+  const defer = (
+    command: QueuedCommand,
+    reason: QueuedCommandBoundaryDeferReason,
+  ) => {
+    deferred.push({ command, reason })
+    incrementReason(deferredReasonCounts, reason)
+  }
+
+  for (const command of commands) {
+    if (PRIORITY_ORDER[command.priority ?? 'next'] > threshold) {
+      defer(command, 'priority_below_threshold')
+      continue
+    }
+    if (isSlashCommand(command)) {
+      defer(command, 'slash_command')
+      continue
+    }
+    if (!isForCurrentQueryThread(command, input)) {
+      defer(command, 'different_agent')
+      continue
+    }
+    if (
+      !input.allowSystemNotifications &&
+      isSystemGeneratedQueuedCommand(command)
+    ) {
+      defer(command, 'system_command_deferred_by_human_turn')
+      continue
+    }
+    attachable.push(command)
+  }
+
+  return { attachable, deferred, deferredReasonCounts }
+}
+
 /**
  * Returns true if the command is a slash command that should be routed through
  * processSlashCommand rather than sent to the model as text.
  *
  * Commands with `skipSlashCommands` (e.g. bridge/CCR messages) are NOT treated
- * as slash commands — their text is meant for the model.
+ * as slash commands ...their text is meant for the model.
  */
 export function isSlashCommand(cmd: QueuedCommand): boolean {
   return (

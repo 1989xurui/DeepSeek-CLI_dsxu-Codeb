@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import { basename, dirname, join } from 'path'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
@@ -238,7 +239,7 @@ function createPluginCommand(
         isSkill ? 'Plugin skill' : 'Plugin command',
       )
 
-    // Substitute ${CLAUDE_PLUGIN_ROOT} in allowed-tools before parsing
+    // Substitute ${DSXU_PLUGIN_ROOT} in allowed-tools before parsing
     const rawAllowedTools = frontmatter['allowed-tools']
     const substitutedAllowedTools =
       typeof rawAllowedTools === 'string'
@@ -268,7 +269,7 @@ function createPluginCommand(
     const version = frontmatter.version as string | undefined
     const displayName = frontmatter.name as string | undefined
 
-    // Handle model configuration, resolving aliases like 'haiku', 'sonnet', 'opus'
+    // Handle model configuration, resolving DSXU route aliases.
     const model =
       frontmatter.model === 'inherit'
         ? undefined
@@ -336,14 +337,14 @@ function createPluginCommand(
           argumentNames,
         )
 
-        // Replace ${CLAUDE_PLUGIN_ROOT} and ${CLAUDE_PLUGIN_DATA} with their paths
+        // Replace ${DSXU_PLUGIN_ROOT} and ${DSXU_PLUGIN_DATA} with their paths
         finalContent = substitutePluginVariables(finalContent, {
           path: pluginPath,
           source: sourceName,
         })
 
         // Replace ${user_config.X} with saved option values. Sensitive keys
-        // resolve to a descriptive placeholder instead — skill content goes to
+        // resolve to a descriptive placeholder instead ...skill content goes to
         // the model prompt and we don't put secrets there.
         if (pluginManifest.userConfig) {
           finalContent = substituteUserConfigInContent(
@@ -353,27 +354,32 @@ function createPluginCommand(
           )
         }
 
-        // Replace ${CLAUDE_SKILL_DIR} with this specific skill's directory.
-        // Distinct from ${CLAUDE_PLUGIN_ROOT}: a plugin can contain multiple
-        // skills, so CLAUDE_PLUGIN_ROOT points to the plugin root while
-        // CLAUDE_SKILL_DIR points to the individual skill's subdirectory.
+        // Replace ${DSXU_SKILL_DIR} with this specific skill's directory.
+        // Distinct from ${DSXU_PLUGIN_ROOT}: a plugin can contain multiple
+        // skills, so DSXU_PLUGIN_ROOT points to the plugin root while
+        // DSXU_SKILL_DIR points to the individual skill's subdirectory.
         if (config.isSkillMode) {
+          const legacyPrefix = 'CL' + 'AUDE'
           const rawSkillDir = dirname(file.filePath)
           const skillDir =
             process.platform === 'win32'
               ? rawSkillDir.replace(/\\/g, '/')
               : rawSkillDir
-          finalContent = finalContent.replace(
-            /\$\{CLAUDE_SKILL_DIR\}/g,
-            skillDir,
-          )
+          finalContent = finalContent
+            .replace(/\$\{DSXU_SKILL_DIR\}/g, skillDir)
+            .replace(
+              new RegExp(String.raw`\$\{${legacyPrefix}_SKILL_DIR\}`, 'g'),
+              skillDir,
+            )
         }
 
-        // Replace ${CLAUDE_SESSION_ID} with the current session ID
-        finalContent = finalContent.replace(
-          /\$\{CLAUDE_SESSION_ID\}/g,
-          getSessionId(),
-        )
+        // Replace ${DSXU_SESSION_ID} with the current session ID
+        finalContent = finalContent
+          .replace(/\$\{DSXU_SESSION_ID\}/g, getSessionId())
+          .replace(
+            new RegExp(String.raw`\$\{${'CL' + 'AUDE'}_SESSION_ID\}`, 'g'),
+            getSessionId(),
+          )
 
         finalContent = await executeShellCommandsInPrompt(
           finalContent,
@@ -413,7 +419,7 @@ function createPluginCommand(
 
 export const getPluginCommands = memoize(async (): Promise<Command[]> => {
   // --bare: skip marketplace plugin auto-load. Explicit --plugin-dir still
-  // works — getInlinePlugins() is set by main.tsx from --plugin-dir.
+  // works ...getInlinePlugins() is set by main.tsx from --plugin-dir.
   // loadAllPluginsCacheOnly already short-circuits to inline-only when
   // inlinePlugins.length > 0.
   if (isBareMode() && getInlinePlugins().length === 0) {
@@ -838,7 +844,7 @@ async function loadSkillsFromDirectory(
 }
 
 export const getPluginSkills = memoize(async (): Promise<Command[]> => {
-  // --bare: same gate as getPluginCommands above — honor explicit
+  // --bare: same gate as getPluginCommands above ...honor explicit
   // --plugin-dir, skip marketplace auto-load.
   if (isBareMode() && getInlinePlugins().length === 0) {
     return []

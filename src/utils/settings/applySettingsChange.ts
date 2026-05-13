@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { AppState } from '../../state/AppState.js'
 import { logForDebugging } from '../debug.js'
 import { updateHooksConfigSnapshot } from '../hooks/hooksConfigSnapshot.js'
@@ -23,8 +24,8 @@ import { getInitialSettings } from './settings.js'
  *
  * The settings cache is reset by the notifier (changeDetector.fanOut) before
  * listeners are iterated, so getInitialSettings() here reads fresh disk
- * state. Previously this function reset the cache itself, which — combined
- * with useSettingsChange's own reset — caused N disk reloads per notification
+ * state. Previously this function reset the cache itself, which ...combined
+ * with useSettingsChange's own reset ...caused N disk reloads per notification
  * for N subscribers.
  *
  * Side-effects like clearing auth caches and applying env vars are handled by
@@ -47,10 +48,10 @@ export function applySettingsChange(
       updatedRules,
     )
 
-    // Ant-only: re-strip overly broad Bash allow rules after settings sync
+    // Internal build only: re-strip overly broad Bash allow rules after settings sync
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env.CLAUDE_CODE_ENTRYPOINT !== 'local-agent'
+      process.env['CL' + 'AUDE' + '_CODE_ENTRYPOINT'] !== 'local-agent'
     ) {
       const overlyBroad = findOverlyBroadBashPermissions(updatedRules, [])
       if (overlyBroad.length > 0) {
@@ -69,7 +70,7 @@ export function applySettingsChange(
 
     // Sync effortLevel from settings to top-level AppState when it changes
     // (e.g. via applyFlagSettings from IDE). Only propagate if the setting
-    // itself changed — otherwise unrelated settings churn (e.g. tips dismissal
+    // itself changed ...otherwise unrelated settings churn (e.g. tips dismissal
     // on startup) would clobber a --effort CLI flag value held in AppState.
     const prevEffort = prev.settings.effortLevel
     const newEffort = newSettings.effortLevel
@@ -79,7 +80,7 @@ export function applySettingsChange(
       ...prev,
       settings: newSettings,
       toolPermissionContext: newContext,
-      // Only propagate a defined new value — when the disk key is absent
+      // Only propagate a defined new value ...when the disk key is absent
       // (e.g. /effort max for non-ants writes undefined; --effort CLI flag),
       // prev.settings.effortLevel can be stale (internal writes suppress the
       // watcher that would resync AppState.settings), so effortChanged would

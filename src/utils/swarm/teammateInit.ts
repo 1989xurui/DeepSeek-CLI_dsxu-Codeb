@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Teammate Initialization Module
  *
- * Handles initialization for Claude Code instances running as teammates in a swarm.
+ * Handles initialization for DSXU Code instances running as teammates in a swarm.
  * Registers a Stop hook to notify the team leader when the teammate becomes idle.
  */
 

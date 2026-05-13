@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * Beta Session Tracing for Claude Code
+ * Beta Session Tracing for DSXU Code
  *
  * This module contains beta tracing features enabled when
  * ENABLE_BETA_TRACING_DETAILED=1 and BETA_TRACING_ENDPOINT are set.
@@ -12,11 +13,11 @@
  * Visibility Rules:
  * | Content          | External | Ant  |
  * |------------------|----------|------|
- * | System prompts   | ✅                  | ✅   |
- * | Model output     | ✅                  | ✅   |
- * | Thinking output  | ❌                  | ✅   |
- * | Tools            | ✅                  | ✅   |
- * | new_context      | ✅                  | ✅   |
+ * | System prompts   | ?                  | ?   |
+ * | Model output     | ?                  | ?   |
+ * | Thinking output  | ?                  | ?   |
+ * | Tools            | ?                  | ?   |
+ * | new_context      | ?                  | ?   |
  *
  * Features:
  * - Per-agent message tracking with hash-based deduplication

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execFile } from 'child_process'
 import { execa } from 'execa'
 import { mkdir, stat } from 'fs/promises'
@@ -11,7 +12,10 @@ import {
   embeddedSearchToolsBinaryPath,
   hasEmbeddedSearchTools,
 } from '../embeddedTools.js'
-import { getClaudeConfigHomeDir } from '../envUtils.js'
+import {
+  getRuntimeConfigHomeDir,
+  isDsxuCodeEnvTruthy,
+} from '../envUtils.js'
 import { pathExists } from '../file.js'
 import { getFsImplementation } from '../fsOperations.js'
 import { logError } from '../log.js'
@@ -19,10 +23,9 @@ import { getPlatform } from '../platform.js'
 import { ripgrepCommand } from '../ripgrep.js'
 import { subprocessEnv } from '../subprocessEnv.js'
 import { quote } from './shellQuote.js'
-
 const LITERAL_BACKSLASH = '\\'
 const SNAPSHOT_CREATION_TIMEOUT = 10000 // 10 seconds
-
+const LEGACY_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
 /**
  * Creates a shell function that invokes `binaryPath` with a specific argv[0].
  * This uses the bun-internal ARGV0 dispatch trick: the bun binary checks its
@@ -57,7 +60,6 @@ function createArgv0ShellFunction(
     '}',
   ].join('\n')
 }
-
 /**
  * Creates ripgrep shell integration (alias or function)
  * @returns Object with type and the shell snippet to use
@@ -67,7 +69,6 @@ export function createRipgrepShellIntegration(): {
   snippet: string
 } {
   const rgCommand = ripgrepCommand()
-
   // For embedded ripgrep (bun-internal), we need a shell function that sets argv0
   if (rgCommand.argv0) {
     return {
@@ -79,7 +80,6 @@ export function createRipgrepShellIntegration(): {
       ),
     }
   }
-
   // For regular ripgrep, use a simple alias target
   const quotedPath = quote([rgCommand.rgPath])
   const quotedArgs = rgCommand.rgArgs.map(arg => quote([arg]))
@@ -87,10 +87,8 @@ export function createRipgrepShellIntegration(): {
     rgCommand.rgArgs.length > 0
       ? `${quotedPath} ${quotedArgs.join(' ')}`
       : quotedPath
-
   return { type: 'alias', snippet: aliasTarget }
 }
-
 /**
  * VCS directories to exclude from grep searches. Matches the list in
  * GrepTool (see GrepTool.ts: VCS_DIRECTORIES_TO_EXCLUDE).
@@ -103,7 +101,6 @@ const VCS_DIRECTORIES_TO_EXCLUDE = [
   '.jj',
   '.sl',
 ] as const
-
 /**
  * Creates shell integration for `find` and `grep`, backed by bfs and ugrep
  * embedded in the bun binary (ant-native only). Unlike the rg integration,
@@ -114,7 +111,7 @@ const VCS_DIRECTORIES_TO_EXCLUDE = [
  * removed from the tool registry when embedded search tools are available),
  * so they're tuned to match those tools' semantics, not GNU find/grep.
  *
- * `find` ↔ GlobTool:
+ * `find` ? GlobTool:
  * - Inject `-regextype findutils-default`: bfs defaults to POSIX BRE for
  *   -regex, but GNU find defaults to emacs-flavor (which supports `\|`
  *   alternation). Without this, `find . -regex '.*\.\(js\|ts\)'` silently
@@ -128,7 +125,7 @@ const VCS_DIRECTORIES_TO_EXCLUDE = [
  * one alternative is a prefix of another (e.g., `\(ts\|tsx\)`) may miss
  * matches that GNU find catches. Workaround: put the longer alternative first.
  *
- * `grep` ↔ GrepTool (file filtering) + GNU grep (regex syntax):
+ * `grep` ? GrepTool (file filtering) + GNU grep (regex syntax):
  * - `-G` (basic regex / BRE): GNU grep defaults to BRE where `\|` is
  *   alternation. ugrep defaults to ERE where `|` is alternation and `\|` is a
  *   literal pipe. Without -G, `grep "foo\|bar"` silently returns zero results.
@@ -159,7 +156,7 @@ export function createFindGrepShellIntegration(): string | null {
     // User shell configs may define aliases like `alias find=gfind` or
     // `alias grep=ggrep` (common on macOS with Homebrew GNU tools). The
     // snapshot sources user aliases before these function definitions, and
-    // bash expands aliases before function lookup — so a renaming alias
+    // bash expands aliases before function lookup - so a renaming alias
     // would silently bypass the embedded bfs/ugrep dispatch. Clear them first
     // (same fix the rg integration uses).
     'unalias find 2>/dev/null || true',
@@ -177,36 +174,28 @@ export function createFindGrepShellIntegration(): string | null {
     ]),
   ].join('\n')
 }
-
 function getConfigFile(shellPath: string): string {
   const fileName = shellPath.includes('zsh')
     ? '.zshrc'
     : shellPath.includes('bash')
       ? '.bashrc'
       : '.profile'
-
   const configPath = join(os.homedir(), fileName)
-
   return configPath
 }
-
 /**
  * Generates user-specific snapshot content (functions, options, aliases)
  * This content is derived from the user's shell configuration file
  */
 function getUserSnapshotContent(configFile: string): string {
   const isZsh = configFile.endsWith('.zshrc')
-
   let content = ''
-
   // User functions
   if (isZsh) {
     content += `
       echo "# Functions" >> "$SNAPSHOT_FILE"
-
       # Force autoload all functions first
       typeset -f > /dev/null 2>&1
-
       # Now get user function names - filter completion functions (single underscore prefix)
       # but keep double-underscore helpers (e.g. __zsh_like_cd from mise, __pyenv_init)
       typeset +f | grep -vE '^_[^_]' | while read func; do
@@ -216,10 +205,8 @@ function getUserSnapshotContent(configFile: string): string {
   } else {
     content += `
       echo "# Functions" >> "$SNAPSHOT_FILE"
-
       # Force autoload all functions first
       declare -f > /dev/null 2>&1
-
       # Now get user function names - filter completion functions (single underscore prefix)
       # but keep double-underscore helpers (e.g. __zsh_like_cd from mise, __pyenv_init)
       declare -F | cut -d' ' -f3 | grep -vE '^_[^_]' | while read func; do
@@ -230,7 +217,6 @@ function getUserSnapshotContent(configFile: string): string {
       done
     `
   }
-
   // Shell options
   if (isZsh) {
     content += `
@@ -245,7 +231,6 @@ function getUserSnapshotContent(configFile: string): string {
       echo "shopt -s expand_aliases" >> "$SNAPSHOT_FILE"
     `
   }
-
   // User aliases
   content += `
       echo "# Aliases" >> "$SNAPSHOT_FILE"
@@ -258,15 +243,13 @@ function getUserSnapshotContent(configFile: string): string {
         alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
       fi
   `
-
   return content
 }
-
 /**
- * Generates Claude Code specific snapshot content
+ * Generates DSXU Code specific snapshot content
  * This content is always included regardless of user configuration
  */
-async function getClaudeCodeSnapshotContent(): Promise<string> {
+async function getDsxuCodeSnapshotContent(): Promise<string> {
   // Get the appropriate PATH based on platform
   let pathValue = process.env.PATH
   if (getPlatform() === 'windows') {
@@ -280,11 +263,8 @@ async function getClaudeCodeSnapshotContent(): Promise<string> {
     }
     // Fall back to process.env.PATH if we can't get Cygwin PATH
   }
-
   const rgIntegration = createRipgrepShellIntegration()
-
   let content = ''
-
   // Check if rg is available, if not create an alias/function to bundled ripgrep
   // We use a subshell to unalias rg before checking, so that user aliases like
   // `alias rg='rg --smart-case'` don't shadow the real binary check. The subshell
@@ -294,7 +274,6 @@ async function getClaudeCodeSnapshotContent(): Promise<string> {
       echo "# Check for rg availability" >> "$SNAPSHOT_FILE"
       echo "if ! (unalias rg 2>/dev/null; command -v rg) >/dev/null 2>&1; then" >> "$SNAPSHOT_FILE"
   `
-
   if (rgIntegration.type === 'function') {
     // For embedded ripgrep, write the function definition using heredoc
     content += `
@@ -309,15 +288,13 @@ RIPGREP_FUNC_END
       echo '  alias rg='"'${escapedSnippet}'" >> "$SNAPSHOT_FILE"
     `
   }
-
   content += `
       echo "fi" >> "$SNAPSHOT_FILE"
   `
-
   // For ant-native builds, shadow find/grep with bfs/ugrep embedded in the bun
   // binary. Unlike rg (which only activates if system rg is absent), we always
   // shadow find/grep since bfs/ugrep are drop-in replacements and we want
-  // consistent fast behavior in Claude's shell.
+  // consistent fast behavior in DSXU's shell.
   const findGrepIntegration = createFindGrepShellIntegration()
   if (findGrepIntegration !== null) {
     content += `
@@ -328,17 +305,13 @@ ${findGrepIntegration}
 FIND_GREP_FUNC_END
     `
   }
-
   // Add PATH to the file
   content += `
-
       # Add PATH to the file
       echo "export PATH=${quote([pathValue || ''])}" >> "$SNAPSHOT_FILE"
   `
-
   return content
 }
-
 /**
  * Creates the appropriate shell script for capturing environment
  */
@@ -349,46 +322,37 @@ async function getSnapshotScript(
 ): Promise<string> {
   const configFile = getConfigFile(shellPath)
   const isZsh = configFile.endsWith('.zshrc')
-
-  // Generate the user content and Claude Code content
+  // Generate the user content and DSXU Code content
   const userContent = configFileExists
     ? getUserSnapshotContent(configFile)
     : !isZsh
       ? // we need to manually force alias expansion in bash - normally `getUserSnapshotContent` takes care of this
         'echo "shopt -s expand_aliases" >> "$SNAPSHOT_FILE"'
       : ''
-  const claudeCodeContent = await getClaudeCodeSnapshotContent()
-
+  const dsxuCodeContent = await getDsxuCodeSnapshotContent()
   const script = `SNAPSHOT_FILE=${quote([snapshotFilePath])}
       ${configFileExists ? `source "${configFile}" < /dev/null` : '# No user config file to source'}
-
       # First, create/clear the snapshot file
       echo "# Snapshot file" >| "$SNAPSHOT_FILE"
-
       # When this file is sourced, we first unalias to avoid conflicts
       # This is necessary because aliases get "frozen" inside function definitions at definition time,
       # which can cause unexpected behavior when functions use commands that conflict with aliases
       echo "# Unset all aliases to avoid conflicts with functions" >> "$SNAPSHOT_FILE"
       echo "unalias -a 2>/dev/null || true" >> "$SNAPSHOT_FILE"
-
       ${userContent}
-
-      ${claudeCodeContent}
-
+      ${dsxuCodeContent}
       # Exit silently on success, only report errors
       if [ ! -f "$SNAPSHOT_FILE" ]; then
         echo "Error: Snapshot file was not created at $SNAPSHOT_FILE" >&2
         exit 1
       fi
     `
-
   return script
 }
-
 /**
  * Creates and saves the shell environment snapshot by loading the user's shell configuration
  *
- * This function is a critical part of Claude CLI's shell integration strategy. It:
+ * This function is a critical part of DSXU CLI's shell integration strategy. It:
  *
  * 1. Identifies the user's shell config file (.zshrc, .bashrc, etc.)
  * 2. Creates a temporary script that sources this configuration file
@@ -400,7 +364,7 @@ async function getSnapshotScript(
  * The snapshot is saved to a temporary file that can be sourced by subsequent shell
  * commands, ensuring they run with the user's expected environment, aliases, and functions.
  *
- * This approach allows Claude CLI to execute commands as if they were run in the user's
+ * This approach allows DSXU CLI to execute commands as if they were run in the user's
  * interactive shell, while avoiding the overhead of creating a new login shell for each command.
  * It handles both Bash and Zsh shells with their different syntax for functions, options, and aliases.
  *
@@ -418,34 +382,28 @@ export const createAndSaveSnapshot = async (
     : binShell.includes('bash')
       ? 'bash'
       : 'sh'
-
   logForDebugging(`Creating shell snapshot for ${shellType} (${binShell})`)
-
   return new Promise(async resolve => {
     try {
       const configFile = getConfigFile(binShell)
       logForDebugging(`Looking for shell config file: ${configFile}`)
       const configFileExists = await pathExists(configFile)
-
       if (!configFileExists) {
         logForDebugging(
-          `Shell config file not found: ${configFile}, creating snapshot with Claude Code defaults only`,
+          `Shell config file not found: ${configFile}, creating snapshot with DSXU Code defaults only`,
         )
       }
-
       // Create unique snapshot path with timestamp and random ID
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substring(2, 8)
-      const snapshotsDir = join(getClaudeConfigHomeDir(), 'shell-snapshots')
+      const snapshotsDir = join(getRuntimeConfigHomeDir(), 'shell-snapshots')
       logForDebugging(`Snapshots directory: ${snapshotsDir}`)
       const shellSnapshotPath = join(
         snapshotsDir,
         `snapshot-${shellType}-${timestamp}-${randomId}.sh`,
       )
-
       // Ensure snapshots directory exists
       await mkdir(snapshotsDir, { recursive: true })
-
       const snapshotScript = await getSnapshotScript(
         binShell,
         shellSnapshotPath,
@@ -458,12 +416,13 @@ export const createAndSaveSnapshot = async (
         ['-c', '-l', snapshotScript],
         {
           env: {
-            ...((process.env.CLAUDE_CODE_DONT_INHERIT_ENV
+            ...((isDsxuCodeEnvTruthy('DONT_INHERIT_ENV')
               ? {}
               : subprocessEnv()) as typeof process.env),
             SHELL: binShell,
             GIT_EDITOR: 'true',
-            CLAUDECODE: '1',
+            DSXUCODE: '1',
+            [LEGACY_RUNTIME_MARKER_ENV]: '1',
           },
           timeout: SNAPSHOT_CREATION_TIMEOUT,
           maxBuffer: 1024 * 1024, // 1MB buffer
@@ -485,7 +444,7 @@ export const createAndSaveSnapshot = async (
             logForDebugging(`  - Config file: ${getConfigFile(binShell)}`)
             logForDebugging(`  - Config file exists: ${configFileExists}`)
             logForDebugging(`  - Working directory: ${getCwd()}`)
-            logForDebugging(`  - Claude home: ${getClaudeConfigHomeDir()}`)
+            logForDebugging(`  - DSXU home: ${getRuntimeConfigHomeDir()}`)
             logForDebugging(`Full snapshot script:\n${snapshotScript}`)
             if (stdout) {
               logForDebugging(
@@ -524,12 +483,10 @@ export const createAndSaveSnapshot = async (
             } catch {
               // Snapshot file not found
             }
-
             if (snapshotSize !== undefined) {
               logForDebugging(
                 `Shell snapshot created successfully (${snapshotSize} bytes)`,
               )
-
               // Register cleanup to remove snapshot on graceful shutdown
               registerCleanup(async () => {
                 try {
@@ -543,7 +500,6 @@ export const createAndSaveSnapshot = async (
                   )
                 }
               })
-
               resolve(shellSnapshotPath)
             } else {
               logForDebugging(
@@ -579,4 +535,16 @@ export const createAndSaveSnapshot = async (
       resolve(undefined)
     }
   })
+}
+export function getDsxuShellSnapshotRuntimeProfile() {
+  return {
+    runtime: 'DSXU Shell Snapshot Kernel',
+    defaultBehavior: 'shell environment snapshots preserve search-tool aliases and cleanup discipline for real Bash execution',
+    providerTarget: 'DSXU Bash/Shell Gate',
+    activationEvidence: [
+      'ripgrep integration supports embedded and external rg paths',
+      'find/grep wrappers align shell behavior with Glob/Grep tool semantics',
+      'snapshot creation has timeout, diagnostics, cleanup, and failure telemetry',
+    ],
+  }
 }

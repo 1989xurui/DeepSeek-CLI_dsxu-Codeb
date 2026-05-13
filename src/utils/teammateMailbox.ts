@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Teammate Mailbox - File-based messaging system for agent swarms
  *
- * Each teammate has an inbox file at .claude/teams/{team_name}/inboxes/{agent_name}.json
+ * Each teammate has an inbox file at .dsxu/teams/{team_name}/inboxes/{agent_name}.json
  * Other teammates can write messages to it, and the recipient sees them as attachments.
  *
  * Note: Inboxes are keyed by agent name within a team.
@@ -28,7 +29,7 @@ import { TEAM_LEAD_NAME } from './swarm/constants.js'
 import { sanitizePathComponent } from './tasks.js'
 import { getAgentName, getTeammateColor, getTeamName } from './teammate.js'
 
-// Lock options: retry with backoff so concurrent callers (multiple Claudes
+// Lock options: retry with backoff so concurrent callers (multiple DSXU agents
 // in a swarm) wait for the lock instead of failing immediately. The sync
 // lockSync API blocked the event loop; the async API needs explicit retries
 // to achieve the same serialization semantics.
@@ -51,7 +52,7 @@ export type TeammateMessage = {
 
 /**
  * Get the path to a teammate's inbox file
- * Structure: ~/.claude/teams/{team_name}/inboxes/{agent_name}.json
+ * Structure: ~/.dsxu/teams/{team_name}/inboxes/{agent_name}.json
  */
 export function getInboxPath(agentName: string, teamName?: string): string {
   const team = teamName || getTeamName() || 'default'
@@ -79,7 +80,7 @@ async function ensureInboxDir(teamName?: string): Promise<void> {
 /**
  * Read all messages from a teammate's inbox
  * @param agentName - The agent name (not UUID) to read inbox for
- * @param teamName - Optional team name (defaults to CLAUDE_CODE_TEAM_NAME env var or 'default')
+ * @param teamName - Optional team name (defaults to DSXU/legacy team env var or 'default')
  */
 export async function readMailbox(
   agentName: string,
@@ -314,7 +315,7 @@ export async function markMessagesAsRead(
       `[TeammateMailbox] markMessagesAsRead: ${unreadCount} unread of ${messages.length} total`,
     )
 
-    // messages comes from jsonParse — fresh, unshared objects safe to mutate
+    // messages comes from jsonParse ...fresh, unshared objects safe to mutate
     for (const m of messages) m.read = true
 
     await writeFile(inboxPath, jsonStringify(messages, null, 2), 'utf-8')
@@ -577,11 +578,11 @@ export type SandboxPermissionRequestMessage = {
   type: 'sandbox_permission_request'
   /** Unique identifier for this request */
   requestId: string
-  /** Worker's CLAUDE_CODE_AGENT_ID */
+  /** Worker's DSXU agent ID */
   workerId: string
-  /** Worker's CLAUDE_CODE_AGENT_NAME */
+  /** Worker's DSXU agent name */
   workerName: string
-  /** Worker's CLAUDE_CODE_AGENT_COLOR */
+  /** Worker's DSXU agent color */
   workerColor?: string
   /** The host pattern requesting network access */
   hostPattern: {
@@ -824,7 +825,7 @@ export function createShutdownRejectedMessage(params: {
  * This is the core logic extracted for reuse by both the tool and UI components.
  *
  * @param targetName - Name of the teammate to send shutdown request to
- * @param teamName - Optional team name (defaults to CLAUDE_CODE_TEAM_NAME env var)
+ * @param teamName - Optional team name (defaults to DSXU team env via getTeamName)
  * @param reason - Optional reason for the shutdown request
  * @returns The request ID and target name
  */

@@ -71,3 +71,16 @@ export class Mailbox {
     this.changed.emit()
   }
 }
+
+export function processMailboxLifecycle(mailbox: Mailbox): {
+  state: 'idle' | 'queued'
+  lifecycle: string
+  revision: number
+} {
+  const state = mailbox.length > 0 ? 'queued' : 'idle'
+  return {
+    state,
+    lifecycle: `mailbox:${state}`,
+    revision: mailbox.revision,
+  }
+}

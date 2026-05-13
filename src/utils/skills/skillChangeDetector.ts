@@ -1,6 +1,7 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import chokidar, { type FSWatcher } from 'chokidar'
 import * as platformPath from 'path'
-import { getAdditionalDirectoriesForClaudeMd } from '../../bootstrap/state.js'
+import { getAdditionalDirectoriesForDsxuInstructions } from '../../bootstrap/state.js'
 import {
   clearCommandMemoizationCaches,
   clearCommandsCache,
@@ -53,7 +54,7 @@ const POLLING_INTERVAL_MS = 2000
  * #26385): closing a watcher on the main thread while the File Watcher thread
  * is delivering events can hang both threads in __ulock_wait2 forever. Chokidar
  * with depth: 2 on large skill trees (hundreds of subdirs) triggers this
- * reliably when a git operation touches many directories at once — chokidar
+ * reliably when a git operation touches many directories at once ...chokidar
  * internally closes/reopens per-directory FSWatchers as dirs are added/removed.
  *
  * Workaround: use stat() polling under Bun. No FSWatcher = no deadlock.
@@ -172,7 +173,7 @@ async function getWatchablePaths(): Promise<string[]> {
   const fs = getFsImplementation()
   const paths: string[] = []
 
-  // User skills directory (~/.claude/skills)
+  // User skills directory (~/.dsxu/skills in DSXU mode)
   const userSkillsPath = getSkillsPath('userSettings', 'skills')
   if (userSkillsPath) {
     try {
@@ -183,7 +184,7 @@ async function getWatchablePaths(): Promise<string[]> {
     }
   }
 
-  // User commands directory (~/.claude/commands)
+  // User commands directory (~/.dsxu/commands in DSXU mode)
   const userCommandsPath = getSkillsPath('userSettings', 'commands')
   if (userCommandsPath) {
     try {
@@ -194,7 +195,7 @@ async function getWatchablePaths(): Promise<string[]> {
     }
   }
 
-  // Project skills directory (.claude/skills)
+  // Project skills directory (.dsxu/skills in DSXU mode)
   const projectSkillsPath = getSkillsPath('projectSettings', 'skills')
   if (projectSkillsPath) {
     try {
@@ -207,7 +208,7 @@ async function getWatchablePaths(): Promise<string[]> {
     }
   }
 
-  // Project commands directory (.claude/commands)
+  // Project commands directory (.dsxu/commands in DSXU mode)
   const projectCommandsPath = getSkillsPath('projectSettings', 'commands')
   if (projectCommandsPath) {
     try {
@@ -221,13 +222,17 @@ async function getWatchablePaths(): Promise<string[]> {
   }
 
   // Additional directories (--add-dir) skills
-  for (const dir of getAdditionalDirectoriesForClaudeMd()) {
-    const additionalSkillsPath = platformPath.join(dir, '.claude', 'skills')
-    try {
-      await fs.stat(additionalSkillsPath)
-      paths.push(additionalSkillsPath)
-    } catch {
-      // Path doesn't exist, skip it
+  for (const dir of getAdditionalDirectoriesForDsxuInstructions()) {
+    for (const additionalSkillsPath of getAdditionalSkillConfigDirs(
+      dir,
+      'skills',
+    )) {
+      try {
+        await fs.stat(additionalSkillsPath)
+        paths.push(additionalSkillsPath)
+      } catch {
+        // Path doesn't exist, skip it
+      }
     }
   }
 
@@ -249,7 +254,7 @@ function handleChange(path: string): void {
  * change at once (e.g. auto-update installs a new binary and a new session
  * touches skill directories), each file fires its own chokidar event. Without
  * debouncing, each event triggers clearSkillCaches() + clearCommandsCache() +
- * listener notification — 30 events means 30 full reload cycles, which can
+ * listener notification ...30 events means 30 full reload cycles, which can
  * deadlock the Bun event loop via rapid FSWatcher watch/unwatch churn.
  */
 function scheduleReload(changedPath: string): void {
@@ -259,7 +264,7 @@ function scheduleReload(changedPath: string): void {
     reloadTimer = null
     const paths = [...pendingChangedPaths]
     pendingChangedPaths.clear()
-    // Fire ConfigChange hook once for the batch — the hook query is always
+    // Fire ConfigChange hook once for the batch ...the hook query is always
     // 'skills' so firing per-path (which can be hundreds during a git
     // operation) just spams the hook matcher with identical queries. Pass the
     // first path as a representative; hooks can inspect all paths via the

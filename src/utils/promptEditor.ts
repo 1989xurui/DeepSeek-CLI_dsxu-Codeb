@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   expandPastedTextRefs,
   formatPastedTextRef,
@@ -57,7 +58,7 @@ export function editFileInEditor(filePath: string): EditorResult {
     // state so the next render writes from scratch.
     inkInstance.enterAlternateScreen()
   } else {
-    // GUI editors (code, subl, etc.) open in a separate window — just pause
+    // GUI editors (code, subl, etc.) open in a separate window ...just pause
     // Ink and release stdin while they're open.
     inkInstance.pause()
     inkInstance.suspendStdin()

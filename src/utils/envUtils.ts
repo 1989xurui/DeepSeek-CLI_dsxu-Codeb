@@ -1,20 +1,41 @@
 import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { join } from 'path'
+import {
+  getCompatCodeEnv,
+  getCompatProviderConfigHomeDir,
+  getCompatVertexRegionForModel,
+  isCompatCodeSimpleEnvTruthy,
+  isCompatProviderServiceShellAllowed as isCompatProviderServiceShellAllowedFromEnv,
+  shouldCompatMaintainProjectWorkingDir,
+} from '../dsxu/legacy/env/legacyProviderEnv.js'
 
-// Memoized: 150+ callers, many on hot paths. Keyed off CLAUDE_CONFIG_DIR so
+// Memoized: 150+ callers, many on hot paths. Keyed off the config env so
 // tests that change the env var get a fresh value without explicit cache.clear.
-export const getClaudeConfigHomeDir = memoize(
+export const getDSXUConfigHomeDir = getCompatProviderConfigHomeDir
+
+export const getLegacyProviderConfigHomeDir = getDSXUConfigHomeDir
+
+// DSXU-owned config home. Compatibility config can still be read by explicit
+// compatibility paths, but new DSXU runtime state and instruction files should
+// resolve through this directory.
+export const getDsxuConfigHomeDir = memoize(
   (): string => {
     return (
-      process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude')
+      process.env.DSXU_CONFIG_DIR ?? join(homedir(), '.dsxu')
     ).normalize('NFC')
   },
-  () => process.env.CLAUDE_CONFIG_DIR,
+  () => process.env.DSXU_CONFIG_DIR,
 )
 
+export function getRuntimeConfigHomeDir(): string {
+  return isDsxuRuntimeMode()
+    ? getDsxuConfigHomeDir()
+    : getCompatProviderConfigHomeDir()
+}
+
 export function getTeamsDir(): string {
-  return join(getClaudeConfigHomeDir(), 'teams')
+  return join(getDsxuConfigHomeDir(), 'teams')
 }
 
 /**
@@ -36,6 +57,28 @@ export function isEnvTruthy(envVar: string | boolean | undefined): boolean {
   return ['1', 'true', 'yes', 'on'].includes(normalizedValue)
 }
 
+export function isDsxuRuntimeMode(): boolean {
+  return isEnvTruthy(process.env.DSXU_CODE_MODE)
+}
+
+export function isLegacyProviderServiceShellAllowed(): boolean {
+  return isCompatProviderServiceShellAllowedFromEnv()
+}
+
+export const isCompatProviderServiceShellAllowed =
+  isLegacyProviderServiceShellAllowed
+
+export function getDsxuCodeEnv(name: string): string | undefined {
+  return (
+    process.env[`DSXU_CODE_${name}`] ??
+    getCompatCodeEnv(name)
+  )
+}
+
+export function isDsxuCodeEnvTruthy(name: string): boolean {
+  return isEnvTruthy(getDsxuCodeEnv(name))
+}
+
 export function isEnvDefinedFalsy(
   envVar: string | boolean | undefined,
 ): boolean {
@@ -47,19 +90,20 @@ export function isEnvDefinedFalsy(
 }
 
 /**
- * --bare / CLAUDE_CODE_SIMPLE — skip hooks, LSP, plugin sync, skill dir-walk,
+ * --bare / DSXU_CODE_SIMPLE skips hooks, LSP, plugin sync, skill dir-walk,
  * attribution, background prefetches, and ALL keychain/credential reads.
- * Auth is strictly ANTHROPIC_API_KEY env or apiKeyHelper from --settings.
+ * Auth is strictly provider env or apiKeyHelper from --settings.
  * Explicit CLI flags (--plugin-dir, --add-dir, --mcp-config) still honored.
  * ~30 gates across the codebase.
  *
  * Checks argv directly (in addition to the env var) because several gates
- * run before main.tsx's action handler sets CLAUDE_CODE_SIMPLE=1 from --bare
- * — notably startKeychainPrefetch() at main.tsx top-level.
+ * run before main.tsx's action handler sets DSXU_CODE_SIMPLE=1 from --bare
+ * - notably startKeychainPrefetch() at main.tsx top-level.
  */
 export function isBareMode(): boolean {
   return (
-    isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE) ||
+    isDsxuCodeEnvTruthy('SIMPLE') ||
+    isCompatCodeSimpleEnvTruthy() ||
     process.argv.includes('--bare')
   )
 }
@@ -91,7 +135,7 @@ export function parseEnvVars(
 
 /**
  * Get the AWS region with fallback to default
- * Matches the Anthropic Bedrock SDK's region behavior
+ * Matches the provider Bedrock SDK's region behavior
  */
 export function getAWSRegion(): string {
   return process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
@@ -106,10 +150,13 @@ export function getDefaultVertexRegion(): string {
 
 /**
  * Check if bash commands should maintain project working directory (reset to original after each command)
- * @returns true if CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR is set to a truthy value
+ * @returns true if DSXU or compatibility bash cwd env is set to a truthy value
  */
 export function shouldMaintainProjectWorkingDir(): boolean {
-  return isEnvTruthy(process.env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR)
+  return (
+    isDsxuCodeEnvTruthy('BASH_MAINTAIN_PROJECT_WORKING_DIR') ||
+    shouldCompatMaintainProjectWorkingDir()
+  )
 }
 
 /**
@@ -123,7 +170,7 @@ export function isRunningOnHomespace(): boolean {
 }
 
 /**
- * Conservative check for whether Claude Code is running inside a protected
+ * Conservative check for whether DSXU Code is running inside a protected
  * (privileged or ASL3+) COO namespace or cluster.
  *
  * Conservative means: when signals are ambiguous, assume protected. We would
@@ -146,24 +193,6 @@ export function isInProtectedNamespace(): boolean {
   return false
 }
 
-// @[MODEL LAUNCH]: Add a Vertex region override env var for the new model.
-/**
- * Model prefix → env var for Vertex region overrides.
- * Order matters: more specific prefixes must come before less specific ones
- * (e.g., 'claude-opus-4-1' before 'claude-opus-4').
- */
-const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = [
-  ['claude-haiku-4-5', 'VERTEX_REGION_CLAUDE_HAIKU_4_5'],
-  ['claude-3-5-haiku', 'VERTEX_REGION_CLAUDE_3_5_HAIKU'],
-  ['claude-3-5-sonnet', 'VERTEX_REGION_CLAUDE_3_5_SONNET'],
-  ['claude-3-7-sonnet', 'VERTEX_REGION_CLAUDE_3_7_SONNET'],
-  ['claude-opus-4-1', 'VERTEX_REGION_CLAUDE_4_1_OPUS'],
-  ['claude-opus-4', 'VERTEX_REGION_CLAUDE_4_0_OPUS'],
-  ['claude-sonnet-4-6', 'VERTEX_REGION_CLAUDE_4_6_SONNET'],
-  ['claude-sonnet-4-5', 'VERTEX_REGION_CLAUDE_4_5_SONNET'],
-  ['claude-sonnet-4', 'VERTEX_REGION_CLAUDE_4_0_SONNET'],
-]
-
 /**
  * Get the Vertex AI region for a specific model.
  * Different models may be available in different regions.
@@ -171,13 +200,5 @@ const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = [
 export function getVertexRegionForModel(
   model: string | undefined,
 ): string | undefined {
-  if (model) {
-    const match = VERTEX_REGION_OVERRIDES.find(([prefix]) =>
-      model.startsWith(prefix),
-    )
-    if (match) {
-      return process.env[match[1]] || getDefaultVertexRegion()
-    }
-  }
-  return getDefaultVertexRegion()
+  return getCompatVertexRegionForModel(model, getDefaultVertexRegion())
 }

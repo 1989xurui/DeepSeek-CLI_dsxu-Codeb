@@ -1,9 +1,10 @@
 import {
-  getAnthropicApiKey,
+  getProviderApiKey,
   getAuthTokenSource,
   getSubscriptionType,
-  isClaudeAISubscriber,
+  isDSXUAISubscriber,
 } from './auth.js'
+import { getUsableApiKey } from './authPortable.js'
 import { getGlobalConfig } from './config.js'
 import { isEnvTruthy } from './envUtils.js'
 
@@ -13,7 +14,7 @@ export function hasConsoleBillingAccess(): boolean {
     return false
   }
 
-  const isSubscriber = isClaudeAISubscriber()
+  const isSubscriber = isDSXUAISubscriber()
 
   // This might be wrong if user is signed into Max but also using an API key, but
   // we already show a warning on launch in that case
@@ -21,7 +22,7 @@ export function hasConsoleBillingAccess(): boolean {
 
   // Check if user has any form of authentication
   const authSource = getAuthTokenSource()
-  const hasApiKey = getAnthropicApiKey() !== null
+  const hasApiKey = getProviderApiKey() !== null
 
   // If user has no authentication at all (logged out), don't show costs
   if (!authSource.hasToken && !hasApiKey) {
@@ -50,13 +51,13 @@ export function setMockBillingAccessOverride(value: boolean | null): void {
   mockBillingAccessOverride = value
 }
 
-export function hasClaudeAiBillingAccess(): boolean {
+export function hasDSXUAiBillingAccess(): boolean {
   // Check for mock billing access first (for /mock-limits testing)
   if (mockBillingAccessOverride !== null) {
     return mockBillingAccessOverride
   }
 
-  if (!isClaudeAISubscriber()) {
+  if (!isDSXUAISubscriber()) {
     return false
   }
 
@@ -75,4 +76,28 @@ export function hasClaudeAiBillingAccess(): boolean {
     !!orgRole &&
     ['admin', 'billing', 'owner', 'primary_owner'].includes(orgRole)
   )
+}
+
+export const hasLegacyCloudBillingAccess = hasDSXUAiBillingAccess
+
+export function hasDsxuBillingAccess(): boolean {
+  // DSXU can run with API-key providers, local gateways, or migrated account
+  // state. Cost/limit recovery should not be gated on a legacy cloud subscription.
+  if (mockBillingAccessOverride !== null) {
+    return mockBillingAccessOverride
+  }
+
+  if (
+    getUsableApiKey(
+      process.env.DSXU_API_KEY,
+      process.env.DSXU_DEEPSEEK_API_KEY,
+      process.env.DEEPSEEK_API_KEY,
+      process.env.LITELLM_API_KEY,
+    ) ||
+    process.env.LITELLM_BASE_URL
+  ) {
+    return true
+  }
+
+  return hasConsoleBillingAccess() || hasDSXUAiBillingAccess()
 }

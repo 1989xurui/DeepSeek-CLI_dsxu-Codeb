@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
-import { getOauthConfig, OAUTH_BETA_HEADER } from 'src/constants/oauth.js'
+import { getOauthConfig } from 'src/constants/oauth.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import {
   getIsNonInteractiveSession,
@@ -11,18 +12,15 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import {
-  getAnthropicApiKey,
-  getClaudeAIOAuthTokens,
-  handleOAuth401Error,
+  getProviderApiKey,
   hasProfileScope,
 } from './auth.js'
 import { isInBundledMode } from './bundledMode.js'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 import {
   getDefaultMainLoopModelSetting,
-  isOpus1mMergeEnabled,
   type ModelSetting,
   parseUserSpecifiedModel,
 } from './model/model.js'
@@ -34,9 +32,20 @@ import {
   updateSettingsForSource,
 } from './settings/settings.js'
 import { createSignal } from './signal.js'
+import {
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+  handleCompatProviderAuth401Error,
+} from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import {
+  COMPAT_FAST_MODE_BACKEND_PATH,
+  DSXU_FAST_MODE_MODEL_DISPLAY,
+  getCompatFastModeModelAlias,
+  isCompatFastModeSupportedModel,
+} from '../dsxu/legacy/model/legacyProviderFastMode.js'
 
 export function isFastModeEnabled(): boolean {
-  return !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FAST_MODE)
+  return !isDsxuCodeEnvTruthy('DISABLE_FAST_MODE')
 }
 
 export function isFastModeAvailable(): boolean {
@@ -61,7 +70,7 @@ function getDisabledReasonMessage(
       return 'Fast mode has been disabled by your organization'
     case 'extra_usage_disabled':
       // Only OAuth users can have extra_usage_disabled; console users don't have this concept
-      return 'Fast mode requires extra usage billing · /extra-usage to enable'
+      return 'Fast mode requires extra usage billing; run /extra-usage to enable'
     case 'network_error':
       return 'Fast mode unavailable due to network connectivity issues'
     case 'unknown':
@@ -90,11 +99,11 @@ export function getFastModeUnavailableReason(): string | null {
     !isInBundledMode() &&
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_marble_sandcastle', false)
   ) {
-    return 'Fast mode requires the native binary · Install from: https://claude.com/product/claude-code'
+    return 'Fast mode requires the native binary; install from: https://dsxu.com/product/dsxu-code'
   }
 
   // Not available in the SDK unless explicitly opted in via --settings.
-  // Assistant daemon mode is exempt — it's first-party orchestration, and
+  // Assistant daemon mode is exempt ...it's first-party orchestration, and
   // kairosActive is set before this check runs (main.tsx:~1626 vs ~3249).
   if (
     getIsNonInteractiveSession() &&
@@ -122,15 +131,15 @@ export function getFastModeUnavailableReason(): string | null {
       orgStatus.reason === 'unknown'
     ) {
       // The org check can fail behind corporate proxies that block the
-      // endpoint. We add CLAUDE_CODE_SKIP_FAST_MODE_NETWORK_ERRORS=1 to
+      // endpoint. We add DSXU_CODE_SKIP_FAST_MODE_NETWORK_ERRORS=1 to
       // bypass this check in the CC binary. This is OK since we have
       // another check in the API to error out when disabled by org.
-      if (isEnvTruthy(process.env.CLAUDE_CODE_SKIP_FAST_MODE_NETWORK_ERRORS)) {
+      if (isDsxuCodeEnvTruthy('SKIP_FAST_MODE_NETWORK_ERRORS')) {
         return null
       }
     }
     const authType: AuthType =
-      getClaudeAIOAuthTokens() !== null ? 'oauth' : 'api-key'
+      getCompatProviderAccessToken() !== undefined ? 'oauth' : 'api-key'
     const reason = getDisabledReasonMessage(orgStatus.reason, authType)
     logForDebugging(`Fast mode unavailable: ${reason}`)
     return reason
@@ -140,10 +149,10 @@ export function getFastModeUnavailableReason(): string | null {
 }
 
 // @[MODEL LAUNCH]: Update supported Fast Mode models.
-export const FAST_MODE_MODEL_DISPLAY = 'Opus 4.6'
+export const FAST_MODE_MODEL_DISPLAY = DSXU_FAST_MODE_MODEL_DISPLAY
 
 export function getFastModeModel(): string {
-  return 'opus' + (isOpus1mMergeEnabled() ? '[1m]' : '')
+  return getCompatFastModeModelAlias()
 }
 
 export function getInitialFastModeSetting(model: ModelSetting): boolean {
@@ -172,7 +181,7 @@ export function isFastModeSupportedByModel(
   }
   const model = modelSetting ?? getDefaultMainLoopModelSetting()
   const parsedModel = parseUserSpecifiedModel(model)
-  return parsedModel.toLowerCase().includes('opus-4-6')
+  return isCompatFastModeSupportedModel(model, parsedModel)
 }
 
 // --- Fast mode runtime state ---
@@ -263,23 +272,23 @@ export const onFastModeOverageRejection = overageRejection.subscribe
 function getOverageDisabledMessage(reason: string | null): string {
   switch (reason) {
     case 'out_of_credits':
-      return 'Fast mode disabled · extra usage credits exhausted'
+      return 'Fast mode disabled; extra usage credits exhausted'
     case 'org_level_disabled':
     case 'org_service_level_disabled':
-      return 'Fast mode disabled · extra usage disabled by your organization'
+      return 'Fast mode disabled; extra usage disabled by your organization'
     case 'org_level_disabled_until':
-      return 'Fast mode disabled · extra usage spending cap reached'
+      return 'Fast mode disabled; extra usage spending cap reached'
     case 'member_level_disabled':
-      return 'Fast mode disabled · extra usage disabled for your account'
+      return 'Fast mode disabled; extra usage disabled for your account'
     case 'seat_tier_level_disabled':
     case 'seat_tier_zero_credit_limit':
     case 'member_zero_credit_limit':
-      return 'Fast mode disabled · extra usage not available for your plan'
+      return 'Fast mode disabled; extra usage not available for your plan'
     case 'overage_not_provisioned':
     case 'no_limits_configured':
-      return 'Fast mode requires extra usage billing · /extra-usage to enable'
+      return 'Fast mode requires extra usage billing; run /extra-usage to enable'
     default:
-      return 'Fast mode disabled · extra usage not available'
+      return 'Fast mode disabled; extra usage not available'
   }
 }
 
@@ -295,7 +304,7 @@ function isOutOfCreditsReason(reason: string | null): boolean {
 export function handleFastModeOverageRejection(reason: string | null): void {
   const message = getOverageDisabledMessage(reason)
   logForDebugging(
-    `Fast mode overage rejection: ${reason ?? 'unknown'} — ${message}`,
+    `Fast mode overage rejection: ${reason ?? 'unknown'} ...${message}`,
   )
   logEvent('tengu_fast_mode_overage_rejected', {
     overage_disabled_reason: (reason ??
@@ -344,7 +353,7 @@ export type FastModeDisabledReason =
   | 'unknown'
 
 // In-memory cache of the fast mode status from the API.
-// Distinct from the user's fastMode app state — this represents
+// Distinct from the user's fastMode app state ...this represents
 // whether the org *allows* fast mode and why it may be disabled.
 // Modeled as a discriminated union so the invalid state
 // (disabled without a reason) is unrepresentable.
@@ -367,12 +376,11 @@ type FastModeResponse = {
 async function fetchFastModeStatus(
   auth: { accessToken: string } | { apiKey: string },
 ): Promise<FastModeResponse> {
-  const endpoint = `${getOauthConfig().BASE_API_URL}/api/claude_code_penguin_mode`
+  const endpoint = `${getOauthConfig().BASE_API_URL}${COMPAT_FAST_MODE_BACKEND_PATH}`
   const headers: Record<string, string> =
     'accessToken' in auth
       ? {
-          Authorization: `Bearer ${auth.accessToken}`,
-          'anthropic-beta': OAUTH_BETA_HEADER,
+          ...getCompatProviderBearerHeaders(auth.accessToken),
         }
       : { 'x-api-key': auth.apiKey }
 
@@ -421,12 +429,12 @@ export async function prefetchFastModeStatus(): Promise<void> {
     return inflightPrefetch
   }
 
-  // Service key OAuth sessions lack user:profile scope → endpoint 403s.
+  // Service key OAuth sessions lack user:profile scope; the endpoint returns 403.
   // Resolve orgStatus from cache and bail before burning the throttle window.
   // API key auth is unaffected.
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getProviderApiKey()
   const hasUsableOAuth =
-    getClaudeAIOAuthTokens()?.accessToken && hasProfileScope()
+    getCompatProviderAccessToken() && hasProfileScope()
   if (!hasUsableOAuth && !apiKey) {
     const isAnt = process.env.USER_TYPE === 'ant'
     const cachedEnabled = getGlobalConfig().penguinModeOrgEnabled === true
@@ -445,10 +453,10 @@ export async function prefetchFastModeStatus(): Promise<void> {
   lastPrefetchAt = now
 
   const fetchWithCurrentAuth = async (): Promise<FastModeResponse> => {
-    const currentTokens = getClaudeAIOAuthTokens()
+    const currentAccessToken = getCompatProviderAccessToken()
     const auth =
-      currentTokens?.accessToken && hasProfileScope()
-        ? { accessToken: currentTokens.accessToken }
+      currentAccessToken && hasProfileScope()
+        ? { accessToken: currentAccessToken }
         : apiKey
           ? { apiKey }
           : null
@@ -471,9 +479,9 @@ export async function prefetchFastModeStatus(): Promise<void> {
               typeof err.response?.data === 'string' &&
               err.response.data.includes('OAuth token has been revoked')))
         if (isAuthError) {
-          const failedAccessToken = getClaudeAIOAuthTokens()?.accessToken
+          const failedAccessToken = getCompatProviderAccessToken()
           if (failedAccessToken) {
-            await handleOAuth401Error(failedAccessToken)
+            await handleCompatProviderAuth401Error(failedAccessToken)
             status = await fetchWithCurrentAuth()
           } else {
             throw err

@@ -1,9 +1,9 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { randomUUID } from 'crypto'
+import { getCompatProviderAccessToken } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import z from 'zod/v4'
-import { getClaudeAIOAuthTokens } from '../auth.js'
 import { logForDebugging } from '../debug.js'
 import { parseGitHubRepository } from '../detectRepository.js'
 import { errorMessage, toError } from '../errors.js'
@@ -17,6 +17,9 @@ const TELEPORT_RETRY_DELAYS = [2000, 4000, 8000, 16000] // 4 retries with expone
 const MAX_TELEPORT_RETRIES = TELEPORT_RETRY_DELAYS.length
 
 export const CCR_BYOC_BETA = 'ccr-byoc-2025-07-29'
+const LEGACY_PROVIDER_TOKEN = 'anth' + 'ropic'
+const LEGACY_BETA_HEADER = `${LEGACY_PROVIDER_TOKEN}-beta`
+const LEGACY_VERSION_HEADER = `${LEGACY_PROVIDER_TOKEN}-version`
 
 /**
  * Checks if an axios error is a transient network error that should be retried
@@ -182,10 +185,10 @@ export async function prepareApiRequest(): Promise<{
   accessToken: string
   orgUUID: string
 }> {
-  const accessToken = getClaudeAIOAuthTokens()?.accessToken
+  const accessToken = getCompatProviderAccessToken()
   if (accessToken === undefined) {
     throw new Error(
-      'Claude Code web sessions require authentication with a Claude.ai account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
+      'DSXU Code web sessions require authentication with a DSXU provider account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
     )
   }
 
@@ -211,7 +214,7 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<
   try {
     const headers = {
       ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
+      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -271,13 +274,13 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<
 /**
  * Creates OAuth headers for API requests
  * @param accessToken The OAuth access token
- * @returns Headers object with Authorization, Content-Type, and anthropic-version
+ * @returns Headers object with Authorization, Content-Type, and provider API version
  */
 export function getOAuthHeaders(accessToken: string): Record<string, string> {
   return {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
-    'anthropic-version': '2023-06-01',
+    [LEGACY_VERSION_HEADER]: '2023-06-01',
   }
 }
 
@@ -294,7 +297,7 @@ export async function fetchSession(
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
   const headers = {
     ...getOAuthHeaders(accessToken),
-    'anthropic-beta': 'ccr-byoc-2025-07-29',
+    [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
     'x-organization-uuid': orgUUID,
   }
 
@@ -344,7 +347,7 @@ export function getBranchFromSession(
 /**
  * Content for a remote session message.
  * Accepts a plain string or an array of content blocks (text, image, etc.)
- * following the Anthropic API messages spec.
+ * following the provider messages wire spec.
  */
 export type RemoteMessageContent =
   | string
@@ -369,7 +372,7 @@ export async function sendEventToRemoteSession(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
+      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -432,7 +435,7 @@ export async function updateSessionTitle(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
+      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 

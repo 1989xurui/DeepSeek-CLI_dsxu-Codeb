@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -124,7 +125,7 @@ export function getTeamFilePath(teamName: string): string {
 }
 
 /**
- * Reads a team file by name (sync — for sync contexts like React render paths)
+ * Reads a team file by name (sync ...for sync contexts like React render paths)
  * @internal Exported for team discovery UI
  */
 // sync IO: called from sync context
@@ -142,7 +143,7 @@ export function readTeamFile(teamName: string): TeamFile | null {
 }
 
 /**
- * Reads a team file by name (async — for tool handlers and other async contexts)
+ * Reads a team file by name (async ...for tool handlers and other async contexts)
  */
 export async function readTeamFileAsync(
   teamName: string,
@@ -160,7 +161,7 @@ export async function readTeamFileAsync(
 }
 
 /**
- * Writes a team file (sync — for sync contexts)
+ * Writes a team file (sync ...for sync contexts)
  */
 // sync IO: called from sync context
 function writeTeamFile(teamName: string, teamFile: TeamFile): void {
@@ -170,7 +171,7 @@ function writeTeamFile(teamName: string, teamFile: TeamFile): void {
 }
 
 /**
- * Writes a team file (async — for tool handlers)
+ * Writes a team file (async ...for tool handlers)
  */
 export async function writeTeamFileAsync(
   teamName: string,
@@ -563,7 +564,7 @@ export function registerTeamForSessionCleanup(teamName: string): void {
 
 /**
  * Remove a team from session cleanup tracking (e.g., after explicit
- * TeamDelete — already cleaned, don't try again on shutdown).
+ * TeamDelete ...already cleaned, don't try again on shutdown).
  */
 export function unregisterTeamForSessionCleanup(teamName: string): void {
   getSessionCreatedTeams().delete(teamName)
@@ -580,9 +581,9 @@ export async function cleanupSessionTeams(): Promise<void> {
   logForDebugging(
     `cleanupSessionTeams: removing ${teams.length} orphan team dir(s): ${teams.join(', ')}`,
   )
-  // Kill panes first — on SIGINT the teammate processes are still running;
+  // Kill panes first ...on SIGINT the teammate processes are still running;
   // deleting directories alone would orphan them in open tmux/iTerm2 panes.
-  // (TeamDeleteTool's path doesn't need this — by then teammates have
+  // (TeamDeleteTool's path doesn't need this ...by then teammates have
   // gracefully exited and useInboxPoller has already closed their panes.)
   await Promise.allSettled(teams.map(name => killOrphanedTeammatePanes(name)))
   await Promise.allSettled(teams.map(name => cleanupTeamDirectories(name)))
@@ -593,7 +594,7 @@ export async function cleanupSessionTeams(): Promise<void> {
  * Best-effort kill of all pane-backed teammate panes for a team.
  * Called from cleanupSessionTeams on ungraceful leader exit (SIGINT/SIGTERM).
  * Dynamic imports avoid adding registry/detection to this module's static
- * dep graph — this only runs at shutdown, so the import cost is irrelevant.
+ * dep graph ...this only runs at shutdown, so the import cost is irrelevant.
  */
 async function killOrphanedTeammatePanes(teamName: string): Promise<void> {
   const teamFile = readTeamFile(teamName)
@@ -627,7 +628,7 @@ async function killOrphanedTeammatePanes(teamName: string): Promise<void> {
         useExternalSession,
       )
       logForDebugging(
-        `cleanupSessionTeams: killPane ${m.name} (${m.backendType} ${m.tmuxPaneId}) → ${ok}`,
+        `cleanupSessionTeams: killPane ${m.name} (${m.backendType} ${m.tmuxPaneId})  -> ${ok}`,
       )
     }),
   )
@@ -657,7 +658,7 @@ export async function cleanupTeamDirectories(teamName: string): Promise<void> {
     await destroyWorktree(worktreePath)
   }
 
-  // Clean up team directory (~/.claude/teams/{team-name}/)
+  // Clean up team directory (~/.dsxu/teams/{team-name}/)
   const teamDir = getTeamDir(teamName)
   try {
     await rm(teamDir, { recursive: true, force: true })
@@ -668,7 +669,7 @@ export async function cleanupTeamDirectories(teamName: string): Promise<void> {
     )
   }
 
-  // Clean up tasks directory (~/.claude/tasks/{taskListId}/)
+  // Clean up tasks directory (~/.dsxu/tasks/{taskListId}/)
   // The leader and teammates all store tasks under the sanitized team name.
   const tasksDir = getTasksDir(sanitizedName)
   try {

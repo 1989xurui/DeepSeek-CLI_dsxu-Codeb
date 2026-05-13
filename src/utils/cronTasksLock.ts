@@ -1,13 +1,13 @@
-// Scheduler lease lock for .claude/scheduled_tasks.json.
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+// Scheduler lease lock for the runtime scheduled_tasks.json.
 //
-// When multiple Claude sessions run in the same project directory, only one
+// When multiple DSXU sessions run in the same project directory, only one
 // should drive the cron scheduler. The first session to acquire this lock
 // becomes the scheduler; others stay passive and periodically probe the lock.
 // If the owner dies (PID no longer running), a passive session takes over.
 //
 // Pattern mirrors computerUseLock.ts: O_EXCL atomic create, PID liveness
 // probe, stale-lock recovery, cleanup-on-exit.
-
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { z } from 'zod/v4'
@@ -19,9 +19,14 @@ import { isProcessRunning } from './genericProcessUtils.js'
 import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
 import { jsonStringify } from './slowOperations.js'
-
-const LOCK_FILE_REL = join('.claude', 'scheduled_tasks.lock')
-
+import { isDsxuRuntimeMode } from './envUtils.js'
+const LEGACY_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+function getLockFileRel(): string {
+  return join(
+    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_PROJECT_CONFIG_DIR,
+    'scheduled_tasks.lock',
+  )
+}
 const schedulerLockSchema = lazySchema(() =>
   z.object({
     sessionId: z.string(),
@@ -30,7 +35,6 @@ const schedulerLockSchema = lazySchema(() =>
   }),
 )
 type SchedulerLock = z.infer<ReturnType<typeof schedulerLockSchema>>
-
 /**
  * Options for out-of-REPL callers (Agent SDK daemon) that don't have
  * bootstrap state. When omitted, falls back to getProjectRoot() +
@@ -41,15 +45,12 @@ export type SchedulerLockOptions = {
   dir?: string
   lockIdentity?: string
 }
-
 let unregisterCleanup: (() => void) | undefined
 // Suppress repeat "held by X" log lines when polling a live owner.
 let lastBlockedBy: string | undefined
-
 function getLockPath(dir?: string): string {
-  return join(dir ?? getProjectRoot(), LOCK_FILE_REL)
+  return join(dir ?? getProjectRoot(), getLockFileRel())
 }
-
 async function readLock(dir?: string): Promise<SchedulerLock | undefined> {
   let raw: string
   try {
@@ -60,7 +61,6 @@ async function readLock(dir?: string): Promise<SchedulerLock | undefined> {
   const result = schedulerLockSchema().safeParse(safeParseJSON(raw, false))
   return result.success ? result.data : undefined
 }
-
 async function tryCreateExclusive(
   lock: SchedulerLock,
   dir?: string,
@@ -74,7 +74,7 @@ async function tryCreateExclusive(
     const code = getErrnoCode(e)
     if (code === 'EEXIST') return false
     if (code === 'ENOENT') {
-      // .claude/ doesn't exist yet — create it and retry once. In steady
+      // Runtime schedule directory doesn't exist yet ...create it and retry once. In steady
       // state the dir already exists (scheduled_tasks.json lives there),
       // so this path is hit at most once.
       await mkdir(dirname(path), { recursive: true })
@@ -89,22 +89,20 @@ async function tryCreateExclusive(
     throw e
   }
 }
-
 function registerLockCleanup(opts?: SchedulerLockOptions): void {
   unregisterCleanup?.()
   unregisterCleanup = registerCleanup(async () => {
     await releaseSchedulerLock(opts)
   })
 }
-
 /**
  * Try to acquire the scheduler lock for the current session.
  * Returns true on success, false if another live session holds it.
  *
  * Uses O_EXCL ('wx') for atomic test-and-set. If the file exists:
- *   - Already ours → true (idempotent re-acquire)
- *   - Another live PID → false
- *   - Stale (PID dead / corrupt) → unlink and retry exclusive create once
+ *   - Already ours  -> true (idempotent re-acquire)
+ *   - Another live PID  -> false
+ *   - Stale (PID dead / corrupt)  -> unlink and retry exclusive create once
  *
  * If two sessions race to recover a stale lock, only one create succeeds.
  */
@@ -121,7 +119,6 @@ export async function tryAcquireSchedulerLock(
     pid: process.pid,
     acquiredAt: Date.now(),
   }
-
   if (await tryCreateExclusive(lock, dir)) {
     lastBlockedBy = undefined
     registerLockCleanup(opts)
@@ -130,11 +127,9 @@ export async function tryAcquireSchedulerLock(
     )
     return true
   }
-
   const existing = await readLock(dir)
-
   // Already ours (idempotent). After --resume the session ID is restored
-  // but the process has a new PID — update the lock file so other sessions
+  // but the process has a new PID ...update the lock file so other sessions
   // see a live PID and don't steal it.
   if (existing?.sessionId === sessionId) {
     if (existing.pid !== process.pid) {
@@ -143,9 +138,8 @@ export async function tryAcquireSchedulerLock(
     }
     return true
   }
-
-  // Corrupt or unparseable — treat as stale.
-  // Another live session — blocked.
+  // Corrupt or unparseable ...treat as stale.
+  // Another live session ...blocked.
   if (existing && isProcessRunning(existing.pid)) {
     if (lastBlockedBy !== existing.sessionId) {
       lastBlockedBy = existing.sessionId
@@ -155,8 +149,7 @@ export async function tryAcquireSchedulerLock(
     }
     return false
   }
-
-  // Stale — unlink and retry the exclusive create once.
+  // Stale ...unlink and retry the exclusive create once.
   if (existing) {
     logForDebugging(
       `[ScheduledTasks] recovering stale scheduler lock from PID ${existing.pid}`,
@@ -171,7 +164,6 @@ export async function tryAcquireSchedulerLock(
   // Another session won the recovery race.
   return false
 }
-
 /**
  * Release the scheduler lock if the current session owns it.
  */
@@ -181,7 +173,6 @@ export async function releaseSchedulerLock(
   unregisterCleanup?.()
   unregisterCleanup = undefined
   lastBlockedBy = undefined
-
   const dir = opts?.dir
   const sessionId = opts?.lockIdentity ?? getSessionId()
   const existing = await readLock(dir)

@@ -1,11 +1,13 @@
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { APIUserAbortError } from '../types/providerSdk.js'
 
-export class ClaudeError extends Error {
+export class DSXUError extends Error {
   constructor(message: string) {
     super(message)
     this.name = this.constructor.name
   }
 }
+
+export const LegacyProviderError = DSXUError
 
 export class MalformedCommandError extends Error {}
 
@@ -180,7 +182,7 @@ export function shortErrorStack(e: unknown, maxFrames = 5): string {
  *  EACCES    — permission denied
  *  EPERM     — operation not permitted
  *  ENOTDIR   — a path component is not a directory (e.g. a file named
- *              `.claude` exists where a directory is expected)
+ *              `.dsxu` exists where a directory is expected)
  *  ELOOP     — too many symlink levels (circular symlinks)
  */
 export function isFsInaccessible(e: unknown): e is NodeJS.ErrnoException {

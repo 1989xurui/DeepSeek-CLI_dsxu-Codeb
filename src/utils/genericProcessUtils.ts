@@ -1,17 +1,16 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   execFileNoThrowWithCwd,
   execSyncWithDefaults_DEPRECATED,
 } from './execFileNoThrow.js'
-
 // This file contains platform-agnostic implementations of common `ps` type commands.
 // When adding new code to this file, make sure to handle:
 // - Win32, as `ps` within cygwin and WSL may not behave as expected, particularly when attempting to access processes on the host.
 // - Unix vs BSD-style `ps` have different options.
-
 /**
  * Check if a process with the given PID is running (signal 0 probe).
  *
- * PID ≤ 1 returns false (0 is current process group, 1 is init).
+ * PID  -> 1 returns false (0 is current process group, 1 is init).
  *
  * Note: `process.kill(pid, 0)` throws EPERM when the process exists but is
  * owned by another user. This reports such processes as NOT running, which
@@ -26,7 +25,6 @@ export function isProcessRunning(pid: number): boolean {
     return false
   }
 }
-
 /**
  * Gets the ancestor process chain for a given process (up to maxDepth levels)
  * @param pid - The starting process ID
@@ -50,7 +48,6 @@ export async function getAncestorPidsAsync(
       }
       $ancestors -join ','
     `.trim()
-
     const result = await execFileNoThrowWithCwd(
       'powershell.exe',
       ['-NoProfile', '-Command', script],
@@ -66,11 +63,9 @@ export async function getAncestorPidsAsync(
       .map(p => parseInt(p, 10))
       .filter(p => !isNaN(p))
   }
-
   // For Unix, use a shell command that walks up the process tree
   // This uses a single process invocation instead of multiple sequential calls
   const script = `pid=${String(pid)}; for i in $(seq 1 ${maxDepth}); do ppid=$(ps -o ppid= -p $pid 2>/dev/null | tr -d ' '); if [ -z "$ppid" ] || [ "$ppid" = "0" ] || [ "$ppid" = "1" ]; then break; fi; echo $ppid; pid=$ppid; done`
-
   const result = await execFileNoThrowWithCwd('sh', ['-c', script], {
     timeout: 3000,
   })
@@ -84,7 +79,6 @@ export async function getAncestorPidsAsync(
     .map(p => parseInt(p, 10))
     .filter(p => !isNaN(p))
 }
-
 /**
  * Gets the command line for a given process
  * @param pid - The process ID to get the command for
@@ -98,14 +92,12 @@ export function getProcessCommand(pid: string | number): string | null {
       process.platform === 'win32'
         ? `powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter \\"ProcessId=${pidStr}\\").CommandLine"`
         : `ps -o command= -p ${pidStr}`
-
     const result = execSyncWithDefaults_DEPRECATED(command, { timeout: 1000 })
     return result ? result.trim() : null
   } catch {
     return null
   }
 }
-
 /**
  * Gets the command lines for a process and its ancestors in a single call
  * @param pid - The starting process ID
@@ -130,7 +122,6 @@ export async function getAncestorCommandsAsync(
       }
       $commands -join [char]0
     `.trim()
-
     const result = await execFileNoThrowWithCwd(
       'powershell.exe',
       ['-NoProfile', '-Command', script],
@@ -141,11 +132,9 @@ export async function getAncestorCommandsAsync(
     }
     return result.stdout.split('\0').filter(Boolean)
   }
-
   // For Unix, use a shell command that walks up the process tree and collects commands
   // Using null byte as separator to handle commands with newlines
   const script = `currentpid=${String(pid)}; for i in $(seq 1 ${maxDepth}); do cmd=$(ps -o command= -p $currentpid 2>/dev/null); if [ -n "$cmd" ]; then printf '%s\\0' "$cmd"; fi; ppid=$(ps -o ppid= -p $currentpid 2>/dev/null | tr -d ' '); if [ -z "$ppid" ] || [ "$ppid" = "0" ] || [ "$ppid" = "1" ]; then break; fi; currentpid=$ppid; done`
-
   const result = await execFileNoThrowWithCwd('sh', ['-c', script], {
     timeout: 3000,
   })
@@ -154,7 +143,6 @@ export async function getAncestorCommandsAsync(
   }
   return result.stdout.split('\0').filter(Boolean)
 }
-
 /**
  * Gets the child process IDs for a given process
  * @param pid - The parent process ID
@@ -167,7 +155,6 @@ export function getChildPids(pid: string | number): number[] {
       process.platform === 'win32'
         ? `powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter \\"ParentProcessId=${pidStr}\\").ProcessId"`
         : `pgrep -P ${pidStr}`
-
     const result = execSyncWithDefaults_DEPRECATED(command, { timeout: 1000 })
     if (!result) {
       return []

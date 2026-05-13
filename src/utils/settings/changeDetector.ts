@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import chokidar, { type FSWatcher } from 'chokidar'
 import { stat } from 'fs/promises'
 import * as platformPath from 'path'
@@ -40,7 +41,7 @@ const FILE_STABILITY_POLL_INTERVAL_MS = 500
 /**
  * Time window in milliseconds to consider a file change as internal.
  * If a file change occurs within this window after markInternalWrite() is called,
- * it's assumed to be from Claude Code itself and won't trigger a notification.
+ * it's assumed to be from DSXU Code itself and won't trigger a notification.
  */
 const INTERNAL_WRITE_WINDOW_MS = 5000
 
@@ -147,7 +148,7 @@ export async function initialize(): Promise<void> {
 
 /**
  * Clean up file watcher. Returns a promise that resolves when chokidar's
- * close() settles — callers that need the watcher fully stopped before
+ * close() settles - callers that need the watcher fully stopped before
  * removing the watched directory (e.g. test teardown) must await this.
  * Fire-and-forget is still valid where timing doesn't matter.
  */
@@ -190,7 +191,7 @@ async function getWatchTargets(): Promise<{
     // Skip flagSettings - they're provided via CLI and won't change during the session.
     // Additionally, they may be temp files in $TMPDIR which can contain special files
     // (FIFOs, sockets) that cause the file watcher to hang or error.
-    // See: https://github.com/anthropics/claude-code/issues/16469
+    // Watchers can hang on temp files such as FIFOs or sockets.
     if (source === 'flagSettings') {
       continue
     }
@@ -270,13 +271,13 @@ function handleChange(path: string): void {
   if (!source) return
 
   // If a deletion was pending for this path (delete-and-recreate pattern),
-  // cancel the deletion — we'll process this as a change instead.
+  // cancel the deletion - we'll process this as a change instead.
   const pendingTimer = pendingDeletions.get(path)
   if (pendingTimer) {
     clearTimeout(pendingTimer)
     pendingDeletions.delete(path)
     logForDebugging(
-      `Cancelled pending deletion of ${path} — file was recreated`,
+      `Cancelled pending deletion of ${path} - file was recreated`,
     )
   }
 
@@ -287,7 +288,7 @@ function handleChange(path: string): void {
 
   logForDebugging(`Detected change to ${path}`)
 
-  // Fire ConfigChange hook first — if blocked (exit code 2 or decision: 'block'),
+  // Fire ConfigChange hook first - if blocked (exit code 2 or decision: 'block'),
   // skip applying the change to the session
   void executeConfigChangeHooks(
     settingSourceToConfigChangeSource(source),
@@ -309,12 +310,12 @@ function handleAdd(path: string): void {
   const source = getSourceForPath(path)
   if (!source) return
 
-  // Cancel any pending deletion — the file is back
+  // Cancel any pending deletion - the file is back
   const pendingTimer = pendingDeletions.get(path)
   if (pendingTimer) {
     clearTimeout(pendingTimer)
     pendingDeletions.delete(path)
-    logForDebugging(`Cancelled pending deletion of ${path} — file was re-added`)
+    logForDebugging(`Cancelled pending deletion of ${path} - file was re-added`)
   }
 
   // Treat as a change (re-read settings)
@@ -340,7 +341,7 @@ function handleDelete(path: string): void {
     (p, src) => {
       pendingDeletions.delete(p)
 
-      // Fire ConfigChange hook first — if blocked, skip applying the deletion
+      // Fire ConfigChange hook first - if blocked, skip applying the deletion
       void executeConfigChangeHooks(
         settingSourceToConfigChangeSource(src),
         p,
@@ -426,7 +427,7 @@ function startMdmPoll(): void {
  * (file-watch at :289/340, MDM poll at :385) did not reset before iterating
  * listeners. That defense caused N-way thrashing when N listeners were
  * subscribed: each listener cleared the cache, re-read from disk (populating
- * it), then the next listener cleared it again — N full disk reloads per
+ * it), then the next listener cleared it again - N full disk reloads per
  * notification. Profile showed 5 loadSettingsFromDisk calls in 12ms when
  * remote managed settings resolved at startup.
  *
@@ -456,7 +457,7 @@ export function notifyChange(source: SettingSource): void {
  *
  * Closes the watcher and returns the close promise so preload's afterEach
  * can await it BEFORE nuking perTestSettingsDir. Without this, chokidar's
- * pending awaitWriteFinish poll fires on the deleted dir → ENOENT (#25253).
+ * pending awaitWriteFinish poll fires on the deleted dir - ENOENT (#25253).
  */
 export function resetForTesting(overrides?: {
   stabilityThreshold?: number

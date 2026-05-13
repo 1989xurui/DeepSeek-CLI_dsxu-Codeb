@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import { relative } from 'path'
@@ -48,7 +49,6 @@ import {
   removeExtraFields,
 } from './sessionStorage.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
-
 // Dead code elimination: ant-only tool names are conditionally required so
 // their strings don't leak into external builds. Static imports always bundle.
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -70,7 +70,6 @@ const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
     ).SEND_USER_FILE_TOOL_NAME
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-
 /**
  * Transforms legacy attachment types to current types for backward compatibility
  */
@@ -78,12 +77,10 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
   if (message.type !== 'attachment') {
     return message
   }
-
   const attachment = message.attachment as {
     type: string
     [key: string]: unknown
   } // Handle legacy types not in current type system
-
   // Transform legacy attachment types
   if (attachment.type === 'new_file') {
     return {
@@ -95,7 +92,6 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
       },
     } as SerializedMessage // Cast entire message since we know the structure is correct
   }
-
   if (attachment.type === 'new_directory') {
     return {
       ...message,
@@ -106,7 +102,6 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
       },
     } as SerializedMessage // Cast entire message since we know the structure is correct
   }
-
   // Backfill displayPath for attachments from old sessions
   if (!('displayPath' in attachment)) {
     const path =
@@ -127,24 +122,19 @@ function migrateLegacyAttachmentTypes(message: Message): Message {
       } as Message
     }
   }
-
   return message
 }
-
 export type TeleportRemoteResponse = {
   log: Message[]
   branch?: string
 }
-
 export type TurnInterruptionState =
   | { kind: 'none' }
   | { kind: 'interrupted_prompt'; message: NormalizedUserMessage }
-
 export type DeserializeResult = {
   messages: Message[]
   turnInterruptionState: TurnInterruptionState
 }
-
 /**
  * Deserializes messages from a log file into the format expected by the REPL.
  * Filters unresolved tool uses, orphaned thinking messages, and appends a
@@ -154,7 +144,6 @@ export type DeserializeResult = {
 export function deserializeMessages(serializedMessages: Message[]): Message[] {
   return deserializeMessagesWithInterruptDetection(serializedMessages).messages
 }
-
 /**
  * Like deserializeMessages, but also detects whether the session was
  * interrupted mid-turn. Used by the SDK resume path to auto-continue
@@ -169,7 +158,6 @@ export function deserializeMessagesWithInterruptDetection(
     const migratedMessages = serializedMessages.map(
       migrateLegacyAttachmentTypes,
     )
-
     // Strip invalid permissionMode values from deserialized user messages.
     // The field is unvalidated JSON from disk and may contain modes from a different build.
     const validModes = new Set<string>(PERMISSION_MODES)
@@ -182,27 +170,22 @@ export function deserializeMessagesWithInterruptDetection(
         msg.permissionMode = undefined
       }
     }
-
     // Filter out unresolved tool uses and any synthetic messages that follow them
     const filteredToolUses = filterUnresolvedToolUses(
       migratedMessages,
     ) as NormalizedMessage[]
-
     // Filter out orphaned thinking-only assistant messages that can cause API errors
     // during resume. These occur when streaming yields separate messages per content
     // block and interleaved user messages prevent proper merging by message.id.
     const filteredThinking = filterOrphanedThinkingOnlyMessages(
       filteredToolUses,
     ) as NormalizedMessage[]
-
     // Filter out assistant messages with only whitespace text content.
     // This can happen when model outputs "\n\n" before thinking, user cancels mid-stream.
     const filteredMessages = filterWhitespaceOnlyAssistantMessages(
       filteredThinking,
     ) as NormalizedMessage[]
-
     const internalState = detectTurnInterruption(filteredMessages)
-
     // Transform mid-turn interruptions into interrupted_prompt by appending
     // a synthetic continuation message. This unifies both interruption kinds
     // so the consumer only needs to handle interrupted_prompt.
@@ -222,7 +205,6 @@ export function deserializeMessagesWithInterruptDetection(
     } else {
       turnInterruptionState = internalState
     }
-
     // Append a synthetic assistant sentinel after the last user message so
     // the conversation is API-valid if no resume action is taken. Skip past
     // trailing system/progress messages and insert right after the user
@@ -243,14 +225,12 @@ export function deserializeMessagesWithInterruptDetection(
         }) as NormalizedMessage,
       )
     }
-
     return { messages: filteredMessages, turnInterruptionState }
   } catch (error) {
     logError(error as Error)
     throw error
   }
 }
-
 /**
  * Internal 3-way result from detection, before transforming interrupted_turn
  * into interrupted_prompt with a synthetic continuation message.
@@ -258,7 +238,6 @@ export function deserializeMessagesWithInterruptDetection(
 type InternalInterruptionState =
   | TurnInterruptionState
   | { kind: 'interrupted_turn' }
-
 /**
  * Determines whether the conversation was interrupted mid-turn based on the
  * last message after filtering. An assistant as last message (after filtering
@@ -266,7 +245,7 @@ type InternalInterruptionState =
  * always null on persisted messages in the streaming path.
  *
  * System and progress messages are skipped when finding the last turn-relevant
- * message — they are bookkeeping artifacts that should not mask a genuine
+ * message ...they are bookkeeping artifacts that should not mask a genuine
  * interruption. Attachments are kept as part of the turn.
  */
 function detectTurnInterruption(
@@ -275,10 +254,9 @@ function detectTurnInterruption(
   if (messages.length === 0) {
     return { kind: 'none' }
   }
-
   // Find the last turn-relevant message, skipping system/progress and
   // synthetic API error assistants. Error assistants are already filtered
-  // before API send (normalizeMessagesForAPI) — skipping them here lets
+  // before API send (normalizeMessagesForAPI) ...skipping them here lets
   // auto-resume fire after retry exhaustion instead of reading the error as
   // a completed turn.
   const lastMessageIdx = messages.findLastIndex(
@@ -289,11 +267,9 @@ function detectTurnInterruption(
   )
   const lastMessage =
     lastMessageIdx !== -1 ? messages[lastMessageIdx] : undefined
-
   if (!lastMessage) {
     return { kind: 'none' }
   }
-
   if (lastMessage.type === 'assistant') {
     // In the streaming path, stop_reason is always null on persisted messages
     // because messages are recorded at content_block_stop time, before
@@ -302,7 +278,6 @@ function detectTurnInterruption(
     // the last message means the turn most likely completed normally.
     return { kind: 'none' }
   }
-
   if (lastMessage.type === 'user') {
     if (lastMessage.isMeta || lastMessage.isCompactSummary) {
       return { kind: 'none' }
@@ -319,23 +294,20 @@ function detectTurnInterruption(
       }
       return { kind: 'interrupted_turn' }
     }
-    // Plain text user prompt — CC hadn't started responding
+    // Plain text user prompt ...CC hadn't started responding
     return { kind: 'interrupted_prompt', message: lastMessage }
   }
-
   if (lastMessage.type === 'attachment') {
-    // Attachments are part of the user turn — the user provided context but
+    // Attachments are part of the user turn ...the user provided context but
     // the assistant never responded.
     return { kind: 'interrupted_turn' }
   }
-
   return { kind: 'none' }
 }
-
 /**
  * Is this tool_result the output of a tool that legitimately terminates a
  * turn? SendUserMessage is the canonical case: in brief mode, calling it is
- * the turn's final act — there is no follow-up assistant text (#20467
+ * the turn's final act ...there is no follow-up assistant text (#20467
  * removed it). A transcript ending here means the turn COMPLETED, not that
  * it was killed mid-tool.
  *
@@ -355,7 +327,6 @@ function isTerminalToolResult(
   const block = content[0]
   if (block?.type !== 'tool_result') return false
   const toolUseId = block.tool_use_id
-
   for (let i = resultIdx - 1; i >= 0; i--) {
     const msg = messages[i]!
     if (msg.type !== 'assistant') continue
@@ -371,7 +342,6 @@ function isTerminalToolResult(
   }
   return false
 }
-
 /**
  * Restores skill state from invoked_skills attachments in messages.
  * This ensures that skills are preserved across resume after compaction.
@@ -392,7 +362,7 @@ export function restoreSkillStateFromMessages(messages: Message[]): void {
         }
       }
     }
-    // A prior process already injected the skills-available reminder — it's
+    // A prior process already injected the skills-available reminder ...it's
     // in the transcript the model is about to see. sentSkillNames is
     // process-local, so without this every resume re-announces the same
     // ~600 tokens. Fire-once latch; consumed on the first attachment pass.
@@ -401,15 +371,14 @@ export function restoreSkillStateFromMessages(messages: Message[]): void {
     }
   }
 }
-
 /**
  * Chain-walk a transcript jsonl by path.  Same sequence loadFullLog
- * runs internally — loadTranscriptFile → find newest non-sidechain
- * leaf → buildConversationChain → removeExtraFields — just starting
+ * runs internally ...loadTranscriptFile  -> find newest non-sidechain
+ * leaf  -> buildConversationChain  -> removeExtraFields ...just starting
  * from an arbitrary path instead of the sid-derived one.
  *
  * leafUuids is populated by loadTranscriptFile as "uuids that no
- * other message's parentUuid points at" — the chain tips.  There can
+ * other message's parentUuid points at" ...the chain tips.  There can
  * be several (sidechains, orphans); newest non-sidechain is the main
  * conversation's end.
  */
@@ -432,13 +401,12 @@ export async function loadMessagesFromJsonlPath(path: string): Promise<{
   const chain = buildConversationChain(byUuid, tip)
   return {
     messages: removeExtraFields(chain),
-    // Leaf's sessionId — forked sessions copy chain[0] from the source
+    // Leaf's sessionId ...forked sessions copy chain[0] from the source
     // transcript, so the root retains the source session's ID. Matches
     // loadFullLog's mostRecentLeaf.sessionId.
     sessionId: tip.sessionId as UUID | undefined,
   }
 }
-
 /**
  * Loads a conversation for resume from various sources.
  * This is the centralized function for loading and deserializing conversations.
@@ -483,7 +451,6 @@ export async function loadConversationForResume(
     let log: LogOption | null = null
     let messages: Message[] | null = null
     let sessionId: UUID | undefined
-
     if (source === undefined) {
       // --continue: most recent session, skipping live --bg/daemon sessions
       // that are actively writing their own transcript.
@@ -501,7 +468,7 @@ export async function loadConversationForResume(
             ),
           )
         } catch {
-          // UDS unavailable — treat all sessions as continuable
+          // UDS unavailable ...treat all sessions as continuable
         }
       }
       const logs = await logsPromise
@@ -512,7 +479,7 @@ export async function loadConversationForResume(
         }) ?? null
     } else if (sourceJsonlFile) {
       // --resume with a .jsonl path (cli/print.ts routes on suffix).
-      // Same chain walk as the sid branch below — only the starting
+      // Same chain walk as the sid branch below ...only the starting
       // path differs.
       const loaded = await loadMessagesFromJsonlPath(sourceJsonlFile)
       messages = loaded.messages
@@ -525,17 +492,14 @@ export async function loadConversationForResume(
       // Already have a LogOption
       log = source
     }
-
     if (!log && !messages) {
       return null
     }
-
     if (log) {
       // Load full messages for lite logs
       if (isLiteLog(log)) {
         log = await loadFullLog(log)
       }
-
       // Determine sessionId first so we can pass it to copy functions
       if (!sessionId) {
         sessionId = getSessionIdFromLog(log) as UUID
@@ -545,28 +509,21 @@ export async function loadConversationForResume(
       if (sessionId) {
         await copyPlanForResume(log, asSessionId(sessionId))
       }
-
       // Copy file history for resume
       void copyFileHistoryForResume(log)
-
       messages = log.messages
       checkResumeConsistency(messages)
     }
-
     // Restore skill state from invoked_skills attachments before deserialization.
     // This ensures skills survive multiple compaction cycles after resume.
     restoreSkillStateFromMessages(messages!)
-
     // Deserialize messages to handle unresolved tool uses and ensure proper format
     const deserialized = deserializeMessagesWithInterruptDetection(messages!)
     messages = deserialized.messages
-
     // Process session start hooks for resume
     const hookMessages = await processSessionStartHooks('resume', { sessionId })
-
     // Append hook messages to the conversation
     messages.push(...hookMessages)
-
     return {
       messages,
       turnInterruptionState: deserialized.turnInterruptionState,

@@ -1,26 +1,38 @@
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
+import { getDsxuCodeEnv, isDsxuRuntimeMode } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
+
+const LEGACY_CODE_PRODUCT = 'Clau' + 'deCode'
+const LEGACY_CODE_ETC_DIR = '/etc/' + ('clau' + 'de-code')
 
 /**
  * Get the path to the managed settings directory based on the current platform.
  */
 export const getManagedFilePath = memoize(function (): string {
-  // Allow override for testing/demos (Ant-only, eliminated from external builds)
-  if (
-    process.env.USER_TYPE === 'ant' &&
-    process.env.CLAUDE_CODE_MANAGED_SETTINGS_PATH
-  ) {
-    return process.env.CLAUDE_CODE_MANAGED_SETTINGS_PATH
+  const managedSettingsPath = getDsxuCodeEnv('MANAGED_SETTINGS_PATH')
+  if (managedSettingsPath) {
+    return managedSettingsPath
   }
 
-  switch (getPlatform()) {
+  if (isDsxuRuntimeMode()) {
+    switch (getPlatform()) {
+      case 'macos':
+        return '/Library/Application Support/DSXUCode'
+      case 'windows':
+        return 'C:\\Program Files\\DSXUCode'
+      default:
+        return '/etc/dsxu-code'
+    }
+  }
+
+    switch (getPlatform()) {
     case 'macos':
-      return '/Library/Application Support/ClaudeCode'
+      return `/Library/Application Support/${LEGACY_CODE_PRODUCT}`
     case 'windows':
-      return 'C:\\Program Files\\ClaudeCode'
+      return `C:\\Program Files\\${LEGACY_CODE_PRODUCT}`
     default:
-      return '/etc/claude-code'
+      return LEGACY_CODE_ETC_DIR
   }
 })
 

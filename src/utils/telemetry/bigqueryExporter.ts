@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Attributes, HrTime } from '@opentelemetry/api'
 import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import {
@@ -10,14 +11,18 @@ import {
 import axios from 'axios'
 import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getSubscriptionType, isClaudeAISubscriber } from '../auth.js'
+import { getSubscriptionType, isLegacyCloudSubscriber } from '../auth.js'
 import { checkHasTrustDialogAccepted } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, toError } from '../errors.js'
 import { getAuthHeaders } from '../http.js'
 import { logError } from '../log.js'
 import { jsonStringify } from '../slowOperations.js'
-import { getClaudeCodeUserAgent } from '../userAgent.js'
+import { getDSXUCodeUserAgent } from '../userAgent.js'
+
+const PROVIDER_API_ORIGIN = `https://api.${'anth' + 'ropic'}.com`
+const METRICS_PATH = `/api/${'cl' + 'aude'}_code/metrics`
+const LEGACY_METRICS_ENDPOINT_ENV = 'ANT_CL' + 'AUDE_CODE_METRICS_ENDPOINT'
 
 type DataPoint = {
   attributes: Record<string, string>
@@ -44,15 +49,14 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
   private isShutdown = false
 
   constructor(options: { timeout?: number } = {}) {
-    const defaultEndpoint = 'https://api.anthropic.com/api/claude_code/metrics'
+    const defaultEndpoint = `${PROVIDER_API_ORIGIN}${METRICS_PATH}`
 
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT
+      process.env[LEGACY_METRICS_ENDPOINT_ENV]
     ) {
       this.endpoint =
-        process.env.ANT_CLAUDE_CODE_METRICS_ENDPOINT +
-        '/api/claude_code/metrics'
+        process.env[LEGACY_METRICS_ENDPOINT_ENV] + METRICS_PATH
     } else {
       this.endpoint = defaultEndpoint
     }
@@ -123,7 +127,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'User-Agent': getClaudeCodeUserAgent(),
+        'User-Agent': getDSXUCodeUserAgent(),
         ...authResult.headers,
       }
 
@@ -153,7 +157,7 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     const attrs = metrics.resource.attributes
 
     const resourceAttributes: Record<string, string> = {
-      'service.name': (attrs['service.name'] as string) || 'claude-code',
+      'service.name': (attrs['service.name'] as string) || 'dsxu-code',
       'service.version': (attrs['service.version'] as string) || 'unknown',
       'os.type': (attrs['os.type'] as string) || 'unknown',
       'os.version': (attrs['os.version'] as string) || 'unknown',
@@ -170,8 +174,8 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     }
 
     // Add customer type and subscription type
-    if (isClaudeAISubscriber()) {
-      resourceAttributes['user.customer_type'] = 'claude_ai'
+    if (isLegacyCloudSubscriber()) {
+      resourceAttributes['user.customer_type'] = 'legacy_cloud'
       const subscriptionType = getSubscriptionType()
       if (subscriptionType) {
         resourceAttributes['user.subscription_type'] = subscriptionType

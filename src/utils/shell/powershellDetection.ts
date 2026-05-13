@@ -1,4 +1,5 @@
 import { realpath, stat } from 'fs/promises'
+import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 import { which } from '../which.js'
 
@@ -8,6 +9,21 @@ async function probePath(p: string): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+export function isWindowsPowerShellFallbackAllowedFromWsl(): boolean {
+  return (
+    isEnvTruthy(getDsxuCodeEnv('ALLOW_WINDOWS_POWERSHELL_FROM_WSL')) ||
+    isEnvTruthy(process.env.DSXU_ALLOW_WINDOWS_POWERSHELL_FROM_WSL)
+  )
+}
+
+function looksLikeWindowsPowerShellFromWsl(p: string): boolean {
+  return (
+    getPlatform() === 'wsl' &&
+    /(?:^|[\\/])powershell(?:\.exe)?$/i.test(p) &&
+    /^\/mnt\/[a-z]\//i.test(p)
+  )
 }
 
 /**
@@ -50,7 +66,21 @@ export async function findPowerShell(): Promise<string | null> {
 
   const powershellPath = await which('powershell')
   if (powershellPath) {
+    if (looksLikeWindowsPowerShellFromWsl(powershellPath)) {
+      return isWindowsPowerShellFallbackAllowedFromWsl()
+        ? powershellPath
+        : null
+    }
     return powershellPath
+  }
+
+  if (getPlatform() === 'wsl' && isWindowsPowerShellFallbackAllowedFromWsl()) {
+    const windowsPowerShellPath =
+      (await probePath('/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')) ??
+      (await probePath('/mnt/c/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe'))
+    if (windowsPowerShellPath) {
+      return windowsPowerShellPath
+    }
   }
 
   return null

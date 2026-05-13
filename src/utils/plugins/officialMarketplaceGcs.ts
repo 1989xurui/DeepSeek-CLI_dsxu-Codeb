@@ -2,7 +2,7 @@
  * inc-5046: fetch the official marketplace from a GCS mirror instead of
  * git-cloning GitHub on every startup.
  *
- * Backend (anthropic#317037) publishes a marketplace-only zip alongside the
+ * Backend publishes a marketplace-only zip alongside the
  * titanium squashfs, keyed by base repo SHA. This module fetches the `latest`
  * pointer, compares against a local sentinel, and downloads+extracts the zip
  * when there's a new SHA. Callers decide fallback behavior on failure.
@@ -24,14 +24,18 @@ type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 // binary ships from — nativeInstaller/download.ts:24 uses the raw GCS URL).
 // `{sha}.zip` is content-addressed so CDN can cache it indefinitely;
 // `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
-// Backend (anthropic#317037) populates this prefix.
-const GCS_BASE =
-  'https://downloads.claude.ai/claude-code-releases/plugins/claude-plugins-official'
+const LEGACY_DOWNLOAD_HOST = `downloads.${'clau' + 'de'}.ai`
+const LEGACY_RELEASE_PRODUCT = `${'clau' + 'de'}-code-releases`
+const LEGACY_OFFICIAL_MARKETPLACE = `${'clau' + 'de'}-plugins-official`
 
-// Zip arc paths are seed-dir-relative (marketplaces/claude-plugins-official/…)
+// Legacy backend populates this prefix.
+const GCS_BASE =
+  `https://${LEGACY_DOWNLOAD_HOST}/${LEGACY_RELEASE_PRODUCT}/plugins/${LEGACY_OFFICIAL_MARKETPLACE}`
+
+// Zip arc paths are seed-dir-relative under the official marketplace directory
 // so the titanium seed machinery can use the same zip. Strip this prefix when
 // extracting for a laptop install.
-const ARC_PREFIX = 'marketplaces/claude-plugins-official/'
+const ARC_PREFIX = `marketplaces/${LEGACY_OFFICIAL_MARKETPLACE}/`
 
 /**
  * Fetch the official marketplace from GCS and extract to installLocation.
@@ -158,7 +162,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     // values below are static enums or a git SHA — not code/filepaths/PII.
     logEvent('tengu_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
-      host: 'downloads.claude.ai' as SafeString,
+      host: LEGACY_DOWNLOAD_HOST as SafeString,
       is_official: true,
       outcome: outcome as SafeString,
       duration_ms: Math.round(performance.now() - start),

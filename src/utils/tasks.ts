@@ -1,10 +1,17 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
 import { uniq } from './array.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir, getTeamsDir, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuCodeEnv,
+  getRuntimeConfigHomeDir,
+  getTeamsDir,
+  isDsxuCodeEnvTruthy,
+  isDsxuRuntimeMode,
+} from './envUtils.js'
 import { errorMessage, getErrnoCode } from './errors.js'
 import { lazySchema } from './lazySchema.js'
 import * as lockfile from './lockfile.js'
@@ -31,8 +38,7 @@ let leaderTeamName: string | undefined
 export function setLeaderTeamName(teamName: string): void {
   if (leaderTeamName === teamName) return
   leaderTeamName = teamName
-  // Changing the task list ID is a "tasks updated" event for subscribers —
-  // they're now looking at a different directory.
+  // Changing the task list ID is a "tasks updated" event for subscribers ...  // they're now looking at a different directory.
   notifyTasksUpdated()
 }
 
@@ -62,7 +68,7 @@ export function notifyTasksUpdated(): void {
   try {
     tasksUpdated.emit()
   } catch {
-    // Ignore listener errors — task mutations must not fail due to notification issues
+    // Ignore listener errors ...task mutations must not fail due to notification issues
   }
 }
 
@@ -91,7 +97,7 @@ export type Task = z.infer<ReturnType<typeof TaskSchema>>
 // High water mark file name - stores the maximum task ID ever assigned
 const HIGH_WATER_MARK_FILE = '.highwatermark'
 
-// Lock options: retry with backoff so concurrent callers (multiple Claudes
+// Lock options: retry with backoff so concurrent callers (multiple DSXU agents
 // in a swarm) wait for the lock instead of failing immediately. The sync
 // lockSync API blocked the event loop; the async API needs explicit retries
 // to achieve the same serialization semantics.
@@ -131,8 +137,11 @@ async function writeHighWaterMark(
 }
 
 export function isTodoV2Enabled(): boolean {
+  if (isDsxuRuntimeMode()) {
+    return true
+  }
   // Force-enable tasks in non-interactive mode (e.g. SDK users who want Task tools over TodoWrite)
-  if (isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_TASKS)) {
+  if (isDsxuCodeEnvTruthy('ENABLE_TASKS')) {
     return true
   }
   return !getIsNonInteractiveSession()
@@ -142,7 +151,7 @@ export function isTodoV2Enabled(): boolean {
  * Resets the task list for a new swarm - clears any existing tasks.
  * Writes a high water mark file to prevent ID reuse after reset.
  * Should be called when a new swarm is created to ensure task numbering starts at 1.
- * Uses file locking to prevent race conditions when multiple Claudes run in parallel.
+ * Uses file locking to prevent race conditions when multiple DSXU/legacy agents run in parallel.
  */
 export async function resetTaskList(taskListId: string): Promise<void> {
   const dir = getTasksDir(taskListId)
@@ -190,15 +199,16 @@ export async function resetTaskList(taskListId: string): Promise<void> {
 /**
  * Gets the task list ID based on the current context.
  * Priority:
- * 1. CLAUDE_CODE_TASK_LIST_ID - explicit task list ID
+ * 1. DSXU_CODE_TASK_LIST_ID - explicit task list ID
  * 2. In-process teammate: leader's team name (so teammates share the leader's task list)
- * 3. CLAUDE_CODE_TEAM_NAME - set when running as a process-based teammate
+ * 3. DSXU/legacy team env - set when running as a process-based teammate
  * 4. Leader team name - set when the leader creates a team via TeamCreate
  * 5. Session ID - fallback for standalone sessions
  */
 export function getTaskListId(): string {
-  if (process.env.CLAUDE_CODE_TASK_LIST_ID) {
-    return process.env.CLAUDE_CODE_TASK_LIST_ID
+  const envTaskListId = getDsxuCodeEnv('TASK_LIST_ID')
+  if (envTaskListId) {
+    return envTaskListId
   }
   // In-process teammates use the leader's team name so they share the same
   // task list that tmux/iTerm2 teammates also resolve to.
@@ -219,8 +229,9 @@ export function sanitizePathComponent(input: string): string {
 }
 
 export function getTasksDir(taskListId: string): string {
+  const configHome = getRuntimeConfigHomeDir()
   return join(
-    getClaudeConfigHomeDir(),
+    configHome,
     'tasks',
     sanitizePathComponent(taskListId),
   )
@@ -374,7 +385,7 @@ export async function updateTask(
 ): Promise<Task | null> {
   const path = getTaskPath(taskListId, taskId)
 
-  // Check existence before locking — proper-lockfile throws if the
+  // Check existence before locking ...proper-lockfile throws if the
   // target file doesn't exist, and we want a clean null result.
   const taskBeforeLock = await getTask(taskListId, taskId)
   if (!taskBeforeLock) {
@@ -517,7 +528,7 @@ async function ensureTaskListLockFile(taskListId: string): Promise<string> {
   try {
     await writeFile(lockPath, '', { flag: 'wx' })
   } catch {
-    // EEXIST or other — file already exists, which is fine.
+    // EEXIST or other ...file already exists, which is fine.
   }
   return lockPath
 }
@@ -546,7 +557,7 @@ export async function claimTask(
 ): Promise<ClaimTaskResult> {
   const taskPath = getTaskPath(taskListId, taskId)
 
-  // Check existence before locking — proper-lockfile.lock throws if the
+  // Check existence before locking ...proper-lockfile.lock throws if the
   // target file doesn't exist, and we want a clean task_not_found result.
   const taskBeforeLock = await getTask(taskListId, taskId)
   if (!taskBeforeLock) {
@@ -593,7 +604,7 @@ export async function claimTask(
       return { success: false, reason: 'blocked', task, blockedByTasks }
     }
 
-    // Claim the task (already holding taskPath lock — use unsafe variant)
+    // Claim the task (already holding taskPath lock ...use unsafe variant)
     const updated = await updateTaskUnsafe(taskListId, taskId, {
       owner: claimantAgentId,
     })

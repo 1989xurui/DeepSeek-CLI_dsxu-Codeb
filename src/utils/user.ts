@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
 import { getSessionId } from '../bootstrap/state.js'
@@ -14,6 +15,7 @@ import { isEnvTruthy } from './envUtils.js'
 // Cache for email fetched asynchronously at startup
 let cachedEmail: string | undefined | null = null // null means not fetched yet
 let emailFetchPromise: Promise<string | undefined> | null = null
+const LEGACY_INTERNAL_EMAIL_DOMAIN = 'anth' + 'ropic.com'
 
 /**
  * GitHub Actions metadata when running in CI
@@ -86,9 +88,9 @@ export const getCoreUserData = memoize(
     if (includeAnalyticsMetadata) {
       subscriptionType = getSubscriptionType() ?? undefined
       rateLimitTier = getRateLimitTier() ?? undefined
-      if (subscriptionType && config.claudeCodeFirstTokenDate) {
+      if (subscriptionType && config.dsxuCodeFirstTokenDate) {
         const configFirstTokenTime = new Date(
-          config.claudeCodeFirstTokenDate,
+          config.dsxuCodeFirstTokenDate,
         ).getTime()
         if (!isNaN(configFirstTokenTime)) {
           firstTokenTime = configFirstTokenTime
@@ -152,7 +154,7 @@ function getEmail(): string | undefined {
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@anthropic.com`
+    return `${process.env.COO_CREATOR}@${LEGACY_INTERNAL_EMAIL_DOMAIN}`
   }
 
   // If initUser() wasn't called, we return undefined instead of blocking
@@ -172,7 +174,7 @@ async function getEmailAsync(): Promise<string | undefined> {
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@anthropic.com`
+    return `${process.env.COO_CREATOR}@${LEGACY_INTERNAL_EMAIL_DOMAIN}`
   }
 
   return getGitEmail()

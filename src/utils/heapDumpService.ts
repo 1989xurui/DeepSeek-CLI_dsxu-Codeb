@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Service for heap dump capture.
  * Used by the /heapdump command.
@@ -212,7 +213,7 @@ export async function captureMemoryDiagnostics(
 }
 
 /**
- * Core heap dump function — captures heap snapshot + diagnostics to ~/Desktop.
+ * Core heap dump function ...captures heap snapshot + diagnostics to ~/Desktop.
  *
  * Diagnostics are written BEFORE the heap snapshot is captured, because the
  * V8 heap snapshot serialization can crash for very large heaps. By writing
@@ -225,8 +226,7 @@ export async function performHeapDump(
   try {
     const sessionId = getSessionId()
 
-    // Capture diagnostics before any other async I/O —
-    // the heap dump itself allocates memory and would skew the numbers.
+    // Capture diagnostics before any other async I/O ...    // the heap dump itself allocates memory and would skew the numbers.
     const diagnostics = await captureMemoryDiagnostics(trigger, dumpNumber)
 
     const toGB = (bytes: number): string =>

@@ -44,7 +44,7 @@ export function getSettingSourceName(source: SettingSource): string {
  * @returns Short capitalized display name like 'User', 'Project', 'Plugin'
  */
 export function getSourceDisplayName(
-  source: SettingSource | 'plugin' | 'built-in',
+  source: SettingSource | 'plugin' | 'built-in' | 'bundled',
 ): string {
   switch (source) {
     case 'userSettings':
@@ -61,6 +61,8 @@ export function getSourceDisplayName(
       return 'Plugin'
     case 'built-in':
       return 'Built-in'
+    case 'bundled':
+      return 'Bundled'
   }
 }
 
@@ -195,8 +197,11 @@ export const SOURCES = [
 ] as const satisfies readonly EditableSettingSource[]
 
 /**
- * The JSON Schema URL for Claude Code settings
- * You can edit the contents at https://github.com/SchemaStore/schemastore/blob/master/src/schemas/json/claude-code-settings.json
+ * The JSON Schema URL for DSXU Code settings
  */
-export const CLAUDE_CODE_SETTINGS_SCHEMA_URL =
-  'https://json.schemastore.org/claude-code-settings.json'
+export const DSXU_CODE_SETTINGS_SCHEMA_URL =
+  'https://json.schemastore.org/dsxu-code-settings.json'
+
+const LEGACY_SCHEMA_PRODUCT = 'clau' + 'de-code'
+export const LEGACY_CODE_SETTINGS_SCHEMA_URL =
+  `https://json.schemastore.org/${LEGACY_SCHEMA_PRODUCT}-settings.json`

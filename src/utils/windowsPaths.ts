@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as pathWin32 from 'path/win32'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
+import { getDsxuCodeEnv } from './envUtils.js'
 import { execSync_DEPRECATED } from './execSyncWrapper.js'
 import { memoizeWithLRU } from './memoize.js'
 import { getPlatform } from './platform.js'
@@ -96,13 +97,14 @@ export function setShellIfWindows(): void {
  * Find the path where `bash.exe` included with git-bash exists, exiting the process if not found.
  */
 export const findGitBashPath = memoize((): string => {
-  if (process.env.CLAUDE_CODE_GIT_BASH_PATH) {
-    if (checkPathExists(process.env.CLAUDE_CODE_GIT_BASH_PATH)) {
-      return process.env.CLAUDE_CODE_GIT_BASH_PATH
+  const configuredGitBashPath = getDsxuCodeEnv('GIT_BASH_PATH')
+  if (configuredGitBashPath) {
+    if (checkPathExists(configuredGitBashPath)) {
+      return configuredGitBashPath
     }
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.error(
-      `Claude Code was unable to find CLAUDE_CODE_GIT_BASH_PATH path "${process.env.CLAUDE_CODE_GIT_BASH_PATH}"`,
+      `DSXU Code was unable to find DSXU_CODE_GIT_BASH_PATH path "${configuredGitBashPath}"`,
     )
     // eslint-disable-next-line custom-rules/no-process-exit
     process.exit(1)
@@ -118,7 +120,7 @@ export const findGitBashPath = memoize((): string => {
 
   // biome-ignore lint/suspicious/noConsole:: intentional console output
   console.error(
-    'Claude Code on Windows requires git-bash (https://git-scm.com/downloads/win). If installed but not in PATH, set environment variable pointing to your bash.exe, similar to: CLAUDE_CODE_GIT_BASH_PATH=C:\\Program Files\\Git\\bin\\bash.exe',
+    'DSXU Code on Windows requires git-bash (https://git-scm.com/downloads/win). If installed but not in PATH, set environment variable pointing to your bash.exe, similar to: DSXU_CODE_GIT_BASH_PATH=C:\\Program Files\\Git\\bin\\bash.exe',
   )
   // eslint-disable-next-line custom-rules/no-process-exit
   process.exit(1)
@@ -144,6 +146,32 @@ export const windowsPathToPosixPath = memoizeWithLRU(
   500,
 )
 
+/** Convert a Windows path to a WSL /mnt/<drive> path using pure JS. */
+export const windowsPathToWslPath = memoizeWithLRU(
+  (windowsPath: string): string => {
+    const wslUncMatch = windowsPath.match(
+      /^\\\\wsl(?:\.localhost|\$)\\[^\\]+\\mnt\\([A-Za-z])(\\|$)/i,
+    )
+    if (wslUncMatch) {
+      const driveLetter = wslUncMatch[1]!.toLowerCase()
+      const prefixLength = wslUncMatch[0].length
+      const rest = windowsPath.slice(prefixLength)
+      return `/mnt/${driveLetter}${rest ? '/' + rest.replace(/\\/g, '/') : ''}`
+    }
+
+    const driveMatch = windowsPath.match(/^([A-Za-z]):[/\\]?/)
+    if (driveMatch) {
+      const driveLetter = driveMatch[1]!.toLowerCase()
+      const rest = windowsPath.slice(driveMatch[0].length)
+      return `/mnt/${driveLetter}${rest ? '/' + rest.replace(/\\/g, '/') : ''}`
+    }
+
+    return windowsPath.replace(/\\/g, '/')
+  },
+  (p: string) => p,
+  500,
+)
+
 /** Convert a POSIX path to a Windows path using pure JS. */
 export const posixPathToWindowsPath = memoizeWithLRU(
   (posixPath: string): string => {
@@ -156,6 +184,13 @@ export const posixPathToWindowsPath = memoizeWithLRU(
     if (cygdriveMatch) {
       const driveLetter = cygdriveMatch[1]!.toUpperCase()
       const rest = posixPath.slice(('/cygdrive/' + cygdriveMatch[1]).length)
+      return driveLetter + ':' + (rest || '\\').replace(/\//g, '\\')
+    }
+    // Handle WSL /mnt/c/... format
+    const wslDriveMatch = posixPath.match(/^\/mnt\/([A-Za-z])(\/|$)/)
+    if (wslDriveMatch) {
+      const driveLetter = wslDriveMatch[1]!.toUpperCase()
+      const rest = posixPath.slice(('/mnt/' + wslDriveMatch[1]).length)
       return driveLetter + ':' + (rest || '\\').replace(/\//g, '\\')
     }
     // Handle /c/... format (MSYS2/Git Bash)

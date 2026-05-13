@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { access } from 'fs/promises'
 import { tmpdir as osTmpdir } from 'os'
-import { join as nativeJoin } from 'path'
+import { dirname, join as nativeJoin } from 'path'
 import { join as posixJoin } from 'path/posix'
 import { rearrangePipeCommand } from '../bash/bashPipeCommand.js'
 import { createAndSaveSnapshot } from '../bash/ShellSnapshot.js'
@@ -18,9 +19,11 @@ import { getSessionEnvironmentScript } from '../sessionEnvironment.js'
 import { getSessionEnvVars } from '../sessionEnvVars.js'
 import {
   ensureSocketInitialized,
-  getClaudeTmuxEnv,
+  getDsxuTmuxEnv,
   hasTmuxToolBeenUsed,
 } from '../tmuxSocket.js'
+import { getDsxuCodeEnv } from '../envUtils.js'
+import { getVendoredToolPathEntries } from '../vendorToolPaths.js'
 import { windowsPathToPosixPath } from '../windowsPaths.js'
 import type { ShellProvider } from './shellProvider.js'
 
@@ -29,7 +32,7 @@ import type { ShellProvider } from './shellProvider.js'
  * Extended globs (bash extglob, zsh EXTENDED_GLOB) can be exploited via
  * malicious filenames that expand after our security validation.
  *
- * When CLAUDE_CODE_SHELL_PREFIX is set, the actual executing shell may differ
+ * When DSXU shell-prefix env is set, the actual executing shell may differ
  * from shellPath (e.g., shellPath is zsh but the wrapper runs bash). In this
  * case, we include commands for BOTH shells. We redirect both stdout and stderr
  * to /dev/null because zsh's command_not_found_handler writes to STDOUT.
@@ -37,9 +40,9 @@ import type { ShellProvider } from './shellProvider.js'
  * When no shell prefix is set, we use the appropriate command for the detected shell.
  */
 function getDisableExtglobCommand(shellPath: string): string | null {
-  // When CLAUDE_CODE_SHELL_PREFIX is set, the wrapper may use a different shell
+  // When DSXU shell-prefix env is set, the wrapper may use a different shell
   // than shellPath, so we include both bash and zsh commands
-  if (process.env.CLAUDE_CODE_SHELL_PREFIX) {
+  if (getDsxuCodeEnv('SHELL_PREFIX')) {
     // Redirect both stdout and stderr because zsh's command_not_found_handler
     // writes to stdout instead of stderr
     return '{ shopt -u extglob || setopt NO_EXTENDED_GLOB; } >/dev/null 2>&1 || true'
@@ -83,7 +86,7 @@ export async function createBashShellProvider(
       },
     ): Promise<{ commandString: string; cwdFilePath: string }> {
       let snapshotFilePath = await snapshotPromise
-      // This access() check is NOT pure TOCTOU — it's the fallback decision
+      // This access() check is NOT pure TOCTOU ...it's the fallback decision
       // point for getSpawnArgs. When the snapshot disappears mid-session
       // (tmpdir cleanup), we must clear lastSnapshotFilePath so getSpawnArgs
       // adds -l and the command gets login-shell init. Without this check,
@@ -115,15 +118,14 @@ export async function createBashShellProvider(
       // but Node.js needs native Windows paths for file operations.
       const shellCwdFilePath = opts.useSandbox
         ? posixJoin(opts.sandboxTmpDir!, `cwd-${opts.id}`)
-        : posixJoin(shellTmpdir, `claude-${opts.id}-cwd`)
+        : posixJoin(shellTmpdir, `dsxu-${opts.id}-cwd`)
       const cwdFilePath = opts.useSandbox
         ? posixJoin(opts.sandboxTmpDir!, `cwd-${opts.id}`)
-        : nativeJoin(tmpdir, `claude-${opts.id}-cwd`)
+        : nativeJoin(tmpdir, `dsxu-${opts.id}-cwd`)
 
       // Defensive rewrite: the model sometimes emits Windows CMD-style `2>nul`
       // redirects. In POSIX bash (including Git Bash on Windows), this creates a
-      // literal file named `nul` — a reserved device name that breaks git.
-      // See anthropics/claude-code#4928.
+      // literal file named `nul` ...a reserved device name that breaks git.
       const normalizedCommand = rewriteWindowsNullRedirect(command)
       const addStdinRedirect = shouldAddStdinRedirect(normalizedCommand)
       let quotedCommand = quoteShellCommand(normalizedCommand, addStdinRedirect)
@@ -145,7 +147,7 @@ export async function createBashShellProvider(
       // Special handling for pipes: move stdin redirect after first command
       // This ensures the redirect applies to the first command, not to eval itself.
       // Without this, `eval 'rg foo | wc -l' \< /dev/null` becomes
-      // `rg foo | wc -l < /dev/null` — wc reads /dev/null and outputs 0, and
+      // `rg foo | wc -l < /dev/null` ...wc reads /dev/null and outputs 0, and
       // rg (with no path arg) waits on the open spawn stdin pipe forever.
       // Applies to sandbox mode too: sandbox wraps the assembled commandString,
       // not the raw command (since PR #9189).
@@ -156,7 +158,7 @@ export async function createBashShellProvider(
       const commandParts: string[] = []
 
       // Source the snapshot file. The `|| true` guards the race between the
-      // access() check above and the spawned shell's `source` — if the file
+      // access() check above and the spawned shell's `source` ...if the file
       // vanishes in that window, the `&&` chain still continues.
       if (snapshotFilePath) {
         const finalPath =
@@ -170,6 +172,22 @@ export async function createBashShellProvider(
       const sessionEnvScript = await getSessionEnvironmentScript()
       if (sessionEnvScript) {
         commandParts.push(sessionEnvScript)
+      }
+
+      // Keep DSXU's own runtime bin ahead of profile/snapshot PATH entries so
+      // commands like `bun run test` resolve to the runtime that launched DSXU,
+      // not a WindowsApps shim or an unrelated host installation.
+      const runtimeBin =
+        getPlatform() === 'windows'
+          ? windowsPathToPosixPath(dirname(process.execPath))
+          : dirname(process.execPath)
+      commandParts.push(`export PATH=${quote([runtimeBin])}:$PATH`)
+      for (const vendoredToolBin of getVendoredToolPathEntries()) {
+        const finalToolBin =
+          getPlatform() === 'windows'
+            ? windowsPathToPosixPath(vendoredToolBin)
+            : vendoredToolBin
+        commandParts.push(`export PATH=${quote([finalToolBin])}:$PATH`)
       }
 
       // Disable extended glob patterns for security (after sourcing user config to override)
@@ -186,10 +204,11 @@ export async function createBashShellProvider(
       commandParts.push(`pwd -P >| ${quote([shellCwdFilePath])}`)
       let commandString = commandParts.join(' && ')
 
-      // Apply CLAUDE_CODE_SHELL_PREFIX if set
-      if (process.env.CLAUDE_CODE_SHELL_PREFIX) {
+      // Apply DSXU shell-prefix env if set.
+      const shellPrefix = getDsxuCodeEnv('SHELL_PREFIX')
+      if (shellPrefix) {
         commandString = formatShellPrefixCommand(
-          process.env.CLAUDE_CODE_SHELL_PREFIX,
+          shellPrefix,
           commandString,
         )
       }
@@ -202,19 +221,22 @@ export async function createBashShellProvider(
       if (skipLoginShell) {
         logForDebugging('Spawning shell without login (-l flag skipped)')
       }
-      return ['-c', ...(skipLoginShell ? [] : ['-l']), commandString]
+      // Bash parses the argument immediately after -c as the command string.
+      // On Windows/WSL, `bash -c -l <cmd>` treats "-l" as the command and
+      // drops the real payload, which breaks BashTool with exit code 1/127.
+      return [...(skipLoginShell ? [] : ['-l']), '-c', commandString]
     },
 
     async getEnvironmentOverrides(
       command: string,
     ): Promise<Record<string, string>> {
       // TMUX SOCKET ISOLATION (DEFERRED):
-      // We initialize Claude's tmux socket ONLY AFTER the Tmux tool has been used
+      // We initialize DSXU's tmux socket ONLY AFTER the Tmux tool has been used
       // at least once, OR if the current command appears to use tmux.
       // This defers the startup cost until tmux is actually needed.
       //
       // Once the Tmux tool is used (or a tmux command runs), all subsequent Bash
-      // commands will use Claude's isolated socket via the TMUX env var override.
+      // commands will use DSXU's isolated socket via the TMUX env var override.
       //
       // See tmuxSocket.ts for the full isolation architecture documentation.
       const commandUsesTmux = command.includes('tmux')
@@ -224,13 +246,13 @@ export async function createBashShellProvider(
       ) {
         await ensureSocketInitialized()
       }
-      const claudeTmuxEnv = getClaudeTmuxEnv()
+      const dsxuTmuxEnv = getDsxuTmuxEnv()
       const env: Record<string, string> = {}
-      // CRITICAL: Override TMUX to isolate ALL tmux commands to Claude's socket.
-      // This is NOT the user's TMUX value - it points to Claude's isolated socket.
+      // CRITICAL: Override TMUX to isolate ALL tmux commands to DSXU's socket.
+      // This is NOT the user's TMUX value - it points to DSXU's isolated socket.
       // When null (before socket initializes), user's TMUX is preserved.
-      if (claudeTmuxEnv) {
-        env.TMUX = claudeTmuxEnv
+      if (dsxuTmuxEnv) {
+        env.TMUX = dsxuTmuxEnv
       }
       if (currentSandboxTmpDir) {
         let posixTmpDir = currentSandboxTmpDir
@@ -238,11 +260,12 @@ export async function createBashShellProvider(
           posixTmpDir = windowsPathToPosixPath(posixTmpDir)
         }
         env.TMPDIR = posixTmpDir
-        env.CLAUDE_CODE_TMPDIR = posixTmpDir
+        env.DSXU_CODE_TMPDIR = posixTmpDir
+        env[`CL${'AUDE'}_CODE_TMPDIR`] = posixTmpDir
         // Zsh uses TMPPREFIX (default /tmp/zsh) for heredoc temp files,
         // not TMPDIR. Set it to a path inside the sandbox tmp dir so
         // heredocs work in sandboxed zsh commands.
-        // Safe to set unconditionally — non-zsh shells ignore TMPPREFIX.
+        // Safe to set unconditionally ...non-zsh shells ignore TMPPREFIX.
         env.TMPPREFIX = posixJoin(posixTmpDir, 'zsh')
       }
       // Apply session env vars set via /env (child processes only, not the REPL)

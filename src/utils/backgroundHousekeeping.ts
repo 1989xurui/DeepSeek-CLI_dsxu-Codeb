@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { initAutoDream } from '../services/autoDream/autoDream.js'
 import { initMagicDocs } from '../services/MagicDocs/magicDocs.js'
@@ -15,7 +16,7 @@ const registerProtocolModule = feature('LODESTONE')
 
 import { getIsInteractive, getLastInteractionTime } from '../bootstrap/state.js'
 import {
-  cleanupNpmCacheForAnthropicPackages,
+  cleanupNpmCacheForProviderPackages,
   cleanupOldMessageFilesInBackground,
   cleanupOldVersionsThrottled,
 } from './cleanup.js'
@@ -84,7 +85,7 @@ export function startBackgroundHousekeeping(): void {
   // and skip immediately if another process holds the lock.
   if (process.env.USER_TYPE === 'ant') {
     const interval = setInterval(() => {
-      void cleanupNpmCacheForAnthropicPackages()
+      void cleanupNpmCacheForProviderPackages()
       void cleanupOldVersionsThrottled()
     }, RECURRING_CLEANUP_INTERVAL_MS)
 

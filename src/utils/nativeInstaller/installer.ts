@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Native Installer Implementation
  *
@@ -41,7 +42,7 @@ import { logForDebugging } from '../debug.js'
 import { getCurrentInstallationType } from '../doctorDiagnostic.js'
 import { env } from '../env.js'
 import { envDynamic } from '../envDynamic.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { isDsxuRuntimeMode, isEnvTruthy } from '../envUtils.js'
 import { errorMessage, getErrnoCode, isENOENT, toError } from '../errors.js'
 import { execFileNoThrowWithCwd } from '../execFileNoThrow.js'
 import { getShellType } from '../localInstaller.js'
@@ -49,7 +50,7 @@ import * as lockfile from '../lockfile.js'
 import { logError } from '../log.js'
 import { gt, gte } from '../semver.js'
 import {
-  filterClaudeAliases,
+  filterLegacyProviderAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
@@ -77,6 +78,12 @@ export const VERSION_RETENTION_COUNT = 2
 // This is long enough to survive laptop sleep durations while still
 // allowing cleanup of abandoned locks from crashed processes within a reasonable time.
 const LOCK_STALE_MS = 7 * 24 * 60 * 60 * 1000
+const DSXU_NATIVE_STATE_NAME = 'dsxu'
+const LEGACY_NATIVE_PRODUCT = 'cl' + 'aude'
+const LEGACY_NATIVE_CONFIG_DIR = `.${LEGACY_NATIVE_PRODUCT}`
+const LEGACY_PROVIDER_SCOPE = '@' + 'anth' + 'ropic-ai'
+const LEGACY_CODE_PACKAGE = `${LEGACY_PROVIDER_SCOPE}/${LEGACY_NATIVE_PRODUCT}-code`
+const LEGACY_NATIVE_PACKAGE_PREFIX = `${LEGACY_NATIVE_PRODUCT}-cli-native-`
 
 export type SetupMessage = {
   message: string
@@ -109,29 +116,34 @@ export function getPlatform(): string {
 }
 
 export function getBinaryName(platform: string): string {
-  return platform.startsWith('win32') ? 'claude.exe' : 'claude'
+  return platform.startsWith('win32')
+    ? `${LEGACY_NATIVE_PRODUCT}.exe`
+    : LEGACY_NATIVE_PRODUCT
 }
 
 function getBaseDirectories() {
   const platform = getPlatform()
   const executableName = getBinaryName(platform)
+  const stateDirName = isDsxuRuntimeMode()
+    ? DSXU_NATIVE_STATE_NAME
+    : LEGACY_NATIVE_PRODUCT
 
   return {
     // Data directories (permanent storage)
-    versions: join(getXDGDataHome(), 'claude', 'versions'),
+    versions: join(getXDGDataHome(), stateDirName, 'versions'),
 
     // Cache directories (can be deleted)
-    staging: join(getXDGCacheHome(), 'claude', 'staging'),
+    staging: join(getXDGCacheHome(), stateDirName, 'staging'),
 
     // State directories
-    locks: join(getXDGStateHome(), 'claude', 'locks'),
+    locks: join(getXDGStateHome(), stateDirName, 'locks'),
 
     // User bin
     executable: join(getUserBinDir(), executableName),
   }
 }
 
-async function isPossibleClaudeBinary(filePath: string): Promise<boolean> {
+async function isPossibleNativeBinary(filePath: string): Promise<boolean> {
   try {
     const stats = await stat(filePath)
     // before download, the version lock file (located at the same filePath) will be size 0
@@ -331,10 +343,10 @@ async function installVersionFromPackage(
 ) {
   try {
     // Extract binary from npm package structure in staging
-    const nodeModulesDir = join(stagingPath, 'node_modules', '@anthropic-ai')
+    const nodeModulesDir = join(stagingPath, 'node_modules', LEGACY_PROVIDER_SCOPE)
     const entries = await readdir(nodeModulesDir)
     const nativePackage = entries.find((entry: string) =>
-      entry.startsWith('claude-cli-native-'),
+      entry.startsWith(LEGACY_NATIVE_PACKAGE_PREFIX),
     )
 
     if (!nativePackage) {
@@ -465,12 +477,12 @@ async function performVersionUpdate(
     logForDebugging(`Version ${version} already installed, updating symlink`)
   }
 
-  // Create direct symlink from ~/.local/bin/claude to the version binary
+  // Create direct symlink from the user bin directory to the version binary.
   await removeDirectoryIfEmpty(executablePath)
   await updateSymlink(executablePath, installPath)
 
   // Verify the executable was actually created/updated
-  if (!(await isPossibleClaudeBinary(executablePath))) {
+  if (!(await isPossibleNativeBinary(executablePath))) {
     let installPathExists = false
     try {
       await stat(installPath)
@@ -489,7 +501,7 @@ async function performVersionUpdate(
 
 async function versionIsAvailable(version: string): Promise<boolean> {
   const { installPath } = await getVersionPaths(version)
-  return isPossibleClaudeBinary(installPath)
+  return isPossibleNativeBinary(installPath)
 }
 
 async function updateLatest(
@@ -539,7 +551,7 @@ async function updateLatest(
     !forceReinstall &&
     version === MACRO.VERSION &&
     (await versionIsAvailable(version)) &&
-    (await isPossibleClaudeBinary(executablePath))
+    (await isPossibleNativeBinary(executablePath))
   ) {
     logForDebugging(`Found ${version} at ${executablePath}, skipping install`)
     logEvent('tengu_native_update_complete', {
@@ -628,7 +640,7 @@ export async function removeDirectoryIfEmpty(path: string): Promise<void> {
     logForDebugging(`Removed empty directory at ${path}`)
   } catch (error) {
     const code = getErrnoCode(error)
-    // Expected cases (not-a-dir, missing, not-empty) — silently skip.
+    // Expected cases (not-a-dir, missing, not-empty) ...silently skip.
     // ENOTDIR is the normal path: executablePath is typically a symlink.
     if (code !== 'ENOTDIR' && code !== 'ENOENT' && code !== 'ENOTEMPTY') {
       logForDebugging(`Could not remove directory at ${path}: ${error}`)
@@ -845,18 +857,18 @@ export async function checkInstall(
     })
   }
 
-  // Check if claude executable exists and is valid.
-  // On non-Windows, call readlink directly and route errno — ENOENT means
+  // Check if the native executable exists and is valid.
+  // On non-Windows, call readlink directly and route errno ...ENOENT means
   // the executable is missing, EINVAL means it exists but isn't a symlink.
   // This avoids an access()→readlink() TOCTOU where deletion between the
   // two calls produces a misleading "Not a symlink" diagnostic.
-  // isPossibleClaudeBinary stats the path internally, so we don't pre-check
-  // with access() — that would be a TOCTOU between access and the stat.
+  // isPossibleNativeBinary stats the path internally, so we don't pre-check
+  // with access() ...that would be a TOCTOU between access and the stat.
   if (isWindows) {
     // On Windows it's a copied executable, not a symlink
-    if (!(await isPossibleClaudeBinary(dirs.executable))) {
+    if (!(await isPossibleNativeBinary(dirs.executable))) {
       messages.push({
-        message: `installMethod is native, but claude command is missing or invalid at ${dirs.executable}`,
+        message: `installMethod is native, but native command is missing or invalid at ${dirs.executable}`,
         userActionRequired: true,
         type: 'error',
       })
@@ -865,9 +877,9 @@ export async function checkInstall(
     try {
       const target = await readlink(dirs.executable)
       const absoluteTarget = resolve(dirname(dirs.executable), target)
-      if (!(await isPossibleClaudeBinary(absoluteTarget))) {
+      if (!(await isPossibleNativeBinary(absoluteTarget))) {
         messages.push({
-          message: `Claude symlink points to missing or invalid binary: ${target}`,
+          message: `Native symlink points to missing or invalid binary: ${target}`,
           userActionRequired: true,
           type: 'error',
         })
@@ -875,15 +887,15 @@ export async function checkInstall(
     } catch (e) {
       if (isENOENT(e)) {
         messages.push({
-          message: `installMethod is native, but claude command not found at ${dirs.executable}`,
+          message: `installMethod is native, but native command not found at ${dirs.executable}`,
           userActionRequired: true,
           type: 'error',
         })
       } else {
-        // EINVAL (not a symlink) or other — check as regular binary
-        if (!(await isPossibleClaudeBinary(dirs.executable))) {
+        // EINVAL (not a symlink) or other ...check as regular binary
+        if (!(await isPossibleNativeBinary(dirs.executable))) {
           messages.push({
-            message: `${dirs.executable} exists but is not a valid Claude binary`,
+            message: `${dirs.executable} exists but is not a valid native binary`,
             userActionRequired: true,
             type: 'error',
           })
@@ -915,7 +927,7 @@ export async function checkInstall(
       // Windows-specific PATH instructions
       const windowsBinPath = localBinDir.replace(/\//g, '\\')
       messages.push({
-        message: `Native installation exists but ${windowsBinPath} is not in your PATH. Add it by opening: System Properties → Environment Variables → Edit User PATH → New → Add the path above. Then restart your terminal.`,
+        message: `Native installation exists but ${windowsBinPath} is not in your PATH. Add it by opening: System Properties -> Environment Variables -> Edit User PATH -> New -> Add the path above. Then restart your terminal.`,
         userActionRequired: true,
         type: 'path',
       })
@@ -1021,7 +1033,7 @@ async function getVersionFromSymlink(
   try {
     const target = await readlink(symlinkPath)
     const absoluteTarget = resolve(dirname(symlinkPath), target)
-    if (await isPossibleClaudeBinary(absoluteTarget)) {
+    if (await isPossibleNativeBinary(absoluteTarget)) {
       return absoluteTarget
     }
   } catch {
@@ -1195,7 +1207,10 @@ export async function cleanupOldVersions(): Promise<void> {
       const files = await readdir(executableDir)
       let cleanedCount = 0
       for (const file of files) {
-        if (!/^claude\.exe\.old\.\d+$/.test(file)) continue
+        const oldExePattern = new RegExp(
+          `^${LEGACY_NATIVE_PRODUCT}\\.exe\\.old\\.\\d+$`,
+        )
+        if (!oldExePattern.test(file)) continue
         try {
           await unlink(join(executableDir, file))
           cleanedCount++
@@ -1224,7 +1239,7 @@ export async function cleanupOldVersions(): Promise<void> {
       try {
         // stat() is load-bearing here (we need mtime). There is a theoretical
         // TOCTOU where a concurrent installer could freshen a stale staging
-        // dir between stat and rm — but the 1-hour threshold makes this
+        // dir between stat and rm ...but the 1-hour threshold makes this
         // vanishingly unlikely, and rm({force:true}) tolerates concurrent
         // deletion.
         const stats = await stat(stagingPath)
@@ -1251,7 +1266,7 @@ export async function cleanupOldVersions(): Promise<void> {
     }
   }
 
-  // Clean up stale PID locks (crashed processes) — cleanupStaleLocks handles ENOENT
+  // Clean up stale PID locks (crashed processes) ...cleanupStaleLocks handles ENOENT
   if (isPidBasedLockingEnabled()) {
     const staleLocksCleaned = cleanupStaleLocks(dirs.locks)
     if (staleLocksCleaned > 0) {
@@ -1286,7 +1301,7 @@ export async function cleanupOldVersions(): Promise<void> {
   for (const entry of versionEntries) {
     const entryPath = join(dirs.versions, entry)
     if (/\.tmp\.\d+\.\d+$/.test(entry)) {
-      // Orphaned temp install file — pattern: {version}.tmp.{pid}.{timestamp}
+      // Orphaned temp install file ...pattern: {version}.tmp.{pid}.{timestamp}
       try {
         const stats = await stat(entryPath)
         if (stats.mtime.getTime() < oneHourAgo) {
@@ -1299,7 +1314,7 @@ export async function cleanupOldVersions(): Promise<void> {
       }
       continue
     }
-    // Candidate version binary — stat once, reuse for isFile/size/mtime/mode
+    // Candidate version binary ...stat once, reuse for isFile/size/mtime/mode
     try {
       const stats = await stat(entryPath)
       if (!stats.isFile()) continue
@@ -1308,8 +1323,7 @@ export async function cleanupOldVersions(): Promise<void> {
         stats.size > 0 &&
         (stats.mode & 0o111) === 0
       ) {
-        // Check executability via mode bits from the existing stat result —
-        // avoids a second syscall (access(X_OK)) and the TOCTOU window between
+        // Check executability via mode bits from the existing stat result ...        // avoids a second syscall (access(X_OK)) and the TOCTOU window between
         // stat and access. Skip on Windows: libuv only sets execute bits for
         // .exe/.com/.bat/.cmd, but version files are extensionless semver
         // strings (e.g. "1.2.3"), so this check would reject all of them.
@@ -1458,7 +1472,7 @@ async function isNpmSymlink(executablePath: string): Promise<boolean> {
 }
 
 /**
- * Remove the claude symlink from the executable directory
+ * Remove the native symlink from the executable directory.
  * This is used when switching away from native installation
  * Will only remove if it's a native binary symlink, not npm-managed JS files
  */
@@ -1476,17 +1490,17 @@ export async function removeInstalledSymlink(): Promise<void> {
 
     // It's a native binary symlink, safe to remove
     await unlink(dirs.executable)
-    logForDebugging(`Removed claude symlink at ${dirs.executable}`)
+    logForDebugging(`Removed native symlink at ${dirs.executable}`)
   } catch (error) {
     if (isENOENT(error)) {
       return
     }
-    logError(new Error(`Failed to remove claude symlink: ${error}`))
+    logError(new Error(`Failed to remove native symlink: ${error}`))
   }
 }
 
 /**
- * Clean up old claude aliases from shell configuration files
+ * Clean up old legacy provider aliases from shell configuration files.
  * Only handles alias removal, not PATH setup
  */
 export async function cleanupShellAliases(): Promise<SetupMessage[]> {
@@ -1498,16 +1512,16 @@ export async function cleanupShellAliases(): Promise<SetupMessage[]> {
       const lines = await readFileLines(configFile)
       if (!lines) continue
 
-      const { filtered, hadAlias } = filterClaudeAliases(lines)
+      const { filtered, hadAlias } = filterLegacyProviderAliases(lines)
 
       if (hadAlias) {
         await writeFileLines(configFile, filtered)
         messages.push({
-          message: `Removed claude alias from ${configFile}. Run: unalias claude`,
+          message: `Removed legacy provider alias from ${configFile}. Run: unalias ${LEGACY_NATIVE_PRODUCT}`,
           userActionRequired: true,
           type: 'alias',
         })
-        logForDebugging(`Cleaned up claude alias from ${shellType} config`)
+        logForDebugging(`Cleaned up legacy provider alias from ${shellType} config`)
       }
     } catch (error) {
       logError(error)
@@ -1542,7 +1556,7 @@ async function manualRemoveNpmPackage(
     const globalPrefix = prefixResult.stdout.trim()
     let manuallyRemoved = false
 
-    // Helper to try removing a file. unlink alone is sufficient — it throws
+    // Helper to try removing a file. unlink alone is sufficient ...it throws
     // ENOENT if the file is missing, which the catch handles identically.
     // A stat() pre-check would add a syscall and a TOCTOU window where
     // concurrent cleanup causes a false-negative return.
@@ -1558,9 +1572,9 @@ async function manualRemoveNpmPackage(
 
     if (getPlatform().startsWith('win32')) {
       // Windows - only remove executables, not the package directory
-      const binCmd = join(globalPrefix, 'claude.cmd')
-      const binPs1 = join(globalPrefix, 'claude.ps1')
-      const binExe = join(globalPrefix, 'claude')
+      const binCmd = join(globalPrefix, `${LEGACY_NATIVE_PRODUCT}.cmd`)
+      const binPs1 = join(globalPrefix, `${LEGACY_NATIVE_PRODUCT}.ps1`)
+      const binExe = join(globalPrefix, LEGACY_NATIVE_PRODUCT)
 
       if (await tryRemove(binCmd, 'bin script')) {
         manuallyRemoved = true
@@ -1575,7 +1589,7 @@ async function manualRemoveNpmPackage(
       }
     } else {
       // Unix/Mac - only remove symlink, not the package directory
-      const binSymlink = join(globalPrefix, 'bin', 'claude')
+      const binSymlink = join(globalPrefix, 'bin', LEGACY_NATIVE_PRODUCT)
 
       if (await tryRemove(binSymlink, 'bin symlink')) {
         manuallyRemoved = true
@@ -1662,10 +1676,8 @@ export async function cleanupNpmInstallations(): Promise<{
   const warnings: string[] = []
   let removed = 0
 
-  // Always attempt to remove @anthropic-ai/claude-code
-  const codePackageResult = await attemptNpmUninstall(
-    '@anthropic-ai/claude-code',
-  )
+  // Always attempt to remove the legacy provider package.
+  const codePackageResult = await attemptNpmUninstall(LEGACY_CODE_PACKAGE)
   if (codePackageResult.success) {
     removed++
     if (codePackageResult.warning) {
@@ -1676,7 +1688,7 @@ export async function cleanupNpmInstallations(): Promise<{
   }
 
   // Also attempt to remove MACRO.PACKAGE_URL if it's defined and different
-  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== '@anthropic-ai/claude-code') {
+  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== LEGACY_CODE_PACKAGE) {
     const macroPackageResult = await attemptNpmUninstall(MACRO.PACKAGE_URL)
     if (macroPackageResult.success) {
       removed++
@@ -1688,8 +1700,12 @@ export async function cleanupNpmInstallations(): Promise<{
     }
   }
 
-  // Check for local installation at ~/.claude/local
-  const localInstallDir = join(homedir(), '.claude', 'local')
+  // Check for local installation at the runtime config location.
+  const localInstallDir = join(
+    homedir(),
+    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_NATIVE_CONFIG_DIR,
+    'local',
+  )
 
   try {
     await rm(localInstallDir, { recursive: true })

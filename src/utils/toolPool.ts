@@ -66,7 +66,9 @@ export function mergeAndFilterTools(
     uniqBy([...initialTools, ...assembled], 'name'),
     isMcpTool,
   )
-  const byName = (a: Tool, b: Tool) => a.name.localeCompare(b.name)
+  const byName = (a: Tool, b: Tool) => (
+    a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+  )
   const tools = [...builtIn.sort(byName), ...mcp.sort(byName)]
 
   if (feature('COORDINATOR_MODE') && coordinatorModeModule) {

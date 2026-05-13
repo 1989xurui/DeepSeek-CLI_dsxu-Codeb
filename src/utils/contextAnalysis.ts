@@ -1,8 +1,8 @@
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { BetaContentBlock } from 'src/types/providerSdk.js'
 import type {
   ContentBlock,
   ContentBlockParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+} from 'src/types/providerSdk.js'
 import { roughTokenCountEstimation as countTokens } from '../services/tokenEstimation.js'
 import type {
   AssistantMessage,
@@ -269,4 +269,18 @@ export function tokenStatsToStatsigMetrics(
   }
 
   return metrics
+}
+
+
+export function getDsxuContextAnalysisRuntimeProfile() {
+  return {
+    runtime: 'DSXU Context Analysis Ledger',
+    defaultBehavior: 'transcript/tool/file-read token distribution is measured before compact/recovery decisions',
+    providerTarget: 'DSXU Prompt/Context Discipline',
+    activationEvidence: [
+      'analyzeContext separates human, assistant, tool request, tool result, attachment, and local command tokens',
+      'duplicate file reads are detected to reduce weak-model context waste',
+      'metrics include percentages for release-gate and context-collapse policies',
+    ],
+  }
 }

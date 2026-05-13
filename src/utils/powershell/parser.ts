@@ -1,15 +1,15 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execa } from 'execa'
 import { logForDebugging } from '../debug.js'
+import { getDsxuCodeEnv } from '../envUtils.js'
 import { memoizeWithLRU } from '../memoize.js'
 import { getCachedPowerShellPath } from '../shell/powershellDetection.js'
 import { jsonParse } from '../slowOperations.js'
-
 // ---------------------------------------------------------------------------
 // Public types describing the parsed output returned to callers.
 // These map to System.Management.Automation.Language AST classes.
 // Raw internal types (RawParsedOutput etc.) are defined further below.
 // ---------------------------------------------------------------------------
-
 /**
  * The PowerShell AST element type for pipeline elements.
  * Maps directly to CommandBaseAst derivatives in System.Management.Automation.Language.
@@ -18,7 +18,6 @@ type PipelineElementType =
   | 'CommandAst'
   | 'CommandExpressionAst'
   | 'ParenExpressionAst'
-
 /**
  * The AST node type for individual command elements (arguments, expressions).
  * Used to classify each element during the AST walk so TypeScript can derive
@@ -33,10 +32,9 @@ type CommandElementType =
   | 'StringConstant'
   | 'Parameter'
   | 'Other'
-
 /**
  * A child node of a command element (one level deep). Populated for
- * CommandParameterAst → .Argument (colon-bound parameters like
+ * CommandParameterAst  -> .Argument (colon-bound parameters like
  * `-InputObject:$env:SECRET`). Consumers check `child.type` to classify
  * the bound value (Variable, StringConstant, Other) without parsing text.
  */
@@ -44,7 +42,6 @@ export type CommandElementChild = {
   type: CommandElementType
   text: string
 }
-
 /**
  * The PowerShell AST statement type.
  * Maps directly to StatementAst derivatives in System.Management.Automation.Language.
@@ -65,7 +62,6 @@ type StatementType =
   | 'FunctionDefinitionAst'
   | 'DataStatementAst'
   | 'UnknownStatementAst'
-
 /**
  * A command invocation within a pipeline segment.
  */
@@ -84,7 +80,7 @@ export type ParsedCommandElement = {
   elementTypes?: CommandElementType[]
   /**
    * Child nodes of each argument, aligned with `args[]` (so
-   * `children[i]` ↔ `args[i]` ↔ `elementTypes[i+1]`). Only populated for
+   * `children[i]`  -> `args[i]`  -> `elementTypes[i+1]`). Only populated for
    * Parameter elements with a colon-bound argument. Undefined for elements
    * with no children. Lets consumers check `children[i].some(c => c.type
    * !== 'StringConstant')` instead of parsing the arg text for `:` + `$`.
@@ -93,7 +89,6 @@ export type ParsedCommandElement = {
   /** Redirections on this command element (from nested commands in && / || chains) */
   redirections?: ParsedRedirection[]
 }
-
 /**
  * A redirection found in the command.
  */
@@ -105,7 +100,6 @@ type ParsedRedirection = {
   /** Whether this is a merging redirection like 2>&1 */
   isMerging: boolean
 }
-
 /**
  * A parsed statement from PowerShell.
  * Can be a pipeline, assignment, control flow statement, etc.
@@ -139,7 +133,6 @@ type ParsedStatement = {
     hasScriptBlocks?: boolean
   }
 }
-
 /**
  * A variable reference found in the command.
  */
@@ -149,7 +142,6 @@ type ParsedVariable = {
   /** Whether this variable uses splatting (@var instead of $var) */
   isSplatted: boolean
 }
-
 /**
  * A parse error from PowerShell's parser.
  */
@@ -157,7 +149,6 @@ type ParseError = {
   message: string
   errorId: string
 }
-
 /**
  * The complete parsed result from the PowerShell AST parser.
  */
@@ -176,8 +167,8 @@ export type ParsedPowerShellCommand = {
   originalCommand: string
   /**
    * All .NET type literals found anywhere in the AST (TypeExpressionAst +
-   * TypeConstraintAst). TypeName.FullName — the literal text as written, NOT
-   * the resolved .NET type (e.g. [int] → "int", not "System.Int32").
+   * TypeConstraintAst). TypeName.FullName ...the literal text as written, NOT
+   * the resolved .NET type (e.g. [int]  -> "int", not "System.Int32").
    * Consumed by the CLM-allowlist check in powershellSecurity.ts.
    */
   typeLiterals?: string[]
@@ -195,18 +186,16 @@ export type ParsedPowerShellCommand = {
    */
   hasScriptRequirements?: boolean
 }
-
 // ---------------------------------------------------------------------------
-
 // Default 5s is fine for interactive use (warm pwsh spawn is ~450ms). Windows
 // CI under Defender/AMSI load can exceed 5s on consecutive spawns even after
 // CAN_SPAWN_PARSE_SCRIPT() warms the JIT (run 23574701241 windows-shard-5:
-// attackVectors F1 hit 2×5s timeout → valid:false → 'ask' instead of 'deny').
+// attackVectors F1 hit 2×5s timeout  -> valid:false  -> 'ask' instead of 'deny').
 // Override via env for tests. Read inside parsePowerShellCommandImpl, not
-// top-level, per CLAUDE.md (globalSettings.env ordering).
-const DEFAULT_PARSE_TIMEOUT_MS = 5_000
+// top-level, per DSXU.md (globalSettings.env ordering).
+const DEFAULT_PARSE_TIMEOUT_MS = 15_000
 function getParseTimeoutMs(): number {
-  const env = process.env.CLAUDE_CODE_PWSH_PARSE_TIMEOUT_MS
+  const env = getDsxuCodeEnv('PWSH_PARSE_TIMEOUT_MS')
   if (env) {
     const parsed = parseInt(env, 10)
     if (!isNaN(parsed) && parsed > 0) return parsed
@@ -215,7 +204,22 @@ function getParseTimeoutMs(): number {
 }
 // MAX_COMMAND_LENGTH is derived from PARSE_SCRIPT_BODY.length below (after the
 // script body is defined) so it cannot go stale as the script grows.
-
+let parserSpawnQueue: Promise<void> = Promise.resolve()
+async function withSerializedPowerShellParser<T>(
+  task: () => Promise<T>,
+): Promise<T> {
+  const previous = parserSpawnQueue
+  let releaseCurrent: () => void = () => {}
+  parserSpawnQueue = new Promise<void>(resolve => {
+    releaseCurrent = resolve
+  })
+  await previous.catch(() => {})
+  try {
+    return await task()
+  } finally {
+    releaseCurrent()
+  }
+}
 /**
  * The PowerShell parse script inlined as a string constant.
  * This avoids needing to read from disk at runtime (the file may not exist
@@ -230,14 +234,12 @@ export type RawCommandElement = {
   expressionType?: string // .Expression.GetType().Name for CommandExpressionAst
   children?: { type: string; text: string }[] // CommandParameterAst.Argument, one level
 }
-
 export type RawRedirection = {
   type: string // "FileRedirectionAst" or "MergingRedirectionAst"
   append?: boolean // .Append (FileRedirectionAst only)
   fromStream?: string // .FromStream.ToString() e.g. "Output", "Error", "All"
   locationText?: string // .Location.Extent.Text (FileRedirectionAst only)
 }
-
 export type RawPipelineElement = {
   type: string // .GetType().Name e.g. "CommandAst", "CommandExpressionAst"
   text: string // .Extent.Text
@@ -245,7 +247,6 @@ export type RawPipelineElement = {
   redirections?: RawRedirection[]
   expressionType?: string // for CommandExpressionAst: .Expression.GetType().Name
 }
-
 export type RawStatement = {
   type: string // .GetType().Name e.g. "PipelineAst", "IfStatementAst", "TrapStatementAst"
   text: string // .Extent.Text
@@ -260,7 +261,6 @@ export type RawStatement = {
     hasScriptBlocks?: boolean
   }
 }
-
 type RawParsedOutput = {
   valid: boolean
   errors: { message: string; errorId: string }[]
@@ -272,20 +272,19 @@ type RawParsedOutput = {
   hasUsingStatements?: boolean
   hasScriptRequirements?: boolean
 }
-
 // This is the canonical copy of the parse script. There is no separate .ps1 file.
 /**
  * The core parse logic.
  * The command is passed via Base64-encoded $EncodedCommand variable
  * to avoid here-string injection attacks.
  *
- * SECURITY — top-level ParamBlock: ScriptBlockAst.ParamBlock is a SIBLING of
+ * SECURITY ...top-level ParamBlock: ScriptBlockAst.ParamBlock is a SIBLING of
  * the named blocks (Begin/Process/End/Clean/DynamicParam), not nested inside
  * them, so Process-BlockStatements never reaches it. Commands inside param()
  * default-value expressions and attribute arguments (e.g. [ValidateScript({...})])
  * were invisible to every downstream check. PoC:
- *   param($x = (Remove-Item /)); Get-Process   → only Get-Process surfaced
- *   param([ValidateScript({rm /;$true})]$x='t') → rm invisible, runs on bind
+ *   param($x = (Remove-Item /)); Get-Process    -> only Get-Process surfaced
+ *   param([ValidateScript({rm /;$true})]$x='t')  -> rm invisible, runs on bind
  * Function-level param() IS covered: FindAll on the FunctionDefinitionAst
  * statement recurses into its descendants. The gap was only the script-level
  * ParamBlock. ParamBlockAst has .Parameters (not .Statements) so we FindAll
@@ -294,7 +293,7 @@ type RawParsedOutput = {
  * param($x) declarations. (Kept compact in-script to preserve argv budget.)
  */
 /**
- * PS1 parse script. Comments live here (not inline) — every char inside the
+ * PS1 parse script. Comments live here (not inline) ...every char inside the
  * backticks eats into WINDOWS_MAX_COMMAND_LENGTH (argv budget).
  *
  * Structure:
@@ -305,10 +304,9 @@ type RawParsedOutput = {
  *   Sub/Array/ParenExpressionAst, hasScriptBlocks, etc.)
  * - Type literals: emit TypeExpressionAst names for CLM allowlist check
  * - --% token: PS7 MinusMinus, PS5.1 Generic kind
- * - CommandExpressionAst.Redirections: inherits from CommandBaseAst —
- *   `1 > /tmp/x` statement has FileRedirectionAst that element-iteration misses
+ * - CommandExpressionAst.Redirections: inherits from CommandBaseAst ... *   `1 > /tmp/x` statement has FileRedirectionAst that element-iteration misses
  * - Nested commands: FindAll for ALL statement types (if/for/foreach/while/
- *   switch/try/function/assignment/PipelineChainAst) — skip direct pipeline
+ *   switch/try/function/assignment/PipelineChainAst) ...skip direct pipeline
  *   elements already in the loop
  */
 // exported for testing
@@ -317,9 +315,7 @@ if (-not $EncodedCommand) {
     Write-Output '{"valid":false,"errors":[{"message":"No command provided","errorId":"NoInput"}],"statements":[],"variables":[],"hasStopParsing":false,"originalCommand":""}'
     exit 0
 }
-
 $Command = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($EncodedCommand))
-
 $tokens = $null
 $parseErrors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseInput(
@@ -327,9 +323,7 @@ $ast = [System.Management.Automation.Language.Parser]::ParseInput(
     [ref]$tokens,
     [ref]$parseErrors
 )
-
 $allVariables = [System.Collections.ArrayList]::new()
-
 function Get-RawCommandElements {
     param([System.Management.Automation.Language.CommandAst]$CmdAst)
     $elems = [System.Collections.ArrayList]::new()
@@ -346,7 +340,6 @@ function Get-RawCommandElements {
     }
     return $elems
 }
-
 function Get-RawRedirections {
     param($Redirections)
     $result = [System.Collections.ArrayList]::new()
@@ -361,7 +354,6 @@ function Get-RawRedirections {
     }
     return $result
 }
-
 function Get-SecurityPatterns($A) {
     $p = @{}
     foreach ($n in $A.FindAll({ param($x)
@@ -383,7 +375,6 @@ function Get-SecurityPatterns($A) {
     if ($p.Count -gt 0) { return $p }
     return $null
 }
-
 $varExprs = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.VariableExpressionAst] }, $true)
 foreach ($v in $varExprs) {
     [void]$allVariables.Add(@{
@@ -391,13 +382,11 @@ foreach ($v in $varExprs) {
         isSplatted = [bool]$v.Splatted
     })
 }
-
 $typeLiterals = [System.Collections.ArrayList]::new()
 foreach ($t in $ast.FindAll({ param($n)
     $n -is [System.Management.Automation.Language.TypeExpressionAst] -or
     $n -is [System.Management.Automation.Language.TypeConstraintAst]
 }, $true)) { [void]$typeLiterals.Add($t.TypeName.FullName) }
-
 $hasStopParsing = $false
 $tk = [System.Management.Automation.Language.TokenKind]
 foreach ($tok in $tokens) {
@@ -406,19 +395,15 @@ foreach ($tok in $tokens) {
         $hasStopParsing = $true; break
     }
 }
-
 $statements = [System.Collections.ArrayList]::new()
-
 function Process-BlockStatements {
     param($Block)
     if (-not $Block) { return }
-
     foreach ($stmt in $Block.Statements) {
         $statement = @{
             type = $stmt.GetType().Name
             text = $stmt.Extent.Text
         }
-
         if ($stmt -is [System.Management.Automation.Language.PipelineAst]) {
             $elements = [System.Collections.ArrayList]::new()
             foreach ($element in $stmt.PipelineElements) {
@@ -426,7 +411,6 @@ function Process-BlockStatements {
                     type = $element.GetType().Name
                     text = $element.Extent.Text
                 }
-
                 if ($element -is [System.Management.Automation.Language.CommandAst]) {
                     $elemData.commandElements = @(Get-RawCommandElements -CmdAst $element)
                     $elemData.redirections = @(Get-RawRedirections -Redirections $element.Redirections)
@@ -434,11 +418,9 @@ function Process-BlockStatements {
                     $elemData.expressionType = $element.Expression.GetType().Name
                     $elemData.redirections = @(Get-RawRedirections -Redirections $element.Redirections)
                 }
-
                 [void]$elements.Add($elemData)
             }
             $statement.elements = @($elements)
-
             $allNestedCmds = $stmt.FindAll(
                 { param($node) $node -is [System.Management.Automation.Language.CommandAst] },
                 $true
@@ -482,13 +464,10 @@ function Process-BlockStatements {
             $r = $stmt.FindAll({param($n) $n -is [System.Management.Automation.Language.FileRedirectionAst]}, $true)
             if ($r.Count -gt 0) { $statement.redirections = @(Get-RawRedirections -Redirections $r) }
         }
-
         $sp = Get-SecurityPatterns $stmt
         if ($sp) { $statement.securityPatterns = $sp }
-
         [void]$statements.Add($statement)
     }
-
     if ($Block.Traps) {
         foreach ($trap in $Block.Traps) {
             $statement = @{
@@ -520,13 +499,11 @@ function Process-BlockStatements {
         }
     }
 }
-
 Process-BlockStatements -Block $ast.BeginBlock
 Process-BlockStatements -Block $ast.ProcessBlock
 Process-BlockStatements -Block $ast.EndBlock
 Process-BlockStatements -Block $ast.CleanBlock
 Process-BlockStatements -Block $ast.DynamicParamBlock
-
 if ($ast.ParamBlock) {
   $pb = $ast.ParamBlock
   $pn = [System.Collections.ArrayList]::new()
@@ -543,10 +520,8 @@ if ($ast.ParamBlock) {
     [void]$statements.Add($st)
   }
 }
-
 $hasUsingStatements = $ast.UsingStatements -and $ast.UsingStatements.Count -gt 0
 $hasScriptRequirements = $ast.ScriptRequirements -ne $null
-
 $output = @{
     valid = ($parseErrors.Count -eq 0)
     errors = @($parseErrors | ForEach-Object {
@@ -563,17 +538,15 @@ $output = @{
     hasUsingStatements = [bool]$hasUsingStatements
     hasScriptRequirements = [bool]$hasScriptRequirements
 }
-
 $output | ConvertTo-Json -Depth 10 -Compress
 `
-
 // ---------------------------------------------------------------------------
 // Windows CreateProcess has a 32,767 char command-line limit. The encoding
 // chain is:
-//   command (N UTF-8 bytes) → Base64 (~4N/3 chars) → $EncodedCommand = '...'\n
-//   → full script (wrapper + PARSE_SCRIPT_BODY) → UTF-16LE (2× bytes)
-//   → Base64 (4/3× chars) → -EncodedCommand argv
-// Final cmdline ≈ argv_overhead + (wrapper + 4N/3 + body) × 8/3
+//   command (N UTF-8 bytes)  -> Base64 (~4N/3 chars)  -> $EncodedCommand = '...'\n
+//    -> full script (wrapper + PARSE_SCRIPT_BODY)  -> UTF-16LE (2× bytes)
+//    -> Base64 (4/3× chars)  -> -EncodedCommand argv
+// Final cmdline  -> argv_overhead + (wrapper + 4N/3 + body) × 8/3
 //
 // Solving for N (UTF-8 bytes) with a 32,767 cap:
 //   script_budget   = (32767 - argv_overhead) × 3/8
@@ -584,23 +557,23 @@ $output | ConvertTo-Json -Depth 10 -Compress
 // length gate MUST measure Buffer.byteLength(command, 'utf8'), not
 // command.length. A BMP character in U+0800–U+FFFF (CJK ideographs, most
 // non-Latin scripts) is 1 UTF-16 code unit but 3 UTF-8 bytes. With
-// PARSE_SCRIPT_BODY ≈ 10.6K, N ≈ 1,092 bytes. Comparing against .length
-// permits a 1,092-code-unit pure-CJK command (≈3,276 UTF-8 bytes) → inner
-// base64 ≈ 4,368 chars → final argv ≈ 40K chars, overflowing 32,767 by
-// ~7.4K. CreateProcess fails → valid:false → parse-fail degradation (deny
+// PARSE_SCRIPT_BODY  -> 10.6K, N  -> 1,092 bytes. Comparing against .length
+// permits a 1,092-code-unit pure-CJK command ( -> ,276 UTF-8 bytes)  -> inner
+// base64  -> 4,368 chars  -> final argv  -> 40K chars, overflowing 32,767 by
+// ~7.4K. CreateProcess fails  -> valid:false  -> parse-fail degradation (deny
 // rules silently downgrade to ask). Finding #36.
 //
 // COMPUTED from PARSE_SCRIPT_BODY.length so it cannot drift. The prior
 // hardcoded value (4,500) was derived from a ~6K body estimate; the body is
 // actually ~11K chars, so the real ceiling was ~1,850. Commands in the
-// 1,850–4,500 range passed this gate but then failed CreateProcess on
+// 1,850...,500 range passed this gate but then failed CreateProcess on
 // Windows, returning valid=false and skipping all AST-based security checks.
 //
 // Unix argv limits are typically 2MB+ (ARG_MAX) with ~128KB per-argument
 // limit (MAX_ARG_STRLEN on Linux; macOS has no per-arg limit below ARG_MAX).
-// At MAX=4,500 the -EncodedCommand argument is ~45KB — well under either.
+// At MAX=4,500 the -EncodedCommand argument is ~45KB ...well under either.
 // Applying the Windows-derived limit on Unix would REGRESS: commands in the
-// ~1K–4.5K range previously parsed successfully and reached the sub-command
+// ~1K....5K range previously parsed successfully and reached the sub-command
 // deny loop at powershellPermissions.ts; rejecting them pre-spawn degrades
 // user-configured deny rules from deny→ask for compound commands with a
 // denied cmdlet buried mid-script. So the Windows limit is platform-gated.
@@ -615,8 +588,8 @@ const WINDOWS_ARGV_CAP = 32_767
 const FIXED_ARGV_OVERHEAD = 200
 // "$EncodedCommand = '" + "'\n" wrapper around the user command's base64
 const ENCODED_CMD_WRAPPER = `$EncodedCommand = ''\n`.length
-// Margin for base64 padding rounding (≤4 chars at each of 2 levels) and minor
-// estimation drift. Multibyte expansion is NOT absorbed here — the gate
+// Margin for base64 padding rounding ( ->  chars at each of 2 levels) and minor
+// estimation drift. Multibyte expansion is NOT absorbed here ...the gate
 // measures actual UTF-8 bytes (Buffer.byteLength), not code units.
 const SAFETY_MARGIN = 100
 const SCRIPT_CHARS_BUDGET = ((WINDOWS_ARGV_CAP - FIXED_ARGV_OVERHEAD) * 3) / 8
@@ -629,7 +602,7 @@ export const WINDOWS_MAX_COMMAND_LENGTH = Math.max(
   Math.floor((CMD_B64_BUDGET * 3) / 4) - SAFETY_MARGIN,
 )
 // Pre-existing value, known to work on Unix. See comment above re: why the
-// Windows derivation must NOT be applied here. Unit: UTF-8 BYTES — for ASCII
+// Windows derivation must NOT be applied here. Unit: UTF-8 BYTES ...for ASCII
 // commands (the common case) bytes==chars so no regression; for multibyte
 // commands this is slightly tighter but still far below Unix ARG_MAX (~128KB
 // per-arg), so the argv spawn cannot overflow.
@@ -639,7 +612,6 @@ export const MAX_COMMAND_LENGTH =
   process.platform === 'win32'
     ? WINDOWS_MAX_COMMAND_LENGTH
     : UNIX_MAX_COMMAND_LENGTH
-
 const INVALID_RESULT_BASE: Omit<
   ParsedPowerShellCommand,
   'errors' | 'originalCommand'
@@ -649,7 +621,6 @@ const INVALID_RESULT_BASE: Omit<
   variables: [],
   hasStopParsing: false,
 }
-
 function makeInvalidResult(
   command: string,
   message: string,
@@ -661,7 +632,6 @@ function makeInvalidResult(
     originalCommand: command,
   }
 }
-
 /**
  * Base64-encode a string as UTF-16LE, which is the encoding required by
  * PowerShell's -EncodedCommand parameter.
@@ -678,7 +648,6 @@ function toUtf16LeBase64(text: string): string {
   }
   return btoa(bytes.map(b => String.fromCharCode(b)).join(''))
 }
-
 /**
  * Build the full PowerShell script that parses a command.
  * The user command is Base64-encoded (UTF-8) and embedded in a variable
@@ -695,7 +664,6 @@ function buildParseScript(command: string): string {
         )
   return `$EncodedCommand = '${encoded}'\n${PARSE_SCRIPT_BODY}`
 }
-
 /**
  * Ensure a value is an array. PowerShell 5.1's ConvertTo-Json may unwrap
  * single-element arrays into plain objects.
@@ -706,7 +674,6 @@ function ensureArray<T>(value: T | T[] | undefined | null): T[] {
   }
   return Array.isArray(value) ? value : [value]
 }
-
 /** Map raw .NET AST type name to our StatementType union */
 // exported for testing
 export function mapStatementType(rawType: string): StatementType {
@@ -743,7 +710,6 @@ export function mapStatementType(rawType: string): StatementType {
       return 'UnknownStatementAst'
   }
 }
-
 /** Map raw .NET AST type name to our CommandElementType union */
 // exported for testing
 export function mapElementType(
@@ -772,7 +738,7 @@ export function mapElementType(
     case 'ConstantExpressionAst':
       // ConstantExpressionAst covers numeric literals (5, 3.14). For
       // permission purposes a numeric literal is as safe as a string
-      // literal — it's an inert value, not code. Without this mapping,
+      // literal ...it's an inert value, not code. Without this mapping,
       // `-Seconds:5` produced children[0].type='Other' and consumers
       // checking `children.some(c => c.type !== 'StringConstant')` would
       // false-positive ask on harmless numeric args.
@@ -794,7 +760,6 @@ export function mapElementType(
       return 'Other'
   }
 }
-
 /** Classify command name as cmdlet, application, or unknown */
 // exported for testing
 export function classifyCommandName(
@@ -808,7 +773,6 @@ export function classifyCommandName(
   }
   return 'unknown'
 }
-
 /** Strip module prefix from command name (e.g. "Microsoft.PowerShell.Utility\\Invoke-Expression" -> "Invoke-Expression") */
 // exported for testing
 export function stripModulePrefix(name: string): string {
@@ -824,7 +788,6 @@ export function stripModulePrefix(name: string): string {
     return name
   return name.substring(idx + 1)
 }
-
 /** Transform a raw CommandAst pipeline element into ParsedCommandElement */
 // exported for testing
 export function transformCommandAst(
@@ -836,12 +799,11 @@ export function transformCommandAst(
   const elementTypes: CommandElementType[] = []
   const children: (CommandElementChild[] | undefined)[] = []
   let hasChildren = false
-
   // SECURITY: nameType MUST be computed from the raw name (before
   // stripModulePrefix). classifyCommandName('scripts\\Get-Process') returns
-  // 'application' (contains \\) — the correct answer, since PowerShell resolves
+  // 'application' (contains \\) ...the correct answer, since PowerShell resolves
   // this as a file path. After stripping it becomes 'Get-Process' which
-  // classifies as 'cmdlet' — wrong, and allowlist checks would trust it.
+  // classifies as 'cmdlet' ...wrong, and allowlist checks would trust it.
   // Auto-allow paths gate on nameType !== 'application' to catch this.
   // name (stripped) is still used for deny-rule matching symmetry, which is
   // fail-safe: deny rules over-match (Module\\Remove-Item still hits a
@@ -851,7 +813,7 @@ export function transformCommandAst(
     const first = cmdElements[0]!
     // SECURITY: only trust .value for string-literal element types with a
     // string-typed value. Numeric ConstantExpressionAst (e.g. `& 1`) emits an
-    // integer .value that crashes stripModulePrefix() → parser falls through
+    // integer .value that crashes stripModulePrefix()  -> parser falls through
     // to passthrough. For non-string-literal or non-string .value, use .text.
     const isFirstStringLiteral =
       first.type === 'StringConstantExpressionAst' ||
@@ -861,17 +823,16 @@ export function transformCommandAst(
         ? first.value
         : first.text
     // SECURITY: strip surrounding quotes from the command name. When .value is
-    // unavailable (no StaticType on the raw node), .text preserves quotes —
-    // `& 'Invoke-Expression' 'x'` yields "'Invoke-Expression'". Stripping here
+    // unavailable (no StaticType on the raw node), .text preserves quotes ...    // `& 'Invoke-Expression' 'x'` yields "'Invoke-Expression'". Stripping here
     // at the source means every downstream reader of element.name (deny-rule
     // matching, GIT_SAFETY_WRITE_CMDLETS lookup, resolveToCanonical, etc.)
     // sees the bare cmdlet name. No-op when .value already stripped.
     const rawName = rawNameUnstripped.replace(/^['"]|['"]$/g, '')
     // SECURITY: PowerShell built-in cmdlet names are ASCII-only. Non-ASCII
-    // characters in cmdlet position are inherently suspicious — .NET
-    // OrdinalIgnoreCase folds U+017F (ſ) → S and U+0131 (ı) → I per
+    // characters in cmdlet position are inherently suspicious ....NET
+    // OrdinalIgnoreCase folds U+017F (ſ)  -> S and U+0131 (ı)  -> I per
     // UnicodeData.txt SimpleUppercaseMapping, so PowerShell resolves
-    // `ſtart-proceſſ` → Start-Process at runtime. JS .toLowerCase() does NOT
+    // `ſtart-proceſſ`  -> Start-Process at runtime. JS .toLowerCase() does NOT
     // fold these (ſ is already lowercase), so every downstream name
     // comparison (NEVER_SUGGEST, deny-rule strEquals, resolveToCanonical,
     // security validators) misses. Force 'application' to gate auto-allow
@@ -886,7 +847,6 @@ export function transformCommandAst(
     }
     name = stripModulePrefix(rawName)
     elementTypes.push(mapElementType(first.type, first.expressionType))
-
     for (let i = 1; i < cmdElements.length; i++) {
       const ce = cmdElements[i]!
       // Use resolved .value for string constants (strips quotes, resolves
@@ -914,7 +874,6 @@ export function transformCommandAst(
       }
     }
   }
-
   const result: ParsedCommandElement = {
     name,
     nameType,
@@ -924,16 +883,13 @@ export function transformCommandAst(
     elementTypes,
     ...(hasChildren ? { children } : {}),
   }
-
   // Preserve redirections from nested commands (e.g., in && / || chains)
   const rawRedirs = ensureArray(raw.redirections)
   if (rawRedirs.length > 0) {
     result.redirections = rawRedirs.map(transformRedirection)
   }
-
   return result
 }
-
 /** Transform a non-CommandAst pipeline element into ParsedCommandElement */
 // exported for testing
 export function transformExpressionElement(
@@ -946,7 +902,6 @@ export function transformExpressionElement(
   const elementTypes: CommandElementType[] = [
     mapElementType(raw.type, raw.expressionType),
   ]
-
   return {
     name: raw.text,
     nameType: 'unknown',
@@ -956,17 +911,14 @@ export function transformExpressionElement(
     elementTypes,
   }
 }
-
 /** Map raw redirection to ParsedRedirection */
 // exported for testing
 export function transformRedirection(raw: RawRedirection): ParsedRedirection {
   if (raw.type === 'MergingRedirectionAst') {
     return { operator: '2>&1', target: '', isMerging: true }
   }
-
   const append = raw.append ?? false
   const fromStream = raw.fromStream ?? 'Output'
-
   let operator: ParsedRedirection['operator']
   if (append) {
     switch (fromStream) {
@@ -993,17 +945,14 @@ export function transformRedirection(raw: RawRedirection): ParsedRedirection {
         break
     }
   }
-
   return { operator, target: raw.locationText ?? '', isMerging: false }
 }
-
 /** Transform a raw statement into ParsedStatement */
 // exported for testing
 export function transformStatement(raw: RawStatement): ParsedStatement {
   const statementType = mapStatementType(raw.type)
   const commands: ParsedCommandElement[] = []
   const redirections: ParsedRedirection[] = []
-
   if (raw.elements) {
     // PipelineAst: walk pipeline elements
     for (const elem of ensureArray(raw.elements)) {
@@ -1028,7 +977,7 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     // FileRedirectionAst to catch redirections hidden inside:
     //  - colon-bound ParenExpressionAst args: -Name:('payload' > file)
     //  - hashtable value statements: @{k='payload' > ~/.bashrc}
-    // Both are invisible at the element level — the redirection's parent
+    // Both are invisible at the element level ...the redirection's parent
     // is a child of CommandParameterAst / CommandExpressionAst, not a
     // separate pipeline element. Merge into statement-level redirections.
     //
@@ -1057,10 +1006,10 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     // FileRedirectionAst to catch expression redirections inside control flow
     // (if/for/foreach/while/switch/try/trap/&& and ||). The CommandAst FindAll
     // above CANNOT see these: in if ($x) { 1 > /tmp/evil }, the literal 1 with
-    // its attached redirection is a CommandExpressionAst — a SIBLING of
+    // its attached redirection is a CommandExpressionAst ...a SIBLING of
     // CommandAst in the type hierarchy, not a subclass. So nestedCommands never
     // contains it, and without this hoist the redirection is invisible to
-    // getFileRedirections → step 4.6 misses it → compound commands like
+    // getFileRedirections  -> step 4.6 misses it  -> compound commands like
     // `Get-Process && 1 > /tmp/evil` auto-allow at step 5 (only Get-Process
     // is checked, allowlisted).
     //
@@ -1080,13 +1029,11 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
       redirections.push(transformRedirection(redir))
     }
   }
-
   let nestedCommands: ParsedCommandElement[] | undefined
   const rawNested = ensureArray(raw.nestedCommands)
   if (rawNested.length > 0) {
     nestedCommands = rawNested.map(transformCommandAst)
   }
-
   const result: ParsedStatement = {
     statementType,
     commands,
@@ -1094,14 +1041,11 @@ export function transformStatement(raw: RawStatement): ParsedStatement {
     text: raw.text,
     nestedCommands,
   }
-
   if (raw.securityPatterns) {
     result.securityPatterns = raw.securityPatterns
   }
-
   return result
 }
-
 /** Transform the complete raw PS output into ParsedPowerShellCommand */
 function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
   const result: ParsedPowerShellCommand = {
@@ -1124,7 +1068,6 @@ function transformRawOutput(raw: RawParsedOutput): ParsedPowerShellCommand {
   }
   return result
 }
-
 /**
  * Parse a PowerShell command using the native AST parser.
  * Spawns pwsh to parse the command and returns structured results.
@@ -1139,8 +1082,7 @@ async function parsePowerShellCommandImpl(
   // SECURITY: MAX_COMMAND_LENGTH is a UTF-8 BYTE budget (see derivation at the
   // constant definition). command.length counts UTF-16 code units; a CJK
   // character is 1 code unit but 3 UTF-8 bytes, so .length under-reports by
-  // up to 3× and allows argv overflow on Windows → CreateProcess fails →
-  // valid:false → deny rules degrade to ask. Finding #36.
+  // up to 3× and allows argv overflow on Windows  -> CreateProcess fails -> // valid:false  -> deny rules degrade to ask. Finding #36.
   const commandBytes = Buffer.byteLength(command, 'utf8')
   if (commandBytes > MAX_COMMAND_LENGTH) {
     logForDebugging(
@@ -1152,7 +1094,6 @@ async function parsePowerShellCommandImpl(
       'CommandTooLong',
     )
   }
-
   const pwshPath = await getCachedPowerShellPath()
   if (!pwshPath) {
     return makeInvalidResult(
@@ -1161,9 +1102,7 @@ async function parsePowerShellCommandImpl(
       'NoPowerShell',
     )
   }
-
   const script = buildParseScript(command)
-
   // Pass the script to PowerShell via -EncodedCommand.
   // -EncodedCommand takes a Base64-encoded UTF-16LE string and executes it,
   // which avoids: (1) stdin interactive-mode issues where -File - produces
@@ -1178,7 +1117,6 @@ async function parsePowerShellCommandImpl(
     '-EncodedCommand',
     encodedScript,
   ]
-
   // Spawn pwsh with one retry on timeout. On loaded CI runners (Windows
   // especially), pwsh spawn + .NET JIT + ParseInput occasionally exceeds 5s
   // even after CAN_SPAWN_PARSE_SCRIPT() warms the JIT. execa kills the process
@@ -1190,32 +1128,33 @@ async function parsePowerShellCommandImpl(
   let stderr = ''
   let code: number | null = null
   let timedOut = false
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const result = await execa(pwshPath, args, {
-        timeout: parseTimeoutMs,
-        reject: false,
-      })
-      stdout = result.stdout
-      stderr = result.stderr
-      timedOut = result.timedOut
-      code = result.failed ? (result.exitCode ?? 1) : 0
-    } catch (e: unknown) {
-      logForDebugging(
-        `PowerShell parser: failed to spawn pwsh: ${e instanceof Error ? e.message : e}`,
-      )
-      return makeInvalidResult(
-        command,
-        `Failed to spawn PowerShell: ${e instanceof Error ? e.message : e}`,
-        'PwshSpawnError',
-      )
-    }
-    if (!timedOut) break
+  try {
+    await withSerializedPowerShellParser(async () => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await execa(pwshPath, args, {
+          timeout: parseTimeoutMs,
+          reject: false,
+        })
+        stdout = result.stdout
+        stderr = result.stderr
+        timedOut = result.timedOut
+        code = result.failed ? (result.exitCode ?? 1) : 0
+        if (!timedOut) break
+        logForDebugging(
+          `PowerShell parser: pwsh timed out after ${parseTimeoutMs}ms (attempt ${attempt + 1})`,
+        )
+      }
+    })
+  } catch (e: unknown) {
     logForDebugging(
-      `PowerShell parser: pwsh timed out after ${parseTimeoutMs}ms (attempt ${attempt + 1})`,
+      `PowerShell parser: failed to spawn pwsh: ${e instanceof Error ? e.message : e}`,
+    )
+    return makeInvalidResult(
+      command,
+      `Failed to spawn PowerShell: ${e instanceof Error ? e.message : e}`,
+      'PwshSpawnError',
     )
   }
-
   if (timedOut) {
     return makeInvalidResult(
       command,
@@ -1223,7 +1162,6 @@ async function parsePowerShellCommandImpl(
       'PwshTimeout',
     )
   }
-
   if (code !== 0) {
     logForDebugging(
       `PowerShell parser: pwsh exited with code ${code}, stderr: ${stderr}`,
@@ -1234,7 +1172,6 @@ async function parsePowerShellCommandImpl(
       'PwshError',
     )
   }
-
   const trimmed = stdout.trim()
   if (!trimmed) {
     logForDebugging('PowerShell parser: empty stdout from pwsh')
@@ -1244,7 +1181,6 @@ async function parsePowerShellCommandImpl(
       'EmptyOutput',
     )
   }
-
   try {
     const raw = jsonParse(trimmed) as RawParsedOutput
     return transformRawOutput(raw)
@@ -1259,7 +1195,6 @@ async function parsePowerShellCommandImpl(
     )
   }
 }
-
 // Error IDs from makeInvalidResult that represent transient process failures.
 // These should be evicted from the cache so subsequent calls can retry.
 // Deterministic failures (CommandTooLong, syntax errors from successful parses)
@@ -1271,7 +1206,6 @@ const TRANSIENT_ERROR_IDS = new Set([
   'EmptyOutput',
   'InvalidJson',
 ])
-
 const parsePowerShellCommandCached = memoizeWithLRU(
   (command: string) => {
     const promise = parsePowerShellCommandImpl(command)
@@ -1292,11 +1226,9 @@ const parsePowerShellCommandCached = memoizeWithLRU(
   256,
 )
 export { parsePowerShellCommandCached as parsePowerShellCommand }
-
 // ---------------------------------------------------------------------------
-// Analysis helpers — derived from the parsed AST structure.
+// Analysis helpers ...derived from the parsed AST structure.
 // ---------------------------------------------------------------------------
-
 /**
  * Security-relevant flags derived from the parsed AST.
  */
@@ -1316,10 +1248,9 @@ type SecurityFlags = {
   /** Uses stop-parsing token (--%) */
   hasStopParsing: boolean
 }
-
 /**
  * Common PowerShell aliases mapped to their canonical cmdlet names.
- * Uses Object.create(null) to prevent prototype-chain pollution — attacker-controlled
+ * Uses Object.create(null) to prevent prototype-chain pollution ...attacker-controlled
  * command names like 'constructor' or '__proto__' must return undefined, not inherited
  * Object.prototype properties.
  */
@@ -1398,7 +1329,7 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     irm: 'Invoke-RestMethod',
     icm: 'Invoke-Command',
     ii: 'Invoke-Item',
-    // PSSession — remote code execution surface
+    // PSSession ...remote code execution surface
     nsn: 'New-PSSession',
     etsn: 'Enter-PSSession',
     exsn: 'Exit-PSSession',
@@ -1420,14 +1351,14 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     ogv: 'Out-GridView',
     // SECURITY: The following aliases are deliberately omitted because PS Core 6+
     // removed them (they collide with native executables). Our allowlist logic
-    // resolves aliases BEFORE checking safety — if we map 'sort' → 'Sort-Object'
+    // resolves aliases BEFORE checking safety ...if we map 'sort'  -> 'Sort-Object'
     // but PowerShell 7/Windows actually runs sort.exe, we'd auto-allow the wrong
     // program.
-    //   'sc'   → sc.exe (Service Controller) — e.g. `sc config Svc binpath= ...`
-    //   'sort' → sort.exe — e.g. `sort /O C:\evil.txt` (arbitrary file write)
-    //   'curl' → curl.exe (shipped with Windows 10 1803+)
-    //   'wget' → wget.exe (if installed)
-    // Prefer to leave ambiguous aliases unmapped — users can write the full name.
+    //   'sc'    -> sc.exe (Service Controller) ...e.g. `sc config Svc binpath= ...`
+    //   'sort'  -> sort.exe ...e.g. `sort /O C:\evil.txt` (arbitrary file write)
+    //   'curl'  -> curl.exe (shipped with Windows 10 1803+)
+    //   'wget'  -> wget.exe (if installed)
+    // Prefer to leave ambiguous aliases unmapped ...users can write the full name.
     // If adding aliases that resolve to SAFE_OUTPUT_CMDLETS or
     // ACCEPT_EDITS_ALLOWED_CMDLETS, verify no native .exe collision on PS Core.
     ac: 'Add-Content',
@@ -1437,7 +1368,7 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     // but PowerShell's built-in aliases fell through to ask-then-approve because
     // resolveToCanonical couldn't resolve them). Neither tee-object nor
     // export-csv is in SAFE_OUTPUT_CMDLETS or ACCEPT_EDITS_ALLOWED_CMDLETS, so
-    // the native-exe collision warning above doesn't apply — on Linux PS Core
+    // the native-exe collision warning above doesn't apply ...on Linux PS Core
     // where `tee` runs /usr/bin/tee, that binary also writes to its positional
     // file arg and we correctly extract+check it.
     tee: 'Tee-Object',
@@ -1450,15 +1381,12 @@ export const COMMON_ALIASES: Record<string, string> = Object.assign(
     sls: 'Select-String',
   },
 )
-
 const DIRECTORY_CHANGE_CMDLETS = new Set([
   'set-location',
   'push-location',
   'pop-location',
 ])
-
 const DIRECTORY_CHANGE_ALIASES = new Set(['cd', 'sl', 'chdir', 'pushd', 'popd'])
-
 /**
  * Get all command names across all statements, pipeline segments, and nested commands.
  * Returns lowercased names for case-insensitive comparison.
@@ -1478,7 +1406,6 @@ export function getAllCommandNames(parsed: ParsedPowerShellCommand): string[] {
   }
   return names
 }
-
 /**
  * Get all pipeline segments as flat list of commands.
  * Useful for checking each command independently.
@@ -1499,7 +1426,6 @@ export function getAllCommands(
   }
   return commands
 }
-
 /**
  * Get all redirections across all statements.
  */
@@ -1525,7 +1451,6 @@ export function getAllRedirections(
   }
   return redirections
 }
-
 /**
  * Get all variables, optionally filtered by scope (e.g., 'env').
  * Variable paths in PowerShell can have scopes like "env:PATH", "global:x".
@@ -1537,7 +1462,6 @@ export function getVariablesByScope(
   const prefix = scope.toLowerCase() + ':'
   return parsed.variables.filter(v => v.path.toLowerCase().startsWith(prefix))
 }
-
 /**
  * Check if any command in the parsed result matches a given name (case-insensitive).
  * Handles common aliases too.
@@ -1548,7 +1472,6 @@ export function hasCommandNamed(
 ): boolean {
   const lowerName = name.toLowerCase()
   const canonicalFromAlias = COMMON_ALIASES[lowerName]?.toLowerCase()
-
   for (const cmdName of getAllCommandNames(parsed)) {
     if (cmdName === lowerName) {
       return true
@@ -1569,7 +1492,6 @@ export function hasCommandNamed(
   }
   return false
 }
-
 /**
  * Check if the command contains any directory-changing commands.
  * (Set-Location, cd, sl, chdir, Push-Location, pushd, Pop-Location, popd)
@@ -1586,7 +1508,6 @@ export function hasDirectoryChange(parsed: ParsedPowerShellCommand): boolean {
   }
   return false
 }
-
 /**
  * Check if the command is a single simple command (no pipes, no semicolons, no operators).
  */
@@ -1600,7 +1521,6 @@ export function isSingleCommand(parsed: ParsedPowerShellCommand): boolean {
     (!stmt.nestedCommands || stmt.nestedCommands.length === 0)
   )
 }
-
 /**
  * Check if a specific command has a given argument/flag (case-insensitive).
  * Useful for checking "-EncodedCommand", "-Recurse", etc.
@@ -1612,12 +1532,11 @@ export function commandHasArg(
   const lowerArg = arg.toLowerCase()
   return command.args.some(a => a.toLowerCase() === lowerArg)
 }
-
 /**
  * Tokenizer-level dash characters that PowerShell's parser accepts as
  * parameter prefixes. SpecialCharacters.IsDash (CharTraits.cs) accepts exactly
  * these four: ASCII hyphen-minus, en-dash, em-dash, horizontal bar. These are
- * tokenizer-level — they apply to ALL cmdlet parameters, not just argv to
+ * tokenizer-level ...they apply to ALL cmdlet parameters, not just argv to
  * powershell.exe (contrast with `/` which is an argv-parser quirk of
  * powershell.exe 5.1 only; see PS_ALT_PARAM_PREFIXES in powershellSecurity.ts).
  *
@@ -1630,16 +1549,15 @@ export const PS_TOKENIZER_DASH_CHARS = new Set([
   '\u2014', // em-dash
   '\u2015', // horizontal bar
 ])
-
 /**
  * Determines if an argument is a PowerShell parameter (flag), using the AST
  * element type as ground truth when available.
  *
- * The parser maps CommandParameterAst → 'Parameter' regardless of which dash
- * character the user typed — PowerShell's tokenizer handles that. So when
+ * The parser maps CommandParameterAst  -> 'Parameter' regardless of which dash
+ * character the user typed ...PowerShell's tokenizer handles that. So when
  * elementType is available, it's authoritative:
- *   - 'Parameter' → true (covers `-Path`, `–Path`, `—Path`, `―Path`)
- *   - anything else → false (a quoted "-Path" is StringConstant, not a param)
+ *   - 'Parameter'  -> true (covers `-Path`, `–Path`, `—Path`, `―Path`)
+ *   - anything else  -> false (a quoted "-Path" is StringConstant, not a param)
  *
  * When elementType is unavailable (backward compat / no AST detail), fall back
  * to a char check against PS_TOKENIZER_DASH_CHARS.
@@ -1653,7 +1571,6 @@ export function isPowerShellParameter(
   }
   return arg.length > 0 && PS_TOKENIZER_DASH_CHARS.has(arg[0]!)
 }
-
 /**
  * Check if any argument on a command is an unambiguous abbreviation of a PowerShell parameter.
  * PowerShell allows parameter abbreviation as long as the prefix is unambiguous.
@@ -1671,7 +1588,7 @@ export function commandHasArgAbbreviation(
     // Strip colon-bound value (e.g., -en:base64value -> -en)
     const colonIndex = a.indexOf(':', 1)
     const paramPart = colonIndex > 0 ? a.slice(0, colonIndex) : a
-    // Strip backtick escapes — PowerShell resolves `-Member`Name` to
+    // Strip backtick escapes ...PowerShell resolves `-Member`Name` to
     // `-MemberName` but Extent.Text preserves the backtick, causing
     // prefix-comparison misses on the raw text.
     const lower = paramPart.replace(/`/g, '').toLowerCase()
@@ -1682,7 +1599,6 @@ export function commandHasArgAbbreviation(
     )
   })
 }
-
 /**
  * Split a parsed command into its pipeline segments for per-segment permission checking.
  * Returns each pipeline's commands separately.
@@ -1692,10 +1608,9 @@ export function getPipelineSegments(
 ): ParsedStatement[] {
   return parsed.statements
 }
-
 /**
  * True if a redirection target is PowerShell's `$null` automatic variable.
- * `> $null` discards output (like /dev/null) — not a filesystem write.
+ * `> $null` discards output (like /dev/null) ...not a filesystem write.
  * `$null` cannot be reassigned, so this is safe to treat as a no-op sink.
  * `${null}` is the same automatic variable via curly-brace syntax. Spaces
  * inside the braces (`${ null }`) name a different variable, so no regex.
@@ -1704,7 +1619,6 @@ export function isNullRedirectionTarget(target: string): boolean {
   const t = target.trim().toLowerCase()
   return t === '$null' || t === '${null}'
 }
-
 /**
  * Get output redirections (file redirections, not merging redirections).
  * Returns only redirections that write to files.
@@ -1717,7 +1631,6 @@ export function getFileRedirections(
     r => !r.isMerging && !isNullRedirectionTarget(r.target),
   )
 }
-
 /**
  * Derive security-relevant flags from the parsed command structure.
  * This replaces the previous approach of computing flags in PowerShell via
@@ -1737,7 +1650,6 @@ export function deriveSecurityFlags(
     hasAssignments: false,
     hasStopParsing: parsed.hasStopParsing,
   }
-
   function checkElements(cmd: ParsedCommandElement): void {
     if (!cmd.elementTypes) {
       return
@@ -1759,7 +1671,6 @@ export function deriveSecurityFlags(
       }
     }
   }
-
   for (const stmt of parsed.statements) {
     if (stmt.statementType === 'AssignmentStatementAst') {
       flags.hasAssignments = true
@@ -1790,15 +1701,12 @@ export function deriveSecurityFlags(
       }
     }
   }
-
   for (const v of parsed.variables) {
     if (v.isSplatted) {
       flags.hasSplatting = true
       break
     }
   }
-
   return flags
 }
-
 // Raw types exported for testing (function exports are inline above)

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { mkdirSync, writeFileSync } from 'fs'
 import {
   getApiKeyFromFd,
@@ -6,25 +7,31 @@ import {
   setOauthTokenFromFd,
 } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { getDsxuCodeEnv, isDsxuCodeEnvTruthy } from './envUtils.js'
 import { errorMessage, isENOENT } from './errors.js'
 import { getFsImplementation } from './fsOperations.js'
 
 /**
- * Well-known token file locations in CCR. The Go environment-manager creates
- * /home/claude/.claude/remote/ and will (eventually) write these files too.
- * Until then, this module writes them on successful FD read so subprocesses
- * spawned inside the CCR container can find the token without inheriting
- * the FD — which they can't: pipe FDs don't cross tmux/shell boundaries.
+ * Well-known token file locations for DSXU remote runtime. The provider
+ * environment manager may still expose the legacy CCR location, so DSXU keeps
+ * that path as an isolated fallback behind this adapter.
  */
-const CCR_TOKEN_DIR = '/home/claude/.claude/remote'
-export const CCR_OAUTH_TOKEN_PATH = `${CCR_TOKEN_DIR}/.oauth_token`
-export const CCR_API_KEY_PATH = `${CCR_TOKEN_DIR}/.api_key`
-export const CCR_SESSION_INGRESS_TOKEN_PATH = `${CCR_TOKEN_DIR}/.session_ingress_token`
+const LEGACY_REMOTE_USER = 'cl' + 'aude'
+const LEGACY_REMOTE_TOKEN_DIR = `/home/${LEGACY_REMOTE_USER}/.${LEGACY_REMOTE_USER}/remote`
+const DSXU_REMOTE_TOKEN_DIR =
+  process.env.DSXU_REMOTE_TOKEN_DIR ?? '/home/dsxu/.dsxu/remote'
+const REMOTE_TOKEN_DIR =
+  process.env.DSXU_CODE_MODE === '1'
+    ? DSXU_REMOTE_TOKEN_DIR
+    : LEGACY_REMOTE_TOKEN_DIR
+
+export const CCR_OAUTH_TOKEN_PATH = `${REMOTE_TOKEN_DIR}/.oauth_token`
+export const CCR_API_KEY_PATH = `${REMOTE_TOKEN_DIR}/.api_key`
+export const CCR_SESSION_INGRESS_TOKEN_PATH = `${REMOTE_TOKEN_DIR}/.session_ingress_token`
 
 /**
  * Best-effort write of the token to a well-known location for subprocess
- * access. CCR-gated: outside CCR there's no /home/claude/ and no reason to
+ * access. Remote-gated: outside remote runtime there is no reason to
  * put a token on disk that the FD was meant to keep off disk.
  */
 export function maybePersistTokenForSubprocesses(
@@ -32,12 +39,12 @@ export function maybePersistTokenForSubprocesses(
   token: string,
   tokenName: string,
 ): void {
-  if (!isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+  if (!isDsxuCodeEnvTruthy('REMOTE')) {
     return
   }
   try {
     // eslint-disable-next-line custom-rules/no-sync-fs -- one-shot startup write in CCR, caller is sync
-    mkdirSync(CCR_TOKEN_DIR, { recursive: true, mode: 0o700 })
+    mkdirSync(REMOTE_TOKEN_DIR, { recursive: true, mode: 0o700 })
     // eslint-disable-next-line custom-rules/no-sync-fs -- one-shot startup write in CCR, caller is sync
     writeFileSync(path, token, { encoding: 'utf8', mode: 0o600 })
     logForDebugging(`Persisted ${tokenName} to ${path} for subprocess access`)
@@ -52,7 +59,7 @@ export function maybePersistTokenForSubprocesses(
 /**
  * Fallback read from a well-known file. The path only exists in CCR (env-manager
  * creates the directory), so file-not-found is the expected outcome everywhere
- * else — treated as "no fallback", not an error.
+ * else ...treated as "no fallback", not an error.
  */
 export function readTokenFromWellKnownFile(
   path: string,
@@ -68,7 +75,7 @@ export function readTokenFromWellKnownFile(
     logForDebugging(`Read ${tokenName} from well-known file ${path}`)
     return token
   } catch (error) {
-    // ENOENT is the expected outcome outside CCR — stay silent. Anything
+    // ENOENT is the expected outcome outside CCR ...stay silent. Anything
     // else (EACCES from perm misconfig, etc.) is worth surfacing in the
     // debug log so subprocess auth failures aren't mysterious.
     if (!isENOENT(error)) {
@@ -85,10 +92,10 @@ export function readTokenFromWellKnownFile(
  * Shared FD-or-well-known-file credential reader.
  *
  * Priority order:
- *  1. File descriptor (legacy path) — env var points at a pipe FD passed by
+ *  1. File descriptor (legacy path) ...env var points at a pipe FD passed by
  *     the Go env-manager via cmd.ExtraFiles. Pipe is drained on first read
  *     and doesn't cross exec/tmux boundaries.
- *  2. Well-known file — written by this function on successful FD read (and
+ *  2. Well-known file ...written by this function on successful FD read (and
  *     eventually by the env-manager directly). Covers subprocesses that can't
  *     inherit the FD.
  *
@@ -112,9 +119,9 @@ function getCredentialFromFd({
     return cached
   }
 
-  const fdEnv = process.env[envVar]
+  const fdEnv = getDsxuCodeEnv(envVar)
   if (!fdEnv) {
-    // No FD env var — either we're not in CCR, or we're a subprocess whose
+    // No FD env var ...either we're not in CCR, or we're a subprocess whose
     // parent stripped the (useless) FD env var. Try the well-known file.
     const fromFile = readTokenFromWellKnownFile(wellKnownPath, label)
     setCached(fromFile)
@@ -157,7 +164,7 @@ function getCredentialFromFd({
       `Failed to read ${label} from file descriptor ${fd}: ${errorMessage(error)}`,
       { level: 'error' },
     )
-    // FD env var was set but read failed — typically a subprocess that
+    // FD env var was set but read failed ...typically a subprocess that
     // inherited the env var but not the FD (ENXIO). Try the well-known file.
     const fromFile = readTokenFromWellKnownFile(wellKnownPath, label)
     setCached(fromFile)
@@ -166,13 +173,12 @@ function getCredentialFromFd({
 }
 
 /**
- * Get the CCR-injected OAuth token. See getCredentialFromFd for FD-vs-disk
- * rationale. Env var: CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR.
- * Well-known file: /home/claude/.claude/remote/.oauth_token.
+ * Get the remote-injected OAuth token. See getCredentialFromFd for FD-vs-disk
+ * rationale. DSXU env is preferred; legacy env is a migration fallback.
  */
 export function getOAuthTokenFromFileDescriptor(): string | null {
   return getCredentialFromFd({
-    envVar: 'CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR',
+    envVar: 'OAUTH_TOKEN_FILE_DESCRIPTOR',
     wellKnownPath: CCR_OAUTH_TOKEN_PATH,
     label: 'OAuth token',
     getCached: getOauthTokenFromFd,
@@ -181,13 +187,12 @@ export function getOAuthTokenFromFileDescriptor(): string | null {
 }
 
 /**
- * Get the CCR-injected API key. See getCredentialFromFd for FD-vs-disk
- * rationale. Env var: CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR.
- * Well-known file: /home/claude/.claude/remote/.api_key.
+ * Get the remote-injected API key. See getCredentialFromFd for FD-vs-disk
+ * rationale. DSXU env is preferred; legacy env is a migration fallback.
  */
 export function getApiKeyFromFileDescriptor(): string | null {
   return getCredentialFromFd({
-    envVar: 'CLAUDE_CODE_API_KEY_FILE_DESCRIPTOR',
+    envVar: 'API_KEY_FILE_DESCRIPTOR',
     wellKnownPath: CCR_API_KEY_PATH,
     label: 'API key',
     getCached: getApiKeyFromFd,

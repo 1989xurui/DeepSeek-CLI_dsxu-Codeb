@@ -1,16 +1,16 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * Plugin telemetry helpers — shared field builders for plugin lifecycle events.
+ * Plugin telemetry helpers ...shared field builders for plugin lifecycle events.
  *
  * Implements the twin-column privacy pattern: every user-defined-name field
  * emits both a raw value (routed to PII-tagged _PROTO_* BQ columns) and a
- * redacted twin (real name iff marketplace ∈ allowlist, else 'third-party').
+ * redacted twin (real name iff marketplace  -> allowlist, else 'third-party').
  *
  * plugin_id_hash provides an opaque per-plugin aggregation key with no privacy
- * dependency — sha256(name@marketplace + FIXED_SALT) truncated to 16 chars.
+ * dependency ...sha256(name@marketplace + FIXED_SALT) truncated to 16 chars.
  * This answers distinct-count and per-plugin-trend questions that the
  * redacted column can't, without exposing user-defined names.
  */
-
 import { createHash } from 'crypto'
 import { sep } from 'path'
 import {
@@ -27,17 +27,14 @@ import {
   isOfficialMarketplaceName,
   parsePluginIdentifier,
 } from '../plugins/pluginIdentifier.js'
-
-// builtinPlugins.ts:BUILTIN_MARKETPLACE_NAME — inlined to avoid the cycle
+// builtinPlugins.ts:BUILTIN_MARKETPLACE_NAME ...inlined to avoid the cycle
 // through commands.js. Marketplace schemas.ts enforces 'builtin' is reserved.
 const BUILTIN_MARKETPLACE_NAME = 'builtin'
-
 // Fixed salt for plugin_id_hash. Same constant across all repos and emission
-// sites. Not per-org, not rotated — per-org salt would defeat cross-org
+// sites. Not per-org, not rotated ...per-org salt would defeat cross-org
 // distinct-count, rotation would break trend lines. Customers can compute the
 // same hash on their known plugin names to reverse-match their own telemetry.
-const PLUGIN_ID_HASH_SALT = 'claude-plugin-telemetry-v1'
-
+const PLUGIN_ID_HASH_SALT = `${'dsxu'}-plugin-telemetry-v1`
 /**
  * Opaque per-plugin aggregation key. Input is the name@marketplace string as
  * it appears in enabledPlugins keys, lowercased on the marketplace suffix for
@@ -52,13 +49,12 @@ export function hashPluginId(name: string, marketplace?: string): string {
     .digest('hex')
     .slice(0, 16)
 }
-
 /**
  * 4-value scope enum for plugin origin. Distinct from PluginScope
- * (managed/user/project/local) which is installation-target — this is
+ * (managed/user/project/local) which is installation-target ...this is
  * marketplace-origin.
  *
- * - official: from an allowlisted Anthropic marketplace
+ * - official: from an allowlisted DSXU marketplace
  * - default-bundle: ships with product (@builtin), auto-enabled
  * - org: enterprise admin-pushed via managed settings (policySettings)
  * - user-local: user added marketplace or local plugin
@@ -68,7 +64,6 @@ export type TelemetryPluginScope =
   | 'org'
   | 'user-local'
   | 'default-bundle'
-
 export function getTelemetryPluginScope(
   name: string,
   marketplace: string | undefined,
@@ -79,10 +74,9 @@ export function getTelemetryPluginScope(
   if (managedNames?.has(name)) return 'org'
   return 'user-local'
 }
-
 /**
  * How a plugin arrived in the session. Splits self-selected from org-pushed
- * — plugin_scope alone doesn't (an official plugin can be user-installed OR
+ * ...plugin_scope alone doesn't (an official plugin can be user-installed OR
  * org-pushed; both are scope='official').
  */
 export type EnabledVia =
@@ -90,23 +84,19 @@ export type EnabledVia =
   | 'org-policy'
   | 'default-enable'
   | 'seed-mount'
-
 /** How a skill/command invocation was triggered. */
 export type InvocationTrigger =
   | 'user-slash'
-  | 'claude-proactive'
+  | 'dsxu-proactive'
   | 'nested-skill'
-
 /** Where a skill invocation executes. */
 export type SkillExecutionContext = 'fork' | 'inline' | 'remote'
-
 /** How a plugin install was initiated. */
 export type InstallSource =
   | 'cli-explicit'
   | 'ui-discover'
   | 'ui-suggestion'
   | 'deep-link'
-
 export function getEnabledVia(
   plugin: LoadedPlugin,
   managedNames: Set<string> | null,
@@ -124,7 +114,6 @@ export function getEnabledVia(
   }
   return 'user-install'
 }
-
 /**
  * Common plugin telemetry fields keyed off name@marketplace. Returns the
  * hash, scope enum, and the redacted-twin columns. Callers add the raw
@@ -142,9 +131,9 @@ export function buildPluginTelemetryFields(
   is_official_plugin: boolean
 } {
   const scope = getTelemetryPluginScope(name, marketplace, managedNames)
-  // Both official marketplaces and builtin plugins are Anthropic-controlled
-  // — safe to expose real names in the redacted columns.
-  const isAnthropicControlled =
+  // Both official marketplaces and builtin plugins are DSXU-controlled
+  // ...safe to expose real names in the redacted columns.
+  const isDsxuControlled =
     scope === 'official' || scope === 'default-bundle'
   return {
     plugin_id_hash: hashPluginId(
@@ -153,19 +142,18 @@ export function buildPluginTelemetryFields(
     ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     plugin_scope:
       scope as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    plugin_name_redacted: (isAnthropicControlled
+    plugin_name_redacted: (isDsxuControlled
       ? name
       : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    marketplace_name_redacted: (isAnthropicControlled && marketplace
+    marketplace_name_redacted: (isDsxuControlled && marketplace
       ? marketplace
       : 'third-party') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    is_official_plugin: isAnthropicControlled,
+    is_official_plugin: isDsxuControlled,
   }
 }
-
 /**
  * Per-invocation callers (SkillTool, processSlashCommand) pass
- * managedNames=null — the session-level tengu_plugin_enabled_for_session
+ * managedNames=null ...the session-level tengu_plugin_enabled_for_session
  * event carries the authoritative plugin_scope, and per-invocation rows can
  * join on plugin_id_hash to recover it. This keeps hot-path call sites free
  * of the extra settings read.
@@ -181,10 +169,9 @@ export function buildPluginCommandTelemetryFields(
     managedNames,
   )
 }
-
 /**
  * Emit tengu_plugin_enabled_for_session once per enabled plugin at session
- * start. Supplements tengu_skill_loaded (which still fires per-skill) — use
+ * start. Supplements tengu_skill_loaded (which still fires per-skill) ...use
  * this for plugin-level aggregates instead of DISTINCT-on-prefix hacks.
  * A plugin with 5 skills emits 5 skill_loaded rows but 1 of these.
  */
@@ -195,7 +182,6 @@ export function logPluginsEnabledForSession(
 ): void {
   for (const plugin of plugins) {
     const { marketplace } = parsePluginIdentifier(plugin.repository)
-
     logEvent('tengu_plugin_enabled_for_session', {
       _PROTO_plugin_name:
         plugin.name as AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -222,7 +208,6 @@ export function logPluginsEnabledForSession(
     })
   }
 }
-
 /**
  * Bounded-cardinality error bucket for CLI plugin operation failures.
  * Maps free-form error messages to 5 stable categories so dashboard
@@ -234,7 +219,6 @@ export type PluginCommandErrorCategory =
   | 'permission'
   | 'validation'
   | 'unknown'
-
 export function classifyPluginCommandError(
   error: unknown,
 ): PluginCommandErrorCategory {
@@ -257,12 +241,11 @@ export function classifyPluginCommandError(
   }
   return 'unknown'
 }
-
 /**
  * Emit tengu_plugin_load_failed once per error surfaced by session-start
  * plugin loading. Pairs with tengu_plugin_enabled_for_session so dashboards
  * can compute a load-success rate. PluginError.type is already a bounded
- * enum — use it directly as error_category.
+ * enum ...use it directly as error_category.
  */
 export function logPluginLoadErrors(
   errors: PluginError[],

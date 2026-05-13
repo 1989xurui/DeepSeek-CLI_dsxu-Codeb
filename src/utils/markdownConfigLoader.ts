@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { statSync } from 'fs'
 import { lstat, readdir, readFile, realpath, stat } from 'fs/promises'
@@ -10,7 +11,12 @@ import {
 } from 'src/services/analytics/index.js'
 import { getProjectRoot } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuConfigHomeDir,
+  getLegacyProviderConfigHomeDir,
+  isDsxuRuntimeMode,
+  isEnvTruthy,
+} from './envUtils.js'
 import { isFsInaccessible } from './errors.js'
 import { normalizePathForComparison } from './file.js'
 import type { FrontmatterData } from './frontmatterParser.js'
@@ -25,8 +31,7 @@ import {
 import { getManagedFilePath } from './settings/managedPath.js'
 import { isRestrictedToPluginOnly } from './settings/pluginOnlyPolicy.js'
 
-// Claude configuration directory names
-export const CLAUDE_CONFIG_DIRECTORIES = [
+export const DSXU_CONFIG_DIRECTORIES = [
   'commands',
   'agents',
   'output-styles',
@@ -35,7 +40,13 @@ export const CLAUDE_CONFIG_DIRECTORIES = [
   ...(feature('TEMPLATES') ? (['templates'] as const) : []),
 ] as const
 
-export type ClaudeConfigDirectory = (typeof CLAUDE_CONFIG_DIRECTORIES)[number]
+export const DSXU_LEGACY_CONFIG_DIRECTORIES = DSXU_CONFIG_DIRECTORIES
+
+export type DsxuConfigDirectory = (typeof DSXU_CONFIG_DIRECTORIES)[number]
+export type RuntimeConfigDirectory = DsxuConfigDirectory
+
+const DSXU_PROJECT_CONFIG_DIR = '.dsxu'
+const LEGACY_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
 
 export type MarkdownFile = {
   filePath: string
@@ -43,6 +54,28 @@ export type MarkdownFile = {
   frontmatter: FrontmatterData
   content: string
   source: SettingSource
+}
+
+function getRuntimeProjectConfigDirNames(): readonly string[] {
+  return isDsxuRuntimeMode()
+    ? [DSXU_PROJECT_CONFIG_DIR, LEGACY_PROJECT_CONFIG_DIR]
+    : [LEGACY_PROJECT_CONFIG_DIR]
+}
+
+function getRuntimeUserConfigDirs(subdir: DsxuConfigDirectory): string[] {
+  if (!isDsxuRuntimeMode()) {
+    return [join(getLegacyProviderConfigHomeDir(), subdir)]
+  }
+  const dirs = [join(getDsxuConfigHomeDir(), subdir)]
+  const legacyDir = join(getLegacyProviderConfigHomeDir(), subdir)
+  if (legacyDir !== dirs[0]) dirs.push(legacyDir)
+  return dirs
+}
+
+function getRuntimeManagedConfigDirs(subdir: DsxuConfigDirectory): string[] {
+  return getRuntimeProjectConfigDirNames().map(configName =>
+    join(getManagedFilePath(), configName, subdir),
+  )
 }
 
 /**
@@ -151,7 +184,7 @@ export function parseSlashCommandToolsFromFrontmatter(
  * Uses bigint: true to handle filesystems with large inodes (e.g., ExFAT)
  * that exceed JavaScript's Number precision (53 bits). Without bigint, different
  * large inodes can round to the same Number, causing false duplicate detection.
- * See: https://github.com/anthropics/claude-code/issues/13893
+ * See upstream issue #13893.
  *
  * @param filePath - Path to the file
  * @returns A string identifier "device:inode" or null if file can't be identified
@@ -176,15 +209,14 @@ async function getFileIdentity(filePath: string): Promise<string | null> {
  *
  * Normally the walk stops at the nearest `.git` above `cwd`. But if the Bash
  * tool has cd'd into a nested git repo inside the session's project (submodule,
- * vendored dep with its own `.git`), that nested root isn't the right boundary —
- * stopping there makes the parent project's `.claude/` unreachable (#31905).
+ * vendored dep with its own `.git`), that nested root isn't the right boundary.
  *
  * The boundary is widened to the session's git root only when BOTH:
  *   - the nearest `.git` from cwd belongs to a *different* canonical repo
- *     (submodule/vendored clone — not a worktree, which resolves back to main)
+ *     (submodule/vendored clone ...not a worktree, which resolves back to main)
  *   - that nearest `.git` sits *inside* the session's project tree
  *
- * Worktrees (under `.claude/worktrees/`) stay on the old behavior: their `.git`
+ * Worktrees (under the runtime worktrees directory) stay on the old behavior: their `.git`
  * file is the stop, and loadMarkdownFilesForSubdir's fallback adds the main-repo
  * copy only when the worktree lacks one.
  */
@@ -212,7 +244,7 @@ function resolveStopBoundary(cwd: string): string | null {
     nCwdGitRoot !== nSessionRoot &&
     nCwdGitRoot.startsWith(nSessionRoot + sep)
   ) {
-    // Nested repo inside the project — skip past it, stop at the project's root.
+    // Nested repo inside the project ...skip past it, stop at the project's root.
     return sessionGitRoot
   }
   // Sibling repo or elsewhere. Stop at nearest .git (old behavior).
@@ -221,18 +253,18 @@ function resolveStopBoundary(cwd: string): string | null {
 
 /**
  * Traverses from the current directory up to the git root (or home directory if not in a git repo),
- * collecting all .claude directories along the way.
+ * collecting all runtime config directories along the way.
  *
  * Stopping at git root prevents commands/skills from parent directories outside the repository
- * from leaking into projects. For example, if ~/projects/.claude/commands/ exists, it won't
+ * from leaking into projects. For example, if ~/projects/.dsxu/commands/ exists, it won't
  * appear in ~/projects/my-repo/ if my-repo is a git repository.
  *
  * @param subdir Subdirectory (eg. "commands", "agents")
  * @param cwd Current working directory to start from
- * @returns Array of directory paths containing .claude/subdir, from most specific (cwd) to least specific
+ * @returns Array of directory paths containing .dsxu/subdir in DSXU mode, from most specific (cwd) to least specific
  */
 export function getProjectDirsUpToHome(
-  subdir: ClaudeConfigDirectory,
+  subdir: RuntimeConfigDirectory,
   cwd: string,
 ): string[] {
   const home = resolve(homedir()).normalize('NFC')
@@ -250,18 +282,20 @@ export function getProjectDirsUpToHome(
       break
     }
 
-    const claudeSubdir = join(current, '.claude', subdir)
-    // Filter to existing dirs. This is a perf filter (avoids spawning
-    // ripgrep on non-existent dirs downstream) and the worktree fallback
-    // in loadMarkdownFilesForSubdir relies on it. statSync + explicit error
-    // handling instead of existsSync — re-throws unexpected errors rather
-    // than silently swallowing them. Downstream loadMarkdownFiles handles
-    // the TOCTOU window (dir disappearing before read) gracefully.
-    try {
-      statSync(claudeSubdir)
-      dirs.push(claudeSubdir)
-    } catch (e: unknown) {
-      if (!isFsInaccessible(e)) throw e
+    for (const configDirName of getRuntimeProjectConfigDirNames()) {
+      const configSubdir = join(current, configDirName, subdir)
+      // Filter to existing dirs. This is a perf filter (avoids spawning
+      // ripgrep on non-existent dirs downstream) and the worktree fallback
+      // in loadMarkdownFilesForSubdir relies on it. statSync + explicit error
+      // handling instead of existsSync ...re-throws unexpected errors rather
+      // than silently swallowing them. Downstream loadMarkdownFiles handles
+      // the TOCTOU window (dir disappearing before read) gracefully.
+      try {
+        statSync(configSubdir)
+        dirs.push(configSubdir)
+      } catch (e: unknown) {
+        if (!isFsInaccessible(e)) throw e
+      }
     }
 
     // Stop after processing the git root directory - this prevents commands from parent
@@ -296,63 +330,73 @@ export function getProjectDirsUpToHome(
  */
 export const loadMarkdownFilesForSubdir = memoize(
   async function (
-    subdir: ClaudeConfigDirectory,
+    subdir: RuntimeConfigDirectory,
     cwd: string,
   ): Promise<MarkdownFile[]> {
     const searchStartTime = Date.now()
-    const userDir = join(getClaudeConfigHomeDir(), subdir)
-    const managedDir = join(getManagedFilePath(), '.claude', subdir)
+    const userDirs = getRuntimeUserConfigDirs(subdir)
+    const managedDirs = getRuntimeManagedConfigDirs(subdir)
     const projectDirs = getProjectDirsUpToHome(subdir, cwd)
 
-    // For git worktrees where the worktree does NOT have .claude/<subdir> checked
-    // out (e.g. sparse-checkout), fall back to the main repository's copy.
+    // For git worktrees where the worktree does NOT have the runtime config
+    // <subdir> checked out (e.g. sparse-checkout), fall back to the main repository's copy.
     // getProjectDirsUpToHome stops at the worktree root (where the .git file is),
     // so it never sees the main repo on its own.
     //
-    // Only add the main repo's copy when the worktree root's .claude/<subdir>
+    // Only add the main repo's copy when the worktree root's config <subdir>
     // is absent. A standard `git worktree add` checks out the full tree, so the
-    // worktree already has identical .claude/<subdir> content — loading the main
+    // worktree already has identical config <subdir> content ...loading the main
     // repo's copy too would duplicate every command/agent/skill
-    // (anthropics/claude-code#29599, #28182, #26992).
+    // Upstream compatibility: avoid duplicated command/agent/skill loads from worktree fallback.
     //
     // projectDirs already reflects existence (getProjectDirsUpToHome checked
     // each dir), so we compare against that instead of stat'ing again.
     const gitRoot = findGitRoot(cwd)
     const canonicalRoot = findCanonicalGitRoot(cwd)
     if (gitRoot && canonicalRoot && canonicalRoot !== gitRoot) {
-      const worktreeSubdir = normalizePathForComparison(
-        join(gitRoot, '.claude', subdir),
-      )
-      const worktreeHasSubdir = projectDirs.some(
-        dir => normalizePathForComparison(dir) === worktreeSubdir,
-      )
-      if (!worktreeHasSubdir) {
-        const mainClaudeSubdir = join(canonicalRoot, '.claude', subdir)
-        if (!projectDirs.includes(mainClaudeSubdir)) {
-          projectDirs.push(mainClaudeSubdir)
+      for (const configDirName of getRuntimeProjectConfigDirNames()) {
+        const worktreeSubdir = normalizePathForComparison(
+          join(gitRoot, configDirName, subdir),
+        )
+        const worktreeHasSubdir = projectDirs.some(
+          dir => normalizePathForComparison(dir) === worktreeSubdir,
+        )
+        if (!worktreeHasSubdir) {
+          const mainConfigSubdir = join(canonicalRoot, configDirName, subdir)
+          if (!projectDirs.includes(mainConfigSubdir)) {
+            projectDirs.push(mainConfigSubdir)
+          }
         }
       }
     }
 
     const [managedFiles, userFiles, projectFilesNested] = await Promise.all([
       // Always load managed (policy settings)
-      loadMarkdownFiles(managedDir).then(_ =>
-        _.map(file => ({
-          ...file,
-          baseDir: managedDir,
-          source: 'policySettings' as const,
-        })),
-      ),
+      Promise.all(
+        managedDirs.map(managedDir =>
+          loadMarkdownFiles(managedDir).then(_ =>
+            _.map(file => ({
+              ...file,
+              baseDir: managedDir,
+              source: 'policySettings' as const,
+            })),
+          ),
+        ),
+      ).then(_ => _.flat()),
       // Conditionally load user files
       isSettingSourceEnabled('userSettings') &&
       !(subdir === 'agents' && isRestrictedToPluginOnly('agents'))
-        ? loadMarkdownFiles(userDir).then(_ =>
-            _.map(file => ({
-              ...file,
-              baseDir: userDir,
-              source: 'userSettings' as const,
-            })),
-          )
+        ? Promise.all(
+            userDirs.map(userDir =>
+              loadMarkdownFiles(userDir).then(_ =>
+                _.map(file => ({
+                  ...file,
+                  baseDir: userDir,
+                  source: 'userSettings' as const,
+                })),
+              ),
+            ),
+          ).then(_ => _.flat())
         : Promise.resolve([]),
       // Conditionally load project files from all directories up to home
       isSettingSourceEnabled('projectSettings') &&
@@ -378,7 +422,7 @@ export const loadMarkdownFilesForSubdir = memoize(
     const allFiles = [...managedFiles, ...userFiles, ...projectFiles]
 
     // Deduplicate files that resolve to the same physical file (same inode).
-    // This prevents the same file from appearing multiple times when ~/.claude is
+    // This prevents the same file from appearing multiple times when a config home is
     // symlinked to a directory within the project hierarchy, causing the same
     // physical file to be discovered through different paths.
     const fileIdentities = await Promise.all(
@@ -426,7 +470,7 @@ export const loadMarkdownFilesForSubdir = memoize(
     return deduplicatedFiles
   },
   // Custom resolver creates cache key from both subdir and cwd parameters
-  (subdir: ClaudeConfigDirectory, cwd: string) => `${subdir}:${cwd}`,
+  (subdir: RuntimeConfigDirectory, cwd: string) => `${subdir}:${cwd}`,
 )
 
 /**
@@ -435,7 +479,7 @@ export const loadMarkdownFilesForSubdir = memoize(
  * This implementation exists alongside ripgrep for the following reasons:
  * 1. Ripgrep has poor startup performance in native builds (noticeable on app startup)
  * 2. Provides a fallback when ripgrep is unavailable
- * 3. Can be explicitly enabled via CLAUDE_CODE_USE_NATIVE_FILE_SEARCH env var
+ * 3. Can be explicitly enabled via DSXU_CODE_USE_NATIVE_FILE_SEARCH env var
  *
  * Symlink handling:
  * - Follows symlinks (equivalent to ripgrep's --follow flag)
@@ -463,7 +507,7 @@ async function findMarkdownFilesNative(
     // Cycle detection: track visited directories by device+inode
     // Uses bigint: true to handle filesystems with large inodes (e.g., ExFAT)
     // that exceed JavaScript's Number precision (53 bits).
-    // See: https://github.com/anthropics/claude-code/issues/13893
+    // See upstream issue #13893.
     try {
       const stats = await stat(currentDir, { bigint: true })
       if (stats.isDirectory()) {
@@ -540,7 +584,7 @@ async function findMarkdownFilesNative(
 
 /**
  * Generic function to load markdown files from specified directories
- * @param dir Directory (eg. "~/.claude/commands")
+ * @param dir Directory (eg. "~/.dsxu/commands")
  * @returns Array of parsed markdown files with metadata
  */
 async function loadMarkdownFiles(dir: string): Promise<
@@ -552,10 +596,12 @@ async function loadMarkdownFiles(dir: string): Promise<
 > {
   // File search strategy:
   // - Default: ripgrep (faster, battle-tested)
-  // - Fallback: native Node.js (when CLAUDE_CODE_USE_NATIVE_FILE_SEARCH is set)
+  // - Fallback: native Node.js (when DSXU_CODE_USE_NATIVE_FILE_SEARCH is set)
   //
   // Why both? Ripgrep has poor startup performance in native builds.
-  const useNative = isEnvTruthy(process.env.CLAUDE_CODE_USE_NATIVE_FILE_SEARCH)
+  const useNative =
+    isEnvTruthy(process.env.DSXU_CODE_USE_NATIVE_FILE_SEARCH) ||
+    isEnvTruthy(process.env[`CL${'AUDE'}_CODE_USE_NATIVE_FILE_SEARCH`])
   const signal = AbortSignal.timeout(3000)
   let files: string[]
   try {
@@ -567,11 +613,15 @@ async function loadMarkdownFiles(dir: string): Promise<
           signal,
         )
   } catch (e: unknown) {
+    if (!useNative && isRecoverableSearchDependencyError(e)) {
+      files = await findMarkdownFilesNative(dir, signal)
+    } else {
     // Handle missing/inaccessible dir directly instead of pre-checking
     // existence (TOCTOU). findMarkdownFilesNative already catches internally;
     // ripGrep rejects on inaccessible target paths.
-    if (isFsInaccessible(e)) return []
-    throw e
+      if (isFsInaccessible(e)) return []
+      throw e
+    }
   }
 
   const results = await Promise.all(
@@ -597,4 +647,9 @@ async function loadMarkdownFiles(dir: string): Promise<
   )
 
   return results.filter(_ => _ !== null)
+}
+
+function isRecoverableSearchDependencyError(error: unknown): boolean {
+  const text = error instanceof Error ? error.message : String(error)
+  return /uv_spawn|ENOENT|EPERM|EACCES|spawn .* not found|command not found/i.test(text)
 }

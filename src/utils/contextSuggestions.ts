@@ -50,6 +50,26 @@ export function generateContextSuggestions(
   return suggestions
 }
 
+export function processContextSuggestionsLifecycle(
+  data: ContextData,
+): {
+  state: 'idle' | 'warning'
+  lifecycle: string
+  suggestions: ContextSuggestion[]
+  warningCount: number
+} {
+  const suggestions = generateContextSuggestions(data)
+  const warningCount = suggestions.filter(
+    suggestion => suggestion.severity === 'warning',
+  ).length
+  return {
+    state: warningCount > 0 ? 'warning' : 'idle',
+    lifecycle: `context-suggestions:${warningCount > 0 ? 'warning' : 'idle'}`,
+    suggestions,
+    warningCount,
+  }
+}
+
 // --
 
 function checkNearCapacity(

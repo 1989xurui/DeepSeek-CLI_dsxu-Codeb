@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getMainThreadAgentType } from '../bootstrap/state.js'
 import type { HookResultMessage } from '../types/message.js'
 import { createAttachmentMessage } from './attachments.js'
@@ -21,7 +22,7 @@ type SessionStartHooksOptions = {
 // consumed once by takeInitialUserMessage. This side channel avoids changing
 // the Promise<HookResultMessage[]> return type that main.tsx and print.ts
 // both already await on (sessionStartHooksPromise is kicked in main.tsx and
-// joined later — rippling a structural return-type change through that
+// joined later ...rippling a structural return-type change through that
 // handoff would touch five callsites for what is a print-mode-only value).
 let pendingInitialUserMessage: string | undefined
 
@@ -31,7 +32,7 @@ export function takeInitialUserMessage(): string | undefined {
   return v
 }
 
-// Note to CLAUDE: do not add ANY "warmup" logic. It is **CRITICAL** that you do not add extra work on startup.
+// Note to DSXU: do not add ANY "warmup" logic. It is **CRITICAL** that you do not add extra work on startup.
 export async function processSessionStartHooks(
   source: 'startup' | 'resume' | 'clear' | 'compact',
   {
@@ -42,8 +43,7 @@ export async function processSessionStartHooks(
   }: SessionStartHooksOptions = {},
 ): Promise<HookResultMessage[]> {
   // --bare skips all hooks. executeHooks already early-returns under --bare
-  // (hooks.ts:1861), but this skips the loadPluginHooks() await below too —
-  // no point loading plugin hooks that'll never run.
+  // (hooks.ts:1861), but this skips the loadPluginHooks() await below too ...  // no point loading plugin hooks that'll never run.
   if (isBareMode()) {
     return []
   }
@@ -101,7 +101,7 @@ export async function processSessionStartHooks(
         errorMessage.includes('EPERM')
       ) {
         userGuidance =
-          'This appears to be a permissions issue. Check file permissions on ~/.claude/plugins/'
+          'This appears to be a permissions issue. Check file permissions on ~/.dsxu/plugins/'
       } else if (
         errorMessage.includes('Invalid') ||
         errorMessage.includes('parse') ||
@@ -109,7 +109,7 @@ export async function processSessionStartHooks(
         errorMessage.includes('schema')
       ) {
         userGuidance =
-          'This appears to be a configuration issue. Check your plugin settings in .claude/settings.json'
+          'This appears to be a configuration issue. Check your plugin settings in .dsxu/settings.json'
       } else {
         userGuidance =
           'Please fix the plugin configuration or remove problematic plugins from your settings.'
@@ -122,7 +122,7 @@ export async function processSessionStartHooks(
       )
 
       // Continue execution - plugin hooks won't be available, but project-level hooks
-      // from .claude/settings.json (loaded via captureHooksConfigSnapshot) will still work
+      // from .dsxu/settings.json (loaded via captureHooksConfigSnapshot) will still work
     }
   }
 

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { WriteFileOptions } from 'fs'
 import {
@@ -10,24 +11,22 @@ import {
 import lodashCloneDeep from 'lodash-es/cloneDeep.js'
 import { addSlowOperation } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
-
+import { getDsxuCodeEnv } from './envUtils.js'
 // Extended WriteFileOptions to include 'flush' which is available in Node.js 20.1.0+
 // but not yet in @types/node
 type WriteFileOptionsWithFlush =
   | WriteFileOptions
   | (WriteFileOptions & { flush?: boolean })
-
 // --- Slow operation logging infrastructure ---
-
 /**
  * Threshold in milliseconds for logging slow JSON/clone operations.
  * Operations taking longer than this will be logged for debugging.
- * - Override: set CLAUDE_CODE_SLOW_OPERATION_THRESHOLD_MS to a number
+ * - Override: set DSXU_CODE_SLOW_OPERATION_THRESHOLD_MS to a number
  * - Dev builds: 20ms (lower threshold for development)
  * - Ants: 300ms (enabled for all internal users)
  */
 const SLOW_OPERATION_THRESHOLD_MS = (() => {
-  const envValue = process.env.CLAUDE_CODE_SLOW_OPERATION_THRESHOLD_MS
+  const envValue = getDsxuCodeEnv('SLOW_OPERATION_THRESHOLD_MS')
   if (envValue !== undefined) {
     const parsed = Number(envValue)
     if (!Number.isNaN(parsed) && parsed >= 0) {
@@ -42,19 +41,16 @@ const SLOW_OPERATION_THRESHOLD_MS = (() => {
   }
   return Infinity
 })()
-
 // Re-export for callers that still need the threshold value directly
 export { SLOW_OPERATION_THRESHOLD_MS }
-
 // Module-level re-entrancy guard. logForDebugging writes to a debug file via
 // appendFileSync, which goes through slowLogging again. Without this guard,
-// a slow appendFileSync → dispose → logForDebugging → appendFileSync → dispose → ...
+// a slow appendFileSync  -> dispose  -> logForDebugging  -> appendFileSync  -> dispose  -> ...
 let isLogging = false
-
 /**
  * Extract the first stack frame outside this file, so the DevBar warning
  * points at the actual caller instead of a useless `Object{N keys}`.
- * Only called when an operation was actually slow — never on the fast path.
+ * Only called when an operation was actually slow ...never on the fast path.
  */
 export function callerFrame(stack: string | undefined): string {
   if (!stack) return ''
@@ -65,10 +61,9 @@ export function callerFrame(stack: string | undefined): string {
   }
   return ''
 }
-
 /**
  * Builds a human-readable description from tagged template arguments.
- * Only called when an operation was actually slow — never on the fast path.
+ * Only called when an operation was actually slow ...never on the fast path.
  *
  * args[0] = TemplateStringsArray, args[1..n] = interpolated values
  */
@@ -92,20 +87,17 @@ function buildDescription(args: IArguments): string {
   }
   return result
 }
-
 class AntSlowLogger {
   startTime: number
   args: IArguments
   err: Error
-
   constructor(args: IArguments) {
     this.startTime = performance.now()
     this.args = args
     // V8/JSC capture the stack at construction but defer the expensive string
-    // formatting until .stack is read — so this stays off the fast path.
+    // formatting until .stack is read ...so this stays off the fast path.
     this.err = new Error()
   }
-
   [Symbol.dispose](): void {
     const duration = performance.now() - this.startTime
     if (duration > SLOW_OPERATION_THRESHOLD_MS && !isLogging) {
@@ -123,9 +115,7 @@ class AntSlowLogger {
     }
   }
 }
-
 const NOOP_LOGGER: Disposable = { [Symbol.dispose]() {} }
-
 // Must be regular functions (not arrows) to access `arguments`
 function slowLoggingAnt(
   _strings: TemplateStringsArray,
@@ -134,11 +124,9 @@ function slowLoggingAnt(
   // eslint-disable-next-line prefer-rest-params
   return new AntSlowLogger(arguments)
 }
-
 function slowLoggingExternal(): Disposable {
   return NOOP_LOGGER
 }
-
 /**
  * Tagged template for slow operation logging.
  *
@@ -155,9 +143,7 @@ function slowLoggingExternal(): Disposable {
 export const slowLogging: {
   (strings: TemplateStringsArray, ...values: unknown[]): Disposable
 } = feature('SLOW_OPERATION_LOGGING') ? slowLoggingAnt : slowLoggingExternal
-
 // --- Wrapped operations ---
-
 /**
  * Wrapped JSON.stringify with slow operation logging.
  * Use this instead of JSON.stringify directly to detect performance issues.
@@ -192,7 +178,6 @@ export function jsonStringify(
     space,
   )
 }
-
 /**
  * Wrapped JSON.parse with slow operation logging.
  * Use this instead of JSON.parse directly to detect performance issues.
@@ -209,7 +194,6 @@ export const jsonParse: typeof JSON.parse = (text, reviver) => {
     ? JSON.parse(text)
     : JSON.parse(text, reviver)
 }
-
 /**
  * Wrapped structuredClone with slow operation logging.
  * Use this instead of structuredClone directly to detect performance issues.
@@ -222,7 +206,6 @@ export function clone<T>(value: T, options?: StructuredSerializeOptions): T {
   using _ = slowLogging`structuredClone(${value})`
   return structuredClone(value, options)
 }
-
 /**
  * Wrapped cloneDeep with slow operation logging.
  * Use this instead of lodash cloneDeep directly to detect performance issues.
@@ -235,7 +218,6 @@ export function cloneDeep<T>(value: T): T {
   using _ = slowLogging`cloneDeep(${value})`
   return lodashCloneDeep(value)
 }
-
 /**
  * Wrapper around fs.writeFileSync with slow operation logging.
  * Supports flush option to ensure data is written to disk before returning.
@@ -251,14 +233,12 @@ export function writeFileSync_DEPRECATED(
   options?: WriteFileOptionsWithFlush,
 ): void {
   using _ = slowLogging`fs.writeFileSync(${filePath}, ${data})`
-
   // Check if flush is requested (for object-style options)
   const needsFlush =
     options !== null &&
     typeof options === 'object' &&
     'flush' in options &&
     options.flush === true
-
   if (needsFlush) {
     // Manual flush: open file, write, fsync, close
     const encoding =

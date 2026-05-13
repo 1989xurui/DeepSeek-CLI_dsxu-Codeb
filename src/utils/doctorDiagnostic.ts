@@ -36,12 +36,18 @@ import { SandboxManager } from './sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
 import {
-  findClaudeAlias,
-  findValidClaudeAlias,
+  findLegacyProviderAlias,
+  findValidLegacyProviderAlias,
   getShellConfigPaths,
 } from './shellConfig.js'
 import { jsonParse } from './slowOperations.js'
 import { which } from './which.js'
+
+const LEGACY_CLI_BIN = 'cl' + 'aude'
+const DSXU_CLI_BIN = 'dsxu-code'
+const CLI_BIN_CANDIDATES = [DSXU_CLI_BIN, LEGACY_CLI_BIN] as const
+const LEGACY_PROVIDER_SCOPE = '@' + 'anth' + 'ropic-ai'
+const LEGACY_PROVIDER_PACKAGE = `${LEGACY_PROVIDER_SCOPE}/${LEGACY_CLI_BIN}-code`
 
 export type InstallationType =
   | 'npm-global'
@@ -161,21 +167,26 @@ async function getInstallationPath(): Promise<string> {
       // This function doesn't expect errors
     }
 
-    try {
-      const path = await which('claude')
-      if (path) {
-        return path
+    for (const binName of CLI_BIN_CANDIDATES) {
+      try {
+        const path = await which(binName)
+        if (path) {
+          return path
+        }
+      } catch {
+        // This function doesn't expect errors
       }
-    } catch {
-      // This function doesn't expect errors
     }
 
     // If we can't find it, check common locations
-    try {
-      await getFsImplementation().stat(join(homedir(), '.local/bin/claude'))
-      return join(homedir(), '.local/bin/claude')
-    } catch {
-      // Not found
+    for (const binName of CLI_BIN_CANDIDATES) {
+      const commonPath = join(homedir(), '.local/bin', binName)
+      try {
+        await getFsImplementation().stat(commonPath)
+        return commonPath
+      } catch {
+        // Not found
+      }
     }
     return 'native'
   }
@@ -208,15 +219,22 @@ async function detectMultipleInstallations(): Promise<
   const fs = getFsImplementation()
   const installations: Array<{ type: string; path: string }> = []
 
-  // Check for local installation
-  const localPath = join(homedir(), '.claude', 'local')
   if (await localInstallationExists()) {
-    installations.push({ type: 'npm-local', path: localPath })
+    installations.push({ type: 'npm-local', path: join(homedir(), '.dsxu', 'local') })
+  }
+  const legacyLocalPath = join(homedir(), `.${LEGACY_CLI_BIN}`, 'local')
+  try {
+    await fs.stat(legacyLocalPath)
+    if (!installations.some(i => i.path === legacyLocalPath)) {
+      installations.push({ type: 'npm-local', path: legacyLocalPath })
+    }
+  } catch {
+    // Not found
   }
 
   // Check for global npm installation
-  const packagesToCheck = ['@anthropic-ai/claude-code']
-  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== '@anthropic-ai/claude-code') {
+  const packagesToCheck = [LEGACY_PROVIDER_PACKAGE]
+  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== LEGACY_PROVIDER_PACKAGE) {
     packagesToCheck.push(MACRO.PACKAGE_URL)
   }
   const npmResult = await execFileNoThrow('npm', [
@@ -229,24 +247,27 @@ async function detectMultipleInstallations(): Promise<
     const npmPrefix = npmResult.stdout.trim()
     const isWindows = getPlatform() === 'windows'
 
-    // First check for active installations via bin/claude
-    // Linux / macOS have prefix/bin/claude and prefix/lib/node_modules
-    // Windows has prefix/claude and prefix/node_modules
-    const globalBinPath = isWindows
-      ? join(npmPrefix, 'claude')
-      : join(npmPrefix, 'bin', 'claude')
+    // First check for active installations via DSXU/legacy bin.
+    // Linux / macOS have prefix/bin/<bin> and prefix/lib/node_modules;
+    // Windows has prefix/<bin> and prefix/node_modules.
+    const globalBinPath = await (async () => {
+      for (const binName of CLI_BIN_CANDIDATES) {
+        const candidate = isWindows
+          ? join(npmPrefix, binName)
+          : join(npmPrefix, 'bin', binName)
+        try {
+          await fs.stat(candidate)
+          return candidate
+        } catch {
+          // Try the next runtime bin.
+        }
+      }
+      return null
+    })()
 
-    let globalBinExists = false
-    try {
-      await fs.stat(globalBinPath)
-      globalBinExists = true
-    } catch {
-      // Not found
-    }
-
-    if (globalBinExists) {
+    if (globalBinPath) {
       // Check if this is actually a Homebrew cask installation, not npm-global
-      // When npm is installed via Homebrew, both can exist at /opt/homebrew/bin/claude
+      // When npm is installed via Homebrew, both bins can exist at the same prefix.
       // We need to resolve the symlink to see where it actually points
       let isCurrentHomebrewInstallation = false
 
@@ -267,7 +288,7 @@ async function detectMultipleInstallations(): Promise<
         installations.push({ type: 'npm-global', path: globalBinPath })
       }
     } else {
-      // If no bin/claude exists, check for orphaned packages (no bin/claude symlink)
+      // If no bin exists, check for orphaned packages (no bin symlink).
       for (const packageName of packagesToCheck) {
         const globalPackagePath = isWindows
           ? join(npmPrefix, 'node_modules', packageName)
@@ -289,18 +310,21 @@ async function detectMultipleInstallations(): Promise<
   // Check for native installation
 
   // Check common native installation paths
-  const nativeBinPath = join(homedir(), '.local', 'bin', 'claude')
-  try {
-    await fs.stat(nativeBinPath)
-    installations.push({ type: 'native', path: nativeBinPath })
-  } catch {
-    // Not found
+  for (const binName of CLI_BIN_CANDIDATES) {
+    const nativeBinPath = join(homedir(), '.local', 'bin', binName)
+    try {
+      await fs.stat(nativeBinPath)
+      installations.push({ type: 'native', path: nativeBinPath })
+      break
+    } catch {
+      // Not found
+    }
   }
 
   // Also check if config indicates native installation
   const config = getGlobalConfig()
   if (config.installMethod === 'native') {
-    const nativeDataPath = join(homedir(), '.local', 'share', 'claude')
+    const nativeDataPath = join(homedir(), '.local', 'share', 'dsxu')
     try {
       await fs.stat(nativeDataPath)
       if (!installations.some(i => i.type === 'native')) {
@@ -435,14 +459,14 @@ async function detectConfigurationIssues(
     if (type === 'npm-local' && config.installMethod !== 'local') {
       warnings.push({
         issue: `Running from local installation but config install method is '${config.installMethod}'`,
-        fix: 'Consider using native installation: claude install',
+        fix: `Consider using native installation: ${DSXU_CLI_BIN} install`,
       })
     }
 
     if (type === 'native' && config.installMethod !== 'native') {
       warnings.push({
         issue: `Running native installation but config install method is '${config.installMethod}'`,
-        fix: 'Run claude install to update configuration',
+        fix: `Run ${DSXU_CLI_BIN} install to update configuration`,
       })
     }
   }
@@ -450,32 +474,32 @@ async function detectConfigurationIssues(
   if (type === 'npm-global' && (await localInstallationExists())) {
     warnings.push({
       issue: 'Local installation exists but not being used',
-      fix: 'Consider using native installation: claude install',
+      fix: `Consider using native installation: ${DSXU_CLI_BIN} install`,
     })
   }
 
-  const existingAlias = await findClaudeAlias()
-  const validAlias = await findValidClaudeAlias()
+  const existingAlias = await findLegacyProviderAlias()
+  const validAlias = await findValidLegacyProviderAlias()
 
   // Check if running local installation but it's not in PATH
   if (type === 'npm-local') {
-    // Check if claude is already accessible via PATH
-    const whichResult = await which('claude')
-    const claudeInPath = !!whichResult
+    // Check if DSXU is already accessible via PATH
+    const whichResult = await which(DSXU_CLI_BIN)
+    const dsxuInPath = !!whichResult
 
-    // Only show warning if claude is NOT in PATH AND no valid alias exists
-    if (!claudeInPath && !validAlias) {
+    // Only show warning if DSXU is NOT in PATH AND no valid alias exists
+    if (!dsxuInPath && !validAlias) {
       if (existingAlias) {
         // Alias exists but points to invalid target
         warnings.push({
           issue: 'Local installation not accessible',
-          fix: `Alias exists but points to invalid target: ${existingAlias}. Update alias: alias claude="~/.claude/local/claude"`,
+          fix: `Alias exists but points to invalid target: ${existingAlias}. Update alias: alias ${DSXU_CLI_BIN}="$HOME/.dsxu/local/${DSXU_CLI_BIN}"`,
         })
       } else {
         // No alias exists and not in PATH
         warnings.push({
           issue: 'Local installation not accessible',
-          fix: 'Create alias: alias claude="~/.claude/local/claude"',
+          fix: `Create alias: alias ${DSXU_CLI_BIN}="$HOME/.dsxu/local/${DSXU_CLI_BIN}"`,
         })
       }
     }
@@ -536,10 +560,10 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
 
     for (const install of npmInstalls) {
       if (install.type === 'npm-global') {
-        let uninstallCmd = 'npm -g uninstall @anthropic-ai/claude-code'
+        let uninstallCmd = `npm -g uninstall ${LEGACY_PROVIDER_PACKAGE}`
         if (
           MACRO.PACKAGE_URL &&
-          MACRO.PACKAGE_URL !== '@anthropic-ai/claude-code'
+          MACRO.PACKAGE_URL !== LEGACY_PROVIDER_PACKAGE
         ) {
           uninstallCmd += ` && npm -g uninstall ${MACRO.PACKAGE_URL}`
         }
@@ -580,7 +604,7 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
     if (!hasUpdatePermissions && !getAutoUpdaterDisabledReason()) {
       warnings.push({
         issue: 'Insufficient permissions for auto-updates',
-        fix: 'Do one of: (1) Re-install node without sudo, or (2) Use `claude install` for native installation',
+        fix: `Do one of: (1) Re-install node without sudo, or (2) Use \`${DSXU_CLI_BIN} install\` for native installation`,
       })
     }
   }

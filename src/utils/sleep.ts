@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Abort-responsive sleep. Resolves after `ms` milliseconds, or immediately
  * when `signal` aborts (so backoff loops don't block shutdown).
  *
  * By default, abort resolves silently; the caller should check
  * `signal.aborted` after the await. Pass `throwOnAbort: true` to have
- * abort reject — useful when the sleep is deep inside a retry loop
+ * abort reject ...useful when the sleep is deep inside a retry loop
  * and you want the rejection to bubble up and cancel the whole operation.
  *
  * Pass `abortError` to customize the rejection error (implies
@@ -63,7 +64,7 @@ function rejectWithTimeout(reject: (e: Error) => void, message: string): void {
  * the promise settles (no dangling timer) and unref'd so it doesn't
  * block process exit.
  *
- * Note: this doesn't cancel the underlying work — if the promise is
+ * Note: this doesn't cancel the underlying work ...if the promise is
  * backed by a runaway async operation, that keeps running. This just
  * returns control to the caller.
  */

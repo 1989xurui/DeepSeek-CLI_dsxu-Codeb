@@ -263,3 +263,18 @@ export function filterInvalidPermissionRules(
   }
   return warnings
 }
+
+export function processValidationLifecycle(content: string): {
+  state: 'valid' | 'invalid'
+  lifecycle: string
+  errorCount: number
+} {
+  const result = validateSettingsFileContent(content)
+  const errorCount = result.isValid ? 0 : 1
+  const state = result.isValid ? 'valid' : 'invalid'
+  return {
+    state,
+    lifecycle: `validation:${state}`,
+    errorCount,
+  }
+}

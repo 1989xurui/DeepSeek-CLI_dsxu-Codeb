@@ -103,7 +103,7 @@ function extractConversationContext(
   messages: Message[],
   maxChars = 1000,
 ): string {
-  // Get recent assistant messages (they contain Claude's reasoning)
+  // Get recent assistant messages (they contain DSXU's reasoning)
   const assistantMessages = messages
     .filter((m): m is AssistantMessage => m.type === 'assistant')
     .slice(-3) // Last 3 assistant messages
@@ -141,7 +141,7 @@ export function isPermissionExplainerEnabled(): boolean {
 }
 
 /**
- * Generate a permission explanation using Haiku with structured output.
+ * Generate a permission explanation using the lightweight route with structured output.
  * Returns null if the feature is disabled, request is aborted, or an error occurs.
  */
 export async function generatePermissionExplanation({

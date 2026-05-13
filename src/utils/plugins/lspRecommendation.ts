@@ -41,7 +41,7 @@ export type LspPluginRecommendation = {
 const MAX_IGNORED_COUNT = 5
 
 /**
- * Check if a marketplace is official (from Anthropic)
+ * Check if a marketplace is official for the DSXU bundled marketplace set.
  */
 function isOfficialMarketplace(name: string): boolean {
   return ALLOWED_OFFICIAL_MARKETPLACE_NAMES.has(name.toLowerCase())

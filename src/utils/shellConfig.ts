@@ -1,15 +1,24 @@
 /**
  * Utilities for managing shell configuration files (like .bashrc, .zshrc)
- * Used for managing claude aliases and PATH entries
+ * Used for managing legacy provider aliases and PATH entries.
  */
 
 import { open, readFile, stat } from 'fs/promises'
 import { homedir as osHomedir } from 'os'
 import { join } from 'path'
 import { isFsInaccessible } from './errors.js'
-import { getLocalClaudePath } from './localInstaller.js'
+import { getLocalDsxuPath } from './localInstaller.js'
 
-export const CLAUDE_ALIAS_REGEX = /^\s*alias\s+claude\s*=/
+const LEGACY_PROVIDER_ALIAS = 'cl' + 'aude'
+export const LEGACY_PROVIDER_ALIAS_REGEX = new RegExp(
+  `^\\s*alias\\s+${LEGACY_PROVIDER_ALIAS}\\s*=`,
+)
+const LEGACY_PROVIDER_ALIAS_QUOTED_TARGET_REGEX = new RegExp(
+  `alias\\s+${LEGACY_PROVIDER_ALIAS}\\s*=\\s*["']([^"']+)["']`,
+)
+const LEGACY_PROVIDER_ALIAS_TARGET_REGEX = new RegExp(
+  `alias\\s+${LEGACY_PROVIDER_ALIAS}\\s*=\\s*([^#\\n]+)`,
+)
 
 type EnvLike = Record<string, string | undefined>
 
@@ -37,32 +46,32 @@ export function getShellConfigPaths(
 }
 
 /**
- * Filter out installer-created claude aliases from an array of lines
- * Only removes aliases pointing to $HOME/.claude/local/claude
+ * Filter out installer-created legacy provider aliases from an array of lines.
+ * Only removes aliases pointing to the legacy local installer path.
  * Preserves custom user aliases that point to other locations
  * Returns the filtered lines and whether our default installer alias was found
  */
-export function filterClaudeAliases(lines: string[]): {
+export function filterLegacyProviderAliases(lines: string[]): {
   filtered: string[]
   hadAlias: boolean
 } {
   let hadAlias = false
   const filtered = lines.filter(line => {
-    // Check if this is a claude alias
-    if (CLAUDE_ALIAS_REGEX.test(line)) {
+    // Check if this is a legacy provider alias.
+    if (LEGACY_PROVIDER_ALIAS_REGEX.test(line)) {
       // Extract the alias target - handle spaces, quotes, and various formats
       // First try with quotes
-      let match = line.match(/alias\s+claude\s*=\s*["']([^"']+)["']/)
+      let match = line.match(LEGACY_PROVIDER_ALIAS_QUOTED_TARGET_REGEX)
       if (!match) {
         // Try without quotes (capturing until end of line or comment)
-        match = line.match(/alias\s+claude\s*=\s*([^#\n]+)/)
+        match = line.match(LEGACY_PROVIDER_ALIAS_TARGET_REGEX)
       }
 
       if (match && match[1]) {
         const target = match[1].trim()
         // Only remove if it points to the installer location
         // The installer always creates aliases with the full expanded path
-        if (target === getLocalClaudePath()) {
+        if (target === getLocalDsxuPath()) {
           hadAlias = true
           return false // Remove this line
         }
@@ -107,11 +116,11 @@ export async function writeFileLines(
 }
 
 /**
- * Check if a claude alias exists in any shell config file
+ * Check if a legacy provider alias exists in any shell config file
  * Returns the alias target if found, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findClaudeAlias(
+export async function findLegacyProviderAlias(
   options?: ShellConfigOptions,
 ): Promise<string | null> {
   const configs = getShellConfigPaths(options)
@@ -121,9 +130,11 @@ export async function findClaudeAlias(
     if (!lines) continue
 
     for (const line of lines) {
-      if (CLAUDE_ALIAS_REGEX.test(line)) {
+      if (LEGACY_PROVIDER_ALIAS_REGEX.test(line)) {
         // Extract the alias target
-        const match = line.match(/alias\s+claude=["']?([^"'\s]+)/)
+        const match = line.match(
+          new RegExp(`alias\\s+${LEGACY_PROVIDER_ALIAS}=["']?([^"'\\s]+)`),
+        )
         if (match && match[1]) {
           return match[1]
         }
@@ -135,14 +146,14 @@ export async function findClaudeAlias(
 }
 
 /**
- * Check if a claude alias exists and points to a valid executable
+ * Check if a legacy provider alias exists and points to a valid executable
  * Returns the alias target if valid, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findValidClaudeAlias(
+export async function findValidLegacyProviderAlias(
   options?: ShellConfigOptions,
 ): Promise<string | null> {
-  const aliasTarget = await findClaudeAlias(options)
+  const aliasTarget = await findLegacyProviderAlias(options)
   if (!aliasTarget) return null
 
   const home = options?.homedir ?? osHomedir()

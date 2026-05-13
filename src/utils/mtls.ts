@@ -5,6 +5,7 @@ import type * as tls from 'tls'
 import type * as undici from 'undici'
 import { getCACertificates } from './caCerts.js'
 import { logForDebugging } from './debug.js'
+import { getDsxuCodeEnv } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 
 export type MTLSConfig = {
@@ -27,14 +28,14 @@ export const getMTLSConfig = memoize((): MTLSConfig | undefined => {
   // We don't need to manually load it - Node.js appends it to the built-in CAs automatically
 
   // Client certificate
-  if (process.env.CLAUDE_CODE_CLIENT_CERT) {
+  const clientCertPath = getDsxuCodeEnv('CLIENT_CERT')
+  if (clientCertPath) {
     try {
-      config.cert = getFsImplementation().readFileSync(
-        process.env.CLAUDE_CODE_CLIENT_CERT,
-        { encoding: 'utf8' },
-      )
+      config.cert = getFsImplementation().readFileSync(clientCertPath, {
+        encoding: 'utf8',
+      })
       logForDebugging(
-        'mTLS: Loaded client certificate from CLAUDE_CODE_CLIENT_CERT',
+        'mTLS: Loaded client certificate from DSXU_CODE_CLIENT_CERT',
       )
     } catch (error) {
       logForDebugging(`mTLS: Failed to load client certificate: ${error}`, {
@@ -44,13 +45,13 @@ export const getMTLSConfig = memoize((): MTLSConfig | undefined => {
   }
 
   // Client key
-  if (process.env.CLAUDE_CODE_CLIENT_KEY) {
+  const clientKeyPath = getDsxuCodeEnv('CLIENT_KEY')
+  if (clientKeyPath) {
     try {
-      config.key = getFsImplementation().readFileSync(
-        process.env.CLAUDE_CODE_CLIENT_KEY,
-        { encoding: 'utf8' },
-      )
-      logForDebugging('mTLS: Loaded client key from CLAUDE_CODE_CLIENT_KEY')
+      config.key = getFsImplementation().readFileSync(clientKeyPath, {
+        encoding: 'utf8',
+      })
+      logForDebugging('mTLS: Loaded client key from DSXU_CODE_CLIENT_KEY')
     } catch (error) {
       logForDebugging(`mTLS: Failed to load client key: ${error}`, {
         level: 'error',
@@ -59,8 +60,9 @@ export const getMTLSConfig = memoize((): MTLSConfig | undefined => {
   }
 
   // Key passphrase
-  if (process.env.CLAUDE_CODE_CLIENT_KEY_PASSPHRASE) {
-    config.passphrase = process.env.CLAUDE_CODE_CLIENT_KEY_PASSPHRASE
+  const clientKeyPassphrase = getDsxuCodeEnv('CLIENT_KEY_PASSPHRASE')
+  if (clientKeyPassphrase) {
+    config.passphrase = clientKeyPassphrase
     logForDebugging('mTLS: Using client key passphrase')
   }
 

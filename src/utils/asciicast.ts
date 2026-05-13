@@ -1,15 +1,16 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { appendFile, rename } from 'fs/promises'
 import { basename, dirname, join } from 'path'
 import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import { createBufferedWriter } from './bufferedWriter.js'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getRuntimeConfigHomeDir, isDsxuCodeEnvTruthy } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import { sanitizePath } from './path.js'
 import { jsonStringify } from './slowOperations.js'
 
-// Mutable recording state — filePath is updated when session ID changes (e.g., --resume)
+// Mutable recording state ...filePath is updated when session ID changes (e.g., --resume)
 const recordingState: { filePath: string | null; timestamp: number } = {
   filePath: null,
   timestamp: 0,
@@ -17,7 +18,7 @@ const recordingState: { filePath: string | null; timestamp: number } = {
 
 /**
  * Get the asciicast recording file path.
- * For ants with CLAUDE_CODE_TERMINAL_RECORDING=1: returns a path.
+ * For internal users with DSXU terminal recording enabled: returns a path.
  * Otherwise: returns null.
  * The path is computed once and cached in recordingState.
  */
@@ -28,12 +29,12 @@ export function getRecordFilePath(): string | null {
   if (process.env.USER_TYPE !== 'ant') {
     return null
   }
-  if (!isEnvTruthy(process.env.CLAUDE_CODE_TERMINAL_RECORDING)) {
+  if (!isDsxuCodeEnvTruthy('TERMINAL_RECORDING')) {
     return null
   }
   // Record alongside the transcript.
   // Each launch gets its own file so --continue produces multiple recordings.
-  const projectsDir = join(getClaudeConfigHomeDir(), 'projects')
+  const projectsDir = join(getRuntimeConfigHomeDir(), 'projects')
   const projectDir = join(projectsDir, sanitizePath(getOriginalCwd()))
   recordingState.timestamp = Date.now()
   recordingState.filePath = join(
@@ -54,7 +55,7 @@ export function _resetRecordingStateForTesting(): void {
  */
 export function getSessionRecordingPaths(): string[] {
   const sessionId = getSessionId()
-  const projectsDir = join(getClaudeConfigHomeDir(), 'projects')
+  const projectsDir = join(getRuntimeConfigHomeDir(), 'projects')
   const projectDir = join(projectsDir, sanitizePath(getOriginalCwd()))
   try {
     // eslint-disable-next-line custom-rules/no-sync-fs -- called during /share before upload, not in hot path
@@ -84,7 +85,7 @@ export async function renameRecordingForSession(): Promise<void> {
   if (!oldPath || recordingState.timestamp === 0) {
     return
   }
-  const projectsDir = join(getClaudeConfigHomeDir(), 'projects')
+  const projectsDir = join(getRuntimeConfigHomeDir(), 'projects')
   const projectDir = join(projectsDir, sanitizePath(getOriginalCwd()))
   const newPath = join(
     projectDir,
@@ -100,7 +101,7 @@ export async function renameRecordingForSession(): Promise<void> {
   try {
     await rename(oldPath, newPath)
     recordingState.filePath = newPath
-    logForDebugging(`[asciicast] Renamed recording: ${oldName} → ${newName}`)
+    logForDebugging(`[asciicast] Renamed recording: ${oldName}  -> ${newName}`)
   } catch {
     logForDebugging(
       `[asciicast] Failed to rename recording from ${oldName} to ${newName}`,
@@ -116,7 +117,7 @@ type AsciicastRecorder = {
 let recorder: AsciicastRecorder | null = null
 
 function getTerminalSize(): { cols: number; rows: number } {
-  // Direct access to stdout dimensions — not in a React component
+  // Direct access to stdout dimensions ...not in a React component
   // eslint-disable-next-line custom-rules/prefer-use-terminal-size
   const cols = process.stdout.columns || 80
   // eslint-disable-next-line custom-rules/prefer-use-terminal-size
@@ -179,7 +180,7 @@ export function installAsciicastRecorder(): void {
       pendingWrite = pendingWrite
         .then(() => appendFile(currentPath, content))
         .catch(() => {
-          // Silently ignore write errors — don't break the session
+          // Silently ignore write errors ...don't break the session
         })
     },
     flushIntervalMs: 500,

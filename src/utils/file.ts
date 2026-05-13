@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { chmodSync, writeFileSync as fsWriteFileSync } from 'fs'
 import { realpath, stat } from 'fs/promises'
 import { homedir } from 'os'
@@ -71,7 +72,7 @@ export function getFileModificationTime(filePath: string): number {
 /**
  * Async variant of getFileModificationTime. Same floor semantics.
  * Use this in async paths (getChangedFiles runs every turn on every readFileState
- * entry — sync statSync there triggers the slow-operation indicator on network/
+ * entry ...sync statSync there triggers the slow-operation indicator on network/
  * slow disks).
  */
 export async function getFileModificationTimeAsync(
@@ -276,8 +277,7 @@ export async function suggestPathUnderCwd(
  * Killswitch pattern: GB can disable if issues surface externally.
  */
 export function isCompactLinePrefixEnabled(): boolean {
-  // 3P default: killswitch off = compact format enabled. Client-side only —
-  // no server support needed, safe for Bedrock/Vertex/Foundry.
+  // 3P default: killswitch off = compact format enabled. Client-side only ...  // no server support needed, safe for Bedrock/Vertex/Foundry.
   return !getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_compact_line_prefix_killswitch',
     false,
@@ -311,15 +311,15 @@ export function addLineNumbers({
     .map((line, index) => {
       const numStr = String(index + startLine)
       if (numStr.length >= 6) {
-        return `${numStr}→${line}`
+        return `${numStr}	${line}`
       }
-      return `${numStr.padStart(6, ' ')}→${line}`
+      return `${numStr.padStart(6, ' ')}	${line}`
     })
     .join('\n')
 }
 
 /**
- * Inverse of addLineNumbers — strips the `N→` or `N\t` prefix from a single
+ * Inverse of addLineNumbers ...strips the `N→` or `N\t` prefix from a single
  * line. Co-located so format changes here and in addLineNumbers stay in sync.
  */
 export function stripLineNumberPrefix(line: string): string {
@@ -379,7 +379,7 @@ export function writeFileSyncAndFlush_DEPRECATED(
       : resolve(dirname(filePath), linkTarget)
     logForDebugging(`Writing through symlink: ${filePath} -> ${targetPath}`)
   } catch {
-    // ENOENT (doesn't exist) or EINVAL (not a symlink) — keep targetPath = filePath
+    // ENOENT (doesn't exist) or EINVAL (not a symlink) ...keep targetPath = filePath
   }
 
   // Try atomic write first

@@ -1,11 +1,11 @@
-// Non-React scheduler core for .claude/scheduled_tasks.json.
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+// Non-React scheduler core for .dsxu/scheduled_tasks.json.
 // Shared by REPL (via useScheduledTasks) and SDK/-p mode (print.ts).
 //
 // Lifecycle: poll getScheduledTasksEnabled() until true (flag flips when
-// CronCreate runs or a skill on: trigger fires) → load tasks + watch the
-// file + start a 1s check timer → on fire, call onFire(prompt). stop()
+// CronCreate runs or a skill on: trigger fires)  -> load tasks + watch the
+// file + start a 1s check timer  -> on fire, call onFire(prompt). stop()
 // tears everything down.
-
 import type { FSWatcher } from 'chokidar'
 import {
   getScheduledTasksEnabled,
@@ -36,7 +36,6 @@ import {
   tryAcquireSchedulerLock,
 } from './cronTasksLock.js'
 import { logForDebugging } from './debug.js'
-
 const CHECK_INTERVAL_MS = 1000
 const FILE_STABILITY_MS = 300
 // How often a non-owning session re-probes the scheduler lock. Coarse
@@ -47,7 +46,7 @@ const LOCK_PROBE_INTERVAL_MS = 5000
  * be deleted on its next fire. Permanent tasks never age. `maxAgeMs === 0`
  * means unlimited (never ages out). Sourced from
  * {@link CronJitterConfig.recurringMaxAgeMs} at call time.
- * Extracted for testability — the scheduler's check() is buried under
+ * Extracted for testability ...the scheduler's check() is buried under
  * setInterval/chokidar/lock machinery.
  */
 export function isRecurringTaskAged(
@@ -58,7 +57,6 @@ export function isRecurringTaskAged(
   if (maxAgeMs === 0) return false
   return Boolean(t.recurring && !t.permanent && nowMs - t.createdAt >= maxAgeMs)
 }
-
 type CronSchedulerOptions = {
   /** Called when a task fires (regular or missed-on-startup). */
   onFire: (prompt: string) => void
@@ -67,7 +65,7 @@ type CronSchedulerOptions = {
   /**
    * When true, bypasses the isLoading gate in check() and auto-enables the
    * scheduler without waiting for setScheduledTasksEnabled(). The
-   * auto-enable is the load-bearing part — assistant mode has tasks in
+   * auto-enable is the load-bearing part ...assistant mode has tasks in
    * scheduled_tasks.json at install time and shouldn't wait on a loader
    * skill to flip the flag. The isLoading bypass is minor post-#20425
    * (assistant mode now idles between turns like a normal REPL).
@@ -86,7 +84,7 @@ type CronSchedulerOptions = {
    */
   onMissed?: (tasks: CronTask[]) => void
   /**
-   * Directory containing .claude/scheduled_tasks.json. When provided, the
+   * Directory containing .dsxu/scheduled_tasks.json. When provided, the
    * scheduler never touches bootstrap state: getProjectRoot/getSessionId are
    * not read, and the getScheduledTasksEnabled() poll is skipped (enable()
    * runs immediately on start). Required for Agent SDK daemon callers.
@@ -101,17 +99,17 @@ type CronSchedulerOptions = {
   /**
    * Returns the cron jitter config to use for this tick. Called once per
    * check() cycle. REPL callers pass a GrowthBook-backed implementation
-   * (see cronJitterConfig.ts) for live tuning — ops can widen the jitter
+   * (see cronJitterConfig.ts) for live tuning ...ops can widen the jitter
    * window mid-session during a :00 load spike without restarting clients.
    * Agent SDK daemon callers omit this and get DEFAULT_CRON_JITTER_CONFIG,
    * which is safe since daemons restart on config change anyway, and the
-   * growthbook.ts → config.ts → commands.ts → REPL chain stays out of
+   * growthbook.ts  -> config.ts  -> commands.ts  -> REPL chain stays out of
    * sdk.mjs.
    */
   getJitterConfig?: () => CronJitterConfig
   /**
    * Killswitch: polled once per check() tick. When true, check() bails
-   * before firing anything — existing crons stop dead mid-session. CLI
+   * before firing anything ...existing crons stop dead mid-session. CLI
    * callers inject `() => !isKairosCronEnabled()` so flipping the
    * tengu_kairos_cron gate off stops already-running schedulers (not just
    * new ones). Daemon callers omit this, same rationale as getJitterConfig.
@@ -126,7 +124,6 @@ type CronSchedulerOptions = {
    */
   filter?: (t: CronTask) => boolean
 }
-
 export type CronScheduler = {
   start: () => void
   stop: () => void
@@ -138,7 +135,6 @@ export type CronScheduler = {
    */
   getNextFireTime: () => number | null
 }
-
 export function createCronScheduler(
   options: CronSchedulerOptions,
 ): CronScheduler {
@@ -155,42 +151,37 @@ export function createCronScheduler(
     filter,
   } = options
   const lockOpts = dir || lockIdentity ? { dir, lockIdentity } : undefined
-
   // File-backed tasks only. Session tasks (durable: false) are NOT loaded
-  // here — they can be added/removed mid-session with no file event, so
+  // here ...they can be added/removed mid-session with no file event, so
   // check() reads them fresh from bootstrap state on every tick instead.
   let tasks: CronTask[] = []
   // Per-task next-fire times (epoch ms).
   const nextFireAt = new Map<string, number>()
-  // Ids we've already enqueued a "missed task" prompt for — prevents
+  // Ids we've already enqueued a "missed task" prompt for ...prevents
   // re-asking on every file change before the user answers.
   const missedAsked = new Set<string>()
   // Tasks currently enqueued but not yet removed from the file. Prevents
   // double-fire if the interval ticks again before removeCronTasks lands.
   const inFlight = new Set<string>()
-
   let enablePoll: ReturnType<typeof setInterval> | null = null
   let checkTimer: ReturnType<typeof setInterval> | null = null
   let lockProbeTimer: ReturnType<typeof setInterval> | null = null
   let watcher: FSWatcher | null = null
   let stopped = false
   let isOwner = false
-
   async function load(initial: boolean) {
     const next = await readCronTasks(dir)
     if (stopped) return
     tasks = next
-
     // Only surface missed tasks on initial load. Chokidar-triggered
     // reloads leave overdue tasks to check() (which anchors from createdAt
-    // and fires immediately). This avoids a misleading "missed while Claude
+    // and fires immediately). This avoids a misleading "missed while DSXU
     // was not running" prompt for tasks that became overdue mid-session.
     //
-    // Recurring tasks are NOT surfaced or deleted — check() handles them
+    // Recurring tasks are NOT surfaced or deleted ...check() handles them
     // correctly (fires on first tick, reschedules forward). Only one-shot
     // missed tasks need user input (run once now, or discard forever).
     if (!initial) return
-
     const now = Date.now()
     const missed = findMissedTasks(next, now).filter(
       t => !t.recurring && !missedAsked.has(t.id) && (!filter || filter(t)),
@@ -226,7 +217,6 @@ export function createCronScheduler(
       )
     }
   }
-
   function check() {
     if (isKilled?.()) return
     if (isLoading() && !assistantMode) return
@@ -234,14 +224,13 @@ export function createCronScheduler(
     const seen = new Set<string>()
     // File-backed recurring tasks that fired this tick. Batched into one
     // markCronTasksFired call after the loop so N fires = one write. Session
-    // tasks excluded — they die with the process, no point persisting.
+    // tasks excluded ...they die with the process, no point persisting.
     const firedFileRecurring: string[] = []
     // Read once per tick. REPL callers pass getJitterConfig backed by
     // GrowthBook so a config push takes effect without restart. Daemon and
-    // SDK callers omit it and get DEFAULT_CRON_JITTER_CONFIG (safe — jitter
+    // SDK callers omit it and get DEFAULT_CRON_JITTER_CONFIG (safe ...jitter
     // is an ops lever for REPL fleet load-shedding, not a daemon concern).
     const jitterCfg = getJitterConfig?.() ?? DEFAULT_CRON_JITTER_CONFIG
-
     // Shared loop body. `isSession` routes the one-shot cleanup path:
     // session tasks are removed synchronously from memory, file tasks go
     // through the async removeCronTasks + chokidar reload.
@@ -249,10 +238,9 @@ export function createCronScheduler(
       if (filter && !filter(t)) return
       seen.add(t.id)
       if (inFlight.has(t.id)) return
-
       let next = nextFireAt.get(t.id)
       if (next === undefined) {
-        // First sight — anchor from lastFiredAt (recurring) or createdAt.
+        // First sight ...anchor from lastFiredAt (recurring) or createdAt.
         // Never-fired recurring tasks use createdAt: if isLoading delayed
         // this tick past the fire time, anchoring from `now` would compute
         // next-year for pinned crons (`30 14 27 2 *`). Fired-before tasks
@@ -260,7 +248,7 @@ export function createCronScheduler(
         // so on next process spawn first-sight computes the SAME newNext we
         // set in-memory here. Without this, a daemon child despawning on
         // idle loses nextFireAt and the next spawn re-anchors from 10-day-
-        // old createdAt → fires every task every cycle.
+        // old createdAt  -> fires every task every cycle.
         next = t.recurring
           ? (jitteredNextCronRunMs(
               t.cron,
@@ -279,9 +267,7 @@ export function createCronScheduler(
           `[ScheduledTasks] scheduled ${t.id} for ${next === Infinity ? 'never' : new Date(next).toISOString()}`,
         )
       }
-
       if (now < next) return
-
       logForDebugging(
         `[ScheduledTasks] firing ${t.id}${t.recurring ? ' (recurring)' : ''}`,
       )
@@ -295,7 +281,6 @@ export function createCronScheduler(
       } else {
         onFire(t.prompt)
       }
-
       // Aged-out recurring tasks fall through to the one-shot delete paths
       // below (session tasks get synchronous removal; file tasks get the
       // async inFlight/chokidar path). Fires one last time, then is removed.
@@ -311,7 +296,6 @@ export function createCronScheduler(
           ageHours,
         })
       }
-
       if (t.recurring && !aged) {
         // Recurring: reschedule from now (not from next) to avoid rapid
         // catch-up if the session was blocked. Jitter keeps us off the
@@ -320,11 +304,11 @@ export function createCronScheduler(
           jitteredNextCronRunMs(t.cron, now, t.id, jitterCfg) ?? Infinity
         nextFireAt.set(t.id, newNext)
         // Persist lastFiredAt=now so next process spawn reconstructs this
-        // same newNext on first-sight. Session tasks skip — process-local.
+        // same newNext on first-sight. Session tasks skip ...process-local.
         if (!isSession) firedFileRecurring.push(t.id)
       } else if (isSession) {
         // One-shot (or aged-out recurring) session task: synchronous memory
-        // removal. No inFlight window — the next tick will read a session
+        // removal. No inFlight window ...the next tick will read a session
         // store without this id.
         removeSessionCronTasks([t.id])
         nextFireAt.delete(t.id)
@@ -343,15 +327,14 @@ export function createCronScheduler(
         nextFireAt.delete(t.id)
       }
     }
-
     // File-backed tasks: only when we own the scheduler lock. The lock
-    // exists to stop two Claude sessions in the same cwd from double-firing
+    // exists to stop two DSXU sessions in the same cwd from double-firing
     // the same on-disk task.
     if (isOwner) {
       for (const t of tasks) process(t, false)
       // Batched lastFiredAt write. inFlight guards against double-fire
       // during the chokidar-triggered reload (same pattern as removeCronTasks
-      // below) — the reload re-seeds `tasks` with the just-written
+      // below) ...the reload re-seeds `tasks` with the just-written
       // lastFiredAt, and first-sight on that yields the same newNext we
       // already set in-memory, so it's idempotent even without inFlight.
       // Guarding anyway keeps the semantics obvious.
@@ -368,7 +351,7 @@ export function createCronScheduler(
           })
       }
     }
-    // Session-only tasks: process-private, the lock does not apply — the
+    // Session-only tasks: process-private, the lock does not apply ...the
     // other session cannot see them and there is no double-fire risk. Read
     // fresh from bootstrap state every tick (no chokidar, no load()). This
     // is skipped on the daemon path (`dir !== undefined`) which never
@@ -376,9 +359,8 @@ export function createCronScheduler(
     if (dir === undefined) {
       for (const t of getSessionCronTasks()) process(t, true)
     }
-
     if (seen.size === 0) {
-      // No live tasks this tick — clear the whole schedule so
+      // No live tasks this tick ...clear the whole schedule so
       // getNextFireTime() returns null. The eviction loop below is
       // unreachable here (seen is empty), so stale entries would
       // otherwise survive indefinitely and keep the daemon agent warm.
@@ -386,26 +368,23 @@ export function createCronScheduler(
       return
     }
     // Evict schedule entries for tasks no longer present. When !isOwner,
-    // file-task ids aren't in `seen` and get evicted — harmless: they
+    // file-task ids aren't in `seen` and get evicted ...harmless: they
     // re-anchor from createdAt on the first owned tick.
     for (const id of nextFireAt.keys()) {
       if (!seen.has(id)) nextFireAt.delete(id)
     }
   }
-
   async function enable() {
     if (stopped) return
     if (enablePoll) {
       clearInterval(enablePoll)
       enablePoll = null
     }
-
     const { default: chokidar } = await import('chokidar')
     if (stopped) return
-
     // Acquire the per-project scheduler lock. Only the owning session runs
     // check(). Other sessions probe periodically to take over if the owner
-    // dies. Prevents double-firing when multiple Claudes share a cwd.
+    // dies. Prevents double-firing when multiple DSXUs share a cwd.
     isOwner = await tryAcquireSchedulerLock(lockOpts).catch(() => false)
     if (stopped) {
       if (isOwner) {
@@ -434,9 +413,7 @@ export function createCronScheduler(
       }, LOCK_PROBE_INTERVAL_MS)
       lockProbeTimer.unref?.()
     }
-
     void load(true)
-
     const path = getCronFilePath(dir)
     watcher = chokidar.watch(path, {
       persistent: false,
@@ -452,28 +429,25 @@ export function createCronScheduler(
         nextFireAt.clear()
       }
     })
-
     checkTimer = setInterval(check, CHECK_INTERVAL_MS)
-    // Don't keep the process alive for the scheduler alone — in -p text mode
+    // Don't keep the process alive for the scheduler alone ...in -p text mode
     // the process should exit after the single turn even if a cron was created.
     checkTimer.unref?.()
   }
-
   return {
     start() {
       stopped = false
-      // Daemon path (dir explicitly given): don't touch bootstrap state —
-      // getScheduledTasksEnabled() would read a never-initialized flag. The
+      // Daemon path (dir explicitly given): don't touch bootstrap state ...      // getScheduledTasksEnabled() would read a never-initialized flag. The
       // daemon is asking to schedule; just enable.
       if (dir !== undefined) {
         logForDebugging(
-          `[ScheduledTasks] scheduler start() — dir=${dir}, hasTasks=${hasCronTasksSync(dir)}`,
+          `[ScheduledTasks] scheduler start() ...dir=${dir}, hasTasks=${hasCronTasksSync(dir)}`,
         )
         void enable()
         return
       }
       logForDebugging(
-        `[ScheduledTasks] scheduler start() — enabled=${getScheduledTasksEnabled()}, hasTasks=${hasCronTasksSync()}`,
+        `[ScheduledTasks] scheduler start() ...enabled=${getScheduledTasksEnabled()}, hasTasks=${hasCronTasksSync()}`,
       )
       // Auto-enable when scheduled_tasks.json has entries. CronCreateTool
       // also sets this when a task is created mid-session.
@@ -529,12 +503,11 @@ export function createCronScheduler(
     },
   }
 }
-
 /**
  * Build the missed-task notification text. Guidance precedes the task list
  * and the list is wrapped in a code fence so a multi-line imperative prompt
  * is not interpreted as immediate instructions to avoid self-inflicted
- * prompt injection. The full prompt body is preserved — this path DOES
+ * prompt injection. The full prompt body is preserved ...this path DOES
  * need the model to execute the prompt after user
  * confirmation, and tasks are already deleted from JSON before the model
  * sees this notification.
@@ -542,12 +515,11 @@ export function createCronScheduler(
 export function buildMissedTaskNotification(missed: CronTask[]): string {
   const plural = missed.length > 1
   const header =
-    `The following one-shot scheduled task${plural ? 's were' : ' was'} missed while Claude was not running. ` +
-    `${plural ? 'They have' : 'It has'} already been removed from .claude/scheduled_tasks.json.\n\n` +
+    `The following one-shot scheduled task${plural ? 's were' : ' was'} missed while DSXU was not running. ` +
+    `${plural ? 'They have' : 'It has'} already been removed from .dsxu/scheduled_tasks.json.\n\n` +
     `Do NOT execute ${plural ? 'these prompts' : 'this prompt'} yet. ` +
     `First use the AskUserQuestion tool to ask whether to run ${plural ? 'each one' : 'it'} now. ` +
     `Only execute if the user confirms.`
-
   const blocks = missed.map(t => {
     const meta = `[${cronToHuman(t.cron)}, created ${new Date(t.createdAt).toLocaleString()}]`
     // Use a fence one longer than any backtick run in the prompt so a
@@ -560,6 +532,5 @@ export function buildMissedTaskNotification(missed: CronTask[]): string {
     const fence = '`'.repeat(Math.max(3, longestRun + 1))
     return `${meta}\n${fence}\n${t.prompt}\n${fence}`
   })
-
   return `${header}\n\n${blocks.join('\n\n')}`
 }

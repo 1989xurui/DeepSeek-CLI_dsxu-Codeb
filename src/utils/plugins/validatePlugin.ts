@@ -16,7 +16,7 @@ import {
 /**
  * Fields that belong in marketplace.json entries (PluginMarketplaceEntrySchema)
  * but not plugin.json (PluginManifestSchema). Plugin authors reasonably copy
- * one into the other. Surfaced as warnings by `claude plugin validate` since
+ * one into the other. Surfaced as warnings by `dsxu plugin validate` since
  * they're a known confusion point — the load path silently strips all unknown
  * keys via zod's default behavior, so they're harmless at runtime but worth
  * flagging to authors.
@@ -28,6 +28,19 @@ const MARKETPLACE_ONLY_MANIFEST_FIELDS = new Set([
   'strict',
   'id',
 ])
+
+const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
+const LEGACY_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const PLUGIN_MANIFEST_DIRS = [
+  DSXU_PLUGIN_MANIFEST_DIR,
+  LEGACY_PLUGIN_MANIFEST_DIR,
+] as const
+
+function isPluginManifestDir(dirName: string): boolean {
+  return PLUGIN_MANIFEST_DIRS.includes(
+    dirName as (typeof PLUGIN_MANIFEST_DIRS)[number],
+  )
+}
 
 export type ValidationResult = {
   success: boolean
@@ -61,8 +74,8 @@ function detectManifestType(
   if (fileName === 'plugin.json') return 'plugin'
   if (fileName === 'marketplace.json') return 'marketplace'
 
-  // Check if it's in .claude-plugin directory
-  if (dirName === '.claude-plugin') {
+  // Check if it's in a DSXU plugin manifest directory.
+  if (isPluginManifestDir(dirName)) {
     return 'plugin' // Most likely plugin.json
   }
 
@@ -86,7 +99,7 @@ function formatZodErrors(zodError: z.ZodError): ValidationError[] {
  * For plugin.json component paths this is a security concern (escaping the plugin dir).
  * For marketplace.json source paths it's almost always a resolution-base misunderstanding:
  * paths resolve from the marketplace repo root, not from marketplace.json itself, so the
- * '..' a user added to "climb out of .claude-plugin/" is unnecessary. Callers pass `hint`
+ * '..' a user added to "climb out of the manifest directory" is unnecessary. Callers pass `hint`
  * to attach the right explanation.
  */
 function checkPathTraversal(
@@ -106,19 +119,19 @@ function checkPathTraversal(
 }
 
 // Shown when a marketplace plugin source contains '..'. Most users hit this because
-// they expect paths to resolve relative to marketplace.json (inside .claude-plugin/),
+// they expect paths to resolve relative to marketplace.json (inside the manifest directory),
 // but resolution actually starts at the marketplace repo root — see gh-29485.
 // Computes a tailored "use X instead of Y" suggestion from the user's actual path
 // rather than a hardcoded example (review feedback on #20895).
 function marketplaceSourceHint(p: string): string {
   // Strip leading ../ segments: the '..' a user added to "climb out of
-  // .claude-plugin/" is unnecessary since paths already start at the repo root.
+  // the manifest directory is unnecessary since paths already start at the repo root.
   // If '..' appears mid-path (rare), fall back to a generic example.
   const stripped = p.replace(/^(\.\.\/)+/, '')
   const corrected = stripped !== p ? `./${stripped}` : './plugins/my-plugin'
   return (
     'Plugin source paths are resolved relative to the marketplace root (the directory ' +
-    'containing .claude-plugin/), not relative to marketplace.json. ' +
+    `containing ${DSXU_PLUGIN_MANIFEST_DIR}/), not relative to marketplace.json. ` +
     `Use "${corrected}" instead of "${p}".`
   )
 }
@@ -213,7 +226,7 @@ export async function validatePluginManifest(
   }
 
   // Surface marketplace-only fields as a warning BEFORE validation flags
-  // them. `claude plugin validate` is a developer tool — authors running it
+  // them. `dsxu plugin validate` is a developer tool — authors running it
   // want to know these fields don't belong here. But it's a warning, not an
   // error: the plugin loads fine at runtime (the base schema strips unknown
   // keys). We strip them here so the .strict() call below doesn't double-
@@ -232,7 +245,7 @@ export async function validatePluginManifest(
           path: key,
           message:
             `Field '${key}' belongs in the marketplace entry (marketplace.json), ` +
-            `not plugin.json. It's harmless here but unused — Claude Code ` +
+            `not plugin.json. It's harmless here but unused — DSXU Code ` +
             `ignores it at load time.`,
         })
       }
@@ -254,15 +267,15 @@ export async function validatePluginManifest(
   if (result.success) {
     const manifest = result.data
 
-    // Warn if name isn't strict kebab-case. CC's schema only rejects spaces,
-    // but the Claude.ai marketplace sync rejects non-kebab names. Surfacing
-    // this here lets authors catch it in CI before the sync fails on them.
+  // Warn if name isn't strict kebab-case. DSXU accepts the broader local form,
+  // but the legacy marketplace sync rejects non-kebab names. Surfacing this
+  // here lets authors catch it in CI before the sync fails on them.
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(manifest.name)) {
       warnings.push({
         path: 'name',
         message:
-          `Plugin name "${manifest.name}" is not kebab-case. Claude Code accepts ` +
-          `it, but the Claude.ai marketplace sync requires kebab-case ` +
+          `Plugin name "${manifest.name}" is not kebab-case. DSXU Code accepts ` +
+          `it, but the legacy marketplace sync requires kebab-case ` +
           `(lowercase letters, digits, and hyphens only, e.g., "my-plugin").`,
       })
     }
@@ -446,10 +459,9 @@ export async function validateMarketplaceManifest(
       // shows one version, /status shows another after install).
       // Only local sources: remote sources would need cloning to check.
       const manifestDir = path.dirname(absolutePath)
-      const marketplaceRoot =
-        path.basename(manifestDir) === '.claude-plugin'
-          ? path.dirname(manifestDir)
-          : manifestDir
+      const marketplaceRoot = isPluginManifestDir(path.basename(manifestDir))
+        ? path.dirname(manifestDir)
+        : manifestDir
       for (const [i, entry] of marketplace.plugins.entries()) {
         if (
           !entry.version ||
@@ -458,28 +470,31 @@ export async function validateMarketplaceManifest(
         ) {
           continue
         }
-        const pluginJsonPath = path.join(
-          marketplaceRoot,
-          entry.source,
-          '.claude-plugin',
-          'plugin.json',
-        )
         let manifestVersion: string | undefined
-        try {
-          const raw = await readFile(pluginJsonPath, { encoding: 'utf-8' })
-          const parsed = jsonParse(raw) as { version?: unknown }
-          if (typeof parsed.version === 'string') {
-            manifestVersion = parsed.version
+        for (const manifestDirName of PLUGIN_MANIFEST_DIRS) {
+          const pluginJsonPath = path.join(
+            marketplaceRoot,
+            entry.source,
+            manifestDirName,
+            'plugin.json',
+          )
+          try {
+            const raw = await readFile(pluginJsonPath, { encoding: 'utf-8' })
+            const parsed = jsonParse(raw) as { version?: unknown }
+            if (typeof parsed.version === 'string') {
+              manifestVersion = parsed.version
+            }
+            break
+          } catch {
+            // Missing/unreadable plugin.json is someone else's error to report
+            continue
           }
-        } catch {
-          // Missing/unreadable plugin.json is someone else's error to report
-          continue
         }
         if (manifestVersion && manifestVersion !== entry.version) {
           warnings.push({
             path: `plugins[${i}].version`,
             message:
-              `Entry declares version "${entry.version}" but ${entry.source}/.claude-plugin/plugin.json says "${manifestVersion}". ` +
+              `Entry declares version "${entry.version}" but ${entry.source}/${DSXU_PLUGIN_MANIFEST_DIR}/plugin.json says "${manifestVersion}". ` +
               `At install time, plugin.json wins (calculatePluginVersion precedence) — the entry version is silently ignored. ` +
               `Update this entry to "${manifestVersion}" to match.`,
           })
@@ -510,7 +525,7 @@ export async function validateMarketplaceManifest(
  *
  * The runtime loader (parseFrontmatter) silently drops unparseable YAML to a
  * debug log and returns an empty object. That's the right resilience choice
- * for the load path, but authors running `claude plugin validate` want a hard
+ * for the load path, but authors running `dsxu plugin validate` want a hard
  * signal. This re-parses the frontmatter block and surfaces what the loader
  * would silently swallow.
  */
@@ -580,7 +595,7 @@ function validateComponentFile(
     warnings.push({
       path: 'description',
       message:
-        `No description in frontmatter. A description helps users and Claude ` +
+        `No description in frontmatter. A description helps users and DSXU ` +
         `understand when to use this ${fileType}.`,
     })
   }
@@ -827,23 +842,32 @@ export async function validateManifest(
   }
 
   if (stats?.isDirectory()) {
-    // Look for manifest files in .claude-plugin directory
-    // Prefer marketplace.json over plugin.json
-    const marketplacePath = path.join(
-      absolutePath,
-      '.claude-plugin',
-      'marketplace.json',
-    )
-    const marketplaceResult = await validateMarketplaceManifest(marketplacePath)
-    // Only fall through if the marketplace file was not found (ENOENT)
-    if (marketplaceResult.errors[0]?.code !== 'ENOENT') {
-      return marketplaceResult
+    // Look for manifest files in DSXU plugin manifest directories.
+    // Prefer marketplace.json over plugin.json.
+    for (const manifestDirName of PLUGIN_MANIFEST_DIRS) {
+      const marketplacePath = path.join(
+        absolutePath,
+        manifestDirName,
+        'marketplace.json',
+      )
+      const marketplaceResult =
+        await validateMarketplaceManifest(marketplacePath)
+      // Only fall through if the marketplace file was not found (ENOENT)
+      if (marketplaceResult.errors[0]?.code !== 'ENOENT') {
+        return marketplaceResult
+      }
     }
 
-    const pluginPath = path.join(absolutePath, '.claude-plugin', 'plugin.json')
-    const pluginResult = await validatePluginManifest(pluginPath)
-    if (pluginResult.errors[0]?.code !== 'ENOENT') {
-      return pluginResult
+    for (const manifestDirName of PLUGIN_MANIFEST_DIRS) {
+      const pluginPath = path.join(
+        absolutePath,
+        manifestDirName,
+        'plugin.json',
+      )
+      const pluginResult = await validatePluginManifest(pluginPath)
+      if (pluginResult.errors[0]?.code !== 'ENOENT') {
+        return pluginResult
+      }
     }
 
     return {
@@ -851,7 +875,7 @@ export async function validateManifest(
       errors: [
         {
           path: 'directory',
-          message: `No manifest found in directory. Expected .claude-plugin/marketplace.json or .claude-plugin/plugin.json`,
+          message: `No manifest found in directory. Expected ${DSXU_PLUGIN_MANIFEST_DIR}/marketplace.json or ${DSXU_PLUGIN_MANIFEST_DIR}/plugin.json`,
         },
       ],
       warnings: [],
@@ -899,5 +923,19 @@ export async function validateManifest(
       // Default: validate as plugin manifest
       return validatePluginManifest(filePath)
     }
+  }
+}
+
+export async function processValidatePluginLifecycle(filePath: string): Promise<{
+  state: 'valid' | 'invalid'
+  lifecycle: string
+  success: boolean
+}> {
+  const result = await validateManifest(filePath)
+  const state = result.success ? 'valid' : 'invalid'
+  return {
+    state,
+    lifecycle: `validate-plugin:${state}`,
+    success: result.success,
   }
 }

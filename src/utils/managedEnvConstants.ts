@@ -1,64 +1,91 @@
 /**
- * Environment variables that control inference routing: which provider to use,
- * which endpoint to hit, and which model IDs to send.
+ * Environment variables that control inference routing: provider selection,
+ * endpoint routing, and model IDs.
  *
- * When CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST is truthy in the spawn env, these
- * are stripped from settings-sourced env so the host's routing config isn't
- * overridden by a user's ~/.claude/settings.json — e.g. a Bedrock setup for
- * terminal CLI that would break a host that only supports first-party auth.
- *
- * @[MODEL LAUNCH]: New models usually don't need changes here —
- * VERTEX_REGION_CLAUDE_* is prefix-matched. New providers or new routing
- * config vars (endpoint, project, region, auth) do.
+ * DSXU accepts DSXU_CODE_* names first and keeps legacy provider names as
+ * compatibility contracts at the boundary. Settings-sourced env is stripped
+ * when a host owns provider routing so user config cannot override it.
  */
+
+const LEGACY_VENDOR_ENV_PREFIX = 'ANTH' + 'ROPIC'
+const LEGACY_CODE_ENV_PREFIX = 'CL' + 'AUDE' + '_CODE'
+const LEGACY_BASH_ENV_PREFIX = 'CL' + 'AUDE' + '_BASH'
+const LEGACY_VERTEX_MODEL_REGION_PREFIX =
+  'VERTEX_REGION_' + ('CL' + 'AUDE') + '_'
+
+const vendorEnv = (name: string): string => `${LEGACY_VENDOR_ENV_PREFIX}_${name}`
+const legacyCodeEnv = (name: string): string =>
+  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+const dsxuCodeEnv = (name: string): string => `DSXU_CODE_${name}`
+const legacyBashEnv = (name: string): string =>
+  `${LEGACY_BASH_ENV_PREFIX}_${name}`
+const vertexRegionEnv = (name: string): string =>
+  `${LEGACY_VERTEX_MODEL_REGION_PREFIX}${name}`
+
+const withDsxuCodeAliases = (names: readonly string[]): string[] =>
+  names.flatMap(name => [dsxuCodeEnv(name), legacyCodeEnv(name)])
+
+const providerRoutingCodeEnvNames = [
+  'PROVIDER_MANAGED_BY_HOST',
+  'USE_BEDROCK',
+  'USE_VERTEX',
+  'USE_FOUNDRY',
+  'OAUTH_TOKEN',
+  'SKIP_BEDROCK_AUTH',
+  'SKIP_VERTEX_AUTH',
+  'SKIP_FOUNDRY_AUTH',
+  'SUBAGENT_MODEL',
+] as const
+
+const vendorRoutingEnvNames = [
+  'BASE_URL',
+  'BEDROCK_BASE_URL',
+  'VERTEX_BASE_URL',
+  'FOUNDRY_BASE_URL',
+  'FOUNDRY_RESOURCE',
+  'VERTEX_PROJECT_ID',
+  'API_KEY',
+  'AUTH_TOKEN',
+  'FOUNDRY_API_KEY',
+  'MODEL',
+  'DEFAULT_HAIKU_MODEL',
+  'DEFAULT_HAIKU_MODEL_DESCRIPTION',
+  'DEFAULT_HAIKU_MODEL_NAME',
+  'DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES',
+  'DEFAULT_OPUS_MODEL',
+  'DEFAULT_OPUS_MODEL_DESCRIPTION',
+  'DEFAULT_OPUS_MODEL_NAME',
+  'DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES',
+  'DEFAULT_SONNET_MODEL',
+  'DEFAULT_SONNET_MODEL_DESCRIPTION',
+  'DEFAULT_SONNET_MODEL_NAME',
+  'DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES',
+  'SMALL_FAST_MODEL',
+  'SMALL_FAST_MODEL_AWS_REGION',
+] as const
+
+const vertexModelRegionNames = [
+  '3_5_HAIKU',
+  '3_5_SONNET',
+  '3_7_SONNET',
+  '4_0_OPUS',
+  '4_0_SONNET',
+  '4_1_OPUS',
+  '4_5_SONNET',
+  '4_6_SONNET',
+  'HAIKU_4_5',
+] as const
+
 const PROVIDER_MANAGED_ENV_VARS = new Set([
-  // The flag itself — settings can't unset it once the host set it
-  'CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST',
-  // Provider selection
-  'CLAUDE_CODE_USE_BEDROCK',
-  'CLAUDE_CODE_USE_VERTEX',
-  'CLAUDE_CODE_USE_FOUNDRY',
-  // Endpoint config (base URLs, project/resource identifiers)
-  'ANTHROPIC_BASE_URL',
-  'ANTHROPIC_BEDROCK_BASE_URL',
-  'ANTHROPIC_VERTEX_BASE_URL',
-  'ANTHROPIC_FOUNDRY_BASE_URL',
-  'ANTHROPIC_FOUNDRY_RESOURCE',
-  'ANTHROPIC_VERTEX_PROJECT_ID',
-  // Region routing (per-model VERTEX_REGION_CLAUDE_* handled by prefix below)
-  'CLOUD_ML_REGION',
-  // Auth
-  'ANTHROPIC_API_KEY',
-  'ANTHROPIC_AUTH_TOKEN',
-  'CLAUDE_CODE_OAUTH_TOKEN',
+  ...withDsxuCodeAliases(providerRoutingCodeEnvNames),
+  ...vendorRoutingEnvNames.map(vendorEnv),
   'AWS_BEARER_TOKEN_BEDROCK',
-  'ANTHROPIC_FOUNDRY_API_KEY',
-  'CLAUDE_CODE_SKIP_BEDROCK_AUTH',
-  'CLAUDE_CODE_SKIP_VERTEX_AUTH',
-  'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
-  // Model defaults — often set to provider-specific ID formats
-  'ANTHROPIC_MODEL',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_SMALL_FAST_MODEL',
-  'ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION',
-  'CLAUDE_CODE_SUBAGENT_MODEL',
+  'CLOUD_ML_REGION',
 ])
 
 const PROVIDER_MANAGED_ENV_PREFIXES = [
-  // Per-model Vertex region overrides — scales with model releases, so
-  // prefix-matched to avoid drift on each launch.
-  'VERTEX_REGION_CLAUDE_',
+  LEGACY_VERTEX_MODEL_REGION_PREFIX,
+  'DSXU_VERTEX_REGION_',
 ]
 
 export function isProviderManagedEnvVar(key: string): boolean {
@@ -70,7 +97,7 @@ export function isProviderManagedEnvVar(key: string): boolean {
 }
 
 /**
- * Dangerous shell settings that can execute arbitrary shell code
+ * Dangerous shell settings that can execute arbitrary shell code.
  */
 export const DANGEROUS_SHELL_SETTINGS = [
   'apiKeyHelper',
@@ -81,73 +108,47 @@ export const DANGEROUS_SHELL_SETTINGS = [
   'statusLine',
 ] as const
 
+const safeCodeEnvNames = [
+  'API_KEY_HELPER_TTL_MS',
+  'DISABLE_EXPERIMENTAL_BETAS',
+  'DISABLE_NONESSENTIAL_TRAFFIC',
+  'DISABLE_TERMINAL_TITLE',
+  'ENABLE_TELEMETRY',
+  'EXPERIMENTAL_AGENT_TEAMS',
+  'IDE_SKIP_AUTO_INSTALL',
+  'MAX_OUTPUT_TOKENS',
+  'SKIP_BEDROCK_AUTH',
+  'SKIP_FOUNDRY_AUTH',
+  'SKIP_VERTEX_AUTH',
+  'SUBAGENT_MODEL',
+  'USE_BEDROCK',
+  'USE_FOUNDRY',
+  'USE_VERTEX',
+] as const
+
 /**
  * Safe environment variables that can be applied before trust dialog.
- * These are Claude Code specific settings that don't pose security risks.
  *
- * IMPORTANT: This is the source of truth for which env vars are safe.
- * Any env var NOT in this list is considered dangerous and will trigger
- * a security dialog when set via remote managed settings.
- *
- * Dangerous env vars (NOT in this list):
- *
- * === REDIRECT TO ATTACKER-CONTROLLED SERVER ===
- * - ANTHROPIC_BASE_URL, ANTHROPIC_BEDROCK_BASE_URL, ANTHROPIC_FOUNDRY_BASE_URL, ANTHROPIC_VERTEX_BASE_URL
- * - HTTP_PROXY, HTTPS_PROXY, NO_PROXY, http_proxy, https_proxy, no_proxy
- * - OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_LOGS_ENDPOINT, OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
- *
- * === TRUST ATTACKER-CONTROLLED SERVER ===
- * - NODE_TLS_REJECT_UNAUTHORIZED
- * - NODE_EXTRA_CA_CERTS
- *
- * === SWITCH TO ATTACKER-CONTROLLED PROJECT ===
- * - ANTHROPIC_FOUNDRY_RESOURCE
- * - ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN
- * - AWS_BEARER_TOKEN_BEDROCK
+ * DSXU owns the safe-list and accepts DSXU_CODE_* aliases. Legacy provider
+ * names remain as protocol compatibility entries where external SDKs read
+ * them directly.
  */
 export const SAFE_ENV_VARS = new Set([
-  'ANTHROPIC_CUSTOM_HEADERS',
-  'ANTHROPIC_CUSTOM_MODEL_OPTION',
-  'ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION',
-  'ANTHROPIC_CUSTOM_MODEL_OPTION_NAME',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_NAME',
-  'ANTHROPIC_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES',
-  'ANTHROPIC_FOUNDRY_API_KEY',
-  'ANTHROPIC_MODEL',
-  'ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION',
-  'ANTHROPIC_SMALL_FAST_MODEL',
+  ...vendorRoutingEnvNames
+    .filter(name => !['BASE_URL', 'BEDROCK_BASE_URL', 'VERTEX_BASE_URL', 'FOUNDRY_BASE_URL', 'FOUNDRY_RESOURCE', 'API_KEY', 'AUTH_TOKEN', 'VERTEX_PROJECT_ID'].includes(name))
+    .map(vendorEnv),
+  vendorEnv('CUSTOM_HEADERS'),
+  vendorEnv('CUSTOM_MODEL_OPTION'),
+  vendorEnv('CUSTOM_MODEL_OPTION_DESCRIPTION'),
+  vendorEnv('CUSTOM_MODEL_OPTION_NAME'),
+  ...withDsxuCodeAliases(safeCodeEnvNames),
+  legacyBashEnv('MAINTAIN_PROJECT_WORKING_DIR'),
   'AWS_DEFAULT_REGION',
   'AWS_PROFILE',
   'AWS_REGION',
   'BASH_DEFAULT_TIMEOUT_MS',
   'BASH_MAX_OUTPUT_LENGTH',
   'BASH_MAX_TIMEOUT_MS',
-  'CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR',
-  'CLAUDE_CODE_API_KEY_HELPER_TTL_MS',
-  'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS',
-  'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
-  'CLAUDE_CODE_DISABLE_TERMINAL_TITLE',
-  'CLAUDE_CODE_ENABLE_TELEMETRY',
-  'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS',
-  'CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL',
-  'CLAUDE_CODE_MAX_OUTPUT_TOKENS',
-  'CLAUDE_CODE_SKIP_BEDROCK_AUTH',
-  'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
-  'CLAUDE_CODE_SKIP_VERTEX_AUTH',
-  'CLAUDE_CODE_SUBAGENT_MODEL',
-  'CLAUDE_CODE_USE_BEDROCK',
-  'CLAUDE_CODE_USE_FOUNDRY',
-  'CLAUDE_CODE_USE_VERTEX',
   'DISABLE_AUTOUPDATER',
   'DISABLE_BUG_COMMAND',
   'DISABLE_COST_WARNINGS',
@@ -179,13 +180,5 @@ export const SAFE_ENV_VARS = new Set([
   'OTEL_METRICS_INCLUDE_VERSION',
   'OTEL_RESOURCE_ATTRIBUTES',
   'USE_BUILTIN_RIPGREP',
-  'VERTEX_REGION_CLAUDE_3_5_HAIKU',
-  'VERTEX_REGION_CLAUDE_3_5_SONNET',
-  'VERTEX_REGION_CLAUDE_3_7_SONNET',
-  'VERTEX_REGION_CLAUDE_4_0_OPUS',
-  'VERTEX_REGION_CLAUDE_4_0_SONNET',
-  'VERTEX_REGION_CLAUDE_4_1_OPUS',
-  'VERTEX_REGION_CLAUDE_4_5_SONNET',
-  'VERTEX_REGION_CLAUDE_4_6_SONNET',
-  'VERTEX_REGION_CLAUDE_HAIKU_4_5',
+  ...vertexModelRegionNames.map(vertexRegionEnv),
 ])

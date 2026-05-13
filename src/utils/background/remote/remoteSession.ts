@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
 import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/growthbook.js'
 import { isPolicyAllowed } from '../../../services/policyLimits/index.js'
@@ -8,7 +9,7 @@ import {
   checkGithubAppInstalled,
   checkHasRemoteEnvironment,
   checkIsInGitRepo,
-  checkNeedsClaudeAiLogin,
+  checkNeedsLegacyCloudLogin,
 } from './preconditions.js'
 
 /**
@@ -56,7 +57,7 @@ export async function checkBackgroundRemoteSessionEligibility({
   }
 
   const [needsLogin, hasRemoteEnv, repository] = await Promise.all([
-    checkNeedsClaudeAiLogin(),
+    checkNeedsLegacyCloudLogin(),
     checkHasRemoteEnvironment(),
     detectCurrentRepositoryWithHost(),
   ])
@@ -69,7 +70,7 @@ export async function checkBackgroundRemoteSessionEligibility({
     errors.push({ type: 'no_remote_environment' })
   }
 
-  // When bundle seeding is on, in-git-repo is enough — CCR can seed from
+  // When bundle seeding is on, in-git-repo is enough ...CCR can seed from
   // a local bundle. No GitHub remote or app needed. Same gate as
   // teleport.tsx bundleSeedGateOn.
   const bundleSeedGateOn =
@@ -81,7 +82,7 @@ export async function checkBackgroundRemoteSessionEligibility({
   if (!checkIsInGitRepo()) {
     errors.push({ type: 'not_in_git_repo' })
   } else if (bundleSeedGateOn) {
-    // has .git/, bundle will work — skip remote+app checks
+    // has .git/, bundle will work ...skip remote+app checks
   } else if (repository === null) {
     errors.push({ type: 'no_git_remote' })
   } else if (repository.host === 'github.com') {

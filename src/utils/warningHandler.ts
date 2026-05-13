@@ -1,13 +1,14 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { posix, win32 } from 'path'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from 'src/services/analytics/index.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 import { getPlatform } from './platform.js'
 
-// Track warnings to avoid spam — bounded to prevent unbounded memory growth
+// Track warnings to avoid spam ...bounded to prevent unbounded memory growth
 export const MAX_WARNING_KEYS = 1000
 const warningCounts = new Map<string, number>()
 
@@ -81,7 +82,7 @@ export function initializeWarningHandler(): void {
       const count = warningCounts.get(warningKey) || 0
 
       // Bound the map to prevent unbounded memory growth from unique warning keys.
-      // Once the cap is reached, new unique keys are not tracked — their
+      // Once the cap is reached, new unique keys are not tracked ...their
       // occurrence_count will always be reported as 1 in analytics.
       if (
         warningCounts.has(warningKey) ||
@@ -106,7 +107,7 @@ export function initializeWarningHandler(): void {
       })
 
       // In debug mode, show all warnings with context
-      if (isEnvTruthy(process.env.CLAUDE_DEBUG)) {
+      if (isDsxuCodeEnvTruthy('DEBUG')) {
         const prefix = isInternal ? '[Internal Warning]' : '[Warning]'
         logForDebugging(`${prefix} ${warning.toString()}`, { level: 'warn' })
       }

@@ -1,9 +1,10 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Attributes } from '@opentelemetry/api'
 import { getSessionId } from 'src/bootstrap/state.js'
 import { getOauthAccountInfo } from './auth.js'
 import { getOrCreateUserID } from './config.js'
 import { envDynamic } from './envDynamic.js'
-import { isEnvTruthy } from './envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
 import { toTaggedId } from './taggedId.js'
 
 // Default configuration for metrics cardinality
@@ -57,7 +58,7 @@ export function getTelemetryAttributes(): Attributes {
     ) {
       attributes['user.account_uuid'] = accountUuid
       attributes['user.account_id'] =
-        process.env.CLAUDE_CODE_ACCOUNT_TAGGED_ID ||
+        getDsxuCodeEnv('ACCOUNT_TAGGED_ID') ||
         toTaggedId('user', accountUuid)
     }
   }

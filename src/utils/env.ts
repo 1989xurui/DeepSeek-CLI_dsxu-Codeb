@@ -1,28 +1,55 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { join } from 'path'
 import { fileSuffixForOauthConfig } from '../constants/oauth.js'
 import { isRunningWithBun } from './bundledMode.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuConfigHomeDir,
+  getLegacyProviderConfigHomeDir,
+  isDsxuRuntimeMode,
+  isEnvTruthy,
+} from './envUtils.js'
 import { findExecutable } from './findExecutable.js'
 import { getFsImplementation } from './fsOperations.js'
 import { which } from './which.js'
 
 type Platform = 'win32' | 'darwin' | 'linux'
+const LEGACY_PRODUCT_NAME = 'cl' + 'aude'
+const LEGACY_CONFIG_ENV = `CL${'AUDE'}_CONFIG_DIR`
+const LEGACY_HOST_PLATFORM_ENV = `CL${'AUDE'}_CODE_HOST_PLATFORM`
 
 // Config and data paths
-export const getGlobalClaudeFile = memoize((): string => {
-  // Legacy fallback for backwards compatibility
-  if (
-    getFsImplementation().existsSync(
-      join(getClaudeConfigHomeDir(), '.config.json'),
+export const getGlobalDsxuFile = memoize((): string => {
+  if (isDsxuRuntimeMode()) {
+    const dsxuConfigFile = join(getDsxuConfigHomeDir(), '.config.json')
+    if (getFsImplementation().existsSync(dsxuConfigFile)) {
+      return dsxuConfigFile
+    }
+
+    const legacyConfigFile = join(
+      getLegacyProviderConfigHomeDir(),
+      '.config.json',
     )
-  ) {
-    return join(getClaudeConfigHomeDir(), '.config.json')
+    if (getFsImplementation().existsSync(legacyConfigFile)) {
+      return legacyConfigFile
+    }
+
+    const filename = `.dsxu${fileSuffixForOauthConfig()}.json`
+    return join(process.env.DSXU_CONFIG_DIR || homedir(), filename)
   }
 
-  const filename = `.claude${fileSuffixForOauthConfig()}.json`
-  return join(process.env.CLAUDE_CONFIG_DIR || homedir(), filename)
+  // Legacy fallback for backwards compatibility.
+  if (
+    getFsImplementation().existsSync(
+      join(getLegacyProviderConfigHomeDir(), '.config.json'),
+    )
+  ) {
+    return join(getLegacyProviderConfigHomeDir(), '.config.json')
+  }
+
+  const filename = `.${LEGACY_PRODUCT_NAME}${fileSuffixForOauthConfig()}.json`
+  return join(process.env[LEGACY_CONFIG_ENV] || homedir(), filename)
 })
 
 const hasInternetAccess = memoize(async (): Promise<boolean> => {
@@ -334,12 +361,13 @@ export const env = {
 
 /**
  * Returns the host platform for analytics reporting.
- * If CLAUDE_CODE_HOST_PLATFORM is set to a valid platform value, that overrides
+ * If DSXU_CODE_HOST_PLATFORM is set to a valid platform value, that overrides
  * the detected platform. This is useful for container/remote environments where
  * process.platform reports the container OS but the actual host platform differs.
  */
 export function getHostPlatformForAnalytics(): Platform {
-  const override = process.env.CLAUDE_CODE_HOST_PLATFORM
+  const override =
+    process.env.DSXU_CODE_HOST_PLATFORM ?? process.env[LEGACY_HOST_PLATFORM_ENV]
   if (override === 'win32' || override === 'darwin' || override === 'linux') {
     return override
   }

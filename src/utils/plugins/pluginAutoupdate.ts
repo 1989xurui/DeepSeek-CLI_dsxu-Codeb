@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Background plugin autoupdate functionality
  *
@@ -6,7 +7,7 @@
  * 2. Then checks all installed plugins from those marketplaces and updates them
  *
  * Updates are non-inplace (disk-only), requiring a restart to take effect.
- * Official Anthropic marketplaces have autoUpdate enabled by default,
+ * Official DSXU marketplaces have autoUpdate enabled by default,
  * but users can disable it per-marketplace.
  */
 
@@ -143,13 +144,13 @@ async function updatePlugin(
  * Iterates installed_plugins.json, filters to plugins whose marketplace is in
  * the set, further filters each plugin's installations to those relevant to
  * the current project (user/managed scope, or project/local scope matching
- * cwd — see isInstallationRelevantToCurrentProject), then calls updatePluginOp
+ * cwd ...see isInstallationRelevantToCurrentProject), then calls updatePluginOp
  * per installation. Already-up-to-date plugins are silently skipped.
  *
  * Called by:
- * - updatePlugins() below — background autoupdate path (autoUpdate-enabled
+ * - updatePlugins() below ...background autoupdate path (autoUpdate-enabled
  *   marketplaces only; third-party marketplaces default autoUpdate: false)
- * - ManageMarketplaces.tsx applyChanges() — user-initiated /plugin marketplace
+ * - ManageMarketplaces.tsx applyChanges() ...user-initiated /plugin marketplace
  *   update. Before #29512 this path only called refreshMarketplace() (git
  *   pull on the marketplace clone), so the loader would create the new
  *   version cache dir but installed_plugins.json stayed on the old version,
@@ -218,7 +219,7 @@ async function updatePlugins(
  * 3. Updates installed plugins from those marketplaces
  * 4. If any plugins were updated, notifies via the registered callback
  *
- * Official Anthropic marketplaces have autoUpdate enabled by default,
+ * Official DSXU marketplaces have autoUpdate enabled by default,
  * but users can disable it per-marketplace in the UI.
  *
  * This function runs silently without blocking user interaction.

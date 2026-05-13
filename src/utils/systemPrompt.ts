@@ -1,4 +1,4 @@
-import { feature } from 'bun:bundle'
+﻿import { feature } from 'bun:bundle'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -6,7 +6,7 @@ import {
 import type { ToolUseContext } from '../Tool.js'
 import type { AgentDefinition } from '../tools/AgentTool/loadAgentsDir.js'
 import { isBuiltInAgent } from '../tools/AgentTool/loadAgentsDir.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 import { asSystemPrompt, type SystemPrompt } from './systemPromptType.js'
 
 export { asSystemPrompt, type SystemPrompt } from './systemPromptType.js'
@@ -34,7 +34,7 @@ function isProactiveActive_SAFE_TO_CALL_ANYWHERE(): boolean {
  *      instructions on top of the autonomous agent prompt, like teammates do)
  *    - Otherwise: agent prompt REPLACES default
  * 3. Custom system prompt (if specified via --system-prompt)
- * 4. Default system prompt (the standard Claude Code prompt)
+ * 4. Default system prompt (the standard DSXU Code prompt)
  *
  * Plus appendSystemPrompt is always added at the end if specified (except when override is set).
  */
@@ -61,7 +61,7 @@ export function buildEffectiveSystemPrompt({
   // dependency issues during test module loading.
   if (
     feature('COORDINATOR_MODE') &&
-    isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE) &&
+    isDsxuCodeEnvTruthy('COORDINATOR_MODE') &&
     !mainThreadAgentDefinition
   ) {
     // Lazy require to avoid circular dependency at module load time
@@ -120,4 +120,29 @@ export function buildEffectiveSystemPrompt({
         : defaultSystemPrompt),
     ...(appendSystemPrompt ? [appendSystemPrompt] : []),
   ])
+}
+
+export function processSystemPromptLifecycle(input: {
+  defaultSystemPrompt: string[]
+  customSystemPrompt?: string
+  appendSystemPrompt?: string
+}): {
+  state: 'default' | 'customized'
+  lifecycle: string
+  prompt: SystemPrompt
+} {
+  const prompt = buildEffectiveSystemPrompt({
+    mainThreadAgentDefinition: undefined,
+    toolUseContext: { options: {} as ToolUseContext['options'] },
+    customSystemPrompt: input.customSystemPrompt,
+    defaultSystemPrompt: input.defaultSystemPrompt,
+    appendSystemPrompt: input.appendSystemPrompt,
+    overrideSystemPrompt: undefined,
+  })
+  const state = input.customSystemPrompt ? 'customized' : 'default'
+  return {
+    state,
+    lifecycle: `system-prompt:${state}`,
+    prompt,
+  }
 }

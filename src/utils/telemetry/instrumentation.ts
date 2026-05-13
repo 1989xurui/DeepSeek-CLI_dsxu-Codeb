@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { DiagLogLevel, diag, trace } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 // OTLP/Prometheus exporters are dynamically imported inside the protocol
@@ -43,14 +44,14 @@ import {
   getOtelHeadersFromHelper,
   getSubscriptionType,
   is1PApiCustomer,
-  isClaudeAISubscriber,
+  isLegacyCloudSubscriber,
 } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 
 import { getCACertificates } from '../caCerts.js'
 import { registerCleanup } from '../cleanupRegistry.js'
 import { getHasFormattedOutput, logForDebugging } from '../debug.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { getDsxuCodeEnv, isDsxuCodeEnvTruthy } from '../envUtils.js'
 import { errorMessage } from '../errors.js'
 import { getMTLSConfig } from '../mtls.js'
 import { getProxyUrl, shouldBypassProxy } from '../proxy.js'
@@ -59,7 +60,7 @@ import { jsonStringify } from '../slowOperations.js'
 import { profileCheckpoint } from '../startupProfiler.js'
 import { isBetaTracingEnabled } from './betaSessionTracing.js'
 import { BigQueryMetricsExporter } from './bigqueryExporter.js'
-import { ClaudeCodeDiagLogger } from './logger.js'
+import { DsxuCodeDiagLogger } from './logger.js'
 import { initializePerfettoTracing } from './perfettoTracing.js'
 import {
   endInteractionSpan,
@@ -322,7 +323,7 @@ async function getOtlpTraceExporters() {
 }
 
 export function isTelemetryEnabled() {
-  return isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_TELEMETRY)
+  return isDsxuCodeEnvTruthy('ENABLE_TELEMETRY')
 }
 
 function getBigQueryExportingReader() {
@@ -335,12 +336,12 @@ function getBigQueryExportingReader() {
 
 function isBigQueryMetricsEnabled() {
   // BigQuery metrics are enabled for:
-  // 1. API customers (excluding Claude.ai subscribers and Bedrock/Vertex)
-  // 2. Claude for Enterprise (C4E) users
-  // 3. Claude for Teams users
+  // 1. API customers (excluding DSXU.ai subscribers and Bedrock/Vertex)
+  // 2. DSXU for Enterprise (C4E) users
+  // 3. DSXU for Teams users
   const subscriptionType = getSubscriptionType()
   const isC4EOrTeamUser =
-    isClaudeAISubscriber() &&
+    isLegacyCloudSubscriber() &&
     (subscriptionType === 'enterprise' || subscriptionType === 'team')
 
   return is1PApiCustomer() || isC4EOrTeamUser
@@ -400,10 +401,7 @@ async function initializeBetaTracing(
   setLoggerProvider(loggerProvider)
 
   // Initialize event logger
-  const eventLogger = logs.getLogger(
-    'com.anthropic.claude_code.events',
-    MACRO.VERSION,
-  )
+  const eventLogger = logs.getLogger('com.dsxu.code.events', MACRO.VERSION)
   setEventLogger(eventLogger)
 
   // Setup flush handlers - flush both logs AND traces
@@ -428,7 +426,7 @@ export async function initializeTelemetry() {
   // the SDK's line reader. Stripped here (not main.tsx) because init.ts
   // re-runs applyConfigEnvironmentVariables() inside initializeTelemetry-
   // AfterTrust for remote-managed-settings users, and bootstrapTelemetry
-  // above copies ANT_OTEL_* for ant users — both would undo an earlier strip.
+  // above copies ANT_OTEL_* for ant users ...both would undo an earlier strip.
   if (getHasFormattedOutput()) {
     for (const key of [
       'OTEL_METRICS_EXPORTER',
@@ -446,10 +444,10 @@ export async function initializeTelemetry() {
     }
   }
 
-  diag.setLogger(new ClaudeCodeDiagLogger(), DiagLogLevel.ERROR)
+  diag.setLogger(new DsxuCodeDiagLogger(), DiagLogLevel.ERROR)
 
   // Initialize Perfetto tracing (independent of OTEL)
-  // Enable via CLAUDE_CODE_PERFETTO_TRACE=1 or CLAUDE_CODE_PERFETTO_TRACE=<path>
+  // Enable via DSXU_CODE_PERFETTO_TRACE=1 or DSXU_CODE_PERFETTO_TRACE=<path>
   initializePerfettoTracing()
 
   const readers = []
@@ -457,7 +455,7 @@ export async function initializeTelemetry() {
   // Add customer exporters (if enabled)
   const telemetryEnabled = isTelemetryEnabled()
   logForDebugging(
-    `[3P telemetry] isTelemetryEnabled=${telemetryEnabled} (CLAUDE_CODE_ENABLE_TELEMETRY=${process.env.CLAUDE_CODE_ENABLE_TELEMETRY})`,
+    `[3P telemetry] isTelemetryEnabled=${telemetryEnabled} (DSXU_CODE_ENABLE_TELEMETRY=${getDsxuCodeEnv('ENABLE_TELEMETRY')})`,
   )
   if (telemetryEnabled) {
     readers.push(...(await getOtlpReaders()))
@@ -471,7 +469,7 @@ export async function initializeTelemetry() {
   // Create base resource with service attributes
   const platform = getPlatform()
   const baseAttributes: Record<string, string> = {
-    [ATTR_SERVICE_NAME]: 'claude-code',
+    [ATTR_SERVICE_NAME]: 'dsxu-code',
     [ATTR_SERVICE_VERSION]: MACRO.VERSION,
   }
 
@@ -526,7 +524,7 @@ export async function initializeTelemetry() {
     // Register shutdown for beta tracing
     const shutdownTelemetry = async () => {
       const timeoutMs = parseInt(
-        process.env.CLAUDE_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000',
+        getDsxuCodeEnv('OTEL_SHUTDOWN_TIMEOUT_MS') || '2000',
       )
       try {
         endInteractionSpan()
@@ -560,7 +558,7 @@ export async function initializeTelemetry() {
     }
     registerCleanup(shutdownTelemetry)
 
-    return meterProvider.getMeter('com.anthropic.claude_code', MACRO.VERSION)
+    return meterProvider.getMeter('com.dsxu.code', MACRO.VERSION)
   }
 
   const meterProvider = new MeterProvider({
@@ -599,10 +597,7 @@ export async function initializeTelemetry() {
       setLoggerProvider(loggerProvider)
 
       // Initialize event logger
-      const eventLogger = logs.getLogger(
-        'com.anthropic.claude_code.events',
-        MACRO.VERSION,
-      )
+      const eventLogger = logs.getLogger('com.dsxu.code.events', MACRO.VERSION)
       setEventLogger(eventLogger)
       logForDebugging('[3P telemetry] Event logger set successfully')
 
@@ -653,7 +648,7 @@ export async function initializeTelemetry() {
   // Shutdown metrics and logs on exit (flushes and closes exporters)
   const shutdownTelemetry = async () => {
     const timeoutMs = parseInt(
-      process.env.CLAUDE_CODE_OTEL_SHUTDOWN_TIMEOUT_MS || '2000',
+      getDsxuCodeEnv('OTEL_SHUTDOWN_TIMEOUT_MS') || '2000',
     )
 
     try {
@@ -681,9 +676,9 @@ export async function initializeTelemetry() {
 OpenTelemetry telemetry flush timed out after ${timeoutMs}ms
 
 To resolve this issue, you can:
-1. Increase the timeout by setting CLAUDE_CODE_OTEL_SHUTDOWN_TIMEOUT_MS env var (e.g., 5000 for 5 seconds)
+1. Increase the timeout by setting DSXU_CODE_OTEL_SHUTDOWN_TIMEOUT_MS env var (e.g., 5000 for 5 seconds)
 2. Check if your OpenTelemetry backend is experiencing scalability issues
-3. Disable OpenTelemetry by unsetting CLAUDE_CODE_ENABLE_TELEMETRY env var
+3. Disable OpenTelemetry by unsetting DSXU_CODE_ENABLE_TELEMETRY env var
 
 Current timeout: ${timeoutMs}ms
 `,
@@ -697,7 +692,7 @@ Current timeout: ${timeoutMs}ms
   // Always register shutdown (internal metrics are always enabled)
   registerCleanup(shutdownTelemetry)
 
-  return meterProvider.getMeter('com.anthropic.claude_code', MACRO.VERSION)
+  return meterProvider.getMeter('com.dsxu.code', MACRO.VERSION)
 }
 
 /**
@@ -711,7 +706,7 @@ export async function flushTelemetry(): Promise<void> {
   }
 
   const timeoutMs = parseInt(
-    process.env.CLAUDE_CODE_OTEL_FLUSH_TIMEOUT_MS || '5000',
+    getDsxuCodeEnv('OTEL_FLUSH_TIMEOUT_MS') || '5000',
   )
 
   try {

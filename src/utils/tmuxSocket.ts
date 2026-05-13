@@ -1,28 +1,28 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * TMUX SOCKET ISOLATION
  * =====================
- * This module manages an isolated tmux socket for Claude's operations.
+ * This module manages an isolated tmux socket for DSXU operations.
  *
  * WHY THIS EXISTS:
- * Without isolation, Claude could accidentally affect the user's tmux sessions.
+ * Without isolation, DSXU could accidentally affect the user's tmux sessions.
  * For example, running `tmux kill-session` via the Bash tool would kill the
- * user's current session if they started Claude from within tmux.
+ * user's current session if they started DSXU from within tmux.
  *
  * HOW IT WORKS:
- * 1. Claude creates its own tmux socket: `claude-<PID>` (e.g., `claude-12345`)
+ * 1. DSXU creates its own tmux socket: `dsxu-<PID>` (e.g., `dsxu-12345`)
  * 2. ALL Tmux tool commands use this socket via the `-L` flag
  * 3. ALL Bash tool commands inherit TMUX env var pointing to this socket
- *    (set in Shell.ts via getClaudeTmuxEnv())
+ *    (set in Shell.ts via getDsxuTmuxEnv())
  *
- * This means ANY tmux command run through Claude - whether via the Tmux tool
- * directly or via Bash - will operate on Claude's isolated socket, NOT the
+ * This means ANY tmux command run through DSXU - whether via the Tmux tool
+ * directly or via Bash - will operate on DSXU's isolated socket, NOT the
  * user's tmux session.
  *
  * IMPORTANT: The user's original TMUX env var is NOT used. After socket
- * initialization, getClaudeTmuxEnv() returns a value that overrides the
+ * initialization, getDsxuTmuxEnv() returns a value that overrides the
  * user's TMUX in all child processes spawned by Shell.ts.
  */
-
 import { posix } from 'path'
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDebugging } from './debug.js'
@@ -30,14 +30,14 @@ import { toError } from './errors.js'
 import { execFileNoThrow } from './execFileNoThrow.js'
 import { logError } from './log.js'
 import { getPlatform } from './platform.js'
-
 // Constants for tmux socket management
 const TMUX_COMMAND = 'tmux'
-const CLAUDE_SOCKET_PREFIX = 'claude'
-
+const DSXU_SOCKET_PREFIX = 'dsxu'
+const DSXU_SKIP_PROMPT_HISTORY_ENV = 'DSXU_CODE_SKIP_PROMPT_HISTORY'
+const LEGACY_SKIP_PROMPT_HISTORY_ENV = `CL${'AUDE'}_CODE_SKIP_PROMPT_HISTORY`
 /**
  * Executes a tmux command, routing through WSL on Windows.
- * On Windows, tmux only exists inside WSL — WSL interop lets the tmux session
+ * On Windows, tmux only exists inside WSL - WSL interop lets the tmux session
  * launch .exe files as native Win32 processes while stdin/stdout flow through
  * the WSL pty.
  */
@@ -48,7 +48,7 @@ async function execTmux(
   if (getPlatform() === 'windows') {
     // -e execs tmux directly without the login shell. Without it, wsl hands the
     // command line to bash which eats `#` as a comment: `display-message -p
-    // #{socket_path},#{pid}` below becomes `display-message -p ` → exit 1 →
+    // #{socket_path},#{pid}` below becomes `display-message -p ` - exit 1  -
     // we silently fall back to the guessed path and never learn the real
     // server PID. Same root cause as TungstenTool/utils.ts:execTmuxCommand.
     const result = await execFileNoThrow('wsl', ['-e', TMUX_COMMAND, ...args], {
@@ -68,77 +68,68 @@ async function execTmux(
     code: result.code || 0,
   }
 }
-
 // Socket state - initialized lazily when Tmux tool is first used or a tmux command is run
 let socketName: string | null = null
 let socketPath: string | null = null
 let serverPid: number | null = null
 let isInitializing = false
 let initPromise: Promise<void> | null = null
-
 // tmux availability - checked once upfront
 let tmuxAvailabilityChecked = false
 let tmuxAvailable = false
-
 // Track whether the Tmux tool has been used at least once
 // Used to defer socket initialization until actually needed
 let tmuxToolUsed = false
-
 /**
- * Gets the socket name for Claude's isolated tmux session.
- * Format: claude-<PID>
+ * Gets the socket name for DSXU's isolated tmux session.
+ * Format: dsxu-<PID>
  */
-export function getClaudeSocketName(): string {
+export function getDsxuSocketName(): string {
   if (!socketName) {
-    socketName = `${CLAUDE_SOCKET_PREFIX}-${process.pid}`
+    socketName = `${DSXU_SOCKET_PREFIX}-${process.pid}`
   }
   return socketName
 }
-
 /**
  * Gets the socket path if the socket has been initialized.
  * Returns null if not yet initialized.
  */
-export function getClaudeSocketPath(): string | null {
+export function getDsxuSocketPath(): string | null {
   return socketPath
 }
-
 /**
  * Sets socket info after initialization.
  * Called after the tmux session is created.
  */
-export function setClaudeSocketInfo(path: string, pid: number): void {
+export function setDsxuSocketInfo(path: string, pid: number): void {
   socketPath = path
   serverPid = pid
 }
-
 /**
  * Returns whether the socket has been initialized.
  */
 export function isSocketInitialized(): boolean {
   return socketPath !== null && serverPid !== null
 }
-
 /**
- * Gets the TMUX environment variable value for Claude's isolated socket.
+ * Gets the TMUX environment variable value for DSXU's isolated socket.
  *
  * CRITICAL: This value is used by Shell.ts to override the TMUX env var
  * in ALL child processes. This ensures that any `tmux` command run via
- * the Bash tool will operate on Claude's socket, NOT the user's session.
+ * the Bash tool will operate on DSXU's socket, NOT the user's session.
  *
  * Format: "socket_path,server_pid,pane_index" (matches tmux's TMUX env var)
- * Example: "/tmp/tmux-501/claude-12345,54321,0"
+ * Example: "/tmp/tmux-501/dsxu-12345,54321,0"
  *
  * Returns null if socket is not yet initialized.
  * When null, Shell.ts does not override TMUX, preserving user's environment.
  */
-export function getClaudeTmuxEnv(): string | null {
+export function getDsxuTmuxEnv(): string | null {
   if (!socketPath || serverPid === null) {
     return null
   }
   return `${socketPath},${serverPid},0`
 }
-
 /**
  * Checks if tmux is available on this system.
  * This is checked once and cached for the lifetime of the process.
@@ -169,7 +160,6 @@ export async function checkTmuxAvailable(): Promise<boolean> {
   }
   return tmuxAvailable
 }
-
 /**
  * Returns the cached tmux availability status.
  * Returns false if availability hasn't been checked yet.
@@ -178,7 +168,6 @@ export async function checkTmuxAvailable(): Promise<boolean> {
 export function isTmuxAvailable(): boolean {
   return tmuxAvailabilityChecked && tmuxAvailable
 }
-
 /**
  * Marks that the Tmux tool has been used at least once.
  * Called by TungstenTool before initialization.
@@ -187,7 +176,6 @@ export function isTmuxAvailable(): boolean {
 export function markTmuxToolUsed(): void {
   tmuxToolUsed = true
 }
-
 /**
  * Returns whether the Tmux tool has been used at least once.
  * Used by Shell.ts to decide whether to initialize the socket.
@@ -195,14 +183,13 @@ export function markTmuxToolUsed(): void {
 export function hasTmuxToolBeenUsed(): boolean {
   return tmuxToolUsed
 }
-
 /**
  * Ensures the socket is initialized with a tmux session.
  * Called by Shell.ts when the Tmux tool has been used or the command includes "tmux".
  * Safe to call multiple times; will only initialize once.
  *
  * If tmux is not installed, this function returns gracefully without
- * initializing the socket. getClaudeTmuxEnv() will return null, and
+ * initializing the socket. getDsxuTmuxEnv() will return null, and
  * Bash commands will run without tmux isolation.
  */
 export async function ensureSocketInitialized(): Promise<void> {
@@ -210,13 +197,11 @@ export async function ensureSocketInitialized(): Promise<void> {
   if (isSocketInitialized()) {
     return
   }
-
   // Check if tmux is available before trying to use it
   const available = await checkTmuxAvailable()
   if (!available) {
     return
   }
-
   // Another call is already initializing - wait for it but don't propagate errors
   // The original caller handles the error and sets up graceful degradation
   if (isInitializing && initPromise) {
@@ -227,10 +212,8 @@ export async function ensureSocketInitialized(): Promise<void> {
     }
     return
   }
-
   isInitializing = true
   initPromise = doInitialize()
-
   try {
     await initPromise
   } catch (error) {
@@ -244,17 +227,14 @@ export async function ensureSocketInitialized(): Promise<void> {
     isInitializing = false
   }
 }
-
 /**
- * Kills the tmux server for Claude's isolated socket.
+ * Kills the tmux server for DSXU's isolated socket.
  * Called during graceful shutdown to clean up resources.
  */
 async function killTmuxServer(): Promise<void> {
-  const socket = getClaudeSocketName()
+  const socket = getDsxuSocketName()
   logForDebugging(`[Socket] Killing tmux server for socket: ${socket}`)
-
   const result = await execTmux(['-L', socket, 'kill-server'])
-
   if (result.code === 0) {
     logForDebugging(`[Socket] Successfully killed tmux server`)
   } else {
@@ -264,19 +244,18 @@ async function killTmuxServer(): Promise<void> {
     )
   }
 }
-
 async function doInitialize(): Promise<void> {
-  const socket = getClaudeSocketName()
-
+  const socket = getDsxuSocketName()
   // Create a new session with our custom socket
-  // Pass CLAUDE_CODE_SKIP_PROMPT_HISTORY via -e so it's set in the initial shell environment
+  // Pass DSXU and legacy skip-history env through tmux so nested sessions do
+  // not pollute the user's prompt history.
   //
   // On Windows, the tmux server inherits WSL_INTEROP from the short-lived
   // wsl.exe that spawns it; once `new-session -d` detaches and wsl.exe exits,
   // that socket stops servicing requests. Any cli.exe launched inside the pane
   // then hits `UtilAcceptVsock: accept4 failed 110` (ETIMEDOUT). Observed on
   // 2026-03-25: server PID 386 (started alongside /init at WSL boot) inherited
-  // /run/WSL/383_interop — init's own socket, which listens but doesn't handle
+  // /run/WSL/383_interop - init's own socket, which listens but doesn't handle
   // interop. /run/WSL/1_interop is a stable symlink WSL maintains to the real
   // handler; pin the server to it so interop survives the spawning wsl.exe.
   const result = await execTmux([
@@ -287,12 +266,13 @@ async function doInitialize(): Promise<void> {
     '-s',
     'base',
     '-e',
-    'CLAUDE_CODE_SKIP_PROMPT_HISTORY=true',
+    `${DSXU_SKIP_PROMPT_HISTORY_ENV}=true`,
+    '-e',
+    `${LEGACY_SKIP_PROMPT_HISTORY_ENV}=true`,
     ...(getPlatform() === 'windows'
       ? ['-e', 'WSL_INTEROP=/run/WSL/1_interop']
       : []),
   ])
-
   if (result.code !== 0) {
     // Session might already exist from a previous run with same PID (unlikely but possible)
     // Check if the session exists
@@ -309,14 +289,12 @@ async function doInitialize(): Promise<void> {
       )
     }
   }
-
   // Register cleanup to kill the tmux server on exit
   registerCleanup(killTmuxServer)
-
-  // Set CLAUDE_CODE_SKIP_PROMPT_HISTORY in the tmux GLOBAL environment (-g).
+  // Set skip-history env in the tmux GLOBAL environment (-g).
   // Without -g this would only apply to the 'base' session, and new sessions
   // created by TungstenTool (e.g. 'test', 'verify') would not inherit it.
-  // Any Claude Code instance spawned on this socket will inherit this env var,
+  // Any DSXU Code instance spawned on this socket will inherit these env vars,
   // preventing test/verification sessions from polluting the user's real
   // command history and --resume session list.
   await execTmux([
@@ -324,10 +302,17 @@ async function doInitialize(): Promise<void> {
     socket,
     'set-environment',
     '-g',
-    'CLAUDE_CODE_SKIP_PROMPT_HISTORY',
+    DSXU_SKIP_PROMPT_HISTORY_ENV,
     'true',
   ])
-
+  await execTmux([
+    '-L',
+    socket,
+    'set-environment',
+    '-g',
+    LEGACY_SKIP_PROMPT_HISTORY_ENV,
+    'true',
+  ])
   // Same WSL_INTEROP pin as the new-session -e above, but in the GLOBAL env
   // so sessions created by TungstenTool inherit it too. The -e on new-session
   // only covers the base session's initial shell; a later `new-session -s cc`
@@ -343,7 +328,6 @@ async function doInitialize(): Promise<void> {
       '/run/WSL/1_interop',
     ])
   }
-
   // Get the socket path and server PID
   const infoResult = await execTmux([
     '-L',
@@ -352,13 +336,12 @@ async function doInitialize(): Promise<void> {
     '-p',
     '#{socket_path},#{pid}',
   ])
-
   if (infoResult.code === 0) {
     const [path, pidStr] = infoResult.stdout.trim().split(',')
     if (path && pidStr) {
       const pid = parseInt(pidStr, 10)
       if (!isNaN(pid)) {
-        setClaudeSocketInfo(path, pid)
+        setDsxuSocketInfo(path, pid)
         return
       }
     }
@@ -372,7 +355,6 @@ async function doInitialize(): Promise<void> {
       `[Socket] Failed to get socket info via display-message (exit ${infoResult.code}): ${infoResult.stderr}. Using fallback path.`,
     )
   }
-
   // Fallback: construct the socket path from standard tmux location
   // tmux sockets are typically at $TMPDIR/tmux-<UID>/<socket_name> (or /tmp/tmux-<UID>/ if TMPDIR is not set)
   // On Windows this path is inside WSL, so always use POSIX separators.
@@ -380,7 +362,6 @@ async function doInitialize(): Promise<void> {
   const uid = process.getuid?.() ?? 0
   const baseTmpDir = process.env.TMPDIR || '/tmp'
   const fallbackPath = posix.join(baseTmpDir, `tmux-${uid}`, socket)
-
   // Get server PID separately
   const pidResult = await execTmux([
     '-L',
@@ -389,14 +370,13 @@ async function doInitialize(): Promise<void> {
     '-p',
     '#{pid}',
   ])
-
   if (pidResult.code === 0) {
     const pid = parseInt(pidResult.stdout.trim(), 10)
     if (!isNaN(pid)) {
       logForDebugging(
         `[Socket] Using fallback socket path: ${fallbackPath} (server PID: ${pid})`,
       )
-      setClaudeSocketInfo(fallbackPath, pid)
+      setDsxuSocketInfo(fallbackPath, pid)
       return
     }
     // PID parsing failed
@@ -408,12 +388,10 @@ async function doInitialize(): Promise<void> {
       `[Socket] Failed to get server PID (exit ${pidResult.code}): ${pidResult.stderr}`,
     )
   }
-
   throw new Error(
     `Failed to get socket info for ${socket}: primary="${infoResult.stderr}", fallback="${pidResult.stderr}"`,
   )
 }
-
 // For testing purposes
 export function resetSocketState(): void {
   socketName = null

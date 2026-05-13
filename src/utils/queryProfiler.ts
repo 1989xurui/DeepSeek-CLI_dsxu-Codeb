@@ -1,6 +1,7 @@
+﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Query profiling utility for measuring and reporting time spent in the query
- * pipeline from user input to first token arrival. Enable by setting CLAUDE_CODE_PROFILE_QUERY=1
+ * pipeline from user input to first token arrival. Enable by setting DSXU_CODE_PROFILE_QUERY=1
  *
  * Uses Node.js built-in performance hooks API for standard timing measurement.
  * Tracks each query session with detailed checkpoints for identifying bottlenecks.
@@ -17,7 +18,7 @@
  * - query_api_streaming_start: Start of streaming API call
  * - query_tool_schema_build_start/end: Building tool schemas
  * - query_message_normalization_start/end: Normalizing messages
- * - query_client_creation_start/end: Creating Anthropic client
+ * - query_client_creation_start/end: Creating Provider client
  * - query_api_request_sent: HTTP request dispatched (before await, inside retry body)
  * - query_response_headers_received: .withResponse() resolved (headers arrived)
  * - query_first_chunk_received: First streaming chunk received (TTFT)
@@ -28,12 +29,12 @@
  */
 
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 import { formatMs, formatTimelineLine, getPerformance } from './profilerBase.js'
 
 // Module-level state - initialized once when the module loads
 // eslint-disable-next-line custom-rules/no-process-env-top-level
-const ENABLED = isEnvTruthy(process.env.CLAUDE_CODE_PROFILE_QUERY)
+const ENABLED = isDsxuCodeEnvTruthy('PROFILE_QUERY')
 
 // Track memory snapshots separately (perf_hooks doesn't track memory)
 const memorySnapshots = new Map<string, NodeJS.MemoryUsage>()
@@ -103,21 +104,21 @@ function getSlowWarning(deltaMs: number, name: string): string {
   }
 
   if (deltaMs > 1000) {
-    return ` ⚠️  VERY SLOW`
+    return ` 鈿狅笍  VERY SLOW`
   }
   if (deltaMs > 100) {
-    return ` ⚠️  SLOW`
+    return ` 鈿狅笍  SLOW`
   }
 
   // Specific warnings for known bottlenecks
   if (name.includes('git_status') && deltaMs > 50) {
-    return ' ⚠️  git status'
+    return ' 鈿狅笍  git status'
   }
   if (name.includes('tool_schema') && deltaMs > 50) {
-    return ' ⚠️  tool schemas'
+    return ' 鈿狅笍  tool schemas'
   }
   if (name.includes('client_creation') && deltaMs > 50) {
-    return ' ⚠️  client creation'
+    return ' 鈿狅笍  client creation'
   }
 
   return ''
@@ -128,7 +129,7 @@ function getSlowWarning(deltaMs: number, name: string): string {
  */
 function getQueryProfileReport(): string {
   if (!ENABLED) {
-    return 'Query profiling not enabled (set CLAUDE_CODE_PROFILE_QUERY=1)'
+    return 'Query profiling not enabled (set DSXU_CODE_PROFILE_QUERY=1)'
   }
 
   const perf = getPerformance()
@@ -273,7 +274,7 @@ function getPhaseSummary(
 
     if (startTime !== undefined && endTime !== undefined) {
       const duration = endTime - startTime
-      const bar = '█'.repeat(Math.min(Math.ceil(duration / 10), 50)) // 1 block per 10ms, max 50
+      const bar = '#'.repeat(Math.min(Math.ceil(duration / 10), 50)) // 1 block per 10ms, max 50
       lines.push(
         `  ${phase.name.padEnd(22)} ${formatMs(duration).padStart(10)}ms ${bar}`,
       )

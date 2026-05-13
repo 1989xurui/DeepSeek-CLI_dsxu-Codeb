@@ -1,11 +1,10 @@
 /**
  * Plugin install counts data layer
  *
- * This module fetches and caches plugin install counts from the official
- * Claude plugins statistics repository. The cache is refreshed if older
- * than 24 hours.
+ * This module fetches and caches plugin install counts from a DSXU-configured
+ * statistics endpoint. The cache is refreshed if older than 24 hours.
  *
- * Cache location: ~/.claude/plugins/install-counts-cache.json
+ * Cache location: ~/.dsxu/plugins/install-counts-cache.json
  */
 
 import axios from 'axios'
@@ -22,9 +21,11 @@ import { getPluginsDirectory } from './pluginDirectories.js'
 
 const INSTALL_COUNTS_CACHE_VERSION = 1
 const INSTALL_COUNTS_CACHE_FILENAME = 'install-counts-cache.json'
-const INSTALL_COUNTS_URL =
-  'https://raw.githubusercontent.com/anthropics/claude-plugins-official/refs/heads/stats/stats/plugin-installs.json'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+
+function getInstallCountsUrl(): string | undefined {
+  return process.env.DSXU_PLUGIN_INSTALL_COUNTS_URL
+}
 
 /**
  * Structure of the install counts cache file
@@ -179,16 +180,21 @@ async function saveInstallCountsCache(
 }
 
 /**
- * Fetch install counts from GitHub stats repository
+ * Fetch install counts from the configured DSXU stats endpoint
  */
-async function fetchInstallCountsFromGitHub(): Promise<
+async function fetchInstallCountsFromEndpoint(): Promise<
   Array<{ plugin: string; unique_installs: number }>
 > {
-  logForDebugging(`Fetching install counts from ${INSTALL_COUNTS_URL}`)
+  const installCountsUrl = getInstallCountsUrl()
+  if (!installCountsUrl) {
+    return []
+  }
+
+  logForDebugging(`Fetching install counts from ${installCountsUrl}`)
 
   const started = performance.now()
   try {
-    const response = await axios.get<GitHubStatsResponse>(INSTALL_COUNTS_URL, {
+    const response = await axios.get<GitHubStatsResponse>(installCountsUrl, {
       timeout: 10000,
     })
 
@@ -198,7 +204,7 @@ async function fetchInstallCountsFromGitHub(): Promise<
 
     logPluginFetch(
       'install_counts',
-      INSTALL_COUNTS_URL,
+      installCountsUrl,
       'success',
       performance.now() - started,
     )
@@ -206,7 +212,7 @@ async function fetchInstallCountsFromGitHub(): Promise<
   } catch (error) {
     logPluginFetch(
       'install_counts',
-      INSTALL_COUNTS_URL,
+      installCountsUrl,
       'failure',
       performance.now() - started,
       classifyFetchError(error),
@@ -227,7 +233,7 @@ export async function getInstallCounts(): Promise<Map<string, number> | null> {
   const cache = await loadInstallCountsCache()
   if (cache) {
     logForDebugging('Using cached install counts')
-    logPluginFetch('install_counts', INSTALL_COUNTS_URL, 'cache_hit', 0)
+    logPluginFetch('install_counts', getInstallCountsUrl(), 'cache_hit', 0)
     const map = new Map<string, number>()
     for (const entry of cache.counts) {
       map.set(entry.plugin, entry.unique_installs)
@@ -235,9 +241,9 @@ export async function getInstallCounts(): Promise<Map<string, number> | null> {
     return map
   }
 
-  // Cache miss or stale - fetch from GitHub
+  // Cache miss or stale - fetch from configured endpoint
   try {
-    const counts = await fetchInstallCountsFromGitHub()
+    const counts = await fetchInstallCountsFromEndpoint()
 
     // Save to cache
     const newCache: InstallCountsCache = {

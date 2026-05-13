@@ -1,15 +1,16 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Deep Link Origin Banner
  *
  * Builds the warning text shown when a session was opened by an external
- * claude-cli:// deep link. Linux xdg-open and browsers with "always allow"
+ * dsxu-cli:// deep link. Linux xdg-open and browsers with "always allow"
  * set dispatch the link with no OS-level confirmation, so the application
- * provides its own provenance signal — mirroring claude.ai's security
+ * provides its own provenance signal ...mirroring the legacy cloud security
  * interstitial for external-source prefills.
  *
  * The user must press Enter to submit; this banner primes them to read the
  * prompt (which may use homoglyphs or padding to hide instructions) and
- * notice which directory — and therefore which CLAUDE.md — was loaded.
+ * notice which directory ...and therefore which DSXU.md ...was loaded.
  */
 
 import { stat } from 'fs/promises'
@@ -43,13 +44,13 @@ export type DeepLinkBannerInfo = {
 /**
  * Build the multi-line warning banner for a deep-link-originated session.
  *
- * Always shows the working directory so the user can see which CLAUDE.md
+ * Always shows the working directory so the user can see which DSXU.md
  * will load. When the link pre-filled a prompt, adds a second line prompting
- * the user to review it — the prompt itself is visible in the input box.
+ * the user to review it ...the prompt itself is visible in the input box.
  *
  * When the cwd was resolved from a ?repo= slug, also shows the slug and the
  * clone's last-fetch age so the user knows which local clone was selected
- * and whether its CLAUDE.md may be stale relative to upstream.
+ * and whether its DSXU.md may be stale relative to upstream.
  */
 export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
   const lines = [
@@ -61,14 +62,14 @@ export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
       !info.lastFetch ||
       Date.now() - info.lastFetch.getTime() > STALE_FETCH_WARN_MS
     lines.push(
-      `Resolved ${info.repo} from local clones · last fetched ${age}${stale ? ' — CLAUDE.md may be stale' : ''}`,
+      `Resolved ${info.repo} from local clones · last fetched ${age}${stale ? ' ...DSXU.md may be stale' : ''}`,
     )
   }
   if (info.prefillLength) {
     lines.push(
       info.prefillLength > LONG_PREFILL_THRESHOLD
-        ? `The prompt below (${formatNumber(info.prefillLength)} chars) was supplied by the link — scroll to review the entire prompt before pressing Enter.`
-        : 'The prompt below was supplied by the link — review carefully before pressing Enter.',
+        ? `The prompt below (${formatNumber(info.prefillLength)} chars) was supplied by the link ...scroll to review the entire prompt before pressing Enter.`
+        : 'The prompt below was supplied by the link ...review carefully before pressing Enter.',
     )
   }
   return lines.join('\n')
@@ -79,7 +80,7 @@ export function buildDeepLinkBanner(info: DeepLinkBannerInfo): string {
  * pull. Returns undefined if the directory is not a git repo or has never
  * been fetched.
  *
- * FETCH_HEAD is per-worktree — fetching from the main worktree does not
+ * FETCH_HEAD is per-worktree ...fetching from the main worktree does not
  * touch a sibling worktree's FETCH_HEAD. When cwd is a worktree, we check
  * both and return whichever is newer so a recently-fetched main repo
  * doesn't read as "never fetched" just because the deep link landed in

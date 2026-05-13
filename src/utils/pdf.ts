@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import { mkdir, readdir, readFile } from 'fs/promises'
 import { join } from 'path'
@@ -69,7 +70,7 @@ export async function readPDF(filePath: string): Promise<
 
     const fileBuffer = await readFile(filePath)
 
-    // Validate PDF magic bytes — reject files that aren't actually PDFs
+    // Validate PDF magic bytes ...reject files that aren't actually PDFs
     // (e.g., HTML files renamed to .pdf) before they enter conversation context.
     // Once an invalid PDF document block is in the message history, every subsequent
     // API call fails with 400 "The PDF specified was not valid" and the session

@@ -1,20 +1,24 @@
-import type { BetaUsage as Usage } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { BetaUsage as Usage } from 'src/types/providerSdk.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js'
 import { logEvent } from 'src/services/analytics/index.js'
 import { setHasUnknownModelCost } from '../bootstrap/state.js'
 import { isFastModeEnabled } from './fastMode.js'
 import {
-  CLAUDE_3_5_HAIKU_CONFIG,
-  CLAUDE_3_5_V2_SONNET_CONFIG,
-  CLAUDE_3_7_SONNET_CONFIG,
-  CLAUDE_HAIKU_4_5_CONFIG,
-  CLAUDE_OPUS_4_1_CONFIG,
-  CLAUDE_OPUS_4_5_CONFIG,
-  CLAUDE_OPUS_4_6_CONFIG,
-  CLAUDE_OPUS_4_CONFIG,
-  CLAUDE_SONNET_4_5_CONFIG,
-  CLAUDE_SONNET_4_6_CONFIG,
-  CLAUDE_SONNET_4_CONFIG,
+  getDeepSeekV4Pricing,
+  normalizeDeepSeekV4Model,
+} from './model/deepseekV4Control.js'
+import {
+  HAIKU_3_5_PROVIDER_CONFIG,
+  HAIKU_4_5_PROVIDER_CONFIG,
+  OPUS_4_1_PROVIDER_CONFIG,
+  OPUS_4_5_PROVIDER_CONFIG,
+  OPUS_4_6_PROVIDER_CONFIG,
+  OPUS_4_PROVIDER_CONFIG,
+  SONNET_3_5_V2_PROVIDER_CONFIG,
+  SONNET_3_7_PROVIDER_CONFIG,
+  SONNET_4_5_PROVIDER_CONFIG,
+  SONNET_4_6_PROVIDER_CONFIG,
+  SONNET_4_PROVIDER_CONFIG,
 } from './model/configs.js'
 import {
   firstPartyNameToCanonical,
@@ -23,7 +27,7 @@ import {
   type ModelShortName,
 } from './model/model.js'
 
-// @see https://platform.claude.com/docs/en/about-claude/pricing
+// @see provider pricing docs
 export type ModelCosts = {
   inputTokens: number
   outputTokens: number
@@ -32,7 +36,7 @@ export type ModelCosts = {
   webSearchRequests: number
 }
 
-// Standard pricing tier for Sonnet models: $3 input / $15 output per Mtok
+// Standard coding-model pricing tier: $3 input / $15 output per Mtok
 export const COST_TIER_3_15 = {
   inputTokens: 3,
   outputTokens: 15,
@@ -41,7 +45,7 @@ export const COST_TIER_3_15 = {
   webSearchRequests: 0.01,
 } as const satisfies ModelCosts
 
-// Pricing tier for Opus 4/4.1: $15 input / $75 output per Mtok
+// High-capacity pricing tier: $15 input / $75 output per Mtok
 export const COST_TIER_15_75 = {
   inputTokens: 15,
   outputTokens: 75,
@@ -50,7 +54,7 @@ export const COST_TIER_15_75 = {
   webSearchRequests: 0.01,
 } as const satisfies ModelCosts
 
-// Pricing tier for Opus 4.5: $5 input / $25 output per Mtok
+// Updated high-capacity pricing tier: $5 input / $25 output per Mtok
 export const COST_TIER_5_25 = {
   inputTokens: 5,
   outputTokens: 25,
@@ -59,7 +63,7 @@ export const COST_TIER_5_25 = {
   webSearchRequests: 0.01,
 } as const satisfies ModelCosts
 
-// Fast mode pricing for Opus 4.6: $30 input / $150 output per Mtok
+// Fast-mode high-capacity pricing tier: $30 input / $150 output per Mtok
 export const COST_TIER_30_150 = {
   inputTokens: 30,
   outputTokens: 150,
@@ -68,7 +72,7 @@ export const COST_TIER_30_150 = {
   webSearchRequests: 0.01,
 } as const satisfies ModelCosts
 
-// Pricing for Haiku 3.5: $0.80 input / $4 output per Mtok
+// Lightweight pricing tier: $0.80 input / $4 output per Mtok
 export const COST_HAIKU_35 = {
   inputTokens: 0.8,
   outputTokens: 4,
@@ -77,7 +81,7 @@ export const COST_HAIKU_35 = {
   webSearchRequests: 0.01,
 } as const satisfies ModelCosts
 
-// Pricing for Haiku 4.5: $1 input / $5 output per Mtok
+// Updated lightweight pricing tier: $1 input / $5 output per Mtok
 export const COST_HAIKU_45 = {
   inputTokens: 1,
   outputTokens: 5,
@@ -88,10 +92,43 @@ export const COST_HAIKU_45 = {
 
 const DEFAULT_UNKNOWN_MODEL_COST = COST_TIER_5_25
 
+function numberFromEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name])
+  return Number.isFinite(value) && value >= 0 ? value : fallback
+}
+
+function getDeepSeekCosts(model: string): ModelCosts {
+  const pricing = getDeepSeekV4Pricing(normalizeDeepSeekV4Model(model))
+  const inputTokens = numberFromEnv(
+    'DSXU_DEEPSEEK_INPUT_USD_PER_MTOKENS',
+    pricing.cacheMissInputPerMillion,
+  )
+  return {
+    inputTokens,
+    outputTokens: numberFromEnv(
+      'DSXU_DEEPSEEK_OUTPUT_USD_PER_MTOKENS',
+      pricing.outputPerMillion,
+    ),
+    promptCacheWriteTokens: numberFromEnv(
+      'DSXU_DEEPSEEK_CACHE_CREATE_USD_PER_MTOKENS',
+      inputTokens,
+    ),
+    promptCacheReadTokens: numberFromEnv(
+      'DSXU_DEEPSEEK_CACHE_READ_USD_PER_MTOKENS',
+      pricing.cacheHitInputPerMillion,
+    ),
+    webSearchRequests: 0,
+  }
+}
+
+function isDeepSeekModel(model: string): boolean {
+  return /^(deepseek|dsxu)|deepseek/i.test(model)
+}
+
 /**
- * Get the cost tier for Opus 4.6 based on fast mode.
+ * Get the compatibility provider cost tier based on fast mode.
  */
-export function getOpus46CostTier(fastMode: boolean): ModelCosts {
+export function getFastModeProviderCostTier(fastMode: boolean): ModelCosts {
   if (isFastModeEnabled() && fastMode) {
     return COST_TIER_30_150
   }
@@ -99,29 +136,30 @@ export function getOpus46CostTier(fastMode: boolean): ModelCosts {
 }
 
 // @[MODEL LAUNCH]: Add a pricing entry for the new model below.
-// Costs from https://platform.claude.com/docs/en/about-claude/pricing
+// Costs from provider pricing docs
 // Web search cost: $10 per 1000 requests = $0.01 per request
 export const MODEL_COSTS: Record<ModelShortName, ModelCosts> = {
-  [firstPartyNameToCanonical(CLAUDE_3_5_HAIKU_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(HAIKU_3_5_PROVIDER_CONFIG.firstParty)]:
     COST_HAIKU_35,
-  [firstPartyNameToCanonical(CLAUDE_HAIKU_4_5_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(HAIKU_4_5_PROVIDER_CONFIG.firstParty)]:
     COST_HAIKU_45,
-  [firstPartyNameToCanonical(CLAUDE_3_5_V2_SONNET_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(SONNET_3_5_V2_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_3_15,
-  [firstPartyNameToCanonical(CLAUDE_3_7_SONNET_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(SONNET_3_7_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_3_15,
-  [firstPartyNameToCanonical(CLAUDE_SONNET_4_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(SONNET_4_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_3_15,
-  [firstPartyNameToCanonical(CLAUDE_SONNET_4_5_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(SONNET_4_5_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_3_15,
-  [firstPartyNameToCanonical(CLAUDE_SONNET_4_6_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(SONNET_4_6_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_3_15,
-  [firstPartyNameToCanonical(CLAUDE_OPUS_4_CONFIG.firstParty)]: COST_TIER_15_75,
-  [firstPartyNameToCanonical(CLAUDE_OPUS_4_1_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(OPUS_4_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_15_75,
-  [firstPartyNameToCanonical(CLAUDE_OPUS_4_5_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(OPUS_4_1_PROVIDER_CONFIG.firstParty)]:
+    COST_TIER_15_75,
+  [firstPartyNameToCanonical(OPUS_4_5_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_5_25,
-  [firstPartyNameToCanonical(CLAUDE_OPUS_4_6_CONFIG.firstParty)]:
+  [firstPartyNameToCanonical(OPUS_4_6_PROVIDER_CONFIG.firstParty)]:
     COST_TIER_5_25,
 }
 
@@ -141,15 +179,38 @@ function tokensToUSDCost(modelCosts: ModelCosts, usage: Usage): number {
   )
 }
 
+function deepSeekTokensToUSDCost(modelCosts: ModelCosts, usage: Usage): number {
+  const hasCacheBreakdown =
+    usage.cache_creation_input_tokens != null ||
+    usage.cache_read_input_tokens != null
+  const cacheReadTokens = usage.cache_read_input_tokens ?? 0
+  const cacheCreationTokens = hasCacheBreakdown
+    ? usage.cache_creation_input_tokens ??
+      Math.max(0, usage.input_tokens - cacheReadTokens)
+    : 0
+  const uncachedInputTokens = hasCacheBreakdown ? 0 : usage.input_tokens
+
+  return (
+    (uncachedInputTokens / 1_000_000) * modelCosts.inputTokens +
+    (cacheCreationTokens / 1_000_000) * modelCosts.promptCacheWriteTokens +
+    (cacheReadTokens / 1_000_000) * modelCosts.promptCacheReadTokens +
+    (usage.output_tokens / 1_000_000) * modelCosts.outputTokens
+  )
+}
+
 export function getModelCosts(model: string, usage: Usage): ModelCosts {
+  if (isDeepSeekModel(model)) {
+    return getDeepSeekCosts(model)
+  }
+
   const shortName = getCanonicalName(model)
 
-  // Check if this is an Opus 4.6 model with fast mode active.
+  // Check if this is the compatibility fast-mode model with fast mode active.
   if (
-    shortName === firstPartyNameToCanonical(CLAUDE_OPUS_4_6_CONFIG.firstParty)
+    shortName === firstPartyNameToCanonical(OPUS_4_6_PROVIDER_CONFIG.firstParty)
   ) {
     const isFastMode = usage.speed === 'fast'
-    return getOpus46CostTier(isFastMode)
+    return getFastModeProviderCostTier(isFastMode)
   }
 
   const costs = MODEL_COSTS[shortName]
@@ -176,6 +237,9 @@ function trackUnknownModelCost(model: string, shortName: ModelShortName): void {
 // If the model's costs are not found, use the default model's costs.
 export function calculateUSDCost(resolvedModel: string, usage: Usage): number {
   const modelCosts = getModelCosts(resolvedModel, usage)
+  if (isDeepSeekModel(resolvedModel)) {
+    return deepSeekTokensToUSDCost(modelCosts, usage)
+  }
   return tokensToUSDCost(modelCosts, usage)
 }
 
@@ -224,6 +288,10 @@ export function formatModelPricing(costs: ModelCosts): string {
  * Returns undefined if model is not found
  */
 export function getModelPricingString(model: string): string | undefined {
+  if (isDeepSeekModel(model)) {
+    return formatModelPricing(getDeepSeekCosts(model))
+  }
+
   const shortName = getCanonicalName(model)
   const costs = MODEL_COSTS[shortName]
   if (!costs) return undefined

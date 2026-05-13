@@ -11,6 +11,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { getImageProcessor } from '../tools/FileReadTool/imageProcessor.js'
 import { logForDebugging } from './debug.js'
 import { execFileNoThrowWithCwd } from './execFileNoThrow.js'
+import { getDsxuCodeEnv } from './envUtils.js'
 import { getFsImplementation } from './fsOperations.js'
 import {
   detectImageFormatFromBase64,
@@ -32,11 +33,11 @@ function getClipboardCommands() {
   const platform = process.platform as SupportedPlatform
 
   // Platform-specific temporary file paths
-  // Use CLAUDE_CODE_TMPDIR if set, otherwise fall back to platform defaults
+  // Use DSXU_CODE_TMPDIR if set, otherwise fall back to platform defaults
   const baseTmpDir =
-    process.env.CLAUDE_CODE_TMPDIR ||
+    getDsxuCodeEnv('TMPDIR') ||
     (platform === 'win32' ? process.env.TEMP || 'C:\\Temp' : '/tmp')
-  const screenshotFilename = 'claude_cli_latest_screenshot.png'
+  const screenshotFilename = 'dsxu_cli_latest_screenshot.png'
   const tempPaths: Record<SupportedPlatform, string> = {
     darwin: join(baseTmpDir, screenshotFilename),
     linux: join(baseTmpDir, screenshotFilename),

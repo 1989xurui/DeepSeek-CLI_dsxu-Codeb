@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Provides ripgrep glob exclusion patterns for orphaned plugin versions.
  *
  * When plugin versions are updated, old versions are marked with a
  * `.orphaned_at` file but kept on disk for 7 days (since concurrent
  * sessions might still reference them). During this window, Grep/Glob
- * could return files from orphaned versions, causing Claude to use
+ * could return files from orphaned versions, causing DSXU to use
  * outdated plugin code.
  *
  * We find `.orphaned_at` markers via a single ripgrep call and generate
@@ -22,7 +23,7 @@ import { getPluginsDirectory } from './pluginDirectories.js'
 // Inlined from cacheUtils.ts to avoid a circular dep through commands.js.
 const ORPHANED_AT_FILENAME = '.orphaned_at'
 
-/** Session-scoped cache. Frozen once computed — only cleared by explicit /reload-plugins. */
+/** Session-scoped cache. Frozen once computed ...only cleared by explicit /reload-plugins. */
 let cachedExclusions: string[] | null = null
 
 /**
@@ -52,7 +53,7 @@ export async function getGlobExclusionsForPluginCache(
     // Find all .orphaned_at files within the plugin cache directory.
     // --hidden: marker is a dotfile. --no-ignore: don't let a stray
     // .gitignore hide it. --max-depth 4: marker is always at
-    // cache/<marketplace>/<plugin>/<version>/.orphaned_at — don't recurse
+    // cache/<marketplace>/<plugin>/<version>/.orphaned_at ...don't recurse
     // into plugin contents (node_modules, etc.). Never-aborts signal: no
     // caller signal to thread.
     const markers = await ripGrep(
@@ -70,7 +71,7 @@ export async function getGlobExclusionsForPluginCache(
     )
 
     cachedExclusions = markers.map(markerPath => {
-      // ripgrep may return absolute or relative — normalize to relative.
+      // ripgrep may return absolute or relative ...normalize to relative.
       const versionDir = dirname(markerPath)
       const rel = isAbsolute(versionDir)
         ? relative(cachePath, versionDir)
@@ -81,7 +82,7 @@ export async function getGlobExclusionsForPluginCache(
     })
     return cachedExclusions
   } catch {
-    // Best-effort — don't break core search tools if ripgrep fails here
+    // Best-effort ...don't break core search tools if ripgrep fails here
     cachedExclusions = []
     return cachedExclusions
   }
@@ -94,7 +95,7 @@ export function clearPluginCacheExclusions(): void {
 /**
  * One path is a prefix of the other. Special-cases root (normalize('/') + sep
  * = '//'). Case-insensitive on win32 since normalize() doesn't lowercase
- * drive letters and CLAUDE_CODE_PLUGIN_CACHE_DIR may disagree with resolved.
+ * drive letters and plugin cache env values may disagree with resolved paths.
  */
 function pathsOverlap(a: string, b: string): boolean {
   const na = normalizeForCompare(a)

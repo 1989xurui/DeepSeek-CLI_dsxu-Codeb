@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Session activity tracking with refcount-based heartbeat timer.
  *
@@ -7,18 +8,14 @@
  * periodic timer fires the registered callback every 30 seconds to keep the
  * container alive.
  *
- * Sending keep-alives is gated behind CLAUDE_CODE_REMOTE_SEND_KEEPALIVES.
+ * Sending keep-alives is gated behind DSXU_CODE_REMOTE_SEND_KEEPALIVES.
  * Diagnostic logging always fires to help diagnose idle gaps.
  */
-
 import { registerCleanup } from './cleanupRegistry.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { isEnvTruthy } from './envUtils.js'
-
+import { isDsxuCodeEnvTruthy } from './envUtils.js'
 const SESSION_ACTIVITY_INTERVAL_MS = 30_000
-
 export type SessionActivityReason = 'api_call' | 'tool_exec'
-
 let activityCallback: (() => void) | null = null
 let refcount = 0
 const activeReasons = new Map<SessionActivityReason, number>()
@@ -26,19 +23,17 @@ let oldestActivityStartedAt: number | null = null
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
 let cleanupRegistered = false
-
 function startHeartbeatTimer(): void {
   clearIdleTimer()
   heartbeatTimer = setInterval(() => {
     logForDiagnosticsNoPII('debug', 'session_keepalive_heartbeat', {
       refcount,
     })
-    if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE_SEND_KEEPALIVES)) {
+    if (isDsxuCodeEnvTruthy('REMOTE_SEND_KEEPALIVES')) {
       activityCallback?.()
     }
   }, SESSION_ACTIVITY_INTERVAL_MS)
 }
-
 function startIdleTimer(): void {
   clearIdleTimer()
   if (activityCallback === null) {
@@ -49,14 +44,12 @@ function startIdleTimer(): void {
     idleTimer = null
   }, SESSION_ACTIVITY_INTERVAL_MS)
 }
-
 function clearIdleTimer(): void {
   if (idleTimer !== null) {
     clearTimeout(idleTimer)
     idleTimer = null
   }
 }
-
 export function registerSessionActivityCallback(cb: () => void): void {
   activityCallback = cb
   // Restart timer if work is already in progress (e.g. reconnect during streaming)
@@ -64,7 +57,6 @@ export function registerSessionActivityCallback(cb: () => void): void {
     startHeartbeatTimer()
   }
 }
-
 export function unregisterSessionActivityCallback(): void {
   activityCallback = null
   // Stop timer if the callback is removed
@@ -74,19 +66,16 @@ export function unregisterSessionActivityCallback(): void {
   }
   clearIdleTimer()
 }
-
 export function sendSessionActivitySignal(): void {
-  if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE_SEND_KEEPALIVES)) {
+  if (isDsxuCodeEnvTruthy('REMOTE_SEND_KEEPALIVES')) {
     activityCallback?.()
   }
 }
-
 export function isSessionActivityTrackingActive(): boolean {
   return activityCallback !== null
 }
-
 /**
- * Increment the activity refcount. When it transitions from 0→1 and a callback
+ * Increment the activity refcount. When it transitions from 0 ->  and a callback
  * is registered, start a periodic heartbeat timer.
  */
 export function startSessionActivity(reason: SessionActivityReason): void {
@@ -113,7 +102,6 @@ export function startSessionActivity(reason: SessionActivityReason): void {
     })
   }
 }
-
 /**
  * Decrement the activity refcount. When it reaches 0, stop the heartbeat timer
  * and start an idle timer that logs after 30s of inactivity.

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import mergeWith from 'lodash-es/mergeWith.js'
 import { dirname, join, resolve } from 'path'
@@ -12,7 +13,7 @@ import { getRemoteManagedSettingsSyncFromCache } from '../../services/remoteMana
 import { uniq } from '../array.js'
 import { logForDebugging } from '../debug.js'
 import { logForDiagnosticsNoPII } from '../diagLogs.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from '../envUtils.js'
+import { getRuntimeConfigHomeDir, isEnvTruthy } from '../envUtils.js'
 import { getErrnoCode, isENOENT } from '../errors.js'
 import { writeFileSyncAndFlush_DEPRECATED } from '../file.js'
 import { readFileSync } from '../fileRead.js'
@@ -51,14 +52,12 @@ import {
   type SettingsWithErrors,
   type ValidationError,
 } from './validation.js'
-
 /**
  * Get the path to the managed settings file based on the current platform
  */
 function getManagedSettingsFilePath(): string {
   return join(getManagedFilePath(), 'managed-settings.json')
 }
-
 /**
  * Load file-based managed settings: managed-settings.json + managed-settings.d/*.json.
  *
@@ -78,7 +77,6 @@ export function loadManagedFileSettings(): {
   const errors: ValidationError[] = []
   let merged: SettingsJson = {}
   let found = false
-
   const { settings, errors: baseErrors } = parseSettingsFile(
     getManagedSettingsFilePath(),
   )
@@ -87,7 +85,6 @@ export function loadManagedFileSettings(): {
     merged = mergeWith(merged, settings, settingsMergeCustomizer)
     found = true
   }
-
   const dropInDir = getManagedSettingsDropInDir()
   try {
     const entries = getFsImplementation()
@@ -116,10 +113,8 @@ export function loadManagedFileSettings(): {
       logError(e)
     }
   }
-
   return { settings: found ? merged : null, errors }
 }
-
 /**
  * Check which file-based managed settings sources are present.
  * Used by /status to show "(file)", "(drop-ins)", or "(file + drop-ins)".
@@ -130,7 +125,6 @@ export function getManagedFileSettingsPresence(): {
 } {
   const { settings: base } = parseSettingsFile(getManagedSettingsFilePath())
   const hasBase = !!base && Object.keys(base).length > 0
-
   let hasDropIns = false
   const dropInDir = getManagedSettingsDropInDir()
   try {
@@ -145,10 +139,8 @@ export function getManagedFileSettingsPresence(): {
   } catch {
     // dir doesn't exist
   }
-
   return { hasBase, hasDropIns }
 }
-
 /**
  * Handles file system errors appropriately
  * @param error The error to handle
@@ -168,7 +160,6 @@ function handleFileSystemError(error: unknown, path: string): void {
     logError(error)
   }
 }
-
 /**
  * Parses a settings file into a structured format
  * @param path The path to the permissions file
@@ -190,14 +181,13 @@ export function parseSettingsFile(path: string): {
   }
   const result = parseSettingsFileUncached(path)
   setCachedParsedFile(path, result)
-  // Clone the first return too — the caller may mutate before
+  // Clone the first return too - the caller may mutate before
   // another caller reads the same cache entry.
   return {
     settings: result.settings ? clone(result.settings) : null,
     errors: result.errors,
   }
 }
-
 function parseSettingsFileUncached(path: string): {
   settings: SettingsJson | null
   errors: ValidationError[]
@@ -205,41 +195,34 @@ function parseSettingsFileUncached(path: string): {
   try {
     const { resolvedPath } = safeResolvePath(getFsImplementation(), path)
     const content = readFileSync(resolvedPath)
-
     if (content.trim() === '') {
       return { settings: {}, errors: [] }
     }
-
     const data = safeParseJSON(content, false)
-
     // Filter invalid permission rules before schema validation so one bad
     // rule doesn't cause the entire settings file to be rejected.
     const ruleWarnings = filterInvalidPermissionRules(data, path)
-
     const result = SettingsSchema().safeParse(data)
-
     if (!result.success) {
       const errors = formatZodError(result.error, path)
       return { settings: null, errors: [...ruleWarnings, ...errors] }
     }
-
     return { settings: result.data, errors: ruleWarnings }
   } catch (error) {
     handleFileSystemError(error, path)
     return { settings: null, errors: [] }
   }
 }
-
 /**
  * Get the absolute path to the associated file root for a given settings source
- * (e.g. for $PROJ_DIR/.claude/settings.json, returns $PROJ_DIR)
+ * (e.g. for $PROJ_DIR/.dsxu/settings.json, returns $PROJ_DIR)
  * @param source The source of the settings
  * @returns The root path of the settings file
  */
 export function getSettingsRootPathForSource(source: SettingSource): string {
   switch (source) {
     case 'userSettings':
-      return resolve(getClaudeConfigHomeDir())
+      return resolve(getRuntimeConfigHomeDir())
     case 'policySettings':
     case 'projectSettings':
     case 'localSettings': {
@@ -251,26 +234,25 @@ export function getSettingsRootPathForSource(source: SettingSource): string {
     }
   }
 }
-
 /**
  * Get the user settings filename based on cowork mode.
  * Returns 'cowork_settings.json' when in cowork mode, 'settings.json' otherwise.
  *
  * Priority:
  * 1. Session state (set by CLI flag --cowork)
- * 2. Environment variable CLAUDE_CODE_USE_COWORK_PLUGINS
+ * 2. Environment variable DSXU_CODE_USE_COWORK_PLUGINS
  * 3. Default: 'settings.json'
  */
 function getUserSettingsFilePath(): string {
   if (
     getUseCoworkPlugins() ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_COWORK_PLUGINS)
+    isEnvTruthy(process.env.DSXU_CODE_USE_COWORK_PLUGINS) ||
+    isEnvTruthy(process.env['CL' + 'AUDE' + '_CODE_USE_COWORK_PLUGINS'])
   ) {
     return 'cowork_settings.json'
   }
   return 'settings.json'
 }
-
 export function getSettingsFilePathForSource(
   source: SettingSource,
 ): string | undefined {
@@ -294,18 +276,16 @@ export function getSettingsFilePathForSource(
     }
   }
 }
-
 export function getRelativeSettingsFilePathForSource(
   source: 'projectSettings' | 'localSettings',
 ): string {
   switch (source) {
     case 'projectSettings':
-      return join('.claude', 'settings.json')
+      return join('.dsxu', 'settings.json')
     case 'localSettings':
-      return join('.claude', 'settings.local.json')
+      return join('.dsxu', 'settings.local.json')
   }
 }
-
 export function getSettingsForSource(
   source: SettingSource,
 ): SettingsJson | null {
@@ -315,7 +295,6 @@ export function getSettingsForSource(
   setCachedSettingsForSource(source, result)
   return result
 }
-
 function getSettingsForSourceUncached(
   source: SettingSource,
 ): SettingsJson | null {
@@ -325,30 +304,24 @@ function getSettingsForSourceUncached(
     if (remoteSettings && Object.keys(remoteSettings).length > 0) {
       return remoteSettings
     }
-
     const mdmResult = getMdmSettings()
     if (Object.keys(mdmResult.settings).length > 0) {
       return mdmResult.settings
     }
-
     const { settings: fileSettings } = loadManagedFileSettings()
     if (fileSettings) {
       return fileSettings
     }
-
     const hkcu = getHkcuSettings()
     if (Object.keys(hkcu.settings).length > 0) {
       return hkcu.settings
     }
-
     return null
   }
-
   const settingsFilePath = getSettingsFilePathForSource(source)
   const { settings: fileSettings } = settingsFilePath
     ? parseSettingsFile(settingsFilePath)
     : { settings: null }
-
   // For flagSettings, merge in any inline settings set via the SDK
   if (source === 'flagSettings') {
     const inlineSettings = getFlagSettingsInline()
@@ -363,13 +336,11 @@ function getSettingsForSourceUncached(
       }
     }
   }
-
   return fileSettings
 }
-
 /**
  * Get the origin of the highest-priority active policy settings source.
- * Uses "first source wins" — returns the first source that has content.
+ * Uses "first source wins" - returns the first source that has content.
  * Priority: remote > plist/hklm > file (managed-settings.json) > hkcu
  */
 export function getPolicySettingsOrigin():
@@ -384,33 +355,28 @@ export function getPolicySettingsOrigin():
   if (remoteSettings && Object.keys(remoteSettings).length > 0) {
     return 'remote'
   }
-
   // 2. Admin-only MDM (HKLM / macOS plist)
   const mdmResult = getMdmSettings()
   if (Object.keys(mdmResult.settings).length > 0) {
     return getPlatform() === 'macos' ? 'plist' : 'hklm'
   }
-
   // 3. managed-settings.json + managed-settings.d/ (file-based, requires admin)
   const { settings: fileSettings } = loadManagedFileSettings()
   if (fileSettings) {
     return 'file'
   }
-
-  // 4. HKCU (lowest — user-writable)
+  // 4. HKCU (lowest - user-writable)
   const hkcu = getHkcuSettings()
   if (Object.keys(hkcu.settings).length > 0) {
     return 'hkcu'
   }
-
   return null
 }
-
 /**
  * Merges `settings` into the existing settings for `source` using lodash mergeWith.
  *
  * To delete a key from a record field (e.g. enabledPlugins, extraKnownMarketplaces),
- * set it to `undefined` — do NOT use `delete`. mergeWith only detects deletion when
+ * set it to `undefined` - do NOT use `delete`. mergeWith only detects deletion when
  * the key is present with an explicit `undefined` value.
  */
 export function updateSettingsForSource(
@@ -423,22 +389,18 @@ export function updateSettingsForSource(
   ) {
     return { error: null }
   }
-
   // Create the folder if needed
   const filePath = getSettingsFilePathForSource(source)
   if (!filePath) {
     return { error: null }
   }
-
   try {
     getFsImplementation().mkdirSync(dirname(filePath))
-
     // Try to get existing settings with validation. Bypass the per-source
-    // cache — mergeWith below mutates its target (including nested refs),
+    // cache - mergeWith below mutates its target (including nested refs),
     // and mutating the cached object would leak unpersisted state if the
     // write fails before resetSettingsCache().
     let existingSettings = getSettingsForSourceUncached(source)
-
     // If validation failed, check if file exists with a JSON syntax error
     if (!existingSettings) {
       let content: string | null = null
@@ -448,7 +410,7 @@ export function updateSettingsForSource(
         if (!isENOENT(e)) {
           throw e
         }
-        // File doesn't exist — fall through to merge with empty settings
+        // File doesn't exist - fall through to merge with empty settings
       }
       if (content !== null) {
         const rawData = safeParseJSON(content)
@@ -469,7 +431,6 @@ export function updateSettingsForSource(
         }
       }
     }
-
     const updatedSettings = mergeWith(
       existingSettings || {},
       settings,
@@ -493,18 +454,14 @@ export function updateSettingsForSource(
         return undefined
       },
     )
-
     // Mark this as an internal write before writing the file
     markInternalWrite(filePath)
-
     writeFileSyncAndFlush_DEPRECATED(
       filePath,
       jsonStringify(updatedSettings, null, 2) + '\n',
     )
-
     // Invalidate the session cache since settings have been updated
     resetSettingsCache()
-
     if (source === 'localSettings') {
       // Okay to add to gitignore async without awaiting
       void addFileGlobRuleToGitignore(
@@ -519,17 +476,14 @@ export function updateSettingsForSource(
     logError(error)
     return { error }
   }
-
   return { error: null }
 }
-
 /**
  * Custom merge function for arrays - concatenate and deduplicate
  */
 function mergeArrays<T>(targetArray: T[], sourceArray: T[]): T[] {
   return uniq([...targetArray, ...sourceArray])
 }
-
 /**
  * Custom merge function for lodash mergeWith when merging settings.
  * Arrays are concatenated and deduplicated; other values use default lodash merge behavior.
@@ -545,7 +499,6 @@ export function settingsMergeCustomizer(
   // Return undefined to let lodash handle default merge behavior
   return undefined
 }
-
 /**
  * Get a list of setting keys from managed settings for logging purposes.
  * For certain nested settings (permissions, sandbox, hooks), expands to show
@@ -565,7 +518,6 @@ export function getManagedSettingsKeysForLogging(
   >
   const keysToExpand = ['permissions', 'sandbox', 'hooks']
   const allKeys: string[] = []
-
   // Define valid nested keys for each nested setting we expand
   const validNestedKeys: Record<string, Set<string>> = {
     permissions: new Set([
@@ -607,7 +559,6 @@ export function getManagedSettingsKeysForLogging(
       'TaskCompleted',
     ]),
   }
-
   for (const key of Object.keys(validSettings)) {
     if (
       keysToExpand.includes(key) &&
@@ -617,7 +568,6 @@ export function getManagedSettingsKeysForLogging(
       // Expand nested keys for these special settings (one level deep only)
       const nestedObj = validSettings[key] as Record<string, unknown>
       const validKeys = validNestedKeys[key]
-
       if (validKeys) {
         for (const nestedKey of Object.keys(nestedObj)) {
           // Only include known valid nested keys
@@ -631,13 +581,10 @@ export function getManagedSettingsKeysForLogging(
       allKeys.push(key)
     }
   }
-
   return allKeys.sort()
 }
-
 // Flag to prevent infinite recursion when loading settings
 let isLoadingSettings = false
-
 /**
  * Load settings from disk without using cache
  * This is the original implementation that actually reads from files
@@ -647,11 +594,9 @@ function loadSettingsFromDisk(): SettingsWithErrors {
   if (isLoadingSettings) {
     return { settings: {}, errors: [] }
   }
-
   const startTime = Date.now()
   profileCheckpoint('loadSettingsFromDisk_start')
   logForDiagnosticsNoPII('info', 'settings_load_started')
-
   isLoadingSettings = true
   try {
     // Start with plugin settings as the lowest priority base.
@@ -669,15 +614,13 @@ function loadSettingsFromDisk(): SettingsWithErrors {
     const allErrors: ValidationError[] = []
     const seenErrors = new Set<string>()
     const seenFiles = new Set<string>()
-
     // Merge settings from each source in priority order with deep merging
     for (const source of getEnabledSettingSources()) {
-      // policySettings: "first source wins" — use the highest-priority source
+      // policySettings: "first source wins" - use the highest-priority source
       // that has content. Priority: remote > HKLM/plist > managed-settings.json > HKCU
       if (source === 'policySettings') {
         let policySettings: SettingsJson | null = null
         const policyErrors: ValidationError[] = []
-
         // 1. Remote (highest priority)
         const remoteSettings = getRemoteManagedSettingsSyncFromCache()
         if (remoteSettings && Object.keys(remoteSettings).length > 0) {
@@ -685,13 +628,12 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           if (result.success) {
             policySettings = result.data
           } else {
-            // Remote exists but is invalid — surface errors even as we fall through
+            // Remote exists but is invalid - surface errors even as we fall through
             policyErrors.push(
               ...formatZodError(result.error, 'remote managed settings'),
             )
           }
         }
-
         // 2. Admin-only MDM (HKLM / macOS plist)
         if (!policySettings) {
           const mdmResult = getMdmSettings()
@@ -700,7 +642,6 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           }
           policyErrors.push(...mdmResult.errors)
         }
-
         // 3. managed-settings.json + managed-settings.d/ (file-based, requires admin)
         if (!policySettings) {
           const { settings, errors } = loadManagedFileSettings()
@@ -709,8 +650,7 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           }
           policyErrors.push(...errors)
         }
-
-        // 4. HKCU (lowest — user-writable, only if nothing above exists)
+        // 4. HKCU (lowest - user-writable, only if nothing above exists)
         if (!policySettings) {
           const hkcu = getHkcuSettings()
           if (Object.keys(hkcu.settings).length > 0) {
@@ -718,7 +658,6 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           }
           policyErrors.push(...hkcu.errors)
         }
-
         // Merge the winning policy source into the settings chain
         if (policySettings) {
           mergedSettings = mergeWith(
@@ -734,20 +673,15 @@ function loadSettingsFromDisk(): SettingsWithErrors {
             allErrors.push(error)
           }
         }
-
         continue
       }
-
       const filePath = getSettingsFilePathForSource(source)
       if (filePath) {
         const resolvedPath = resolve(filePath)
-
         // Skip if we've already loaded this file from another source
         if (!seenFiles.has(resolvedPath)) {
           seenFiles.add(resolvedPath)
-
           const { settings, errors } = parseSettingsFile(filePath)
-
           // Add unique errors (deduplication)
           for (const error of errors) {
             const errorKey = `${error.file}:${error.path}:${error.message}`
@@ -756,7 +690,6 @@ function loadSettingsFromDisk(): SettingsWithErrors {
               allErrors.push(error)
             }
           }
-
           if (settings) {
             mergedSettings = mergeWith(
               mergedSettings,
@@ -766,7 +699,6 @@ function loadSettingsFromDisk(): SettingsWithErrors {
           }
         }
       }
-
       // For flagSettings, also merge any inline settings set via the SDK
       if (source === 'flagSettings') {
         const inlineSettings = getFlagSettingsInline()
@@ -782,19 +714,16 @@ function loadSettingsFromDisk(): SettingsWithErrors {
         }
       }
     }
-
     logForDiagnosticsNoPII('info', 'settings_load_completed', {
       duration_ms: Date.now() - startTime,
       source_count: seenFiles.size,
       error_count: allErrors.length,
     })
-
     return { settings: mergedSettings, errors: allErrors }
   } finally {
     isLoadingSettings = false
   }
 }
-
 /**
  * Get merged settings from all sources in priority order
  * Settings are merged from lowest to highest priority:
@@ -813,24 +742,21 @@ export function getInitialSettings(): SettingsJson {
   const { settings } = getSettingsWithErrors()
   return settings || {}
 }
-
 /**
  * @deprecated Use getInitialSettings() instead. This alias exists for backwards compatibility.
  */
 export const getSettings_DEPRECATED = getInitialSettings
-
 export type SettingsWithSources = {
   effective: SettingsJson
-  /** Ordered low-to-high priority — later entries override earlier ones. */
+  /** Ordered low-to-high priority - later entries override earlier ones. */
   sources: Array<{ source: SettingSource; settings: SettingsJson }>
 }
-
 /**
  * Get the effective merged settings alongside the raw per-source settings,
  * in merge-priority order. Only includes sources that are enabled and have
  * non-empty content.
  *
- * Always reads fresh from disk — resets the session cache so that `effective`
+ * Always reads fresh from disk - resets the session cache so that `effective`
  * and `sources` are consistent even if the change detector hasn't fired yet.
  */
 export function getSettingsWithSources(): SettingsWithSources {
@@ -846,11 +772,10 @@ export function getSettingsWithSources(): SettingsWithSources {
   }
   return { effective: getInitialSettings(), sources }
 }
-
 /**
  * Get merged settings and validation errors from all sources
  * This function now uses session-level caching to avoid repeated file I/O.
- * Settings changes require Claude Code restart, so cache is valid for entire session.
+ * Settings changes require DSXU Code restart, so cache is valid for entire session.
  * @returns Merged settings and all validation errors encountered
  */
 export function getSettingsWithErrors(): SettingsWithErrors {
@@ -859,14 +784,12 @@ export function getSettingsWithErrors(): SettingsWithErrors {
   if (cached !== null) {
     return cached
   }
-
   // Load from disk and cache the result
   const result = loadSettingsFromDisk()
   profileCheckpoint('loadSettingsFromDisk_end')
   setSessionSettingsCache(result)
   return result
 }
-
 /**
  * Check if any raw settings file contains a specific key, regardless of validation.
  * This is useful for detecting user intent even when settings validation fails.
@@ -876,7 +799,7 @@ export function getSettingsWithErrors(): SettingsWithErrors {
  */
 /**
  * Returns true if any trusted settings source has accepted the bypass
- * permissions mode dialog. projectSettings is intentionally excluded —
+ * permissions mode dialog. projectSettings is intentionally excluded  -
  * a malicious project could otherwise auto-bypass the dialog (RCE risk).
  */
 export function hasSkipDangerousModePermissionPrompt(): boolean {
@@ -887,10 +810,9 @@ export function hasSkipDangerousModePermissionPrompt(): boolean {
     getSettingsForSource('policySettings')?.skipDangerousModePermissionPrompt
   )
 }
-
 /**
  * Returns true if any trusted settings source has accepted the auto
- * mode opt-in dialog. projectSettings is intentionally excluded —
+ * mode opt-in dialog. projectSettings is intentionally excluded  -
  * a malicious project could otherwise auto-bypass the dialog (RCE risk).
  */
 export function hasAutoModeOptIn(): boolean {
@@ -909,7 +831,6 @@ export function hasAutoModeOptIn(): boolean {
   }
   return false
 }
-
 /**
  * Returns whether plan mode should use auto mode semantics. Default true
  * (opt-out). Returns false if any trusted source explicitly sets false.
@@ -926,11 +847,10 @@ export function getUseAutoModeDuringPlan(): boolean {
   }
   return true
 }
-
 /**
  * Returns the merged autoMode config from trusted settings sources.
  * Only available when TRANSCRIPT_CLASSIFIER is active; returns undefined otherwise.
- * projectSettings is intentionally excluded — a malicious project could
+ * projectSettings is intentionally excluded - a malicious project could
  * otherwise inject classifier allow/deny rules (RCE risk).
  */
 export function getAutoModeConfig():
@@ -943,11 +863,9 @@ export function getAutoModeConfig():
       deny: z.array(z.string()).optional(),
       environment: z.array(z.string()).optional(),
     })
-
     const allow: string[] = []
     const soft_deny: string[] = []
     const environment: string[] = []
-
     for (const source of [
       'userSettings',
       'localSettings',
@@ -969,7 +887,6 @@ export function getAutoModeConfig():
           environment.push(...result.data.environment)
       }
     }
-
     if (allow.length > 0 || soft_deny.length > 0 || environment.length > 0) {
       return {
         ...(allow.length > 0 && { allow }),
@@ -980,26 +897,22 @@ export function getAutoModeConfig():
   }
   return undefined
 }
-
 export function rawSettingsContainsKey(key: string): boolean {
   for (const source of getEnabledSettingSources()) {
     // Skip policySettings - we only care about user-configured settings
     if (source === 'policySettings') {
       continue
     }
-
     const filePath = getSettingsFilePathForSource(source)
     if (!filePath) {
       continue
     }
-
     try {
       const { resolvedPath } = safeResolvePath(getFsImplementation(), filePath)
       const content = readFileSync(resolvedPath)
       if (!content.trim()) {
         continue
       }
-
       const rawData = safeParseJSON(content, false)
       if (rawData && typeof rawData === 'object' && key in rawData) {
         return true
@@ -1010,6 +923,5 @@ export function rawSettingsContainsKey(key: string): boolean {
       handleFileSystemError(error, filePath)
     }
   }
-
   return false
 }

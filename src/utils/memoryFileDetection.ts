@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { normalize, posix, win32 } from 'path'
 import {
@@ -7,42 +8,37 @@ import {
   isAutoMemPath,
 } from '../memdir/paths.js'
 import { isAgentMemoryPath } from '../tools/AgentTool/agentMemory.js'
-import { getClaudeConfigHomeDir } from './envUtils.js'
+import { getRuntimeConfigHomeDir } from './envUtils.js'
 import {
   posixPathToWindowsPath,
   windowsPathToPosixPath,
 } from './windowsPaths.js'
-
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
   ? (require('../memdir/teamMemPaths.js') as typeof import('../memdir/teamMemPaths.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-
 const IS_WINDOWS = process.platform === 'win32'
-
 // Normalize path separators to posix (/). Does NOT translate drive encoding.
 function toPosix(p: string): string {
   return p.split(win32.sep).join(posix.sep)
 }
-
 // Convert a path to a stable string-comparable form: forward-slash separated,
 // and on Windows, lowercased (Windows filesystems are case-insensitive).
 function toComparable(p: string): string {
   const posixForm = toPosix(p)
   return IS_WINDOWS ? posixForm.toLowerCase() : posixForm
 }
-
 /**
- * Detects if a file path is a session-related file under ~/.claude.
+ * Detects if a file path is a DSXU-managed session file.
  * Returns the type of session file or null if not a session file.
  */
 export function detectSessionFileType(
   filePath: string,
 ): 'session_memory' | 'session_transcript' | null {
-  const configDir = getClaudeConfigHomeDir()
+  const configDir = getRuntimeConfigHomeDir()
   // Compare in forward-slash form; on Windows also case-fold. The caller
-  // (isShellCommandTargetingMemory) converts MinGW /c/... → native before
+  // (isShellCommandTargetingMemory) converts MinGW /c/...> native before
   // reaching here, so we only need separator + case normalization.
   const normalized = toComparable(filePath)
   const configDirCmp = toComparable(configDir)
@@ -57,7 +53,6 @@ export function detectSessionFileType(
   }
   return null
 }
-
 /**
  * Checks if a glob/pattern string indicates session file access intent.
  * Used for Grep/Glob tools where we check patterns, not actual file paths.
@@ -80,7 +75,6 @@ export function detectSessionPatternType(
   }
   return null
 }
-
 /**
  * Check if a file path is within the memdir directory.
  */
@@ -90,9 +84,7 @@ export function isAutoMemFile(filePath: string): boolean {
   }
   return false
 }
-
 export type MemoryScope = 'personal' | 'team'
-
 /**
  * Determine which memory store (if any) a path belongs to.
  *
@@ -100,7 +92,7 @@ export type MemoryScope = 'personal' | 'team'
  * so a team path matches both isTeamMemFile and isAutoMemFile. Check team first.
  *
  * Use this for scope-keyed telemetry where a single event name distinguishes
- * by scope field — the existing tengu_memdir_* / tengu_team_mem_* event-name
+ * by scope field ...the existing tengu_memdir_* / tengu_team_mem_* event-name
  * hierarchy handles the overlap differently (team writes intentionally fire both).
  */
 export function memoryScopeForPath(filePath: string): MemoryScope | null {
@@ -112,7 +104,6 @@ export function memoryScopeForPath(filePath: string): MemoryScope | null {
   }
   return null
 }
-
 /**
  * Check if a file path is within an agent memory directory.
  */
@@ -122,11 +113,10 @@ function isAgentMemFile(filePath: string): boolean {
   }
   return false
 }
-
 /**
- * Check if a file is a Claude-managed memory file (NOT user-managed instruction files).
+ * Check if a file is a DSXU-managed memory file (NOT user-managed instruction files).
  * Includes: auto-memory (memdir), agent memory, session memory/transcripts.
- * Excludes: CLAUDE.md, CLAUDE.local.md, .claude/rules/*.md (user-managed).
+ * Excludes: DSXU.md, legacy instruction files, and rules/*.md (user-managed).
  *
  * Use this for collapse/badge logic where user-managed files should show full diffs.
  */
@@ -145,7 +135,6 @@ export function isAutoManagedMemoryFile(filePath: string): boolean {
   }
   return false
 }
-
 // Check if a directory path is a memory-related directory.
 // Used by Grep/Glob which take a directory `path` rather than a specific file.
 // Checks both configDir and memoryBaseDir to handle custom memory dir paths.
@@ -173,7 +162,7 @@ export function isMemoryDirectory(dirPath: string): boolean {
   ) {
     return true
   }
-  // Check the auto-memory path override (CLAUDE_COWORK_MEMORY_PATH_OVERRIDE)
+  // Check the auto-memory path override.
   if (isAutoMemoryEnabled()) {
     const autoMemPath = getAutoMemPath()
     const autoMemDirCmp = toComparable(autoMemPath.replace(/[/\\]+$/, ''))
@@ -185,12 +174,10 @@ export function isMemoryDirectory(dirPath: string): boolean {
       return true
     }
   }
-
-  const configDirCmp = toComparable(getClaudeConfigHomeDir())
+  const configDirCmp = toComparable(getRuntimeConfigHomeDir())
   const memoryBaseCmp = toComparable(getMemoryBaseDir())
   const underConfig = normalizedCmp.startsWith(configDirCmp)
   const underMemoryBase = normalizedCmp.startsWith(memoryBaseCmp)
-
   if (!underConfig && !underMemoryBase) {
     return false
   }
@@ -205,7 +192,6 @@ export function isMemoryDirectory(dirPath: string): boolean {
   }
   return false
 }
-
 /**
  * Check if a shell command string (Bash or PowerShell) targets memory files
  * by extracting absolute path tokens and checking them against memory
@@ -213,25 +199,24 @@ export function isMemoryDirectory(dirPath: string): boolean {
  * collapse logic.
  */
 export function isShellCommandTargetingMemory(command: string): boolean {
-  const configDir = getClaudeConfigHomeDir()
+  const configDir = getRuntimeConfigHomeDir()
   const memoryBase = getMemoryBaseDir()
   const autoMemDir = isAutoMemoryEnabled()
     ? getAutoMemPath().replace(/[/\\]+$/, '')
     : ''
-
   // Quick check: does the command mention the config, memory base, or
   // auto-mem directory? Compare in forward-slash form (PowerShell on Windows
   // may use either separator while configDir uses the platform-native one).
   // On Windows also check the MinGW form (/c/...) since BashTool runs under
   // Git Bash which emits that encoding. On Linux/Mac, configDir is already
-  // posix so only one form to check — and crucially, windowsPathToPosixPath
+  // posix so only one form to check ...and crucially, windowsPathToPosixPath
   // is NOT called, so Linux paths like /m/foo aren't misinterpreted as MinGW.
   const commandCmp = toComparable(command)
   const dirs = [configDir, memoryBase, autoMemDir].filter(Boolean)
   const matchesAnyDir = dirs.some(d => {
     if (commandCmp.includes(toComparable(d))) return true
     if (IS_WINDOWS) {
-      // BashTool on Windows (Git Bash) emits /c/Users/... — check MinGW form too
+      // BashTool on Windows (Git Bash) emits /c/Users/... ...check MinGW form too
       return commandCmp.includes(windowsPathToPosixPath(d).toLowerCase())
     }
     return false
@@ -239,26 +224,23 @@ export function isShellCommandTargetingMemory(command: string): boolean {
   if (!matchesAnyDir) {
     return false
   }
-
   // Extract absolute path-like tokens. Matches Unix absolute paths (/foo/bar),
-  // Windows drive-letter paths (C:\foo, C:/foo), and MinGW paths (/c/foo —
-  // they're /-prefixed so the regex already captures them). Bare backslash
-  // tokens (\foo) are intentionally excluded — they appear in regex/grep
+  // Windows drive-letter paths (C:\foo, C:/foo), and MinGW paths (/c/foo ...  // they're /-prefixed so the regex already captures them). Bare backslash
+  // tokens (\foo) are intentionally excluded ...they appear in regex/grep
   // patterns and would cause false-positive memory classification after
   // normalization flips backslashes to forward slashes.
   const matches = command.match(/(?:[A-Za-z]:[/\\]|\/)[^\s'"]+/g)
   if (!matches) {
     return false
   }
-
   for (const match of matches) {
     // Strip trailing shell metacharacters that could be adjacent to a path
     const cleanPath = match.replace(/[,;|&>]+$/, '')
-    // On Windows, convert MinGW /c/... → native C:\... at this single
+    // On Windows, convert MinGW /c/...> native C:\... at this single
     // point. Downstream predicates (isAutoManagedMemoryFile, isMemoryDirectory,
     // isAutoMemPath, isAgentMemoryPath) then receive native paths and only
     // need toComparable() for matching. On other platforms, paths are already
-    // native — no conversion, so /m/foo etc. pass through unmodified.
+    // native ...no conversion, so /m/foo etc. pass through unmodified.
     const nativePath = IS_WINDOWS
       ? posixPathToWindowsPath(cleanPath)
       : cleanPath
@@ -266,12 +248,10 @@ export function isShellCommandTargetingMemory(command: string): boolean {
       return true
     }
   }
-
   return false
 }
-
 // Check if a glob/pattern targets auto-managed memory files only.
-// Excludes CLAUDE.md, CLAUDE.local.md, .claude/rules/ (user-managed).
+// Excludes DSXU.md, legacy instruction files, and rules/ (user-managed).
 // Used for collapse badge logic where user-managed files should not be
 // counted as "memory" operations.
 export function isAutoManagedMemoryPattern(pattern: string): boolean {

@@ -1,6 +1,6 @@
 /**
  * Privacy level controls how much nonessential network traffic and telemetry
- * Claude Code generates.
+ * DSXU Code generates.
  *
  * Levels are ordered by restrictiveness:
  *   default < no-telemetry < essential-traffic
@@ -11,14 +11,17 @@
  *                       (telemetry + auto-updates, grove, release notes, model capabilities, etc.).
  *
  * The resolved level is the most restrictive signal from:
- *   CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC  →  essential-traffic
+ *   DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC   ->  essential-traffic
+ *   legacy provider disable-nonessential alias -> essential-traffic
  *   DISABLE_TELEMETRY                         →  no-telemetry
  */
+
+import { getDsxuCodeEnv, isDsxuCodeEnvTruthy } from './envUtils.js'
 
 type PrivacyLevel = 'default' | 'no-telemetry' | 'essential-traffic'
 
 export function getPrivacyLevel(): PrivacyLevel {
-  if (process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC) {
+  if (isDsxuCodeEnvTruthy('DISABLE_NONESSENTIAL_TRAFFIC')) {
     return 'essential-traffic'
   }
   if (process.env.DISABLE_TELEMETRY) {
@@ -29,7 +32,8 @@ export function getPrivacyLevel(): PrivacyLevel {
 
 /**
  * True when all nonessential network traffic should be suppressed.
- * Equivalent to the old `process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` check.
+ * Equivalent to the old nonessential-traffic guard, with DSXU env taking
+ * precedence over the legacy provider alias.
  */
 export function isEssentialTrafficOnly(): boolean {
   return getPrivacyLevel() === 'essential-traffic'
@@ -48,8 +52,8 @@ export function isTelemetryDisabled(): boolean {
  * or null if unrestricted. Used for user-facing "unset X to re-enable" messages.
  */
 export function getEssentialTrafficOnlyReason(): string | null {
-  if (process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC) {
-    return 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC'
+  if (getDsxuCodeEnv('DISABLE_NONESSENTIAL_TRAFFIC')) {
+    return 'DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC'
   }
   return null
 }

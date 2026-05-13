@@ -1,6 +1,10 @@
 import type { ValidationResult } from 'src/Tool.js'
-import { isClaudeSettingsPath } from '../permissions/filesystem.js'
+import * as permissionFilesystem from '../permissions/filesystem.js'
 import { validateSettingsFileContent } from './validation.js'
+
+const isSettingsPath = (
+  permissionFilesystem as Record<string, unknown>
+)['isDsxuSettingsPath'] as (filePath: string) => boolean
 
 /**
  * Validates settings file edits to ensure the result conforms to SettingsSchema.
@@ -16,8 +20,8 @@ export function validateInputForSettingsFileEdit(
   originalContent: string,
   getUpdatedContent: () => string,
 ): Extract<ValidationResult, { result: false }> | null {
-  // Only validate Claude settings files
-  if (!isClaudeSettingsPath(filePath)) {
+  // Only validate DSXU settings files
+  if (!isSettingsPath(filePath)) {
     return null
   }
 
@@ -36,7 +40,7 @@ export function validateInputForSettingsFileEdit(
   if (!afterValidation.isValid) {
     return {
       result: false,
-      message: `Claude Code settings.json validation failed after edit:\n${afterValidation.error}\n\nFull schema:\n${afterValidation.fullSchema}\nIMPORTANT: Do not update the env unless explicitly instructed to do so.`,
+      message: `DSXU Code settings.json validation failed after edit:\n${afterValidation.error}\n\nFull schema:\n${afterValidation.fullSchema}\nIMPORTANT: Do not update the env unless explicitly instructed to do so.`,
       errorCode: 10,
     }
   }

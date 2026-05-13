@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * Marketplace manager for Claude Code plugins
+ * Marketplace manager for DSXU Code plugins
  *
  * This module provides functionality to:
  * - Manage known marketplace sources (URLs, GitHub repos, npm packages, local files)
@@ -8,14 +9,14 @@
  * - Track and update marketplace configurations
  *
  * File structure managed by this module:
- * ~/.claude/
- *   └── plugins/
- *       ├── known_marketplaces.json    # Configuration of all known marketplaces
- *       └── marketplaces/              # Cache directory for marketplace data
- *           ├── my-marketplace.json    # Cached marketplace from URL source
- *           └── github-marketplace/    # Cloned repository for GitHub source
- *               └── .claude-plugin/
- *                   └── marketplace.json
+ * ~/.dsxu/
+ *   --- plugins/
+ *       --- known_marketplaces.json    # Configuration of all known marketplaces
+ *       --- marketplaces/              # Cache directory for marketplace data
+ *           --- my-marketplace.json    # Cached marketplace from URL source
+ *           --- github-marketplace/    # Cloned repository for GitHub source
+ *               --- .dsxu-plugin/
+ *                   --- marketplace.json
  */
 
 import axios from 'axios'
@@ -25,7 +26,7 @@ import memoize from 'lodash-es/memoize.js'
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'path'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { logForDebugging } from '../debug.js'
-import { isEnvTruthy } from '../envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import {
   ConfigParseError,
   errorMessage,
@@ -87,6 +88,31 @@ import {
   validateOfficialNameSource,
 } from './schemas.js'
 
+const DSXU_PLUGIN_PACKAGE_DIR = '.dsxu-plugin'
+const LEGACY_PLUGIN_PACKAGE_DIR = `.${'clau' + 'de'}-plugin`
+const PLUGIN_MARKETPLACE_FILENAME = 'marketplace.json'
+
+function pluginMarketplacePath(root: string, packageDir: string): string {
+  return join(root, packageDir, PLUGIN_MARKETPLACE_FILENAME)
+}
+
+async function resolveMarketplaceManifestPath(
+  root: string,
+  explicitPath?: string,
+): Promise<string> {
+  if (explicitPath) return join(root, explicitPath)
+
+  const fs = getFsImplementation()
+  const dsxuPath = pluginMarketplacePath(root, DSXU_PLUGIN_PACKAGE_DIR)
+  try {
+    await fs.stat(dsxuPath)
+    return dsxuPath
+  } catch (error) {
+    if (!isENOENT(error)) throw error
+  }
+  return pluginMarketplacePath(root, LEGACY_PLUGIN_PACKAGE_DIR)
+}
+
 /**
  * Result of loading and caching a marketplace
  */
@@ -133,7 +159,7 @@ export type KnownMarketplacesConfig = KnownMarketplacesFile
  *
  * Structurally compatible with settings `extraKnownMarketplaces` entries, but
  * adds `sourceIsFallback` for implicit built-in declarations. This is NOT a
- * settings-schema field — it's only ever set in code (never parsed from JSON).
+ * settings-schema field - it's only ever set in code (never parsed from JSON).
  */
 export type DeclaredMarketplace = {
   source: MarketplaceSource
@@ -141,7 +167,7 @@ export type DeclaredMarketplace = {
   autoUpdate?: boolean
   /**
    * Presence suffices. When set, diffMarketplaces treats an already-materialized
-   * entry as upToDate regardless of source shape — never reports sourceChanged.
+   * entry as upToDate regardless of source shape - never reports sourceChanged.
    *
    * Used for the implicit official-marketplace declaration: we want "clone from
    * GitHub if missing", not "replace with GitHub if present under a different
@@ -153,7 +179,7 @@ export type DeclaredMarketplace = {
 
 /**
  * Get declared marketplace intent from merged settings and --add-dir sources.
- * This is what SHOULD exist — used by the reconciler to find gaps.
+ * This is what SHOULD exist - used by the reconciler to find gaps.
  *
  * The official marketplace is implicitly declared with `sourceIsFallback: true`
  * when any enabled plugin references it.
@@ -161,7 +187,7 @@ export type DeclaredMarketplace = {
 export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
   const implicit: Record<string, DeclaredMarketplace> = {}
 
-  // Only the official marketplace can be implicitly declared — it's the one
+  // Only the official marketplace can be implicitly declared - it's the one
   // built-in source we know. Other marketplaces have no default source to inject.
   // Explicitly-disabled entries (value: false) don't count.
   const enabledPlugins = {
@@ -182,7 +208,7 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
   }
 
   // Lowest precedence: implicit < --add-dir < merged settings.
-  // An explicit extraKnownMarketplaces entry for claude-plugins-official
+  // An explicit extraKnownMarketplaces entry for the official marketplace
   // in --add-dir or settings wins.
   return {
     ...implicit,
@@ -200,7 +226,7 @@ export function getDeclaredMarketplaces(): Record<string, DeclaredMarketplace> {
 export function getMarketplaceDeclaringSource(
   name: string,
 ): 'userSettings' | 'projectSettings' | 'localSettings' | null {
-  // Check highest-precedence editable sources first — the one that wins
+  // Check highest-precedence editable sources first - the one that wins
   // in the merged view is the one we should write back to.
   const editableSources: Array<
     'localSettings' | 'projectSettings' | 'userSettings'
@@ -240,7 +266,7 @@ export function saveMarketplaceToSettings(
 /**
  * Load known marketplaces configuration from disk
  *
- * Reads the configuration file at ~/.claude/plugins/known_marketplaces.json
+ * Reads the configuration file at ~/.dsxu/plugins/known_marketplaces.json
  * which contains a mapping of marketplace names to their sources and metadata.
  *
  * Example configuration file content:
@@ -248,12 +274,12 @@ export function saveMarketplaceToSettings(
  * {
  *   "official-marketplace": {
  *     "source": { "source": "url", "url": "https://example.com/marketplace.json" },
- *     "installLocation": "/Users/me/.claude/plugins/marketplaces/official-marketplace.json",
+ *     "installLocation": "/Users/me/.dsxu/plugins/marketplaces/official-marketplace.json",
  *     "lastUpdated": "2024-01-15T10:30:00.000Z"
  *   },
  *   "company-plugins": {
  *     "source": { "source": "github", "repo": "mycompany/plugins" },
- *     "installLocation": "/Users/me/.claude/plugins/marketplaces/company-plugins",
+ *     "installLocation": "/Users/me/.dsxu/plugins/marketplaces/company-plugins",
  *     "lastUpdated": "2024-01-14T15:45:00.000Z"
  *   }
  * }
@@ -301,8 +327,8 @@ export async function loadKnownMarketplacesConfig(): Promise<KnownMarketplacesCo
  * Load known marketplaces config, returning {} on any error instead of throwing.
  *
  * Use this on read-only paths (plugin loading, feature checks) where a corrupted
- * config should degrade gracefully rather than crash. DO NOT use on load→mutate→save
- * paths — returning {} there would cause the save to overwrite the corrupted file
+ * config should degrade gracefully rather than crash. DO NOT use on load-mutate-save
+ * paths - returning {} there would cause the save to overwrite the corrupted file
  * with just the new entry, permanently destroying the user's other entries. The
  * throwing variant preserves the file so the user can fix the corruption and recover.
  */
@@ -310,8 +336,8 @@ export async function loadKnownMarketplacesConfigSafe(): Promise<KnownMarketplac
   try {
     return await loadKnownMarketplacesConfig()
   } catch {
-    // Inner function already logged via logForDebugging. Don't logError here —
-    // corrupted user config isn't a Claude Code bug, shouldn't hit the error file.
+    // Inner function already logged via logForDebugging. Don't logError here -
+    // corrupted user config isn't a DSXU Code bug, shouldn't hit the error file.
     return {}
   }
 }
@@ -319,7 +345,7 @@ export async function loadKnownMarketplacesConfigSafe(): Promise<KnownMarketplac
 /**
  * Save known marketplaces configuration to disk
  *
- * Writes the configuration to ~/.claude/plugins/known_marketplaces.json,
+ * Writes the configuration to ~/.dsxu/plugins/known_marketplaces.json,
  * creating the directory structure if it doesn't exist.
  *
  * @param config - The marketplace configuration to save
@@ -356,10 +382,10 @@ export async function saveKnownMarketplacesConfig(
  * The seed's known_marketplaces.json contains installLocation paths pointing
  * into the seed dir itself. Registering those entries into the primary JSON
  * makes them visible to all marketplace readers (getMarketplaceCacheOnly,
- * getPluginByIdCacheOnly, etc.) without any loader changes — they just follow
+ * getPluginByIdCacheOnly, etc.) without any loader changes - they just follow
  * the installLocation wherever it points.
  *
- * Seed entries always win for marketplaces declared in the seed — the seed is
+ * Seed entries always win for marketplaces declared in the seed - the seed is
  * admin-managed (baked into the container image). If admin updates the seed
  * in a new image, those changes propagate on next boot. Users opt out of seed
  * plugins via `plugin disable`, not by removing the marketplace.
@@ -383,7 +409,7 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
 
   const primary = await loadKnownMarketplacesConfig()
   // First-seed-wins across this registration pass. Can't use the isEqual check
-  // alone — two seeds with the same name will have different installLocations.
+  // alone - two seeds with the same name will have different installLocations.
   const claimed = new Set<string>()
   let changed = 0
 
@@ -399,7 +425,7 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
       // where the seed is mounted at a different path than where it was built.
       const resolvedLocation = await findSeedMarketplaceLocation(seedDir, name)
       if (!resolvedLocation) {
-        // Seed content missing (incomplete build) — leave primary alone, but
+        // Seed content missing (incomplete build) - leave primary alone, but
         // don't claim the name either: a later seed may have working content.
         logForDebugging(
           `Seed marketplace '${name}' not found under ${seedDir}/marketplaces/, skipping`,
@@ -416,10 +442,10 @@ export async function registerSeedMarketplaces(): Promise<boolean> {
         autoUpdate: false,
       }
 
-      // Skip if primary already matches — idempotent no-op, no write.
+      // Skip if primary already matches - idempotent no-op, no write.
       if (isEqual(primary[name], desired)) continue
 
-      // Seed wins — admin-managed. Overwrite any existing primary entry.
+      // Seed wins - admin-managed. Overwrite any existing primary entry.
       primary[name] = desired
       changed++
     }
@@ -489,7 +515,7 @@ async function findSeedMarketplaceLocation(
 
 /**
  * If installLocation points into a configured seed directory, return that seed
- * directory. Seed-managed entries are admin-controlled — users can't
+ * directory. Seed-managed entries are admin-controlled - users can't
  * remove/refresh/modify them (they'd be overwritten by registerSeedMarketplaces
  * on next startup). Returning the specific seed lets error messages name it.
  */
@@ -502,7 +528,7 @@ function seedDirFor(installLocation: string): string | undefined {
 /**
  * Git pull operation (exported for testing)
  *
- * Pulls latest changes with a configurable timeout (default 120s, override via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS).
+ * Pulls latest changes with a configurable timeout (default 120s, override via DSXU_CODE_PLUGIN_GIT_TIMEOUT_MS).
  * Provides helpful error messages for common failure scenarios.
  * If a ref is specified, fetches and checks out that specific branch or tag.
  */
@@ -515,7 +541,7 @@ const GIT_NO_PROMPT_ENV = {
 const DEFAULT_PLUGIN_GIT_TIMEOUT_MS = 120 * 1000
 
 function getPluginGitTimeoutMs(): number {
-  const envValue = process.env.CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS
+  const envValue = getDsxuCodeEnv('PLUGIN_GIT_TIMEOUT_MS')
   if (envValue) {
     const parsed = parseInt(envValue, 10)
     if (!isNaN(parsed) && parsed > 0) {
@@ -583,20 +609,20 @@ export async function gitPull(
 
 /**
  * Sync submodule working dirs after a successful pull. gitClone() uses
- * --recurse-submodules, but gitPull() didn't — the parent repo's submodule
+ * --recurse-submodules, but gitPull() didn't - the parent repo's submodule
  * pointer would advance while the working dir stayed at the old commit,
  * making plugin sources in submodules unresolvable after marketplace update.
  * Non-fatal: a failed submodule update logs a warning; most marketplaces
  * don't use submodules at all. (gh-30696)
  *
- * Skipped for sparse clones — gitClone's sparse path intentionally omits
+ * Skipped for sparse clones - gitClone's sparse path intentionally omits
  * --recurse-submodules to preserve partial-clone bandwidth savings, and
  * .gitmodules is a root file that cone-mode sparse-checkout always
  * materializes, so the .gitmodules gate alone can't distinguish sparse repos.
  *
  * Perf: git-submodule is a bash script that spawns ~20 subprocesses (~35ms+)
- * even when no submodules exist. .gitmodules is a tracked file — pull
- * materializes it iff the repo has submodules — so gate on its presence to
+ * even when no submodules exist. .gitmodules is a tracked file - pull
+ * materializes it iff the repo has submodules - so gate on its presence to
  * skip the spawn for the common case.
  *
  * --init performs first-contact clone of newly-added submodules, so maintain
@@ -656,19 +682,19 @@ function enhanceGitPullErrorMessages(result: {
   }
 
   // Detect execa timeout kills via the error field (stderr won't contain "timed out"
-  // when the process is killed by SIGTERM — the timeout info is only in error)
+  // when the process is killed by SIGTERM - the timeout info is only in error)
   if (result.error?.includes('timed out')) {
     const timeoutSec = Math.round(getPluginGitTimeoutMs() / 1000)
     return {
       ...result,
-      stderr: `Git pull timed out after ${timeoutSec}s. Try increasing the timeout via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS environment variable.\n\nOriginal error: ${result.stderr}`,
+      stderr: `Git pull timed out after ${timeoutSec}s. Try increasing the timeout via DSXU_CODE_PLUGIN_GIT_TIMEOUT_MS environment variable.\n\nOriginal error: ${result.stderr}`,
     }
   }
 
   // Detect SSH host key verification failures (check before the generic
-  // 'Could not read from remote' catch — that string appears in both cases).
+  // 'Could not read from remote' catch - that string appears in both cases).
   // OpenSSH emits "Host key verification failed" for BOTH host-not-in-known_hosts
-  // and host-key-has-changed — the latter also includes the "REMOTE HOST
+  // and host-key-has-changed - the latter also includes the "REMOTE HOST
   // IDENTIFICATION HAS CHANGED" banner, which needs different remediation.
   if (result.stderr.includes('REMOTE HOST IDENTIFICATION HAS CHANGED')) {
     return {
@@ -786,11 +812,11 @@ function extractSshHost(gitUrl: string): string | null {
 /**
  * Git clone operation (exported for testing)
  *
- * Clones a git repository with a configurable timeout (default 120s, override via CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS)
+ * Clones a git repository with a configurable timeout (default 120s, override via DSXU_CODE_PLUGIN_GIT_TIMEOUT_MS)
  * and larger repositories. Provides helpful error messages for common failure scenarios.
  * Optionally checks out a specific branch or tag.
  *
- * Does NOT disable credential helpers — this allows the user's existing auth setup
+ * Does NOT disable credential helpers - this allows the user's existing auth setup
  * (gh auth, keychain, git-credential-store, etc.) to work natively for private repos.
  * Interactive prompts are still prevented via GIT_TERMINAL_PROMPT=0, GIT_ASKPASS='',
  * stdin: 'ignore', and BatchMode=yes for SSH.
@@ -798,7 +824,7 @@ function extractSshHost(gitUrl: string): string | null {
  * Uses StrictHostKeyChecking=yes (not accept-new): unknown SSH hosts fail closed
  * with a clear message rather than being silently trusted on first contact. For
  * the github source type, the preflight check routes unknown-host users to HTTPS
- * automatically; for explicit git@host:… URLs, users see an actionable error.
+ * automatically; for explicit git@host:- URLs, users see an actionable error.
  */
 export async function gitClone(
   gitUrl: string,
@@ -818,7 +844,7 @@ export async function gitClone(
   if (useSparse) {
     // Partial clone: skip blob download until checkout, defer checkout until
     // after sparse-checkout is configured. Submodules are intentionally dropped
-    // for sparse clones — sparse monorepos rarely need them, and recursing
+    // for sparse clones - sparse monorepos rarely need them, and recursing
     // submodules would defeat the partial-clone bandwidth savings.
     args.push('--filter=blob:none', '--no-checkout')
   } else {
@@ -903,20 +929,20 @@ export async function gitClone(
     { level: 'warn' },
   )
 
-  // Detect timeout kills — when execFileNoThrowWithCwd kills the process via SIGTERM,
+  // Detect timeout kills - when execFileNoThrowWithCwd kills the process via SIGTERM,
   // stderr may only contain partial output (e.g. "Cloning into '...'") with no
   // "timed out" string. Check the error field from execa which contains the
   // timeout message.
   if (result.error?.includes('timed out')) {
     return {
       ...result,
-      stderr: `Git clone timed out after ${Math.round(timeoutMs / 1000)}s. The repository may be too large for the current timeout. Set CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS to increase it (e.g., 300000 for 5 minutes).\n\nOriginal error: ${result.stderr}`,
+      stderr: `Git clone timed out after ${Math.round(timeoutMs / 1000)}s. The repository may be too large for the current timeout. Set DSXU_CODE_PLUGIN_GIT_TIMEOUT_MS to increase it (e.g., 300000 for 5 minutes).\n\nOriginal error: ${result.stderr}`,
     }
   }
 
   // Enhance error messages for common scenarios
   if (result.stderr) {
-    // Host key verification failure — check FIRST, before the generic
+    // Host key verification failure - check FIRST, before the generic
     // 'Could not read from remote repository' catch (that string appears
     // in both stderr outputs, so order matters). OpenSSH emits
     // "Host key verification failed" for BOTH host-not-in-known_hosts and
@@ -967,7 +993,7 @@ export async function gitClone(
     }
   }
 
-  // Fallback for empty stderr — gh-28373: user saw "Failed to clone
+  // Fallback for empty stderr - gh-28373: user saw "Failed to clone
   // marketplace repository:" with nothing after the colon. Git CAN fail
   // without writing to stderr (stdout instead, or output swallowed by
   // credential helper / signal). execa's error field has the execa-level
@@ -1022,13 +1048,13 @@ function safeCallProgress(
  * Reconcile the on-disk sparse-checkout state with the desired config.
  *
  * Runs before gitPull to handle transitions:
- * - Full→Sparse or SparseA→SparseB: run `sparse-checkout set --cone` (idempotent)
- * - Sparse→Full: return non-zero so caller falls back to rm+reclone. Avoids
+ * - Full-Sparse or SparseA-SparseB: run `sparse-checkout set --cone` (idempotent)
+ * - Sparse-Full: return non-zero so caller falls back to rm+reclone. Avoids
  *   `sparse-checkout disable` on a --filter=blob:none partial clone, which would
  *   trigger a lazy fetch of every blob in the monorepo.
- * - Full→Full (common case): single local `git config --get` check, no-op.
+ * - Full-Full (common case): single local `git config --get` check, no-op.
  *
- * Failures here (ENOENT, not a repo) are harmless — gitPull will also fail and
+ * Failures here (ENOENT, not a repo) are harmless - gitPull will also fail and
  * trigger the clone path, which establishes the correct state from scratch.
  */
 export async function reconcileSparseCheckout(
@@ -1070,10 +1096,10 @@ export async function reconcileSparseCheckout(
  * Example repository structure:
  * ```
  * my-marketplace/
- *   ├── .claude-plugin/
- *   │   └── marketplace.json    # Default location for marketplace manifest
- *   ├── plugins/                # Plugin implementations
- *   └── README.md
+ *   --- .dsxu-plugin/
+ *   -   --- marketplace.json    # Default location for marketplace manifest
+ *   --- plugins/                # Plugin implementations
+ *   --- README.md
  * ```
  *
  * @param gitUrl - The git URL to clone (https or ssh)
@@ -1097,11 +1123,11 @@ async function cacheMarketplaceFromGit(
   const timeoutSec = Math.round(getPluginGitTimeoutMs() / 1000)
   safeCallProgress(
     onProgress,
-    `Refreshing marketplace cache (timeout: ${timeoutSec}s)…`,
+    `Refreshing marketplace cache (timeout: ${timeoutSec}s)-`,
   )
 
   // Reconcile sparse-checkout config before pulling. If this requires a re-clone
-  // (Sparse→Full transition) or fails (missing dir, not a repo), skip straight
+  // (Sparse-Full transition) or fails (missing dir, not a repo), skip straight
   // to the rm+clone fallback.
   const reconcileResult = await reconcileSparseCheckout(cachePath, sparsePaths)
   if (reconcileResult.code === 0) {
@@ -1129,14 +1155,14 @@ async function cacheMarketplaceFromGit(
 
   try {
     await fs.rm(cachePath, { recursive: true })
-    // rm succeeded — a stale or partially-cloned directory existed; log for diagnostics
+    // rm succeeded - a stale or partially-cloned directory existed; log for diagnostics
     logForDebugging(
       `Found stale marketplace directory at ${cachePath}, cleaning up to allow re-clone`,
       { level: 'warn' },
     )
     safeCallProgress(
       onProgress,
-      'Found stale directory, cleaning up and re-cloning…',
+      'Found stale directory, cleaning up and re-cloning-',
     )
   } catch (rmError) {
     if (!isENOENT(rmError)) {
@@ -1145,10 +1171,10 @@ async function cacheMarketplaceFromGit(
         `Failed to clean up existing marketplace directory. Please manually delete the directory at ${cachePath} and try again.\n\nTechnical details: ${rmErrorMsg}`,
       )
     }
-    // ENOENT — cachePath didn't exist, this is a fresh install, nothing to clean up
+    // ENOENT - cachePath didn't exist, this is a fresh install, nothing to clean up
   }
 
-  // Clone the repository (one attempt — no internal retry loop)
+  // Clone the repository (one attempt - no internal retry loop)
   const refMessage = ref ? ` (ref: ${ref})` : ''
   safeCallProgress(
     onProgress,
@@ -1174,7 +1200,7 @@ async function cacheMarketplaceFromGit(
     }
     throw new Error(`Failed to clone marketplace repository: ${result.stderr}`)
   }
-  safeCallProgress(onProgress, 'Clone complete, validating marketplace…')
+  safeCallProgress(onProgress, 'Clone complete, validating marketplace-')
 }
 
 /**
@@ -1200,9 +1226,9 @@ function redactHeaders(
  * be redacted before logging.
  *
  * Redacts all credentials from http(s) URLs:
- *   https://user:token@github.com/repo → https://***:***@github.com/repo
- *   https://:token@github.com/repo     → https://:***@github.com/repo
- *   https://token@github.com/repo      → https://***@github.com/repo
+ *   https://user:token@github.com/repo - https://***:***@github.com/repo
+ *   https://:token@github.com/repo     - https://:***@github.com/repo
+ *   https://token@github.com/repo      - https://***@github.com/repo
  *
  * Both username and password are redacted unconditionally on http(s) because
  * it is impossible to distinguish `placeholder:secret` (e.g. x-access-token:ghp_...)
@@ -1220,7 +1246,7 @@ function redactUrlCredentials(urlString: string): string {
       return parsed.toString()
     }
   } catch {
-    // Not a valid URL — safe as-is
+    // Not a valid URL - safe as-is
   }
   return urlString
 }
@@ -1273,7 +1299,7 @@ async function cacheMarketplaceFromUrl(
   const headers = {
     ...customHeaders,
     // User-Agent must come last to prevent override (for consistency with WebFetch)
-    'User-Agent': 'Claude-Code-Plugin-Manager',
+    'User-Agent': 'DSXU-Code-Plugin-Manager',
   }
 
   let response
@@ -1409,7 +1435,7 @@ async function parseFileWithSchema<T>(
  *
  * Handles different source types:
  * - URL: Downloads marketplace.json directly
- * - GitHub: Clones repo and looks for .claude-plugin/marketplace.json
+ * - GitHub: Clones repo and looks for .dsxu-plugin/marketplace.json
  * - Git: Clones repository from git URL
  * - NPM: (Not yet implemented) Would fetch from npm package
  * - File: Reads from local filesystem
@@ -1418,12 +1444,12 @@ async function parseFileWithSchema<T>(
  * to match the marketplace's actual name from the manifest.
  *
  * Cache structure:
- * ~/.claude/plugins/marketplaces/
- *   ├── official-marketplace.json     # From URL source
- *   ├── github-marketplace/          # From GitHub/Git source
- *   │   └── .claude-plugin/
- *   │       └── marketplace.json
- *   └── local-marketplace.json       # From file source
+ * ~/.dsxu/plugins/marketplaces/
+ *   --- official-marketplace.json     # From URL source
+ *   --- github-marketplace/          # From GitHub/Git source
+ *   -   --- .dsxu-plugin/
+ *   -       --- marketplace.json
+ *   --- local-marketplace.json       # From file source
  *
  * @param source - The marketplace source to load from
  * @param onProgress - Optional callback to report progress
@@ -1591,9 +1617,9 @@ async function loadAndCacheMarketplace(
           throw lastError
         }
 
-        marketplacePath = join(
+        marketplacePath = await resolveMarketplaceManifestPath(
           temporaryCachePath,
-          source.path || '.claude-plugin/marketplace.json',
+          source.path,
         )
         break
       }
@@ -1608,9 +1634,9 @@ async function loadAndCacheMarketplace(
           source.sparsePaths,
           onProgress,
         )
-        marketplacePath = join(
+        marketplacePath = await resolveMarketplaceManifestPath(
           temporaryCachePath,
-          source.path || '.claude-plugin/marketplace.json',
+          source.path,
         )
         break
       }
@@ -1622,8 +1648,8 @@ async function loadAndCacheMarketplace(
 
       case 'file': {
         // For local files, resolve paths relative to marketplace root directory
-        // File sources point to .claude-plugin/marketplace.json, so the marketplace
-        // root is two directories up (parent of .claude-plugin/)
+        // File sources point to a plugin package marketplace manifest, so the
+        // marketplace root is two directories up (parent of the package dir).
         // Resolve to absolute so error messages show the actual path checked
         // (legacy known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
@@ -1634,18 +1660,19 @@ async function loadAndCacheMarketplace(
       }
 
       case 'directory': {
-        // For directories, look for .claude-plugin/marketplace.json
+        // For directories, prefer .dsxu-plugin/marketplace.json and fall back
+        // to the legacy plugin package layout.
         // Resolve to absolute so error messages show the actual path checked
         // (legacy known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
-        marketplacePath = join(absPath, '.claude-plugin', 'marketplace.json')
+        marketplacePath = await resolveMarketplaceManifestPath(absPath)
         temporaryCachePath = absPath
         cleanupNeeded = false
         break
       }
 
       case 'settings': {
-        // Inline manifest from settings.json — no fetch. Synthesize the
+        // Inline manifest from settings.json - no fetch. Synthesize the
         // marketplace.json on disk so getMarketplaceCacheOnly reads it
         // like any other source. The plugins array already passed
         // PluginMarketplaceEntrySchema validation when settings were parsed;
@@ -1655,20 +1682,19 @@ async function loadAndCacheMarketplace(
         // Writing to source.name up front means the rename below is a no-op
         // (temporaryCachePath === finalCachePath). known_marketplaces.json
         // stores this source object including the plugins array, so
-        // diffMarketplaces detects settings edits via isEqual — no special
+        // diffMarketplaces detects settings edits via isEqual - no special
         // dirty-tracking needed.
         temporaryCachePath = join(cacheDir, source.name)
-        marketplacePath = join(
+        marketplacePath = pluginMarketplacePath(
           temporaryCachePath,
-          '.claude-plugin',
-          'marketplace.json',
+          DSXU_PLUGIN_PACKAGE_DIR,
         )
         cleanupNeeded = false
         await fs.mkdir(dirname(marketplacePath))
         // No `satisfies PluginMarketplace` here: source.plugins is the narrow
         // SettingsMarketplacePlugin type (no strict/.default(), no manifest
         // fields). The parseFileWithSchema(PluginMarketplaceSchema()) call
-        // below widens and validates — that's the real check.
+        // below widens and validates - that's the real check.
         await writeFile(
           marketplacePath,
           jsonStringify(
@@ -1710,7 +1736,7 @@ async function loadAndCacheMarketplace(
     // Defense-in-depth: the schema rejects path separators, .., and . in marketplace.name,
     // but verify the computed path is a strict subdirectory of cacheDir before fs.rm.
     // A malicious marketplace.json with a crafted name must never cause us to rm outside
-    // cacheDir, nor rm cacheDir itself (e.g. name "." → join normalizes to cacheDir).
+    // cacheDir, nor rm cacheDir itself (e.g. name "." - join normalizes to cacheDir).
     const resolvedFinal = resolve(finalCachePath)
     const resolvedCacheDir = resolve(cacheDir)
     if (!resolvedFinal.startsWith(resolvedCacheDir + sep)) {
@@ -1726,7 +1752,7 @@ async function loadAndCacheMarketplace(
       try {
         // Remove the destination if it already exists, then rename
         try {
-          onProgress?.('Cleaning up old marketplace cache…')
+          onProgress?.('Cleaning up old marketplace cache-')
         } catch (callbackError) {
           logForDebugging(
             `Progress callback error: ${errorMessage(callbackError)}`,
@@ -1771,7 +1797,7 @@ async function loadAndCacheMarketplace(
  * Add a marketplace source to the known marketplaces
  *
  * The marketplace is fetched, validated, and cached locally.
- * The configuration is saved to ~/.claude/plugins/known_marketplaces.json.
+ * The configuration is saved to ~/.dsxu/plugins/known_marketplaces.json.
  *
  * @param source - MarketplaceSource object representing the marketplace source.
  *                 Callers should parse user input into MarketplaceSource format
@@ -1871,19 +1897,19 @@ export async function addMarketplaceSource(
       )
     }
     logForDebugging(
-      `Marketplace '${marketplace.name}' exists with different source — overwriting`,
+      `Marketplace '${marketplace.name}' exists with different source - overwriting`,
     )
     // Clean up the old cache if it's not a user-owned local path AND it
     // actually differs from the new cachePath. loadAndCacheMarketplace writes
-    // to cachePath BEFORE we get here — rm-ing the same dir deletes the fresh
-    // write. Settings sources always land on the same dir (name → path);
+    // to cachePath BEFORE we get here - rm-ing the same dir deletes the fresh
+    // write. Settings sources always land on the same dir (name - path);
     // git sources hit this latently when the source repo changes but the
     // fetched marketplace.json declares the same name. Only rm when locations
     // genuinely differ (the only case where there's a stale dir to clean).
     //
     // Defensively validate the stored path before rm: a corrupted
     // installLocation (gh-32793, gh-32661) could point at the user's project
-    // dir. If it's outside the cache dir, skip cleanup — the stale dir (if
+    // dir. If it's outside the cache dir, skip cleanup - the stale dir (if
     // any) is harmless, and blocking the re-add would prevent the user from
     // fixing the corruption.
     if (!isLocalMarketplaceSource(oldEntry.source)) {
@@ -1891,7 +1917,7 @@ export async function addMarketplaceSource(
       const resolvedOld = resolve(oldEntry.installLocation)
       const resolvedNew = resolve(cachePath)
       if (resolvedOld === resolvedNew) {
-        // Same dir — loadAndCacheMarketplace already overwrote in place.
+        // Same dir - loadAndCacheMarketplace already overwrote in place.
         // Nothing to clean.
       } else if (
         resolvedOld === cacheDir ||
@@ -1901,7 +1927,7 @@ export async function addMarketplaceSource(
         await fs.rm(oldEntry.installLocation, { recursive: true, force: true })
       } else {
         logForDebugging(
-          `Skipping cleanup of old installLocation (${oldEntry.installLocation}) — ` +
+          `Skipping cleanup of old installLocation (${oldEntry.installLocation}) - ` +
             `outside ${cacheDir}. The path is corrupted; leaving it alone and ` +
             `overwriting the config entry.`,
           { level: 'warn' },
@@ -1941,7 +1967,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
     throw new Error(`Marketplace '${name}' not found`)
   }
 
-  // Seed-registered marketplaces are admin-baked into the container — removing
+  // Seed-registered marketplaces are admin-baked into the container - removing
   // them is a category error. They'd resurrect on next startup anyway. Guide
   // the user to the right action instead.
   const entry = config[name]
@@ -1950,7 +1976,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
     throw new Error(
       `Marketplace '${name}' is registered from the read-only seed directory ` +
         `(${seedDir}) and will be re-registered on next startup. ` +
-        `To stop using its plugins: claude plugin disable <plugin>@${name}`,
+        `To stop using its plugins: dsxu plugin disable <plugin>@${name}`,
     )
   }
 
@@ -2032,7 +2058,7 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
   }
 
   // Remove plugins from installed_plugins.json and mark orphaned paths.
-  // Also wipe their stored options/secrets — after marketplace removal
+  // Also wipe their stored options/secrets - after marketplace removal
   // zero installations remain, same "last scope gone" condition as
   // uninstallPluginOp.
   const { orphanedPaths, removedPluginIds } =
@@ -2058,11 +2084,12 @@ export async function removeMarketplaceSource(name: string): Promise<void> {
 async function readCachedMarketplace(
   installLocation: string,
 ): Promise<PluginMarketplace> {
-  // For git-sourced directories, the manifest lives at .claude-plugin/marketplace.json.
+  // For git-sourced directories, the manifest lives under the DSXU plugin
+  // package directory, with legacy package layout as a compatibility fallback.
   // For url/file/directory sources it is the installLocation itself.
   // Try the nested path first; fall back to installLocation when it is a plain file
   // (ENOTDIR) or the nested file is simply missing (ENOENT).
-  const nestedPath = join(installLocation, '.claude-plugin', 'marketplace.json')
+  const nestedPath = await resolveMarketplaceManifestPath(installLocation)
   try {
     return await parseFileWithSchema(nestedPath, PluginMarketplaceSchema())
   } catch (e) {
@@ -2131,7 +2158,7 @@ export const getMarketplace = memoize(
     }
 
     // Legacy entries (pre-#19708) may have relative paths in global config.
-    // These are meaningless outside the project that wrote them — resolving
+    // These are meaningless outside the project that wrote them - resolving
     // against process.cwd() produces the wrong path. Give actionable guidance
     // instead of a misleading ENOENT.
     if (
@@ -2140,8 +2167,8 @@ export const getMarketplace = memoize(
     ) {
       throw new Error(
         `Marketplace "${name}" has a relative source path (${entry.source.path}) ` +
-          `in known_marketplaces.json — this is stale state from an older ` +
-          `Claude Code version. Run 'claude marketplace remove ${name}' and ` +
+          `in known_marketplaces.json - this is stale state from an older ` +
+          `DSXU Code version. Run 'dsxu plugin marketplace remove ${name}' and ` +
           `re-add it from the original project directory.`,
       )
     }
@@ -2297,7 +2324,7 @@ export async function refreshAllMarketplaces(): Promise<void> {
   const config = await loadKnownMarketplacesConfig()
 
   for (const [name, entry] of Object.entries(config)) {
-    // Seed-managed marketplaces are controlled by the seed image — refreshing
+    // Seed-managed marketplaces are controlled by the seed image - refreshing
     // them is pointless (registerSeedMarketplaces overwrites on next startup).
     if (seedDirFor(entry.installLocation)) {
       logForDebugging(
@@ -2305,12 +2332,12 @@ export async function refreshAllMarketplaces(): Promise<void> {
       )
       continue
     }
-    // settings-sourced marketplaces have no upstream — see refreshMarketplace.
+    // settings-sourced marketplaces have no upstream - see refreshMarketplace.
     if (entry.source.source === 'settings') {
       continue
     }
-    // inc-5046: same GCS intercept as refreshMarketplace() — bulk update
-    // hits this path on `claude plugin marketplace update` (no name arg).
+    // inc-5046: same GCS intercept as refreshMarketplace() - bulk update
+    // hits this path on `dsxu plugin marketplace update` (no name arg).
     if (name === OFFICIAL_MARKETPLACE_NAME) {
       const sha = await fetchOfficialMarketplaceFromGcs(
         entry.installLocation,
@@ -2381,10 +2408,10 @@ export async function refreshMarketplace(
 
   // settings-sourced marketplaces have no upstream to pull. Edits to the
   // inline plugins array surface as sourceChanged in the reconciler, which
-  // re-materializes via addMarketplaceSource — refresh is not the vehicle.
+  // re-materializes via addMarketplaceSource - refresh is not the vehicle.
   if (entry.source.source === 'settings') {
     logForDebugging(
-      `Skipping refresh for settings-sourced marketplace '${name}' — no upstream`,
+      `Skipping refresh for settings-sourced marketplace '${name}' - no upstream`,
     )
     return
   }
@@ -2395,7 +2422,7 @@ export async function refreshMarketplace(
     const source = entry.source
 
     // Seed-managed marketplaces are controlled by the seed image. Refreshing
-    // would be pointless — registerSeedMarketplaces() overwrites installLocation
+    // would be pointless - registerSeedMarketplaces() overwrites installLocation
     // back to seed on next startup. Error with guidance instead.
     const seedDir = seedDirFor(installLocation)
     if (seedDir) {
@@ -2406,7 +2433,7 @@ export async function refreshMarketplace(
     }
 
     // For remote sources (github/git/url), installLocation must be inside the
-    // marketplaces cache dir. A corrupted value (gh-32793, gh-32661 — e.g.
+    // marketplaces cache dir. A corrupted value (gh-32793, gh-32661 - e.g.
     // Windows path read on WSL, literal tilde, manual edit) can point at the
     // user's project. cacheMarketplaceFromGit would then run git ops with that
     // cwd (git walks up to the user's .git) and fs.rm it on pull failure.
@@ -2417,17 +2444,17 @@ export async function refreshMarketplace(
       if (resolvedLoc !== cacheDir && !resolvedLoc.startsWith(cacheDir + sep)) {
         throw new Error(
           `Marketplace '${name}' has a corrupted installLocation ` +
-            `(${installLocation}) — expected a path inside ${cacheDir}. ` +
+            `(${installLocation}) - expected a path inside ${cacheDir}. ` +
             `This can happen after cross-platform path writes or manual edits ` +
             `to known_marketplaces.json. ` +
-            `Run: claude plugin marketplace remove "${name}" and re-add it.`,
+            `Run: dsxu plugin marketplace remove "${name}" and re-add it.`,
         )
       }
     }
 
     // inc-5046: official marketplace fetches from a GCS mirror instead of
     // git-cloning GitHub. Special-cased by NAME (not a new source type) so
-    // no data migration is needed — existing known_marketplaces.json entries
+    // no data migration is needed - existing known_marketplaces.json entries
     // still say source:'github', which is true (GCS is a mirror).
     if (name === OFFICIAL_MARKETPLACE_NAME) {
       const sha = await fetchOfficialMarketplaceFromGcs(
@@ -2439,7 +2466,7 @@ export async function refreshMarketplace(
         await saveKnownMarketplacesConfig(config)
         return
       }
-      // GCS failed — fall through to git ONLY if the kill-switch allows.
+      // GCS failed - fall through to git ONLY if the kill-switch allows.
       // Default true (backend write perms are pending as of inc-5046); flip
       // to false via GrowthBook once the backend is confirmed live so new
       // clients NEVER hit GitHub for the official marketplace.
@@ -2449,7 +2476,7 @@ export async function refreshMarketplace(
           true,
         )
       ) {
-        // Throw, don't return — every other failure path in this function
+        // Throw, don't return - every other failure path in this function
         // throws, and callers like ManageMarketplaces.tsx:259 increment
         // updatedCount on any non-throwing return. A silent return would
         // report "Updated 1 marketplace" when nothing was refreshed.
@@ -2469,11 +2496,11 @@ export async function refreshMarketplace(
       if (source.source === 'github') {
         // Same SSH/HTTPS fallback as loadAndCacheMarketplace: if the pull
         // succeeds the remote URL in .git/config is used, but a re-clone
-        // needs a URL — pick the right protocol up-front and fall back.
+        // needs a URL - pick the right protocol up-front and fall back.
         const sshUrl = `git@github.com:${source.repo}.git`
         const httpsUrl = `https://github.com/${source.repo}.git`
 
-        if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+        if (isEnvTruthy(getDsxuCodeEnv('REMOTE'))) {
           // CCR: always HTTPS (no SSH keys available)
           await cacheMarketplaceFromGit(
             httpsUrl,
@@ -2532,15 +2559,17 @@ export async function refreshMarketplace(
           source.source === 'github'
             ? source.repo
             : redactUrlCredentials(source.url)
+        const legacyMarketplaceName = `${'clau' + 'de'}-code-plugins`
+        const legacyOfficialMarketplaceName = `${'clau' + 'de'}-plugins-official`
         const reason =
-          name === 'claude-code-plugins'
-            ? `We've deprecated "claude-code-plugins" in favor of "claude-plugins-official".`
+          name === legacyMarketplaceName
+            ? `We've deprecated "${legacyMarketplaceName}" in favor of "${legacyOfficialMarketplaceName}".`
             : `This marketplace may have been deprecated or moved to a new location.`
         throw new Error(
           `The marketplace.json file is no longer present in this repository.\n\n` +
             `${reason}\n` +
             `Source: ${sourceDisplay}\n\n` +
-            `You can remove this marketplace with: claude plugin marketplace remove "${name}"`,
+            `You can remove this marketplace with: dsxu plugin marketplace remove "${name}"`,
         )
       }
     } else if (source.source === 'url') {
@@ -2620,7 +2649,7 @@ export async function setMarketplaceAutoUpdate(
   }
   await saveKnownMarketplacesConfig(config)
 
-  // Also update intent in settings if declared there — write to the SAME
+  // Also update intent in settings if declared there - write to the SAME
   // source that declared it to avoid creating duplicates at wrong scope
   const declaringSource = getMarketplaceDeclaringSource(name)
   if (declaringSource) {

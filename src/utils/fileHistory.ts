@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { createHash, type UUID } from 'crypto'
 import { diffLines } from 'diff'
 import type { Stats } from 'fs'
@@ -22,7 +23,10 @@ import type { LogOption } from 'src/types/logs.js'
 import { inspect } from 'util'
 import { getGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import {
+  getRuntimeConfigHomeDir,
+  isDsxuCodeEnvTruthy,
+} from './envUtils.js'
 import { getErrnoCode, isENOENT } from './errors.js'
 import { pathExists } from './file.js'
 import { logError } from './log.js'
@@ -66,14 +70,14 @@ export function fileHistoryEnabled(): boolean {
   }
   return (
     getGlobalConfig().fileCheckpointingEnabled !== false &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING)
+    !isDsxuCodeEnvTruthy('DISABLE_FILE_CHECKPOINTING')
   )
 }
 
 function fileHistoryEnabledSdk(): boolean {
   return (
-    isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING) &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING)
+    isDsxuCodeEnvTruthy('ENABLE_SDK_FILE_CHECKPOINTING') &&
+    !isDsxuCodeEnvTruthy('DISABLE_FILE_CHECKPOINTING')
   )
 }
 
@@ -97,7 +101,7 @@ export async function fileHistoryTrackEdit(
   const trackingPath = maybeShortenFilePath(filePath)
 
   // Phase 1: check if backup is needed. Speculative writes would overwrite
-  // the deterministic {hash}@v1 backup on every repeat call — a second
+  // the deterministic {hash}@v1 backup on every repeat call ...a second
   // trackEdit after an edit would corrupt v1 with post-edit content.
   let captured: FileHistoryState | undefined
   updateFileHistoryState(state => {
@@ -148,7 +152,7 @@ export async function fileHistoryTrackEdit(
       // Shallow-spread is sufficient: backup values are never mutated after
       // insertion, so we only need fresh top-level + trackedFileBackups refs
       // for React change detection. A deep clone would copy every existing
-      // backup's Date/string fields — O(n) cost to add one entry.
+      // backup's Date/string fields ...O(n) cost to add one entry.
       const updatedMostRecentSnapshot = {
         ...mostRecentSnapshot,
         trackedFileBackups: {
@@ -207,7 +211,7 @@ export async function fileHistoryMakeSnapshot(
 
   // Phase 1: capture current state with a no-op updater so we know which
   // files to back up. Returning the same reference keeps this a true no-op
-  // for any wrapper that honors same-ref returns (src/CLAUDE.md wrapper
+  // for any wrapper that honors same-ref returns (src/DSXU.md wrapper
   // rule). Wrappers that unconditionally spread will trigger one extra
   // re-render; acceptable for a once-per-turn call.
   let captured: FileHistoryState | undefined
@@ -282,7 +286,7 @@ export async function fileHistoryMakeSnapshot(
   }
 
   // Phase 3: commit the new snapshot to state. Read state.trackedFiles FRESH
-  // — if fileHistoryTrackEdit added a file during phase 2's async window, it
+  // ...if fileHistoryTrackEdit added a file during phase 2's async window, it
   // wrote the backup to state.snapshots[-1].trackedFileBackups. Inherit those
   // so the new snapshot covers every currently-tracked file.
   updateFileHistoryState((state: FileHistoryState) => {
@@ -667,7 +671,7 @@ function compareStatsAndContent<T extends boolean | Promise<boolean>>(
   }
 
   // Use the more expensive file content comparison. The callback handles its
-  // own read errors — a try/catch here is dead for async callbacks anyway.
+  // own read errors ...a try/catch here is dead for async callbacks anyway.
   return compareContent()
 }
 
@@ -731,7 +735,7 @@ function getBackupFileName(filePath: string, version: number): string {
 }
 
 function resolveBackupPath(backupFileName: string, sessionId?: string): string {
-  const configDir = getClaudeConfigHomeDir()
+  const configDir = getRuntimeConfigHomeDir()
   return join(
     configDir,
     'file-history',
@@ -757,8 +761,7 @@ async function createBackup(
   const backupPath = resolveBackupPath(backupFileName)
 
   // Stat first: if the source is missing, record a null backup and skip the
-  // copy. Separates "source missing" from "backup dir missing" cleanly —
-  // sharing a catch for both meant a file deleted between copyFile-success
+  // copy. Separates "source missing" from "backup dir missing" cleanly ...  // sharing a catch for both meant a file deleted between copyFile-success
   // and stat would leave an orphaned backup with a null state record.
   let srcStats: Stats
   try {
@@ -951,7 +954,7 @@ export async function copyFileHistoryForResume(log: LogOption): Promise<void> {
     // All backups share the same directory: {configDir}/file-history/{sessionId}/
     // Create it once upfront instead of once per backup file
     const newBackupDir = join(
-      getClaudeConfigHomeDir(),
+      getRuntimeConfigHomeDir(),
       'file-history',
       sessionId,
     )
