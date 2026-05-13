@@ -20,6 +20,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 export async function runFinalReleasePreflightRegisterHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  deferredEvalRawLiveManifestPath?: string
 } = {}): Promise<FinalReleasePreflightRegisterHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'final-release-preflight-register-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -30,6 +31,7 @@ export async function runFinalReleasePreflightRegisterHarness(options: {
     runOwnerGitClosureBoardHarness({
       evidenceDir: join(evidenceDir, 'owner-git-closure-board'),
       targetReferenceManifestPath: options.targetReferenceManifestPath,
+      deferredEvalRawLiveManifestPath: options.deferredEvalRawLiveManifestPath,
     }),
     runCleanExportReadinessHarness({
       evidenceDir: join(evidenceDir, 'clean-export-readiness'),

@@ -1,7 +1,8 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   buildRawEvidenceReadinessRegister,
+  validateDeferredEvalRawLiveManifest,
   type RawEvidenceReadinessRegister,
 } from '../../engine/raw-evidence-readiness-register-v1'
 import { runP12RawComparisonHarness } from './phase12-raw-comparison-v1-harness'
@@ -15,9 +16,19 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }
 
+async function readJsonIfExists(path: string): Promise<unknown | null> {
+  try {
+    return JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, ''))
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') return null
+    throw error
+  }
+}
+
 export async function runRawEvidenceReadinessRegisterHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  deferredEvalRawLiveManifestPath?: string
 } = {}): Promise<RawEvidenceReadinessRegisterHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'raw-evidence-readiness-register-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -28,9 +39,16 @@ export async function runRawEvidenceReadinessRegisterHarness(options: {
     targetReferenceManifestPath: options.targetReferenceManifestPath,
   })
   const collectionPack = p12Report.collectionPack
+  const deferredEvalRawLiveManifestPath = options.deferredEvalRawLiveManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'deferred-eval-raw-live-codex-runner-v1', 'deferred-eval-raw-live-manifest.json')
+  const deferredEvalRawLiveInput = await readJsonIfExists(deferredEvalRawLiveManifestPath)
+  const deferredEvalRawLiveManifest = deferredEvalRawLiveInput
+    ? validateDeferredEvalRawLiveManifest(deferredEvalRawLiveInput)
+    : undefined
   const register = buildRawEvidenceReadinessRegister({
     p12Report,
     collectionPack,
+    deferredEvalRawLiveManifest,
   })
   const result: RawEvidenceReadinessRegisterHarnessResult = {
     ...register,
@@ -38,7 +56,7 @@ export async function runRawEvidenceReadinessRegisterHarness(options: {
     tracePath,
   }
 
-  await writeJson(tracePath, { p12Report, collectionPack, register })
+  await writeJson(tracePath, { p12Report, collectionPack, deferredEvalRawLiveManifest, register })
   await writeJson(evidencePath, result)
   return result
 }

@@ -15,6 +15,48 @@ export type DeferredEvalRawEvidenceSpec = {
   forbiddenRuntimeShortcut: string
 }
 
+export type DeferredEvalRawLiveLog = {
+  id: DeferredEvalId
+  owner: string
+  rawLogPath: string
+  artifactPaths: readonly string[]
+  outcome: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'FAIL'
+  requiredEvidenceCovered: readonly string[]
+  integrity: {
+    rawTranscript: boolean
+    toolTrace: boolean
+    finalReport: boolean
+  }
+  metrics: {
+    elapsedMs: number | null
+    toolCallCount: number
+    evidenceCompletenessPct: number
+    costUsd: number | null
+  }
+  risks: readonly string[]
+}
+
+export type DeferredEvalRawLiveManifest = {
+  schemaVersion: 'dsxu.deferred-eval-raw-live-manifest.v1'
+  source: {
+    collectedAt: string
+    acquisitionMethod: 'manual-import' | 'runner-export'
+    immutableRawDir?: string
+  }
+  logs: readonly DeferredEvalRawLiveLog[]
+}
+
+export type DeferredEvalRawLiveManifestValidation = {
+  schemaVersion: 'dsxu.deferred-eval-raw-live-manifest-validation.v1'
+  status: RawEvidenceReadinessStatus
+  acceptedLogs: readonly DeferredEvalRawLiveLog[]
+  rejectedLogs: readonly {
+    index: number
+    redlines: readonly string[]
+  }[]
+  redlines: readonly string[]
+}
+
 export type RawEvidenceReadinessEntry = {
   id: string
   lane: 'P12-19' | 'deferred-eval'
@@ -26,6 +68,144 @@ export type RawEvidenceReadinessEntry = {
   requiredAction: string
   requiredArtifacts: readonly string[]
   redlines: readonly string[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isDeferredEvalId(value: unknown): value is DeferredEvalId {
+  return value === 'R01' ||
+    value === 'R02' ||
+    value === 'S02' ||
+    value === 'R04' ||
+    value === 'R05' ||
+    value === 'R06'
+}
+
+function isOutcome(value: unknown): value is DeferredEvalRawLiveLog['outcome'] {
+  return value === 'PASS' || value === 'PARTIAL' || value === 'BLOCKED' || value === 'FAIL'
+}
+
+function parseDeferredEvalRawLiveLog(input: unknown, index: number): {
+  log: DeferredEvalRawLiveLog | null
+  redlines: readonly string[]
+} {
+  if (!isRecord(input)) return { log: null, redlines: [`log ${index}: entry is not an object`] }
+  const redlines: string[] = []
+  const id = isDeferredEvalId(input.id) ? input.id : null
+  const owner = typeof input.owner === 'string' ? input.owner : ''
+  const rawLogPath = typeof input.rawLogPath === 'string' ? input.rawLogPath : ''
+  const artifactPaths = Array.isArray(input.artifactPaths) && input.artifactPaths.every(item => typeof item === 'string')
+    ? input.artifactPaths
+    : []
+  const outcome = isOutcome(input.outcome) ? input.outcome : null
+  const requiredEvidenceCovered = Array.isArray(input.requiredEvidenceCovered) &&
+    input.requiredEvidenceCovered.every(item => typeof item === 'string')
+    ? input.requiredEvidenceCovered
+    : []
+  const integrity = isRecord(input.integrity) ? input.integrity : null
+  const metrics = isRecord(input.metrics) ? input.metrics : null
+  const risks = Array.isArray(input.risks) && input.risks.every(item => typeof item === 'string')
+    ? input.risks
+    : []
+
+  if (!id) redlines.push('missing or invalid id')
+  if (!owner.trim()) redlines.push('missing owner')
+  if (!rawLogPath.trim()) redlines.push('missing rawLogPath')
+  if (artifactPaths.length === 0) redlines.push('missing artifactPaths')
+  if (!outcome) redlines.push('missing outcome')
+  if (requiredEvidenceCovered.length === 0) redlines.push('missing requiredEvidenceCovered')
+  if (!integrity) redlines.push('missing integrity')
+  if (!metrics) redlines.push('missing metrics')
+  if (redlines.length > 0 || !id || !outcome || !integrity || !metrics) {
+    return { log: null, redlines }
+  }
+
+  const parsedIntegrity = {
+    rawTranscript: integrity.rawTranscript === true,
+    toolTrace: integrity.toolTrace === true,
+    finalReport: integrity.finalReport === true,
+  }
+  const parsedMetrics = {
+    elapsedMs: typeof metrics.elapsedMs === 'number' || metrics.elapsedMs === null ? metrics.elapsedMs : null,
+    toolCallCount: typeof metrics.toolCallCount === 'number' ? metrics.toolCallCount : NaN,
+    evidenceCompletenessPct: typeof metrics.evidenceCompletenessPct === 'number' ? metrics.evidenceCompletenessPct : NaN,
+    costUsd: typeof metrics.costUsd === 'number' || metrics.costUsd === null ? metrics.costUsd : null,
+  }
+  if (!parsedIntegrity.rawTranscript) redlines.push('integrity.rawTranscript must be true')
+  if (!parsedIntegrity.toolTrace) redlines.push('integrity.toolTrace must be true')
+  if (!parsedIntegrity.finalReport) redlines.push('integrity.finalReport must be true')
+  if (Number.isNaN(parsedMetrics.toolCallCount)) redlines.push('missing metrics.toolCallCount')
+  if (Number.isNaN(parsedMetrics.evidenceCompletenessPct)) redlines.push('missing metrics.evidenceCompletenessPct')
+  if (redlines.length > 0) return { log: null, redlines }
+
+  return {
+    log: {
+      id,
+      owner,
+      rawLogPath,
+      artifactPaths,
+      outcome,
+      requiredEvidenceCovered,
+      integrity: parsedIntegrity,
+      metrics: parsedMetrics,
+      risks,
+    },
+    redlines,
+  }
+}
+
+export function validateDeferredEvalRawLiveManifest(input: unknown): DeferredEvalRawLiveManifestValidation {
+  const redlines: string[] = []
+  if (!isRecord(input)) {
+    return {
+      schemaVersion: 'dsxu.deferred-eval-raw-live-manifest-validation.v1',
+      status: 'BLOCKED',
+      acceptedLogs: [],
+      rejectedLogs: [{ index: -1, redlines: ['manifest is not an object'] }],
+      redlines: ['manifest is not an object'],
+    }
+  }
+  if (input.schemaVersion !== 'dsxu.deferred-eval-raw-live-manifest.v1') {
+    redlines.push('manifest schemaVersion mismatch')
+  }
+  if (!isRecord(input.source)) redlines.push('manifest source is missing')
+  const source = isRecord(input.source) ? input.source : null
+  const logs = Array.isArray(input.logs) ? input.logs : []
+  if (!Array.isArray(input.logs)) redlines.push('manifest logs must be an array')
+  if (logs.length > 0) {
+    if (typeof source?.collectedAt !== 'string' || source.collectedAt.includes('<')) {
+      redlines.push('manifest source.collectedAt must be filled')
+    }
+    if (source?.acquisitionMethod !== 'manual-import' && source?.acquisitionMethod !== 'runner-export') {
+      redlines.push('manifest source.acquisitionMethod is invalid')
+    }
+    if (typeof source?.immutableRawDir !== 'string' || source.immutableRawDir.includes('<')) {
+      redlines.push('manifest source.immutableRawDir must point to immutable raw/live evidence')
+    }
+  }
+  const parsed = logs.map((item, index) => ({ index, ...parseDeferredEvalRawLiveLog(item, index) }))
+  const acceptedLogs = parsed
+    .map(item => item.log)
+    .filter((item): item is DeferredEvalRawLiveLog => item !== null)
+  const rejectedLogs = parsed
+    .filter(item => item.redlines.length > 0)
+    .map(item => ({ index: item.index, redlines: item.redlines }))
+  const seen = new Set<DeferredEvalId>()
+  for (const log of acceptedLogs) {
+    if (seen.has(log.id)) redlines.push(`duplicate deferred eval log: ${log.id}`)
+    seen.add(log.id)
+  }
+  redlines.push(...rejectedLogs.flatMap(item => item.redlines.map(line => `log ${item.index}: ${line}`)))
+
+  return {
+    schemaVersion: 'dsxu.deferred-eval-raw-live-manifest-validation.v1',
+    status: redlines.length > 0 ? 'BLOCKED' : 'PASS',
+    acceptedLogs,
+    rejectedLogs,
+    redlines,
+  }
 }
 
 export type RawEvidenceReadinessRegister = {
@@ -160,18 +340,38 @@ function p12Entry(
   }
 }
 
-function deferredEvalEntry(spec: DeferredEvalRawEvidenceSpec): RawEvidenceReadinessEntry {
+function deferredEvalEntry(
+  spec: DeferredEvalRawEvidenceSpec,
+  manifest?: DeferredEvalRawLiveManifestValidation,
+): RawEvidenceReadinessEntry {
+  const log = manifest?.acceptedLogs.find(item => item.id === spec.id)
+  const missingRequiredEvidence = log
+    ? spec.requiredRawEvidence.filter(item => !log.requiredEvidenceCovered.includes(item))
+    : spec.requiredRawEvidence
+  const redlines = [
+    ...(manifest?.status === 'BLOCKED' ? manifest.redlines.map(redline => `raw/live manifest: ${redline}`) : []),
+    ...(log ? [] : ['raw/live eval evidence is not imported yet']),
+    ...(log && log.owner !== spec.owner ? [`raw/live evidence owner does not match ${spec.owner}`] : []),
+    ...missingRequiredEvidence.map(item => `missing raw/live evidence: ${item}`),
+  ]
+  const status: RawEvidenceReadinessStatus = redlines.some(redline => /manifest|missing|does not match/i.test(redline))
+    ? log
+      ? 'BLOCKED'
+      : 'PARTIAL'
+    : 'PASS'
   return {
     id: spec.id,
     lane: 'deferred-eval',
-    status: 'PARTIAL',
+    status,
     owner: spec.owner,
-    rawEvidenceState: 'waiting-raw-live',
-    pairedRawLogCount: 0,
+    rawEvidenceState: status === 'PASS' ? 'ready-for-delta-review' : 'waiting-raw-live',
+    pairedRawLogCount: log ? 1 : 0,
     minimumPairedRawLogsForPass: 1,
-    requiredAction: `collect raw/live evidence for ${spec.name}; ${spec.forbiddenRuntimeShortcut}`,
-    requiredArtifacts: spec.requiredRawEvidence,
-    redlines: ['raw/live eval evidence is not imported yet'],
+    requiredAction: status === 'PASS'
+      ? `raw/live evidence for ${spec.name} is imported; ${spec.forbiddenRuntimeShortcut}`
+      : `collect raw/live evidence for ${spec.name}; ${spec.forbiddenRuntimeShortcut}`,
+    requiredArtifacts: log ? [log.rawLogPath, ...log.artifactPaths] : spec.requiredRawEvidence,
+    redlines,
   }
 }
 
@@ -179,11 +379,12 @@ export function buildRawEvidenceReadinessRegister(input: {
   p12Report: P12RawComparisonReport
   collectionPack: P12TargetReferenceCollectionPack
   deferredEvalSpecs?: readonly DeferredEvalRawEvidenceSpec[]
+  deferredEvalRawLiveManifest?: DeferredEvalRawLiveManifestValidation
 }): RawEvidenceReadinessRegister {
   const deferredEvalSpecs = input.deferredEvalSpecs ?? DEFERRED_EVAL_RAW_EVIDENCE_SPECS
   const entries = [
     p12Entry(input.p12Report, input.collectionPack),
-    ...deferredEvalSpecs.map(deferredEvalEntry),
+    ...deferredEvalSpecs.map(spec => deferredEvalEntry(spec, input.deferredEvalRawLiveManifest)),
   ]
   const pass = entries.filter(entry => entry.status === 'PASS').length
   const partial = entries.filter(entry => entry.status === 'PARTIAL').length

@@ -21,11 +21,14 @@ import {
   buildDeferredProductAbsorptionReviewState,
   validateDeferredProductAbsorptionReviewManifest,
 } from '../../engine/deferred-product-absorption-register-v1'
+import {
+  DEFERRED_EVAL_RAW_EVIDENCE_SPECS,
+  validateDeferredEvalRawLiveManifest,
+} from '../../engine/raw-evidence-readiness-register-v1'
 import { runP12RawComparisonHarness } from './phase12-raw-comparison-v1-harness'
 import { runV18DirtyQuarantineLedgerHarness } from '../../engine/v18-dirty-quarantine-ledger'
 import { runV18OpenSourcePackageGateHarness } from '../../engine/v18-open-source-package-gate'
 
-const DEFERRED_EVAL_IDS = ['R01', 'R02', 'S02', 'R04', 'R05', 'R06'] as const
 const DEFERRED_PRODUCT_IDS = ['PZ01', 'PZ02', 'PZ04', 'PZ05', 'PZ06', 'PZ08'] as const
 
 export type OwnerGitClosureBoardHarnessResult = OwnerGitClosureBoard & {
@@ -122,6 +125,7 @@ function buildPermissionResidueExternalClosureState(input: unknown | null): {
 export async function runOwnerGitClosureBoardHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  deferredEvalRawLiveManifestPath?: string
   permissionResidueClosureManifestPath?: string
   deferredProductReviewManifestPath?: string
 } = {}): Promise<OwnerGitClosureBoardHarnessResult> {
@@ -153,6 +157,20 @@ export async function runOwnerGitClosureBoardHarness(options: {
     DEFERRED_PRODUCT_IDS,
     deferredProductReviewManifest,
   )
+  const deferredEvalRawLiveManifestPath = options.deferredEvalRawLiveManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'deferred-eval-raw-live-codex-runner-v1', 'deferred-eval-raw-live-manifest.json')
+  const deferredEvalRawLiveInput = await readJsonIfExists(deferredEvalRawLiveManifestPath)
+  const deferredEvalRawLiveManifest = deferredEvalRawLiveInput
+    ? validateDeferredEvalRawLiveManifest(deferredEvalRawLiveInput)
+    : undefined
+  const signedDeferredEvalIds = new Set(
+    deferredEvalRawLiveManifest?.status === 'PASS'
+      ? deferredEvalRawLiveManifest.acceptedLogs.map(log => log.id)
+      : [],
+  )
+  const openDeferredEvalIds = DEFERRED_EVAL_RAW_EVIDENCE_SPECS
+    .filter(spec => !signedDeferredEvalIds.has(spec.id))
+    .map(spec => spec.id)
 
   const pendingDeletionReview = buildPendingDeletionReview(packageGate.pendingDeletionClosure)
   const dirtyWorktreeReview = buildDirtyWorktreeReview(dirtyLedger)
@@ -344,7 +362,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     p12CollectionBacklogCount: rawComparison.collectionPack.expansionBacklog.length,
     p12CollectionBacklogSlots: rawComparison.collectionPack.expansionBacklog.map(task => task.slotId),
     p12RawNextAction: rawComparison.nextAction,
-    deferredEvalIds: DEFERRED_EVAL_IDS,
+    deferredEvalIds: openDeferredEvalIds,
     deferredProductIds: DEFERRED_PRODUCT_IDS,
     deferredProductAbsorptionStatus: deferredProductAbsorptionReview.status,
     localArtifactPolicyKnown: true,
@@ -393,6 +411,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     toolRuntimeDuplicationDecision,
     deferredProductAbsorptionReview,
     permissionResidueExternalClosure,
+    deferredEvalRawLiveManifest,
     rawComparison,
     cleanExportReadiness,
     releaseClosureBoard,

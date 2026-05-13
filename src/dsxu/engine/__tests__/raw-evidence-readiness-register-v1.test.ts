@@ -8,6 +8,7 @@ import {
 import {
   buildRawEvidenceReadinessRegister,
   DEFERRED_EVAL_RAW_EVIDENCE_SPECS,
+  validateDeferredEvalRawLiveManifest,
 } from '../raw-evidence-readiness-register-v1'
 import { runRawEvidenceReadinessRegisterHarness } from '../../integration/harness/raw-evidence-readiness-register-v1-harness'
 
@@ -197,6 +198,53 @@ describe('OGC-03 - Raw Evidence Readiness Register V1', () => {
     expect(register.nextAction).toBe('collect-deferred-eval-raw-live-logs')
   })
 
+  test('closes deferred evals only when raw live manifest covers every existing owner evidence item', () => {
+    const report = makePairedReport(14)
+    const manifest = validateDeferredEvalRawLiveManifest({
+      schemaVersion: 'dsxu.deferred-eval-raw-live-manifest.v1',
+      source: {
+        collectedAt: '2026-05-13T00:00:00.000Z',
+        acquisitionMethod: 'runner-export',
+        immutableRawDir: '.dsxu/trace/deferred-eval-raw-live-codex-runner-v1',
+      },
+      logs: DEFERRED_EVAL_RAW_EVIDENCE_SPECS.map(spec => ({
+        id: spec.id,
+        owner: spec.owner,
+        rawLogPath: `.dsxu/trace/deferred-eval/${spec.id}.raw.jsonl`,
+        artifactPaths: [`.dsxu/trace/deferred-eval/${spec.id}.final.json`],
+        outcome: 'PARTIAL',
+        requiredEvidenceCovered: spec.requiredRawEvidence,
+        integrity: {
+          rawTranscript: true,
+          toolTrace: true,
+          finalReport: true,
+        },
+        metrics: {
+          elapsedMs: 1000,
+          toolCallCount: 1,
+          evidenceCompletenessPct: 100,
+          costUsd: null,
+        },
+        risks: ['raw/live evidence imported without creating benchmark-only runtime'],
+      })),
+    })
+    const register = buildRawEvidenceReadinessRegister({
+      p12Report: report,
+      collectionPack: buildP12TargetReferenceCollectionPack(report.cases.map(item => makeLog({
+        comparisonId: item.comparisonId,
+        taskId: item.taskId,
+        side: 'dsxu',
+      }))),
+      deferredEvalRawLiveManifest: manifest,
+    })
+
+    expect(register.status).toBe('PASS')
+    expect(register.deferredEvalStatus).toBe('PASS')
+    expect(register.deferredEvalWaitingRawLiveCount).toBe(0)
+    expect(register.entries.filter(entry => entry.lane === 'deferred-eval').every(entry => entry.status === 'PASS')).toBe(true)
+    expect(register.nextAction).toBe('ready-for-delta-review')
+  })
+
   test('writes current raw evidence readiness register without fabricating target logs', async () => {
     const register = await runRawEvidenceReadinessRegisterHarness()
 
@@ -217,9 +265,11 @@ describe('OGC-03 - Raw Evidence Readiness Register V1', () => {
     expect(register.p12UnmappedCollectionTaskCount).toBe(0)
     expect(register.p12ReplayFamilyGaps).toEqual([])
     expect(register.deferredEvalCount).toBe(DEFERRED_EVAL_RAW_EVIDENCE_SPECS.length)
-    expect(register.deferredEvalWaitingRawLiveCount).toBe(6)
+    expect(register.deferredEvalWaitingRawLiveCount).toBe(0)
+    expect(register.deferredEvalStatus).toBe('PASS')
     expect(register.entryCount).toBe(7)
     expect(register.entries.map(entry => entry.id)).toEqual(['P12-19', 'R01', 'R02', 'S02', 'R04', 'R05', 'R06'])
+    expect(register.entries.filter(entry => entry.lane === 'deferred-eval').every(entry => entry.status === 'PASS')).toBe(true)
     expect(register.blockers.join('\n')).toContain('target reference paired raw logs are missing')
     expect(register.safeguards.join('\n')).toContain('collection pack task count must not be confused')
     expect(register.mustNotClaimComparisonWin).toBe(true)
