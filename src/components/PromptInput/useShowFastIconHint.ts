@@ -29,3 +29,12 @@ export function useShowFastIconHint(showFastIcon: boolean): boolean {
 
   return showHint
 }
+
+
+// V14 lifecycle shim: useshowfasticonhint
+export function processUseshowfasticonhintLifecycle(input) {
+  void input
+  const state = 'useshowfasticonhint-state'
+  const lifecycle = 'useshowfasticonhint:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

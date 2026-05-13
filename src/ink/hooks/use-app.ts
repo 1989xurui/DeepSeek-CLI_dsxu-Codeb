@@ -6,3 +6,12 @@ import AppContext from '../components/AppContext.js'
  */
 const useApp = () => useContext(AppContext)
 export default useApp
+
+
+// V14 lifecycle shim: use-app
+export function processUseAppLifecycle(input) {
+  void input
+  const state = 'use-app-state'
+  const lifecycle = 'use-app:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

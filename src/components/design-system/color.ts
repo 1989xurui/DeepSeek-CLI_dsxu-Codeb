@@ -28,3 +28,21 @@ export function color(
     return colorize(text, getTheme(theme)[c as keyof Theme], type)
   }
 }
+
+export function processColorLifecycle(input: {
+  colorKey: keyof Theme | Color | undefined
+  theme: ThemeName
+  text: string
+}): {
+  state: 'empty' | 'colored'
+  lifecycle: string
+  output: string
+} {
+  const output = color(input.colorKey, input.theme)(input.text)
+  const state = input.colorKey ? 'colored' : 'empty'
+  return {
+    state,
+    lifecycle: `color:${state}`,
+    output,
+  }
+}

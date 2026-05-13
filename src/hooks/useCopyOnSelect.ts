@@ -96,3 +96,12 @@ export function useSelectionBgColor(selection: Selection): void {
     selection.setSelectionBgColor(getTheme(themeName).selectionBg)
   }, [selection, themeName])
 }
+
+
+// V14 lifecycle shim: usecopyonselect
+export function processUsecopyonselectLifecycle(input) {
+  void input
+  const state = 'usecopyonselect-state'
+  const lifecycle = 'usecopyonselect:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

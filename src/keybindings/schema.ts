@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Zod schema for keybindings.json configuration.
  * Used for validation and JSON schema generation.
@@ -224,7 +225,7 @@ export const KeybindingsSchema = lazySchema(() =>
         .describe('Array of keybinding blocks by context'),
     })
     .describe(
-      'Claude Code keybindings configuration. Customize keyboard shortcuts by context.',
+      'DSXU Code keybindings configuration. Customize keyboard shortcuts by context.',
     ),
 )
 

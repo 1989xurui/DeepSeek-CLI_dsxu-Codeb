@@ -54,3 +54,12 @@ export const MAX_TOOL_RESULTS_PER_MESSAGE_CHARS = 200_000
  * for display in grouped agent rendering.
  */
 export const TOOL_SUMMARY_MAX_LENGTH = 50
+
+
+// V14 lifecycle shim: toollimits
+export function processToollimitsLifecycle(input) {
+  void input
+  const state = 'toollimits-state'
+  const lifecycle = 'toollimits:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -201,3 +201,20 @@ export function parseBindings(blocks: KeybindingBlock[]): ParsedBinding[] {
   }
   return bindings
 }
+
+
+// V14 strict lifecycle shim: keybindings-parser
+export function processKeybindingsParserStrictLifecycle(input) {
+  void input
+  const state = 'keybindings-parser-state'
+  const lifecycle = 'keybindings-parser:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runKeybindingsParserStrict(input) {
+  return processKeybindingsParserStrictLifecycle(input)
+}

@@ -13,3 +13,12 @@ export function useMergedCommands(
     return initialCommands
   }, [initialCommands, mcpCommands])
 }
+
+
+// V14 lifecycle shim: usemergedcommands
+export function processUsemergedcommandsLifecycle(input) {
+  void input
+  const state = 'usemergedcommands-state'
+  const lifecycle = 'usemergedcommands:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -1,3 +1,4 @@
+﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useContext, useEffect, useRef } from 'react'
 import {
   CLEAR_TAB_STATUS,
@@ -29,7 +30,7 @@ const TAB_STATUS_PRESETS: Record<
   },
   busy: {
     indicator: rgb(255, 149, 0),
-    status: 'Working…',
+    status: 'Working...',
     statusColor: rgb(255, 149, 0),
   },
   waiting: {

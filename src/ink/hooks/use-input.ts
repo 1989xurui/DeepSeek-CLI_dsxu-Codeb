@@ -90,3 +90,12 @@ const useInput = (inputHandler: Handler, options: Options = {}) => {
 }
 
 export default useInput
+
+
+// V14 lifecycle shim: use-input
+export function processUseInputLifecycle(input) {
+  void input
+  const state = 'use-input-state'
+  const lifecycle = 'use-input:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

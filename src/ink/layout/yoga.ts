@@ -306,3 +306,12 @@ export class YogaLayoutNode implements LayoutNode {
 export function createYogaLayoutNode(): LayoutNode {
   return new YogaLayoutNode(Yoga.Node.create())
 }
+
+
+// V14 lifecycle shim: yoga
+export function processYogaLifecycle(input) {
+  void input
+  const state = 'yoga-state'
+  const lifecycle = 'yoga:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

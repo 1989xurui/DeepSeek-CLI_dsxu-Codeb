@@ -211,3 +211,12 @@ export function useTurnDiffs(messages: Message[]): TurnDiff[] {
     return result.reverse()
   }, [messages])
 }
+
+
+// V14 lifecycle shim: useturndiffs
+export function processUseturndiffsLifecycle(input) {
+  void input
+  const state = 'useturndiffs-state'
+  const lifecycle = 'useturndiffs:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

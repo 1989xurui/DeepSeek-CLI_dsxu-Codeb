@@ -57,6 +57,24 @@ export async function resolveSystemPromptSections(
   )
 }
 
+export async function processSystemPromptSectionsLifecycle(
+  sections: SystemPromptSection[],
+): Promise<{
+  state: 'empty' | 'resolved'
+  lifecycle: string
+  values: (string | null)[]
+}> {
+  const values = await resolveSystemPromptSections(sections)
+  const state = values.some(value => typeof value === 'string' && value.length > 0)
+    ? 'resolved'
+    : 'empty'
+  return {
+    state,
+    lifecycle: `system-prompt-sections:${state}`,
+    values,
+  }
+}
+
 /**
  * Clear all system prompt section state. Called on /clear and /compact.
  * Also resets beta header latches so a fresh conversation gets fresh

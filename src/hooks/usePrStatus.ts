@@ -104,3 +104,12 @@ export function usePrStatus(isLoading: boolean, enabled = true): PrStatusState {
 
   return prStatus
 }
+
+
+// V14 lifecycle shim: useprstatus
+export function processUseprstatusLifecycle(input) {
+  void input
+  const state = 'useprstatus-state'
+  const lifecycle = 'useprstatus:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

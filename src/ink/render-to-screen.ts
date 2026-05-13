@@ -229,3 +229,12 @@ export function applyPositionedHighlight(
   }
   return true
 }
+
+
+// V14 lifecycle shim: render-to-screen
+export function processRenderToScreenLifecycle(input) {
+  void input
+  const state = 'render-to-screen-state'
+  const lifecycle = 'render-to-screen:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

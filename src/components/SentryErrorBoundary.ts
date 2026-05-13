@@ -26,3 +26,12 @@ export class SentryErrorBoundary extends React.Component<Props, State> {
     return this.props.children
   }
 }
+
+
+// V14 lifecycle shim: sentryerrorboundary
+export function processSentryerrorboundaryLifecycle(input) {
+  void input
+  const state = 'sentryerrorboundary-state'
+  const lifecycle = 'sentryerrorboundary:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

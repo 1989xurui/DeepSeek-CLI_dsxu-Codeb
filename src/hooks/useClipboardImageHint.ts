@@ -75,3 +75,12 @@ export function useClipboardImageHint(
     }
   }, [isFocused, enabled, addNotification])
 }
+
+
+// V14 lifecycle shim: useclipboardimagehint
+export function processUseclipboardimagehintLifecycle(input) {
+  void input
+  const state = 'useclipboardimagehint-state'
+  const lifecycle = 'useclipboardimagehint:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

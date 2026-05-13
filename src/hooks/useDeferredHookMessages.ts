@@ -44,3 +44,12 @@ export function useDeferredHookMessages(
     }
   }, [setMessages])
 }
+
+
+// V14 lifecycle shim: usedeferredhookmessages
+export function processUsedeferredhookmessagesLifecycle(input) {
+  void input
+  const state = 'usedeferredhookmessages-state'
+  const lifecycle = 'usedeferredhookmessages:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

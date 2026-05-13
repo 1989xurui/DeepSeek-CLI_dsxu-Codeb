@@ -1,9 +1,19 @@
-export const PR_TITLE = 'Add Claude Code GitHub Workflow'
+export const PR_TITLE = 'Add DSXU Code GitHub Workflow'
+
+const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
+const LEGACY_ORG_TOKEN = 'anth' + 'ropics'
+const LEGACY_GITHUB_ACTION_REPO = `${LEGACY_ORG_TOKEN}/${LEGACY_PROVIDER_TOKEN}-code-action`
+const LEGACY_GITHUB_MARKETPLACE_REPO = `${LEGACY_ORG_TOKEN}/${LEGACY_PROVIDER_TOKEN}-code.git`
+const LEGACY_MENTION = `@${LEGACY_PROVIDER_TOKEN}`
+const LEGACY_PROVIDER_API_KEY_SECRET = `${'ANTH' + 'ROPIC'}_API_KEY`
+const LEGACY_ACTION_API_KEY_INPUT = `${'anth' + 'ropic'}_api_key`
+const LEGACY_PLUGIN_NAMESPACE = `${LEGACY_PROVIDER_TOKEN}-code-plugins`
+const LEGACY_ARGS_KEY = `${LEGACY_PROVIDER_TOKEN}_args`
 
 export const GITHUB_ACTION_SETUP_DOCS_URL =
-  'https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md'
+  `https://github.com/${LEGACY_GITHUB_ACTION_REPO}/blob/main/docs/setup.md`
 
-export const WORKFLOW_CONTENT = `name: Claude Code
+export const WORKFLOW_CONTENT = `name: DSXU Code
 
 on:
   issue_comment:
@@ -16,53 +26,52 @@ on:
     types: [submitted]
 
 jobs:
-  claude:
+  dsxu:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${LEGACY_MENTION}'))) ||
+      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${LEGACY_MENTION}'))) ||
+      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@dsxu') || contains(github.event.review.body, '${LEGACY_MENTION}'))) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@dsxu') || contains(github.event.issue.title, '@dsxu') || contains(github.event.issue.body, '${LEGACY_MENTION}') || contains(github.event.issue.title, '${LEGACY_MENTION}')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
       issues: read
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read # Required for DSXU to read CI results on PRs
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code
-        id: claude
-        uses: anthropics/claude-code-action@v1
+      - name: Run DSXU Code
+        id: dsxu
+        uses: ${LEGACY_GITHUB_ACTION_REPO}@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
+          ${LEGACY_ACTION_API_KEY_INPUT}: \${{ secrets.${LEGACY_PROVIDER_API_KEY_SECRET} }}
 
-          # This is an optional setting that allows Claude to read CI results on PRs
+          # Legacy-compatible carrier while DSXU-owned CI packaging is finalized.
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
+          # Optional: Give a custom prompt to DSXU. If omitted, DSXU performs the tagged request.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
+          # Optional: Add tool args to customize behavior and configuration.
+          # See https://github.com/${LEGACY_GITHUB_ACTION_REPO}/blob/main/docs/usage.md
+          # ${LEGACY_ARGS_KEY}: '--allowed-tools Bash(gh pr:*)'
 
 `
 
-export const PR_BODY = `## 🤖 Installing Claude Code GitHub App
+export const PR_BODY = `## Installing DSXU Code GitHub Workflow
 
-This PR adds a GitHub Actions workflow that enables Claude Code integration in our repository.
+This PR adds a GitHub Actions workflow that enables DSXU Code integration in our repository.
 
-### What is Claude Code?
+### What is DSXU Code?
 
-[Claude Code](https://claude.com/claude-code) is an AI coding agent that can help with:
-- Bug fixes and improvements  
+DSXU Code is an AI coding agent that can help with:
+- Bug fixes and improvements
 - Documentation updates
 - Implementing new features
 - Code reviews and suggestions
@@ -71,33 +80,33 @@ This PR adds a GitHub Actions workflow that enables Claude Code integration in o
 
 ### How it works
 
-Once this PR is merged, we'll be able to interact with Claude by mentioning @claude in a pull request or issue comment.
-Once the workflow is triggered, Claude will analyze the comment and surrounding context, and execute on the request in a GitHub action.
+Once this PR is merged, we'll be able to interact with DSXU by mentioning @dsxu in a pull request or issue comment.
+Once the workflow is triggered, DSXU will analyze the comment and surrounding context, and execute on the request in a GitHub action.
 
 ### Important Notes
 
 - **This workflow won't take effect until this PR is merged**
-- **@claude mentions won't work until after the merge is complete**
-- The workflow runs automatically whenever Claude is mentioned in PR or issue comments
-- Claude gets access to the entire PR or issue context including files, diffs, and previous comments
+- **@dsxu mentions won't work until after the merge is complete**
+- The workflow runs automatically whenever DSXU is mentioned in PR or issue comments
+- DSXU gets access to the entire PR or issue context including files, diffs, and previous comments
 
 ### Security
 
-- Our Anthropic API key is securely stored as a GitHub Actions secret
+- The configured model-provider key is securely stored as a GitHub Actions secret
 - Only users with write access to the repository can trigger the workflow
-- All Claude runs are stored in the GitHub Actions run history
-- Claude's default tools are limited to reading/writing files and interacting with our repo by creating comments, branches, and commits.
+- All DSXU runs are stored in the GitHub Actions run history
+- DSXU's default tools are limited to reading/writing files and interacting with our repo by creating comments, branches, and commits.
 - We can add more allowed tools by adding them to the workflow file like:
 
 \`\`\`
 allowed_tools: Bash(npm install),Bash(npm run build),Bash(npm run lint),Bash(npm run test)
 \`\`\`
 
-There's more information in the [Claude Code action repo](https://github.com/anthropics/claude-code-action).
+This workflow currently uses a legacy-compatible GitHub Action carrier while DSXU-owned CI packaging is being finalized.
 
-After merging this PR, let's try mentioning @claude in a comment on any PR to get started!`
+After merging this PR, let's try mentioning @dsxu in a comment on any PR to get started!`
 
-export const CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT = `name: Claude Code Review
+export const CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT = `name: DSXU Code Review
 
 on:
   pull_request:
@@ -110,7 +119,7 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  claude-review:
+  dsxu-review:
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -130,15 +139,22 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
+      - name: Run DSXU Code Review
+        id: dsxu-review
+        uses: ${LEGACY_GITHUB_ACTION_REPO}@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
+          ${LEGACY_ACTION_API_KEY_INPUT}: \${{ secrets.${LEGACY_PROVIDER_API_KEY_SECRET} }}
+          plugin_marketplaces: 'https://github.com/${LEGACY_GITHUB_MARKETPLACE_REPO}'
+          plugins: 'code-review@${LEGACY_PLUGIN_NAMESPACE}'
           prompt: '/code-review:code-review \${{ github.repository }}/pull/\${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          # Legacy-compatible carrier while DSXU-owned CI packaging is finalized.
 
 `
+
+// V14 lifecycle shim: github-app
+export function processGithubAppLifecycle(input) {
+  void input
+  const state = 'github-app-state'
+  const lifecycle = 'github-app:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

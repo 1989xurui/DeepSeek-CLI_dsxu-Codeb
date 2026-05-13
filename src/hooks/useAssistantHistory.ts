@@ -14,8 +14,8 @@ import {
   type HistoryPage,
 } from '../assistant/sessionHistory.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
-import type { RemoteSessionConfig } from '../remote/RemoteSessionManager.js'
-import { convertSDKMessage } from '../remote/sdkMessageAdapter.js'
+import type { RemoteSessionConfig } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
+import { convertSDKMessage } from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
 import type { Message, SystemInformationalMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 
@@ -60,7 +60,7 @@ function pageToMessages(page: HistoryPage): Message[] {
 }
 
 /**
- * Lazy-load `claude assistant` history on scroll-up.
+ * Lazy-load remote assistant history on scroll-up.
  *
  * On mount: fetch newest page via anchor_to_latest, prepend to messages.
  * On scroll-up near top: fetch next-older page via before_id, prepend with

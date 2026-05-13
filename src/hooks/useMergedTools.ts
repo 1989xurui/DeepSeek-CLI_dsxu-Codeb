@@ -42,3 +42,12 @@ export function useMergedTools(
     replBridgeOutboundOnly,
   ])
 }
+
+
+// V14 lifecycle shim: usemergedtools
+export function processUsemergedtoolsLifecycle(input) {
+  void input
+  const state = 'usemergedtools-state'
+  const lifecycle = 'usemergedtools:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

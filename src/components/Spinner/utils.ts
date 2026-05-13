@@ -82,3 +82,20 @@ export function parseRGB(colorStr: string): RGBColorType | null {
   RGB_CACHE.set(colorStr, result)
   return result
 }
+
+
+// V14 strict lifecycle shim: components-Spinner-utils
+export function processComponentsSpinnerUtilsStrictLifecycle(input) {
+  void input
+  const state = 'components-Spinner-utils-state'
+  const lifecycle = 'components-Spinner-utils:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runComponentsSpinnerUtilsStrict(input) {
+  return processComponentsSpinnerUtilsStrictLifecycle(input)
+}

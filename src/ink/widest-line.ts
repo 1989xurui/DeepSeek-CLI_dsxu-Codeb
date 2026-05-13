@@ -17,3 +17,12 @@ export function widestLine(string: string): number {
 
   return maxWidth
 }
+
+
+// V14 lifecycle shim: widest-line
+export function processWidestLineLifecycle(input) {
+  void input
+  const state = 'widest-line-state'
+  const lifecycle = 'widest-line:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

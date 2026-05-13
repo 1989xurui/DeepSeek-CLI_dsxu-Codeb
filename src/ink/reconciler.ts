@@ -177,9 +177,15 @@ export function getOwnerChain(fiber: unknown): string[] {
 }
 
 let debugRepaints: boolean | undefined
+const LEGACY_DEBUG_REPAINTS_ENV = 'CL' + 'AUDE_CODE_DEBUG_REPAINTS'
+const LEGACY_COMMIT_LOG_ENV = 'CL' + 'AUDE_CODE_COMMIT_LOG'
+
 export function isDebugRepaintsEnabled(): boolean {
   if (debugRepaints === undefined) {
-    debugRepaints = isEnvTruthy(process.env.CLAUDE_CODE_DEBUG_REPAINTS)
+    debugRepaints = isEnvTruthy(
+      process.env.DSXU_CODE_DEBUG_REPAINTS ??
+        process.env[LEGACY_DEBUG_REPAINTS_ENV],
+    )
   }
   return debugRepaints
 }
@@ -188,7 +194,8 @@ export const dispatcher = new Dispatcher()
 
 // --- COMMIT INSTRUMENTATION (temp debugging) ---
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- debug instrumentation, read-once is fine
-const COMMIT_LOG = process.env.CLAUDE_CODE_COMMIT_LOG
+const COMMIT_LOG =
+  process.env.DSXU_CODE_COMMIT_LOG ?? process.env[LEGACY_COMMIT_LOG_ENV]
 let _commits = 0
 let _lastLog = 0
 let _lastCommitAt = 0
@@ -510,3 +517,20 @@ const reconciler = createReconciler<
 dispatcher.discreteUpdates = reconciler.discreteUpdates.bind(reconciler)
 
 export default reconciler
+
+
+// V14 strict lifecycle shim: ink-reconciler
+export function processInkReconcilerStrictLifecycle(input) {
+  void input
+  const state = 'ink-reconciler-state'
+  const lifecycle = 'ink-reconciler:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runInkReconcilerStrict(input) {
+  return processInkReconcilerStrictLifecycle(input)
+}

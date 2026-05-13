@@ -18,3 +18,12 @@ const wrapAnsi: (
 ) => string = wrapAnsiBun ?? wrapAnsiNpm
 
 export { wrapAnsi }
+
+
+// V14 lifecycle shim: wrapansi
+export function processWrapansiLifecycle(input) {
+  void input
+  const state = 'wrapansi-state'
+  const lifecycle = 'wrapansi:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

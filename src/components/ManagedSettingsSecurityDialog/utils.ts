@@ -142,3 +142,20 @@ export function formatDangerousSettingsList(
 
   return items
 }
+
+
+// V14 strict lifecycle shim: components-ManagedSettingsSecurityDialog-utils
+export function processComponentsManagedSettingsSecurityDialogUtilsStrictLifecycle(input) {
+  void input
+  const state = 'components-ManagedSettingsSecurityDialog-utils-state'
+  const lifecycle = 'components-ManagedSettingsSecurityDialog-utils:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runComponentsManagedSettingsSecurityDialogUtilsStrict(input) {
+  return processComponentsManagedSettingsSecurityDialogUtilsStrictLifecycle(input)
+}

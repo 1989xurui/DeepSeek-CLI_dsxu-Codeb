@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useState } from 'react'
 import { useInterval } from 'usehooks-ts'
 
@@ -27,7 +28,7 @@ export function useMemoryUsage(): MemoryUsageInfo | null {
           ? 'high'
           : 'normal'
     setMemoryUsage(prev => {
-      // Bail when status is 'normal' — nothing is shown, so heapUsed is
+      // Bail when status is 'normal' ...nothing is shown, so heapUsed is
       // irrelevant and we avoid re-rendering the whole Notifications subtree
       // every 10 seconds for the 99%+ of users who never reach 1.5GB.
       if (status === 'normal') return prev === null ? prev : null

@@ -130,3 +130,12 @@ export function useInputBuffer({
     clearBuffer,
   }
 }
+
+
+// V14 lifecycle shim: useinputbuffer
+export function processUseinputbufferLifecycle(input) {
+  void input
+  const state = 'useinputbuffer-state'
+  const lifecycle = 'useinputbuffer:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

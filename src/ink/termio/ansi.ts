@@ -73,3 +73,16 @@ export function isC0(byte: number): boolean {
 export function isEscFinal(byte: number): boolean {
   return byte >= 0x30 && byte <= 0x7e
 }
+
+export function processAnsiLifecycle(input: string): {
+  state: 'plain' | 'escaped'
+  lifecycle: string
+  hasEscape: boolean
+} {
+  const hasEscape = input.includes(ESC)
+  return {
+    state: hasEscape ? 'escaped' : 'plain',
+    lifecycle: `ansi:${hasEscape ? 'escaped' : 'plain'}`,
+    hasEscape,
+  }
+}

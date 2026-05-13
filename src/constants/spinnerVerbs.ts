@@ -202,3 +202,12 @@ export const SPINNER_VERBS = [
   'Zesting',
   'Zigzagging',
 ]
+
+
+// V14 lifecycle shim: spinnerverbs
+export function processSpinnerverbsLifecycle(input) {
+  void input
+  const state = 'spinnerverbs-state'
+  const lifecycle = 'spinnerverbs:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

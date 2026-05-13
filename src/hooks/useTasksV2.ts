@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { type FSWatcher, watch } from 'fs'
 import { useEffect, useSyncExternalStore } from 'react'
 import { useAppState, useSetAppState } from '../state/AppState.js'
@@ -12,17 +13,15 @@ import {
   resetTaskList,
 } from '../utils/tasks.js'
 import { isTeamLead } from '../utils/teammate.js'
-
 const HIDE_DELAY_MS = 5000
 const DEBOUNCE_MS = 50
 const FALLBACK_POLL_MS = 5000 // Fallback in case fs.watch misses events
-
 /**
  * Singleton store for the TodoV2 task list. Owns the file watcher, timers,
  * and cached task list. Multiple hook instances (REPL, Spinner,
  * PromptInputFooterLeftSide) subscribe to one shared store instead of each
  * setting up their own fs.watch on the same directory. The Spinner mounts/
- * unmounts every turn — per-hook watchers caused constant watch/unwatch churn.
+ * unmounts every turn ...per-hook watchers caused constant watch/unwatch churn.
  *
  * Implements the useSyncExternalStore contract: subscribe/getSnapshot.
  */
@@ -32,7 +31,7 @@ class TasksV2Store {
   /**
    * Set when the hide timer has elapsed (all tasks completed for >5s), or
    * when the task list is empty. Starts false so the first fetch runs the
-   * "all completed → schedule 5s hide" path (matches original behavior:
+   * "all completed  -> schedule 5s hide" path (matches original behavior:
    * resuming a session with completed tasks shows them briefly).
    */
   #hidden = false
@@ -45,7 +44,6 @@ class TasksV2Store {
   #changed = createSignal()
   #subscriberCount = 0
   #started = false
-
   /**
    * useSyncExternalStore snapshot. Returns the same Task[] reference between
    * updates (required for Object.is stability). Returns undefined when hidden.
@@ -53,7 +51,6 @@ class TasksV2Store {
   getSnapshot = (): Task[] | undefined => {
     return this.#hidden ? undefined : this.#tasks
   }
-
   subscribe = (fn: () => void): (() => void) => {
     // Lazy init on first subscriber. useSyncExternalStore calls this
     // post-commit, so I/O here is safe (no render-phase side effects).
@@ -77,11 +74,9 @@ class TasksV2Store {
       if (this.#subscriberCount === 0) this.#stop()
     }
   }
-
   #notify(): void {
     this.#changed.emit()
   }
-
   /**
    * Point the file watcher at the current tasks directory. Called on start
    * and whenever #fetch detects the task list ID has changed (e.g. when
@@ -99,48 +94,42 @@ class TasksV2Store {
       this.#watcher.unref()
     } catch {
       // Directory may not exist yet (ensureTasksDir is called by writers).
-      // Not critical — onTasksUpdated covers in-process updates and the
+      // Not critical ...onTasksUpdated covers in-process updates and the
       // poll timer covers cross-process updates.
     }
   }
-
   #debouncedFetch = (): void => {
     if (this.#debounceTimer) clearTimeout(this.#debounceTimer)
     this.#debounceTimer = setTimeout(() => void this.#fetch(), DEBOUNCE_MS)
     this.#debounceTimer.unref()
   }
-
   #fetch = async (): Promise<void> => {
     const taskListId = getTaskListId()
     // Task list ID can change mid-session (TeamCreateTool sets
-    // leaderTeamName) — point the watcher at the current dir.
+    // leaderTeamName) ...point the watcher at the current dir.
     this.#rewatch(getTasksDir(taskListId))
     const current = (await listTasks(taskListId)).filter(
       t => !t.metadata?._internal,
     )
     this.#tasks = current
-
     const hasIncomplete = current.some(t => t.status !== 'completed')
-
     if (hasIncomplete || current.length === 0) {
-      // Has unresolved tasks (open/in_progress) or empty — reset hide state
+      // Has unresolved tasks (open/in_progress) or empty ...reset hide state
       this.#hidden = current.length === 0
       this.#clearHideTimer()
     } else if (this.#hideTimer === null && !this.#hidden) {
-      // All tasks just became completed — schedule clear
+      // All tasks just became completed ...schedule clear
       this.#hideTimer = setTimeout(
         this.#onHideTimerFired.bind(this, taskListId),
         HIDE_DELAY_MS,
       )
       this.#hideTimer.unref()
     }
-
     this.#notify()
-
     // Schedule fallback poll only when there are incomplete tasks that
     // need monitoring. When all tasks are completed (or there are none),
     // the fs.watch watcher and onTasksUpdated callback are sufficient to
-    // detect new activity — no need to keep polling and re-rendering.
+    // detect new activity ...no need to keep polling and re-rendering.
     if (this.#pollTimer) {
       clearTimeout(this.#pollTimer)
       this.#pollTimer = null
@@ -150,11 +139,10 @@ class TasksV2Store {
       this.#pollTimer.unref()
     }
   }
-
   #onHideTimerFired(scheduledForTaskListId: string): void {
     this.#hideTimer = null
     // Bail if the task list ID changed since scheduling (team created/deleted
-    // during the 5s window) — don't reset the wrong list.
+    // during the 5s window) ...don't reset the wrong list.
     const currentId = getTaskListId()
     if (currentId !== scheduledForTaskListId) return
     // Verify all tasks are still completed before clearing
@@ -170,14 +158,12 @@ class TasksV2Store {
       this.#notify()
     })
   }
-
   #clearHideTimer(): void {
     if (this.#hideTimer) {
       clearTimeout(this.#hideTimer)
       this.#hideTimer = null
     }
   }
-
   /**
    * Tear down the watcher, timers, and in-process subscription. Called when
    * the last subscriber unsubscribes. Preserves #tasks/#hidden cache so a
@@ -197,18 +183,15 @@ class TasksV2Store {
     this.#started = false
   }
 }
-
 let _store: TasksV2Store | null = null
 function getStore(): TasksV2Store {
   return (_store ??= new TasksV2Store())
 }
-
 // Stable no-ops for the disabled path so useSyncExternalStore doesn't
 // churn its subscription on every render.
 const NOOP = (): void => {}
 const NOOP_SUBSCRIBE = (): (() => void) => NOOP
 const NOOP_SNAPSHOT = (): undefined => undefined
-
 /**
  * Hook to get the current task list for the persistent UI display.
  * Returns tasks when TodoV2 is enabled, otherwise returns undefined.
@@ -217,17 +200,13 @@ const NOOP_SNAPSHOT = (): undefined => undefined
  */
 export function useTasksV2(): Task[] | undefined {
   const teamContext = useAppState(s => s.teamContext)
-
   const enabled = isTodoV2Enabled() && (!teamContext || isTeamLead(teamContext))
-
   const store = enabled ? getStore() : null
-
   return useSyncExternalStore(
     store ? store.subscribe : NOOP_SUBSCRIBE,
     store ? store.getSnapshot : NOOP_SNAPSHOT,
   )
 }
-
 /**
  * Same as useTasksV2, plus collapses the expanded task view when the list
  * becomes hidden. Call this from exactly one always-mounted component (REPL)
@@ -236,7 +215,6 @@ export function useTasksV2(): Task[] | undefined {
 export function useTasksV2WithCollapseEffect(): Task[] | undefined {
   const tasks = useTasksV2()
   const setAppState = useSetAppState()
-
   const hidden = tasks === undefined
   useEffect(() => {
     if (!hidden) return
@@ -245,6 +223,5 @@ export function useTasksV2WithCollapseEffect(): Task[] | undefined {
       return { ...prev, expandedView: 'none' as const }
     })
   }, [hidden, setAppState])
-
   return tasks
 }

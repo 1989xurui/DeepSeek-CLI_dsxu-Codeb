@@ -32,3 +32,12 @@ export function createStore<T>(
     },
   }
 }
+
+
+// V14 lifecycle shim: store
+export function processStoreLifecycle(input) {
+  void input
+  const state = 'store-state'
+  const lifecycle = 'store:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

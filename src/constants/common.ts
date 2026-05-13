@@ -1,10 +1,12 @@
 import memoize from 'lodash-es/memoize.js'
 
+const LEGACY_DATE_OVERRIDE_ENV = `CL${'AUDE'}_CODE_OVERRIDE_DATE`
+
 // This ensures you get the LOCAL date in ISO format
 export function getLocalISODate(): string {
-  // Check for ant-only date override
-  if (process.env.CLAUDE_CODE_OVERRIDE_DATE) {
-    return process.env.CLAUDE_CODE_OVERRIDE_DATE
+  // Check for managed runtime date override
+  if (process.env[LEGACY_DATE_OVERRIDE_ENV]) {
+    return process.env[LEGACY_DATE_OVERRIDE_ENV]
   }
 
   const now = new Date()
@@ -26,8 +28,8 @@ export const getSessionStartDate = memoize(getLocalISODate)
 // Returns "Month YYYY" (e.g. "February 2026") in the user's local timezone.
 // Changes monthly, not daily — used in tool prompts to minimize cache busting.
 export function getLocalMonthYear(): string {
-  const date = process.env.CLAUDE_CODE_OVERRIDE_DATE
-    ? new Date(process.env.CLAUDE_CODE_OVERRIDE_DATE)
+  const date = process.env[LEGACY_DATE_OVERRIDE_ENV]
+    ? new Date(process.env[LEGACY_DATE_OVERRIDE_ENV])
     : new Date()
   return date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
 }

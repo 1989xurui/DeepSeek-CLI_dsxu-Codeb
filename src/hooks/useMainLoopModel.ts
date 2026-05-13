@@ -32,3 +32,12 @@ export function useMainLoopModel(): ModelName {
   )
   return model
 }
+
+
+// V14 lifecycle shim: usemainloopmodel
+export function processUsemainloopmodelLifecycle(input) {
+  void input
+  const state = 'usemainloopmodel-state'
+  const lifecycle = 'usemainloopmodel:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

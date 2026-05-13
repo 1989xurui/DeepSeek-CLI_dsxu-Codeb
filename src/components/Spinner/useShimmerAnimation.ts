@@ -29,3 +29,12 @@ export function useShimmerAnimation(
   }
   return [ref, messageWidth + 10 - (cyclePosition % cycleLength)]
 }
+
+
+// V14 lifecycle shim: useshimmeranimation
+export function processUseshimmeranimationLifecycle(input) {
+  void input
+  const state = 'useshimmeranimation-state'
+  const lifecycle = 'useshimmeranimation:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -29,3 +29,12 @@ export function useTerminalTitle(title: string | null): void {
     }
   }, [title, writeRaw])
 }
+
+
+// V14 lifecycle shim: use-terminal-title
+export function processUseTerminalTitleLifecycle(input) {
+  void input
+  const state = 'use-terminal-title-state'
+  const lifecycle = 'use-terminal-title:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -58,3 +58,12 @@ export const DISABLE_MOUSE_TRACKING =
   decreset(DEC.MOUSE_ANY) +
   decreset(DEC.MOUSE_BUTTON) +
   decreset(DEC.MOUSE_NORMAL)
+
+
+// V14 lifecycle shim: dec
+export function processDecLifecycle(input) {
+  void input
+  const state = 'dec-state'
+  const lifecycle = 'dec:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

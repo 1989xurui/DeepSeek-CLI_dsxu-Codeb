@@ -123,3 +123,12 @@ export function useAwaySummary(
     void generateRef.current?.()
   }, [isLoading])
 }
+
+
+// V14 lifecycle shim: useawaysummary
+export function processUseawaysummaryLifecycle(input) {
+  void input
+  const state = 'useawaysummary-state'
+  const lifecycle = 'useawaysummary:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

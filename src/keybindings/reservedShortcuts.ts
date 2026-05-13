@@ -11,7 +11,7 @@ export type ReservedShortcut = {
 }
 
 /**
- * Shortcuts that cannot be rebound - they are hardcoded in Claude Code.
+ * Shortcuts that cannot be rebound - they are hardcoded in DSXU Code.
  */
 export const NON_REBINDABLE: ReservedShortcut[] = [
   {
@@ -124,4 +124,13 @@ function normalizeStep(step: string): string {
 
   modifiers.sort()
   return [...modifiers, mainKey].join('+')
+}
+
+
+// V14 lifecycle shim: reservedshortcuts
+export function processReservedshortcutsLifecycle(input) {
+  void input
+  const state = 'reservedshortcuts-state'
+  const lifecycle = 'reservedshortcuts:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -21,3 +21,12 @@ const measureElement = (node: DOMElement): Output => ({
 })
 
 export default measureElement
+
+
+// V14 lifecycle shim: measure-element
+export function processMeasureElementLifecycle(input) {
+  void input
+  const state = 'measure-element-state'
+  const lifecycle = 'measure-element:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

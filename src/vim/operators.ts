@@ -554,3 +554,12 @@ export function executeOperatorGg(
   applyOperator(op, range.from, range.to, ctx, range.linewise)
   ctx.recordChange({ type: 'operator', op, motion: 'gg', count })
 }
+
+
+// V14 lifecycle shim: operators
+export function processOperatorsLifecycle(input) {
+  void input
+  const state = 'operators-state'
+  const lifecycle = 'operators:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

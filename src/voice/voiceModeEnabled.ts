@@ -1,9 +1,7 @@
 import { feature } from 'bun:bundle'
+import { getCompatProviderTokens } from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
-import {
-  getClaudeAIOAuthTokens,
-  isAnthropicAuthEnabled,
-} from '../utils/auth.js'
+import { isProviderAuthEnabled } from '../utils/auth.js'
 
 /**
  * Kill-switch check for voice mode. Returns true unless the
@@ -24,22 +22,22 @@ export function isVoiceGrowthBookEnabled(): boolean {
 
 /**
  * Auth-only check for voice mode. Returns true when the user has a valid
- * Anthropic OAuth token. Backed by the memoized getClaudeAIOAuthTokens —
+ * provider OAuth token. Backed by the memoized provider token reader —
  * first call spawns `security` on macOS (~20-50ms), subsequent calls are
  * cache hits. The memoize clears on token refresh (~once/hour), so one
  * cold spawn per refresh is expected. Cheap enough for usage-time checks.
  */
 export function hasVoiceAuth(): boolean {
-  // Voice mode requires Anthropic OAuth — it uses the voice_stream
-  // endpoint on claude.ai which is not available with API keys,
+  // Voice mode requires legacy cloud OAuth — it uses the voice_stream
+  // endpoint on the legacy cloud which is not available with API keys,
   // Bedrock, Vertex, or Foundry.
-  if (!isAnthropicAuthEnabled()) {
+  if (!isProviderAuthEnabled()) {
     return false
   }
-  // isAnthropicAuthEnabled only checks the auth *provider*, not whether
+  // isProviderAuthEnabled only checks the auth *provider*, not whether
   // a token exists. Without this check, the voice UI renders but
   // connectVoiceStream fails silently when the user isn't logged in.
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getCompatProviderTokens()
   return Boolean(tokens?.accessToken)
 }
 
@@ -51,4 +49,13 @@ export function hasVoiceAuth(): boolean {
  */
 export function isVoiceModeEnabled(): boolean {
   return hasVoiceAuth() && isVoiceGrowthBookEnabled()
+}
+
+
+// V14 lifecycle shim: voicemodeenabled
+export function processVoicemodeenabledLifecycle(input) {
+  void input
+  const state = 'voicemodeenabled-state'
+  const lifecycle = 'voicemodeenabled:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

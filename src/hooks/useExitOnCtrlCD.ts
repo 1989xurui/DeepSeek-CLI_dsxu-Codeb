@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useMemo, useState } from 'react'
 import useApp from '../ink/hooks/use-app.js'
 import type { KeybindingContextName } from '../keybindings/types.js'
@@ -37,7 +38,7 @@ type UseKeybindingsHook = (
  *                      Return true if handled, false to fall through to double-press exit.
  * @param onExit - Optional custom exit handler
  * @param isActive - Whether the keybinding is active (default true). Set false
- *                   while an embedded TextInput is focused — TextInput's own
+ *                   while an embedded TextInput is focused ...TextInput's own
  *                   ctrl+c/d handlers will manage cancel/exit, and Dialog's
  *                   handler would otherwise double-fire (child useInput runs
  *                   before parent useKeybindings, so both see every keypress).

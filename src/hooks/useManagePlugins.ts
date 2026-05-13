@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useEffect } from 'react'
 import type { Command } from '../commands.js'
 import { useNotifications } from '../context/notifications.js'
@@ -21,13 +22,13 @@ import { loadPluginMcpServers } from '../utils/plugins/mcpPluginIntegration.js'
 import { detectAndUninstallDelistedPlugins } from '../utils/plugins/pluginBlocklist.js'
 import { getFlaggedPlugins } from '../utils/plugins/pluginFlagging.js'
 import { loadAllPlugins } from '../utils/plugins/pluginLoader.js'
-
+import { getDsxuCodeEnv } from '../utils/envUtils.js'
 /**
  * Hook to manage plugin state and synchronize with AppState.
  *
  * On mount: loads all plugins, runs delisting enforcement, surfaces flagged-
  * plugin notifications, populates AppState.plugins. This is the initial
- * Layer-3 load — subsequent refresh goes through /reload-plugins.
+ * Layer-3 load ...subsequent refresh goes through /reload-plugins.
  *
  * On needsRefresh: shows a notification directing the user to /reload-plugins.
  * Does NOT auto-refresh. All Layer-3 swap (commands, agents, hooks, MCP)
@@ -42,9 +43,8 @@ export function useManagePlugins({
   const setAppState = useSetAppState()
   const needsRefresh = useAppState(s => s.plugins.needsRefresh)
   const { addNotification } = useNotifications()
-
-  // Initial plugin load. Runs once on mount. NOT used for refresh — all
-  // post-mount refresh goes through /reload-plugins → refreshActivePlugins().
+  // Initial plugin load. Runs once on mount. NOT used for refresh ...all
+  // post-mount refresh goes through /reload-plugins  -> refreshActivePlugins().
   // Unlike refreshActivePlugins, this also runs delisting enforcement and
   // flagged-plugin notifications (session-start concerns), and does NOT bump
   // mcp.pluginReconnectKey (MCP effects fire on their own mount).
@@ -52,10 +52,8 @@ export function useManagePlugins({
     try {
       // Load all plugins - capture errors array
       const { enabled, disabled, errors } = await loadAllPlugins()
-
       // Detect delisted plugins, auto-uninstall them, and record as flagged.
       await detectAndUninstallDelistedPlugins()
-
       // Notify if there are flagged plugins pending dismissal
       const flagged = getFlaggedPlugins()
       if (Object.keys(flagged).length > 0) {
@@ -66,12 +64,10 @@ export function useManagePlugins({
           priority: 'high',
         })
       }
-
       // Load commands, agents, and hooks with individual error handling
       // Errors are added to the errors array for user visibility in Doctor UI
       let commands: Command[] = []
       let agents: AgentDefinition[] = []
-
       try {
         commands = await getPluginCommands()
       } catch (error) {
@@ -83,7 +79,6 @@ export function useManagePlugins({
           error: `Failed to load plugin commands: ${errorMessage}`,
         })
       }
-
       try {
         agents = await loadPluginAgents()
       } catch (error) {
@@ -95,7 +90,6 @@ export function useManagePlugins({
           error: `Failed to load plugin agents: ${errorMessage}`,
         })
       }
-
       try {
         await loadPluginHooks()
       } catch (error) {
@@ -107,9 +101,8 @@ export function useManagePlugins({
           error: `Failed to load plugin hooks: ${errorMessage}`,
         })
       }
-
       // Load MCP server configs per plugin to get an accurate count.
-      // LoadedPlugin.mcpServers is not populated by loadAllPlugins — it's a
+      // LoadedPlugin.mcpServers is not populated by loadAllPlugins ...it's a
       // cache slot that extractMcpServersFromPlugins fills later, which races
       // with this metric. Calling loadPluginMcpServers directly (as
       // cli/handlers/plugins.ts does) gives the correct count and also
@@ -126,10 +119,9 @@ export function useManagePlugins({
         }),
       )
       const mcp_count = mcpServerCounts.reduce((sum, n) => sum + n, 0)
-
       // LSP: the primary fix for issue #15521 is in refresh.ts (via
-      // performBackgroundPluginInstallations → refreshActivePlugins, which
-      // clears caches first). This reinit is defensive — it reads the same
+      // performBackgroundPluginInstallations  -> refreshActivePlugins, which
+      // clears caches first). This reinit is defensive ...it reads the same
       // memoized loadAllPlugins() result as the original init unless a cache
       // invalidation happened between main.tsx:3203 and REPL mount (e.g.
       // seed marketplace registration or policySettings hot-reload).
@@ -143,7 +135,6 @@ export function useManagePlugins({
       )
       const lsp_count = lspServerCounts.reduce((sum, n) => sum + n, 0)
       reinitializeLspServerManager()
-
       // Update AppState - merge errors to preserve LSP errors
       setAppState(prevState => {
         // Keep existing LSP/non-plugin-loading errors (source 'lsp-manager' or 'plugin:*')
@@ -166,7 +157,6 @@ export function useManagePlugins({
           return !newErrorKeys.has(key)
         })
         const mergedErrors = [...filteredExisting, ...errors]
-
         return {
           ...prevState,
           plugins: {
@@ -178,11 +168,9 @@ export function useManagePlugins({
           },
         }
       })
-
       logForDebugging(
         `Loaded plugins - Enabled: ${enabled.length}, Disabled: ${disabled.length}, Commands: ${commands.length}, Agents: ${agents.length}, Errors: ${errors.length}`,
       )
-
       // Count component types across enabled plugins
       const hook_count = enabled.reduce((sum, p) => {
         if (!p.hooksConfig) return sum
@@ -195,7 +183,6 @@ export function useManagePlugins({
           )
         )
       }, 0)
-
       return {
         enabled_count: enabled.length,
         disabled_count: disabled.length,
@@ -247,7 +234,6 @@ export function useManagePlugins({
           },
         }
       })
-
       return {
         enabled_count: 0,
         disabled_count: 0,
@@ -264,7 +250,6 @@ export function useManagePlugins({
       }
     }
   }, [setAppState, addNotification])
-
   // Load plugins on mount and emit telemetry
   useEffect(() => {
     if (!enabled) return
@@ -272,7 +257,7 @@ export function useManagePlugins({
       const { ant_enabled_names, ...baseMetrics } = metrics
       const allMetrics = {
         ...baseMetrics,
-        has_custom_plugin_cache_dir: !!process.env.CLAUDE_CODE_PLUGIN_CACHE_DIR,
+        has_custom_plugin_cache_dir: !!getDsxuCodeEnv('PLUGIN_CACHE_DIR'),
       }
       logEvent('tengu_plugins_loaded', {
         ...allMetrics,
@@ -283,7 +268,6 @@ export function useManagePlugins({
       logForDiagnosticsNoPII('info', 'tengu_plugins_loaded', allMetrics)
     })
   }, [initialPluginLoad, enabled])
-
   // Plugin state changed on disk (background reconcile, /plugin menu,
   // external settings edit). Show a notification; user runs /reload-plugins
   // to apply. The previous auto-refresh here had a stale-cache bug (only
@@ -298,7 +282,7 @@ export function useManagePlugins({
       color: 'suggestion',
       priority: 'low',
     })
-    // Do NOT auto-refresh. Do NOT reset needsRefresh — /reload-plugins
+    // Do NOT auto-refresh. Do NOT reset needsRefresh .../reload-plugins
     // consumes it via refreshActivePlugins().
   }, [enabled, needsRefresh, addNotification])
 }

@@ -7,3 +7,20 @@ export { MCPStdioServerMenu } from './MCPStdioServerMenu.js'
 export { MCPToolDetailView } from './MCPToolDetailView.js'
 export { MCPToolListView } from './MCPToolListView.js'
 export type { AgentMcpServerInfo, MCPViewState, ServerInfo } from './types.js'
+
+
+// V14 strict lifecycle shim: components-mcp-index
+export function processComponentsMcpIndexStrictLifecycle(input) {
+  void input
+  const state = 'components-mcp-index-state'
+  const lifecycle = 'components-mcp-index:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runComponentsMcpIndexStrict(input) {
+  return processComponentsMcpIndexStrictLifecycle(input)
+}

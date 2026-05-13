@@ -54,3 +54,12 @@ export function useAutoModeUnavailableNotification(): void {
     })
   }, [mode, isAutoModeAvailable, addNotification])
 }
+
+
+// V14 lifecycle shim: useautomodeunavailablenotification
+export function processUseautomodeunavailablenotificationLifecycle(input) {
+  void input
+  const state = 'useautomodeunavailablenotification-state'
+  const lifecycle = 'useautomodeunavailablenotification:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

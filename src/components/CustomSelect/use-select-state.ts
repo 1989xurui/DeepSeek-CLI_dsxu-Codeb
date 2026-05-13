@@ -155,3 +155,12 @@ export function useSelectState<T>({
     onCancel,
   }
 }
+
+
+// V14 lifecycle shim: use-select-state
+export function processUseSelectStateLifecycle(input) {
+  void input
+  const state = 'use-select-state-state'
+  const lifecycle = 'use-select-state:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

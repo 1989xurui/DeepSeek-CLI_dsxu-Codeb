@@ -1,6 +1,6 @@
 /**
  * Keybindings template generator.
- * Generates a well-documented template file for ~/.claude/keybindings.json
+ * Generates a well-documented template file for ~/.dsxu/keybindings.json
  */
 
 import { jsonStringify } from '../utils/slowOperations.js'
@@ -43,10 +43,19 @@ export function generateKeybindingsTemplate(): string {
 
   // Format as object wrapper with bindings array
   const config = {
-    $schema: 'https://www.schemastore.org/claude-code-keybindings.json',
-    $docs: 'https://code.claude.com/docs/en/keybindings',
+    $schema: 'https://dsxu.local/schemas/dsxu-code-keybindings.json',
+    $docs: 'https://dsxu.local/docs/keybindings',
     bindings,
   }
 
   return jsonStringify(config, null, 2) + '\n'
+}
+
+
+// V14 lifecycle shim: template
+export function processTemplateLifecycle(input) {
+  void input
+  const state = 'template-state'
+  const lifecycle = 'template:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

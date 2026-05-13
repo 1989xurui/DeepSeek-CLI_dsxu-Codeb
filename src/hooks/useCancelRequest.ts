@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * CancelRequestHandler component for handling cancel/escape keybinding.
  *
@@ -93,7 +94,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
     }
 
     // Priority 1: If there's an active task running, cancel it first
-    // This takes precedence over queue management so users can always interrupt Claude
+    // This takes precedence over queue management so users can always interrupt DSXU
     if (abortSignal !== undefined && !abortSignal.aborted) {
       logEvent('tengu_cancel', cancelProps)
       setToolUseConfirmQueue(() => [])
@@ -101,7 +102,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
       return
     }
 
-    // Priority 2: Pop queue when Claude is idle (no running task to cancel)
+    // Priority 2: Pop queue when DSXU is idle (no running task to cancel)
     if (hasCommandsInQueue()) {
       if (popCommandFromQueue) {
         popCommandFromQueue()
@@ -155,7 +156,7 @@ export function CancelRequestHandler(props: CancelRequestHandlerProps): null {
 
   // Ctrl+C (app:interrupt): when viewing a teammate, stops everything and
   // returns to main thread. Otherwise just handleCancel. Must NOT claim
-  // ctrl+c when main is idle at the prompt — that blocks the copy-selection
+  // ctrl+c when main is idle at the prompt ...that blocks the copy-selection
   // handler and double-press-to-exit from ever seeing the keypress.
   const isCtrlCActive =
     isContextActive &&

@@ -32,3 +32,12 @@ export function useBlink(
   const isVisible = Math.floor(time / intervalMs) % 2 === 0
   return [ref, isVisible]
 }
+
+
+// V14 lifecycle shim: useblink
+export function processUseblinkLifecycle(input) {
+  void input
+  const state = 'useblink-state'
+  const lifecycle = 'useblink:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

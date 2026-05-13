@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { isInputModeCharacter } from 'src/components/PromptInput/inputModes.js'
 import { useNotifications } from 'src/context/notifications.js'
 import stripAnsi from 'strip-ansi'
@@ -19,6 +20,7 @@ import {
   yankPop,
 } from '../utils/Cursor.js'
 import { env } from '../utils/env.js'
+import { traceDsxuLifecycle } from '../utils/dsxuLifecycleTrace.js'
 import { isFullscreenEnvEnabled } from '../utils/fullscreen.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import { isModifierPressed, prewarmModifiers } from '../utils/modifiers.js'
@@ -245,6 +247,13 @@ export function useTextInput({
   ])
 
   function handleEnter(key: Key) {
+    traceDsxuLifecycle('text_input_enter_received', {
+      meta: key.meta,
+      shift: key.shift,
+      multiline,
+      valueLength: originalValue.length,
+      previousChar: cursor.offset > 0 ? cursor.text[cursor.offset - 1] : '',
+    })
     if (
       multiline &&
       cursor.offset > 0 &&
@@ -320,8 +329,7 @@ export function useTextInput({
       case key.escape:
         return () => {
           // Skip when a keybinding context (e.g. Autocomplete) owns escape.
-          // useKeybindings can't shield us via stopImmediatePropagation —
-          // BaseTextInput's useInput registers first (child effects fire
+          // useKeybindings can't shield us via stopImmediatePropagation ...          // BaseTextInput's useInput registers first (child effects fire
           // before parent effects), so this handler has already run by the
           // time the keybinding's handler stops propagation.
           if (disableEscapeDoublePress) return cursor
@@ -347,7 +355,7 @@ export function useTextInput({
         return () => cursor.endOfLine()
       case key.pageDown:
         // In fullscreen mode, PgUp/PgDn scroll the message viewport instead
-        // of moving the cursor — no-op here, ScrollKeybindingHandler handles it.
+        // of moving the cursor ...no-op here, ScrollKeybindingHandler handles it.
         if (isFullscreenEnvEnabled()) {
           return NOOP_HANDLER
         }
@@ -388,15 +396,14 @@ export function useTextInput({
             case input === '\x1b[F' || input === '\x1b[4~':
               return cursor.endOfLine()
             default: {
-              // Trailing \r after text is SSH-coalesced Enter ("o\r") —
-              // strip it so the Enter isn't inserted as content. Lone \r
+              // Trailing \r after text is SSH-coalesced Enter ("o\r") ...              // strip it so the Enter isn't inserted as content. Lone \r
               // here is Alt+Enter leaking through (META_KEY_CODE_RE doesn't
-              // match \x1b\r) — leave it for the \r→\n below. Embedded \r
+              // match \x1b\r) ...leave it for the \r→\n below. Embedded \r
               // is multi-line paste from a terminal without bracketed
-              // paste — convert to \n. Backslash+\r is a stale VS Code
+              // paste ...convert to \n. Backslash+\r is a stale VS Code
               // Shift+Enter binding (pre-#8991 /terminal-setup wrote
               // args.text "\\\r\n" to keybindings.json); keep the \r so
-              // it becomes \n below (anthropics/claude-code#31316).
+              // it becomes \n below.
               const text = stripAnsi(input)
                 // eslint-disable-next-line custom-rules/no-lookbehind-regex -- .replace(re, str) on 1-2 char keystrokes: no-match returns same string (Object.is), regex never runs
                 .replace(/(?<=[^\\\r\n])\r$/, '')

@@ -49,3 +49,12 @@ export function renderPlaceholder({
     showPlaceholder,
   }
 }
+
+
+// V14 lifecycle shim: renderplaceholder
+export function processRenderplaceholderLifecycle(input) {
+  void input
+  const state = 'renderplaceholder-state'
+  const lifecycle = 'renderplaceholder:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

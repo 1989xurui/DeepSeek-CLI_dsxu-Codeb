@@ -128,3 +128,12 @@ export function dispatchHover(
     }
   }
 }
+
+
+// V14 lifecycle shim: hit-test
+export function processHitTestLifecycle(input) {
+  void input
+  const state = 'hit-test-state'
+  const lifecycle = 'hit-test:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

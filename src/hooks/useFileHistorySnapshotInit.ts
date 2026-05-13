@@ -23,3 +23,12 @@ export function useFileHistorySnapshotInit(
     }
   }, [fileHistoryState, initialFileHistorySnapshots, onUpdateState])
 }
+
+
+// V14 lifecycle shim: usefilehistorysnapshotinit
+export function processUsefilehistorysnapshotinitLifecycle(input) {
+  void input
+  const state = 'usefilehistorysnapshotinit-state'
+  const lifecycle = 'usefilehistorysnapshotinit:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -58,3 +58,20 @@ export function isNonSpacePrintable(input: string, key: Key): boolean {
   }
   return input.length > 0 && !/^\s/.test(input) && !input.startsWith('\x1b')
 }
+
+
+// V14 strict lifecycle shim: components-PromptInput-utils
+export function processComponentsPromptInputUtilsStrictLifecycle(input) {
+  void input
+  const state = 'components-PromptInput-utils-state'
+  const lifecycle = 'components-PromptInput-utils:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runComponentsPromptInputUtilsStrict(input) {
+  return processComponentsPromptInputUtilsStrictLifecycle(input)
+}

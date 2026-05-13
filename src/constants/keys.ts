@@ -9,3 +9,12 @@ export function getGrowthBookClientKey(): string {
       : 'sdk-xRVcrliHIlrg4og4'
     : 'sdk-zAZezfDKGoZuXXKe'
 }
+
+
+// V14 lifecycle shim: keys
+export function processKeysLifecycle(input) {
+  void input
+  const state = 'keys-state'
+  const lifecycle = 'keys:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

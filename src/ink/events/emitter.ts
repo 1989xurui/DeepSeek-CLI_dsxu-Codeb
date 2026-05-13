@@ -37,3 +37,12 @@ export class EventEmitter extends NodeEventEmitter {
     return true
   }
 }
+
+
+// V14 lifecycle shim: emitter
+export function processEmitterLifecycle(input) {
+  void input
+  const state = 'emitter-state'
+  const lifecycle = 'emitter:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

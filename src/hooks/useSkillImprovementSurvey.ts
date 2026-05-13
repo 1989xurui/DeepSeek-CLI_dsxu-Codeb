@@ -103,3 +103,12 @@ export function useSkillImprovementSurvey(setMessages: SetMessages): {
     handleSelect,
   }
 }
+
+
+// V14 lifecycle shim: useskillimprovementsurvey
+export function processUseskillimprovementsurveyLifecycle(input) {
+  void input
+  const state = 'useskillimprovementsurvey-state'
+  const lifecycle = 'useskillimprovementsurvey:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

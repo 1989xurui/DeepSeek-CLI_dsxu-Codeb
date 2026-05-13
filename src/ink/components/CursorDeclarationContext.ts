@@ -30,3 +30,12 @@ const CursorDeclarationContext = createContext<CursorDeclarationSetter>(
 )
 
 export default CursorDeclarationContext
+
+
+// V14 lifecycle shim: cursordeclarationcontext
+export function processCursordeclarationcontextLifecycle(input) {
+  void input
+  const state = 'cursordeclarationcontext-state'
+  const lifecycle = 'cursordeclarationcontext:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

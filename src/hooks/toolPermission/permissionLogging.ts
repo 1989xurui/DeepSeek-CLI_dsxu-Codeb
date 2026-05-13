@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Centralized analytics/telemetry logging for tool permission decisions.
 // All permission approve/reject events flow through logPermissionDecision(),
 // which fans out to Statsig analytics, OTel telemetry, and code-edit metrics.

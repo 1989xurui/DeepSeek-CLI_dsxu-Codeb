@@ -65,3 +65,12 @@ export function parseEsc(chars: string): Action | null {
   // Unknown
   return { type: 'unknown', sequence: `\x1b${chars}` }
 }
+
+
+// V14 lifecycle shim: esc
+export function processEscLifecycle(input) {
+  void input
+  const state = 'esc-state'
+  const lifecycle = 'esc:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

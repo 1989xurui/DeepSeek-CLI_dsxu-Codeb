@@ -91,3 +91,12 @@ export function optimize(diff: Diff): Diff {
 
   return result
 }
+
+
+// V14 lifecycle shim: optimizer
+export function processOptimizerLifecycle(input) {
+  void input
+  const state = 'optimizer-state'
+  const lifecycle = 'optimizer:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

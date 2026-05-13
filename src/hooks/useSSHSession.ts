@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * REPL integration hook for `claude ssh` sessions.
+ * REPL integration hook for DSXU SSH sessions.
  *
- * Sibling to useDirectConnect — same shape (isRemoteMode/sendMessage/
+ * Sibling to useDirectConnect ...same shape (isRemoteMode/sendMessage/
  * cancelRequest/disconnect), same REPL wiring, but drives an SSH child
  * process instead of a WebSocket. Kept separate rather than generalizing
  * useDirectConnect because the lifecycle differs: the ssh process and auth
@@ -15,11 +16,11 @@ import type { ToolUseConfirm } from '../components/permissions/PermissionRequest
 import {
   createSyntheticAssistantMessage,
   createToolStub,
-} from '../remote/remotePermissionBridge.js'
+} from '../dsxu/engine/provider-backend/dsxu-remote-permission-bridge.js'
 import {
   convertSDKMessage,
   isSessionEndMessage,
-} from '../remote/sdkMessageAdapter.js'
+} from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'
 import type { Tool } from '../Tool.js'
@@ -165,14 +166,14 @@ export function useSSHSession({
         )
         isConnectedRef.current = false
         // Surface a transient system message in the transcript so the user
-        // knows what's happening — the next onConnected clears the state.
+        // knows what's happening ...the next onConnected clears the state.
         // Any in-flight request is lost; the remote's --continue reloads
         // history but there's no turn in progress to resume.
         setIsLoading(false)
         const msg: MessageType = {
           type: 'system',
           subtype: 'informational',
-          content: `SSH connection dropped — reconnecting (attempt ${attempt}/${max})...`,
+          content: `SSH connection dropped ...reconnecting (attempt ${attempt}/${max})...`,
           timestamp: new Date().toISOString(),
           uuid: randomUUID(),
           level: 'warning',
@@ -191,7 +192,7 @@ export function useSSHSession({
           ? 'Remote session ended.'
           : 'SSH session failed before connecting.'
         // Surface remote stderr if it looks like an error (pre-connect always,
-        // post-connect only on nonzero exit — normal --verbose noise otherwise).
+        // post-connect only on nonzero exit ...normal --verbose noise otherwise).
         if (stderr && (!connected || exitCode !== 0)) {
           msg += `\nRemote stderr (exit ${exitCode ?? 'signal ' + session.proc.signalCode}):\n${stderr}`
         }

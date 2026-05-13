@@ -154,3 +154,21 @@ export function isBinaryContent(buffer: Buffer): boolean {
   // If more than 10% non-printable, likely binary
   return nonPrintable / checkSize > 0.1
 }
+
+export function processFilesLifecycle(input: {
+  filePath: string
+  buffer: Buffer
+}): {
+  state: 'binary' | 'text'
+  lifecycle: string
+  hasBinaryExtension: boolean
+} {
+  const binaryByExtension = hasBinaryExtension(input.filePath)
+  const binaryByContent = isBinaryContent(input.buffer)
+  const state = binaryByExtension || binaryByContent ? 'binary' : 'text'
+  return {
+    state,
+    lifecycle: `files:${state}`,
+    hasBinaryExtension: binaryByExtension,
+  }
+}

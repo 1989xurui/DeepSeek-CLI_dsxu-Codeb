@@ -1,6 +1,7 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/utils/todo/types.js'
-import type { BridgePermissionCallbacks } from '../bridge/bridgePermissionCallbacks.js'
+import type { BridgePermissionCallbacks } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js'
 import type { Command } from '../commands.js'
 import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
@@ -37,7 +38,6 @@ import { getInitialSettings } from '../utils/settings/settings.js'
 import type { SettingsJson } from '../utils/settings/types.js'
 import { shouldEnableThinkingByDefault } from '../utils/thinking.js'
 import type { Store } from './store.js'
-
 export type CompletionBoundary =
   | { type: 'complete'; completedAt: number; outputTokens: number }
   | { type: 'bash'; command: string; completedAt: number }
@@ -48,13 +48,11 @@ export type CompletionBoundary =
       detail: string
       completedAt: number
     }
-
 export type SpeculationResult = {
   messages: Message[]
   boundary: CompletionBoundary | null
   timeSavedMs: number
 }
-
 export type SpeculationState =
   | { status: 'idle' }
   | {
@@ -75,9 +73,7 @@ export type SpeculationState =
         generationRequestId: string | null
       } | null
     }
-
 export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
-
 export type FooterItem =
   | 'tasks'
   | 'tmux'
@@ -85,7 +81,6 @@ export type FooterItem =
   | 'teams'
   | 'bridge'
   | 'companion'
-
 export type AppState = DeepImmutable<{
   settings: SettingsJson
   verbose: boolean
@@ -99,7 +94,7 @@ export type AppState = DeepImmutable<{
   selectedIPAgentIndex: number
   // CoordinatorTaskPanel selection: -1 = pill, 0 = main, 1..N = agent rows.
   // AppState (not local) so the panel can read it directly without prop-drilling
-  // through PromptInput → PromptInputFooter.
+  // through PromptInput  -> PromptInputFooter.
   coordinatorTaskIndex: number
   viewSelectionMode: 'none' | 'selecting-agent' | 'viewing-agent'
   // Which footer pill is focused (arrow-key navigation below the prompt).
@@ -116,7 +111,7 @@ export type AppState = DeepImmutable<{
   kairosEnabled: boolean
   // Remote session URL for --remote mode (shown in footer indicator)
   remoteSessionUrl: string | undefined
-  // Remote session WS state (`claude assistant` viewer). 'connected' means the
+  // Remote session WS state (`dsxu assistant` viewer). 'connected' means the
   // live event stream is open; 'reconnecting' = transient WS drop, backoff
   // in progress; 'disconnected' = permanent close or reconnects exhausted.
   remoteConnectionStatus:
@@ -124,10 +119,10 @@ export type AppState = DeepImmutable<{
     | 'connected'
     | 'reconnecting'
     | 'disconnected'
-  // `claude assistant`: count of background tasks (Agent calls, teammates,
+  // `dsxu assistant`: count of background tasks (Agent calls, teammates,
   // workflows) running inside the REMOTE daemon child. Event-sourced from
   // system/task_started and system/task_notification on the WS. The local
-  // AppState.tasks is always empty in viewer mode — the tasks live in a
+  // AppState.tasks is always empty in viewer mode ...the tasks live in a
   // different process.
   remoteBackgroundTaskCount: number
   // Always-on bridge: desired state (controlled by /config or footer toggle)
@@ -138,13 +133,13 @@ export type AppState = DeepImmutable<{
   replBridgeOutboundOnly: boolean
   // Always-on bridge: env registered + session created (= "Ready")
   replBridgeConnected: boolean
-  // Always-on bridge: ingress WebSocket is open (= "Connected" - user on claude.ai)
+  // Always-on bridge: ingress WebSocket is open (= "Connected" - user on dsxu.ai)
   replBridgeSessionActive: boolean
   // Always-on bridge: poll loop is in error backoff (= "Reconnecting")
   replBridgeReconnecting: boolean
   // Always-on bridge: connect URL for Ready state (?bridge=envId)
   replBridgeConnectUrl: string | undefined
-  // Always-on bridge: session URL on claude.ai (set when connected)
+  // Always-on bridge: session URL on dsxu.ai (set when connected)
   replBridgeSessionUrl: string | undefined
   // Always-on bridge: IDs for debugging (shown in dialog when --verbose)
   replBridgeEnvironmentId: string | undefined
@@ -158,7 +153,7 @@ export type AppState = DeepImmutable<{
 }> & {
   // Unified task state - excluded from DeepImmutable because TaskState contains function types
   tasks: { [taskId: string]: TaskState }
-  // Name → AgentId registry populated by Agent tool when `name` is provided.
+  // Name  -> AgentId registry populated by Agent tool when `name` is provided.
   // Latest-wins on collision. Used by SendMessage to route by name.
   agentNameRegistry: Map<string, AgentId>
   // Task ID that has been foregrounded - its messages are shown in main view
@@ -167,7 +162,7 @@ export type AppState = DeepImmutable<{
   viewingAgentTaskId?: string
   // Latest companion reaction from the friend observer (src/buddy/observer.ts)
   companionReaction?: string
-  // Timestamp of last /buddy pet — CompanionSprite renders hearts while recent
+  // Timestamp of last /buddy pet ...CompanionSprite renders hearts while recent
   companionPetAt?: number
   // TODO (ashwin): see if we can use utility-types DeepReadonly for this
   mcp: {
@@ -239,9 +234,9 @@ export type AppState = DeepImmutable<{
     command: string // The command string to display (e.g., "Enter", "echo hello")
     timestamp: number // When the command was sent
   }
-  // Sticky tmux panel visibility — mirrors globalConfig.tungstenPanelVisible for reactivity.
+  // Sticky tmux panel visibility ...mirrors globalConfig.tungstenPanelVisible for reactivity.
   tungstenPanelVisible?: boolean
-  // Transient auto-hide at turn end — separate from tungstenPanelVisible so the
+  // Transient auto-hide at turn end ...separate from tungstenPanelVisible so the
   // pill stays in the footer (user can reopen) but the panel content doesn't take
   // screen space when idle. Cleared on next Tmux tool use or user toggle. NOT persisted.
   tungstenPanelAutoHidden?: boolean
@@ -254,7 +249,7 @@ export type AppState = DeepImmutable<{
   // chicago MCP session state. Types inlined (not imported from
   // @ant/computer-use-mcp/types) so external typecheck passes without the
   // ant-scoped dep resolved. Shapes match `AppGrant`/`CuGrantFlags`
-  // structurally — wrapper.tsx assigns via structural compatibility. Only
+  // structurally ...wrapper.tsx assigns via structural compatibility. Only
   // populated when feature('CHICAGO_MCP') is active.
   computerUseMcpState?: {
     // Session-scoped app allowlist. NOT persisted across resume.
@@ -289,12 +284,12 @@ export type AppState = DeepImmutable<{
     // True when the model explicitly picked a display via `switch_display`.
     // Makes `handleScreenshot` skip the resolver chase chain and honor
     // `selectedDisplayId` directly. Cleared on resolver writeback (pinned
-    // display unplugged → Swift fell back to main) and on
+    // display unplugged  -> Swift fell back to main) and on
     // `switch_display("auto")`.
     displayPinnedByModel?: boolean
     // Sorted comma-joined bundle-ID set the display was last auto-resolved
     // for. `handleScreenshot` only re-resolves when the allowed set has
-    // changed since — keeps the resolver from yanking on every screenshot.
+    // changed since ...keeps the resolver from yanking on every screenshot.
     displayResolvedForApps?: string
   }
   // REPL tool VM context - persists across REPL calls for state sharing
@@ -445,14 +440,12 @@ export type AppState = DeepImmutable<{
   isUltraplanMode?: boolean
   // Always-on bridge: permission callbacks for bidirectional permission checks
   replBridgePermissionCallbacks?: BridgePermissionCallbacks
-  // Channel permission callbacks — permission prompts over Telegram/iMessage/etc.
+  // Channel permission callbacks ...permission prompts over Telegram/iMessage/etc.
   // Races against local UI + bridge + hooks + classifier via claim() in
   // interactiveHandler.ts. Constructed once in useManageMCPConnections.
   channelPermissionCallbacks?: ChannelPermissionCallbacks
 }
-
 export type AppStateStore = Store<AppState>
-
 export function getDefaultAppState(): AppState {
   // Determine initial permission mode for teammates spawned with plan_mode_required
   // Use lazy require to avoid circular dependency with teammate.ts
@@ -464,7 +457,6 @@ export function getDefaultAppState(): AppState {
     teammateUtils.isTeammate() && teammateUtils.isPlanModeRequired()
       ? 'plan'
       : 'default'
-
   return {
     settings: getInitialSettings(),
     tasks: {},
@@ -565,5 +557,33 @@ export function getDefaultAppState(): AppState {
     effortValue: undefined,
     activeOverlays: new Set<string>(),
     fastMode: false,
+  }
+}
+export function getDsxuAppStateRuntimeProfile() {
+  const state = getDefaultAppState()
+  return {
+    runtime: 'DSXU AppState Store',
+    bridgeDefaults: {
+      replBridgeEnabled: state.replBridgeEnabled,
+      replBridgeConnected: state.replBridgeConnected,
+      replBridgeSessionActive: state.replBridgeSessionActive,
+      remoteSessionUrl: state.remoteSessionUrl,
+    },
+    mainlineState: [
+      'toolPermissionContext',
+      'mcp',
+      'plugins',
+      'tasks',
+      'agentNameRegistry',
+      'fileHistory',
+      'sessionHooks',
+      'thinkingEnabled',
+      'promptSuggestion',
+    ],
+    activationEvidence: [
+      'DSXU default AppState starts with local tasks and MCP state, not DSXU bridge sessions',
+      'agentNameRegistry and tasks are first-class runtime state for coding workflows',
+      'toolPermissionContext is initialized before any tool execution',
+    ],
   }
 }

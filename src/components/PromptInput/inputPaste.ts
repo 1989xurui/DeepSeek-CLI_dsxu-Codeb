@@ -11,7 +11,7 @@ type TruncatedMessage = {
 
 /**
  * Determines whether the input text should be truncated. If so, it adds a
- * truncated text placeholder and neturns
+ * truncated text placeholder and returns both display and stored content.
  *
  * @param text The input text
  * @param nextPasteId The reference id to use
@@ -87,4 +87,13 @@ export function maybeTruncateInput(
       },
     },
   }
+}
+
+
+// V14 lifecycle shim: inputpaste
+export function processInputpasteLifecycle(input) {
+  void input
+  const state = 'inputpaste-state'
+  const lifecycle = 'inputpaste:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

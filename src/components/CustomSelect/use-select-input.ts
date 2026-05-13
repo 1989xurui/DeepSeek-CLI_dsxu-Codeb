@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useMemo } from 'react'
 import { useRegisterOverlay } from '../../context/overlayContext.js'
 import type { InputEvent } from '../../ink/events/input-event.js'
@@ -225,7 +226,7 @@ export const useSelectInput = <T>({
 
         // All other keys (including digits) pass through to TextInput.
         // Digits should type literally into the input rather than select
-        // options — the user has focused a text field and expects typing
+        // options ...the user has focused a text field and expects typing
         // to insert characters, not jump to a different option.
         return
       }

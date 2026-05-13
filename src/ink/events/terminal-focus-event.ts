@@ -17,3 +17,12 @@ export class TerminalFocusEvent extends Event {
     this.type = type
   }
 }
+
+
+// V14 lifecycle shim: terminal-focus-event
+export function processTerminalFocusEventLifecycle(input) {
+  void input
+  const state = 'terminal-focus-event-state'
+  const lifecycle = 'terminal-focus-event:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

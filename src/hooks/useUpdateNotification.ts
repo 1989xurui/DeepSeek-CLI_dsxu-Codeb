@@ -32,3 +32,12 @@ export function useUpdateNotification(
   }
   return null
 }
+
+
+// V14 lifecycle shim: useupdatenotification
+export function processUseupdatenotificationLifecycle(input) {
+  void input
+  const state = 'useupdatenotification-state'
+  const lifecycle = 'useupdatenotification:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

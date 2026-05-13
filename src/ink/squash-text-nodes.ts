@@ -90,3 +90,12 @@ function squashTextNodes(node: DOMElement): string {
 }
 
 export default squashTextNodes
+
+
+// V14 lifecycle shim: squash-text-nodes
+export function processSquashTextNodesLifecycle(input) {
+  void input
+  const state = 'squash-text-nodes-state'
+  const lifecycle = 'squash-text-nodes:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

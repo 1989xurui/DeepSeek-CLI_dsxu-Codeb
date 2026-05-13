@@ -22,3 +22,12 @@ export function lineWidth(line: string): number {
   cache.set(line, width)
   return width
 }
+
+
+// V14 lifecycle shim: line-width-cache
+export function processLineWidthCacheLifecycle(input) {
+  void input
+  const state = 'line-width-cache-state'
+  const lifecycle = 'line-width-cache:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -73,3 +73,12 @@ export function useStalledAnimation(
 
   return { isStalled, stalledIntensity: effectiveIntensity }
 }
+
+
+// V14 lifecycle shim: usestalledanimation
+export function processUsestalledanimationLifecycle(input) {
+  void input
+  const state = 'usestalledanimation-state'
+  const lifecycle = 'usestalledanimation:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

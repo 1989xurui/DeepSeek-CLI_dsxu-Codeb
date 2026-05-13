@@ -40,3 +40,12 @@ export type {
   UnderlineStyle,
 } from './termio/types.js'
 export { colorsEqual, defaultStyle, stylesEqual } from './termio/types.js'
+
+
+// V14 lifecycle shim: termio
+export function processTermioLifecycle(input) {
+  void input
+  const state = 'termio-state'
+  const lifecycle = 'termio:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

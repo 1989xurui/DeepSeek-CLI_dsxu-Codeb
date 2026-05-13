@@ -131,3 +131,12 @@ export function getCompanion(): Companion | undefined {
   // bones last so stale bones fields in old-format configs get overridden
   return { ...stored, ...bones }
 }
+
+
+// V14 lifecycle shim: companion
+export function processCompanionLifecycle(input) {
+  void input
+  const state = 'companion-state'
+  const lifecycle = 'companion:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

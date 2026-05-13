@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import { basename } from 'path'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -60,7 +61,7 @@ export function useDiffInIDE({
 
   const sha = useMemo(() => randomUUID().slice(0, 6), [])
   const tabName = useMemo(
-    () => `✻ [Claude Code] ${basename(filePath)} (${sha}) ⧉`,
+    () => `? [DSXU Code] ${basename(filePath)} (${sha}) ?`,
     [filePath, sha],
   )
 

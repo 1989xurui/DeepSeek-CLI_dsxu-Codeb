@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -378,7 +379,30 @@ function createPermissionQueueOps(
   }
 }
 
-export { createPermissionContext, createPermissionQueueOps, createResolveOnce }
+export function getDsxuPermissionContextRuntimeProfile(): {
+  runtime: 'DSXU Permission Context'
+  decisionSources: readonly string[]
+  queueOps: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Permission Context',
+    decisionSources: ['hook', 'user', 'classifier'],
+    queueOps: ['push', 'remove', 'update'],
+    activationEvidence: [
+      'runs PermissionRequest hooks before user prompt',
+      'persists approved permission updates through DSXU permission context',
+      'supports classifier auto-approval for Bash when enabled',
+      'aborts unsafe rejected main-session tool calls',
+    ],
+  }
+}
+
+export {
+  createPermissionContext,
+  createPermissionQueueOps,
+  createResolveOnce,
+}
 export type {
   PermissionContext,
   PermissionApprovalSource,

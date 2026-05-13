@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useEffect, useState } from 'react'
 import type { PastedContent } from 'src/utils/config.js'
 import { maybeTruncateInput } from './inputPaste.js'

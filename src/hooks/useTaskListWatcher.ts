@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { type FSWatcher, watch } from 'fs'
 import { useEffect, useRef } from 'react'
 import { logForDebugging } from '../utils/debug.js'
@@ -28,7 +29,7 @@ type Props = {
  * Hook that watches a task list directory and automatically picks up
  * open, unowned tasks to work on.
  *
- * This enables "tasks mode" where Claude watches for externally-created
+ * This enables "tasks mode" where DSXU watches for externally-created
  * tasks and processes them one at a time.
  */
 export function useTaskListWatcher({
@@ -42,7 +43,7 @@ export function useTaskListWatcher({
   // Stabilize unstable props via refs so the watcher effect doesn't depend on
   // them. isLoading flips every turn, and onSubmitTask's identity changes
   // whenever onQuery's deps change. Without this, the watcher effect re-runs
-  // on every turn, calling watcher.close() + watch() each time — which is a
+  // on every turn, calling watcher.close() + watch() each time ...which is a
   // trigger for Bun's PathWatcherManager deadlock (oven-sh/bun#27469).
   const isLoadingRef = useRef(isLoading)
   isLoadingRef.current = isLoading
@@ -52,7 +53,7 @@ export function useTaskListWatcher({
   const enabled = taskListId !== undefined
   const agentId = taskListId ?? DEFAULT_TASKS_MODE_TASK_LIST_ID
 
-  // checkForTasks reads isLoading and onSubmitTask from refs — always
+  // checkForTasks reads isLoading and onSubmitTask from refs ...always
   // up-to-date, no stale closure, and doesn't force a new function identity
   // per render. Stored in a ref so the watcher effect can call it without
   // depending on it.
@@ -155,7 +156,7 @@ export function useTaskListWatcher({
       watcher.unref()
       logForDebugging(`[TaskListWatcher] Watching for tasks in ${tasksDir}`)
     } catch (error) {
-      // fs.watch throws synchronously on ENOENT — ensureTasksDir should have
+      // fs.watch throws synchronously on ENOENT ...ensureTasksDir should have
       // created the dir, but handle the race gracefully
       logForDebugging(`[TaskListWatcher] Failed to watch ${tasksDir}: ${error}`)
     }
@@ -164,8 +165,7 @@ export function useTaskListWatcher({
     debouncedCheck()
 
     return () => {
-      // This cleanup only fires when taskListId changes or on unmount —
-      // never per-turn. That keeps watcher.close() out of the Bun
+      // This cleanup only fires when taskListId changes or on unmount ...      // never per-turn. That keeps watcher.close() out of the Bun
       // PathWatcherManager deadlock window.
       scheduleCheckRef.current = () => {}
       if (watcher) {
@@ -208,7 +208,7 @@ function findAvailableTask(tasks: Task[]): Task | undefined {
 }
 
 /**
- * Format a task as a prompt for Claude to work on.
+ * Format a task as a prompt for DSXU to work on.
  */
 function formatTaskAsPrompt(task: Task): string {
   let prompt = `Complete all open tasks. Start with task #${task.id}: \n\n ${task.subject}`

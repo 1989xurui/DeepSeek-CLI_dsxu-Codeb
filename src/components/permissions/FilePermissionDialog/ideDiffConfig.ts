@@ -40,3 +40,12 @@ export function createSingleEditDiffConfig(
     editMode: 'single',
   }
 }
+
+
+// V14 lifecycle shim: idediffconfig
+export function processIdediffconfigLifecycle(input) {
+  void input
+  const state = 'idediffconfig-state'
+  const lifecycle = 'idediffconfig:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

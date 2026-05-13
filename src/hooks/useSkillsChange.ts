@@ -60,3 +60,12 @@ export function useSkillsChange(
     [handleGrowthBookRefresh],
   )
 }
+
+
+// V14 lifecycle shim: useskillschange
+export function processUseskillschangeLifecycle(input) {
+  void input
+  const state = 'useskillschange-state'
+  const lifecycle = 'useskillschange:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

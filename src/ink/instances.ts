@@ -8,3 +8,12 @@ import type Ink from './ink.js'
 
 const instances = new Map<NodeJS.WriteStream, Ink>()
 export default instances
+
+
+// V14 lifecycle shim: instances
+export function processInstancesLifecycle(input) {
+  void input
+  const state = 'instances-state'
+  const lifecycle = 'instances:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

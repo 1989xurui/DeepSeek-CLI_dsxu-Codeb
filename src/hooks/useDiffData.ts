@@ -108,3 +108,12 @@ export function useDiffData(): DiffData {
     return { stats, files, hunks, loading: false }
   }, [diffResult, hunks, loading])
 }
+
+
+// V14 lifecycle shim: usediffdata
+export function processUsediffdataLifecycle(input) {
+  void input
+  const state = 'usediffdata-state'
+  const lifecycle = 'usediffdata:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { FocusManager } from './focus.js'
 import { createLayoutNode } from './layout/engine.js'
 import type { LayoutNode } from './layout/node.js'
@@ -63,7 +64,7 @@ export type DOMElement = {
   // Render-time clamp bounds for virtual scroll. useVirtualScroll writes
   // the currently-mounted children's coverage span; render-node-to-output
   // clamps scrollTop to stay within it. Prevents blank screen when
-  // scrollTo's direct write races past React's async re-render — instead
+  // scrollTo's direct write races past React's async re-render ...instead
   // of painting spacer (blank), the renderer holds at the edge of mounted
   // content until React catches up (next commit updates these bounds and
   // the clamp releases). Undefined = no clamp (sticky-scroll, cold start).
@@ -74,18 +75,18 @@ export type DOMElement = {
   scrollViewportTop?: number
   stickyScroll?: boolean
   // Set by ScrollBox.scrollToElement; render-node-to-output reads
-  // el.yogaNode.getComputedTop() (FRESH — same Yoga pass as scrollHeight)
+  // el.yogaNode.getComputedTop() (FRESH ...same Yoga pass as scrollHeight)
   // and sets scrollTop = top + offset, then clears this. Unlike an
   // imperative scrollTo(N) which bakes in a number that's stale by the
   // time the throttled render fires, the element ref defers the position
   // read to paint time. One-shot.
   scrollAnchor?: { el: DOMElement; offset: number }
-  // Only set on ink-root. The document owns focus — any node can
+  // Only set on ink-root. The document owns focus ...any node can
   // reach it by walking parentNode, like browser getRootNode().
   focusManager?: FocusManager
   // React component stack captured at createInstance time (reconciler.ts),
   // e.g. ['ToolUseLoader', 'Messages', 'REPL']. Only populated when
-  // CLAUDE_CODE_DEBUG_REPAINTS is set. Used by findOwnerChainAtRow to
+  // legacy debug-repaints env is set. Used by findOwnerChainAtRow to
   // attribute scrollback-diff full-resets to the component that caused them.
   debugOwnerChain?: string[]
 } & InkNode
@@ -230,7 +231,7 @@ function collectRemovedRects(
   if (removed.nodeName === '#text') return
   const elem = removed as DOMElement
   // If this node or any ancestor in the removed subtree was absolute,
-  // its painted pixels may overlap non-siblings — flag for global blit
+  // its painted pixels may overlap non-siblings ...flag for global blit
   // disable. Normal-flow removals only affect direct siblings, which
   // hasRemovedChild already handles.
   const isAbsolute = underAbsolute || elem.style.position === 'absolute'
@@ -374,7 +375,7 @@ const measureTextNode = function (
 }
 
 // ink-raw-ansi nodes hold pre-rendered ANSI strings with known dimensions.
-// No stringWidth, no wrapping, no tab expansion — the producer (e.g. ColorDiff)
+// No stringWidth, no wrapping, no tab expansion ...the producer (e.g. ColorDiff)
 // already wrapped to the target width and each line is exactly one terminal row.
 const measureRawAnsiNode = function (node: DOMElement): {
   width: number
@@ -459,7 +460,7 @@ export const clearYogaNodeReferences = (node: DOMElement | TextNode): void => {
  * the deepest node whose bounding box contains `y`. Called from ink.tsx when
  * log-update triggers a full reset, to attribute the flicker to its source.
  *
- * Only useful when CLAUDE_CODE_DEBUG_REPAINTS is set (otherwise chains are
+ * Only useful when legacy debug-repaints env is set (otherwise chains are
  * undefined and this returns []).
  */
 export function findOwnerChainAtRow(root: DOMElement, y: number): string[] {

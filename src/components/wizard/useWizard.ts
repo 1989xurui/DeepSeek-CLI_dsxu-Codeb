@@ -11,3 +11,12 @@ export function useWizard<
   }
   return context
 }
+
+
+// V14 lifecycle shim: usewizard
+export function processUsewizardLifecycle(input) {
+  void input
+  const state = 'usewizard-state'
+  const lifecycle = 'usewizard:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

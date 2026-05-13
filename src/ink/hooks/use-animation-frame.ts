@@ -55,3 +55,12 @@ export function useAnimationFrame(
 
   return [viewportRef, time]
 }
+
+
+// V14 lifecycle shim: use-animation-frame
+export function processUseAnimationFrameLifecycle(input) {
+  void input
+  const state = 'use-animation-frame-state'
+  const lifecycle = 'use-animation-frame:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useMemo, useRef } from 'react'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
 import type { Message } from '../types/message.js'
@@ -25,19 +26,19 @@ const EXTERNAL_COMMAND_PATTERNS = [
 ]
 
 const FRICTION_PATTERNS = [
-  // "No," or "No!" at start — comma/exclamation implies correction tone
+  // "No," or "No!" at start ...comma/exclamation implies correction tone
   // (avoids "No problem", "No thanks", "No I think we should...")
   /^no[,!]\s/i,
-  // Direct corrections about Claude's output
+  // Direct corrections about DSXU's output
   /\bthat'?s (wrong|incorrect|not (what|right|correct))\b/i,
   /\bnot what I (asked|wanted|meant|said)\b/i,
-  // Referencing prior instructions Claude missed
+  // Referencing prior instructions DSXU missed
   /\bI (said|asked|wanted|told you|already said)\b/i,
-  // Questioning Claude's actions
+  // Questioning DSXU's actions
   /\bwhy did you\b/i,
   /\byou should(n'?t| not)? have\b/i,
   /\byou were supposed to\b/i,
-  // Explicit retry/revert of Claude's work
+  // Explicit retry/revert of DSXU's work
   /\btry again\b/i,
   /\b(undo|revert) (that|this|it|what you)\b/i,
 ]
@@ -105,7 +106,7 @@ export function useIssueFlagBanner(
   // Memoize the O(messages) scans. This hook runs on every REPL render
   // (including every keystroke), but messages is stable during typing.
   // isSessionContainerCompatible walks all messages + regex-tests each
-  // bash command — by far the heaviest work here.
+  // bash command ...by far the heaviest work here.
   // biome-ignore lint/correctness/useHookAtTopLevel: process.env.USER_TYPE is a compile-time constant
   const shouldTrigger = useMemo(
     () => isSessionContainerCompatible(messages) && hasFrictionSignal(messages),

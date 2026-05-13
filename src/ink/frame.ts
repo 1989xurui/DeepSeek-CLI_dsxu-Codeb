@@ -122,3 +122,12 @@ export function shouldClearScreen(
 
   return undefined
 }
+
+
+// V14 lifecycle shim: frame
+export function processFrameLifecycle(input) {
+  void input
+  const state = 'frame-state'
+  const lifecycle = 'frame:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

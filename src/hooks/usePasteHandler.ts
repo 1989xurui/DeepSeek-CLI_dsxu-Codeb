@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { basename } from 'path'
 import React from 'react'
 import { logError } from 'src/utils/log.js'
@@ -9,6 +10,7 @@ import {
   PASTE_THRESHOLD,
   tryReadImageFromPath,
 } from '../utils/imagePaste.js'
+import { traceDsxuLifecycle } from '../utils/dsxuLifecycleTrace.js'
 import type { ImageDimensions } from '../utils/imageResizer.js'
 import { getPlatform } from '../utils/platform.js'
 
@@ -47,7 +49,7 @@ export function usePasteHandler({
   const isMountedRef = React.useRef(true)
   // Mirrors pasteState.timeoutId but updated synchronously. When paste + a
   // keystroke arrive in the same stdin chunk, both wrappedOnInput calls run
-  // in the same discreteUpdates batch before React commits — the second call
+  // in the same discreteUpdates batch before React commits ...the second call
   // reads stale pasteState.timeoutId (null) and takes the onInput path. If
   // that key is Enter, it submits the old input and the paste is lost.
   const pastePendingRef = React.useRef(false)
@@ -187,6 +189,10 @@ export function usePasteHandler({
             if (onPaste) {
               onPaste(pastedText)
             }
+            traceDsxuLifecycle('input_paste_flushed', {
+              length: pastedText.length,
+              lines: pastedText.split('\n').length,
+            })
             // Reset isPasting state after paste is complete
             setIsPasting(false)
             return { chunks: [], timeoutId: null }
@@ -258,6 +264,12 @@ export function usePasteHandler({
         isFromPaste)
 
     if (shouldHandleAsPaste) {
+      traceDsxuLifecycle('input_paste_chunk', {
+        length: input.length,
+        isFromPaste,
+        hasImageFilePath,
+        pastePending: pastePendingRef.current,
+      })
       pastePendingRef.current = true
       setPasteState(({ chunks, timeoutId }) => {
         return {

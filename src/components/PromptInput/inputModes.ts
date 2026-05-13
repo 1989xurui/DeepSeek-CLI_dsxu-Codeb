@@ -31,3 +31,12 @@ export function getValueFromInput(input: string): string {
 export function isInputModeCharacter(input: string): boolean {
   return input === '!'
 }
+
+
+// V14 lifecycle shim: inputmodes
+export function processInputmodesLifecycle(input) {
+  void input
+  const state = 'inputmodes-state'
+  const lifecycle = 'inputmodes:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

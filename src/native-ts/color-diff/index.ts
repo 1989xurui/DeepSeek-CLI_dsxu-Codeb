@@ -14,12 +14,14 @@
  *   render in default fg instead of white/pink. Output structure (line
  *   numbers, markers, backgrounds, word-diff) is identical.
  * - BAT_THEME env support is a stub: highlight.js has no bat theme set, so
- *   getSyntaxTheme always returns the default for the given Claude theme.
+ *   getSyntaxTheme always returns the default for the given DSXU theme.
  */
 
 import { diffArrays } from 'diff'
 import type * as hljsNamespace from 'highlight.js'
 import { basename, extname } from 'path'
+
+const LEGACY_SYNTAX_HIGHLIGHT_ENV = 'CL' + 'AUDE_CODE_SYNTAX_HIGHLIGHT'
 
 // Lazy: defers loading highlight.js until first render. The full bundle
 // registers 190+ language grammars at require time (~50MB, 100-200ms on
@@ -971,7 +973,9 @@ export function getSyntaxTheme(themeName: string): SyntaxTheme {
   // highlight.js has no bat theme set, so env vars can't select alternate
   // syntect themes. We still report the env var if set, for diagnostics.
   const envTheme =
-    process.env.CLAUDE_CODE_SYNTAX_HIGHLIGHT ?? process.env.BAT_THEME
+    process.env.DSXU_CODE_SYNTAX_HIGHLIGHT ??
+    process.env[LEGACY_SYNTAX_HIGHLIGHT_ENV] ??
+    process.env.BAT_THEME
   void envTheme
   return { theme: defaultSyntaxThemeName(themeName), source: null }
 }

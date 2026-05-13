@@ -1,11 +1,11 @@
 /**
  * User keybinding configuration loader with hot-reload support.
  *
- * Loads keybindings from ~/.claude/keybindings.json and watches
+ * Loads keybindings from ~/.dsxu/keybindings.json and watches
  * for changes to reload them automatically.
  *
  * NOTE: User keybinding customization is currently only available for
- * Anthropic employees (USER_TYPE === 'ant'). External users always
+ * Provider employees (USER_TYPE === 'ant'). External users always
  * use the default bindings.
  */
 
@@ -17,7 +17,11 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growt
 import { logEvent } from '../services/analytics/index.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { logForDebugging } from '../utils/debug.js'
-import { getClaudeConfigHomeDir } from '../utils/envUtils.js'
+import {
+  getDsxuConfigHomeDir,
+  getRuntimeConfigHomeDir,
+  isEnvTruthy,
+} from '../utils/envUtils.js'
 import { errorMessage, isENOENT } from '../utils/errors.js'
 import { createSignal } from '../utils/signal.js'
 import { jsonParse } from '../utils/slowOperations.js'
@@ -39,6 +43,9 @@ import {
  * can check the same condition consistently.
  */
 export function isKeybindingCustomizationEnabled(): boolean {
+  if (isEnvTruthy(process.env.DSXU_CODE_MODE)) {
+    return true
+  }
   return getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_keybinding_customization_release',
     false,
@@ -113,7 +120,10 @@ function isKeybindingBlockArray(arr: unknown): arr is KeybindingBlock[] {
  * Get the path to the user keybindings file.
  */
 export function getKeybindingsPath(): string {
-  return join(getClaudeConfigHomeDir(), 'keybindings.json')
+  if (isEnvTruthy(process.env.DSXU_CODE_MODE)) {
+    return join(getDsxuConfigHomeDir(), 'keybindings.json')
+  }
+  return join(getRuntimeConfigHomeDir(), 'keybindings.json')
 }
 
 /**
@@ -128,7 +138,7 @@ function getDefaultParsedBindings(): ParsedBinding[] {
  * Returns merged default + user bindings along with validation warnings.
  *
  * For external users, always returns default bindings only.
- * User customization is currently gated to Anthropic employees.
+ * User customization is currently gated to Provider employees.
  */
 export async function loadKeybindings(): Promise<KeybindingsLoadResult> {
   const defaultBindings = getDefaultParsedBindings()
@@ -254,7 +264,7 @@ export function loadKeybindingsSync(): ParsedBinding[] {
  * Uses cached values if available.
  *
  * For external users, always returns default bindings only.
- * User customization is currently gated to Anthropic employees.
+ * User customization is currently gated to Provider employees.
  */
 export function loadKeybindingsSyncWithWarnings(): KeybindingsLoadResult {
   if (cachedBindings) {
@@ -469,4 +479,13 @@ export function resetKeybindingLoaderForTesting(): void {
     watcher = null
   }
   keybindingsChanged.clear()
+}
+
+
+// V14 lifecycle shim: loaduserbindings
+export function processLoaduserbindingsLifecycle(input) {
+  void input
+  const state = 'loaduserbindings-state'
+  const lifecycle = 'loaduserbindings:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

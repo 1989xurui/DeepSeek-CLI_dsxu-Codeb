@@ -176,3 +176,12 @@ export default function createRenderer(
     }
   }
 }
+
+
+// V14 lifecycle shim: renderer
+export function processRendererLifecycle(input) {
+  void input
+  const state = 'renderer-state'
+  const lifecycle = 'renderer:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

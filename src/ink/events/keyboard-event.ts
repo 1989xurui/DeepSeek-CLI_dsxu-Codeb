@@ -49,3 +49,12 @@ function keyFromParsed(parsed: ParsedKey): string {
   // the parsed name. Browsers report e.key === 'ArrowDown'.
   return name || seq
 }
+
+
+// V14 lifecycle shim: keyboard-event
+export function processKeyboardEventLifecycle(input) {
+  void input
+  const state = 'keyboard-event-state'
+  const lifecycle = 'keyboard-event:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

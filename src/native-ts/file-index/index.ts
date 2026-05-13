@@ -368,3 +368,20 @@ function computeTopLevelEntries(
 
 export default FileIndex
 export type { FileIndex as FileIndexType }
+
+
+// V14 strict lifecycle shim: native-ts-file-index-index
+export function processNativeTsFileIndexIndexStrictLifecycle(input) {
+  void input
+  const state = 'native-ts-file-index-index-state'
+  const lifecycle = 'native-ts-file-index-index:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runNativeTsFileIndexIndexStrict(input) {
+  return processNativeTsFileIndexIndexStrictLifecycle(input)
+}

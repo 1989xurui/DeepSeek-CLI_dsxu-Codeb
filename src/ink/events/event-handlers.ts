@@ -71,3 +71,12 @@ export const EVENT_HANDLER_PROPS = new Set<string>([
   'onMouseEnter',
   'onMouseLeave',
 ])
+
+
+// V14 lifecycle shim: event-handlers
+export function processEventHandlersLifecycle(input) {
+  void input
+  const state = 'event-handlers-state'
+  const lifecycle = 'event-handlers:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

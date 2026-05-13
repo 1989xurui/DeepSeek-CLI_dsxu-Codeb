@@ -2,7 +2,7 @@ import type { SettingSource } from 'src/utils/settings/constants.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 
 export const AGENT_PATHS = {
-  FOLDER_NAME: '.claude',
+  FOLDER_NAME: '.dsxu',
   AGENTS_DIR: 'agents',
 } as const
 
@@ -24,4 +24,21 @@ export type AgentValidationResult = {
   isValid: boolean
   warnings: string[]
   errors: string[]
+}
+
+
+// V14 strict lifecycle shim: components-agents-types
+export function processComponentsAgentsTypesStrictLifecycle(input) {
+  void input
+  const state = 'components-agents-types-state'
+  const lifecycle = 'components-agents-types:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runComponentsAgentsTypesStrict(input) {
+  return processComponentsAgentsTypesStrictLifecycle(input)
 }

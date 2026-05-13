@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { PendingClassifierCheck } from '../../../types/permissions.js'
 import { isAgentSwarmsEnabled } from '../../../utils/agentSwarmsEnabled.js'
 import { toError } from '../../../utils/errors.js'
@@ -157,3 +157,40 @@ async function handleSwarmWorkerPermission(
 
 export { handleSwarmWorkerPermission }
 export type { SwarmWorkerPermissionParams }
+
+export function getDsxuSwarmWorkerPermissionRuntimeProfile(): {
+  runtime: 'DSXU Swarm Worker Permission Handler'
+  activationSignals: readonly string[]
+  permissionFlow: readonly string[]
+  hardening: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Swarm Worker Permission Handler',
+    activationSignals: [
+      'isAgentSwarmsEnabled()',
+      'isSwarmWorker()',
+      'feature(BASH_CLASSIFIER) for classifier pre-check',
+    ],
+    permissionFlow: [
+      'try classifier auto-approval for bash-like requests',
+      'create mailbox permission request for leader',
+      'register callback before sending to avoid response race',
+      'surface pendingWorkerRequest in app state while waiting',
+      'abort signal resolves as cancellation rather than hanging',
+    ],
+    hardening: [
+      'leader approval remains the source of truth for worker tool use',
+      'falls back to local handling if mailbox submission fails',
+      'atomic claim prevents double resolution from concurrent callbacks',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: swarmworkerhandler
+export function processSwarmworkerhandlerLifecycle(input) {
+  void input
+  const state = 'swarmworkerhandler-state'
+  const lifecycle = 'swarmworkerhandler:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -17,3 +17,12 @@ export function teamMemSavedPart(
     count,
   }
 }
+
+
+// V14 lifecycle shim: teammemsaved
+export function processTeammemsavedLifecycle(input) {
+  void input
+  const state = 'teammemsaved-state'
+  const lifecycle = 'teammemsaved:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

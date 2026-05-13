@@ -1,14 +1,15 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
-import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
+import type { RemotePermissionResponse } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
-} from '../remote/remotePermissionBridge.js'
+} from '../dsxu/engine/provider-backend/dsxu-remote-permission-bridge.js'
 import {
   convertSDKMessage,
   isSessionEndMessage,
-} from '../remote/sdkMessageAdapter.js'
+} from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
 import {
   type DirectConnectConfig,
   DirectConnectSessionManager,
@@ -165,12 +166,12 @@ export function useDirectConnect({
       onDisconnected: () => {
         logForDebugging('[useDirectConnect] Disconnected')
         if (!isConnectedRef.current) {
-          // Never connected — connection failure (e.g. auth rejected)
+          // Never connected ...connection failure (e.g. auth rejected)
           process.stderr.write(
             `\nFailed to connect to server at ${config.wsUrl}\n`,
           )
         } else {
-          // Was connected then lost — server process exited or network dropped
+          // Was connected then lost ...server process exited or network dropped
           process.stderr.write('\nServer disconnected.\n')
         }
         isConnectedRef.current = false
@@ -220,7 +221,7 @@ export function useDirectConnect({
     isConnectedRef.current = false
   }, [])
 
-  // Same stability concern as useRemoteSession — memoize so consumers
+  // Same stability concern as useRemoteSession ...memoize so consumers
   // that depend on the result object don't see a fresh reference per render.
   return useMemo(
     () => ({ isRemoteMode, sendMessage, cancelRequest, disconnect }),

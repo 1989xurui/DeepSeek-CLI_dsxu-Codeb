@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import React, { useCallback, useState } from 'react'
 import type { Key } from '../ink.js'
 import type { VimInputState, VimMode } from '../types/textInputTypes.js'
@@ -24,28 +25,23 @@ import {
   type VimState,
 } from '../vim/types.js'
 import { type UseTextInputProps, useTextInput } from './useTextInput.js'
-
 type UseVimInputProps = Omit<UseTextInputProps, 'inputFilter'> & {
   onModeChange?: (mode: VimMode) => void
   onUndo?: () => void
   inputFilter?: UseTextInputProps['inputFilter']
 }
-
 export function useVimInput(props: UseVimInputProps): VimInputState {
   const vimStateRef = React.useRef<VimState>(createInitialVimState())
   const [mode, setMode] = useState<VimMode>('INSERT')
-
   const persistentRef = React.useRef<PersistentState>(
     createInitialPersistentState(),
   )
-
   // inputFilter is applied once at the top of handleVimInput (not here) so
   // vim-handled paths that return without calling textInput.onInput still
-  // run the filter — otherwise a stateful filter (e.g. lazy-space-after-
-  // pill) stays armed across an Escape → NORMAL → INSERT round-trip.
+  // run the filter ...otherwise a stateful filter (e.g. lazy-space-after-
+  // pill) stays armed across an Escape  -> NORMAL  -> INSERT round-trip.
   const textInput = useTextInput({ ...props, inputFilter: undefined })
   const { onModeChange, inputFilter } = props
-
   const switchToInsertMode = useCallback(
     (offset?: number): void => {
       if (offset !== undefined) {
@@ -57,7 +53,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     },
     [textInput, onModeChange],
   )
-
   const switchToNormalMode = useCallback((): void => {
     const current = vimStateRef.current
     if (current.mode === 'INSERT' && current.insertedText) {
@@ -66,19 +61,16 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         text: current.insertedText,
       }
     }
-
     // Vim behavior: move cursor left by 1 when exiting insert mode
     // (unless at beginning of line or at offset 0)
     const offset = textInput.offset
     if (offset > 0 && props.value[offset - 1] !== '\n') {
       textInput.setOffset(offset - 1)
     }
-
     vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
     setMode('NORMAL')
     onModeChange?.('NORMAL')
   }, [onModeChange, textInput, props.value])
-
   function createOperatorContext(
     cursor: Cursor,
     isReplay: boolean = false,
@@ -105,14 +97,11 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
           },
     }
   }
-
   function replayLastChange(): void {
     const change = persistentRef.current.lastChange
     if (!change) return
-
     const cursor = Cursor.fromText(props.value, props.columns, textInput.offset)
     const ctx = createOperatorContext(cursor, true)
-
     switch (change.type) {
       case 'insert':
         if (change.text) {
@@ -121,35 +110,27 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
           textInput.setOffset(newCursor.offset)
         }
         break
-
       case 'x':
         executeX(change.count, ctx)
         break
-
       case 'replace':
         executeReplace(change.char, change.count, ctx)
         break
-
       case 'toggleCase':
         executeToggleCase(change.count, ctx)
         break
-
       case 'indent':
         executeIndent(change.dir, change.count, ctx)
         break
-
       case 'join':
         executeJoin(change.count, ctx)
         break
-
       case 'openLine':
         executeOpenLine(change.direction, ctx)
         break
-
       case 'operator':
         executeOperatorMotion(change.op, change.motion, change.count, ctx)
         break
-
       case 'operatorFind':
         executeOperatorFind(
           change.op,
@@ -159,7 +140,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
           ctx,
         )
         break
-
       case 'operatorTextObj':
         executeOperatorTextObj(
           change.op,
@@ -171,21 +151,18 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         break
     }
   }
-
   function handleVimInput(rawInput: string, key: Key): void {
     const state = vimStateRef.current
     // Run inputFilter in all modes so stateful filters disarm on any key,
-    // but only apply the transformed input in INSERT — NORMAL-mode command
+    // but only apply the transformed input in INSERT ...NORMAL-mode command
     // lookups expect single chars and a prepended space would break them.
     const filtered = inputFilter ? inputFilter(rawInput, key) : rawInput
     const input = state.mode === 'INSERT' ? filtered : rawInput
     const cursor = Cursor.fromText(props.value, props.columns, textInput.offset)
-
     if (key.ctrl) {
       textInput.onInput(input, key)
       return
     }
-
     // NOTE(keybindings): This escape handler is intentionally NOT migrated to the keybindings system.
     // It's vim's standard INSERT->NORMAL mode switch - a vim-specific behavior that should not be
     // configurable via keybindings. Vim users expect Esc to always exit INSERT mode.
@@ -193,19 +170,16 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       switchToNormalMode()
       return
     }
-
     // Escape in NORMAL mode cancels any pending command (replace, operator, etc.)
     if (key.escape && state.mode === 'NORMAL') {
       vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
       return
     }
-
     // Pass Enter to base handler regardless of mode (allows submission from NORMAL)
     if (key.return) {
       textInput.onInput(input, key)
       return
     }
-
     if (state.mode === 'INSERT') {
       // Track inserted text for dot-repeat
       if (key.backspace || key.delete) {
@@ -227,11 +201,9 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       textInput.onInput(input, key)
       return
     }
-
     if (state.mode !== 'NORMAL') {
       return
     }
-
     // In idle state, delegate arrow keys to base handler for cursor movement
     // and history fallback (upOrHistoryUp / downOrHistoryDown)
     if (
@@ -241,13 +213,11 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       textInput.onInput(input, key)
       return
     }
-
     const ctx: TransitionContext = {
       ...createOperatorContext(cursor, false),
       onUndo: props.onUndo,
       onDotRepeat: replayLastChange,
     }
-
     // Backspace/Delete are only mapped in motion-expecting states. In
     // literal-char states (replace, find, operatorFind), mapping would turn
     // r+Backspace into "replace with h" and df+Delete into "delete to next x".
@@ -259,7 +229,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       state.command.type === 'count' ||
       state.command.type === 'operator' ||
       state.command.type === 'operatorCount'
-
     // Map arrow keys to vim motions in NORMAL mode
     let vimInput = input
     if (key.leftArrow) vimInput = 'h'
@@ -269,13 +238,10 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     else if (expectsMotion && key.backspace) vimInput = 'h'
     else if (expectsMotion && state.command.type !== 'count' && key.delete)
       vimInput = 'x'
-
     const result = transition(state.command, vimInput, ctx)
-
     if (result.execute) {
       result.execute()
     }
-
     // Update command state (only if execute didn't switch to INSERT)
     if (vimStateRef.current.mode === 'NORMAL') {
       if (result.next) {
@@ -284,7 +250,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
         vimStateRef.current = { mode: 'NORMAL', command: { type: 'idle' } }
       }
     }
-
     if (
       input === '?' &&
       state.mode === 'NORMAL' &&
@@ -293,7 +258,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
       props.onChange('?')
     }
   }
-
   const setModeExternal = useCallback(
     (newMode: VimMode) => {
       if (newMode === 'INSERT') {
@@ -306,7 +270,6 @@ export function useVimInput(props: UseVimInputProps): VimInputState {
     },
     [onModeChange],
   )
-
   return {
     ...textInput,
     onInput: handleVimInput,

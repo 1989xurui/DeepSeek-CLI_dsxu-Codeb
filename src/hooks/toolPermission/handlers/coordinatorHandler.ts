@@ -5,12 +5,38 @@ import type { PermissionDecision } from '../../../utils/permissions/PermissionRe
 import type { PermissionUpdate } from '../../../utils/permissions/PermissionUpdateSchema.js'
 import type { PermissionContext } from '../PermissionContext.js'
 
+const AUTOMATED_PERMISSION_CHECK_TIMEOUT_MS = 5_000
+
 type CoordinatorPermissionParams = {
   ctx: PermissionContext
   pendingClassifierCheck?: PendingClassifierCheck | undefined
   updatedInput: Record<string, unknown> | undefined
   suggestions: PermissionUpdate[] | undefined
   permissionMode: string | undefined
+}
+
+async function withAutomatedCheckTimeout<T>(
+  promise: Promise<T>,
+  label: string,
+): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<null>(resolve => {
+        timer = setTimeout(() => {
+          logError(
+            new Error(
+              `Automated permission check timed out before dialog: ${label}`,
+            ),
+          )
+          resolve(null)
+        }, AUTOMATED_PERMISSION_CHECK_TIMEOUT_MS)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
 }
 
 /**
@@ -30,16 +56,21 @@ async function handleCoordinatorPermission(
 
   try {
     // 1. Try permission hooks first (fast, local)
-    const hookResult = await ctx.runHooks(
-      permissionMode,
-      suggestions,
-      updatedInput,
+    const hookResult = await withAutomatedCheckTimeout(
+      ctx.runHooks(permissionMode, suggestions, updatedInput),
+      'permission-hooks',
     )
     if (hookResult) return hookResult
 
     // 2. Try classifier (slow, inference -- bash only)
     const classifierResult = feature('BASH_CLASSIFIER')
-      ? await ctx.tryClassifier?.(params.pendingClassifierCheck, updatedInput)
+      ? await withAutomatedCheckTimeout(
+          Promise.resolve(
+            ctx.tryClassifier?.(params.pendingClassifierCheck, updatedInput) ??
+              null,
+          ),
+          'bash-classifier',
+        )
       : null
     if (classifierResult) {
       return classifierResult
@@ -63,3 +94,12 @@ async function handleCoordinatorPermission(
 
 export { handleCoordinatorPermission }
 export type { CoordinatorPermissionParams }
+
+
+// V14 lifecycle shim: coordinatorhandler
+export function processCoordinatorhandlerLifecycle(input) {
+  void input
+  const state = 'coordinatorhandler-state'
+  const lifecycle = 'coordinatorhandler:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -220,3 +220,12 @@ const BUN_STRING_WIDTH_OPTS = { ambiguousIsNarrow: true } as const
 export const stringWidth: (str: string) => number = bunStringWidth
   ? str => bunStringWidth(str, BUN_STRING_WIDTH_OPTS)
   : stringWidthJavaScript
+
+
+// V14 lifecycle shim: stringwidth
+export function processStringwidthLifecycle(input) {
+  void input
+  const state = 'stringwidth-state'
+  const lifecycle = 'stringwidth:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

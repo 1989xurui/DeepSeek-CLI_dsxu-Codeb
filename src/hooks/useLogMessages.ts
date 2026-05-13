@@ -117,3 +117,12 @@ export function useLogMessages(messages: Message[], ignore: boolean = false) {
     firstMessageUuidRef.current = currentFirstUuid
   }, [messages, ignore, teamContext?.teamName, teamContext?.selfAgentName])
 }
+
+
+// V14 lifecycle shim: uselogmessages
+export function processUselogmessagesLifecycle(input) {
+  void input
+  const state = 'uselogmessages-state'
+  const lifecycle = 'uselogmessages:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

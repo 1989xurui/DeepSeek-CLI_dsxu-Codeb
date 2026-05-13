@@ -57,3 +57,12 @@ export function useShortcutDisplay(
 
   return isFallback ? fallback : resolved
 }
+
+
+// V14 lifecycle shim: useshortcutdisplay
+export function processUseshortcutdisplayLifecycle(input) {
+  void input
+  const state = 'useshortcutdisplay-state'
+  const lifecycle = 'useshortcutdisplay:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

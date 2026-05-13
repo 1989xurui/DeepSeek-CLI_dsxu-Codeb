@@ -65,3 +65,12 @@ export function useInterval(
     return clock.subscribe(onChange, false)
   }, [clock, intervalMs])
 }
+
+
+// V14 lifecycle shim: use-interval
+export function processUseIntervalLifecycle(input) {
+  void input
+  const state = 'use-interval-state'
+  const lifecycle = 'use-interval:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

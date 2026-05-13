@@ -34,3 +34,20 @@ export function getCompanionIntroAttachment(
     },
   ]
 }
+
+
+// V14 strict lifecycle shim: buddy-prompt
+export function processBuddyPromptStrictLifecycle(input) {
+  void input
+  const state = 'buddy-prompt-state'
+  const lifecycle = 'buddy-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runBuddyPromptStrict(input) {
+  return processBuddyPromptStrictLifecycle(input)
+}

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import { useCallback, useEffect, useRef } from 'react'
 import { useInterval } from 'usehooks-ts'
@@ -74,7 +75,7 @@ import {
 /**
  * Get the agent name to poll for messages.
  * - In-process teammates return undefined (they use waitForNextPromptOrShutdown instead)
- * - Process-based teammates use their CLAUDE_CODE_AGENT_NAME
+ * - Process-based teammates use their DSXU_CODE_AGENT_NAME
  * - Team leads use their name from teamContext.teammates
  * - Standalone sessions return undefined
  */
@@ -331,12 +332,12 @@ export function useInboxPoller({
               )
             },
             async recheckPermission() {
-              // No-op for tmux workers — permission state is on the worker side
+              // No-op for tmux workers ...permission state is on the worker side
             },
           }
 
           // Deduplicate: if markMessagesAsRead failed on a prior poll,
-          // the same message will be re-read — skip if already queued.
+          // the same message will be re-read ...skip if already queued.
           setToolUseConfirmQueue(queue => {
             if (queue.some(q => q.toolUseID === parsed.tool_use_id)) {
               return queue
@@ -802,13 +803,13 @@ export function useInboxPoller({
     // Process regular teammate messages (existing logic)
     if (regularMessages.length === 0) {
       // No regular messages, but we may have processed non-regular messages
-      // (permissions, shutdown requests, etc.) above — mark those as read.
+      // (permissions, shutdown requests, etc.) above ...mark those as read.
       markRead()
       return
     }
 
-    // Format messages with XML wrapper for Claude (include color if available)
-    // Transform plan approval requests to include instructions for Claude
+    // Format messages with XML wrapper for DSXU (include color if available)
+    // Transform plan approval requests to include instructions for DSXU
     const formatted = regularMessages
       .map(m => {
         const colorAttr = m.color ? ` color="${m.color}"` : ''
@@ -859,7 +860,7 @@ export function useInboxPoller({
 
     // Mark messages as read only after they have been successfully delivered
     // or reliably queued in AppState. This prevents permanent message loss
-    // when the session is busy — if we crash before this point, the messages
+    // when the session is busy ...if we crash before this point, the messages
     // will be re-read on the next poll cycle instead of being silently dropped.
     markRead()
   }, [
@@ -914,7 +915,7 @@ export function useInboxPoller({
       `[InboxPoller] Session idle, delivering ${pendingMessages.length} pending message(s)`,
     )
 
-    // Format messages with XML wrapper for Claude (include color if available)
+    // Format messages with XML wrapper for DSXU (include color if available)
     const formatted = pendingMessages
       .map(m => {
         const colorAttr = m.color ? ` color="${m.color}"` : ''

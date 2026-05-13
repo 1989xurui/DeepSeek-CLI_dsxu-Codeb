@@ -74,3 +74,12 @@ export function usePromptInputPlaceholder({
 
   return placeholder
 }
+
+
+// V14 lifecycle shim: usepromptinputplaceholder
+export function processUsepromptinputplaceholderLifecycle(input) {
+  void input
+  const state = 'usepromptinputplaceholder-state'
+  const lifecycle = 'usepromptinputplaceholder:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -13,3 +13,12 @@ export function useTerminalSize(): TerminalSize {
 
   return size
 }
+
+
+// V14 lifecycle shim: useterminalsize
+export function processUseterminalsizeLifecycle(input) {
+  void input
+  const state = 'useterminalsize-state'
+  const lifecycle = 'useterminalsize:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

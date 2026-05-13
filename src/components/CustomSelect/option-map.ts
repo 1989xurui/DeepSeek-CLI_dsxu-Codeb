@@ -48,3 +48,12 @@ export default class OptionMap<T> extends Map<T, OptionMapItem<T>> {
     this.last = lastItem
   }
 }
+
+
+// V14 lifecycle shim: option-map
+export function processOptionMapLifecycle(input) {
+  void input
+  const state = 'option-map-state'
+  const lifecycle = 'option-map:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
