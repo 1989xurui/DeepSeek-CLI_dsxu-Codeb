@@ -440,7 +440,9 @@ export function buildDeferredProductAbsorptionRegister(
   ]
   const status: OwnerGitClosureStatus = blockers.length > 0
     ? 'BLOCKED'
-    : entries.some(entry => entry.status === 'PARTIAL') || reviewState.status === 'PARTIAL' || reviewState.status === 'NOT_PROVIDED'
+    : entries.length === 0
+      ? 'PASS'
+      : entries.some(entry => entry.status === 'PARTIAL') || reviewState.status === 'PARTIAL' || reviewState.status === 'NOT_PROVIDED'
       ? 'PARTIAL'
       : 'PASS'
 
