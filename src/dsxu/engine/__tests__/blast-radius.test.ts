@@ -18,10 +18,12 @@ import type { ToolContext } from '../types'
 import { mkdirSync, writeFileSync, rmSync } from 'fs'
 import { join, resolve } from 'path'
 
-const TEST_DIR = join(process.env.TEMP || '/tmp', 'dsxu-blast-test-' + Date.now())
-const ctx: ToolContext = { cwd: TEST_DIR, sessionId: 'test', gear: 1 }
+let TEST_DIR: string
+let ctx: ToolContext
 
 beforeEach(() => {
+  TEST_DIR = join(process.env.TEMP || '/tmp', 'dsxu-blast-test-' + Date.now())
+  ctx = { cwd: TEST_DIR, sessionId: 'test', gear: 1 }
   mkdirSync(TEST_DIR, { recursive: true })
 })
 

@@ -64,8 +64,8 @@ describe('checkProjectConfig', () => {
     expect(result.status).toBe('pass')
   })
 
-  it('should pass for CLAUDE.md', () => {
-    writeFileSync(join(TEST_DIR, 'CLAUDE.md'), '# Rules')
+  it('should pass for DSXU.md', () => {
+    writeFileSync(join(TEST_DIR, 'DSXU.md'), '# Rules')
     const result = checkProjectConfig(TEST_DIR)
     expect(result.status).toBe('pass')
   })

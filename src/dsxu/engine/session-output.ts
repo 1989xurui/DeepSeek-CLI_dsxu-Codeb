@@ -10,8 +10,7 @@
 
 import type { Message, AgentSummary } from './types'
 import { SessionStore, SessionData, SessionMeta } from './session-state'
-import { SessionSummaryManager, SessionMemoryNote } from './session-adapter'
-import { AgentSummaryManager } from './session-adapter'
+import { SessionSummaryManager, SessionMemoryNote, AgentSummaryManager } from './session-adapter'
 
 // ── 格式化输出接口 ──
 

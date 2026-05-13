@@ -1,4 +1,7 @@
 /**
+ * V14 FROZEN: tool-bus experiment entry retained only because Windows ACL
+ * blocked physical removal after copying to _deleted_files.
+ *
  * Tool Bus 洋葱圈架构 - 核心实现
  * 
  * 事件驱动的中间件总线，支持洋葱圈执行模型

@@ -294,19 +294,3 @@ function renderModelLabel(model: string | null): string {
   const rendered = renderDefaultModelSetting(model ?? getDefaultMainLoopModelSetting());
   return model === null ? `${rendered} (default)` : rendered;
 }
-
-// V14 strict lifecycle shim: commands-model-model
-export function processCommandsModelModelStrictLifecycle(input) {
-  void input
-  const state = 'commands-model-model-state'
-  const lifecycle = 'commands-model-model:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsModelModelStrict(input) {
-  return processCommandsModelModelStrictLifecycle(input)
-}

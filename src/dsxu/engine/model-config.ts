@@ -1,121 +1,146 @@
-/**
- * DeepSeek 模型配置管理器
- * 
- * 统一管理所有DeepSeek模型配置，去除Claude映射残留
- */
-
 import type { DeepSeekModelConfig } from './types'
+import {
+  DEEPSEEK_V4_CONTEXT_WINDOW,
+  DEEPSEEK_V4_FLASH_MODEL,
+  DEEPSEEK_V4_MAX_CHAT_OUTPUT_TOKENS,
+  DEEPSEEK_V4_MODEL_SPECS,
+  decideDeepSeekV4Route,
+  isDeepSeekV4ModelLike,
+  normalizeDeepSeekV4Model,
+  type DeepSeekV4ApiMode,
+  type DeepSeekV4Model,
+} from '../../utils/model/deepseekV4Control'
+import { getCompatDeepSeekModelMapping } from '../legacy/model/legacyProviderModelRuntimeCompat'
 
-/** DeepSeek 官方模型配置 */
-export const DEEPSEEK_MODELS: Record<string, DeepSeekModelConfig> = {
-  'deepseek-chat': {
-    name: 'deepseek-chat',
-    displayName: 'DeepSeek Chat',
-    contextWindow: 128_000,
-    maxOutputTokens: 8_192,
-    supportsReasoning: false,
-    defaultTemperature: 0.7,
-    supportsTools: true,
-    inputPricePerMillion: 0.14,
-    outputPricePerMillion: 0.28,
-  },
-  'deepseek-reasoner': {
-    name: 'deepseek-reasoner',
-    displayName: 'DeepSeek Reasoner',
-    contextWindow: 128_000,
-    maxOutputTokens: 65_536,
-    supportsReasoning: true,
-    defaultTemperature: 0.5,
-    supportsTools: true,
-    inputPricePerMillion: 0.28,
-    outputPricePerMillion: 0.56,
-  },
-  'deepseek-coder': {
-    name: 'deepseek-coder',
-    displayName: 'DeepSeek Coder',
-    contextWindow: 128_000,
-    maxOutputTokens: 8_192,
-    supportsReasoning: false,
-    defaultTemperature: 0.3,
-    supportsTools: true,
-    inputPricePerMillion: 0.14,
-    outputPricePerMillion: 0.28,
-  },
+export type DeepSeekApiMode = DeepSeekV4ApiMode
+
+export type DeepSeekModelFeature = {
+  supportsFim: boolean
+  fimMode: 'non_thinking_only' | 'unsupported'
+  supportedApiModes: DeepSeekApiMode[]
+  supportsThinkingMode: boolean
+  supportedReasoningEfforts: Array<'high' | 'max'>
+  supportsJsonOutput: boolean
+  supportsToolCalls: boolean
+  supportsPrefixCompletion: boolean
+  apiMode: DeepSeekApiMode
+  lifecycle: 'current' | 'compatibility'
 }
 
-/** 兼容性映射（向后兼容） */
-export const COMPATIBILITY_MAPPING: Record<string, string> = {
-  'claude-sonnet-4-6': 'deepseek-chat',
-  'claude-opus-4-6': 'deepseek-reasoner',
-  'gpt-4o': 'deepseek-chat',
-  'gpt-4o-mini': 'deepseek-chat',
-}
+export type DSXUDeepSeekModelConfig = DeepSeekModelConfig & DeepSeekModelFeature
 
-/**
- * 获取模型配置
- * @param modelName 模型名称（支持兼容性名称）
- * @returns 模型配置，如果未找到则返回默认配置
- */
-export function getModelConfig(modelName: string): DeepSeekModelConfig {
-  // 首先尝试直接匹配
-  if (DEEPSEEK_MODELS[modelName]) {
-    return DEEPSEEK_MODELS[modelName]
+export const DEEPSEEK_1M_CONTEXT_WINDOW = DEEPSEEK_V4_CONTEXT_WINDOW
+export const DEEPSEEK_V4_MAX_OUTPUT_TOKENS = DEEPSEEK_V4_MAX_CHAT_OUTPUT_TOKENS
+
+export const DEEPSEEK_MODELS: Record<DeepSeekV4Model, DSXUDeepSeekModelConfig> = Object.fromEntries(
+  Object.values(DEEPSEEK_V4_MODEL_SPECS).map(spec => [
+    spec.name,
+    {
+      name: spec.name,
+      displayName: spec.displayName,
+      contextWindow: spec.contextWindow,
+      maxOutputTokens: spec.maxOutputTokens,
+      supportsReasoning: spec.supportsReasoning,
+      defaultTemperature: spec.defaultTemperature,
+      supportsTools: spec.supportsTools,
+      supportsFim: spec.supportsFim,
+      fimMode: 'non_thinking_only',
+      supportedApiModes: [...spec.supportedApiModes],
+      supportsThinkingMode: true,
+      supportedReasoningEfforts: [...spec.supportedReasoningEfforts],
+      supportsJsonOutput: spec.supportsJsonOutput,
+      supportsToolCalls: spec.supportsTools,
+      supportsPrefixCompletion: spec.supportsPrefixCompletion,
+      apiMode: spec.defaultApiMode,
+      lifecycle: 'current',
+      inputPricePerMillion: spec.pricing.cacheMissInputPerMillion,
+      outputPricePerMillion: spec.pricing.outputPerMillion,
+    },
+  ]),
+) as Record<DeepSeekV4Model, DSXUDeepSeekModelConfig>
+
+export const COMPATIBILITY_MAPPING: Record<string, DeepSeekV4Model> =
+  getCompatDeepSeekModelMapping()
+
+export function getModelConfig(modelName: string): DSXUDeepSeekModelConfig {
+  if (modelName in DEEPSEEK_MODELS) {
+    return DEEPSEEK_MODELS[modelName as DeepSeekV4Model]
   }
 
-  // 尝试兼容性映射
   const mappedName = COMPATIBILITY_MAPPING[modelName]
   if (mappedName && DEEPSEEK_MODELS[mappedName]) {
     console.warn(`[ModelConfig] Using compatibility mapping: ${modelName} -> ${mappedName}`)
     return DEEPSEEK_MODELS[mappedName]
   }
 
-  // 默认配置（DeepSeek Chat）
+  if (isDeepSeekV4ModelLike(modelName)) {
+    return DEEPSEEK_MODELS[normalizeDeepSeekV4Model(modelName)]
+  }
+
   console.warn(`[ModelConfig] Model not found: ${modelName}, using default`)
-  return DEEPSEEK_MODELS['deepseek-chat']
+  return DEEPSEEK_MODELS[DEEPSEEK_V4_FLASH_MODEL]
 }
 
-/**
- * 检查是否为DeepSeek原生模型
- */
 export function isDeepSeekNativeModel(modelName: string): boolean {
   return modelName in DEEPSEEK_MODELS
 }
 
-/**
- * 检查是否为兼容性模型（Claude/GPT映射）
- */
 export function isCompatibilityModel(modelName: string): boolean {
   return modelName in COMPATIBILITY_MAPPING
 }
 
-/**
- * 获取所有可用的DeepSeek模型名称
- */
 export function getAvailableModels(): string[] {
   return Object.keys(DEEPSEEK_MODELS)
 }
 
-/**
- * 根据任务类型推荐模型
- */
-export function recommendModelForTask(taskType: string): DeepSeekModelConfig {
-  switch (taskType.toLowerCase()) {
-    case 'reasoning':
-    case 'analysis':
-    case 'planning':
-      return DEEPSEEK_MODELS['deepseek-reasoner']
-    case 'coding':
-    case 'programming':
-    case 'refactoring':
-      return DEEPSEEK_MODELS['deepseek-coder'] || DEEPSEEK_MODELS['deepseek-chat']
-    default:
-      return DEEPSEEK_MODELS['deepseek-chat']
+export function recommendModelForTask(taskType: string): DSXUDeepSeekModelConfig {
+  const normalized = taskType.toLowerCase()
+  const workflowKind =
+    /reasoning|analysis|planning|review|recovery/.test(normalized)
+      ? normalized === 'recovery' ? 'recovery' : normalized === 'review' ? 'review' : 'planning'
+      : /fim|completion|autocomplete/.test(normalized)
+        ? 'fim'
+        : /coding|programming|refactoring/.test(normalized)
+          ? 'feature'
+          : 'generic_chat'
+  const decision = decideDeepSeekV4Route({
+    workflowKind,
+    requiresFim: workflowKind === 'fim',
+  })
+  return DEEPSEEK_MODELS[decision.model]
+}
+
+export function selectDeepSeekModelForMode(input: { requiresReasoning?: boolean; requiresFim?: boolean; latencySensitive?: boolean }) {
+  const decision = decideDeepSeekV4Route({
+    workflowKind: input.requiresFim ? 'fim' : input.requiresReasoning && !input.latencySensitive ? 'planning' : 'generic_chat',
+    requiresFim: input.requiresFim,
+    requiresReasoning: input.requiresReasoning,
+    latencySensitive: input.latencySensitive,
+  })
+  return DEEPSEEK_MODELS[decision.model]
+}
+
+export function selectDeepSeekInvocationMode(input: {
+  requiresReasoning?: boolean
+  requiresFim?: boolean
+  complexAgentTask?: boolean
+  latencySensitive?: boolean
+}) {
+  const decision = decideDeepSeekV4Route({
+    workflowKind: input.requiresFim ? 'fim' : input.requiresReasoning && !input.latencySensitive ? 'planning' : 'generic_chat',
+    requiresFim: input.requiresFim,
+    requiresReasoning: input.requiresReasoning,
+    complexAgentTask: input.complexAgentTask,
+    latencySensitive: input.latencySensitive,
+  })
+
+  return {
+    model: DEEPSEEK_MODELS[decision.model],
+    apiMode: decision.apiMode,
+    reasoningEffort: decision.reasoningEffort,
   }
 }
 
-/**
- * 验证模型配置是否有效
- */
 export function validateModelConfig(config: DeepSeekModelConfig): string[] {
   const errors: string[] = []
 

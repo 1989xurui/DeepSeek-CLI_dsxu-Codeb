@@ -1,5 +1,5 @@
 /**
- * #5.1 Blast Radius Analysis — 变更影响分析
+ *
  *
  * 给定修改的文件/符号 → 分析波及范围：
  *   1. 解析 TypeScript import/export → 构建依赖图
@@ -429,7 +429,7 @@ export const BlastRadiusTool: ToolDefinition = {
 }
 
 /**
- * 快速 blast radius — 不需要完整依赖图，用 ripgrep 找引用
+ *
  * 适合单文件变更场景
  */
 export function quickBlastRadius(

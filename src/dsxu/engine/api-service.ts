@@ -1,32 +1,32 @@
-/**
- * #37 API Service — 三后端 Fallback
+﻿/**
+ * #37 API Service with three-backend fallback.
  *
- * DeepSeek（主） → OpenAI（备） → Ollama（本地兜底）
- * 自动健康检查 + 故障切换 + 恢复检测
+ * DeepSeek primary -> OpenAI backup -> Ollama local fallback.
+ * Provides automatic health checks, failover, and recovery checks.
  *
- * 用法：
- *   const api = new APIService()
- *   const call = api.createLLMCall()  // 返回 LLMCallFn，自动 fallback
  */
 
-import type { LLMCallFn, LLMResponse, Message, ToolSchema, LLMCallOptions } from './types'
 import { CircuitBreaker } from './circuit-breaker'
+import {
+  clampDeepSeekV4MaxTokens,
+  normalizeDeepSeekV4Model,
+} from '../../utils/model/deepseekV4Control'
 
 export interface APIBackend {
   name: string
   baseUrl: string
   apiKey: string
-  /** 模型名称映射 */
+  /** Model name mapping. */
   modelMap: Record<string, string>
-  /** 是否启用 */
+  /** Whether this backend is enabled. */
   enabled: boolean
-  /** 最后健康检查时间 */
+  /** Last health check timestamp. */
   lastHealthCheck: number
-  /** 是否健康 */
+  /** Whether the backend is healthy. */
   healthy: boolean
-  /** 连续失败次数 */
+  /** Consecutive failure count. */
   consecutiveFailures: number
-  /** 工业化断路器 */
+  /** Circuit breaker. */
   circuitBreaker: CircuitBreaker
 }
 
@@ -34,16 +34,16 @@ export interface APIServiceConfig {
   /** DeepSeek API key */
   deepseekKey?: string
   deepseekUrl?: string
-  /** OpenAI API key（可选备份） */
+  /** OpenAI API key for optional backup. */
   openaiKey?: string
   openaiUrl?: string
-  /** Ollama URL（本地兜底） */
+  /** Ollama URL for local fallback. */
   ollamaUrl?: string
-  /** 健康检查间隔 ms */
+  /** Health check interval in milliseconds. */
   healthCheckInterval?: number
-  /** 单个后端最大连续失败次数，超过标记为不健康 */
+  /** Maximum consecutive failures before marking a backend unhealthy. */
   maxFailures?: number
-  /** 断路器冷却期 */
+  /** Circuit breaker cooldown period. */
   circuitBreakerCooldownMs?: number
   /** OpenRouter referer header (optional) */
   openrouterReferer?: string
@@ -51,9 +51,9 @@ export interface APIServiceConfig {
   openrouterTitle?: string
 }
 
-const HEALTH_CHECK_INTERVAL = 60_000  // 1 分钟
+const HEALTH_CHECK_INTERVAL = 60_000  // 1 minute.
 const MAX_CONSECUTIVE_FAILURES = 3
-const RECOVERY_CHECK_INTERVAL = 5 * 60_000  // 5 分钟尝试恢复
+const RECOVERY_CHECK_INTERVAL = 5 * 60_000  // Retry recovery after 5 minutes.
 
 export class APIService {
   private backends: APIBackend[] = []
@@ -67,7 +67,7 @@ export class APIService {
     this.openrouterReferer = config?.openrouterReferer || process.env.OPENROUTER_HTTP_REFERER
     this.openrouterTitle = config?.openrouterTitle || process.env.OPENROUTER_X_TITLE
 
-    // 后端 1: DeepSeek（主）
+    // Backend 1: DeepSeek primary.
     const dsKey = config?.deepseekKey || process.env.DEEPSEEK_API_KEY || ''
     if (dsKey) {
       const deepseekBaseUrl = config?.deepseekUrl || process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1'
@@ -82,22 +82,22 @@ export class APIService {
         apiKey: dsKey,
         modelMap: isOpenRouter
           ? {
-              'deepseek-chat': process.env.OPENROUTER_CHAT_MODEL || 'deepseek/deepseek-chat-v3-0324',
-              'deepseek-reasoner': process.env.OPENROUTER_REASONER_MODEL || 'deepseek/deepseek-r1-0528',
+              'deepseek-v4-flash': process.env.OPENROUTER_CHAT_MODEL || 'deepseek/deepseek-v4-flash',
+              'deepseek-v4-pro': process.env.OPENROUTER_REASONER_MODEL || 'deepseek/deepseek-v4-pro',
             }
           : {
-              'deepseek-chat': 'deepseek-chat',
-              'deepseek-reasoner': 'deepseek-reasoner',
+              'deepseek-v4-flash': 'deepseek-v4-flash',
+              'deepseek-v4-pro': 'deepseek-v4-pro',
             },
         enabled: true,
         lastHealthCheck: 0,
-        healthy: true,  // 默认健康
+        healthy: true,  // Default healthy state.
         consecutiveFailures: 0,
         circuitBreaker,
       })
     }
 
-    // 后端 2: OpenAI（备用）
+    // Backend 2: OpenAI fallback.
     const oaiKey = config?.openaiKey || process.env.OPENAI_API_KEY || ''
     if (oaiKey) {
       const circuitBreaker = new CircuitBreaker({
@@ -109,8 +109,8 @@ export class APIService {
         baseUrl: config?.openaiUrl || 'https://api.openai.com/v1',
         apiKey: oaiKey,
         modelMap: {
-          'deepseek-chat': 'gpt-4o-mini',
-          'deepseek-reasoner': 'gpt-4o',
+          'deepseek-v4-flash': 'gpt-4o-mini',
+          'deepseek-v4-pro': 'gpt-4o',
         },
         enabled: true,
         lastHealthCheck: 0,
@@ -120,7 +120,7 @@ export class APIService {
       })
     }
 
-    // 后端 3: Ollama（本地兜底）
+    // Backend 3: local Ollama fallback.
     const ollamaUrl = config?.ollamaUrl || process.env.DSXU_OLLAMA_URL || 'http://localhost:11434'
     const circuitBreaker = new CircuitBreaker({
       failureThreshold: config?.maxFailures ?? MAX_CONSECUTIVE_FAILURES,
@@ -129,27 +129,27 @@ export class APIService {
     this.backends.push({
       name: 'ollama',
       baseUrl: ollamaUrl,
-      apiKey: '',  // Ollama 不需要 key
+      apiKey: '', // DSXU comment sanitized.
       modelMap: {
-        'deepseek-chat': 'deepseek-v2:latest',
-        'deepseek-reasoner': 'deepseek-r1:latest',
+        'deepseek-v4-flash': process.env.DSXU_OLLAMA_CHAT_MODEL || 'qwen3-coder:27b',
+        'deepseek-v4-pro': process.env.DSXU_OLLAMA_REASONER_MODEL || 'qwen3:27b',
       },
       enabled: true,
       lastHealthCheck: 0,
-      healthy: true,  // 假定可用，首次调用时检测
+      healthy: true,
       consecutiveFailures: 0,
       circuitBreaker,
     })
   }
 
-  /** 获取当前可用的后端列表（按优先级） */
+  /** DSXU comment sanitized. */
   getAvailableBackends(): APIBackend[] {
     // Let circuit breaker decide request eligibility. This enables half-open probes
     // for previously unhealthy backends after cooldown.
     return this.backends.filter(b => b.enabled && b.circuitBreaker.canRequest())
   }
 
-  /** 获取所有后端状态 */
+  /** DSXU comment sanitized. */
   getStatus(): Array<{ name: string; healthy: boolean; failures: number; breakerState: string }> {
     return this.backends.map(b => ({
       name: b.name,
@@ -159,7 +159,7 @@ export class APIService {
     }))
   }
 
-  /** 主动巡检所有后端，适合定时恢复与诊断 */
+  /** Actively probe all backends for scheduled recovery and diagnostics. */
   async probeBackends(): Promise<Array<{ name: string; healthy: boolean }>> {
     const results: Array<{ name: string; healthy: boolean }> = []
     for (const backend of this.backends) {
@@ -169,7 +169,7 @@ export class APIService {
     return results
   }
 
-  /** 开启后台健康巡检（可重复调用，已开启时不重复） */
+  /** Start backend health checks. Repeated calls do not start duplicates. */
   startHealthChecks(options?: { immediate?: boolean }): boolean {
     if (this.healthTimer) return false
 
@@ -203,27 +203,27 @@ export class APIService {
     return this.healthTimer !== null
   }
 
-  /** 标记后端失败 */
+  /** Mark backend failure. */
   private markFailure(backend: APIBackend): void {
     backend.consecutiveFailures++
     backend.circuitBreaker.recordFailure()
     if (backend.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       backend.healthy = false
-      console.warn(`[APIService] ❌ ${backend.name} 标记为不健康（连续失败 ${backend.consecutiveFailures} 次）`)
+      console.warn(`[APIService] ${backend.name} marked unhealthy after ${backend.consecutiveFailures} consecutive failures`)
     }
   }
 
-  /** 标记后端成功 */
+  /** Mark backend success. */
   private markSuccess(backend: APIBackend): void {
     if (!backend.healthy) {
-      console.log(`[APIService] ✅ ${backend.name} 恢复健康`)
+      console.log(`[APIService] ${backend.name} recovered`)
     }
     backend.consecutiveFailures = 0
     backend.healthy = true
     backend.circuitBreaker.recordSuccess()
   }
 
-  /** 健康检查单个后端 */
+  /** Check a single backend health state. */
   async checkHealth(backend: APIBackend): Promise<boolean> {
     try {
       const url = backend.name === 'ollama'
@@ -254,7 +254,7 @@ export class APIService {
     }
   }
 
-  /** 调用 LLM（带自动 fallback） */
+  /** DSXU comment sanitized. */
   async callWithFallback(
     messages: any[],
     tools: any[],
@@ -265,7 +265,7 @@ export class APIService {
     const available = this.getAvailableBackends()
 
     if (available.length === 0) {
-      // 尝试恢复所有后端
+      // Try to recover one backend before failing the request.
       for (const b of this.backends) {
         if (!b.circuitBreaker.canRequest()) continue
         if (await this.checkHealth(b)) {
@@ -274,7 +274,7 @@ export class APIService {
         }
       }
       if (available.length === 0) {
-        throw new Error('[APIService] 所有后端不可用')
+        throw new Error('[APIService] All configured backends are unavailable')
       }
     }
 
@@ -282,7 +282,8 @@ export class APIService {
 
     for (const backend of available) {
       try {
-        const mappedModel = backend.modelMap[model] || model
+        const normalizedModel = normalizeDeepSeekV4Model(model)
+        const mappedModel = backend.modelMap[model] || backend.modelMap[normalizedModel] || normalizedModel
         const url = backend.name === 'ollama'
           ? `${backend.baseUrl}/v1/chat/completions`
           : `${backend.baseUrl}/chat/completions`
@@ -290,7 +291,11 @@ export class APIService {
         const body: any = {
           model: mappedModel,
           messages,
-          max_tokens: maxTokens,
+          max_tokens: clampDeepSeekV4MaxTokens({
+            model: normalizedModel,
+            requestedMaxTokens: maxTokens,
+            endpointKind: 'chat_completions',
+          }),
         }
         if (tools?.length) body.tools = tools
 
@@ -322,81 +327,16 @@ export class APIService {
         const data = await resp.json()
         this.markSuccess(backend)
 
-        console.log(`[APIService] ✓ ${backend.name} (${mappedModel})`)
+        console.log(`[APIService] ${backend.name} (${mappedModel}) succeeded`)
         return { response: data, backend: backend.name }
       } catch (error: any) {
         lastError = error
         this.markFailure(backend)
-        console.warn(`[APIService] ${backend.name} 失败: ${error.message}, 尝试下一个...`)
+        console.warn(`[APIService] ${backend.name} failed: ${error.message}; trying next backend...`)
       }
     }
 
-    throw lastError || new Error('[APIService] 所有后端失败')
-  }
-
-  /** 创建 LLMCallFn（给 Query Engine 用） */
-  createLLMCall(): LLMCallFn {
-    return async (messages, tools, options) => {
-      // 转换 Message[] → OpenAI 格式
-      const oaiMessages = messages.map(m => {
-        if (m.role === 'tool') {
-          return { role: 'tool', tool_call_id: m.toolCallId, content: typeof m.content === 'string' ? m.content : '' }
-        }
-        if (m.role === 'assistant' && m.toolCalls?.length) {
-          return {
-            role: 'assistant',
-            content: typeof m.content === 'string' ? m.content : '',
-            tool_calls: m.toolCalls.map(tc => ({
-              id: tc.id,
-              type: 'function',
-              function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
-            })),
-          }
-        }
-        return { role: m.role, content: typeof m.content === 'string' ? m.content : '' }
-      })
-
-      // 转换 ToolSchema[] → OpenAI 格式
-      const oaiTools = tools.map(t => ({
-        type: 'function',
-        function: { name: t.name, description: t.description, parameters: t.inputSchema },
-      }))
-
-      const { response, backend } = await this.callWithFallback(
-        oaiMessages,
-        oaiTools,
-        options.model,
-        options.maxTokens ?? 8192,
-        options.abortSignal,
-      )
-
-      // 解析 OpenAI 格式响应
-      const choice = response.choices?.[0]
-      const msg = choice?.message ?? {}
-      const toolCalls = (msg.tool_calls ?? []).map((tc: any) => {
-        let args: Record<string, any> = {}
-        try { args = JSON.parse(tc.function?.arguments ?? '{}') } catch {}
-        return { id: tc.id, name: tc.function?.name ?? '', arguments: args }
-      })
-
-      const fr = choice?.finish_reason
-      return {
-        content: msg.content ?? '',
-        toolCalls,
-        reasoning: msg.reasoning_content,
-        stopReason: fr === 'tool_calls' ? 'tool_use'
-                  : fr === 'stop' ? 'end_turn'
-                  : fr === 'length' ? 'max_tokens'
-                  : 'end_turn',
-        usage: {
-          inputTokens: response.usage?.prompt_tokens ?? 0,
-          outputTokens: response.usage?.completion_tokens ?? 0,
-          cacheHit: (response.usage?.prompt_cache_hit_tokens ?? 0) > 0,
-          cacheReadTokens: response.usage?.prompt_cache_hit_tokens ?? 0,
-          cacheCreationTokens: response.usage?.prompt_cache_miss_tokens ?? 0,
-        },
-      } satisfies LLMResponse
-    }
+    throw lastError || new Error('[APIService] all backends failed')
   }
 
   destroy(): void {

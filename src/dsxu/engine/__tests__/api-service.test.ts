@@ -361,84 +361,21 @@ describe('APIService', () => {
     })
   })
 
-  describe('createLLMCall', () => {
-    it('should return LLMCallFn that converts message formats', async () => {
+  describe('provider transport boundary', () => {
+    it('returns raw provider response and backend owner to the model adapter', async () => {
       const api = new APIService(baseConfig)
       mockFetch.mockResolvedValueOnce(okChatResponse('response text'))
 
-      const llmCall = api.createLLMCall()
-      const result = await llmCall(
-        [
-          { role: 'system', content: 'You are helpful.' },
-          { role: 'user', content: 'hi' },
-        ],
-        [{ name: 'test', description: 'A test tool', inputSchema: { type: 'object' } }],
-        { model: 'deepseek-chat', maxTokens: 4096 },
+      const result = await api.callWithFallback(
+        [{ role: 'user', content: 'hi' }],
+        [{ type: 'function', function: { name: 'test', description: 'A test tool', parameters: { type: 'object' } } }],
+        'deepseek-chat',
+        4096,
       )
 
-      expect(result.content).toBe('response text')
-      expect(result.stopReason).toBe('end_turn')
-      expect(result.usage.inputTokens).toBe(10)
-      expect(result.usage.outputTokens).toBe(5)
-    })
-
-    it('should parse tool_calls from response', async () => {
-      const api = new APIService(baseConfig)
-      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({
-        choices: [{
-          message: {
-            content: '',
-            tool_calls: [{
-              id: 'call-1',
-              type: 'function',
-              function: { name: 'Bash', arguments: '{"command":"ls"}' },
-            }],
-          },
-          finish_reason: 'tool_calls',
-        }],
-        usage: { prompt_tokens: 20, completion_tokens: 10 },
-      }), { status: 200 }))
-
-      const llmCall = api.createLLMCall()
-      const result = await llmCall(
-        [{ role: 'user', content: 'list files' }],
-        [],
-        { model: 'deepseek-chat' },
-      )
-
-      expect(result.stopReason).toBe('tool_use')
-      expect(result.toolCalls).toHaveLength(1)
-      expect(result.toolCalls[0].name).toBe('Bash')
-      expect(result.toolCalls[0].arguments).toEqual({ command: 'ls' })
-    })
-
-    it('should convert tool messages correctly', async () => {
-      const api = new APIService(baseConfig)
-      mockFetch.mockResolvedValueOnce(okChatResponse())
-
-      const llmCall = api.createLLMCall()
-      await llmCall(
-        [
-          { role: 'user', content: 'hi' },
-          {
-            role: 'assistant',
-            content: '',
-            toolCalls: [{ id: 'tc-1', name: 'echo', arguments: { text: 'hi' } }],
-          },
-          { role: 'tool', content: 'Echo: hi', toolCallId: 'tc-1' },
-        ],
-        [],
-        { model: 'deepseek-chat' },
-      )
-
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      // Check tool message format
-      const toolMsg = body.messages.find((m: any) => m.role === 'tool')
-      expect(toolMsg.tool_call_id).toBe('tc-1')
-
-      // Check assistant with tool_calls
-      const assistantMsg = body.messages.find((m: any) => m.tool_calls)
-      expect(assistantMsg.tool_calls[0].function.name).toBe('echo')
+      expect(result.backend).toBe('deepseek')
+      expect(result.response.choices[0].message.content).toBe('response text')
+      expect(result.response.usage.prompt_tokens).toBe(10)
     })
   })
 })

@@ -16,6 +16,7 @@ import {
   calibrateFromResponse,
 } from '../token-estimator'
 import {
+  DEEPSEEK_CONTEXT_WINDOW,
   getBudgetKillThreshold,
   getBudgetTriggerRatio,
   shouldTriggerBudgetCompaction,
@@ -67,44 +68,52 @@ describe('Token Estimator', () => {
 })
 
 describe('Token Budget', () => {
-  it('should calculate budget for deepseek-chat', () => {
+  it('should calculate V4 window-aware budget for deepseek-chat compatibility alias', () => {
     const msgs: Message[] = [
       { role: 'user', content: 'Hello' },
       { role: 'assistant', content: 'Hi' },
     ]
     const budget = calculateTokenBudget(msgs, 'deepseek-chat')
 
-    expect(budget.maxContext).toBe(128_000)
+    expect(budget.maxContext).toBe(DEEPSEEK_CONTEXT_WINDOW)
     expect(budget.usedTokens).toBeGreaterThan(0)
-    expect(budget.remainingTokens).toBeLessThan(128_000)
+    expect(budget.remainingTokens).toBeLessThan(DEEPSEEK_CONTEXT_WINDOW)
     expect(budget.usagePercent).toBeLessThan(0.01)  // Tiny messages
     expect(budget.shouldCompact).toBe(false)
     expect(budget.isNearLimit).toBe(false)
   })
 
-  it('should flag shouldCompact at 70%', () => {
-    // 128K context × 0.7 = ~90K tokens needed. At 0.28 tok/char → ~321K chars
-    const bigMsg: Message = { role: 'user', content: 'x'.repeat(350_000) }
-    const budget = calculateTokenBudget([bigMsg], 'deepseek-chat')
+  it('should keep V4 long context below warning threshold without early compact', () => {
+    const longButHealthyMsg: Message = { role: 'user', content: 'x'.repeat(350_000) }
+    const budget = calculateTokenBudget([longButHealthyMsg], 'deepseek-chat')
+
+    expect(budget.maxContext).toBe(DEEPSEEK_CONTEXT_WINDOW)
+    expect(budget.shouldCompact).toBe(false)
+  })
+
+  it('should flag shouldCompact only near V4 route-aware threshold', () => {
+    // 1M context x 0.7 = ~734K tokens needed. At 0.28 tok/char this is ~2.63M chars.
+    const bigMsg: Message = { role: 'user', content: 'x'.repeat(2_700_000) }
+    const budget = calculateTokenBudget([bigMsg], 'deepseek-v4-flash')
 
     expect(budget.shouldCompact).toBe(true)
   })
 
-  it('should use 128K context for deepseek-reasoner', () => {
+  it('should map deepseek-reasoner compatibility alias to V4 window, not old 128K', () => {
     const msgs: Message[] = [
       { role: 'user', content: 'Reason about this bug deeply' },
     ]
     const budget = calculateTokenBudget(msgs, 'deepseek-reasoner')
-    expect(budget.maxContext).toBe(128_000)
+    expect(budget.maxContext).toBe(DEEPSEEK_CONTEXT_WINDOW)
   })
 
-  it('should clamp max_tokens to stay within prompt + output + margin <= 128K', () => {
-    const bigMsg: Message = { role: 'user', content: 'x'.repeat(440_000) }
-    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-chat', 8192, new Date('2026-04-13T12:00:00+08:00'))
+  it('should clamp max_tokens to stay within V4 prompt + output + margin window', () => {
+    const bigMsg: Message = { role: 'user', content: 'x'.repeat(3_500_000) }
+    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-v4-flash', 8192, new Date('2026-04-13T12:00:00+08:00'))
 
-    expect(result.contextLimit).toBe(128_000)
+    expect(result.contextLimit).toBe(DEEPSEEK_CONTEXT_WINDOW)
     expect(result.safetyMargin).toBe(2_000)
-    expect(result.promptTokens + result.maxTokens + result.safetyMargin).toBeLessThanOrEqual(128_000)
+    expect(result.promptTokens + result.maxTokens + result.safetyMargin).toBeLessThanOrEqual(DEEPSEEK_CONTEXT_WINDOW)
   })
 
   it('should use stricter night trigger ratio and kill threshold in Beijing off-peak', () => {
@@ -114,7 +123,7 @@ describe('Token Budget', () => {
   })
 
   it('should trigger budget compaction earlier at night', () => {
-    const promptTokens = 90_000
+    const promptTokens = 700_000
     const day = new Date('2026-04-13T12:00:00+08:00')
     const night = new Date('2026-04-13T01:00:00+08:00')
 
@@ -125,9 +134,9 @@ describe('Token Budget', () => {
   it('should apply model-specific safety margins', () => {
     const day = new Date('2026-04-13T12:00:00+08:00')
     const chatMargin = getSafetyMargin(day, 'deepseek-chat', 'normal')
-    const reasonerMargin = getSafetyMargin(day, 'deepseek-reasoner', 'normal')
+    const reasonerMargin = getSafetyMargin(day, 'deepseek-v4-pro', 'normal')
 
-    // reasoner should have higher safety margin (1.5x)
+    // Pro/reasoner route should have higher safety margin (1.5x).
     expect(reasonerMargin).toBeGreaterThan(chatMargin)
   })
 
@@ -143,8 +152,8 @@ describe('Token Budget', () => {
 
   it('should provide degradation strategies when over budget', () => {
     // 模拟超预算情况：prompt很大，请求的输出也很大
-    const bigMsg: Message = { role: 'user', content: 'x'.repeat(500_000) } // ~140K tokens
-    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-chat', 8192)
+    const bigMsg: Message = { role: 'user', content: 'x'.repeat(3_800_000) } // ~1.06M tokens
+    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-v4-flash', 393_216)
 
     expect(result.overBudget).toBe(true)
     expect(result.degradationStrategy).toBeDefined()
@@ -152,8 +161,8 @@ describe('Token Budget', () => {
   })
 
   it('should apply special strategy for reasoner model', () => {
-    const bigMsg: Message = { role: 'user', content: 'x'.repeat(500_000) }
-    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-reasoner', 65536)
+    const bigMsg: Message = { role: 'user', content: 'x'.repeat(3_500_000) }
+    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-v4-pro', 65_536)
 
     expect(result.reasonerStrategyApplied).toBe(true)
     // reasoner should handle high output limits differently
@@ -161,8 +170,8 @@ describe('Token Budget', () => {
   })
 
   it('should suggest compact threshold when input compression needed', () => {
-    const bigMsg: Message = { role: 'user', content: 'x'.repeat(500_000) }
-    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-chat', 8192)
+    const bigMsg: Message = { role: 'user', content: 'x'.repeat(3_800_000) }
+    const result = calculateBudgetedMaxTokens([bigMsg], 'deepseek-v4-flash', 393_216)
 
     if (result.degradationStrategy === 'compress_input' || result.degradationStrategy === 'emergency') {
       expect(result.suggestedCompactThreshold).toBeDefined()

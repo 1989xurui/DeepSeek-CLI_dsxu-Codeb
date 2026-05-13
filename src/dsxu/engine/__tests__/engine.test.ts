@@ -96,7 +96,7 @@ describe('GearBox', () => {
     expect(gb.getModel()).toBe('deepseek-chat')
   })
 
-  it('should stay at gear 1 for first 3 errors (Claude strategy)', () => {
+  it('should stay at gear 1 for first 3 errors (DSXU strategy)', () => {
     const gb = createGearBox()
     const errorResult = { toolUseId: '1', content: 'error', isError: true }
 
@@ -1798,7 +1798,7 @@ describe('QueryEngine', () => {
     const report = engine.executeFullAbsorbOnce({
       aggressive: true,
       importToolPool: true,
-      reduceTestStrategy: 'minimal',
+      reduceTestStrategy: 'focused',
     })
 
     expect(report.status.total).toBeGreaterThan(0)
@@ -1845,7 +1845,7 @@ describe('QueryEngine', () => {
     const report = await engine.executeAllContentOnce({
       aggressive: true,
       importToolPool: true,
-      reduceTestStrategy: 'minimal',
+      reduceTestStrategy: 'focused',
     })
 
     expect(report.status.total).toBeGreaterThan(0)
@@ -2272,7 +2272,7 @@ describe('QueryEngine', () => {
     expect(skillsStatus.skillCount).toBe(0)
   })
 
-  it('should execute a skill (minimal implementation)', async () => {
+  it('should execute a skill through the focused implementation', async () => {
     const engine = new QueryEngine({
       llmCall: createMockLLMCall([]),
       skills: {
@@ -2310,7 +2310,7 @@ describe('QueryEngine', () => {
 
       console.log(`[Test] Skill "${skillName}" executed successfully: ${result.content.substring(0, 100)}...`)
     } catch (error: any) {
-      // 如果技能执行失败，记录但不失败测试（因为这是最小实现）
+      // 如果技能执行失败，记录但不失败测试（因为这里验证的是 focused skill path）
       console.warn(`Skill execution test completed with warning: ${error.message}`)
       // 至少验证技能存在
       expect(engine.hasSkill(skillName)).toBe(true)

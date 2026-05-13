@@ -1,4 +1,7 @@
 /**
+ * V14 FROZEN: zero-import middleware retained only because Windows ACL blocked
+ * physical removal after copying to _deleted_files.
+ *
  * Metrics + Error Boundary 中间件
  * 
  * 功能：

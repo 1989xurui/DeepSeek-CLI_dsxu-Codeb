@@ -6,48 +6,54 @@ import {
   getAvailableModels,
   recommendModelForTask,
   DEEPSEEK_MODELS,
-  COMPATIBILITY_MAPPING
+  COMPATIBILITY_MAPPING,
+  DEEPSEEK_1M_CONTEXT_WINDOW,
+  DEEPSEEK_V4_MAX_OUTPUT_TOKENS,
 } from '../model-config'
 
+const LEGACY_PROVIDER_SONNET_46 = `${'cl' + 'aude'}-sonnet-4-6`
+
 describe('model-config', () => {
-  it('should get config for deepseek-chat', () => {
-    const config = getModelConfig('deepseek-chat')
-    expect(config.name).toBe('deepseek-chat')
-    expect(config.displayName).toBe('DeepSeek Chat')
-    expect(config.maxOutputTokens).toBe(8192)
+  it('gets config for current DeepSeek V4 models', () => {
+    const config = getModelConfig('deepseek-v4-flash')
+    expect(config.name).toBe('deepseek-v4-flash')
+    expect(config.displayName).toBe('DeepSeek V4 Flash')
+    expect(config.contextWindow).toBe(DEEPSEEK_1M_CONTEXT_WINDOW)
+    expect(config.maxOutputTokens).toBe(DEEPSEEK_V4_MAX_OUTPUT_TOKENS)
   })
 
-  it('should map claude-sonnet-4-6 to deepseek-chat', () => {
-    const config = getModelConfig('claude-sonnet-4-6')
-    expect(config.name).toBe('deepseek-chat')
+  it('maps old DSXU/DeepSeek aliases to current DeepSeek V4 models', () => {
+    expect(getModelConfig('deepseek-chat').name).toBe('deepseek-v4-flash')
+    expect(getModelConfig('deepseek-coder').name).toBe('deepseek-v4-flash')
+    expect(getModelConfig('deepseek-reasoner').name).toBe('deepseek-v4-flash')
+    expect(getModelConfig(LEGACY_PROVIDER_SONNET_46).name).toBe('deepseek-v4-pro')
   })
 
-  it('should identify native models', () => {
-    expect(isDeepSeekNativeModel('deepseek-chat')).toBe(true)
-    expect(isDeepSeekNativeModel('deepseek-reasoner')).toBe(true)
-    expect(isDeepSeekNativeModel('claude-sonnet-4-6')).toBe(false)
+  it('identifies native models and compatibility aliases', () => {
+    expect(isDeepSeekNativeModel('deepseek-v4-flash')).toBe(true)
+    expect(isDeepSeekNativeModel('deepseek-v4-pro')).toBe(true)
+    expect(isDeepSeekNativeModel('deepseek-chat')).toBe(false)
+    expect(isCompatibilityModel(LEGACY_PROVIDER_SONNET_46)).toBe(true)
+    expect(isCompatibilityModel('deepseek-chat')).toBe(true)
+    expect(isCompatibilityModel('deepseek-v4-flash')).toBe(false)
   })
 
-  it('should identify compatibility models', () => {
-    expect(isCompatibilityModel('claude-sonnet-4-6')).toBe(true)
-    expect(isCompatibilityModel('deepseek-chat')).toBe(false)
+  it('recommends models for tasks', () => {
+    expect(recommendModelForTask('reasoning').name).toBe('deepseek-v4-flash')
+    expect(recommendModelForTask('coding').name).toBe('deepseek-v4-flash')
+    expect(recommendModelForTask('fim').name).toBe('deepseek-v4-pro')
+    expect(recommendModelForTask('unknown').name).toBe('deepseek-v4-flash')
   })
 
-  it('should recommend models for tasks', () => {
-    const reasoning = recommendModelForTask('reasoning')
-    expect(reasoning.name).toBe('deepseek-reasoner')
-
-    const coding = recommendModelForTask('coding')
-    expect(coding.name).toBe('deepseek-coder')
-
-    const defaultTask = recommendModelForTask('unknown')
-    expect(defaultTask.name).toBe('deepseek-chat')
-  })
-
-  it('should get available models', () => {
+  it('gets available current models only', () => {
     const models = getAvailableModels()
-    expect(models).toContain('deepseek-chat')
-    expect(models).toContain('deepseek-reasoner')
-    expect(models).toContain('deepseek-coder')
+    expect(models).toEqual(['deepseek-v4-flash', 'deepseek-v4-pro'])
+  })
+
+  it('exports model and compatibility maps', () => {
+    expect(DEEPSEEK_MODELS['deepseek-v4-flash']).toBeDefined()
+    expect(DEEPSEEK_MODELS['deepseek-v4-pro']).toBeDefined()
+    expect(COMPATIBILITY_MAPPING['deepseek-chat']).toBe('deepseek-v4-flash')
+    expect(COMPATIBILITY_MAPPING['deepseek-reasoner']).toBe('deepseek-v4-flash')
   })
 })

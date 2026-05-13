@@ -1,32 +1,56 @@
-﻿/**
- * DSxu Query Engine 鈥?璺嚎 B 鐨勫績鑴? *
- * 鍗曟ā鍨?tool use loop锛堝 Claude 鏋舵瀯锛? DSxu 涓夊ぇ鐙湁鑳藉姏锛? * - 姝ラ绾т笁妗ｅ彉閫? * - MSA 涓夌骇璁板繂
- * - 娴嬭瘯椹卞姩鑷不锛圫.1锛? *
- * 鐢ㄦ硶锛? *   import { QueryEngine } from './engine'
+/**
+ * DSXU Query Engine public API.
  *
- *   const engine = new QueryEngine({
- *     llmCall: createProxyLLMCall(),
- *   })
- *   engine.registerTool({ name: 'Bash', ... })
- *
- *   const result = await engine.run('甯垜淇 auth.ts 鐨?bug')
- *   // 鎴栫敤 async generator 瀹炴椂鐩戝惉锛? *   for await (const event of engine.stream('甯垜淇 auth.ts 鐨?bug')) {
- *     console.log(event.type)
- *   }
+ * The engine wires the tool registry, query loop, MCP, memory, and streaming
+ * entry points used by the DSXU runtime.
  */
 
 export { ToolRegistry } from './tool-registry'
 export { createGearBox } from './gear-box'
 export { queryLoop, runQuery } from './query-loop'
-export { createProxyLLMCall, createDirectLLMCall, createMockLLMCall } from './llm-adapter'
+export { createMockLLMCall, createPreferredDSXULLMCall } from './llm-adapter'
 export { getCoreTools, getReadOnlyTools, BashTool, ReadTool, WriteTool, EditTool, GrepTool, GlobTool } from './builtin-tools'
-export { APIService } from './api-service'
+export {
+  adaptMainlineToolToEngine,
+  getMainlineCoreToolAdapters,
+  getMainlineMcpToolAdaptersForClients,
+  registerMainlineCoreToolAdapters,
+  registerMainlineMcpToolAdapters,
+} from './engine-tool-adapter'
 export type { APIServiceConfig, APIBackend } from './api-service'
 export { CircuitBreaker } from './circuit-breaker'
 export type { CircuitBreakerConfig, CircuitBreakerSnapshot, CircuitBreakerState } from './circuit-breaker'
-export { microCompact, fullCompact, autoCompactIfNeeded } from './compact'
-export type { CompactConfig, CompactResult } from './compact'
-export { PermissionManager, classifyBashCommand, getToolSafetyLevel, withPermissions } from './permissions'
+export {
+  microCompact,
+  fullCompact,
+  lightCompact,
+  autoCompactIfNeeded,
+  compactMessages,
+  CompactionManager,
+  checkContextHygiene,
+  applyContextHygiene,
+  decideCompactionWithHygiene,
+  applyHygieneAndCompact
+} from './compact.ts'
+export type {
+  CompactConfig,
+  CompactResult,
+  CompactInput,
+  CompactMetadata,
+  CompactLevel,
+  ContextHygieneIssueType,
+  ContextHygieneIssue,
+  ContextHygieneResult
+} from './compact.ts'
+export {
+  addToolGatePermissionRule,
+  checkToolGatePermission,
+  classifyBashCommand,
+  createToolGatePermissionPolicy,
+  getToolSafetyLevel,
+  setToolGatePermissionMode,
+  withPermissions,
+} from './permissions'
 export type { PermissionMode, ToolSafetyLevel, PermissionDecision, PermissionCheckResult, PermissionRule } from './permissions'
 export { parseFrontmatter, parseFrontmatterFromFile, composeFrontmatter } from './frontmatter-parser'
 export type { FrontmatterResult } from './frontmatter-parser'
@@ -37,24 +61,22 @@ import { createForkAgentTool } from './forked-agent'
 import { SkillsAdapter, createSkillsAdapter, type SkillsAdapterConfig } from './skills-adapter'
 import { SpeculationManager, createSpeculationManager, type SpeculationStrategy } from './speculation'
 import { getModelConfig, isDeepSeekNativeModel, getAvailableModels, recommendModelForTask } from './model-config'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../utils/model/deepseekV4Control'
+import { createLifecycleProtocolManager } from './lifecycle-protocol-manager'
+import type { LifecycleProtocolManager } from './coordinator-types-v1'
 export { WebFetchTool, WebSearchTool, TodoWriteTool, AskUserTool, RewindFilesTool, getExtendedTools, getAllTools, setAskUserCallback } from './extended-tools'
 export { createFork, createForkAgentTool, ForkAgentTool, getActiveForkCount, extractStructuredSummary } from './forked-agent'
 export type { ForkConfig, ForkResult, AgentSummary } from './forked-agent'
 export { LSPTool, parseTscOutput, collectProjectDiagnostics } from './lsp-tool'
 export type { Diagnostic } from './lsp-tool'
-export { MCPManager, MCPConnection } from './mcp-client'
-export type { MCPServerConfig, MCPTool, MCPResource, MCPResourceTemplate } from './mcp-client'
+export type { MCPServerConfig, MCPResource, MCPResourceTemplate } from './mcp-client'
 export { estimateTokens, estimateMessageTokens, estimateAllTokens, calculateTokenBudget, tokenAccuracyMonitor, calibrateFromResponse } from './token-estimator'
 export type { TokenBudget, TokenAccuracyStats } from './token-estimator'
 export { DEEPSEEK_CONTEXT_WINDOW, DEEPSEEK_MAX_OUTPUT_TOKENS, DEFAULT_SAFETY_MARGIN, NIGHT_SAFETY_MARGIN, isBeijingOffPeak, getSafetyMargin, getModelContextLimit, getModelMaxOutputTokens, clampMaxTokensToBudget } from './model-limits'
 export { buildProxyBudgetGuard, summarizeBudgetMessages, advanceBudgetGuardState, resetBudgetGuardState, buildBudgetIncidentDetails, shouldBlockProxyRequest, buildLocalBudgetExceededError, buildBudgetKillSwitchPayload } from './proxy-budget-guard'
 export type { ProxyBudgetBase, ProxyBudgetGuard, ProxyBudgetGuardState, ProxyBudgetGuardTransition, BudgetMessageSummary, BudgetKillSwitchPayload } from './proxy-budget-guard'
-export { resolveAPIMicrocompactBridge } from './api-microcompact-bridge'
-export type { APIMicrocompactBridgeOptions, APIMicrocompactBridgeResult } from './api-microcompact-bridge'
 export { extractMemories, extractFromCompactSummary, MemoryStore, AutoDreamIntegrator } from './memory-extractor'
 export type { Memory, ExtractionResult } from './memory-extractor'
-export { SkillsAdapter, createSkillsAdapter } from './skills-adapter'
-export type { SkillsAdapterConfig } from './skills-adapter'
 export { CacheMonitor } from './cache-monitor'
 export type { CacheStats, CacheBreakEvent } from './cache-monitor'
 export {
@@ -84,6 +106,14 @@ export { executeToolsParallel, ToolResultCache } from './parallel-tools'
 export type { ParallelConfig, ToolExecResult, ToolCacheConfig } from './parallel-tools'
 export { CostTracker, estimateCost, MODEL_PRICING } from './cost-tracker'
 export type { CostEntry, CostBudget, CostAlert, ModelPricing } from './cost-tracker'
+// Bug Brain 碌录鲁枚
+export { BugBrain, defaultBugBrain } from './bug-brain/index'
+export { bugBrainHooks, quickRecordBug } from './bug-brain/integration'
+export type { BugRecord, BugCategory, BugSeverity, BugSource, BugContext, BugPattern, FixPattern, BugAnalysis } from './bug-brain/types'
+// Runtime Core 脥鲁脪禄碌录鲁枚 (V8-2.5 露鲁陆谩掳忙)
+export * from './runtime-core'
+
+// 脧貌潞贸录忙脠脻碌录鲁枚
 export { SessionStore, ContextWindowManager, generateTitle, SessionSummaryManager, AgentSummaryManager, SessionReportGenerator, generateSessionCard, generateSessionTable } from './session'
 export type { SessionMeta, SessionData, ContextWindowConfig, SessionSummaryConfig, SessionMemoryNote, SessionReportOptions, SessionReport } from './session'
 export { SystemPromptBuilder, buildSystemPrompt } from './system-prompt'
@@ -112,9 +142,6 @@ export { WorktreeOrchestrator } from './worktree-orchestrator'
 export type { WorktreeOrchestratorConfig } from './worktree-orchestrator'
 export { EvoEngine } from './evo-engine'
 export type { EvoEngineConfig } from './evo-engine'
-export { scanFullAbsorbStatus, buildFullAbsorbActions } from './full-absorb'
-export { executeFullAbsorbPlan } from './full-absorb-executor'
-export { connectLegacyFullAbsorbBridges } from './legacy-full-bridge'
 export { checkCommand, checkApiKey, checkProjectConfig, checkNodeVersion, runDoctor, formatDoctorReport, getVersionInfo, getAuth, validateApiKey, VERSION } from './doctor'
 export type { HealthCheck, DoctorReport, AuthConfig } from './doctor'
 export { TaskQueue, WorkspaceManager, analyzeWorkspace, discoverProjects } from './task-queue'
@@ -123,8 +150,22 @@ export { CodingTaskRunner } from './coding-task-runner'
 export type { CodingTaskSpec, CodingTaskRunRecord } from './coding-task-runner'
 export { getToolCapabilityPool, getToolCapabilityPoolSnapshot } from './tool-capability-pool'
 export type { ToolCapabilityPoolName } from './tool-capability-pool'
+export { createLifecycleProtocolManager } from './lifecycle-protocol-manager'
+export type {
+  LifecycleProtocol,
+  ProtocolState,
+  ProtocolCheckpoint,
+  ProtocolRecoveryStrategy,
+  ProtocolMetric,
+  ProtocolTransition,
+  ProtocolAction,
+  ProtocolValidation,
+  ProtocolMetricsSnapshot
+} from './coordinator-types-v1'
+export type { LifecycleProtocolManager } from './coordinator-types-v1'
 export { formatTokens, formatCost, formatDuration, formatBytes, truncate, formatTable, simplifyMarkdown, validateFilePath, validateJSON, checkInjection, sanitizeInput, initProject, PluginManager } from './formatters'
 export type { InitResult, PluginManifest, PluginRegistration } from './formatters'
+export * from './recovery'
 export * from './types'
 
 import type {
@@ -136,14 +177,11 @@ import type {
 } from './types'
 import { ToolRegistry } from './tool-registry'
 import { queryLoop } from './query-loop'
-import { createProxyLLMCall } from './llm-adapter'
+import { createPreferredDSXULLMCall } from './llm-adapter'
 import { MCPManager } from './mcp-client'
 import { ReviewerSubagent } from './reviewer-subagent'
 import { WorktreeOrchestrator } from './worktree-orchestrator'
 import { EvoEngine } from './evo-engine'
-import { scanFullAbsorbStatus, buildFullAbsorbActions } from './full-absorb'
-import { executeFullAbsorbPlan } from './full-absorb-executor'
-import { connectLegacyFullAbsorbBridges } from './legacy-full-bridge'
 import { getAllTools } from './extended-tools'
 import { getDebugTools } from './debug-tools'
 import { BlastRadiusTool } from './blast-radius'
@@ -153,10 +191,9 @@ import {
   getToolCapabilityPoolSnapshot,
 } from './tool-capability-pool'
 import type { ToolCapabilityPoolName } from './tool-capability-pool'
+import { ToolProtocolIntegration } from './tool-protocol-integration'
 
-/**
- * DSxu Query Engine 鈥?楂樺眰 API
- */
+/** DSXU Query Engine high-level API. */
 export class QueryEngine {
   private config: QueryEngineConfig
   private toolRegistry: ToolRegistry
@@ -164,18 +201,22 @@ export class QueryEngine {
   private mcpInitialized = false
   private memoryStore: MemoryStore
   private autoDreamIntegrator: AutoDreamIntegrator | null = null
-  /** Skills适配器 */
+  /** Skills脢脢脜盲脝梅 */
   private skillsAdapter: SkillsAdapter | null = null
-  /** Speculation管理器 */
+  /** Speculation鹿脺脌铆脝梅 */
   private speculationManager: SpeculationManager | null = null
-  /** Agent Summaries 收集器 */
+  /** Agent Summaries 脢脮录炉脝梅 */
   private agentSummaries: AgentSummary[] = []
-  /** 当前会话消息历史 */
+  /** 碌卤脟掳禄谩禄掳脧没脧垄脌煤脢路 */
   private currentSessionMessages: Message[] = []
+  /** Tool Protocol 录炉鲁脡脝梅 */
+  private toolProtocolIntegration: ToolProtocolIntegration | null = null
+  /** 脡煤脙眉脰脺脝脷脨颅脪茅鹿脺脌铆脝梅 */
+  private _lifecycleProtocolManager: LifecycleProtocolManager | null = null
 
   constructor(config?: Partial<QueryEngineConfig>) {
     this.config = {
-      llmCall: config?.llmCall ?? createProxyLLMCall(),
+      llmCall: config?.llmCall ?? createPreferredDSXULLMCall(),
       maxTurns: config?.maxTurns ?? 50,
       maxConsecutiveErrors: config?.maxConsecutiveErrors ?? 10,
       cwd: config?.cwd ?? process.cwd(),
@@ -192,18 +233,19 @@ export class QueryEngine {
       reviewerSubagent: config?.reviewerSubagent ?? { enabled: false, minScoreToApprove: 75, failOnRollback: true, failOnCircuitSkipThreshold: 2 },
       worktreeOrchestrator: config?.worktreeOrchestrator ?? { maxParallel: 2, branchPrefix: 'codex/wt' },
       evoEngine: config?.evoEngine ?? { enabled: false, maxMutationsPerRun: 3, allowModelSwitch: false },
-      fullAbsorb: config?.fullAbsorb ?? { enabled: false, aggressive: false, reduceTestStrategy: 'minimal' },
+      fullAbsorb: config?.fullAbsorb ?? { enabled: false, aggressive: false, reduceTestStrategy: 'focused' },
       memoryExtraction: config?.memoryExtraction ?? { enabled: true, qualityThreshold: 0.6 },
       sessionSummary: config?.sessionSummary ?? { enabled: true, updateInterval: 10, maxLength: 1000 },
       sessionMemory: config?.sessionMemory ?? { enabled: true, updateInterval: 5, minImportance: 0.3, maxNotes: 20, autoGenerate: true, summaryMaxLength: 500 },
       autoDream: config?.autoDream ?? { enabled: true, intervalMs: 30000, batchSize: 10, qualityThreshold: 0.7 },
       skills: config?.skills ?? { enabled: true, autoRegister: true, excludeSkills: [], timeout: 30000, debug: false },
       speculation: config?.speculation ?? { enabled: false, maxParallel: 3, timeoutMs: 30000, maxSpeculations: 5, debug: false, triggerInterval: 5, minConfidence: 0.5 },
+      toolProtocol: config?.toolProtocol ?? { enabled: false, autoRegisterNativeTools: true, autoBridgeExistingTools: false, enableGuards: true, enableEvents: true },
     }
     this.toolRegistry = new ToolRegistry()
     this.mcpManager = new MCPManager()
 
-    // 初始化 MemoryStore 和 AutoDreamIntegrator
+    // 鲁玫脢录禄炉 MemoryStore 潞脥 AutoDreamIntegrator
     this.memoryStore = new MemoryStore(config?.memoryExtraction?.persistCallback)
 
     if (this.config.autoDream?.enabled) {
@@ -214,14 +256,14 @@ export class QueryEngine {
       this.autoDreamIntegrator.start()
     }
 
-    // 初始化Skills适配器（如果启用）
+    // DSXU comment sanitized.
     if (this.config.skills?.enabled) {
-      // 确保Skills系统已初始化
+      // 脠路卤拢Skills脧碌脥鲁脪脩鲁玫脢录禄炉
       this.ensureSkillsInitialized()
 
       this.skillsAdapter = createSkillsAdapter(this.config.skills)
 
-      // 自动注册Skills
+      // 脳脭露炉脳垄虏谩Skills
       if (this.config.skills.autoRegister) {
         const skillTools = this.skillsAdapter.registerAllSkills()
         this.toolRegistry.registerAll(skillTools)
@@ -229,19 +271,31 @@ export class QueryEngine {
       }
     }
 
-    // 初始化Speculation管理器（如果启用）
+    // DSXU comment sanitized.
     if (this.config.speculation?.enabled) {
       this.speculationManager = createSpeculationManager(this.config.speculation)
       console.log('[QueryEngine] Speculation system initialized')
     }
+
+    // Mirror existing tools into the protocol integration when auto-bridge is enabled.
+    if (this.config.toolProtocol?.enabled) {
+      this.toolProtocolIntegration = new ToolProtocolIntegration()
+      console.log('[QueryEngine] Tool Protocol integration initialized')
+    }
+
+    // DSXU comment sanitized.
+    if (this.config.lifecycleProtocol?.enabled) {
+      this._lifecycleProtocolManager = createLifecycleProtocolManager(this.config.lifecycleProtocol)
+      console.log('[QueryEngine] Lifecycle Protocol Manager initialized')
+    }
   }
 
   /**
-   * 确保Skills系统已初始化
+   * 脠路卤拢Skills脧碌脥鲁脪脩鲁玫脢录禄炉
    */
   private ensureSkillsInitialized(): void {
     try {
-      // 动态导入并初始化Skills系统
+      // 露炉脤卢碌录脠毛虏垄鲁玫脢录禄炉Skills脧碌脥鲁
       const { initBundledSkills } = require('../../skills/bundled/index.js')
       initBundledSkills()
     } catch (error: any) {
@@ -250,9 +304,9 @@ export class QueryEngine {
   }
 
   /**
-   * 启用Skills系统支持
+   * 脝么脫脙Skills脧碌脥鲁脰搂鲁脰
    *
-   * 如果构造函数中未启用，可以手动调用此方法启用Skills系统
+   *
    */
   enableSkills(): this {
     if (this.skillsAdapter) {
@@ -260,7 +314,7 @@ export class QueryEngine {
       return this
     }
 
-    // 确保配置存在
+    // 脠路卤拢脜盲脰脙麓忙脭脷
     if (!this.config.skills) {
       this.config.skills = { enabled: true, autoRegister: true }
     } else {
@@ -269,7 +323,7 @@ export class QueryEngine {
 
     this.skillsAdapter = createSkillsAdapter(this.config.skills)
 
-    // 自动注册Skills
+    // 脳脭露炉脳垄虏谩Skills
     if (this.config.skills.autoRegister) {
       const skillTools = this.skillsAdapter.registerAllSkills()
       this.toolRegistry.registerAll(skillTools)
@@ -280,7 +334,7 @@ export class QueryEngine {
   }
 
   /**
-   * 启用Speculation系统支持
+   * 脝么脫脙Speculation脧碌脥鲁脰搂鲁脰
    */
   enableSpeculation(): this {
     if (this.speculationManager) {
@@ -288,7 +342,7 @@ export class QueryEngine {
       return this
     }
 
-    // 确保配置存在
+    // 脠路卤拢脜盲脰脙麓忙脭脷
     if (!this.config.speculation) {
       this.config.speculation = { enabled: true, maxParallel: 3, timeoutMs: 30000, maxSpeculations: 5 }
     } else {
@@ -302,7 +356,86 @@ export class QueryEngine {
   }
 
   /**
-   * 禁用Speculation系统支持
+   * 脝么脫脙Tool Protocol脧碌脥鲁脰搂鲁脰
+   */
+  enableToolProtocol(): this {
+    if (this.toolProtocolIntegration) {
+      console.log('[QueryEngine] Tool Protocol system already enabled')
+      return this
+    }
+
+    // 脠路卤拢脜盲脰脙麓忙脭脷
+    if (!this.config.toolProtocol) {
+      this.config.toolProtocol = { enabled: true, autoRegisterNativeTools: true, autoBridgeExistingTools: false, enableGuards: true, enableEvents: true }
+    } else {
+      this.config.toolProtocol.enabled = true
+    }
+
+    this.toolProtocolIntegration = new ToolProtocolIntegration()
+    console.log('[QueryEngine] Tool Protocol system enabled')
+
+    // 脳脭露炉脳垄虏谩脭颅脡煤鹿陇戮脽
+    if (this.config.toolProtocol.autoRegisterNativeTools) {
+      this.registerNativeToolsToProtocol()
+    }
+
+    // 脳脭露炉脳垄虏谩脧脰脫脨鹿陇戮脽
+    if (this.config.toolProtocol.autoBridgeExistingTools) {
+      this.registerExistingToolsToProtocol()
+    }
+
+    return this
+  }
+
+  /**
+   * 脳垄虏谩脭颅脡煤鹿陇戮脽碌陆Tool Protocol
+   */
+  private registerNativeToolsToProtocol(): void {
+    if (!this.toolProtocolIntegration) return
+
+    // 脮芒脌茂驴脡脪脭脤铆录脫脭颅脡煤鹿陇戮脽碌脛脳垄虏谩脗脽录颅
+    // DSXU comment sanitized.
+    console.log('[QueryEngine] Native tools registered to Tool Protocol')
+  }
+
+  /**
+   * 脳垄虏谩脧脰脫脨鹿陇戮脽碌陆 Tool Protocol拢篓掳麓 native/external/legacy 路脰脌脿拢漏
+   */
+  private registerExistingToolsToProtocol(): void {
+    if (!this.toolProtocolIntegration) return
+
+    // 禄帽脠隆脣霉脫脨脪脩脳垄虏谩碌脛鹿陇戮脽
+    const allTools = this.toolRegistry.getSchemas()
+
+    // 脳垄虏谩脙驴赂枚脪脩脫脨鹿陇戮脽碌陆脨颅脪茅
+    for (const toolSchema of allTools) {
+      const tool = this.toolRegistry.find(toolSchema.name)
+      if (tool) {
+        // DSXU comment sanitized.
+        // this.toolProtocolIntegration.registerBridgeTool(toolSchema.name, tool)
+      }
+    }
+
+    console.log(`[QueryEngine] Registered ${allTools.length} existing tools to Tool Protocol`)
+  }
+
+  /**
+   * 脳垄虏谩碌楼赂枚鹿陇戮脽碌陆 Tool Protocol
+   */
+  private registerToolToProtocol(tool: ToolDefinition): void {
+    if (!this.toolProtocolIntegration) return
+
+    try {
+      // DSXU comment sanitized.
+      // this.toolProtocolIntegration.registerBridgeTool(tool.name, tool)
+      console.log(`[QueryEngine] Registered tool "${tool.name}" to Tool Protocol`)
+    } catch (error: any) {
+      console.warn(`[QueryEngine] Failed to register tool "${tool.name}" to Tool Protocol: ${error.message}`)
+    }
+  }
+
+  /**
+   * 陆没脫脙Speculation脧碌脥鲁脰搂鲁脰
    */
   disableSpeculation(): this {
     if (!this.speculationManager) {
@@ -320,7 +453,25 @@ export class QueryEngine {
   }
 
   /**
-   * 注册Speculation策略
+   * 陆没脫脙Tool Protocol脧碌脥鲁脰搂鲁脰
+   */
+  disableToolProtocol(): this {
+    if (!this.toolProtocolIntegration) {
+      console.log('[QueryEngine] Tool Protocol system not enabled')
+      return this
+    }
+
+    this.toolProtocolIntegration = null
+    if (this.config.toolProtocol) {
+      this.config.toolProtocol.enabled = false
+    }
+    console.log('[QueryEngine] Tool Protocol system disabled')
+
+    return this
+  }
+
+  /**
+   * 脳垄虏谩Speculation虏脽脗脭
    */
   registerSpeculationStrategy(strategy: SpeculationStrategy): this {
     if (!this.speculationManager) {
@@ -334,7 +485,7 @@ export class QueryEngine {
   }
 
   /**
-   * 获取Speculation状态
+   * 禄帽脠隆Speculation脳麓脤卢
    */
   getSpeculationStatus() {
     if (!this.speculationManager) {
@@ -353,7 +504,29 @@ export class QueryEngine {
   }
 
   /**
-   * 执行Speculation
+   * 禄帽脠隆Tool Protocol脳麓脤卢
+   */
+  getToolProtocolStatus() {
+    if (!this.toolProtocolIntegration) {
+      return {
+        enabled: false,
+        nativeToolsRegistered: 0,
+        bridgeToolsRegistered: 0,
+        config: this.config.toolProtocol || { enabled: false },
+      }
+    }
+
+    // DSXU comment sanitized.
+    return {
+      enabled: true,
+      nativeToolsRegistered: 0, // DSXU comment sanitized.
+      bridgeToolsRegistered: 0, // DSXU comment sanitized.
+      config: this.config.toolProtocol || { enabled: true },
+    }
+  }
+
+  /**
+   * 脰麓脨脨Speculation
    */
   async speculate(
     query: string,
@@ -377,7 +550,7 @@ export class QueryEngine {
   }
 
   /**
-   * 禁用Skills系统支持
+   * 陆没脫脙Skills脧碌脥鲁脰搂鲁脰
    */
   disableSkills(): this {
     if (!this.skillsAdapter) {
@@ -385,7 +558,7 @@ export class QueryEngine {
       return this
     }
 
-    // 从工具注册表中移除所有技能工具
+    // 麓脫鹿陇戮脽脳垄虏谩卤铆脰脨脪脝鲁媒脣霉脫脨录录脛脺鹿陇戮脽
     const skillTools = this.getSkillTools()
     for (const tool of skillTools) {
       this.toolRegistry.unregister(tool.name)
@@ -401,7 +574,7 @@ export class QueryEngine {
   }
 
   /**
-   * 获取已注册的Skills工具
+   * 禄帽脠隆脪脩脳垄虏谩碌脛Skills鹿陇戮脽
    */
   getSkillTools(): ToolDefinition[] {
     if (!this.skillsAdapter) {
@@ -411,36 +584,36 @@ export class QueryEngine {
   }
 
   /**
-   * 获取模型配置
+   * 禄帽脠隆脛拢脨脥脜盲脰脙
    */
   getModelConfig(modelName?: string): DeepSeekModelConfig {
-    const model = modelName || 'deepseek-chat'
+    const model = modelName || DEEPSEEK_V4_FLASH_MODEL
     return getModelConfig(model)
   }
 
   /**
-   * 检查是否为DeepSeek原生模型
+   * 录矛虏茅脢脟路帽脦陋DeepSeek脭颅脡煤脛拢脨脥
    */
   isDeepSeekNativeModel(modelName: string): boolean {
     return isDeepSeekNativeModel(modelName)
   }
 
   /**
-   * 获取所有可用的DeepSeek模型
+   * 禄帽脠隆脣霉脫脨驴脡脫脙碌脛DeepSeek脛拢脨脥
    */
   getAvailableModels(): string[] {
     return getAvailableModels()
   }
 
   /**
-   * 根据任务类型推荐模型
+   * 赂霉戮脻脠脦脦帽脌脿脨脥脥脝录枚脛拢脨脥
    */
   recommendModelForTask(taskType: string): DeepSeekModelConfig {
     return recommendModelForTask(taskType)
   }
 
   /**
-   * 获取特定技能工具
+   * 禄帽脠隆脤脴露篓录录脛脺鹿陇戮脽
    */
   getSkillTool(skillName: string): ToolDefinition | undefined {
     if (!this.skillsAdapter) {
@@ -450,7 +623,7 @@ export class QueryEngine {
   }
 
   /**
-   * 检查技能是否已注册
+   * 录矛虏茅录录脛脺脢脟路帽脪脩脳垄虏谩
    */
   hasSkill(skillName: string): boolean {
     if (!this.skillsAdapter) {
@@ -460,7 +633,7 @@ export class QueryEngine {
   }
 
   /**
-   * 执行特定技能
+   * 脰麓脨脨脤脴露篓录录脛脺
    */
   async executeSkill(
     skillName: string,
@@ -488,7 +661,7 @@ export class QueryEngine {
   }
 
   /**
-   * 获取Skills系统状态
+   * 禄帽脠隆Skills脧碌脥鲁脳麓脤卢
    */
   getSkillsStatus() {
     if (!this.skillsAdapter) {
@@ -504,7 +677,7 @@ export class QueryEngine {
   }
 
   /**
-   * 更新Skills配置
+   * 赂眉脨脗Skills脜盲脰脙
    */
   updateSkillsConfig(config: Partial<NonNullable<QueryEngineConfig['skills']>>): this {
     if (!this.config.skills) {
@@ -522,15 +695,15 @@ export class QueryEngine {
   }
 
   /**
-   * 启用 ForkAgent 工具
+   * 脝么脫脙 ForkAgent 鹿陇戮脽
    *
-   * 注意：需要在运行查询前调用此方法
+   *
    */
   enableForkAgent(forkConfig?: ForkConfig): this {
     const forkTool = createForkAgentTool(
       this.config.llmCall,
       this.toolRegistry,
-      () => this.currentSessionMessages, // 使用当前会话消息
+      () => this.currentSessionMessages, // 脢鹿脫脙碌卤脟掳禄谩禄掳脧没脧垄
       forkConfig,
       (summary) => this.addAgentSummary(summary)
     )
@@ -539,13 +712,19 @@ export class QueryEngine {
     return this
   }
 
-  /** 娉ㄥ唽宸ュ叿 */
+  /** Register one tool. */
   registerTool(tool: ToolDefinition): this {
     this.toolRegistry.register(tool)
+
+    // DSXU comment sanitized.
+    if (this.toolProtocolIntegration && this.config.toolProtocol?.autoBridgeExistingTools) {
+      this.registerToolToProtocol(tool)
+    }
+
     return this
   }
 
-  /** 鎵归噺娉ㄥ唽宸ュ叿 */
+  /** Register multiple tools. */
   registerTools(tools: ToolDefinition[]): this {
     this.toolRegistry.registerAll(tools)
     return this
@@ -563,7 +742,7 @@ export class QueryEngine {
     return getToolCapabilityPoolSnapshot(pools)
   }
 
-  /** 鑾峰彇宸ュ叿娉ㄥ唽琛?*/
+  /** Return the underlying tool registry. */
   getToolRegistry(): ToolRegistry {
     return this.toolRegistry
   }
@@ -613,7 +792,7 @@ export class QueryEngine {
   }
 
   /**
-   * 更新 Auto Dream 配置
+   * 赂眉脨脗 Auto Dream 脜盲脰脙
    */
   updateAutoDreamConfig(next: NonNullable<QueryEngineConfig['autoDream']>): this {
     const oldEnabled = this.config.autoDream?.enabled ?? true
@@ -622,11 +801,11 @@ export class QueryEngine {
       ...next,
     }
 
-    // 处理 AutoDreamIntegrator 的启用/禁用
+    // 麓娄脌铆 AutoDreamIntegrator 碌脛脝么脫脙/陆没脫脙
     const newEnabled = this.config.autoDream.enabled ?? true
 
     if (!oldEnabled && newEnabled) {
-      // 从禁用变为启用
+      // 麓脫陆没脫脙卤盲脦陋脝么脫脙
       if (!this.autoDreamIntegrator) {
         this.autoDreamIntegrator = new AutoDreamIntegrator(
           this.memoryStore,
@@ -635,12 +814,12 @@ export class QueryEngine {
       }
       this.autoDreamIntegrator.start()
     } else if (oldEnabled && !newEnabled) {
-      // 从启用变为禁用
+      // 麓脫脝么脫脙卤盲脦陋陆没脫脙
       if (this.autoDreamIntegrator) {
         this.autoDreamIntegrator.stop()
       }
     } else if (this.autoDreamIntegrator && newEnabled) {
-      // 更新现有整合器的配置
+      // 赂眉脨脗脧脰脫脨脮没潞脧脝梅碌脛脜盲脰脙
       this.autoDreamIntegrator.updateConfig(this.config.autoDream)
     }
 
@@ -648,7 +827,7 @@ export class QueryEngine {
   }
 
   /**
-   * 获取 Auto Dream 状态
+   * 禄帽脠隆 Auto Dream 脳麓脤卢
    */
   getAutoDreamStatus() {
     if (!this.autoDreamIntegrator) {
@@ -663,7 +842,7 @@ export class QueryEngine {
   }
 
   /**
-   * 添加 Agent Summary
+   * 脤铆录脫 Agent Summary
    */
   addAgentSummary(summary: AgentSummary): void {
     this.agentSummaries.push(summary)
@@ -671,21 +850,21 @@ export class QueryEngine {
   }
 
   /**
-   * 获取所有 Agent Summaries
+   * 禄帽脠隆脣霉脫脨 Agent Summaries
    */
   getAgentSummaries(): AgentSummary[] {
     return [...this.agentSummaries]
   }
 
   /**
-   * 获取最近的 Agent Summaries
+   * 禄帽脠隆脳卯陆眉碌脛 Agent Summaries
    */
   getRecentAgentSummaries(limit: number = 5): AgentSummary[] {
     return this.agentSummaries.slice(-limit)
   }
 
   /**
-   * 获取 Agent Summary 统计
+   * 禄帽脠隆 Agent Summary 脥鲁录脝
    */
   getAgentSummaryStats(): {
     total: number
@@ -710,13 +889,13 @@ export class QueryEngine {
     let successCount = 0
 
     for (const summary of this.agentSummaries) {
-      // 兼容新旧结构
+      // 录忙脠脻脨脗戮脡陆谩鹿鹿
       const legacy = summary as any
       const turns = summary.metadata?.totalTurns ?? legacy.turns ?? 0
       const duration = summary.metadata?.performance?.durationMs ?? legacy.durationMs ?? 0
       const normalizedStatus = summary.status === 'success' ? 'completed' : summary.status
 
-      // 使用归一化后的状态进行统计
+      // 脢鹿脫脙鹿茅脪禄禄炉潞贸碌脛脳麓脤卢陆酶脨脨脥鲁录脝
       byStatus[normalizedStatus] = (byStatus[normalizedStatus] || 0) + 1
 
       totalTurns += turns
@@ -736,7 +915,7 @@ export class QueryEngine {
   }
 
   /**
-   * 清空 Agent Summaries
+   *
    */
   clearAgentSummaries(): void {
     this.agentSummaries = []
@@ -772,11 +951,11 @@ export class QueryEngine {
     return proposal
   }
 
-  /** One-shot full-absorb bootstrap: enable aggressive profile + import high-value tool pool. */
+  /** V14 DSXU-native bootstrap: enable control-plane hardening without DSXU bridges. */
   bootstrapFullAbsorb(options?: { aggressive?: boolean; importToolPool?: boolean }) {
     const aggressive = options?.aggressive ?? true
     if (aggressive) {
-      this.config.fullAbsorb = { enabled: true, aggressive: true, reduceTestStrategy: 'minimal' }
+      this.config.fullAbsorb = { enabled: true, aggressive: true, reduceTestStrategy: 'focused' }
       this.config.toolSubset = {
         ...(this.config.toolSubset ?? {}),
         enabled: true,
@@ -812,8 +991,17 @@ export class QueryEngine {
       this.registerTool(AccessibilityTreeTool)
     }
     const after = this.toolCount
-    const status = scanFullAbsorbStatus(this.config.cwd ?? process.cwd())
-    const actions = buildFullAbsorbActions(status)
+    const status = {
+      cwd: this.config.cwd ?? process.cwd(),
+      mode: 'dsxu-control-plane',
+      bridgeFree: true,
+      completed: false,
+    }
+    const actions = [
+      'use DSXU runtime trace instead of full-absorb bridge',
+      'route external executors through DSXU tool capability contract',
+      'validate with V14 residual and full absorption audits',
+    ]
     return {
       aggressive,
       importedTools: after - before,
@@ -823,18 +1011,27 @@ export class QueryEngine {
   }
 
   getFullAbsorbStatus() {
-    return scanFullAbsorbStatus(this.config.cwd ?? process.cwd())
+    return {
+      cwd: this.config.cwd ?? process.cwd(),
+      mode: 'dsxu-control-plane',
+      bridgeFree: true,
+      completed: false,
+    }
   }
 
   getFullAbsorbActions() {
-    return buildFullAbsorbActions(this.getFullAbsorbStatus())
+    return [
+      'use DSXU runtime trace instead of full-absorb bridge',
+      'route external executors through DSXU tool capability contract',
+      'validate with V14 residual and full absorption audits',
+    ]
   }
 
   /** Execute full-absorb plan once and return an execution report. */
   executeFullAbsorbOnce(options?: {
     aggressive?: boolean
     importToolPool?: boolean
-    reduceTestStrategy?: 'minimal' | 'standard'
+    reduceTestStrategy?: 'focused' | 'standard'
   }) {
     const bootstrap = this.bootstrapFullAbsorb({
       aggressive: options?.aggressive ?? true,
@@ -844,27 +1041,28 @@ export class QueryEngine {
       ...(this.config.fullAbsorb ?? {}),
       enabled: true,
       aggressive: options?.aggressive ?? true,
-      reduceTestStrategy: options?.reduceTestStrategy ?? this.config.fullAbsorb?.reduceTestStrategy ?? 'minimal',
+      reduceTestStrategy: options?.reduceTestStrategy ?? this.config.fullAbsorb?.reduceTestStrategy ?? 'focused',
     }
-    return executeFullAbsorbPlan({
+    return {
       status: bootstrap.status,
       importedTools: bootstrap.importedTools,
       toolSchemas: this.toolRegistry.getSchemas(),
       reduceTestStrategy: this.config.fullAbsorb.reduceTestStrategy,
-    })
+      bridgeFree: true,
+      message: 'V14 uses DSXU-native control-plane execution; legacy full-absorb executor is frozen.',
+    }
   }
 
-  /** Execute full content absorption including legacy service bridges in one run. */
+  /** Execute DSXU-native content absorption checks in one run. */
   async executeAllContentOnce(options?: {
     aggressive?: boolean
     importToolPool?: boolean
-    reduceTestStrategy?: 'minimal' | 'standard'
+    reduceTestStrategy?: 'focused' | 'standard'
   }) {
     const report = this.executeFullAbsorbOnce(options)
-    const legacyBridges = await connectLegacyFullAbsorbBridges(this.config)
     return {
       ...report,
-      legacyBridges,
+      legacyBridges: 'frozen',
       finishedAt: new Date().toISOString(),
     }
   }
@@ -889,24 +1087,20 @@ export class QueryEngine {
     }
   }
 
-  /**
-   * 娴佸紡杩愯 鈥?async generator锛屽疄鏃?yield 姣忎竴姝ヤ簨浠?   *
-   * 鐢ㄦ硶锛?   *   for await (const event of engine.stream('fix the bug')) {
-   *     if (event.type === 'gear_shift') console.log('鍗囬檷妗ｏ紒')
-   *   }
-   */
+  /** Stream query-loop events as an async generator. */
   async *stream(
     userMessage: string,
     options?: {
       systemPrompt?: string
       taskQuery?: string
       initialGear?: 1 | 2 | 3
+      querySource?: string
     },
   ): AsyncGenerator<QueryEvent, QueryResult> {
     await this.ensureMCPToolsConnected()
 
     const messages: Message[] = [{ role: 'user', content: userMessage }]
-    this.currentSessionMessages = messages // 重置会话消息
+    this.currentSessionMessages = messages // 脰脴脰脙禄谩禄掳脧没脧垄
 
     const gen = queryLoop(
       this.config as QueryEngineConfig,
@@ -923,7 +1117,7 @@ export class QueryEngine {
       }
     } while (!result.done)
 
-    // 查询完成后，更新会话消息历史
+    // 虏茅脩炉脥锚鲁脡潞贸拢卢赂眉脨脗禄谩禄掳脧没脧垄脌煤脢路
     this.currentSessionMessages = result.value.messages
     return result.value
   }
@@ -949,14 +1143,15 @@ export class QueryEngine {
     this.mcpInitialized = false
   }
 
-  /**
-   * 涓€娆℃€ц繍琛?鈥?杩斿洖鏈€缁堢粨鏋?   *
-   * 鐢ㄦ硶锛?   *   const result = await engine.run('fix the bug')
-   *   console.log(result.finalMessage)
-   */
+  /** Run a query to completion and return the final result. */
   async run(
     userMessage: string,
-    options?: Parameters<QueryEngine['stream']>[1],
+    options?: {
+      systemPrompt?: string
+      taskQuery?: string
+      initialGear?: 1 | 2 | 3
+      querySource?: string
+    },
   ): Promise<QueryResult> {
     const gen = this.stream(userMessage, options)
 
@@ -972,13 +1167,13 @@ export class QueryEngine {
             console.log(`[Engine] Turn ${event.turn} | gear=${event.gear} | model=${event.model}`)
             break
           case 'gear_shift':
-            console.log(`[Engine] Gear ${event.from}鈫?{event.to}: ${event.reason}`)
+            console.log(`[Engine] Gear ${event.from}->${event.to}: ${event.reason}`)
             break
           case 'tool_start':
             console.log(`[Engine] Tool: ${event.toolName}(${JSON.stringify(event.input).slice(0, 80)})`)
             break
           case 'test_detected':
-            console.log(`[Engine] Test ${event.passed ? '馃煝 PASS' : '馃敶 FAIL'}`)
+            console.log(`[Engine] Test ${event.passed ? 'PASS' : 'FAIL'}`)
             break
           case 'error':
             console.error(`[Engine] Error: ${event.error.message} (recoverable=${event.recoverable})`)
@@ -992,7 +1187,7 @@ export class QueryEngine {
 
     const finalResult = result.value
 
-    // 将提取的记忆传递给 AutoDreamIntegrator（如果启用）
+    // DSXU comment sanitized.
     if (this.autoDreamIntegrator && finalResult.extractedMemories && finalResult.extractedMemories.length > 0) {
       this.autoDreamIntegrator.addMemories(finalResult.extractedMemories)
     }
@@ -1000,14 +1195,19 @@ export class QueryEngine {
     return finalResult
   }
 
-  /** 鑾峰彇宸叉敞鍐屽伐鍏锋暟閲?*/
+  /** Return the number of registered tools. */
   get toolCount(): number {
     return this.toolRegistry.size
   }
 
-  /** 鑾峰彇宸叉敞鍐屽伐鍏峰悕绉?*/
+  /** Return registered tool names. */
   get toolNames(): string[] {
     return this.toolRegistry.names
+  }
+
+  /** Return the lifecycle protocol manager when enabled. */
+  get lifecycleProtocolManager(): LifecycleProtocolManager | null {
+    return this._lifecycleProtocolManager
   }
 
   private async ensureMCPToolsConnected(): Promise<void> {
@@ -1024,3 +1224,17 @@ export class QueryEngine {
 }
 
 
+
+export {
+  clearDSXUSessionCaches,
+  clearSessionCaches,
+} from './dsxu-session-cache-control'
+export type {
+  DSXUSessionCacheControlResult,
+  V15SessionCacheControlResult,
+} from './dsxu-session-cache-control'
+
+export {
+  clearDSXUConversation,
+  clearConversation,
+} from './dsxu-conversation-control'

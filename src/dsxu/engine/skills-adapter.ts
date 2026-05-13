@@ -1,13 +1,18 @@
-/**
+﻿/**
  * Skills系统适配器 - 将Skills Command转换为DSxu ToolDefinition
  *
- * 集成Claude Code的Skills系统到DSxu engine，使DSxu能够调用和执行Skills。
+ * 集成DSXU Code的Skills系统到DSxu engine，使DSxu能够调用和执行Skills。
  */
 
 import type { Command, ToolUseContext } from '../../types/command'
 import type { ToolDefinition, ToolContext, ToolOutput } from './types'
 import { getBundledSkills } from '../../skills/bundledSkills'
-import { SkillsExecutor, createSkillsExecutor, type SkillsExecutorConfig } from './skills-executor'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../utils/model/deepseekV4Control'
+import type { PermissionMode } from '../../types/permissions'
+import { evaluateToolGate } from './tool-gate-v1'
+import { buildSkillToolGateDefinition } from './skills-registry-v1'
+import type { ToolPermissionLevel } from './tool-types-v1'
+import { SKILL_TOOL_NAME } from '../../tools/SkillTool/constants'
 
 /**
  * Skills适配器配置
@@ -23,6 +28,10 @@ export interface SkillsAdapterConfig {
   timeout?: number
   /** 是否启用调试日志 */
   debug?: boolean
+  /** 权限模式 */
+  permissionMode?: PermissionMode
+  /** 权限确认回调 */
+  permissionAskCallback?: (prompt: string) => Promise<boolean>
 }
 
 /**
@@ -68,7 +77,6 @@ export class SkillsAdapter {
   private skillsLoaded = false
   private config: Required<SkillsAdapterConfig>
   private skillTools: Map<string, ToolDefinition> = new Map()
-  private skillsExecutor: SkillsExecutor
   private eventCallbacks: SkillEventCallback[] = []
   private eventHistory: SkillEvent[] = []
   private maxEventHistory = 100
@@ -78,17 +86,11 @@ export class SkillsAdapter {
       enabled: config?.enabled ?? true,
       autoRegister: config?.autoRegister ?? true,
       excludeSkills: config?.excludeSkills ?? [],
-      timeout: config?.timeout ?? 30000, // 30秒超时
+      timeout: config?.timeout ?? 30000, // 默认 30 秒处理超时
       debug: config?.debug ?? false,
+      permissionMode: config?.permissionMode ?? 'default',
+      permissionAskCallback: config?.permissionAskCallback ?? (async () => false),
     }
-
-    // 初始化Skills执行器
-    const executorConfig: SkillsExecutorConfig = {
-      mockExecution: false, // 使用真实执行
-      mockDelay: 100,
-      debug: this.config.debug,
-    }
-    this.skillsExecutor = createSkillsExecutor(executorConfig)
   }
 
   /**
@@ -177,13 +179,27 @@ export class SkillsAdapter {
       // 转换上下文
       const skillContext = this.convertContext(context)
 
+      const permission = await this.evaluateSkillPermission(skill, input, context)
+      if (!permission.allowed) {
+        return {
+          content: `Skill permission denied (${skill.name}): ${permission.reason}`,
+          isError: true,
+          meta: {
+            skill: skill.name,
+            error: permission.reason,
+            durationMs: Date.now() - startTime,
+            owner: 'tool-gate-v1',
+          },
+        }
+      }
+
       // 生成提示
       const promptBlocks = await skill.getPromptForCommand(
         input.args || '',
         skillContext
       )
 
-      // 执行技能
+      // 投射到 SkillTool 主线调度结果；不在 engine adapter 内执行第二套 skill runtime。
       const result = await this.executeSkillWithTimeout(
         skill,
         promptBlocks,
@@ -248,7 +264,7 @@ export class SkillsAdapter {
     context: ToolUseContext
   ): Promise<SkillExecutionResult> {
     if (this.config.timeout <= 0) {
-      return await this.executeSkillPrompt(promptBlocks, context)
+      return await this.materializeSkillToolDispatch(skill, promptBlocks, context)
     }
 
     const timeoutPromise = new Promise<SkillExecutionResult>((_, reject) => {
@@ -257,7 +273,7 @@ export class SkillsAdapter {
       }, this.config.timeout)
     })
 
-    const executionPromise = this.executeSkillPrompt(promptBlocks, context)
+    const executionPromise = this.materializeSkillToolDispatch(skill, promptBlocks, context)
 
     return await Promise.race([executionPromise, timeoutPromise])
   }
@@ -266,14 +282,12 @@ export class SkillsAdapter {
    * 转换DSxu上下文为Skills上下文
    */
   private convertContext(context: ToolContext): ToolUseContext {
-    // 创建简化的ToolUseContext
-    // 注意：这是一个最小实现，实际使用时可能需要更完整的上下文转换
     return {
       options: {
-        commands: [], // 需要从Skills系统获取
+        commands: [],
         debug: this.config.debug,
-        mainLoopModel: 'deepseek-chat',
-        tools: {}, // 需要从Skills系统获取
+        mainLoopModel: DEEPSEEK_V4_FLASH_MODEL,
+        tools: {},
         verbose: false,
         thinkingConfig: { enabled: false },
         mcpClients: [],
@@ -295,7 +309,6 @@ export class SkillsAdapter {
       setAppState: () => {},
       cwd: context.cwd,
       sessionId: context.sessionId,
-      // 添加其他必要的字段
       setToolJSX: undefined,
       addNotification: undefined,
       appendSystemMessage: undefined,
@@ -304,10 +317,51 @@ export class SkillsAdapter {
     } as ToolUseContext
   }
 
+  private async evaluateSkillPermission(
+    skill: Command,
+    input: Record<string, any>,
+    context: ToolContext
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    const gateTool = buildSkillToolGateDefinition({
+      skillName: skill.name,
+      input: {
+        args: input.args ?? '',
+        skillName: skill.name,
+        allowedTools: skill.type === 'prompt' ? skill.allowedTools ?? [] : [],
+      },
+      cwd: context.cwd,
+      sessionId: context.sessionId,
+    })
+    const gate = evaluateToolGate(gateTool, {
+      allowedPermissionLevel: this.permissionLevelForMode(this.config.permissionMode),
+      requireConfirmationForWrite: this.config.permissionMode !== 'bypassPermissions' && this.config.permissionMode !== 'acceptEdits',
+    })
+
+    if (gate.executionDecision === 'deny') {
+      return { allowed: false, reason: gate.failureHint.recommendedAction }
+    }
+    if (gate.gateDecision === 'require_confirmation' || gate.executionDecision === 'defer') {
+      const allowed = await this.config.permissionAskCallback(
+        `Skill "${skill.name}" requires permission: ${gate.confirmation.reason}`
+      )
+      return allowed
+        ? { allowed: true, reason: 'user-approved' }
+        : { allowed: false, reason: 'user-denied' }
+    }
+    return { allowed: true, reason: gate.approvalTrace.notes.join(',') || 'tool-gate-approved' }
+  }
+
+  private permissionLevelForMode(mode: PermissionMode): ToolPermissionLevel {
+    if (mode === 'plan') return 'safe'
+    if (mode === 'bypassPermissions' || mode === 'acceptEdits') return 'privileged'
+    return 'guarded'
+  }
+
   /**
-   * 执行技能提示
+   * 生成 SkillTool 主线调度结果
    */
-  private async executeSkillPrompt(
+  private async materializeSkillToolDispatch(
+    skill: Command,
     promptBlocks: any[],
     context: ToolUseContext
   ): Promise<SkillExecutionResult> {
@@ -315,56 +369,21 @@ export class SkillsAdapter {
       console.log(`[SkillsAdapter] Executing skill prompt with ${promptBlocks.length} blocks`)
     }
 
-    // 从提示块中提取技能名称和参数
-    // 注意：这是一个简化实现，实际需要从promptBlocks中解析更多信息
-    const skillInfo = this.extractSkillInfoFromPrompt(promptBlocks)
+    const textBlocks = promptBlocks
+      .filter(block => block?.type === 'text' && typeof block.text === 'string')
+      .map(block => block.text)
 
-    // 使用Skills执行器执行技能
-    const result = await this.skillsExecutor.execute(
-      skillInfo.name,
-      skillInfo.args,
-      context
-    )
-
-    return result
-  }
-
-  /**
-   * 从提示块中提取技能信息
-   */
-  private extractSkillInfoFromPrompt(promptBlocks: any[]): { name: string; args: string } {
-    // 这是一个简化实现，实际需要更复杂的解析逻辑
-    // 目前假设第一个文本块包含技能信息
-
-    const textBlocks = promptBlocks.filter(block => block.type === 'text')
-    if (textBlocks.length === 0) {
-      return { name: 'unknown', args: '' }
+    return {
+      content: textBlocks.join('\n\n') || `Launching skill: ${skill.name}`,
+      isError: false,
+      meta: {
+        skill: skill.name,
+        resultType: 'skill-tool-dispatch',
+        owner: SKILL_TOOL_NAME,
+        promptBlockCount: promptBlocks.length,
+        sessionId: context.sessionId,
+      },
     }
-
-    const firstText = textBlocks[0].text
-
-    // 简单解析：查找技能名称和参数
-    // 实际实现需要更复杂的解析逻辑
-    let skillName = 'unknown'
-    let args = ''
-
-    // 尝试从文本中提取技能名称
-    const skillMatch = firstText.match(/skill(?:ify)?|commit|review-pr|debug|simplify/i)
-    if (skillMatch) {
-      skillName = skillMatch[0].toLowerCase()
-    }
-
-    // 尝试从文本中提取参数
-    const argsMatch = firstText.match(/args?:?\s*["']?([^"'\n]+)["']?/i)
-    if (argsMatch) {
-      args = argsMatch[1].trim()
-    }
-
-    if (this.config.debug) {
-      console.log(`[SkillsAdapter] Extracted skill info: name=${skillName}, args=${args}`)
-    }
-
-    return { name: skillName, args }
   }
 
   /**

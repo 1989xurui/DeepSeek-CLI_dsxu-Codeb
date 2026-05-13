@@ -1,5 +1,5 @@
 /**
- * #5.5 Accessibility Tree — 无障碍树结构提取
+ *
  *
  * 为 LLM 提供 UI 结构理解能力：
  *   1. 解析 HTML → 简化 Accessibility Tree

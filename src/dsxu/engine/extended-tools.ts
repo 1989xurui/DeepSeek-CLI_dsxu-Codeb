@@ -1,7 +1,7 @@
 /**
- * DSxu 扩展工具集 — 核心 6 工具之外的高价值工具
  *
- * 按 Claude 使用频次排序，分批实现：
+ *
+ * 按 DSXU 使用频次排序，分批实现：
  *   Batch 1（本文件）：WebFetch, WebSearch, TodoWrite, AskUser
  *   Batch 2（后续）：NotebookEdit, LSP, Agent, Worktree
  *
@@ -134,7 +134,7 @@ export const WebSearchTool: ToolDefinition = {
     const numResults = Math.min((input.num_results as number) || 5, 10)
 
     try {
-      // 使用 DuckDuckGo HTML API（免费，无需 API key）
+      // Use the DuckDuckGo HTML endpoint without an API key.
       const encoded = encodeURIComponent(query)
       const resp = await fetch(`https://html.duckduckgo.com/html/?q=${encoded}`, {
         headers: {
@@ -149,7 +149,7 @@ export const WebSearchTool: ToolDefinition = {
 
       const html = await resp.text()
 
-      // 从 DDG HTML 提取结果
+      // Extract results from DDG HTML.
       const results = parseDDGResults(html, numResults)
 
       if (results.length === 0) {
@@ -179,7 +179,6 @@ interface SearchResult {
 function parseDDGResults(html: string, max: number): SearchResult[] {
   const results: SearchResult[] = []
 
-  // DDG HTML results are in <div class="result__body"> blocks
   const resultBlocks = html.match(/<div class="links_main[^"]*"[\s\S]*?<\/div>\s*<\/div>/gi) || []
 
   for (const block of resultBlocks) {

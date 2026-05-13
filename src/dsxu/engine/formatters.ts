@@ -15,7 +15,7 @@
  * 项目初始化：
  *   - 创建 .dsxu/ 目录
  *   - 生成默认配置
- *   - 创建 CLAUDE.md 模板
+ *   - 创建 DSXU.md 模板
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
@@ -100,7 +100,7 @@ export function simplifyMarkdown(md: string): string {
     .replace(/^#{1,6}\s+/gm, (match) => '  '.repeat(match.trim().length - 1))
     .replace(/\*\*([^*]+)\*\*/g, '$1')  // Bold → plain
     .replace(/\*([^*]+)\*/g, '$1')  // Italic → plain
-    .replace(/```[\s\S]*?```/g, '[code block]')  // Code blocks (before inline code!)
+    .replace(/```[\s\S]*?```/g, '[code block]') // DSXU comment sanitized.
     .replace(/`([^`]+)`/g, '$1')  // Inline code → plain
     .trim()
 }
@@ -216,10 +216,10 @@ export function initProject(cwd: string, force: boolean = false): InitResult {
     skipped.push('.dsxu/config.json (exists)')
   }
 
-  // Create CLAUDE.md template
-  const claudeMdPath = join(cwd, 'CLAUDE.md')
-  if (!existsSync(claudeMdPath) || force) {
-    writeFileSync(claudeMdPath, `# Project Rules
+  // Create DSXU.md template
+  const dsxuMdPath = join(cwd, 'DSXU.md')
+  if (!existsSync(dsxuMdPath) || force) {
+    writeFileSync(dsxuMdPath, `# Project Rules
 
 ## Code Style
 - Use TypeScript strict mode
@@ -238,9 +238,9 @@ export function initProject(cwd: string, force: boolean = false): InitResult {
 - Don't commit .env files
 - Don't skip tests
 `, 'utf-8')
-    created.push('CLAUDE.md')
+    created.push('DSXU.md')
   } else {
-    skipped.push('CLAUDE.md (exists)')
+    skipped.push('DSXU.md (exists)')
   }
 
   // Create .gitignore entry (if .gitignore exists)
@@ -263,7 +263,7 @@ export interface PluginManifest {
   version: string
   description: string
   author?: string
-  tools?: string[]  // Tool names this plugin provides
+  tools?: string[] // DSXU comment sanitized.
 }
 
 export interface PluginRegistration {

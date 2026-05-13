@@ -17,6 +17,7 @@ import type {
   QueryEvent
 } from './types'
 import { SessionStore, SessionData } from './session-state'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../utils/model/deepseekV4Control'
 
 // ── Session Summary 功能 ──
 
@@ -130,7 +131,7 @@ export class SessionSummaryManager {
           }
         ],
         [],
-        { model: 'deepseek-chat', maxTokens: 500 }
+        { model: DEEPSEEK_V4_FLASH_MODEL, maxTokens: 500 }
       )
 
       return response.content.slice(0, this.config.maxLength)
@@ -408,7 +409,7 @@ export class SessionSummaryManager {
           }
         ],
         [],
-        { model: 'deepseek-chat', maxTokens: 800 }
+        { model: DEEPSEEK_V4_FLASH_MODEL, maxTokens: 800 }
       )
 
       const content = response.content
@@ -682,7 +683,7 @@ export class AgentSummaryManager {
       success: status === 'completed',
       errorCode: status === 'failed' ? 'MAX_ERRORS' : undefined,
       performance: {
-        durationMs: result.totalUsage ? (result.totalUsage.inputTokens + result.totalUsage.outputTokens) * 0.1 : 0, // 估算
+        durationMs: result.totalUsage ? (result.totalUsage.inputTokens + result.totalUsage.outputTokens) * 0.1 : 0, // DSXU comment sanitized.
         tokensUsed: result.totalUsage ? result.totalUsage.inputTokens + result.totalUsage.outputTokens : 0,
         toolCalls: toolStarts.length,
       },

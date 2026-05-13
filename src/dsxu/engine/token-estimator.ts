@@ -1,5 +1,5 @@
 /**
- * #15 Token Estimation — 精确 token 计数
+ *
  *
  * 三层策略：
  *   1. DeepSeek API response.usage（最精确，免费附带）
@@ -9,8 +9,8 @@
  * V13 选择：先用启发式（已在 proxy 中验证），加精确度监控。
  * 当实际 vs 估算偏差 > 15% 时告警，提示升级到 tiktoken。
  *
- * 与 Claude 的区别：
- *   - Claude 用 Anthropic tokenizer（私有）
+ * 与 DSXU 的区别：
+ *   - DSXU 用 Provider tokenizer（私有）
  *   - DSxu 用 DeepSeek tokenizer（BPE，cl100k 系列）
  */
 
@@ -19,6 +19,11 @@ import {
   getModelContextLimit,
   clampMaxTokensToBudget,
 } from './model-limits'
+import {
+  DEEPSEEK_V4_CONTEXT_WINDOW,
+  DEEPSEEK_V4_FLASH_MODEL,
+  DEEPSEEK_V4_PRO_MODEL,
+} from '../../utils/model/deepseekV4Control'
 
 // ── 启发式估算（与 proxy/compact 一致） ──
 
@@ -175,8 +180,8 @@ export interface TokenBudget {
 }
 
 const MODEL_CONTEXT_LIMITS: Record<string, number> = {
-  'deepseek-chat': 128_000,
-  'deepseek-reasoner': 128_000,
+  [DEEPSEEK_V4_FLASH_MODEL]: DEEPSEEK_V4_CONTEXT_WINDOW,
+  [DEEPSEEK_V4_PRO_MODEL]: DEEPSEEK_V4_CONTEXT_WINDOW,
   'gpt-4o-mini': 128_000,
   'gpt-4o': 128_000,
 }
@@ -190,7 +195,7 @@ const MODEL_CONTEXT_LIMITS: Record<string, number> = {
  */
 export function calculateTokenBudget(
   messages: Message[],
-  model: string = 'deepseek-chat',
+  model: string = DEEPSEEK_V4_FLASH_MODEL,
   compactThreshold: number = 0.7,
 ): TokenBudget {
   const maxContext = MODEL_CONTEXT_LIMITS[model] ?? getModelContextLimit(model)
@@ -210,7 +215,7 @@ export function calculateTokenBudget(
 
 export function calculateBudgetedMaxTokens(
   messages: Message[],
-  model: string = 'deepseek-chat',
+  model: string = DEEPSEEK_V4_FLASH_MODEL,
   requestedMaxTokens?: number,
   date: Date = new Date(),
   scenario: string = 'normal',

@@ -33,9 +33,9 @@ describe('CostTracker', () => {
     tracker.reset()
     const cached = tracker.record('deepseek-chat', 1_000_000, 0, true)
 
-    // Cached should be much cheaper (90% off input)
+    // Cached should use the official V4 cache-hit input price.
     expect(cached.cost).toBeLessThan(regular.cost)
-    expect(cached.cost).toBeCloseTo(regular.cost * 0.1, 4)
+    expect(cached.cost).toBeCloseTo(0.0028, 6)
   })
 
   it('should track session cost', () => {
@@ -102,7 +102,7 @@ describe('CostTracker', () => {
 describe('estimateCost', () => {
   it('should calculate cost for deepseek-chat', () => {
     const cost = estimateCost('deepseek-chat', 1_000_000, 1_000_000)
-    expect(cost).toBeCloseTo(0.27 + 1.10, 2)
+    expect(cost).toBeCloseTo(0.14 + 0.28, 2)
   })
 
   it('should apply cache discount', () => {

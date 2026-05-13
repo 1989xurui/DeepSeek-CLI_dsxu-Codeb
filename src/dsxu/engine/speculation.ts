@@ -546,7 +546,7 @@ export class ToolCallSpeculationStrategy implements SpeculationStrategy {
       success,
       content,
       durationMs,
-      confidence: success ? plan.confidence * 0.9 : plan.confidence * 0.3, // 根据执行结果调整置信度
+      confidence: success ? plan.confidence * 0.9 : plan.confidence * 0.3, // DSXU comment sanitized.
       toolsUsed,
       error,
       metadata: {

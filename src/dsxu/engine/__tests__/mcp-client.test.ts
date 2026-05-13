@@ -35,7 +35,7 @@ describe('MCPManager', () => {
     expect(mgr.size).toBe(0)
   })
 
-  it('should parse .mcp.json in Claude format (no real servers)', async () => {
+  it('should parse .mcp.json in DSXU format (no real servers)', async () => {
     const configPath = join(TEST_DIR, '.mcp.json')
     writeFileSync(configPath, JSON.stringify({
       mcpServers: {

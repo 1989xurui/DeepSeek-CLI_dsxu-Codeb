@@ -192,10 +192,10 @@ describe('initProject', () => {
     expect(existsSync(join(TEST_INIT_DIR, '.dsxu', 'config.json'))).toBe(true)
   })
 
-  it('should create CLAUDE.md', () => {
+  it('should create DSXU.md', () => {
     const result = initProject(TEST_INIT_DIR)
-    expect(result.created).toContain('CLAUDE.md')
-    expect(existsSync(join(TEST_INIT_DIR, 'CLAUDE.md'))).toBe(true)
+    expect(result.created).toContain('DSXU.md')
+    expect(existsSync(join(TEST_INIT_DIR, 'DSXU.md'))).toBe(true)
   })
 
   it('should skip existing files', () => {

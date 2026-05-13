@@ -11,6 +11,11 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
+import {
+  DEEPSEEK_V4_FLASH_MODEL,
+  DEEPSEEK_V4_PRO_MODEL,
+  getDeepSeekV4DefaultMaxTokens,
+} from '../../utils/model/deepseekV4Control'
 
 // ── Types ──
 
@@ -106,9 +111,14 @@ export const DEFAULT_CONFIG: DSxuConfig = {
     ollamaBaseUrl: 'http://localhost:11434',
   },
   models: {
-    chatModel: 'deepseek-chat',
-    reasonerModel: 'deepseek-reasoner',
-    maxOutputTokens: 8192,
+    chatModel: DEEPSEEK_V4_FLASH_MODEL,
+    reasonerModel: DEEPSEEK_V4_PRO_MODEL,
+    maxOutputTokens: getDeepSeekV4DefaultMaxTokens({
+      model: DEEPSEEK_V4_FLASH_MODEL,
+      workflowKind: 'feature',
+      apiMode: 'thinking',
+      reasoningEffort: 'high',
+    }),
   },
   engine: {
     maxTurns: 50,

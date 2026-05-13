@@ -23,7 +23,7 @@ describe('FullAbsorb', () => {
       status,
       importedTools: 10,
       toolSchemas: [],
-      reduceTestStrategy: 'minimal',
+      reduceTestStrategy: 'focused',
     })
     expect(report.status.total).toBeGreaterThan(0)
     expect(report.recommendedTests.length).toBeGreaterThan(0)

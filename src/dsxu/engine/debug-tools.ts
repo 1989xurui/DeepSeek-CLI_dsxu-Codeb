@@ -3,13 +3,13 @@
  *
  * 面对模糊 Bug 的两阶段策略：
  *
- * 阶段 1 — 插桩调试（#5.2）：
+ *
  *   1. 在可疑函数插入 console.log
  *   2. 重跑触发错误
  *   3. 分析 Trace → 定位根因
  *   4. 修复后自动清理插桩代码
  *
- * 阶段 2 — HDD 假设探针（#5.3）：
+ *
  *   1. 基于错误+堆栈，生成 3 个假设
  *   2. 每个假设配一个精确探针（命令/检查）
  *   3. 按 confidence 排序执行
@@ -85,7 +85,7 @@ export const InjectDebugLoggerTool: ToolDefinition = {
             while (braceIdx < lines.length && !lines[braceIdx].includes('{')) braceIdx++
             if (braceIdx < lines.length) {
               const id = `__dsxu_debug_${Date.now()}_${Math.random().toString(36).slice(2, 4)}`
-              const logLine = `  console.log('[DSXU_DEBUG:${id}] ENTER ${funcName}', { args: typeof arguments !== 'undefined' ? [...arguments].map(a => typeof a === 'object' ? JSON.stringify(a).slice(0,200) : a) : [] }); // ${id}`
+              const logLine = `  console.log('[DSXU_DEBUG:${id}] ENTER ${funcName}', { args: typeof arguments !== 'undefined' ? [...arguments].map(a => typeof a === 'object' ? JSON.stringify(a).slice(0,200) : a) : [] });`
 
               // Insert after the opening brace
               lines.splice(braceIdx + 1, 0, logLine)

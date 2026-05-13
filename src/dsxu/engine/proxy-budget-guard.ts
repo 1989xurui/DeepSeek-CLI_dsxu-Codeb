@@ -74,13 +74,18 @@ export function buildProxyBudgetGuard(
     scenario,
   )
 
+  // 检查调整后是否仍然超出预算
+  // 如果调整后的maxTokens小于最小要求（512）或者remainingForOutput为0，则仍然超出预算
+  const minAcceptableTokens = 512
+  const stillOverBudget = budgetResult.maxTokens < minAcceptableTokens || budgetResult.remainingForOutput === 0
+
   return {
     ...base,
     safetyMargin,
     triggerRatio,
     targetTokens,
     isNightMode,
-    stillOverBudget: budgetResult.overBudget,
+    stillOverBudget,
     // 添加降级策略信息
     ...(budgetResult.degradationStrategy !== 'none' && {
       degradationStrategy: budgetResult.degradationStrategy,
@@ -154,12 +159,16 @@ export function shouldBlockProxyRequest(guard: ProxyBudgetGuard): boolean {
 export function buildLocalBudgetExceededError(guard: ProxyBudgetGuard): {
   type: string
   message: string
+  gateClass: 'RECOVERY_BLOCK'
+  policy: 'context-window-aware-overflow-guard'
   budget: ProxyBudgetGuard
 } {
   return {
     type: 'context_budget_exceeded',
     message:
       'LOCAL_BUDGET_GUARD_BLOCKED: prompt still exceeds safe context budget after compression',
+    gateClass: 'RECOVERY_BLOCK',
+    policy: 'context-window-aware-overflow-guard',
     budget: guard,
   }
 }

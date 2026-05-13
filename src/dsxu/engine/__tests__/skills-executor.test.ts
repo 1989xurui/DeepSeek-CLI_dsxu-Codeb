@@ -198,8 +198,8 @@ describe('SkillsExecutor', () => {
     })
   })
 
-  describe('实际执行模式（最小实现）', () => {
-    it('应该切换到实际执行模式', () => {
+  describe('独立执行器禁用真实执行', () => {
+    it('应该切换到非模拟配置但不拥有真实执行 runtime', () => {
       executor.updateConfig({ mockExecution: false })
       const status = executor.getStatus()
       expect(status.mockExecution).toBe(false)

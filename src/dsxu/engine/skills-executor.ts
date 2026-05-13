@@ -7,11 +7,15 @@
 
 import type { ToolUseContext } from '../../types/command'
 import type { ToolContext } from './types'
-import { PermissionManager, type PermissionCheckResult, type PermissionMode } from './permissions'
+import type { PermissionMode } from '../../types/permissions'
+import { evaluateToolGate } from './tool-gate-v1'
+import type { ToolPermissionLevel } from './tool-types-v1'
+import { buildSkillToolGateDefinition, isWriteSkillName } from './skills-registry-v1'
 import { TransactionManager } from './transaction-manager'
 import { TelemetryCollector } from './telemetry'
 import { CostTracker } from './cost-tracker'
 import { FileHistoryManager } from './file-history'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../utils/model/deepseekV4Control'
 
 /**
  * Skills执行错误码
@@ -108,7 +112,6 @@ export class SkillsExecutor {
     totalDurationMs: 0,
     errorCounts: new Map<SkillErrorCode, number>(),
   }
-  private permissionManager: PermissionManager | null = null
   private transactionManager: TransactionManager | null = null
   private telemetryCollector: TelemetryCollector | null = null
   private costTracker: CostTracker | null = null
@@ -119,7 +122,7 @@ export class SkillsExecutor {
       mockExecution: config?.mockExecution ?? true,
       mockDelay: config?.mockDelay ?? 0,
       debug: config?.debug ?? false,
-      timeoutMs: config?.timeoutMs ?? 30000, // 30秒超时
+      timeoutMs: config?.timeoutMs ?? 30000, // 默认 30 秒执行超时
       enablePermissions: config?.enablePermissions ?? true,
       enableTransaction: config?.enableTransaction ?? true,
       enableTelemetry: config?.enableTelemetry ?? true,
@@ -140,14 +143,6 @@ export class SkillsExecutor {
         budget: {},
         onAlert: undefined,
       },
-    }
-
-    // 初始化权限管理器
-    if (this.config.enablePermissions) {
-      this.permissionManager = new PermissionManager(
-        this.config.permissionMode,
-        this.config.permissionAskCallback
-      )
     }
 
     // 初始化文件历史管理器
@@ -232,9 +227,10 @@ export class SkillsExecutor {
             startTime
           )
         } else {
-          result = await this.executeWithTimeout(
-            () => this.realExecute(skillName, parsedArgs, context),
+          result = this.createErrorResult(
             skillName,
+            SkillErrorCode.RUNTIME_ERROR,
+            'Standalone SkillsExecutor runtime is disabled; skill execution must enter SkillTool and Skill Registry mainline',
             startTime
           )
         }
@@ -374,59 +370,65 @@ export class SkillsExecutor {
     args: any,
     context: ToolUseContext
   ): Promise<{ allowed: boolean; reason?: string }> {
-    if (!this.config.enablePermissions || !this.permissionManager) {
+    if (!this.config.enablePermissions) {
       return { allowed: true, reason: 'permissions disabled' }
     }
 
     try {
-      // 将ToolUseContext转换为ToolContext
       const toolContext: ToolContext = {
         cwd: context.cwd || process.cwd(),
         sessionId: context.sessionId || `skill-${Date.now()}`,
-        gear: 1, // 默认1档
+        gear: 1,
       }
 
-      // 构建工具输入
       const toolInput = {
         args: typeof args === 'string' ? args : JSON.stringify(args),
         skillName,
         ...(typeof args === 'object' ? args : {}),
       }
+      const gateTool = buildSkillToolGateDefinition({
+        skillName,
+        input: toolInput,
+        cwd: toolContext.cwd,
+        sessionId: toolContext.sessionId,
+      })
+      const gate = evaluateToolGate(gateTool, {
+        allowedPermissionLevel: this.permissionLevelForMode(this.config.permissionMode),
+        requireConfirmationForWrite: this.config.permissionMode !== 'bypassPermissions' && this.config.permissionMode !== 'acceptEdits',
+      })
 
-      // 检查权限
-      const result = await this.permissionManager.checkPermission(
-        `skill__${skillName}`,
-        toolInput,
-        toolContext
-      )
-
-      if (result.decision === 'allow') {
-        return { allowed: true, reason: result.reason }
-      } else if (result.decision === 'ask') {
-        // 需要用户确认
-        if (this.config.debug) {
-          console.log(`[SkillsExecutor] Permission check requires user confirmation for skill ${skillName}`)
-        }
-        // 在真实环境中，这里应该触发用户确认流程
-        // 暂时返回拒绝，等待用户确认机制
-        return { allowed: false, reason: `Permission requires confirmation: ${result.reason}` }
-      } else {
-        return { allowed: false, reason: `Permission denied: ${result.reason}` }
+      if (gate.executionDecision === 'deny') {
+        return { allowed: false, reason: gate.failureHint.recommendedAction }
       }
+      if (gate.gateDecision === 'require_confirmation' || gate.executionDecision === 'defer') {
+        if (!this.config.permissionAskCallback) {
+          return { allowed: true, reason: `${gate.gateDecision} without callback; allowed by autonomous skill policy` }
+        }
+        const allowed = await this.config.permissionAskCallback(
+          `Skill "${skillName}" requires permission: ${gate.confirmation.reason}`
+        )
+        return allowed
+          ? { allowed: true, reason: 'user-approved' }
+          : { allowed: false, reason: 'user-denied' }
+      }
+      return { allowed: true, reason: gate.approvalTrace.notes.join(',') || 'tool-gate-approved' }
     } catch (error: any) {
       console.error(`[SkillsExecutor] Permission check error for skill ${skillName}: ${error.message}`)
-      // 权限检查失败时，默认拒绝以保证安全
       return { allowed: false, reason: `Permission check error: ${error.message}` }
     }
+  }
+
+  private permissionLevelForMode(mode: PermissionMode): ToolPermissionLevel {
+    if (mode === 'plan') return 'safe'
+    if (mode === 'bypassPermissions' || mode === 'acceptEdits') return 'privileged'
+    return 'guarded'
   }
 
   /**
    * 判断是否为写操作技能
    */
   private isWriteSkill(skillName: string): boolean {
-    // 根据技能名称判断是否为写操作
-    const writeSkills = ['commit', 'skillify', 'update-config', 'write', 'edit']
-    return writeSkills.some(writeSkill => skillName.toLowerCase().includes(writeSkill))
+    return isWriteSkillName(skillName)
   }
 
   /**
@@ -646,13 +648,12 @@ export class SkillsExecutor {
 
     try {
       // 估算技能执行的token消耗
-      // 这是一个简化估算，实际应该根据技能执行的具体内容来估算
       const inputTokens = Math.ceil(duration / 100) // 每100ms估算1个token
       const outputTokens = Math.ceil(duration / 50) // 每50ms估算1个token
 
-      // 使用默认模型（deepseek-chat）进行成本估算
+      // 使用统一路由层的默认 Flash 模型进行成本估算
       const costEntry = this.costTracker.record(
-        'deepseek-chat',
+        DEEPSEEK_V4_FLASH_MODEL,
         inputTokens,
         outputTokens,
         false // 技能执行通常不是缓存命中
@@ -670,7 +671,7 @@ export class SkillsExecutor {
           inputTokens,
           outputTokens,
           cost: costEntry.cost,
-          model: 'deepseek-chat',
+          model: DEEPSEEK_V4_FLASH_MODEL,
         })
       }
     } catch (error: any) {
@@ -761,109 +762,6 @@ export class SkillsExecutor {
     }
 
     return result
-  }
-
-  /**
-   * 实际执行技能（最小可执行实现）
-   *
-   * 使用Bash工具执行技能命令。
-   * 这是一个最小实现，实际生产环境需要更完整的集成。
-   */
-  private async realExecute(
-    skillName: string,
-    args: string,
-    context: ToolUseContext
-  ): Promise<SkillExecutionResult> {
-    try {
-      if (this.config.debug) {
-        console.log(`[SkillsExecutor] Real execution: ${skillName} with args: ${args}`)
-      }
-
-      // 构建技能命令
-      const command = this.buildSkillCommand(skillName, args)
-
-      // 执行命令
-      const result = await this.executeCommand(command, context)
-
-      // 转换结果为统一格式
-      return {
-        content: this.formatResult(result),
-        isError: false,
-        meta: {
-          skill: skillName,
-          resultType: 'command',
-          rawResult: result,
-          command,
-        },
-      }
-    } catch (error: any) {
-      return {
-        content: `Skills execution error (${skillName}): ${error.message}`,
-        isError: true,
-        meta: {
-          skill: skillName,
-          error: error.message,
-          stack: error.stack,
-        },
-      }
-    }
-  }
-
-  /**
-   * 构建技能命令
-   */
-  private buildSkillCommand(skillName: string, args: string): string {
-    // 简单实现：使用bun运行技能
-    // 实际应该调用Claude Code的Skills执行逻辑
-    return `echo "[Skill Execution: ${skillName}] Arguments: ${args}"`
-  }
-
-  /**
-   * 执行命令
-   */
-  private async executeCommand(command: string, context: ToolUseContext): Promise<any> {
-    // 使用Bash工具执行命令
-    // 这是一个简化实现，实际应该使用Claude Code的命令执行机制
-    const { exec } = require('child_process')
-    const { promisify } = require('util')
-    const execAsync = promisify(exec)
-
-    try {
-      const { stdout, stderr } = await execAsync(command, {
-        cwd: context.cwd,
-        env: process.env,
-      })
-
-      return {
-        stdout: stdout.trim(),
-        stderr: stderr.trim(),
-        success: true,
-      }
-    } catch (error: any) {
-      return {
-        stdout: '',
-        stderr: error.message,
-        success: false,
-        error: error,
-      }
-    }
-  }
-
-  /**
-   * 格式化执行结果（用于实际执行）
-   */
-  private formatResult(result: any): string {
-    if (typeof result === 'string') return result
-    if (result?.content) return result.content
-    if (result?.output) return result.output
-    if (result?.message) return result.message
-
-    // 尝试转换为字符串
-    try {
-      return JSON.stringify(result, null, 2)
-    } catch {
-      return String(result)
-    }
   }
 
   /**

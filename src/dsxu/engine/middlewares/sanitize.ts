@@ -1,4 +1,7 @@
 /**
+ * V14 FROZEN: zero-import middleware retained only because Windows ACL blocked
+ * physical removal after copying to _deleted_files.
+ *
  * Sanitize 中间件 - ANSI清洗 + 长度截断
  * 
  * 功能：

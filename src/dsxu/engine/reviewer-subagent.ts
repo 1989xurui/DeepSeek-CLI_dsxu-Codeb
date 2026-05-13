@@ -1,4 +1,5 @@
-import type { QueryEvent, QueryResult, ReviewerFinding, ReviewerReport, AgentSummary } from './types'
+import type { QueryEvent, QueryResult, ReviewerFinding, ReviewerReport, AgentSummary, ReviewSummary } from './types'
+import { createCheckRuleResult, createDangerousChangeCheckRule } from './checks-as-rules'
 
 export interface ReviewerSubagentConfig {
   minScoreToApprove?: number
@@ -19,7 +20,7 @@ export class ReviewerSubagent {
     }
   }
 
-  review(events: QueryEvent[], result: QueryResult): ReviewerReport {
+  review(events: QueryEvent[], result: QueryResult): ReviewSummary {
     const findings: ReviewerFinding[] = []
     const suggestions: string[] = []
     let score = 100
@@ -85,7 +86,47 @@ export class ReviewerSubagent {
       suggestions.push('No critical risks detected. Maintain current strategy.')
     }
 
-    return { approved, score, findings, suggestions }
+    // 9A-C: 创建规则检查结果
+    const ruleResults = [
+      createCheckRuleResult({
+        id: `review-rule-${Date.now()}-1`,
+        ruleId: 'dangerous-change-001',
+        status: approved ? 'passed' : 'failed',
+        target: '代码审查',
+        details: `审查分数: ${score.toFixed(1)}/${this.config.minScoreToApprove}`,
+        fixSuggestion: approved ? undefined : '修复发现的问题并重新审查'
+      }),
+      createCheckRuleResult({
+        id: `review-rule-${Date.now()}-2`,
+        ruleId: 'review-rule-002',
+        status: findings.length === 0 ? 'passed' : 'warning',
+        target: '风险检查',
+        details: `发现 ${findings.length} 个问题，${rollbackCount} 次回滚，${circuitSkips} 次断路器跳过`,
+        context: { findingsCount: findings.length, rollbackCount, circuitSkips }
+      })
+    ]
+
+    return {
+      approved,
+      score,
+      comments: suggestions,
+      riskLevel: this.calculateRiskLevel(findings, score),
+      timestamp: Date.now(),
+      // 9A-C: 添加规则检查结果
+      ruleResults
+    }
+  }
+
+  /**
+   * 计算风险等级
+   */
+  private calculateRiskLevel(findings: ReviewerFinding[], score: number): 'low' | 'medium' | 'high' {
+    const hasCritical = findings.some(f => f.severity === 'P0')
+    const hasHigh = findings.some(f => f.severity === 'P1')
+
+    if (hasCritical || score < 50) return 'high'
+    if (hasHigh || score < 70) return 'medium'
+    return 'low'
   }
 
   /**
@@ -95,7 +136,7 @@ export class ReviewerSubagent {
    * @param summary 智能体摘要
    * @returns 评审报告
    */
-  reviewWithSummary(events: QueryEvent[], result: QueryResult, summary: AgentSummary): ReviewerReport {
+  reviewWithSummary(events: QueryEvent[], result: QueryResult, summary: AgentSummary): ReviewSummary {
     const findings: ReviewerFinding[] = []
     const suggestions: string[] = []
     let score = 100
@@ -242,7 +283,41 @@ export class ReviewerSubagent {
     const summaryInfo = `Agent Summary: ${summary.agentId} (${summary.status}) - ${summary.metadata.totalTurns} turns, ${summary.metadata.toolsUsed.length} tools used`
     suggestions.unshift(summaryInfo)
 
-    return { approved, score, findings, suggestions }
+    // 9A-C: 创建规则检查结果
+    const ruleResults = [
+      createCheckRuleResult({
+        id: `review-agent-rule-${Date.now()}-1`,
+        ruleId: 'dangerous-change-001',
+        status: approved ? 'passed' : 'failed',
+        target: '智能体审查',
+        details: `智能体审查分数: ${score.toFixed(1)}/${this.config.minScoreToApprove}`,
+        fixSuggestion: approved ? undefined : '修复智能体行为问题'
+      }),
+      createCheckRuleResult({
+        id: `review-agent-rule-${Date.now()}-2`,
+        ruleId: 'review-rule-002',
+        status: findings.length === 0 ? 'passed' : 'warning',
+        target: '智能体风险检查',
+        details: `智能体 ${summary.agentId} 发现 ${findings.length} 个问题`,
+        context: {
+          agentId: summary.agentId,
+          agentStatus: summary.status,
+          findingsCount: findings.length,
+          totalTurns: summary.metadata.totalTurns,
+          toolsUsed: summary.metadata.toolsUsed.length
+        }
+      })
+    ]
+
+    return {
+      approved,
+      score,
+      comments: suggestions,
+      riskLevel: this.calculateRiskLevel(findings, score),
+      timestamp: Date.now(),
+      // 9A-C: 添加规则检查结果
+      ruleResults
+    }
   }
 }
 

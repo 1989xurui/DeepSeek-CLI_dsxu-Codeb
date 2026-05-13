@@ -1,17 +1,17 @@
 /**
  * #6.5 Slash Commands
  *
- * 类似 Claude Code 的斜杠命令系统：
- *   /help    — 显示帮助
- *   /clear   — 清除上下文
- *   /compact — 手动压缩
- *   /cost    — 显示费用
- *   /gear    — 查看/切换档位
- *   /tools   — 列出工具
- *   /session — 会话管理
- *   /config  — 配置查看
- *   /debug   — 调试信息
- *   /exit    — 退出
+ * 类似 DSXU Code 的斜杠命令系统：
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
 // ── Types ──

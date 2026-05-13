@@ -1,18 +1,18 @@
 /**
- * #23 LSP Tool — 语言服务器协议适配
+ *
  *
  * 两层实现：
- *   1. LSPTool — 9 种 LSP 操作（goToDefinition, findReferences, hover, etc.）
- *   2. DiagnosticsCollector — 收集编译/lint 诊断，自动注入到对话上下文
+ *
+ *
  *
  * 策略（V13 轻量版）：
  *   - 不启动常驻 LSP server（太重）
  *   - 用 tsc --noEmit / eslint 单次调用获取诊断（够用）
  *   - 诊断结果注入 query loop 的消息历史
- *   - 后续可升级为真正的 LSP server（Claude 模式）
+ *   - 后续可升级为真正的 LSP server（DSXU 模式）
  *
- * 与 Claude 的区别：
- *   - Claude: 常驻 LSP server + JSON-RPC + 多 server 路由
+ * 与 DSXU 的区别：
+ *   - DSXU: 常驻 LSP server + JSON-RPC + 多 server 路由
  *   - DSxu V13: 按需调用 tsc/eslint + 结果解析（零常驻进程）
  */
 
@@ -48,6 +48,24 @@ function runRipgrep(pattern: string, cwd: string, extraArgs: string[] = []): str
     encoding: 'utf-8',
   })
   return String(shell.stdout || '')
+}
+
+function parseRipgrepMatchLine(
+  line: string,
+  cwd: string,
+): { file: string; line: number; text: string } | null {
+  const match = line.match(/^(.+):(\d+):(.*)$/)
+  if (!match) return null
+
+  const file = resolve(cwd, match[1])
+  const lineNumber = Number.parseInt(match[2], 10)
+  if (!Number.isFinite(lineNumber)) return null
+
+  return {
+    file,
+    line: lineNumber,
+    text: match[3] ?? '',
+  }
 }
 
 // ── LSP Operations ──
@@ -304,10 +322,9 @@ function goToDefinition(filePath: string, line: number, character: number, cwd: 
     if (raw.trim()) {
       const lines = raw.trim().split('\n').slice(0, 20)
       for (const item of lines) {
-        const firstColon = item.indexOf(':')
-        if (firstColon <= 0) continue
-        const abs = resolve(cwd, item.slice(0, firstColon))
-        results.push(`${relative(cwd, abs)}:${item.slice(firstColon + 1)}`)
+        const parsed = parseRipgrepMatchLine(item, cwd)
+        if (!parsed) continue
+        results.push(`${relative(cwd, parsed.file)}:${parsed.line}:${parsed.text}`)
       }
     }
     if (results.length > 0) break  // 找到就停
@@ -571,23 +588,14 @@ function renameSymbol(filePath: string, line: number, character: number, newName
   const linesOutput = output.split('\n').filter(Boolean)
 
   for (const lineStr of linesOutput) {
-    const firstColon = lineStr.indexOf(':')
-    if (firstColon <= 0) continue
+    const parsed = parseRipgrepMatchLine(lineStr, cwd)
+    if (!parsed) continue
 
-    const file = resolve(cwd, lineStr.slice(0, firstColon))
-    const rest = lineStr.slice(firstColon + 1)
-    const lineColon = rest.indexOf(':')
-
-    if (lineColon <= 0) continue
-
-    const lineNum = parseInt(rest.slice(0, lineColon), 10)
-    const text = rest.slice(lineColon + 1)
-
-    if (!references[file]) {
-      references[file] = []
+    if (!references[parsed.file]) {
+      references[parsed.file] = []
     }
 
-    references[file].push({ line: lineNum, text })
+    references[parsed.file].push({ line: parsed.line, text: parsed.text })
   }
 
   // 3. 生成预览

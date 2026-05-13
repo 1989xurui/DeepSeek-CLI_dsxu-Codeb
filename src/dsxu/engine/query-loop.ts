@@ -1,16 +1,24 @@
-﻿/**
- * DSxu Query Loop 鈥?璺嚎 B 鐨勫績鑴? *
- * 瀛?Claude 鐨?while(true) tool use loop锛屽姞 DSxu 涓夊ぇ鐙湁鑳藉姏锛? * 1. 姝ラ绾т笁妗ｅ彉閫?鈥?姣忎釜 tool result 閮借兘瑙﹀彂鍗囬檷妗? * 2. MSA 璁板繂娉ㄥ叆 鈥?L1/L2/L3 涓夌骇璁板繂鎸佺画鏇存柊
- * 3. 娴嬭瘯椹卞姩鑷不锛圫.1锛夆€?娴嬭瘯閫氳繃鏄湡姝ｇ殑"瀹屾垚"淇″彿
+/**
+ * DSXU Query Loop.
  *
- * 鏍稿績寰幆锛? *   user message 鈫?[閫夋。] 鈫?LLM call 鈫?tool_calls? 鈫? *     鏈?鈫?鎵ц宸ュ叿 鈫?[妫€娴嬫祴璇?閿欒 鈫?鍗囬檷妗 鈫?缁х画 loop
- *     鏃?鈫?LLM 璇村畬浜?鈫?閫€鍑? *
- * 閫€鍑烘潯浠讹紙瀛?Claude锛?0 绉嶉€€鍑鸿矾寰勶級锛? *   - end_turn: LLM 姝ｅ父缁撴潫
- *   - test_passed: S.1 娴嬭瘯閫氳繃
- *   - max_turns: 闃叉棤闄愬惊鐜? *   - max_errors: 杩炵画閿欒杩囧 鈫?HITL
- *   - aborted: 鐢ㄦ埛鍙栨秷
- *   - api_error: LLM API 涓嶅彲鐢? */
-
+ * Owns the while(true) tool-use loop and DSXU-specific orchestration:
+ * 1. Step-level gear shifts after tool results.
+ * 2. MSA memory injection across L1/L2/L3 tiers.
+ * 3. Test-driven self-healing where verified PASS is the completion signal.
+ *
+ * Core flow:
+ *
+ *     yes -> execute tools -> observe test/error signals -> continue loop
+ *     no  -> return final answer
+ *
+ * Exit reasons:
+ *   - end_turn: LLM produced a final answer.
+ *   - test_passed: verification passed.
+ *   - max_turns: turn budget exhausted.
+ *   - max_errors: error budget exhausted and should escalate to HITL.
+ *   - aborted: user or caller aborted.
+ *   - api_error: LLM API call failed.
+ */
 import type {
   Message,
   ToolCall,
@@ -43,6 +51,12 @@ import { SessionSummaryManager, SessionStore, AgentSummaryManager } from './sess
 import { EnhancedSpeculationManager, createSpeculationManager } from './speculation'
 import type { ContextSnapshotState } from './types'
 import { runCounterfactualBranches } from './forked-agent'
+import { RecoveryIntegrationV3 } from './recovery/recovery-integration-v3'
+import type {
+  RecoveryDecision,
+  RecoveryReason,
+  RecoveryContext,
+} from './recovery/recovery-types-v3'
 
 const DEFAULT_MAX_TURNS = 50
 const DEFAULT_MAX_CONSECUTIVE_ERRORS = 10
@@ -51,19 +65,50 @@ const DEFAULT_TOOL_SUBSET_MIN = 6
 const DEFAULT_MAX_TOOL_CALLS_PER_TURN = 12
 const MAX_RECENT_SUCCESS_TOOLS = 8
 
-// 上下文毒性熔断默认配置
+// Context toxicity breaker defaults.
 const DEFAULT_MAX_FAILED_TURNS_BEFORE_SNAPSHOT = 15
 const DEFAULT_ENABLE_FAILURE_SNAPSHOT_RESET = true
 
-// 语义缓存默认配置
+// Semantic cache defaults.
 const DEFAULT_SEMANTIC_CACHE_ENABLED = false
 const DEFAULT_SEMANTIC_CACHE_READ_ONLY_ONLY = true
 
-// 注意力锚点默认配置
+// Attention anchor defaults.
 const DEFAULT_ATTENTION_ANCHOR_ENABLED = true
-const DEFAULT_ATTENTION_ANCHOR_TEMPLATE = "【重点提醒】当前核心任务：{task}"
+const DEFAULT_ATTENTION_ANCHOR_TEMPLATE = "Keep focus on the current task: {task}"
 const DEFAULT_ATTENTION_ANCHOR_MAX_LENGTH = 100
 const DEFAULT_ATTENTION_ANCHOR_MIN_CONTEXT_LENGTH = 8
+
+export function createRecoveryBridge() {
+  const recoveryIntegration = new RecoveryIntegrationV3()
+
+  return {
+    getRecoveryDecisionForQueryLoop(context: {
+      failureCount: number
+      lastError?: string
+      verification?: { passed: boolean; errors?: string[] }
+      reviewer?: { accepted: boolean; feedback?: string }
+      bugDescription: string
+    }): RecoveryDecision {
+      const recoveryContext: RecoveryContext = {
+        bugContext: { description: context.bugDescription },
+        failureCount: context.failureCount,
+        lastError: context.lastError,
+        verification: context.verification,
+        reviewer: context.reviewer,
+      }
+
+      return recoveryIntegration.processRecoveryRequest(recoveryContext)
+    },
+
+    quickRecoveryDecision(
+      reason: RecoveryReason,
+      failureCount: number = 1,
+    ): RecoveryDecision {
+      return recoveryIntegration.quickDecide(reason, failureCount, 'query-loop recovery')
+    },
+  }
+}
 
 /**
  * 生成最小状态快照
@@ -339,21 +384,21 @@ function calculateToolReliability(toolName: string): number {
 }
 
 /**
- * 鏍稿績 Query Loop 鈥?async generator
+ * Core Query Loop async generator.
  *
- * 鐢ㄦ硶锛? *   for await (const event of queryLoop(config, messages, tools)) {
- *     // 瀹炴椂澶勭悊姣忎竴姝ヤ簨浠? *   }
+ * Usage:
+ *   for await (const event of queryLoop(config, messages, tools)) { ... }
  */
 export async function* queryLoop(
   config: QueryEngineConfig,
   initialMessages: Message[],
   toolRegistry: ToolRegistry,
   options?: {
-    /** 鍒濆绯荤粺 prompt锛圡SA 浼氭敞鍏ュ埌杩欓噷锛?*/
+    /** Initial system prompt; MSA may inject memory here. */
     systemPrompt?: string
-    /** 鍒濆妗ｄ綅 */
+    /** Initial gear. */
     initialGear?: 1 | 2 | 3
-    /** 浠诲姟鎻忚堪锛堢敤浜?MSA L3 妫€绱級 */
+    /** Task description used for MSA L3 retrieval. */
     taskQuery?: string
     /** Cache break tracking source key */
     querySource?: string
@@ -363,7 +408,7 @@ export async function* queryLoop(
   const maxErrors = config.maxConsecutiveErrors ?? DEFAULT_MAX_CONSECUTIVE_ERRORS
   const cwd = config.cwd ?? process.cwd()
   const abortSignal = config.abortSignal
-  const priority = config.priority ?? 2 // 默认中等优先级
+  const priority = config.priority ?? 2 // DSXU comment sanitized.
   const sessionId = `session-${Date.now()}`
   const fileHistory = new FileHistoryManager({ cwd })
 
@@ -406,15 +451,15 @@ export async function* queryLoop(
   // Mutable message history for the query loop.
   const messages: Message[] = []
 
-  // 绯荤粺娑堟伅
+  // System message.
   if (options?.systemPrompt) {
     messages.push({ role: 'system', content: options.systemPrompt })
   }
 
-  // 鍒濆鐢ㄦ埛娑堟伅
+  // Initial user messages.
   messages.push(...initialMessages)
 
-  // 缁熻
+  // Usage totals.
   let totalInputTokens = 0
   let totalOutputTokens = 0
   let turn = 0
@@ -465,7 +510,7 @@ export async function* queryLoop(
         result.messages,
         config.llmCall,
         effectiveSessionId,
-        config.memoryExtraction?.qualityThreshold ?? 0.6 // 质量阈值
+        config.memoryExtraction?.qualityThreshold ?? 0.6 // DSXU comment sanitized.
       )
 
       // 如果有持久化回调，调用它
@@ -625,7 +670,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
     turn++
     let turnSuccessful = false // 跟踪当前轮次是否成功
 
-    // 鈹€鈹€ Speculation触发检查（每N轮） 鈹€鈹€
+    // Speculation trigger check on the configured cadence.
     if (speculationEnabled && speculationManager && turn % speculationTriggerInterval === 0) {
       try {
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')
@@ -700,7 +745,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       console.log(`[ContextToxicityBreaker] 快照重启完成，保留 ${messages.length} 条消息`)
     }
 
-    // 鈹€鈹€ 会话记忆更新（每轮开始） 鈹€鈹€
+    // Session memory update at the start of a turn.
     if (sessionMemoryEnabled && turn - lastMemoryUpdateTurn >= sessionMemoryUpdateInterval) {
       try {
         // 更新会话摘要
@@ -736,17 +781,17 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ Auto Compact: 涓婁笅鏂囧帇缂╋紙姣忚疆寮€濮嬫鏌ワ級 鈹€鈹€
-    if (turn > 1) {  // 绗竴杞笉鍘嬶紙鍒氬紑濮嬶級
+    // Auto Compact: check context compression at the start of each turn.
+    if (turn > 1) {  // Do not compact on the first turn.
       try {
         const compactResult = await autoCompactIfNeeded(messages, config.llmCall)
         if (compactResult.wasCompacted) {
-          // 鏇挎崲娑堟伅鍘嗗彶
+          // Replace message history with the compacted history.
           messages.length = 0
           messages.push(...compactResult.messages)
           console.log(
             `[QueryLoop] Auto-compact: ${compactResult.compactType} ` +
-            `(${compactResult.tokensBefore} 鈫?${compactResult.tokensAfter} tokens, ` +
+            `(${compactResult.tokensBefore} -> ${compactResult.tokensAfter} tokens, ` +
             `removed ${compactResult.messagesRemoved} msgs)`
           )
           notifyCompaction(querySource)
@@ -756,10 +801,10 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ 閫€鍑猴細瓒呰繃鏈€澶ц疆娆?鈹€鈹€
+    // Exit: maximum turn budget reached.
     if (turn > maxTurns) {
       const result: QueryResult = {
-        finalMessage: lastAssistantText || '[杈惧埌鏈€澶ц疆娆￠檺鍒禲',
+        finalMessage: lastAssistantText || '[Reached max turn limit]',
         exitReason: 'max_turns',
         turns: turn - 1,
         totalUsage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
@@ -770,10 +815,10 @@ ${counterfactualResult.summary || '无汇总摘要'}
       return await finalizeResult(result)
     }
 
-    // 鈹€鈹€ 閫€鍑猴細鐢ㄦ埛鍙栨秷 鈹€鈹€
+    // Exit: user or caller aborted.
     if (abortSignal?.aborted) {
       const result: QueryResult = {
-        finalMessage: lastAssistantText || '[鐢ㄦ埛鍙栨秷]',
+        finalMessage: lastAssistantText || '[User aborted]',
         exitReason: 'aborted',
         turns: turn - 1,
         totalUsage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
@@ -784,11 +829,11 @@ ${counterfactualResult.summary || '无汇总摘要'}
       return await finalizeResult(result)
     }
 
-    // 鈹€鈹€ 閫€鍑猴細杩炵画閿欒杩囧 鈫?HITL 鈹€鈹€
+    // Exit: too many consecutive errors; escalate to human intervention.
     const gearState = gearBox.getState()
     if (gearState.consecutiveErrors >= maxErrors) {
       const result: QueryResult = {
-        finalMessage: `[杩炵画閿欒 ${gearState.consecutiveErrors} 娆★紝闇€瑕佷汉宸ヤ粙鍏`,
+        finalMessage: `[Too many consecutive errors: ${gearState.consecutiveErrors}; human intervention required]`,
         exitReason: 'max_errors',
         turns: turn - 1,
         totalUsage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
@@ -799,7 +844,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       return await finalizeResult(result)
     }
 
-    // 鈹€鈹€ Step 1: 閫夋。 + 閫夋ā鍨?鈹€鈹€
+    // Step 1: select tools and model for this turn.
     const currentGear = gearBox.getGear()
     const model = gearBox.getModel()
     const selection = selectToolSubsetForTurn({
@@ -856,7 +901,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
     allEvents.push(turnStartEvent)
     yield turnStartEvent
 
-    // 鈹€鈹€ 注入会话记忆摘要到系统提示 鈹€鈹€
+    // Inject the session memory summary into the system prompt.
     const memorySummary = sessionMemoryEnabled
       ? sessionSummaryManager.getMemorySummary(effectiveSessionId, sessionMemorySummaryMaxLength)
       : ''
@@ -885,7 +930,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ 注入注意力锚点（降低长上下文遗忘风险） 鈹€鈹€
+    // Inject an attention anchor to reduce long-context drift.
     const anchorResult = generateAttentionAnchor(
       messagesWithMemory,
       attentionAnchorEnabled,
@@ -908,7 +953,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
 
           messagesWithMemory[i] = {
             ...userMessage,
-            content: `${currentContent}/n/n${anchorResult.anchor}`
+            content: `${currentContent}\n\n${anchorResult.anchor}`
           }
           break
         }
@@ -923,7 +968,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ Step 2: 璋冪敤 LLM 鈹€鈹€
+    // Step 2: call the LLM.
     let response: LLMResponse
     try {
       // 根据优先级调整模型参数
@@ -958,16 +1003,16 @@ ${counterfactualResult.summary || '无汇总摘要'}
       allEvents.push(errorEvent)
       yield errorEvent
 
-      // 娉ㄥ叆閿欒淇℃伅鍒板璇濓紝璁╀笅涓€杞?LLM 鐪嬪埌
+      // Inject error information so the next LLM turn can see it.
       messages.push({
         role: 'assistant',
         content: `[API Error: ${error.message}]`,
       })
 
-      // API 杩炵画澶辫触 3 娆?鈫?涓嶅彲鎭㈠
+      // Three consecutive API failures are treated as unrecoverable.
       if (gearState.consecutiveErrors >= 3) {
         const result: QueryResult = {
-          finalMessage: `[API 杩炵画澶辫触: ${error.message}]`,
+          finalMessage: `[API failed repeatedly: ${error.message}]`,
           exitReason: 'api_error',
           turns: turn,
           totalUsage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
@@ -982,9 +1027,9 @@ ${counterfactualResult.summary || '无汇总摘要'}
       consecutiveFailedTurns++
       console.warn(`[ContextToxicityBreaker] LLM API错误，连续失败轮次：${consecutiveFailedTurns}/${maxFailedTurnsBeforeSnapshot}`)
 
-      continue  // 閲嶈瘯
+      continue // retry next turn
     }
-
+    // Emit the raw LLM response event before usage accounting.
     yield { type: 'llm_response', response }
 
     const usage = response.usage ?? {
@@ -1015,19 +1060,20 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鏇存柊缁熻
+    // Update usage totals.
     totalInputTokens += usage.inputTokens
     totalOutputTokens += usage.outputTokens
 
-    // 璁板綍 assistant 鏂囨湰
+    // Record assistant text.
     if (response.content) {
       lastAssistantText = response.content
     }
     lastAssistantAt = Date.now()
 
-    // 鈹€鈹€ Step 3: 妫€鏌ユ槸鍚﹂渶瑕佹墽琛屽伐鍏?鈹€鈹€
+    // Step 3: check whether tools need to be executed.
     if (response.stopReason !== 'tool_use' || response.toolCalls.length === 0) {
-      // LLM 璇村畬浜?鈥?姝ｅ父閫€鍑?      gearBox.reportSuccess()
+      // LLM produced a final answer; exit normally.
+      gearBox.reportSuccess()
       turnSuccessful = true
       consecutiveFailedTurns = 0
       lastSuccessfulTurn = turn
@@ -1044,7 +1090,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       return await finalizeResult(result)
     }
 
-    // 鈹€鈹€ Step 4: 杩藉姞 assistant 娑堟伅锛堝惈 tool_calls锛?鈹€鈹€
+    // Step 4: append the assistant message, including tool calls.
     messages.push({
       role: 'assistant',
       content: response.content || '',
@@ -1052,7 +1098,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       reasoning: response.reasoning,
     })
 
-    // 鈹€鈹€ Step 5: 鎵ц宸ュ叿 鈹€鈹€
+    // Step 5: execute tools.
     const toolContext: ToolContext = {
       cwd,
       sessionId: effectiveSessionId,
@@ -1240,7 +1286,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
         }
       }
     }
-// 鈹€鈹€ Step 6: 灏?tool results 杩藉姞鍒版秷鎭巻鍙?鈹€鈹€
+    // Step 6: append tool results to message history.
     for (const tr of toolResults) {
       messages.push({
         role: 'tool',
@@ -1249,7 +1295,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       })
     }
 
-    // 鈹€鈹€ Step 7: 会话摘要更新（每N轮）鈹€鈹€
+    // Step 7: update the session summary on the configured cadence.
     if (config.sessionSummary?.enabled !== false) {
       try {
         await sessionSummaryManager.updateSessionSummary(sessionStore, effectiveSessionId, messages, turn)
@@ -1258,7 +1304,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ 更新失败计数（仅当轮次未成功完成时到达这里）鈹€鈹€
+    // Update failure counters if this turn did not complete successfully.
     if (!turnSuccessful) {
       // 检查是否有工具执行成功
       const hasSuccessfulToolExecution = toolResults.some(r => !r.isError)
@@ -1271,13 +1317,15 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
     }
 
-    // 鈹€鈹€ 缁х画 loop锛氬洖鍒?Step 1锛孡LM 浼氱湅鍒?tool results 鈹€鈹€
+    // Continue the loop so the next LLM call can see the tool results.
   }
 }
 
 /**
- * 绠€鍖栫増鍏ュ彛 鈥?杩愯涓€娆″畬鏁寸殑 query锛岃繑鍥炴渶缁堢粨鏋? *
- * 鐢ㄦ硶锛? *   const result = await runQuery(config, [{ role: 'user', content: '...' }], registry)
+ * Simplified entrypoint: run one complete query and return the final result.
+ *
+ * Usage:
+ *   const result = await runQuery(config, [{ role: 'user', content: '...' }], registry)
  */
 export async function runQuery(
   config: QueryEngineConfig,
@@ -1289,26 +1337,379 @@ export async function runQuery(
 
   for await (const event of queryLoop(config, initialMessages, toolRegistry, options)) {
     if (event.type === 'completed') {
-      // completed 浜嬩欢鍚?generator 浼?return QueryResult
+      // The completed event is emitted before the generator returns QueryResult.
     }
 
-    // 鍙互鍦ㄨ繖閲屽姞鏃ュ織
+    // Optional debug logging for the simplified entrypoint.
     if (event.type === 'turn_start') {
       console.log(`[QueryEngine] Turn ${event.turn}, gear=${event.gear}, model=${event.model}`)
     }
     if (event.type === 'gear_shift') {
-      console.log(`[QueryEngine] Gear ${event.from}鈫?{event.to}: ${event.reason}`)
+      console.log(`[QueryEngine] Gear ${event.from}->${event.to}: ${event.reason}`)
     }
   }
 
-  // async generator 鐨?return value 闇€瑕侀€氳繃 .next() 鑾峰彇
-  // 鐢?for-await 浼氫涪澶?return value锛屾墍浠ユ墜鍔ㄨ繍琛?  const gen = queryLoop(config, initialMessages, toolRegistry, options)
+  // The async generator return value must be collected through .next().
+  // A for-await loop consumes events only, so run a fresh generator to get QueryResult.
+  const gen = queryLoop(config, initialMessages, toolRegistry, options)
   let result: IteratorResult<QueryEvent, QueryResult>
   do {
     result = await gen.next()
   } while (!result.done)
 
   return result.value
+}
+
+export type DsxuQueryLoopContextState = {
+  model: string
+  contextUsedPercent: number
+  autoCompactTriggered: boolean
+  compactionStrategy: 'none' | 'light' | 'aggressive'
+  signalsConsumed: number
+  latestSignal?: {
+    usedPercent: number
+    shouldCompact: boolean
+    strategy: 'none' | 'light' | 'aggressive'
+  }
+}
+
+export function createQueryLoopContextState(model: string): DsxuQueryLoopContextState {
+  return {
+    model,
+    contextUsedPercent: 0,
+    autoCompactTriggered: false,
+    compactionStrategy: 'none',
+    signalsConsumed: 0,
+  }
+}
+
+export type DsxuQueryLoopSkillPromptInput = {
+  skillPlan?: {
+    planId?: string
+    executionOrder?: string[]
+    trace?: {
+      selectedFragmentIds?: string[]
+      reasons?: string[]
+      discardedSkillIds?: string[]
+    }
+  }
+  promptResolution?: {
+    stackId?: string
+    finalPrompt?: string
+    trace?: {
+      selectedFragmentIds?: string[]
+      reasons?: string[]
+    }
+  }
+}
+
+export type DsxuQueryLoopSkillState = {
+  taskId: string
+  skillPlan?: DsxuQueryLoopSkillPromptInput['skillPlan']
+  promptResolution?: DsxuQueryLoopSkillPromptInput['promptResolution']
+  selectedSkillIds: string[]
+  promptPlanStackId?: string
+  finalPrompt?: string
+  selectedFragments: string[]
+  reasons: string[]
+  discardedSkillIds: string[]
+  signalsConsumed: number
+  latestSignal?: {
+    type: 'skill-prompt'
+    hasPlan: boolean
+    promptInjected: boolean
+  }
+}
+
+export function createQueryLoopSkillPromptState(taskId: string): DsxuQueryLoopSkillState {
+  return {
+    taskId,
+    selectedSkillIds: [],
+    selectedFragments: [],
+    reasons: [],
+    discardedSkillIds: [],
+    signalsConsumed: 0,
+  }
+}
+
+export function consumeSkillPromptInQueryLoop(
+  state: DsxuQueryLoopSkillState,
+  input: DsxuQueryLoopSkillPromptInput,
+): DsxuQueryLoopSkillState {
+  const skillPlan = input.skillPlan ?? {}
+  const promptResolution = input.promptResolution
+  const selectedSkillIds = skillPlan.executionOrder ? [...skillPlan.executionOrder] : []
+  const selectedFragments = promptResolution?.trace?.selectedFragmentIds
+    ? [...promptResolution.trace.selectedFragmentIds]
+    : skillPlan.trace?.selectedFragmentIds
+      ? [...skillPlan.trace.selectedFragmentIds]
+      : []
+  const reasons = [
+    ...(promptResolution?.trace?.reasons ?? []),
+    ...(skillPlan.trace?.reasons ?? []),
+  ]
+  const discardedSkillIds = [...(skillPlan.trace?.discardedSkillIds ?? [])]
+
+  return {
+    ...state,
+    skillPlan: input.skillPlan,
+    promptResolution: input.promptResolution,
+    selectedSkillIds,
+    promptPlanStackId: promptResolution?.stackId,
+    finalPrompt: promptResolution?.finalPrompt,
+    selectedFragments,
+    reasons,
+    discardedSkillIds,
+    signalsConsumed: state.signalsConsumed + 1,
+    latestSignal: {
+      type: 'skill-prompt',
+      hasPlan: selectedSkillIds.length > 0 || typeof promptResolution?.stackId === 'string',
+      promptInjected: typeof promptResolution?.finalPrompt === 'string' && promptResolution.finalPrompt.length > 0,
+    },
+  }
+}
+
+export function projectSkillPromptNextRoundInput(state: DsxuQueryLoopSkillState) {
+  return {
+    hasSkillPlan: state.selectedSkillIds.length > 0,
+    promptInjected: typeof state.finalPrompt === 'string' && state.finalPrompt.length > 0,
+    selectedSkillIds: [...state.selectedSkillIds],
+    selectedFragments: [...state.selectedFragments],
+    discardedSkillIds: [...state.discardedSkillIds],
+  }
+}
+
+export function consumeContextSignalInQueryLoop(
+  state: DsxuQueryLoopContextState,
+  signal: {
+    usedPercent: number
+    shouldCompact: boolean
+    strategy: 'none' | 'light' | 'aggressive'
+  },
+): DsxuQueryLoopContextState {
+  return {
+    ...state,
+    contextUsedPercent: signal.usedPercent,
+    autoCompactTriggered: signal.shouldCompact,
+    compactionStrategy: signal.strategy,
+    signalsConsumed: state.signalsConsumed + 1,
+    latestSignal: { ...signal },
+  }
+}
+
+export function createDSXUQueryLoopMainlineBundle(input: {
+  model: string
+  usedPercent: number
+  shouldCompact: boolean
+  strategy: 'none' | 'light' | 'aggressive'
+}): {
+  state: DsxuQueryLoopContextState
+  evidence: {
+    model: string
+    contextUsedPercent: number
+    autoCompactTriggered: boolean
+    compactionStrategy: 'none' | 'light' | 'aggressive'
+  }
+} {
+  const state = consumeContextSignalInQueryLoop(
+    createQueryLoopContextState(input.model),
+    {
+      usedPercent: input.usedPercent,
+      shouldCompact: input.shouldCompact,
+      strategy: input.strategy,
+    },
+  )
+  return {
+    state,
+    evidence: {
+      model: state.model,
+      contextUsedPercent: state.contextUsedPercent,
+      autoCompactTriggered: state.autoCompactTriggered,
+      compactionStrategy: state.compactionStrategy,
+    },
+  }
+}
+
+export type DsxuQueryLoopCoordinatorSignal = {
+  type: 'fork' | 'merge' | 'abort' | 'escalate'
+  payload: any
+}
+
+export type DsxuQueryLoopCoordinatorEnvelope = {
+  taskId: string
+  decision?: {
+    taskId: string
+    roleAssignments?: Array<{ subtaskId: string; assignedRole: string; rationale: string }>
+    concurrencyPlan?: { parallelTasks: string[]; sequentialTasks: string[] }
+    rationale?: string
+  }
+  protocol?: {
+    recoveryHints?: unknown[]
+    lifecycleSummary?: unknown
+    checkpoints?: unknown[]
+  }
+  signals?: DsxuQueryLoopCoordinatorSignal[]
+  createdAt?: number
+}
+
+export type DsxuQueryLoopCoordinatorState = {
+  taskId: string
+  latestDecision?: DsxuQueryLoopCoordinatorEnvelope['decision']
+  latestProtocol?: DsxuQueryLoopCoordinatorEnvelope['protocol']
+  latestSignals: DsxuQueryLoopCoordinatorSignal[]
+  consumedEnvelopes: number
+  lastEnvelopeAt?: number
+}
+
+export function createQueryLoopCoordinatorState(taskId: string): DsxuQueryLoopCoordinatorState {
+  return {
+    taskId,
+    latestSignals: [],
+    consumedEnvelopes: 0,
+  }
+}
+
+export function consumeCoordinatorInQueryLoop(
+  state: DsxuQueryLoopCoordinatorState,
+  envelope: DsxuQueryLoopCoordinatorEnvelope,
+): DsxuQueryLoopCoordinatorState {
+  return {
+    ...state,
+    taskId: envelope.taskId || state.taskId,
+    latestDecision: envelope.decision,
+    latestProtocol: envelope.protocol,
+    latestSignals: [...(envelope.signals ?? [])],
+    consumedEnvelopes: state.consumedEnvelopes + 1,
+    lastEnvelopeAt: envelope.createdAt ?? Date.now(),
+  }
+}
+
+export function projectCoordinatorStateToNextRound(state: DsxuQueryLoopCoordinatorState): {
+  nextRoundInput: {
+    hasCoordinatorDecision: boolean
+    roleAssignments: Array<{ subtaskId: string; assignedRole: string; rationale: string }>
+    parallelTaskIds: string[]
+    sequentialTaskIds: string[]
+    lastLifecycleSignal?: DsxuQueryLoopCoordinatorSignal['type']
+    recoveryHintCount: number
+  }
+} {
+  const roleAssignments = state.latestDecision?.roleAssignments ?? []
+  const parallelTaskIds = state.latestDecision?.concurrencyPlan?.parallelTasks ?? []
+  const sequentialTaskIds = state.latestDecision?.concurrencyPlan?.sequentialTasks ?? []
+  const lastSignal = state.latestSignals.at(-1)
+
+  return {
+    nextRoundInput: {
+      hasCoordinatorDecision: Boolean(state.latestDecision),
+      roleAssignments: [...roleAssignments],
+      parallelTaskIds: [...parallelTaskIds],
+      sequentialTaskIds: [...sequentialTaskIds],
+      lastLifecycleSignal: lastSignal?.type,
+      recoveryHintCount: state.latestProtocol?.recoveryHints?.length ?? 0,
+    },
+  }
+}
+
+export function recordQueryLoopMainlineConsumption(input: {
+  signalType: string
+  detail: string
+}): {
+  recorded: true
+  signalType: string
+  detail: string
+} {
+  return {
+    recorded: true,
+    signalType: input.signalType,
+    detail: input.detail,
+  }
+}
+
+export type DsxuQueryLoopToolState = {
+  taskId: string
+  latestGateDecision?: {
+    toolId: string
+    gateDecision: string
+    executionDecision?: string
+    riskLevel?: string
+  }
+  executionResults: Array<{
+    toolId: string
+    status: string
+    summary?: string
+    failureHint?: string
+  }>
+  blockedToolIds: string[]
+  guardedMode: boolean
+}
+
+export function createQueryLoopToolState(taskId: string): DsxuQueryLoopToolState {
+  return {
+    taskId,
+    executionResults: [],
+    blockedToolIds: [],
+    guardedMode: false,
+  }
+}
+
+export function consumeToolDecisionInQueryLoop(
+  state: DsxuQueryLoopToolState,
+  input: {
+    gateDecision?: {
+      toolId: string
+      gateDecision: string
+      executionDecision?: string
+      riskLevel?: string
+    }
+    executionResult?: {
+      toolId: string
+      status: string
+      summary?: string
+      failureHint?: string
+    }
+  },
+): DsxuQueryLoopToolState {
+  const latestGateDecision = input.gateDecision ?? state.latestGateDecision
+  const blockedToolIds = new Set(state.blockedToolIds)
+  if (
+    input.gateDecision?.gateDecision === 'block' ||
+    input.gateDecision?.executionDecision === 'deny' ||
+    input.executionResult?.status === 'blocked'
+  ) {
+    const toolId = input.gateDecision?.toolId ?? input.executionResult?.toolId
+    if (toolId) blockedToolIds.add(toolId)
+  }
+
+  return {
+    ...state,
+    latestGateDecision,
+    guardedMode:
+      state.guardedMode ||
+      input.gateDecision?.gateDecision === 'require_confirmation' ||
+      input.gateDecision?.executionDecision === 'execute_guarded' ||
+      input.gateDecision?.riskLevel === 'high' ||
+      input.gateDecision?.riskLevel === 'critical',
+    blockedToolIds: [...blockedToolIds],
+    executionResults: input.executionResult
+      ? [...state.executionResults, input.executionResult]
+      : state.executionResults,
+  }
+}
+
+export function projectToolStateToNextRound(state: DsxuQueryLoopToolState): {
+  shouldRunTool: boolean
+  guardedMode: boolean
+  blockedToolIds: string[]
+  lastToolId?: string
+} {
+  const lastResult = state.executionResults.at(-1)
+  return {
+    shouldRunTool: state.blockedToolIds.length === 0,
+    guardedMode: state.guardedMode,
+    blockedToolIds: [...state.blockedToolIds],
+    lastToolId: lastResult?.toolId,
+  }
 }
 
 function selectToolSubsetForTurn(input: {
@@ -1476,16 +1877,16 @@ function inferAlwaysIncludeTools(contextText: string): string[] {
   if (hasAny(['test', 'pytest', 'jest', 'vitest', 'bun test', 'npm test', 'pnpm test'])) {
     picks.push('Bash')
   }
-  if (hasAny(['read', 'open file', '鏌ョ湅', '璇诲彇'])) {
+  if (hasAny(['read', 'open file', 'view file', '\u67e5\u770b', '\u8bfb\u53d6'])) {
     picks.push('Read')
   }
-  if (hasAny(['edit', 'modify', 'change', 'patch', 'fix', '淇', '淇敼'])) {
+  if (hasAny(['edit', 'modify', 'change', 'patch', 'fix', '\u4fee\u590d', '\u4fee\u6539'])) {
     picks.push('Edit')
   }
-  if (hasAny(['create file', 'write file', 'save', '鏂板鏂囦欢', '鍐欏叆'])) {
+  if (hasAny(['create file', 'write file', 'save', '\u65b0\u589e\u6587\u4ef6', '\u5199\u5165'])) {
     picks.push('Write')
   }
-  if (hasAny(['search', 'find', 'grep', 'regex', '鏌ユ壘', '鎼滅储'])) {
+  if (hasAny(['search', 'find', 'grep', 'regex', '\u67e5\u627e', '\u641c\u7d22'])) {
     picks.push('Grep')
     picks.push('Glob')
   }
@@ -1516,13 +1917,13 @@ function scoreToolSchema(
     score += 2
   }
 
-  // Skill工具评分加成
+  // Skill tool scoring boost.
   if (schema.name.startsWith('skill__')) {
-    score += 3 // 基础加成
-    // 根据技能类型额外加成
+    score += 3 // baseline boost
+    // Add extra weight for write-oriented skills.
     const skillName = schema.name.replace('skill__', '')
     if (['commit', 'skillify', 'update-config'].includes(skillName)) {
-      score += 2 // 写操作技能额外加成
+      score += 2
     }
   }
 
@@ -1539,12 +1940,12 @@ function scoreToolSchema(
     score -= Math.max(0, config?.toolSubset?.writePenaltyWeight ?? 3)
   }
 
-  // 优先级影响工具可靠性权重
+  // Priority can influence tool reliability weighting.
   if (config?.priorityConfig?.affectToolSelection !== false) {
     const priority = config.priority ?? 2
     const reliabilityWeight = calculateToolReliabilityWeightByPriority(priority, config.priorityConfig)
 
-    // 根据工具可靠性调整分数
+    // Adjust score by the estimated tool reliability.
     const toolReliability = calculateToolReliability(schema.name)
     score += toolReliability * reliabilityWeight
   }

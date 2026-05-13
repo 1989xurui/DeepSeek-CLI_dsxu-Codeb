@@ -1,4 +1,7 @@
 /**
+ * V14 FROZEN: tool-bus experiment file retained only because Windows ACL
+ * blocked physical removal after copying to _deleted_files.
+ *
  * Tool Bus 中间件工具和常用中间件
  */
 
@@ -239,7 +242,7 @@ export function createCachingMiddleware(options?: {
   maxSize?: number
   cacheKey?: (context: ToolBusContext) => string
 }): Middleware {
-  const ttlMs = options?.ttlMs || 60000 // 默认1分钟
+  const ttlMs = options?.ttlMs || 60000 // DSXU comment sanitized.
   const maxSize = options?.maxSize || 100
   const cacheKeyFn = options?.cacheKey || ((context) => 
     `${context.event}:${JSON.stringify(context.data)}`
@@ -294,7 +297,7 @@ export function createRateLimitingMiddleware(options?: {
   key?: (context: ToolBusContext) => string
 }): Middleware {
   const maxRequests = options?.maxRequests || 100
-  const windowMs = options?.windowMs || 60000 // 默认1分钟
+  const windowMs = options?.windowMs || 60000 // DSXU comment sanitized.
   const keyFn = options?.key || ((context) => context.event)
 
   const requests = new Map<string, number[]>()

@@ -12,6 +12,7 @@
  */
 
 import type { Message, LLMCallFn } from './types'
+import { DEEPSEEK_V4_FLASH_MODEL, DEEPSEEK_V4_PRO_MODEL } from '../../utils/model/deepseekV4Control'
 
 // ── ADR 模板 ──
 
@@ -218,7 +219,7 @@ Output format (JSON):
 {"approved": true/false, "issues": ["issue 1", "issue 2"], "feedback": "overall assessment"}`
 
 /**
- * 独立交叉审查 — Reviewer 不带历史上下文
+ *
  *
  * @param adrContent ADR 文档内容
  * @param llmCall LLM 调用函数
@@ -236,7 +237,7 @@ export async function crossReview(
         { role: 'user', content: `Review this Architecture Decision Record:\n\n${adrContent}` },
       ],
       [],
-      { model: 'deepseek-chat', maxTokens: 2000 },
+      { model: DEEPSEEK_V4_FLASH_MODEL, maxTokens: 2000 },
     )
 
     // Parse reviewer response
@@ -303,7 +304,7 @@ export async function runADRWorkflow(
       },
     ],
     [],
-    { model: 'deepseek-reasoner', maxTokens: 4000 },
+    { model: DEEPSEEK_V4_PRO_MODEL, maxTokens: 4000 },
   )
 
   let adr = genResponse.content
@@ -330,7 +331,7 @@ export async function runADRWorkflow(
         },
       ],
       [],
-      { model: 'deepseek-chat', maxTokens: 4000 },
+      { model: DEEPSEEK_V4_FLASH_MODEL, maxTokens: 4000 },
     )
 
     adr = reviseResponse.content

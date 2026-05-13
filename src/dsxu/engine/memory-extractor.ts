@@ -9,20 +9,26 @@
  * 与 Compact 联动（#3 Session Memory）：
  *   fullCompact 时，一次 LLM 调用同时完成压缩 + 记忆提取
  *
- * 与 Claude 的区别：
- *   - Claude 用 Claude Haiku 提取记忆（便宜）
+ * 与 DSXU 的区别：
+ *   - DSXU 用小模型路由提取记忆（便宜）
  *   - DSxu 用 DeepSeek chat 提取（更便宜）
  */
 
 import type { Message, LLMCallFn, LLMResponse } from './types'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../utils/model/deepseekV4Control'
 
 // ── 记忆类型 ──
+
+/** H-4R: 记忆分类 */
+export type MemoryCategory = 'bug' | 'decision' | 'task-state' | 'repo-context' | 'recovery-history' | 'technical-pattern' | 'user-preference'
 
 export interface Memory {
   /** 唯一 ID */
   id: string
   /** 记忆类型 */
   type: 'technical_decision' | 'bug_fix' | 'user_preference' | 'project_pattern' | 'error_solution' | 'general'
+  /** H-4R: 记忆分类 */
+  category: MemoryCategory
   /** 标题 */
   title: string
   /** 内容 */
@@ -37,6 +43,42 @@ export interface Memory {
   timestamp: string
   /** 来源会话 ID */
   sessionId: string
+  /** H-4R: 置信度 */
+  confidence: number
+  /** H-4R: 元数据 */
+  metadata?: Record<string, any>
+}
+
+/** H-4R: 提取的记忆 */
+export interface ExtractedMemory {
+  /** 记忆ID */
+  id: string
+  /** 分类 */
+  category: MemoryCategory
+  /** 标题 */
+  title: string
+  /** 内容 */
+  content: string
+  /** 置信度 (0-1) */
+  confidence: number
+  /** 关联文件 */
+  relatedFiles: string[]
+  /** 时间戳 */
+  timestamp: number
+  /** 来源消息索引 */
+  sourceMessageIndices: number[]
+  /** 元数据 */
+  metadata: Record<string, any>
+}
+
+/** H-4R: 记忆索引提示 */
+export interface MemoryIndexHint {
+  /** 提示类型 */
+  type: 'category' | 'file' | 'time' | 'confidence'
+  /** 提示值 */
+  value: string | number
+  /** 权重 */
+  weight: number
 }
 
 export interface ExtractionResult {
@@ -116,7 +158,7 @@ export async function extractMemories(
       ],
       [],
       {
-        model: 'deepseek-chat',
+        model: DEEPSEEK_V4_FLASH_MODEL,
         maxTokens: 2000,
       },
     )
@@ -201,7 +243,7 @@ export async function extractFromCompactSummary(
         },
       ],
       [],
-      { model: 'deepseek-chat', maxTokens: 1000 },
+      { model: DEEPSEEK_V4_FLASH_MODEL, maxTokens: 1000 },
     )
 
     return parseMemories(response.content, sessionId).filter(m => m.quality >= 0.6)
@@ -283,6 +325,133 @@ export class MemoryStore {
   }
 }
 
+// ── H-4R: 增强记忆提取 ──
+
+/**
+ * 增强记忆提取 - 支持 H-4R 分类
+ */
+export async function extractMemoriesEnhanced(
+  messages: Message[],
+  llmCall: LLMCallFn,
+  sessionId: string,
+  options?: {
+    qualityThreshold?: number
+    minConfidence?: number
+    targetCategories?: MemoryCategory[]
+  }
+): Promise<{
+  memories: Memory[]
+  extractedMemories: ExtractedMemory[]
+  categoryStats: Record<MemoryCategory, number>
+  indexHints: MemoryIndexHint[]
+}> {
+  // 先执行基础提取
+  const baseResult = await extractMemories(messages, llmCall, sessionId, options?.qualityThreshold || 0.6)
+
+  // 转换为增强的记忆格式
+  const extractedMemories: ExtractedMemory[] = baseResult.memories.map(memory => {
+    // 将旧类型映射到新分类
+    const category = mapMemoryTypeToCategory(memory.type)
+
+    return {
+      id: memory.id,
+      category,
+      title: memory.title,
+      content: memory.content,
+      confidence: memory.quality, // 使用质量作为置信度
+      relatedFiles: memory.files,
+      timestamp: Date.parse(memory.timestamp),
+      sourceMessageIndices: [], // 需要更复杂的分析来填充
+      metadata: {
+        originalType: memory.type,
+        tags: memory.tags,
+        sessionId: memory.sessionId
+      }
+    }
+  })
+
+  // 计算分类统计
+  const categoryStats: Record<MemoryCategory, number> = {
+    'bug': 0, 'decision': 0, 'task-state': 0, 'repo-context': 0,
+    'recovery-history': 0, 'technical-pattern': 0, 'user-preference': 0
+  }
+
+  extractedMemories.forEach(memory => {
+    categoryStats[memory.category] = (categoryStats[memory.category] || 0) + 1
+  })
+
+  // 生成索引提示
+  const indexHints = generateMemoryIndexHints(extractedMemories, categoryStats)
+
+  return {
+    memories: baseResult.memories,
+    extractedMemories,
+    categoryStats,
+    indexHints
+  }
+}
+
+/** 将旧记忆类型映射到新分类 */
+function mapMemoryTypeToCategory(type: string): MemoryCategory {
+  const mapping: Record<string, MemoryCategory> = {
+    'bug_fix': 'bug',
+    'error_solution': 'bug',
+    'technical_decision': 'decision',
+    'project_pattern': 'technical-pattern',
+    'user_preference': 'user-preference'
+  }
+
+  return mapping[type] || 'decision' // 默认分类
+}
+
+/** 生成记忆索引提示 */
+function generateMemoryIndexHints(
+  memories: ExtractedMemory[],
+  categoryStats: Record<MemoryCategory, number>
+): MemoryIndexHint[] {
+  const hints: MemoryIndexHint[] = []
+
+  // 按分类生成提示
+  Object.entries(categoryStats).forEach(([category, count]) => {
+    if (count > 0) {
+      hints.push({
+        type: 'category',
+        value: category,
+        weight: count / memories.length
+      })
+    }
+  })
+
+  // 按置信度生成提示
+  const avgConfidence = memories.reduce((sum, m) => sum + m.confidence, 0) / memories.length
+  hints.push({
+    type: 'confidence',
+    value: avgConfidence,
+    weight: 0.5
+  })
+
+  // 按文件关联生成提示
+  const fileMap = new Map<string, number>()
+  memories.forEach(memory => {
+    memory.relatedFiles.forEach(file => {
+      fileMap.set(file, (fileMap.get(file) || 0) + 1)
+    })
+  })
+
+  Array.from(fileMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .forEach(([file, count]) => {
+      hints.push({
+        type: 'file',
+        value: file,
+        weight: count / memories.length
+      })
+    })
+
+  return hints
+}
+
 // ── Auto Dream 记忆整合 ──
 
 /**
@@ -320,7 +489,7 @@ export class AutoDreamIntegrator {
     this.memoryStore = memoryStore
     this.config = {
       enabled: config?.enabled ?? true,
-      intervalMs: config?.intervalMs ?? 30000, // 默认30秒
+      intervalMs: config?.intervalMs ?? 30000, // DSXU comment sanitized.
       batchSize: config?.batchSize ?? 10,
       qualityThreshold: config?.qualityThreshold ?? 0.7,
       integrateCallback: config?.integrateCallback ?? (async () => {})

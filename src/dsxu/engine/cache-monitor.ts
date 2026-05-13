@@ -1,5 +1,5 @@
 /**
- * #16 Prompt Cache Break Monitor — 前缀缓存监控
+ *
  *
  * 监控 DeepSeek prompt_cache_hit_tokens 字段：
  *   - 正常：cache hit > 50% → 成本折扣 90%
@@ -70,7 +70,7 @@ export class CacheMonitor {
   private breakEvents: CacheBreakEvent[] = []
   private l1Hash: string | null = null  // L1 前缀 hash
   private onAlert?: (event: CacheBreakEvent) => void
-  private onCacheMiss?: () => void  // 连续 miss 时触发（如 warmPrefixCache）
+  private onCacheMiss?: () => void // DSXU comment sanitized.
 
   constructor(options?: {
     onAlert?: (event: CacheBreakEvent) => void

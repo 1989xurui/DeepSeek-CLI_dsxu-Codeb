@@ -1,49 +1,49 @@
-/**
- * #6.9 Real-time Cost Tracker
- *
- * 实时追踪 LLM API 调用费用：
- *   - 按模型分别计费（DeepSeek chat / reasoner）
- *   - 支持 cache hit 折扣
- *   - 会话/日/月累计
- *   - 预算警告
- */
-
-// ── Pricing ──
+import {
+  DEEPSEEK_V4_FLASH_MODEL,
+  DEEPSEEK_V4_PRICING,
+  DEEPSEEK_V4_PRO_MODEL,
+  estimateDeepSeekV4Cost,
+  normalizeDeepSeekV4Model,
+  type DeepSeekV4Model,
+} from '../../utils/model/deepseekV4Control'
 
 export interface ModelPricing {
-  /** 输入价格 $/M tokens */
   inputPerMillion: number
-  /** 输出价格 $/M tokens */
+  cacheHitInputPerMillion: number
+  cacheMissInputPerMillion: number
   outputPerMillion: number
-  /** 缓存命中折扣率（0-1，如 0.9 表示 90% off） */
   cacheDiscount: number
 }
 
+function toLegacyPricing(model: DeepSeekV4Model): ModelPricing {
+  const pricing = DEEPSEEK_V4_PRICING[model]
+  return {
+    inputPerMillion: pricing.cacheMissInputPerMillion,
+    cacheHitInputPerMillion: pricing.cacheHitInputPerMillion,
+    cacheMissInputPerMillion: pricing.cacheMissInputPerMillion,
+    outputPerMillion: pricing.outputPerMillion,
+    cacheDiscount: 1 - pricing.cacheHitInputPerMillion / pricing.cacheMissInputPerMillion,
+  }
+}
+
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  'deepseek-chat': {
-    inputPerMillion: 0.27,
-    outputPerMillion: 1.10,
-    cacheDiscount: 0.90,
-  },
-  'deepseek-reasoner': {
-    inputPerMillion: 0.55,
-    outputPerMillion: 2.19,
-    cacheDiscount: 0.90,
-  },
-  // Fallback models
+  [DEEPSEEK_V4_FLASH_MODEL]: toLegacyPricing(DEEPSEEK_V4_FLASH_MODEL),
+  [DEEPSEEK_V4_PRO_MODEL]: toLegacyPricing(DEEPSEEK_V4_PRO_MODEL),
   'gpt-4o-mini': {
     inputPerMillion: 0.15,
+    cacheHitInputPerMillion: 0.075,
+    cacheMissInputPerMillion: 0.15,
     outputPerMillion: 0.60,
     cacheDiscount: 0.50,
   },
   'gpt-4o': {
     inputPerMillion: 2.50,
+    cacheHitInputPerMillion: 1.25,
+    cacheMissInputPerMillion: 2.50,
     outputPerMillion: 10.00,
     cacheDiscount: 0.50,
   },
 }
-
-// ── Cost Entry ──
 
 export interface CostEntry {
   timestamp: number
@@ -51,18 +51,13 @@ export interface CostEntry {
   inputTokens: number
   outputTokens: number
   cacheHit: boolean
-  cost: number  // USD
+  cost: number
   sessionId: string
 }
 
-// ── Cost Tracker ──
-
 export interface CostBudget {
-  /** 每次会话预算 USD */
   perSession?: number
-  /** 每日预算 USD */
   perDay?: number
-  /** 每月预算 USD */
   perMonth?: number
 }
 
@@ -89,24 +84,13 @@ export class CostTracker {
     this.onAlert = onAlert
   }
 
-  /**
-   * 记录一次 API 调用的费用
-   */
   record(
     model: string,
     inputTokens: number,
     outputTokens: number,
     cacheHit: boolean = false,
   ): CostEntry {
-    const pricing = MODEL_PRICING[model] || MODEL_PRICING['deepseek-chat']
-
-    let inputCost = (inputTokens / 1_000_000) * pricing.inputPerMillion
-    if (cacheHit) {
-      inputCost *= (1 - pricing.cacheDiscount)
-    }
-    const outputCost = (outputTokens / 1_000_000) * pricing.outputPerMillion
-    const cost = inputCost + outputCost
-
+    const cost = estimateCost(model, inputTokens, outputTokens, cacheHit)
     const entry: CostEntry = {
       timestamp: Date.now(),
       model,
@@ -119,13 +103,9 @@ export class CostTracker {
 
     this.entries.push(entry)
     this.checkBudget()
-
     return entry
   }
 
-  /**
-   * 获取会话费用
-   */
   getSessionCost(sessionId?: string): number {
     const sid = sessionId || this.currentSessionId
     return this.entries
@@ -133,9 +113,6 @@ export class CostTracker {
       .reduce((sum, e) => sum + e.cost, 0)
   }
 
-  /**
-   * 获取今日费用
-   */
   getDailyCost(): number {
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
@@ -144,9 +121,6 @@ export class CostTracker {
       .reduce((sum, e) => sum + e.cost, 0)
   }
 
-  /**
-   * 获取本月费用
-   */
   getMonthlyCost(): number {
     const startOfMonth = new Date()
     startOfMonth.setDate(1)
@@ -156,16 +130,10 @@ export class CostTracker {
       .reduce((sum, e) => sum + e.cost, 0)
   }
 
-  /**
-   * 获取总费用
-   */
   getTotalCost(): number {
     return this.entries.reduce((sum, e) => sum + e.cost, 0)
   }
 
-  /**
-   * 按模型统计费用
-   */
   getCostByModel(): Record<string, { cost: number; calls: number; tokens: number }> {
     const byModel: Record<string, { cost: number; calls: number; tokens: number }> = {}
 
@@ -181,9 +149,6 @@ export class CostTracker {
     return byModel
   }
 
-  /**
-   * 获取详细摘要
-   */
   getSummary(): string {
     const sessionCost = this.getSessionCost()
     const dailyCost = this.getDailyCost()
@@ -208,27 +173,17 @@ export class CostTracker {
     return lines.join('\n')
   }
 
-  /**
-   * 获取所有条目
-   */
   getEntries(): CostEntry[] {
     return [...this.entries]
   }
 
-  /**
-   * 获取条目数
-   */
   get size(): number {
     return this.entries.length
   }
 
-  /**
-   * 预算检查
-   */
   private checkBudget(): void {
     const sessionCost = this.getSessionCost()
 
-    // Session budget
     if (this.budget.perSession) {
       if (sessionCost >= this.budget.perSession) {
         this.onAlert?.({
@@ -247,7 +202,6 @@ export class CostTracker {
       }
     }
 
-    // Daily budget
     if (this.budget.perDay) {
       const dailyCost = this.getDailyCost()
       if (dailyCost >= this.budget.perDay) {
@@ -261,26 +215,57 @@ export class CostTracker {
     }
   }
 
-  /** 重置（测试用） */
   reset(): void {
     this.entries = []
   }
 }
 
-/**
- * 计算单次调用的预估费用
- */
+export function estimateCostDetailed(input: {
+  model: string
+  cacheHitInputTokens?: number
+  cacheMissInputTokens?: number
+  inputTokens?: number
+  outputTokens: number
+  cacheHit?: boolean
+}): number {
+  if (input.model.startsWith('deepseek')) {
+    const normalized = normalizeDeepSeekV4Model(input.model)
+    return estimateDeepSeekV4Cost({
+      ...input,
+      model: normalized,
+    })
+  }
+
+  const pricing = MODEL_PRICING[input.model] || MODEL_PRICING[DEEPSEEK_V4_FLASH_MODEL]
+  const cacheHitInputTokens =
+    input.cacheHitInputTokens ?? (input.cacheHit ? input.inputTokens ?? 0 : 0)
+  const cacheMissInputTokens =
+    input.cacheMissInputTokens ?? (input.cacheHit ? 0 : input.inputTokens ?? 0)
+
+  return (
+    (cacheHitInputTokens / 1_000_000) * pricing.cacheHitInputPerMillion +
+    (cacheMissInputTokens / 1_000_000) * pricing.cacheMissInputPerMillion +
+    (input.outputTokens / 1_000_000) * pricing.outputPerMillion
+  )
+}
+
 export function estimateCost(
   model: string,
   inputTokens: number,
   outputTokens: number,
   cacheHit: boolean = false,
 ): number {
-  const pricing = MODEL_PRICING[model] || MODEL_PRICING['deepseek-chat']
-  let inputCost = (inputTokens / 1_000_000) * pricing.inputPerMillion
-  if (cacheHit) {
-    inputCost *= (1 - pricing.cacheDiscount)
-  }
-  const outputCost = (outputTokens / 1_000_000) * pricing.outputPerMillion
-  return inputCost + outputCost
+  return estimateCostDetailed({
+    model,
+    inputTokens,
+    outputTokens,
+    cacheHit,
+  })
+}
+
+export function processCostTrackerLifecycle(input) {
+  void input
+  const state = 'cost-tracker-state'
+  const lifecycle = 'cost-tracker:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

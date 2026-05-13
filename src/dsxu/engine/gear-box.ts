@@ -1,20 +1,15 @@
 /**
- * DSxu 步骤级三档变速器（Step-Level GearBox）
+ * DSXU step-level GearBox.
  *
- * 与 proxy 的请求级变速器不同，这个在 Query Engine loop 内部运行，
- * 每个 tool result 都能触发升降档判定。
- *
- * 档位策略（Claude 策略版）：
- *   1档 chat：错误 1-3 次 → 留在 1 档自纠错
- *   2档 reasoner：错误 4+ 次 → chat 纠错×3 失败，升 reasoner
- *   3档 CoT-SC：错误 6+ 次 → reasoner 也搞不定
- *
- * S.1 测试驱动：测试结果优先级 > 文本错误匹配
+ * This file is intentionally ASCII-only in the main runtime section because
+ * it is imported by release-gate tests in both Windows and WSL environments.
  */
 
 import type { GearState, StepGearBox, ToolResult } from './types'
+import type { RecoveryDecision } from './recovery/recovery-types-v3'
+import { DEEPSEEK_V4_FLASH_MODEL, DEEPSEEK_V4_PRO_MODEL } from '../../utils/model/deepseekV4Control'
 
-const GEAR_TIMEOUT = 5 * 60 * 1000  // 5 分钟无新错误 → 重置
+const GEAR_TIMEOUT = 5 * 60 * 1000
 const TEST_HISTORY_SIZE = 5
 
 export function createGearBox(): StepGearBox {
@@ -25,30 +20,97 @@ export function createGearBox(): StepGearBox {
     testHistory: [],
   }
 
-  /** 检查是否应该重置（超时） */
   function checkTimeout(): void {
-    if (state.lastErrorTs > 0 && (Date.now() - state.lastErrorTs > GEAR_TIMEOUT)) {
+    if (state.lastErrorTs > 0 && Date.now() - state.lastErrorTs > GEAR_TIMEOUT) {
       state.consecutiveErrors = 0
       state.gear = 1
     }
   }
 
-  /** 根据连续错误次数决定档位 */
   function updateGear(): void {
     if (state.consecutiveErrors >= 6 && state.gear < 3) {
       const from = state.gear
       state.gear = 3
-      console.log(`[GearBox] ⚡ ${from}→3档 CoT-SC（连续失败 ${state.consecutiveErrors} 次）`)
-    } else if (state.consecutiveErrors >= 4 && state.gear < 2) {
+      console.log(`[GearBox] ${from}->3: repeated failures need max recovery reasoning`)
+      return
+    }
+
+    if (state.consecutiveErrors >= 4 && state.gear < 2) {
       state.gear = 2
-      console.log(`[GearBox] ⚡ 1→2档 reasoner（chat 自纠错×3 失败）`)
+      console.log('[GearBox] 1->2: repeated failures need Pro reasoning')
     }
   }
 
-  /** 检测 tool result 是否包含测试输出 */
+  function adjustGearByRecoveryDecision(decision: RecoveryDecision): void {
+    const prevGear = state.gear
+
+    switch (decision.action) {
+      case 'retry':
+        if (state.gear > 1 && decision.confidence > 0.7) {
+          state.gear = Math.max(1, state.gear - 1) as 1 | 2 | 3
+          console.log(`[GearBox] retry ${prevGear}->${state.gear}: high-confidence retry`)
+        }
+        break
+
+      case 'replan':
+        if (state.gear < 3) {
+          state.gear = Math.min(3, state.gear + 1) as 1 | 2 | 3
+          console.log(`[GearBox] replan ${prevGear}->${state.gear}: stronger planning required`)
+        }
+        break
+
+      case 'rollback':
+        if (state.gear > 1) {
+          state.gear = 1
+          console.log(`[GearBox] rollback ${prevGear}->1: conservative execution`)
+        }
+        break
+
+      case 'ask-human':
+        console.log(`[GearBox] ask-human: holding gear ${state.gear}`)
+        break
+
+      case 'abort':
+        console.log(`[GearBox] abort: holding gear ${state.gear}`)
+        break
+    }
+
+    switch (decision.reason) {
+      case 'verify-failure':
+        if (state.gear < 3) {
+          state.gear = Math.min(3, state.gear + 1) as 1 | 2 | 3
+          console.log(`[GearBox] verify-failure ${prevGear}->${state.gear}: verification needs stronger reasoning`)
+        }
+        break
+
+      case 'tool-failure':
+        if (state.gear > 1 && decision.confidence < 0.5) {
+          state.gear = Math.max(1, state.gear - 1) as 1 | 2 | 3
+          console.log(`[GearBox] tool-failure ${prevGear}->${state.gear}: tool result is unreliable`)
+        }
+        break
+
+      case 'context-insufficiency':
+      case 'repeated-failure':
+        if (state.gear < 3) {
+          state.gear = 3
+          console.log(`[GearBox] ${decision.reason} ${prevGear}->3: maximum recovery reasoning required`)
+        }
+        break
+
+      case 'reviewer-rejection':
+        if (state.gear < 2) {
+          state.gear = 2
+          console.log(`[GearBox] reviewer-rejection ${prevGear}->2: review recovery requires Pro reasoning`)
+        }
+        break
+    }
+  }
+
   function detectTest(result: ToolResult, toolName: string): boolean | null {
-    // 只检测 Bash 类工具的输出
-    if (!['Bash', 'bash', 'shell', 'terminal'].includes(toolName)) return null
+    if (!['Bash', 'bash', 'PowerShell', 'powershell', 'shell', 'terminal'].includes(toolName)) {
+      return null
+    }
 
     const text = result.content
     const isTestOutput =
@@ -57,19 +119,20 @@ export function createGearBox(): StepGearBox {
       /Tests?:\s+\d+/i.test(text) ||
       /PASS|FAIL/.test(text) ||
       /npm test|vitest|jest|pytest|bun test/i.test(text) ||
-      /[✓✗●]/.test(text)
+      /[\u2713\u2717\u25cf]/.test(text)
 
     if (!isTestOutput) return null
 
     const failPatterns = [
-      /[1-9]\d* fail/i,  // "2 fail" 但不匹配 "0 fail"
-      /FAIL\s/,           // "FAIL src/..." 但不匹配 "0 fail"
+      /[1-9]\d* fail/i,
+      /FAIL\s/,
       /FAILED/i,
-      /✗/,
+      /\u2717/,
       /exit code [1-9]/i,
       /AssertionError/i,
     ]
-    return !failPatterns.some(p => p.test(text))
+
+    return !failPatterns.some(pattern => pattern.test(text))
   }
 
   return {
@@ -81,30 +144,27 @@ export function createGearBox(): StepGearBox {
     getModel() {
       checkTimeout()
       switch (state.gear) {
-        case 1: return 'deepseek-chat'
-        case 2: return 'deepseek-reasoner'
-        case 3: return 'deepseek-reasoner'  // 3档投票逻辑在 loop 层处理
+        case 1:
+          return DEEPSEEK_V4_FLASH_MODEL
+        case 2:
+        case 3:
+          return DEEPSEEK_V4_PRO_MODEL
       }
     },
 
     reportToolResult(result: ToolResult, toolName: string) {
-      // S.1: 测试驱动判定 — 物理证据优先
       const testPassed = detectTest(result, toolName)
       if (testPassed !== null) {
         this.reportTestResult(testPassed)
         return
       }
 
-      // 非测试工具：检查是否有错误
       if (result.isError) {
         checkTimeout()
         state.consecutiveErrors++
         state.lastErrorTs = Date.now()
         updateGear()
-        console.log(`[GearBox] 工具 ${toolName} 失败, 连续错误 ${state.consecutiveErrors}, 档位 ${state.gear}`)
-      } else {
-        // 工具成功但不降档（只有测试通过或 LLM 完成才降）
-        // 避免"工具执行成功但结果是错的"误判
+        console.log(`[GearBox] tool ${toolName} failed; consecutive=${state.consecutiveErrors}; gear=${state.gear}`)
       }
     },
 
@@ -115,36 +175,165 @@ export function createGearBox(): StepGearBox {
       }
 
       if (passed) {
-        console.log(`[GearBox] 🟢 测试通过 → 降回 1 档`)
+        console.log('[GearBox] test passed; reset to gear 1')
         state.consecutiveErrors = 0
         state.gear = 1
-      } else {
-        checkTimeout()
-        state.consecutiveErrors++
-        state.lastErrorTs = Date.now()
-        updateGear()
-        console.log(`[GearBox] 🔴 测试失败, 连续错误 ${state.consecutiveErrors}, 档位 ${state.gear}`)
+        return
       }
-    },
 
-    reportLLMError(error: Error) {
       checkTimeout()
       state.consecutiveErrors++
       state.lastErrorTs = Date.now()
       updateGear()
-      console.log(`[GearBox] LLM 错误: ${error.message}, 连续 ${state.consecutiveErrors}, 档位 ${state.gear}`)
+      console.log(`[GearBox] test failed; consecutive=${state.consecutiveErrors}; gear=${state.gear}`)
+    },
+
+    reportLLMError(error: Error, callId?: string) {
+      checkTimeout()
+      state.consecutiveErrors++
+      state.lastErrorTs = Date.now()
+      updateGear()
+      const callIdSuffix = callId ? ` (callId: ${callId})` : ''
+      console.log(`[GearBox] LLM error: ${error.message}; consecutive=${state.consecutiveErrors}; gear=${state.gear}${callIdSuffix}`)
     },
 
     reportSuccess() {
       if (state.gear > 1) {
-        console.log(`[GearBox] ✓ 成功，${state.gear}档 → 1档`)
+        console.log(`[GearBox] success; ${state.gear}->1`)
       }
       state.consecutiveErrors = 0
       state.gear = 1
+    },
+
+    applyRecoveryDecision(decision: RecoveryDecision): void {
+      console.log(`[GearBox] recovery decision: ${decision.action} (${decision.reason}); confidence=${decision.confidence}`)
+      adjustGearByRecoveryDecision(decision)
     },
 
     getState() {
       return { ...state, testHistory: [...state.testHistory] }
     },
   }
+}
+// ===== V10-2D Coordinator Signal Driven Gear Strategy =====
+
+export type CoordinatorGearSignal =
+  | { type: 'fork'; payload: { runnableBranches: string[] } }
+  | { type: 'merge'; payload: { outcome: 'winner' | 'merged' | 'kept' | 'discarded' | 'conflict' } }
+  | { type: 'abort'; payload: { scope: { scope: 'local' | 'global' } } }
+  | { type: 'escalate'; payload: { priority: 'low' | 'medium' | 'high' | 'critical' } };
+
+export interface GearStrategyState {
+  lane: 'balanced' | 'parallel-first' | 'safe-recovery' | 'escalation-guard';
+  maxParallel: number;
+  writerMode: 'normal' | 'single-writer';
+  reason: string;
+}
+
+export function createGearStrategyState(): GearStrategyState {
+  return {
+    lane: 'balanced',
+    maxParallel: 2,
+    writerMode: 'normal',
+    reason: 'default strategy',
+  };
+}
+
+export function applyCoordinatorSignalToGearStrategy(
+  current: GearStrategyState,
+  signal: CoordinatorGearSignal,
+): GearStrategyState {
+  if (signal.type === 'fork') {
+    return {
+      lane: 'parallel-first',
+      maxParallel: Math.max(2, signal.payload.runnableBranches.length),
+      writerMode: 'single-writer',
+      reason: 'fork runnable branches increased parallel planning',
+    };
+  }
+
+  if (signal.type === 'merge') {
+    if (signal.payload.outcome === 'conflict' || signal.payload.outcome === 'discarded') {
+      return {
+        lane: 'safe-recovery',
+        maxParallel: 1,
+        writerMode: 'single-writer',
+        reason: `merge outcome ${signal.payload.outcome} requires conservative execution`,
+      };
+    }
+    return {
+      lane: 'balanced',
+      maxParallel: 2,
+      writerMode: 'normal',
+      reason: `merge outcome ${signal.payload.outcome} allows normal execution`,
+    };
+  }
+
+  if (signal.type === 'abort') {
+    return {
+      lane: 'safe-recovery',
+      maxParallel: signal.payload.scope.scope === 'global' ? 1 : current.maxParallel,
+      writerMode: 'single-writer',
+      reason: `abort(${signal.payload.scope.scope}) triggered recovery mode`,
+    };
+  }
+
+  return {
+    lane: 'escalation-guard',
+    maxParallel: signal.payload.priority === 'critical' ? 1 : 2,
+    writerMode: 'single-writer',
+    reason: `escalation(${signal.payload.priority}) tightened scheduling policy`,
+  };
+}
+
+// ===== V10-2F Phase A Coordinator Mode Gear Bridge =====
+export function applyCoordinatorModeToGearStrategy(
+  current: GearStrategyState,
+  input: {
+    isCoordinatorMode: boolean;
+    sessionMode: 'coordinator' | 'normal';
+    signal?: CoordinatorGearSignal;
+  },
+): GearStrategyState {
+  const withSignal = input.signal ? applyCoordinatorSignalToGearStrategy(current, input.signal) : current;
+  if (!input.isCoordinatorMode || input.sessionMode !== 'coordinator') {
+    return { ...withSignal, lane: 'balanced', reason: 'normal mode strategy' };
+  }
+  return {
+    ...withSignal,
+    lane: withSignal.lane === 'balanced' ? 'parallel-first' : withSignal.lane,
+    maxParallel: Math.max(withSignal.maxParallel, 3),
+    reason: `coordinator mode active: ${withSignal.reason}`,
+  };
+}
+
+// ===== V10-2F Phase C Context Aware Gear Adjustment =====
+export function applyContextSignalToGearStrategy(
+  current: GearStrategyState,
+  input: { contextUsedPercent: number; shouldCompact: boolean },
+): GearStrategyState {
+  if (input.shouldCompact || input.contextUsedPercent >= 85) {
+    return {
+      lane: 'safe-recovery',
+      maxParallel: 1,
+      writerMode: 'single-writer',
+      reason: 'high context pressure forced conservative scheduling',
+    };
+  }
+  if (input.contextUsedPercent >= 70) {
+    return {
+      ...current,
+      maxParallel: Math.max(1, current.maxParallel - 1),
+      reason: 'context pressure reduced parallelism',
+    };
+  }
+  return current;
+}
+
+// ===== V10-2F Phase D Gear Evidence Hook =====
+export function recordGearMainlineConsumption(input: {
+  signalType: string;
+  detail: string;
+}): { module: 'gear-box'; signalType: string; detail: string } {
+  return { module: 'gear-box', signalType: input.signalType, detail: input.detail };
 }

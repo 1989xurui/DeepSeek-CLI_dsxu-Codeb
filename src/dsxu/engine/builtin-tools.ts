@@ -1,19 +1,15 @@
 ﻿/**
- * DSxu 鍐呯疆宸ュ叿闆?鈥?Query Engine 鐨?鎵嬭剼"
+ * DSXU engine fallback tools.
  *
- * 6 涓牳蹇冨伐鍏凤紝瑕嗙洊 80% 鏃ュ父缂栫爜鎿嶄綔锛? *   Bash  鈥?鎵ц鍛戒护锛堟祴璇曘€乬it銆佹瀯寤虹瓑锛? *   Read  鈥?璇绘枃浠? *   Write 鈥?鍐欐枃浠讹紙鏂板缓/瀹屾暣閲嶅啓锛? *   Edit  鈥?缂栬緫鏂囦欢锛堢簿纭浛鎹級
- *   Grep  鈥?鎼滅储鍐呭锛堝熀浜?ripgrep锛? *   Glob  鈥?鎼滅储鏂囦欢鍚嶏紙glob 妯″紡锛? *
- * 璁捐鍘熷垯锛? * - 杞婚噺鐩存帴锛氱洿鎺ヨ皟 Bun/Node API锛屼笉濂楀３ Claude 鐨勯噸閲忕骇 Tool
- * - 骞跺彂鏍囪锛氳宸ュ叿 concurrencySafe=true锛屽啓宸ュ叿 false
- * - 杈撳嚭鎴柇锛氶槻姝㈣秴闀胯緭鍑烘拺鐖?LLM context
+ * The production tool path should use adapters over the mature `src/tools` classes.
+ * These built-ins stay as a small fallback set for isolated engine tests and recovery.
  */
-
 import type { ToolDefinition } from './types'
 import { execSync, spawnSync } from 'child_process'
-import { readFileSync, writeFileSync, existsSync, statSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, statSync, readdirSync } from 'fs'
 import { resolve, dirname } from 'path'
 
-const MAX_OUTPUT_CHARS = 30_000  // 闃茶緭鍑烘拺鐖嗕笂涓嬫枃
+const MAX_OUTPUT_CHARS = 30_000
 
 function truncate(s: string, max = MAX_OUTPUT_CHARS): string {
   if (s.length <= max) return s
@@ -56,7 +52,49 @@ function runCommand(command: string, cwd: string, timeout: number): ShellRunResu
   return { stdout, stderr, exitCode }
 }
 
-// 鈹€鈹€ Bash 鈹€鈹€
+function searchFilesNative(root: string, pattern: RegExp, outputMode: string): string {
+  const matches: string[] = []
+
+  function walk(dir: string): void {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue
+      const fullPath = resolve(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(fullPath)
+        continue
+      }
+      if (!entry.isFile()) continue
+
+      let content: string
+      try {
+        content = readFileSync(fullPath, 'utf8')
+      } catch {
+        continue
+      }
+
+      const lines = content.split(/\r?\n/)
+      const lineMatches = lines
+        .map((line, index) => ({ line, lineNumber: index + 1 }))
+        .filter(({ line }) => pattern.test(line))
+      if (lineMatches.length === 0) continue
+
+      if (outputMode === 'files_with_matches') {
+        matches.push(fullPath)
+      } else if (outputMode === 'count') {
+        matches.push(`${fullPath}:${lineMatches.length}`)
+      } else {
+        for (const match of lineMatches) {
+          matches.push(`${fullPath}:${match.lineNumber}:${match.line}`)
+        }
+      }
+    }
+  }
+
+  walk(root)
+  return matches.join('\n')
+}
+
+// Bash fallback tool
 
 export const BashTool: ToolDefinition = {
   name: 'Bash',
@@ -68,6 +106,7 @@ export const BashTool: ToolDefinition = {
       timeout: { type: 'number', description: 'Timeout in milliseconds (default 120000, max 600000)' },
     },
     required: ['command'],
+    additionalProperties: false,
   },
   concurrencySafe: false,
   readOnly: false,
@@ -106,7 +145,7 @@ export const BashTool: ToolDefinition = {
   },
 }
 
-// 鈹€鈹€ Read 鈹€鈹€
+// Read fallback tool
 
 export const ReadTool: ToolDefinition = {
   name: 'Read',
@@ -119,6 +158,7 @@ export const ReadTool: ToolDefinition = {
       limit: { type: 'number', description: 'Number of lines to read' },
     },
     required: ['file_path'],
+    additionalProperties: false,
   },
   concurrencySafe: true,
   readOnly: true,
@@ -140,8 +180,7 @@ export const ReadTool: ToolDefinition = {
       const offset = Math.max(1, (input.offset as number) || 1)
       const limit = (input.limit as number) || lines.length
       const selected = lines.slice(offset - 1, offset - 1 + limit)
-
-      // cat -n 鏍煎紡锛氳鍙?+ tab + 鍐呭
+      // Match cat -n style: line number, tab, content.
       const numbered = selected.map((line, i) => `${offset + i}\t${line}`).join('\n')
 
       return { content: truncate(numbered) }
@@ -151,7 +190,7 @@ export const ReadTool: ToolDefinition = {
   },
 }
 
-// 鈹€鈹€ Write 鈹€鈹€
+// Write fallback tool
 
 export const WriteTool: ToolDefinition = {
   name: 'Write',
@@ -163,6 +202,7 @@ export const WriteTool: ToolDefinition = {
       content: { type: 'string', description: 'The content to write' },
     },
     required: ['file_path', 'content'],
+    additionalProperties: false,
   },
   concurrencySafe: false,
   readOnly: false,
@@ -192,7 +232,7 @@ export const WriteTool: ToolDefinition = {
   },
 }
 
-// 鈹€鈹€ Edit 鈹€鈹€
+// Edit fallback tool
 
 export const EditTool: ToolDefinition = {
   name: 'Edit',
@@ -206,6 +246,7 @@ export const EditTool: ToolDefinition = {
       replace_all: { type: 'boolean', description: 'Replace all occurrences (default false)' },
     },
     required: ['file_path', 'old_string', 'new_string'],
+    additionalProperties: false,
   },
   concurrencySafe: false,
   readOnly: false,
@@ -263,7 +304,7 @@ export const EditTool: ToolDefinition = {
   },
 }
 
-// 鈹€鈹€ Grep 鈹€鈹€
+// Grep fallback tool
 
 export const GrepTool: ToolDefinition = {
   name: 'Grep',
@@ -282,6 +323,7 @@ export const GrepTool: ToolDefinition = {
       context: { type: 'number', description: 'Lines of context around matches' },
     },
     required: ['pattern'],
+    additionalProperties: false,
   },
   concurrencySafe: true,
   readOnly: true,
@@ -326,6 +368,10 @@ export const GrepTool: ToolDefinition = {
       })
 
       const output = (shellResult.stdout || '').trimEnd()
+      if (!output && (native.error || shellResult.error || native.status === null || shellResult.status === null)) {
+        const nativeSearch = searchFilesNative(searchPath, new RegExp(pattern), outputMode)
+        return { content: truncate(nativeSearch || 'No matches found.') }
+      }
       if (!output) return { content: 'No matches found.' }
       return { content: truncate(output) }
     } catch (error: any) {
@@ -340,14 +386,21 @@ export const GrepTool: ToolDefinition = {
           encoding: 'utf-8',
         })
         const out2 = (result2.stdout || '').trimEnd()
-        return { content: truncate(out2 || 'No matches found.') }
+        if (out2) return { content: truncate(out2) }
+        const nativeSearch = searchFilesNative(searchPath, new RegExp(pattern), outputMode)
+        return { content: truncate(nativeSearch || 'No matches found.') }
       } catch {
-        return { content: 'No matches found.' }
+        try {
+          const nativeSearch = searchFilesNative(searchPath, new RegExp(pattern), outputMode)
+          return { content: truncate(nativeSearch || 'No matches found.') }
+        } catch {
+          return { content: 'No matches found.' }
+        }
       }
     }
   },
 }
-// 鈹€鈹€ Glob 鈹€鈹€
+// Glob fallback tool
 
 export const GlobTool: ToolDefinition = {
   name: 'Glob',
@@ -359,6 +412,7 @@ export const GlobTool: ToolDefinition = {
       path: { type: 'string', description: 'Directory to search in (defaults to cwd)' },
     },
     required: ['pattern'],
+    additionalProperties: false,
   },
   concurrencySafe: true,
   readOnly: true,
@@ -367,7 +421,7 @@ export const GlobTool: ToolDefinition = {
     const searchPath = resolve(ctx.cwd, (input.path as string) || '.')
 
     try {
-      // 浣跨敤 Bun 鐨?glob 鎴栭檷绾?find
+      // DSXU comment sanitized.
       const { Glob } = await import('bun')
       const glob = new Glob(pattern)
       const files: string[] = []
@@ -389,14 +443,14 @@ export const GlobTool: ToolDefinition = {
   },
 }
 
-// 鈹€鈹€ 娉ㄥ唽鎵€鏈夋牳蹇冨伐鍏?鈹€鈹€
+// Fallback tool registration
 
-/** 鑾峰彇鍏ㄩ儴 6 涓牳蹇冨伐鍏?*/
+/** Return all fallback core tools. */
 export function getCoreTools(): ToolDefinition[] {
   return [BashTool, ReadTool, WriteTool, EditTool, GrepTool, GlobTool]
 }
 
-/** 鍙幏鍙栧彧璇诲伐鍏凤紙鐢ㄤ簬鍙楅檺妯″紡锛?*/
+/** Return read-only fallback tools. */
 export function getReadOnlyTools(): ToolDefinition[] {
   return [ReadTool, GrepTool, GlobTool]
 }

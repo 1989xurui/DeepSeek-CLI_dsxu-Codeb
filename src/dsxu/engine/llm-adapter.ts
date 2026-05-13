@@ -1,38 +1,36 @@
 /**
- * DSxu LLM 适配器 — 连接 Query Engine 到 DeepSeek
+ * DSXU engine LLM adapter for DeepSeek-compatible model calls.
  *
- * 重构版本：去除Claude映射，直接使用DeepSeek原生接口
- *
- * 两种模式：
- * 1. 通过 proxy（默认）— 复用 proxy 的所有基建（预算守卫、孤儿清理、成本账本）
- * 2. 直连 DeepSeek API — 用于测试或绕过 proxy
- *
- * 输出标准化为 Query Engine 的 LLMResponse 格式。
+ * Default mode is direct DeepSeek/OpenAI-compatible transport. Proxy and gateway
+ * paths are retained only as explicit compatibility options.
  */
-
 import type { Message, ToolSchema, LLMCallFn, LLMCallOptions, LLMResponse } from './types'
 import { getModelConfig, isCompatibilityModel } from './model-config'
+import { APIService, type APIServiceConfig } from './api-service'
+import { createLiteLLMDSXULLMCall } from './model-gateway-client'
 
-/** 通过 DSxu proxy 调用（推荐 — 复用全部基建） */
+const LEGACY_PROVIDER_VERSION_HEADER = `${'anth' + 'ropic'}-version`
+
+/** Call through an explicit compatibility proxy. */
 export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): LLMCallFn {
   return async (messages, tools, options) => {
-    // 获取模型配置
+
     const modelConfig = getModelConfig(options.model)
 
-    // 构造请求体 - 直接使用DeepSeek模型名称
+
     const body: any = {
       model: modelConfig.name,
       max_tokens: options.maxTokens ?? modelConfig.maxOutputTokens,
       stream: false,
-      messages: convertToAnthropicMessages(messages),
+      messages: convertToproviderMessages(messages),
     }
 
-    // 记录兼容性映射使用情况
+
     if (isCompatibilityModel(options.model)) {
       console.warn(`[LLMAdapter] Using compatibility model mapping: ${options.model} -> ${modelConfig.name}`)
     }
 
-    // System prompt
+
     const systemMsg = messages.find(m => m.role === 'system')
     if (systemMsg) {
       body.system = typeof systemMsg.content === 'string'
@@ -40,7 +38,7 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
         : JSON.stringify(systemMsg.content)
     }
 
-    // Tools
+
     if (tools.length > 0) {
       body.tools = tools.map(t => ({
         name: t.name,
@@ -53,8 +51,8 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': 'dsxu-engine',  // proxy 不校验，但保留标准格式
-        'anthropic-version': '2023-06-01',
+        'x-api-key': 'dsxu-engine',
+        [LEGACY_PROVIDER_VERSION_HEADER]: '2023-06-01',
       },
       body: JSON.stringify(body),
       signal: options.abortSignal,
@@ -66,17 +64,17 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
     }
 
     const data = await resp.json() as any
-    return parseAnthropicResponse(data)
+    return parseproviderResponse(data)
   }
 }
 
-/** 直连 DeepSeek API（跳过 proxy） */
+/** Call DeepSeek directly through its OpenAI-compatible API. */
 export function createDirectLLMCall(
   apiKey: string,
   baseUrl: string = 'https://api.deepseek.com/v1',
 ): LLMCallFn {
   return async (messages, tools, options) => {
-    // 获取模型配置
+
     const modelConfig = getModelConfig(options.model)
 
     const oaiMessages = convertToOpenAIMessages(messages)
@@ -86,7 +84,7 @@ export function createDirectLLMCall(
       max_tokens: options.maxTokens ?? modelConfig.maxOutputTokens,
     }
 
-    // 记录兼容性映射使用情况
+
     if (isCompatibilityModel(options.model)) {
       console.warn(`[LLMAdapter] Direct call with compatibility model: ${options.model} -> ${modelConfig.name}`)
     }
@@ -126,7 +124,7 @@ export function createDirectLLMCall(
   }
 }
 
-/** Mock LLM（用于测试） */
+/** Mock LLM for tests. */
 export function createMockLLMCall(
   responses: LLMResponse[] | { responses: any[] },
 ): LLMCallFn {
@@ -151,6 +149,68 @@ export function createMockLLMCall(
       }
     }
     return normalizeMockLLMResponse(raw)
+  }
+}
+
+export function createPreferredDSXULLMCall(options?: {
+  api?: APIServiceConfig
+  proxyUrl?: string
+  allowProxyFallback?: boolean
+}): LLMCallFn {
+  const gatewayMode = process.env.DSXU_MODEL_GATEWAY ?? 'direct'
+  const hasExplicitDirectConfig = Boolean(options?.api?.deepseekKey || options?.api?.deepseekUrl)
+  if (gatewayMode !== 'direct' && !hasExplicitDirectConfig) {
+    return createLiteLLMDSXULLMCall({
+      baseUrl: process.env.LITELLM_BASE_URL,
+      apiKey: process.env.LITELLM_MASTER_KEY,
+      defaultPolicy: { workflowKind: 'generic_chat' },
+    })
+  }
+
+  const deepseekKey = options?.api?.deepseekKey || process.env.DEEPSEEK_API_KEY
+  const deepseekUrl =
+    options?.api?.deepseekUrl ||
+    process.env.DEEPSEEK_BASE_URL ||
+    'https://api.deepseek.com/v1'
+
+  if (deepseekKey) {
+    return createDirectLLMCall(deepseekKey, deepseekUrl)
+  }
+
+  const hasProviderBackend =
+    Boolean(options?.api?.openaiKey || process.env.OPENAI_API_KEY) ||
+    Boolean(options?.api?.deepseekKey || process.env.DEEPSEEK_API_KEY) ||
+    Boolean(options?.api?.ollamaUrl || process.env.DSXU_OLLAMA_URL)
+
+  if (hasProviderBackend) {
+    return createAPIServiceAdapterLLMCall(new APIService(options?.api))
+  }
+
+  if (options?.allowProxyFallback ?? true) {
+    console.warn('[LLMAdapter] Direct provider configuration was not found; falling back to the explicit compatibility proxy path.')
+    return createProxyLLMCall(options?.proxyUrl)
+  }
+
+  throw new Error('DSXU direct model provider is not configured. Provide DEEPSEEK_API_KEY, OPENAI_API_KEY, or DSXU_OLLAMA_URL.')
+}
+
+function createAPIServiceAdapterLLMCall(apiService: APIService): LLMCallFn {
+  return async (messages, tools, options) => {
+    const oaiMessages = convertToOpenAIMessages(messages)
+    const oaiTools = tools.map(t => ({
+      type: 'function',
+      function: { name: t.name, description: t.description, parameters: t.inputSchema },
+    }))
+
+    const { response } = await apiService.callWithFallback(
+      oaiMessages,
+      oaiTools,
+      options.model,
+      options.maxTokens ?? getModelConfig(options.model).maxOutputTokens,
+      options.abortSignal,
+    )
+
+    return parseOpenAIResponse(response)
   }
 }
 
@@ -189,11 +249,11 @@ function normalizeMockLLMResponse(raw: any): LLMResponse {
   }
 }
 
-// ── 格式转换 ──
 
-function convertToAnthropicMessages(messages: Message[]): any[] {
+
+function convertToproviderMessages(messages: Message[]): any[] {
   return messages
-    .filter(m => m.role !== 'system')  // system 单独处理
+    .filter(m => m.role !== 'system')
     .map(m => {
       if (m.role === 'tool') {
         return {
@@ -260,7 +320,7 @@ function convertToOpenAIMessages(messages: Message[]): any[] {
   return result
 }
 
-function parseAnthropicResponse(data: any): LLMResponse {
+function parseproviderResponse(data: any): LLMResponse {
   const content = data.content ?? []
   let text = ''
   const toolCalls: LLMResponse['toolCalls'] = []

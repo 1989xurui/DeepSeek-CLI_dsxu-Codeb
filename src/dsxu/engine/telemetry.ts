@@ -235,7 +235,7 @@ export interface Notification {
   message: string
   timestamp: number
   read: boolean
-  action?: string  // Optional action label
+  action?: string // DSXU comment sanitized.
 }
 
 export class NotificationManager {

@@ -1,7 +1,7 @@
 /**
- * #9 Forked Agent — 子任务分叉执行
  *
- * 学 Claude 的 fork 机制，简化为 DSxu 需要的核心：
+ *
+ * 学 DSXU 的 fork 机制，简化为 DSxu 需要的核心：
  *   1. 快照父对话消息
  *   2. 创建隔离上下文（独立消息历史、独立变速器）
  *   3. 运行子任务 query loop
@@ -13,10 +13,10 @@
  *   - AbortController 父子联动
  *   - 超时 + 最大轮次双保险
  *
- * 与 Claude 的区别：
- *   - Claude 支持多 fork 并行（fan-out）→ DSxu V13 只允许单 fork
- *   - Claude 有复杂的 CacheSafeParams → DSxu 直接复制消息
- *   - Claude 用 sidechain transcript → DSxu 用内存 + 可选 JSONL 归档
+ * 与 DSXU 的区别：
+ *   - DSXU 支持多 fork 并行（fan-out）→ DSxu V13 只允许单 fork
+ *   - DSXU 有复杂的 CacheSafeParams → DSxu 直接复制消息
+ *   - DSXU 用 sidechain transcript → DSxu 用内存 + 可选 JSONL 归档
  */
 
 import type {
@@ -486,7 +486,7 @@ export function extractStructuredSummary(finalMessage: string): AgentSummary['st
       nextSteps.push(line)
     }
     if (line.includes('.ts') || line.includes('.js') || line.includes('.tsx') || line.includes('.jsx')) {
-      // 只提取纯路径片段，避免把“关键文件：”这类前缀带入结果
+      // DSXU comment sanitized.
       const fileMatch = line.match(/([A-Za-z0-9_./\\-]+\.(ts|js|tsx|jsx|json|md))\b/)
       if (fileMatch) {
         keyFiles.push(fileMatch[1].replace(/\\/g, '/'))

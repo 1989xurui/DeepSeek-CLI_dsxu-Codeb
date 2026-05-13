@@ -1,4 +1,7 @@
 /**
+ * V14 FROZEN: zero-mainline LSP gate experiment retained only because Windows
+ * ACL blocked physical removal after copying to _deleted_files.
+ *
  * LSP门禁中间件 - 静态拓扑感知
  * 
  * 功能：
@@ -75,7 +78,7 @@ async function performLSPCheck(
     // 这里应该调用实际的LSP工具
     // 由于LSP工具已经存在，我们可以模拟调用
     
-    const lspModule = await import('../lsp-tool')
+    const lspModule = await import('../lsp-tool.ts')
     
     // 执行Go to Definition检查
     const definitionResult = await lspModule.LSPTool.execute(

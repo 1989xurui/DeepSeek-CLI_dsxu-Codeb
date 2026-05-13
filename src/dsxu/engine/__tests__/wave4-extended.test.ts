@@ -59,8 +59,8 @@ describe('SystemPromptBuilder', () => {
     expect(prompt).toContain('Never use any')
   })
 
-  it('should load project rules from CLAUDE.md', () => {
-    writeFileSync(join(TEST_DIR, 'CLAUDE.md'), '# Rules\n- Use vitest\n- Prefer const')
+  it('should load project rules from DSXU.md', () => {
+    writeFileSync(join(TEST_DIR, 'DSXU.md'), '# Rules\n- Use vitest\n- Prefer const')
     const builder = new SystemPromptBuilder()
     builder.loadProjectRules(TEST_DIR)
     const prompt = builder.build()
@@ -68,8 +68,8 @@ describe('SystemPromptBuilder', () => {
     expect(prompt).toContain('Prefer const')
   })
 
-  it('should support .claudemd fallback', () => {
-    writeFileSync(join(TEST_DIR, '.claudemd'), 'Use strict mode')
+  it('should support .dsxumd fallback', () => {
+    writeFileSync(join(TEST_DIR, '.dsxumd'), 'Use strict mode')
     const builder = new SystemPromptBuilder()
     builder.loadProjectRules(TEST_DIR)
     const prompt = builder.build()

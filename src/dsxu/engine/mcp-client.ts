@@ -1,17 +1,17 @@
 /**
- * #22 MCP Client — Model Context Protocol 轻量客户端
+ *
  *
  * 连接外部 MCP server，将其工具暴露为 DSxu ToolDefinition。
  *
  * 支持的传输方式：
- *   1. stdio — 子进程（最常用，如 mcp-server-filesystem）
- *   2. sse   — HTTP Server-Sent Events
+ *
+ *
  *
  * MCP 协议核心流程：
  *   initialize → tools/list → [callTool] → shutdown
  *
- * 与 Claude 的区别：
- *   - Claude: React context + 7 种传输 + OAuth + 企业配置
+ * 与 DSXU 的区别：
+ *   - upstream: React context + 7 种传输 + OAuth + 企业配置
  *   - DSxu V13: 纯 TS + stdio/sse + .mcp.json 配置（够用）
  */
 
@@ -387,6 +387,10 @@ export class MCPConnection {
     return [...this.tools]
   }
 
+  hasTool(name: string): boolean {
+    return this.tools.some((tool) => tool.name === name)
+  }
+
   /** 获取资源列表（连接时缓存） */
   getResources(): MCPResource[] {
     return [...this.resources]
@@ -592,7 +596,7 @@ export class MCPManager {
             try {
               const result = await conn.callTool(mcpTool.name, input)
 
-              // MCP result 格式: { content: [{ type: 'text', text: '...' }], isError?: boolean }
+              // DSXU comment sanitized.
               let content = ''
               if (result?.content) {
                 if (Array.isArray(result.content)) {
@@ -764,6 +768,49 @@ export class MCPManager {
       resourceCount: conn.getResources().length,
       resourceTemplateCount: conn.getResourceTemplates().length,
     }))
+  }
+
+  getConnectedServerNames(): string[] {
+    return Array.from(this.connections.entries())
+      .filter(([, conn]) => conn.isConnected())
+      .map(([name]) => name)
+      .sort((a, b) => a.localeCompare(b))
+  }
+
+  private getConnectedServerOrThrow(serverName: string): MCPConnection {
+    const conn = this.connections.get(serverName)
+    if (!conn || !conn.isConnected()) {
+      throw new Error(`MCP server not connected: ${serverName}`)
+    }
+    return conn
+  }
+
+  async listResourcesByServer(serverName: string): Promise<MCPResource[]> {
+    const conn = this.getConnectedServerOrThrow(serverName)
+    return await conn.listResources()
+  }
+
+  async readResourceByServer(serverName: string, uri: string): Promise<any> {
+    const conn = this.getConnectedServerOrThrow(serverName)
+    return await conn.readResource(uri)
+  }
+
+  async listResourceTemplatesByServer(serverName: string): Promise<MCPResourceTemplate[]> {
+    const conn = this.getConnectedServerOrThrow(serverName)
+    return await conn.listResourceTemplates()
+  }
+
+  async readResourceTemplateByServer(serverName: string, uriTemplate: string, args?: Record<string, any>): Promise<any> {
+    const conn = this.getConnectedServerOrThrow(serverName)
+    return await conn.readResourceTemplate(uriTemplate, args)
+  }
+
+  async callToolByServer(serverName: string, toolName: string, args: Record<string, any>): Promise<any> {
+    const conn = this.getConnectedServerOrThrow(serverName)
+    if (!conn.hasTool(toolName)) {
+      throw new Error(`MCP tool not found on server ${serverName}: ${toolName}`)
+    }
+    return await conn.callTool(toolName, args)
   }
 
   /** 断开所有连接 */

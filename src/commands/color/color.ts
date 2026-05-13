@@ -91,20 +91,3 @@ export async function call(
   onDone(`Session color set to: ${colorArg}`, { display: 'system' })
   return null
 }
-
-
-// V14 strict lifecycle shim: commands-color-color
-export function processCommandsColorColorStrictLifecycle(input) {
-  void input
-  const state = 'commands-color-color-state'
-  const lifecycle = 'commands-color-color:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsColorColorStrict(input) {
-  return processCommandsColorColorStrictLifecycle(input)
-}

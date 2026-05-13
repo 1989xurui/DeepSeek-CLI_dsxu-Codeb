@@ -95,8 +95,8 @@ export function checkProjectConfig(cwd: string): HealthCheck {
   const paths = [
     join(cwd, '.dsxu', 'config.json'),
     join(cwd, '.dsxu.json'),
-    join(cwd, 'CLAUDE.md'),
-    join(cwd, '.claudemd'),
+    join(cwd, 'DSXU.md'),
+    join(cwd, '.dsxumd'),
   ]
 
   const found = paths.filter(p => existsSync(p))
@@ -111,7 +111,7 @@ export function checkProjectConfig(cwd: string): HealthCheck {
     name: 'Project config',
     status: 'warn',
     message: 'No project config found',
-    fix: 'Create .dsxu/config.json or CLAUDE.md for project-specific settings',
+    fix: 'Create .dsxu/config.json or DSXU.md for project-specific settings',
   }
 }
 
