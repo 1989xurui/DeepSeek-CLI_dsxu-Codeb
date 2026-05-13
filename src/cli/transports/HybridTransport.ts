@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios, { type AxiosError } from 'axios'
 import type { StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -15,7 +16,7 @@ const BATCH_FLUSH_INTERVAL_MS = 100
 const POST_TIMEOUT_MS = 15_000
 // Grace period for queued writes on close(). Covers a healthy POST (~100ms)
 // plus headroom; best-effort, not a delivery guarantee under degraded network.
-// Void-ed (nothing awaits it) so this is a last resort — replBridge teardown
+// Void-ed (nothing awaits it) so this is a last resort ...DSXU control-plane caller teardown
 // now closes AFTER archive so archive latency is the primary drain window.
 // NOTE: gracefulShutdown's cleanup budget is 2s (not the 5s outer failsafe);
 // 3s here exceeds it, but the process lives ~2s longer for hooks+analytics.
@@ -26,16 +27,11 @@ const CLOSE_GRACE_MS = 3000
  *
  * Write flow:
  *
- *   write(stream_event) ─┐
- *                        │ (100ms timer)
- *                        │
- *                        ▼
- *   write(other) ────► uploader.enqueue()  (SerialBatchEventUploader)
- *                        ▲    │
- *   writeBatch() ────────┘    │ serial, batched, retries indefinitely,
- *                             │ backpressure at maxQueueSize
- *                             ▼
- *                        postOnce()  (single HTTP POST, throws on retryable)
+ *   write(stream_event) -> 100ms timer -> uploader.enqueue()
+ *   write(other)        -> flush stream buffer -> uploader.enqueue()
+ *   writeBatch()        -> uploader.enqueue()
+ *   uploader            -> serial, batched, retries indefinitely,
+ *                          backpressure at maxQueueSize, then postOnce()
  *
  * stream_event messages accumulate in streamEventBuffer for up to 100ms
  * before enqueue (reduces POST count for high-volume content deltas). A
@@ -45,17 +41,17 @@ const CLOSE_GRACE_MS = 3000
  * (same primitive CCR uses). At most one POST in-flight; events arriving during
  * a POST batch into the next one. On failure, the uploader re-queues and retries
  * with exponential backoff + jitter. If the queue fills past maxQueueSize,
- * enqueue() blocks — giving awaiting callers backpressure.
+ * enqueue() blocks ...giving awaiting callers backpressure.
  *
- * Why serialize? Bridge mode fires writes via `void transport.write()`
- * (fire-and-forget). Without this, concurrent POSTs → concurrent Firestore
- * writes to the same document → collisions → retry storms → pages oncall.
+ * Why serialize? DSXU control mode fires writes via `void transport.write()`
+ * (fire-and-forget). Without this, concurrent POSTs can overlap Firestore
+ * writes to the same document, causing collisions, retry storms, and pages.
  */
 export class HybridTransport extends WebSocketTransport {
   private postUrl: string
   private uploader: SerialBatchEventUploader<StdoutMessage>
 
-  // stream_event delay buffer — accumulates content deltas for up to
+  // stream_event delay buffer ...accumulates content deltas for up to
   // BATCH_FLUSH_INTERVAL_MS before enqueueing (reduces POST count)
   private streamEventBuffer: StdoutMessage[] = []
   private streamEventTimer: ReturnType<typeof setTimeout> | null = null
@@ -74,10 +70,10 @@ export class HybridTransport extends WebSocketTransport {
     const { maxConsecutiveFailures, onBatchDropped } = options ?? {}
     this.postUrl = convertWsUrlToPostUrl(url)
     this.uploader = new SerialBatchEventUploader<StdoutMessage>({
-      // Large cap — session-ingress accepts arbitrary batch sizes. Events
+      // Large cap ...session-ingress accepts arbitrary batch sizes. Events
       // naturally batch during in-flight POSTs; this just bounds the payload.
       maxBatchSize: 500,
-      // Bridge callers use `void transport.write()` — backpressure doesn't
+      // DSXU control callers use `void transport.write()` ...backpressure doesn't
       // apply (they don't await). A batch >maxQueueSize deadlocks (see
       // SerialBatchEventUploader backpressure check). So set it high enough
       // to be a memory bound only. Wire real backpressure in a follow-up
@@ -88,7 +84,7 @@ export class HybridTransport extends WebSocketTransport {
       jitterMs: 1000,
       // Optional cap so a persistently-failing server can't pin the drain
       // loop for the lifetime of the process. Undefined = indefinite retry.
-      // replBridge sets this; the 1P transportUtils path does not.
+      // DSXU control-plane caller sets this; the 1P transportUtils path does not.
       maxConsecutiveFailures,
       onBatchDropped: (batchSize, failures) => {
         logForDiagnosticsNoPII(
@@ -110,14 +106,14 @@ export class HybridTransport extends WebSocketTransport {
   /**
    * Enqueue a message and wait for the queue to drain. Returning flush()
    * preserves the contract that `await write()` resolves after the event is
-   * POSTed (relied on by tests and replBridge's initial flush). Fire-and-forget
-   * callers (`void transport.write()`) are unaffected — they don't await,
+   * POSTed (relied on by tests and the DSXU control-plane caller's initial flush). Fire-and-forget
+   * callers (`void transport.write()`) are unaffected ...they don't await,
    * so the later resolution doesn't add latency.
    */
   override async write(message: StdoutMessage): Promise<void> {
     if (message.type === 'stream_event') {
       // Delay: accumulate stream_events briefly before enqueueing.
-      // Promise resolves immediately — callers don't await stream_events.
+      // Promise resolves immediately ...callers don't await stream_events.
       this.streamEventBuffer.push(message)
       if (!this.streamEventTimer) {
         this.streamEventTimer = setTimeout(
@@ -143,7 +139,7 @@ export class HybridTransport extends WebSocketTransport {
   }
 
   /**
-   * Block until all pending events are POSTed. Used by bridge's initial
+   * Block until all pending events are POSTed. Used by control session's initial
    * history flush so onStateChange('connected') fires after persistence.
    */
   flush(): Promise<void> {
@@ -162,7 +158,7 @@ export class HybridTransport extends WebSocketTransport {
     return buffered
   }
 
-  /** Delay timer fired — enqueue accumulated stream_events. */
+  /** Delay timer fired ...enqueue accumulated stream_events. */
   private flushStreamEvents(): void {
     this.streamEventTimer = null
     void this.uploader.enqueue(this.takeStreamEvents())
@@ -174,7 +170,7 @@ export class HybridTransport extends WebSocketTransport {
       this.streamEventTimer = null
     }
     this.streamEventBuffer = []
-    // Grace period for queued writes — fallback. replBridge teardown now
+    // Grace period for queued writes ...fallback. DSXU control-plane caller teardown now
     // awaits archive between write and close (see CLOSE_GRACE_MS), so
     // archive latency is the primary drain window and this is a last
     // resort. Keep close() sync (returns immediately) but defer
@@ -235,7 +231,7 @@ export class HybridTransport extends WebSocketTransport {
       return
     }
 
-    // 4xx (except 429) are permanent — drop, don't retry.
+    // 4xx (except 429) are permanent ...drop, don't retry.
     if (
       response.status >= 400 &&
       response.status < 500 &&
@@ -250,7 +246,7 @@ export class HybridTransport extends WebSocketTransport {
       return
     }
 
-    // 429 / 5xx — retryable. Throw so uploader re-queues and backs off.
+    // 429 / 5xx ...retryable. Throw so uploader re-queues and backs off.
     logForDebugging(
       `HybridTransport: POST returned ${response.status} (retryable)`,
     )

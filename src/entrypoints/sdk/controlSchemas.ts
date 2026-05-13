@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * SDK Control Schemas - Zod schemas for the control protocol.
  *
@@ -356,7 +357,7 @@ export const SDKControlSeedReadStateRequestSchema = lazySchema(() =>
       mtime: z.number(),
     })
     .describe(
-      'Seeds the readFileState cache with a path+mtime entry. Use when a prior Read was removed from context (e.g. by snip) so Edit validation would fail despite the client having observed the Read. The mtime lets the CLI detect if the file changed since the seeded Read — same staleness check as the normal path.',
+      'Seeds the readFileState cache with a path+mtime entry. Use when a prior Read was removed from context (e.g. by snip) so Edit validation would fail despite the client having observed the Read. The mtime lets the CLI detect if the file changed since the seeded Read ...same staleness check as the normal path.',
     ),
 )
 
@@ -500,12 +501,12 @@ export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
           }),
         )
         .describe(
-          'Ordered low-to-high priority — later entries override earlier ones.',
+          'Ordered low-to-high priority ...later entries override earlier ones.',
         ),
       applied: z
         .object({
           model: z.string(),
-          // String levels only — numeric effort is ant-only and the
+          // String levels only ...numeric effort is ant-only and the
           // Zod→proto generator can't emit enum∪number unions.
           effort: z.enum(['low', 'medium', 'high', 'max']).nullable(),
         })

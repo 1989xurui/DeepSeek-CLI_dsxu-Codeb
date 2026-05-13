@@ -1,10 +1,11 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.js'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { Command } from '../commands.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
 // Legal wants the explicit surface name plus a docs link visible before the
-// user triggers, so the description carries "Claude Code on the web" + URL.
-const CCR_TERMS_URL = 'https://code.claude.com/docs/en/claude-code-on-the-web'
+// user triggers, so the description carries "DSXU Code on the web" + URL.
+const CCR_TERMS_URL = 'https://docs.dsxu.local/dsxu-code-workflow'
 
 const LOCAL_REVIEW_PROMPT = (args: string) => `
       You are an expert code reviewer. Follow these steps:
@@ -48,10 +49,42 @@ const review: Command = {
 const ultrareview: Command = {
   type: 'local-jsx',
   name: 'ultrareview',
-  description: `~10–20 min · Finds and verifies bugs in your branch. Runs in Claude Code on the web. See ${CCR_TERMS_URL}`,
+  description: isDsxuRuntimeMode()
+    ? '~10-30 min - Finds and verifies bugs in your branch. Runs through DSXU review workflow.'
+    : `~10–20 min · Finds and verifies bugs in your branch. Runs in DSXU Code on the web. See ${CCR_TERMS_URL}`,
   isEnabled: () => isUltrareviewEnabled(),
   load: () => import('./review/ultrareviewCommand.js'),
 }
 
 export default review
 export { ultrareview }
+
+export function getDsxuReviewCommandRuntimeProfile(): {
+  runtime: 'DSXU Review Commands'
+  localCommand: string
+  remoteCommand: string
+  activationEvidence: readonly string[]
+  legacyPolicy: string
+} {
+  return {
+    runtime: 'DSXU Review Commands',
+    localCommand: '/review uses local gh pr list/view/diff and model review prompt',
+    remoteCommand: '/ultrareview is reworded to DSXU review workflow in DSXU mode',
+    activationEvidence: [
+      'local review command remains prompt-based and does not require cloud login',
+      'DSXU runtime mode avoids DSXU Code on the web product copy',
+      'ultrareview is still separately gated by isUltrareviewEnabled',
+    ],
+    legacyPolicy:
+      'DSXU Code on the web terms URL remains only for non-DSXU legacy path',
+  }
+}
+
+
+// V14 lifecycle shim: review
+export function processReviewLifecycle(input) {
+  void input
+  const state = 'review-state'
+  const lifecycle = 'review:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

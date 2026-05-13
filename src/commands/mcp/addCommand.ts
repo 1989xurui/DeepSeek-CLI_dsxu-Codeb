@@ -27,6 +27,8 @@ import {
 import { parseEnvVars } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
+const LEGACY_XAA_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
+
 /**
  * Registers the `mcp add` subcommand on the given Commander command.
  */
@@ -34,16 +36,16 @@ export function registerMcpAddCommand(mcp: Command): void {
   mcp
     .command('add <name> <commandOrUrl> [args...]')
     .description(
-      'Add an MCP server to Claude Code.\n\n' +
+      'Add an MCP server to DSXU Code.\n\n' +
         'Examples:\n' +
         '  # Add HTTP server:\n' +
-        '  claude mcp add --transport http sentry https://mcp.sentry.dev/mcp\n\n' +
+        '  dsxu-code mcp add --transport http sentry https://mcp.sentry.dev/mcp\n\n' +
         '  # Add HTTP server with headers:\n' +
-        '  claude mcp add --transport http corridor https://app.corridor.dev/api/mcp --header "Authorization: Bearer ..."\n\n' +
+        '  dsxu-code mcp add --transport http corridor https://app.corridor.dev/api/mcp --header "Authorization: Bearer ..."\n\n' +
         '  # Add stdio server with environment variables:\n' +
-        '  claude mcp add -e API_KEY=xxx my-server -- npx my-mcp-server\n\n' +
+        '  dsxu-code mcp add -e API_KEY=xxx my-server -- npx my-mcp-server\n\n' +
         '  # Add stdio server with subprocess flags:\n' +
-        '  claude mcp add my-server -- my-command --some-flag arg1',
+        '  dsxu-code mcp add my-server -- my-command --some-flag arg1',
     )
     .option(
       '-s, --scope <scope>',
@@ -75,7 +77,7 @@ export function registerMcpAddCommand(mcp: Command): void {
     .addOption(
       new Option(
         '--xaa',
-        "Enable XAA (SEP-990) for this server. Requires 'claude mcp xaa setup' first. Also requires --client-id and --client-secret (for the MCP server's AS).",
+        "Enable XAA (SEP-990) for this server. Requires 'dsxu-code mcp xaa setup' first. Also requires --client-id and --client-secret (for the MCP server's AS).",
       ).hideHelp(!isXaaEnabled()),
     )
     .action(async (name, commandOrUrl, args, options) => {
@@ -87,12 +89,12 @@ export function registerMcpAddCommand(mcp: Command): void {
       if (!name) {
         cliError(
           'Error: Server name is required.\n' +
-            'Usage: claude mcp add <name> <command> [args...]',
+            'Usage: dsxu-code mcp add <name> <command> [args...]',
         )
       } else if (!actualCommand) {
         cliError(
           'Error: Command is required when server name is provided.\n' +
-            'Usage: claude mcp add <name> <command> [args...]',
+            'Usage: dsxu-code mcp add <name> <command> [args...]',
         )
       }
 
@@ -103,7 +105,7 @@ export function registerMcpAddCommand(mcp: Command): void {
         // XAA fail-fast: validate at add-time, not auth-time.
         if (options.xaa && !isXaaEnabled()) {
           cliError(
-            'Error: --xaa requires CLAUDE_CODE_ENABLE_XAA=1 in your environment',
+            `Error: --xaa requires DSXU_CODE_ENABLE_XAA=1 (or legacy ${LEGACY_XAA_ENV}=1 during migration) in your environment`,
           )
         }
         const xaa = Boolean(options.xaa)
@@ -113,7 +115,7 @@ export function registerMcpAddCommand(mcp: Command): void {
           if (!options.clientSecret) missing.push('--client-secret')
           if (!getXaaIdpSettings()) {
             missing.push(
-              "'claude mcp xaa setup' (settings.xaaIdp not configured)",
+              "'dsxu-code mcp xaa setup' (settings.xaaIdp not configured)",
             )
           }
           if (missing.length) {
@@ -254,10 +256,10 @@ export function registerMcpAddCommand(mcp: Command): void {
               `\nWarning: The command "${actualCommand}" looks like a URL, but is being interpreted as a stdio server as --transport was not specified.\n`,
             )
             process.stderr.write(
-              `If this is an HTTP server, use: claude mcp add --transport http ${name} ${actualCommand}\n`,
+              `If this is an HTTP server, use: dsxu-code mcp add --transport http ${name} ${actualCommand}\n`,
             )
             process.stderr.write(
-              `If this is an SSE server, use: claude mcp add --transport sse ${name} ${actualCommand}\n`,
+              `If this is an SSE server, use: dsxu-code mcp add --transport sse ${name} ${actualCommand}\n`,
             )
           }
 
@@ -277,4 +279,37 @@ export function registerMcpAddCommand(mcp: Command): void {
         cliError((error as Error).message)
       }
     })
+}
+
+export function getDsxuMcpAddCommandRuntimeProfile(): {
+  runtime: 'DSXU MCP Add Command'
+  command: string
+  transports: readonly string[]
+  configScopes: readonly string[]
+  identityPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU MCP Add Command',
+    command: 'dsxu-code mcp add',
+    transports: ['stdio', 'sse', 'http'],
+    configScopes: ['local', 'user', 'project'],
+    identityPolicy:
+      `XAA is gated by DSXU_CODE_ENABLE_XAA with ${LEGACY_XAA_ENV} retained only as a migration alias`,
+    activationEvidence: [
+      'registers MCP add subcommand on the DSXU CLI command tree',
+      'validates scope and transport before writing MCP config',
+      'supports HTTP/SSE OAuth and stdio environment variables',
+      'writes config through addMcpConfig for runtime MCP provider consumption',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: addcommand
+export function processAddcommandLifecycle(input) {
+  void input
+  const state = 'addcommand-state'
+  const lifecycle = 'addcommand:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

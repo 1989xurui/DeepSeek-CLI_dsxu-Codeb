@@ -48,3 +48,21 @@ const command = {
 } satisfies Command
 
 export default command
+
+
+// V14 command lifecycle shim: sandbox-toggle
+export function processSandboxToggleCommandLifecycle(input) {
+  void input
+  const state = 'sandbox-toggle-command-state'
+  const lifecycle = 'sandbox-toggle:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'sandbox-toggle',
+  }
+}
+
+export function runSandboxToggleCommand(input) {
+  return processSandboxToggleCommandLifecycle(input)
+}

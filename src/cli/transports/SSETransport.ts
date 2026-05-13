@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios, { type AxiosError } from 'axios'
 import type { StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -6,7 +7,7 @@ import { errorMessage } from '../../utils/errors.js'
 import { getSessionIngressAuthHeaders } from '../../utils/sessionIngressAuth.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import type { Transport } from './Transport.js'
 
 // ---------------------------------------------------------------------------
@@ -129,7 +130,7 @@ type SSETransportState =
 /**
  * Payload for `event: client_event` frames, matching the StreamClientEvent
  * proto message in session_stream.proto. This is the only event type sent
- * to worker subscribers — delivery_update, session_update, ephemeral_event,
+ * to worker subscribers ...delivery_update, session_update, ephemeral_event,
  * and catch_up_truncated are client-channel-only (see notifier.go and
  * event_stream.go SubscriberClient guard).
  */
@@ -195,8 +196,8 @@ export class SSETransport implements Transport {
     initialSequenceNum?: number,
     /**
      * Per-instance auth header source. Omit to read the process-wide
-     * CLAUDE_CODE_SESSION_ACCESS_TOKEN (single-session callers). Required
-     * for concurrent multi-session callers — the env-var path is a process
+     * legacy session access token env (single-session callers). Required
+     * for concurrent multi-session callers ...the env-var path is a process
      * global and would stomp across sessions.
      */
     getAuthHeaders?: () => Record<string, string>,
@@ -208,8 +209,7 @@ export class SSETransport implements Transport {
     this.postUrl = convertSSEUrlToPostUrl(url)
     // Seed with a caller-provided high-water mark so the first connect()
     // sends from_sequence_num / Last-Event-ID. Without this, a fresh
-    // SSETransport always asks the server to replay from sequence 0 —
-    // the entire session history on every transport swap.
+    // SSETransport always asks the server to replay from sequence 0 ...    // the entire session history on every transport swap.
     if (initialSequenceNum !== undefined && initialSequenceNum > 0) {
       this.lastSequenceNum = initialSequenceNum
     }
@@ -220,7 +220,7 @@ export class SSETransport implements Transport {
 
   /**
    * High-water mark of sequence numbers seen on this stream. Callers that
-   * recreate the transport (e.g. replBridge onWorkReceived) read this before
+   * recreate the transport (e.g. DSXU control-plane caller onWorkReceived) read this before
    * close() and pass it as `initialSequenceNum` to the next instance so the
    * server resumes from the right point instead of replaying everything.
    */
@@ -255,8 +255,8 @@ export class SSETransport implements Transport {
       ...this.headers,
       ...authHeaders,
       Accept: 'text/event-stream',
-      'anthropic-version': '2023-06-01',
-      'User-Agent': getClaudeCodeUserAgent(),
+      [PROVIDER_VERSION_HEADER]: PROVIDER_PROTOCOL_VERSION,
+      'User-Agent': getDSXUCodeUserAgent(),
     }
     if (authHeaders['Cookie']) {
       delete headers['Authorization']
@@ -386,10 +386,10 @@ export class SSETransport implements Transport {
           if (frame.event && frame.data) {
             this.handleSSEFrame(frame.event, frame.data)
           } else if (frame.data) {
-            // data: without event: — server is emitting the old envelope format
+            // data: without event: ...server is emitting the old envelope format
             // or a bug. Log so incidents show as a signal instead of silent drops.
             logForDebugging(
-              'SSETransport: Frame has data: but no event: field — dropped',
+              'SSETransport: Frame has data: but no event: field ...dropped',
               { level: 'warn' },
             )
             logForDiagnosticsNoPII('warn', 'cli_sse_frame_missing_event_field')
@@ -407,7 +407,7 @@ export class SSETransport implements Transport {
       reader.releaseLock()
     }
 
-    // Stream ended — reconnect unless we're closing
+    // Stream ended ...reconnect unless we're closing
     if (this.state !== 'closing' && this.state !== 'closed') {
       logForDebugging('SSETransport: Stream ended, reconnecting')
       this.handleConnectionError()
@@ -418,8 +418,7 @@ export class SSETransport implements Transport {
    * Handle a single SSE frame. The event: field names the variant; data:
    * carries the inner proto JSON directly (no envelope).
    *
-   * Worker subscribers only receive client_event frames (see notifier.go) —
-   * any other event type indicates a server-side change that CC doesn't yet
+   * Worker subscribers only receive client_event frames (see notifier.go) ...   * any other event type indicates a server-side change that CC doesn't yet
    * understand. Log a diagnostic so we notice in telemetry.
    */
   private handleSSEFrame(eventType: string, data: string): void {
@@ -503,7 +502,7 @@ export class SSETransport implements Transport {
         RECONNECT_BASE_DELAY_MS * Math.pow(2, this.reconnectAttempts - 1),
         RECONNECT_MAX_DELAY_MS,
       )
-      // Add ±25% jitter
+      // Add +/-25% jitter
       const delay = Math.max(
         0,
         baseDelay + baseDelay * 0.25 * (2 * Math.random() - 1),
@@ -566,7 +565,7 @@ export class SSETransport implements Transport {
   }
 
   // -----------------------------------------------------------------------
-  // Write (HTTP POST) — same pattern as HybridTransport
+  // Write (HTTP POST) ...same pattern as HybridTransport
   // -----------------------------------------------------------------------
 
   async write(message: StdoutMessage): Promise<void> {
@@ -580,8 +579,8 @@ export class SSETransport implements Transport {
     const headers: Record<string, string> = {
       ...authHeaders,
       'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-      'User-Agent': getClaudeCodeUserAgent(),
+      [PROVIDER_VERSION_HEADER]: PROVIDER_PROTOCOL_VERSION,
+      'User-Agent': getDSXUCodeUserAgent(),
     }
 
     logForDebugging(

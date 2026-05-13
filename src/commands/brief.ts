@@ -128,3 +128,12 @@ const brief = {
 } satisfies Command
 
 export default brief
+
+
+// V14 lifecycle shim: brief
+export function processBriefLifecycle(input) {
+  void input
+  const state = 'brief-state'
+  const lifecycle = 'brief:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

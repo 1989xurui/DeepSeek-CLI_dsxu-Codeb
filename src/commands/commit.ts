@@ -1,6 +1,5 @@
-import type { Command } from '../commands.js'
+import type { Command } from '../types/command.js'
 import { getAttributionTexts } from '../utils/attribution.js'
-import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
 import { getUndercoverInstructions, isUndercover } from '../utils/undercover.js'
 
 const ALLOWED_TOOLS = [
@@ -63,6 +62,7 @@ const command = {
   progressMessage: 'creating commit',
   source: 'builtin',
   async getPromptForCommand(_args, context) {
+    const { executeShellCommandsInPrompt } = await import('../utils/promptShellExecution.js')
     const promptContent = getPromptContent()
     const finalContent = await executeShellCommandsInPrompt(
       promptContent,

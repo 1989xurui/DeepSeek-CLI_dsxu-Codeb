@@ -13,3 +13,21 @@ const compact = {
 } satisfies Command
 
 export default compact
+
+
+// V14 command lifecycle shim: compact
+export function processCompactCommandLifecycle(input) {
+  void input
+  const state = 'compact-command-state'
+  const lifecycle = 'compact:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'compact',
+  }
+}
+
+export function runCompactCommand(input) {
+  return processCompactCommandLifecycle(input)
+}

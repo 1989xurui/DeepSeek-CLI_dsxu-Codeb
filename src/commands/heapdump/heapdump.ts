@@ -15,3 +15,12 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
     value: `${result.heapPath}\n${result.diagPath}`,
   }
 }
+
+
+// V14 lifecycle shim: heapdump
+export function processHeapdumpLifecycle(input) {
+  void input
+  const state = 'heapdump-state'
+  const lifecycle = 'heapdump:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

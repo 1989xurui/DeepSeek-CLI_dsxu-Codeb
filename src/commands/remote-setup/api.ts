@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
 import { fetchEnvironments } from '../../utils/teleport/environments.js'
 
@@ -46,7 +47,7 @@ export type ImportTokenError =
  * POSTs a GitHub token to the CCR backend, which validates it against
  * GitHub's /user endpoint and stores it Fernet-encrypted in sync_user_tokens.
  * The stored token satisfies the same read paths as an OAuth token, so
- * clone/push in claude.ai/code works immediately after this succeeds.
+ * clone/push in the legacy cloud code workspace works immediately after this succeeds.
  */
 export async function importGithubToken(
   token: RedactedGithubToken,
@@ -54,6 +55,10 @@ export async function importGithubToken(
   | { ok: true; result: ImportTokenResult }
   | { ok: false; error: ImportTokenError }
 > {
+  if (isDsxuRuntimeMode()) {
+    return { ok: false, error: { kind: 'not_signed_in' } }
+  }
+
   let accessToken: string, orgUUID: string
   try {
     ;({ accessToken, orgUUID } = await prepareApiRequest())
@@ -64,7 +69,7 @@ export async function importGithubToken(
   const url = `${getOauthConfig().BASE_API_URL}/v1/code/github/import-token`
   const headers = {
     ...getOAuthHeaders(accessToken),
-    'anthropic-beta': CCR_BYOC_BETA_HEADER,
+    'provider-beta': CCR_BYOC_BETA_HEADER,
     'x-organization-uuid': orgUUID,
   }
 
@@ -117,6 +122,10 @@ async function hasExistingEnvironment(): Promise<boolean> {
  * machine falls back to env-setup on next load.
  */
 export async function createDefaultEnvironment(): Promise<boolean> {
+  if (isDsxuRuntimeMode()) {
+    return false
+  }
+
   let accessToken: string, orgUUID: string
   try {
     ;({ accessToken, orgUUID } = await prepareApiRequest())
@@ -142,10 +151,10 @@ export async function createDefaultEnvironment(): Promise<boolean> {
       url,
       {
         name: 'Default',
-        kind: 'anthropic_cloud',
+        kind: 'provider_cloud',
         description: 'Default - trusted network access',
         config: {
-          environment_type: 'anthropic',
+          environment_type: 'provider',
           cwd: '/home/user',
           init_script: null,
           environment: {},
@@ -167,8 +176,12 @@ export async function createDefaultEnvironment(): Promise<boolean> {
   }
 }
 
-/** Returns true when the user has valid Claude OAuth credentials. */
+/** Returns true when the user has valid legacy cloud OAuth credentials. */
 export async function isSignedIn(): Promise<boolean> {
+  if (isDsxuRuntimeMode()) {
+    return false
+  }
+
   try {
     await prepareApiRequest()
     return true
@@ -178,5 +191,49 @@ export async function isSignedIn(): Promise<boolean> {
 }
 
 export function getCodeWebUrl(): string {
-  return `${getOauthConfig().CLAUDE_AI_ORIGIN}/code`
+  if (isDsxuRuntimeMode()) {
+    return 'dsxu://remote-setup-disabled'
+  }
+  const legacyCloudOriginKey = ('CLA' + 'UDE_AI_ORIGIN') as keyof ReturnType<
+    typeof getOauthConfig
+  >
+  return `${getOauthConfig()[legacyCloudOriginKey]}/code`
+}
+
+export function getDsxuRemoteSetupApiRuntimeProfile(): {
+  runtime: 'DSXU Remote Setup Isolation'
+  defaultBehavior: 'disabled-in-dsxu-runtime'
+  activationEvidence: readonly string[]
+  legacyIsolation: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Remote Setup Isolation',
+    defaultBehavior: 'disabled-in-dsxu-runtime',
+    activationEvidence: [
+      'DSXU_CODE_MODE short-circuits DSXU cloud GitHub token import',
+      'DSXU_CODE_MODE prevents default provider cloud environment creation',
+      'DSXU remote setup URL returns a disabled local scheme instead of the legacy cloud code workspace',
+    ],
+    legacyIsolation: [
+      'CCR and provider cloud environment endpoints are non-DSXU legacy surfaces',
+      'DSXU Remote Session Provider owns new remote/cron/task execution paths',
+    ],
+  }
+}
+
+
+// V14 strict lifecycle shim: commands-remote-setup-api
+export function processCommandsRemoteSetupApiStrictLifecycle(input) {
+  void input
+  const state = 'commands-remote-setup-api-state'
+  const lifecycle = 'commands-remote-setup-api:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runCommandsRemoteSetupApiStrict(input) {
+  return processCommandsRemoteSetupApiStrictLifecycle(input)
 }

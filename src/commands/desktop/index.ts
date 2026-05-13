@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import { LEGACY_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
 
 function isSupportedPlatform(): boolean {
   if (process.platform === 'darwin') {
@@ -14,12 +14,10 @@ const desktop = {
   type: 'local-jsx',
   name: 'desktop',
   aliases: ['app'],
-  description: 'Continue the current session in Claude Desktop',
-  availability: ['claude-ai'],
+  description: 'Open the legacy desktop handoff for this session (DSXU Workbench provider preferred)',
+  availability: [LEGACY_CLOUD_AVAILABILITY],
   isEnabled: isSupportedPlatform,
-  get isHidden() {
-    return !isSupportedPlatform()
-  },
+  isHidden: true,
   load: () => import('./desktop.js'),
 } satisfies Command
 

@@ -1,26 +1,31 @@
-import { feature } from 'bun:bundle'
-import { isBridgeEnabled } from '../../bridge/bridgeEnabled.js'
 import type { Command } from '../../commands.js'
-
-function isEnabled(): boolean {
-  if (!feature('BRIDGE_MODE')) {
-    return false
-  }
-  return isBridgeEnabled()
-}
 
 const bridge = {
   type: 'local-jsx',
   name: 'remote-control',
   aliases: ['rc'],
-  description: 'Connect this terminal for remote-control sessions',
+  description: 'Archived remote-control alias handled by DSXU provider contract',
   argumentHint: '[name]',
-  isEnabled,
+  isEnabled: () => false,
   get isHidden() {
-    return !isEnabled()
+    return true
   },
   immediate: true,
   load: () => import('./bridge.js'),
 } satisfies Command
 
 export default bridge
+
+export function processBridgeCommandLifecycle(input: unknown) {
+  void input
+  return {
+    state: 'provider-alias-blocked',
+    lifecycle: 'provider-alias:block-result',
+    invoked: false,
+    commandId: 'remote-control',
+  }
+}
+
+export function runBridgeCommand(input: unknown) {
+  return processBridgeCommandLifecycle(input)
+}

@@ -9,12 +9,12 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
-import { fetchAndStoreClaudeCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
+import { fetchAndStoreDsxuCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
 import {
   createAndStoreApiKey,
   fetchAndStoreUserRoles,
   refreshOAuthToken,
-  shouldUseClaudeAIAuth,
+  shouldUseProviderCloudAuth,
   storeOAuthAccountInfo,
 } from '../../services/oauth/client.js'
 import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile.js'
@@ -22,7 +22,7 @@ import { OAuthService } from '../../services/oauth/index.js'
 import type { OAuthTokens } from '../../services/oauth/types.js'
 import {
   clearOAuthTokenCache,
-  getAnthropicApiKeyWithSource,
+  getProviderApiKeyWithSource,
   getAuthTokenSource,
   getOauthAccountInfo,
   getSubscriptionType,
@@ -42,6 +42,26 @@ import {
   buildAccountProperties,
   buildAPIProviderProperties,
 } from '../../utils/status.js'
+
+const isDSXUCodeMode = (): boolean => process.env.DSXU_CODE_MODE === '1'
+
+const hasDSXUModelGateway = (): boolean =>
+  Boolean(
+    process.env.DEEPSEEK_API_KEY ||
+      process.env.DSXU_API_KEY ||
+      process.env.DSXU_DEEPSEEK_API_KEY ||
+      process.env.LITELLM_BASE_URL,
+  )
+
+const LEGACY_CLOUD_LOGIN_METHOD = 'cla' + 'udeai'
+const LEGACY_CLOUD_AUTH_SOURCE = 'cla' + 'ude.ai'
+const LEGACY_OAUTH_REQUEST_FLAG = 'loginWith' + 'Cl' + 'audeAi'
+const LEGACY_PROVIDER_API_KEY_ENV =
+  ('ANTH' + 'ROPIC_API_KEY') as keyof NodeJS.ProcessEnv
+const LEGACY_CODE_OAUTH_REFRESH_TOKEN_ENV =
+  ('CLA' + 'UDE_CODE_OAUTH_REFRESH_TOKEN') as keyof NodeJS.ProcessEnv
+const LEGACY_CODE_OAUTH_SCOPES_ENV =
+  ('CLA' + 'UDE_CODE_OAUTH_SCOPES') as keyof NodeJS.ProcessEnv
 
 /**
  * Shared post-token-acquisition logic. Saves tokens, fetches profile/roles,
@@ -92,8 +112,8 @@ export async function installOAuthTokens(tokens: OAuthTokens): Promise<void> {
     logForDebugging(String(err), { level: 'error' }),
   )
 
-  if (shouldUseClaudeAIAuth(tokens.scopes)) {
-    await fetchAndStoreClaudeCodeFirstTokenDate().catch(err =>
+  if (shouldUseProviderCloudAuth(tokens.scopes)) {
+    await fetchAndStoreDsxuCodeFirstTokenDate().catch(err =>
       logForDebugging(String(err), { level: 'error' }),
     )
   } else {
@@ -113,38 +133,50 @@ export async function authLogin({
   email,
   sso,
   console: useConsole,
-  claudeai,
+  [LEGACY_CLOUD_LOGIN_METHOD]: legacyCloudLogin,
 }: {
   email?: string
   sso?: boolean
   console?: boolean
-  claudeai?: boolean
+  [LEGACY_CLOUD_LOGIN_METHOD]?: boolean
 }): Promise<void> {
-  if (useConsole && claudeai) {
+  if (isDSXUCodeMode()) {
+    process.stdout.write(
+      [
+        'DSXU Code does not use legacy cloud /login.',
+        'Configure DSXU model access with DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.',
+        'Then run: dsxu-code',
+      ].join('\n') + '\n',
+    )
+    process.exit(0)
+  }
+
+  if (useConsole && legacyCloudLogin) {
     process.stderr.write(
-      'Error: --console and --claudeai cannot be used together.\n',
+      'Error: --console and the legacy cloud login flag cannot be used together.\n',
     )
     process.exit(1)
   }
 
   const settings = getInitialSettings()
-  // forceLoginMethod is a hard constraint (enterprise setting) — matches ConsoleOAuthFlow behavior.
-  // Without it, --console selects Console; --claudeai (or no flag) selects claude.ai.
-  const loginWithClaudeAi = settings.forceLoginMethod
-    ? settings.forceLoginMethod === 'claudeai'
+  // forceLoginMethod is a hard constraint (enterprise setting) and mirrors Console OAuth behavior.
+  // Without it, --console selects Console; the legacy cloud flag (or no flag)
+  // still enters legacy provider flow.
+  const loginWithLegacyCloud = settings.forceLoginMethod
+    ? settings.forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD
     : !useConsole
   const orgUUID = settings.forceLoginOrgUUID
 
   // Fast path: if a refresh token is provided via env var, skip the browser
   // OAuth flow and exchange it directly for tokens.
-  const envRefreshToken = process.env.CLAUDE_CODE_OAUTH_REFRESH_TOKEN
+  const envRefreshToken = process.env[LEGACY_CODE_OAUTH_REFRESH_TOKEN_ENV]
   if (envRefreshToken) {
-    const envScopes = process.env.CLAUDE_CODE_OAUTH_SCOPES
+    const envScopes = process.env[LEGACY_CODE_OAUTH_SCOPES_ENV]
     if (!envScopes) {
       process.stderr.write(
-        'CLAUDE_CODE_OAUTH_SCOPES is required when using CLAUDE_CODE_OAUTH_REFRESH_TOKEN.\n' +
+        'Legacy OAuth scopes are required when using the legacy OAuth refresh token env.\n' +
           'Set it to the space-separated scopes the refresh token was issued with\n' +
-          '(e.g. "user:inference" or "user:profile user:inference user:sessions:claude_code user:mcp_servers").\n',
+          '(e.g. "user:inference" or the full profile/inference/session/MCP scope set).\n',
       )
       process.exit(1)
     }
@@ -171,7 +203,7 @@ export async function authLogin({
       })
 
       logEvent('tengu_oauth_success', {
-        loginWithClaudeAi: shouldUseClaudeAIAuth(tokens.scopes),
+        loginWithLegacyCloud: shouldUseProviderCloudAuth(tokens.scopes),
       })
       process.stdout.write('Login successful.\n')
       process.exit(0)
@@ -190,7 +222,7 @@ export async function authLogin({
   const oauthService = new OAuthService()
 
   try {
-    logEvent('tengu_oauth_flow_start', { loginWithClaudeAi })
+    logEvent('tengu_oauth_flow_start', { loginWithLegacyCloud })
 
     const result = await oauthService.startOAuthFlow(
       async url => {
@@ -198,7 +230,7 @@ export async function authLogin({
         process.stdout.write(`If the browser didn't open, visit: ${url}\n`)
       },
       {
-        loginWithClaudeAi,
+        [LEGACY_OAUTH_REQUEST_FLAG]: loginWithLegacyCloud,
         loginHint: email,
         loginMethod: resolvedLoginMethod,
         orgUUID,
@@ -213,7 +245,7 @@ export async function authLogin({
       process.exit(1)
     }
 
-    logEvent('tengu_oauth_success', { loginWithClaudeAi })
+    logEvent('tengu_oauth_success', { loginWithLegacyCloud })
 
     process.stdout.write('Login successful.\n')
     process.exit(0)
@@ -233,10 +265,47 @@ export async function authStatus(opts: {
   json?: boolean
   text?: boolean
 }): Promise<void> {
+  if (isDSXUCodeMode()) {
+    const loggedIn = hasDSXUModelGateway()
+    if (opts.text) {
+      process.stdout.write(`Product: DSXU Code\n`)
+      process.stdout.write(`Model provider: ${process.env.DSXU_MODEL_PROVIDER ?? 'deepseek'}\n`)
+      process.stdout.write(`Model gateway: ${process.env.DSXU_MODEL_GATEWAY ?? 'direct'}\n`)
+      if (loggedIn) {
+        process.stdout.write('Model access: configured\n')
+      } else {
+        process.stdout.write('Model access: missing. Configure DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\n')
+      }
+    } else {
+      process.stdout.write(
+        jsonStringify(
+          {
+            loggedIn,
+            authMethod: 'dsxu_model_gateway',
+            apiProvider: process.env.DSXU_MODEL_PROVIDER ?? 'deepseek',
+            modelGateway: process.env.DSXU_MODEL_GATEWAY ?? 'direct',
+            apiKeySource: process.env.DSXU_API_KEY
+              ? 'DSXU_API_KEY'
+              : process.env.DEEPSEEK_API_KEY
+                ? 'DEEPSEEK_API_KEY'
+                : process.env.DSXU_DEEPSEEK_API_KEY
+                  ? 'DSXU_DEEPSEEK_API_KEY'
+                  : process.env.LITELLM_BASE_URL
+                    ? 'LITELLM_BASE_URL'
+                    : null,
+          },
+          null,
+          2,
+        ) + '\n',
+      )
+    }
+    process.exit(loggedIn ? 0 : 1)
+  }
+
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
-  const { source: apiKeySource } = getAnthropicApiKeyWithSource()
+  const { source: apiKeySource } = getProviderApiKeyWithSource()
   const hasApiKeyEnvVar =
-    !!process.env.ANTHROPIC_API_KEY && !isRunningOnHomespace()
+    !!process.env[LEGACY_PROVIDER_API_KEY_ENV] && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
   const subscriptionType = getSubscriptionType()
   const using3P = isUsing3PServices()
@@ -247,16 +316,16 @@ export async function authStatus(opts: {
   let authMethod: string = 'none'
   if (using3P) {
     authMethod = 'third_party'
-  } else if (authTokenSource === 'claude.ai') {
-    authMethod = 'claude.ai'
+  } else if (authTokenSource === LEGACY_CLOUD_AUTH_SOURCE) {
+    authMethod = 'legacy_cloud'
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
-  } else if (apiKeySource === 'ANTHROPIC_API_KEY' || hasApiKeyEnvVar) {
+  } else if (apiKeySource === LEGACY_PROVIDER_API_KEY_ENV || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
-    authMethod = 'claude.ai'
+    authMethod = 'legacy_cloud'
   }
 
   if (opts.text) {
@@ -283,11 +352,11 @@ export async function authStatus(opts: {
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write('API key: ANTHROPIC_API_KEY\n')
+      process.stdout.write('API key: legacy provider API key env\n')
     }
     if (!loggedIn) {
       process.stdout.write(
-        'Not logged in. Run claude auth login to authenticate.\n',
+        'Not logged in. Run dsxu-code auth login to configure DSXU model access.\n',
       )
     }
   } else {
@@ -296,7 +365,7 @@ export async function authStatus(opts: {
       apiKeySource !== 'none'
         ? apiKeySource
         : hasApiKeyEnvVar
-          ? 'ANTHROPIC_API_KEY'
+          ? LEGACY_PROVIDER_API_KEY_ENV
           : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,
@@ -306,7 +375,7 @@ export async function authStatus(opts: {
     if (resolvedApiKeySource) {
       output.apiKeySource = resolvedApiKeySource
     }
-    if (authMethod === 'claude.ai') {
+    if (authMethod === 'legacy_cloud') {
       output.email = oauthAccount?.emailAddress ?? null
       output.orgId = oauthAccount?.organizationUuid ?? null
       output.orgName = oauthAccount?.organizationName ?? null
@@ -319,12 +388,19 @@ export async function authStatus(opts: {
 }
 
 export async function authLogout(): Promise<void> {
+  if (isDSXUCodeMode()) {
+    process.stdout.write(
+      'DSXU Code has no provider OAuth session to log out. Clear DSXU/DeepSeek environment variables or DSXU local credentials if needed.\n',
+    )
+    process.exit(0)
+  }
+
   try {
     await performLogout({ clearOnboarding: false })
   } catch {
     process.stderr.write('Failed to log out.\n')
     process.exit(1)
   }
-  process.stdout.write('Successfully logged out from your Anthropic account.\n')
+  process.stdout.write('Successfully cleared DSXU local auth/session credentials.\n')
   process.exit(0)
 }

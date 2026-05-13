@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
 import type WsWebSocket from 'ws'
 import { logEvent } from '../../services/analytics/index.js'
 import { CircularBuffer } from '../../utils/CircularBuffer.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { getWebSocketTLSOptions } from '../../utils/mtls.js'
 import {
   getWebSocketProxyAgent,
@@ -30,7 +31,7 @@ const DEFAULT_KEEPALIVE_INTERVAL = 300_000 // 5 minutes
 /**
  * Threshold for detecting system sleep/wake. If the gap between consecutive
  * reconnection attempts exceeds this, the machine likely slept. We reset
- * the reconnection budget and retry — the server will reject with permanent
+ * the reconnection budget and retry ...the server will reject with permanent
  * close codes (4001/1002) if the session was reaped during sleep.
  */
 const SLEEP_DETECTION_THRESHOLD_MS = DEFAULT_MAX_RECONNECT_DELAY * 2 // 60s
@@ -40,7 +41,7 @@ const SLEEP_DETECTION_THRESHOLD_MS = DEFAULT_MAX_RECONNECT_DELAY * 2 // 60s
  * The transport transitions to 'closed' immediately without retrying.
  */
 const PERMANENT_CLOSE_CODES = new Set([
-  1002, // protocol error — server rejected handshake (e.g. session reaped)
+  1002, // protocol error ...server rejected handshake (e.g. session reaped)
   4001, // session expired / not found
   4003, // unauthorized
 ])
@@ -90,7 +91,7 @@ export class WebSocketTransport implements Transport {
   private reconnectTimer: NodeJS.Timeout | null = null
   private lastReconnectAttemptTime: number | null = null
   // Wall-clock of last WS data-frame activity (inbound message or outbound
-  // ws.send). Used to compute idle time at close — the signal for diagnosing
+  // ws.send). Used to compute idle time at close ...the signal for diagnosing
   // proxy idle-timeout RSTs (e.g. Cloudflare 5-min). Excludes ping/pong
   // control frames (proxies don't count those).
   private lastActivityTime = 0
@@ -172,7 +173,7 @@ export class WebSocketTransport implements Transport {
       ws.addEventListener('error', this.onBunError)
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       ws.addEventListener('close', this.onBunClose)
-      // 'pong' is Bun-specific — not in DOM typings.
+      // 'pong' is Bun-specific ...not in DOM typings.
       ws.addEventListener('pong', this.onPong)
     } else {
       const { default: WS } = await import('ws')
@@ -224,7 +225,7 @@ export class WebSocketTransport implements Transport {
       level: 'error',
     })
     logForDiagnosticsNoPII('error', 'cli_websocket_connect_error')
-    // close event fires after error — let it call handleConnectionError
+    // close event fires after error ...let it call handleConnectionError
   }
 
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
@@ -241,7 +242,7 @@ export class WebSocketTransport implements Transport {
   // --- Node (ws package) event handlers ---
 
   private onNodeOpen = () => {
-    // Capture ws before handleOpenEvent() invokes onConnectCallback — if the
+    // Capture ws before handleOpenEvent() invokes onConnectCallback ...if the
     // callback synchronously closes the transport, this.ws becomes null.
     // The old inline-closure code had this safety implicitly via closure capture.
     const ws = this.ws
@@ -274,7 +275,7 @@ export class WebSocketTransport implements Transport {
       level: 'error',
     })
     logForDiagnosticsNoPII('error', 'cli_websocket_connect_error')
-    // close event fires after error — let it call handleConnectionError
+    // close event fires after error ...let it call handleConnectionError
   }
 
   private onNodeClose = (code: number, _reason: Buffer) => {
@@ -300,7 +301,7 @@ export class WebSocketTransport implements Transport {
       duration_ms: connectDuration,
     })
 
-    // Reconnect success — capture attempt count + downtime before resetting.
+    // Reconnect success ...capture attempt count + downtime before resetting.
     // reconnectStartTime is null on first connect, non-null on reopen.
     if (this.isBridge && this.reconnectStartTime !== null) {
       logEvent('tengu_ws_transport_reconnected', {
@@ -344,7 +345,7 @@ export class WebSocketTransport implements Transport {
         level: 'error',
       })
       logForDiagnosticsNoPII('error', 'cli_websocket_send_error')
-      // Don't null this.ws here — let doDisconnect() (via handleConnectionError)
+      // Don't null this.ws here ...let doDisconnect() (via handleConnectionError)
       // handle cleanup so listeners are removed before the WS is released.
       this.handleConnectionError()
       return false
@@ -354,7 +355,7 @@ export class WebSocketTransport implements Transport {
   /**
    * Remove all listeners attached in connect() for the given WebSocket.
    * Without this, each reconnect orphans the old WS object + its closures
-   * until GC — these accumulate under network instability. Mirrors the
+   * until GC ...these accumulate under network instability. Mirrors the
    * pattern in src/utils/mcpWebSocketTransport.ts.
    */
   private removeWsListeners(ws: WebSocketLike): void {
@@ -365,7 +366,7 @@ export class WebSocketTransport implements Transport {
       nws.removeEventListener('error', this.onBunError)
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       nws.removeEventListener('close', this.onBunClose)
-      // 'pong' is Bun-specific — not in DOM typings
+      // 'pong' is Bun-specific ...not in DOM typings
       nws.removeEventListener('pong' as 'message', this.onPong)
     } else {
       const nws = ws as unknown as WsWebSocket
@@ -401,7 +402,7 @@ export class WebSocketTransport implements Transport {
     )
     logForDiagnosticsNoPII('info', 'cli_websocket_disconnected')
     if (this.isBridge) {
-      // Fire on every close — including intermediate ones during a reconnect
+      // Fire on every close ...including intermediate ones during a reconnect
       // storm (those never surface to the onCloseCallback consumer). For the
       // Cloudflare-5min-idle hypothesis: cluster msSinceLastActivity; if the
       // peak sits at ~300s with closeCode 1006, that's the proxy RST.
@@ -420,7 +421,7 @@ export class WebSocketTransport implements Transport {
 
     if (this.state === 'closing' || this.state === 'closed') return
 
-    // Permanent codes: don't retry — server has definitively ended the session.
+    // Permanent codes: don't retry ...server has definitively ended the session.
     // Exception: 4003 (unauthorized) can be retried when refreshHeaders is
     // available and returns a new token (e.g. after the parent process mints
     // a fresh session ingress token during reconnection).
@@ -470,8 +471,7 @@ export class WebSocketTransport implements Transport {
 
     // Detect system sleep/wake: if the gap since our last reconnection
     // attempt greatly exceeds the max delay, the machine likely slept
-    // (e.g. laptop lid closed). Reset the budget and retry from scratch —
-    // the server will reject with permanent close codes (4001/1002) if
+    // (e.g. laptop lid closed). Reset the budget and retry from scratch ...    // the server will reject with permanent close codes (4001/1002) if
     // the session was reaped while we were asleep.
     if (
       this.lastReconnectAttemptTime !== null &&
@@ -582,7 +582,7 @@ export class WebSocketTransport implements Transport {
         message => 'uuid' in message && message.uuid === lastId,
       )
       if (lastConfirmedIndex >= 0) {
-        // Server confirmed messages up to lastConfirmedIndex — evict them
+        // Server confirmed messages up to lastConfirmedIndex ...evict them
         startIndex = lastConfirmedIndex + 1
         // Rebuild the buffer with only unconfirmed messages
         const remaining = messages.slice(startIndex)
@@ -627,7 +627,7 @@ export class WebSocketTransport implements Transport {
         break
       }
     }
-    // Do NOT clear the buffer after replay — messages remain buffered until
+    // Do NOT clear the buffer after replay ...messages remain buffered until
     // the server confirms receipt on the next reconnection. This prevents
     // message loss if the connection drops after replay but before the server
     // processes the messages.
@@ -712,18 +712,18 @@ export class WebSocketTransport implements Transport {
         // Process-suspension detector. If the wall-clock gap between ticks
         // greatly exceeds the 10s interval, the process was suspended
         // (laptop lid, SIGSTOP, VM pause). setInterval does not queue
-        // missed ticks — it coalesces — so on wake this callback fires
+        // missed ticks ...it coalesces ...so on wake this callback fires
         // once with a huge gap. The socket is almost certainly dead:
-        // NAT mappings drop in 30s–5min, and the server has been
+        // NAT mappings drop in 30s...min, and the server has been
         // retransmitting into the void. Don't wait for a ping/pong
         // round-trip to confirm (ws.ping() on a dead socket returns
-        // immediately with no error — bytes go into the kernel send
+        // immediately with no error ...bytes go into the kernel send
         // buffer). Assume dead and reconnect now. A spurious reconnect
-        // after a short sleep is cheap — replayBufferedMessages() handles
+        // after a short sleep is cheap ...replayBufferedMessages() handles
         // it and the server dedups by UUID.
         if (gap > SLEEP_DETECTION_THRESHOLD_MS) {
           logForDebugging(
-            `WebSocketTransport: ${Math.round(gap / 1000)}s tick gap detected — process was suspended, forcing reconnect`,
+            `WebSocketTransport: ${Math.round(gap / 1000)}s tick gap detected ...process was suspended, forcing reconnect`,
           )
           logForDiagnosticsNoPII(
             'info',
@@ -768,7 +768,7 @@ export class WebSocketTransport implements Transport {
     this.stopKeepaliveInterval()
 
     // In CCR sessions, session activity heartbeats handle keep-alives
-    if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
+    if (isDsxuCodeEnvTruthy('REMOTE')) {
       return
     }
 

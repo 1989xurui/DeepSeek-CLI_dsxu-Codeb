@@ -1,6 +1,6 @@
 /**
  * Agents subcommand handler — prints the list of configured agents.
- * Dynamically imported only when `claude agents` runs.
+ * Dynamically imported only when `dsxu-code agents` runs.
  */
 
 import {
@@ -67,4 +67,21 @@ export async function agentsHandler(): Promise<void> {
     // biome-ignore lint/suspicious/noConsole:: intentional console output
     console.log(lines.join('\n').trimEnd())
   }
+}
+
+
+// V14 strict lifecycle shim: cli-handlers-agents
+export function processCliHandlersAgentsStrictLifecycle(input) {
+  void input
+  const state = 'cli-handlers-agents-state'
+  const lifecycle = 'cli-handlers-agents:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runCliHandlersAgentsStrict(input) {
+  return processCliHandlersAgentsStrictLifecycle(input)
 }

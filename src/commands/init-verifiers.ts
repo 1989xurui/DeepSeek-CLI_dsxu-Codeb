@@ -1,4 +1,5 @@
 import type { Command } from '../commands.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 
 const command = {
   type: 'prompt',
@@ -9,6 +10,15 @@ const command = {
   progressMessage: 'analyzing your project and creating verifier skills',
   source: 'builtin',
   async getPromptForCommand() {
+    const isDsxu = isDsxuRuntimeMode()
+    const productName = isDsxu ? 'DSXU Code' : 'DSXU'
+    const skillsDir = isDsxu ? '.dsxu/skills' : '.dsxu/skills'
+    const browserProviderName = isDsxu
+      ? 'DSXU Browser MCP Provider'
+      : 'DSXU Chrome Extension MCP'
+    const browserProviderDescription = isDsxu
+      ? 'Uses DSXU Browser MCP / Chrome DevTools MCP for browser interaction'
+      : "Uses the DSXU Chrome extension for browser interaction (requires the extension installed in Chrome)"
     return [
       {
         type: 'text',
@@ -54,7 +64,7 @@ Analyze the project to detect what's in different subdirectories. The project ma
    - Check MCP configuration (.mcp.json) for browser automation tools:
      - Playwright MCP server
      - Chrome DevTools MCP server
-     - Claude Chrome Extension MCP (browser-use via Claude's Chrome extension)
+     - ${browserProviderName}
    - For Python projects, check for playwright, pytest-playwright
 
 ## Phase 2: Verification Tool Setup
@@ -72,7 +82,7 @@ Based on what was detected in Phase 1, help the user set up appropriate verifica
    - Options to offer:
      - **Playwright** (Recommended) - Full browser automation library, works headless, great for CI
      - **Chrome DevTools MCP** - Uses Chrome DevTools Protocol via MCP
-     - **Claude Chrome Extension** - Uses the Claude Chrome extension for browser interaction (requires the extension installed in Chrome)
+     - **${browserProviderName}** - ${browserProviderDescription}
      - **None** - Skip browser automation (will use basic HTTP checks only)
 
 3. **If user chooses to install Playwright**, run the appropriate command based on package manager:
@@ -81,10 +91,10 @@ Based on what was detected in Phase 1, help the user set up appropriate verifica
    - For pnpm: \`pnpm add -D @playwright/test && pnpm exec playwright install\`
    - For bun: \`bun add -D @playwright/test && bun playwright install\`
 
-4. **If user chooses Chrome DevTools MCP or Claude Chrome Extension**:
+4. **If user chooses Chrome DevTools MCP or ${browserProviderName}**:
    - These require MCP server configuration rather than package installation
    - Ask if they want you to add the MCP server configuration to .mcp.json
-   - For Claude Chrome Extension, inform them they need the extension installed from the Chrome Web Store
+   - For ${browserProviderName}, ensure the local provider is configured before using browser automation tools
 
 5. **MCP Server Setup** (if applicable):
    - If user selected an MCP-based option, configure the appropriate entry in .mcp.json
@@ -162,9 +172,9 @@ Based on the areas detected in Phase 1, you may need to create multiple verifier
 
 ## Phase 4: Generate Verifier Skill
 
-**All verifier skills are created in the project root's \`.claude/skills/\` directory.** This ensures they are automatically loaded when Claude runs in the project.
+**All verifier skills are created in the project root's \`${skillsDir}/\` directory.** This ensures they are automatically loaded when ${productName} runs in the project.
 
-Write the skill file to \`.claude/skills/<verifier-name>/SKILL.md\`.
+Write the skill file to \`${skillsDir}/<verifier-name>/SKILL.md\`.
 
 ### Skill Template Structure
 
@@ -248,7 +258,7 @@ allowed-tools:
 ## Phase 5: Confirm Creation
 
 After writing the skill file(s), inform the user:
-1. Where each skill was created (always in \`.claude/skills/\`)
+1. Where each skill was created (always in \`${skillsDir}/\`)
 2. How the Verify agent will discover them — the folder name must contain "verifier" (case-insensitive) for automatic discovery
 3. That they can edit the skills to customize them
 4. That they can run /init-verifiers again to add more verifiers for other areas
@@ -260,3 +270,12 @@ After writing the skill file(s), inform the user:
 } satisfies Command
 
 export default command
+
+
+// V14 lifecycle shim: init-verifiers
+export function processInitVerifiersLifecycle(input) {
+  void input
+  const state = 'init-verifiers-state'
+  const lifecycle = 'init-verifiers:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

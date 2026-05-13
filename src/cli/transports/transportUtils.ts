@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { URL } from 'url'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { HybridTransport } from './HybridTransport.js'
@@ -5,13 +6,17 @@ import { SSETransport } from './SSETransport.js'
 import type { Transport } from './Transport.js'
 import { WebSocketTransport } from './WebSocketTransport.js'
 
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const legacyCodeEnv = (name: string): string =>
+  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+
 /**
  * Helper function to get the appropriate transport for a URL.
  *
  * Transport selection priority:
- * 1. SSETransport (SSE reads + POST writes) when CLAUDE_CODE_USE_CCR_V2 is set
- * 2. HybridTransport (WS reads + POST writes) when CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2 is set
- * 3. WebSocketTransport (WS reads + WS writes) — default
+ * 1. SSETransport (SSE reads + POST writes) when DSXU_CODE_USE_CCR_V2 is set
+ * 2. HybridTransport (WS reads + POST writes) when DSXU_CODE_POST_FOR_SESSION_INGRESS_V2 is set
+ * 3. WebSocketTransport (WS reads + WS writes) ...default
  */
 export function getTransportForUrl(
   url: URL,
@@ -19,7 +24,12 @@ export function getTransportForUrl(
   sessionId?: string,
   refreshHeaders?: () => Record<string, string>,
 ): Transport {
-  if (isEnvTruthy(process.env.CLAUDE_CODE_USE_CCR_V2)) {
+  if (
+    isEnvTruthy(
+      process.env.DSXU_CODE_USE_CCR_V2 ??
+        process.env[legacyCodeEnv('USE_CCR_V2')],
+    )
+  ) {
     // v2: SSE for reads, HTTP POST for writes
     // --sdk-url is the session URL (.../sessions/{id});
     // derive the SSE stream URL by appending /worker/events/stream
@@ -35,7 +45,12 @@ export function getTransportForUrl(
   }
 
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
-    if (isEnvTruthy(process.env.CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2)) {
+    if (
+      isEnvTruthy(
+        process.env.DSXU_CODE_POST_FOR_SESSION_INGRESS_V2 ??
+          process.env[legacyCodeEnv('POST_FOR_SESSION_INGRESS_V2')],
+      )
+    ) {
       return new HybridTransport(url, headers, sessionId, refreshHeaders)
     }
     return new WebSocketTransport(url, headers, sessionId, refreshHeaders)

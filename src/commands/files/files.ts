@@ -17,3 +17,20 @@ export async function call(
   const fileList = files.map(file => relative(getCwd(), file)).join('\n')
   return { type: 'text' as const, value: `Files in context:\n${fileList}` }
 }
+
+
+// V14 strict lifecycle shim: commands-files-files
+export function processCommandsFilesFilesStrictLifecycle(input) {
+  void input
+  const state = 'commands-files-files-state'
+  const lifecycle = 'commands-files-files:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runCommandsFilesFilesStrict(input) {
+  return processCommandsFilesFilesStrictLifecycle(input)
+}

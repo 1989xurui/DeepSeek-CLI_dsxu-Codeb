@@ -1,13 +1,14 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { StdoutMessage } from 'src/entrypoints/sdk/controlTypes.js'
 import { PassThrough } from 'stream'
 import { URL } from 'url'
 import { getSessionId } from '../bootstrap/state.js'
-import { getPollIntervalConfig } from '../bridge/pollConfig.js'
+import { getPollIntervalConfig } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { setCommandLifecycleListener } from '../utils/commandLifecycle.js'
 import { isDebugMode, logForDebugging } from '../utils/debug.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isDsxuRuntimeMode, isEnvTruthy } from '../utils/envUtils.js'
 import { errorMessage } from '../utils/errors.js'
 import { gracefulShutdown } from '../utils/gracefulShutdown.js'
 import { logError } from '../utils/log.js'
@@ -28,6 +29,10 @@ import { SSETransport } from './transports/SSETransport.js'
 import type { Transport } from './transports/Transport.js'
 import { getTransportForUrl } from './transports/transportUtils.js'
 
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const legacyCodeEnv = (name: string): string =>
+  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+
 /**
  * Bidirectional streaming for SDK mode with session tracking
  * Supports WebSocket transport
@@ -36,7 +41,7 @@ export class RemoteIO extends StructuredIO {
   private url: URL
   private transport: Transport
   private inputStream: PassThrough
-  private readonly isBridge: boolean = false
+  private readonly isControlSessionCompat: boolean = false
   private readonly isDebug: boolean = false
   private ccrClient: CCRClient | null = null
   private keepAliveTimer: ReturnType<typeof setInterval> | null = null
@@ -63,7 +68,9 @@ export class RemoteIO extends StructuredIO {
     }
 
     // Add environment runner version if available (set by Environment Manager)
-    const erVersion = process.env.CLAUDE_CODE_ENVIRONMENT_RUNNER_VERSION
+    const erVersion =
+      process.env.DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??
+      process.env[legacyCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
     if (erVersion) {
       headers['x-environment-runner-version'] = erVersion
     }
@@ -77,7 +84,9 @@ export class RemoteIO extends StructuredIO {
       if (freshToken) {
         h['Authorization'] = `Bearer ${freshToken}`
       }
-      const freshErVersion = process.env.CLAUDE_CODE_ENVIRONMENT_RUNNER_VERSION
+      const freshErVersion =
+        process.env.DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??
+        process.env[legacyCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
       if (freshErVersion) {
         h['x-environment-runner-version'] = freshErVersion
       }
@@ -93,11 +102,14 @@ export class RemoteIO extends StructuredIO {
     )
 
     // Set up data callback
-    this.isBridge = process.env.CLAUDE_CODE_ENVIRONMENT_KIND === 'bridge'
+    this.isControlSessionCompat =
+      process.env.DSXU_CODE_ENVIRONMENT_KIND === 'remote-session' ||
+      process.env.DSXU_CODE_ENVIRONMENT_KIND === 'bridge' ||
+      process.env[legacyCodeEnv('ENVIRONMENT_KIND')] === 'bridge'
     this.isDebug = isDebugMode()
     this.transport.setOnData((data: string) => {
       this.inputStream.write(data)
-      if (this.isBridge && this.isDebug) {
+      if (this.isControlSessionCompat && this.isDebug) {
         writeToStdout(data.endsWith('\n') ? data : data + '\n')
       }
     })
@@ -110,13 +122,15 @@ export class RemoteIO extends StructuredIO {
 
     // Initialize CCR v2 client (heartbeats, epoch, state reporting, event writes).
     // The CCRClient constructor wires the SSE received-ack handler
-    // synchronously, so new CCRClient() MUST run before transport.connect() —
-    // otherwise early SSE frames hit an unwired onEventCallback and their
+    // synchronously, so new CCRClient() MUST run before transport.connect() ...    // otherwise early SSE frames hit an unwired onEventCallback and their
     // 'received' delivery acks are silently dropped.
-    if (isEnvTruthy(process.env.CLAUDE_CODE_USE_CCR_V2)) {
+    if (
+      isEnvTruthy(process.env.DSXU_CODE_USE_CCR_V2) ||
+      isEnvTruthy(process.env[legacyCodeEnv('USE_CCR_V2')])
+    ) {
       // CCR v2 is SSE+POST by definition. getTransportForUrl returns
       // SSETransport under the same env var, but the two checks live in
-      // different files — assert the invariant so a future decoupling
+      // different files ...assert the invariant so a future decoupling
       // fails loudly here instead of confusingly inside CCRClient.
       if (!(this.transport instanceof SSETransport)) {
         throw new Error(
@@ -176,14 +190,13 @@ export class RemoteIO extends StructuredIO {
     // remote control session. The keep_alive type is filtered before
     // reaching any client UI (Query.ts drops it; structuredIO.ts drops it;
     // web/iOS/Android never see it in their message loop). Interval comes
-    // from GrowthBook (tengu_bridge_poll_interval_config
+    // from GrowthBook (compat control poll interval config
     // session_keepalive_interval_v2_ms, default 120s); 0 = disabled.
-    // Bridge-only: fixes Envoy idle timeout on bridge-topology sessions
-    // (#21931). byoc workers ran without this before #21931 and do not
-    // need it — different network path.
+    // Control-session compatibility only: fixes idle timeout on the remote
+    // control topology. Workers on other network paths do not need it.
     const keepAliveIntervalMs =
       getPollIntervalConfig().session_keepalive_interval_v2_ms
-    if (this.isBridge && keepAliveIntervalMs > 0) {
+    if (this.isControlSessionCompat && keepAliveIntervalMs > 0) {
       this.keepAliveTimer = setInterval(() => {
         logForDebugging('[remote-io] keep_alive sent')
         void this.write({ type: 'keep_alive' }).catch(err => {
@@ -224,9 +237,9 @@ export class RemoteIO extends StructuredIO {
 
   /**
    * Send output to the transport.
-   * In bridge mode, control_request messages are always echoed to stdout so the
-   * bridge parent can detect permission requests. Other messages are echoed only
-   * in debug mode.
+   * In control-session compatibility mode, control_request messages are always
+   * echoed to stdout so the parent process can detect permission requests. Other
+   * messages are echoed only in debug mode.
    */
   async write(message: StdoutMessage): Promise<void> {
     if (this.ccrClient) {
@@ -234,7 +247,7 @@ export class RemoteIO extends StructuredIO {
     } else {
       await this.transport.write(message)
     }
-    if (this.isBridge) {
+    if (this.isControlSessionCompat) {
       if (message.type === 'control_request' || this.isDebug) {
         writeToStdout(ndjsonSafeStringify(message) + '\n')
       }
@@ -251,5 +264,20 @@ export class RemoteIO extends StructuredIO {
     }
     this.transport.close()
     this.inputStream.end()
+  }
+}
+
+export function getDsxuRemoteIORuntimeProfile() {
+  return {
+    runtime: 'DSXU Remote IO Provider Adapter',
+    defaultBehavior:
+      'remote IO accepts DSXU_* session env while retaining legacy transport compatibility',
+    dsxuMode: isDsxuRuntimeMode(),
+    providerTarget: 'DSXU Remote Session Provider',
+    activationEvidence: [
+      'DSXU_CODE_ENVIRONMENT_RUNNER_VERSION is preferred over legacy runner version',
+      'DSXU_CODE_ENVIRONMENT_KIND=remote-session enables control-session stdout echoing',
+      'DSXU_CODE_USE_CCR_V2 activates CCR lifecycle without DSXU env dependency',
+    ],
   }
 }

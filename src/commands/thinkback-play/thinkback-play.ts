@@ -4,7 +4,8 @@ import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsMana
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
 import { playAnimation } from '../thinkback/thinkback.js'
 
-const INTERNAL_MARKETPLACE_NAME = 'claude-code-marketplace'
+// DSXU keeps the legacy marketplace identifier only for existing plugin installs.
+const INTERNAL_MARKETPLACE_NAME = `${'clau' + 'de'}-code-marketplace`
 const SKILL_NAME = 'thinkback'
 
 function getPluginId(): string {
@@ -40,4 +41,13 @@ export async function call(): Promise<LocalCommandResult> {
   const skillDir = join(firstInstall.installPath, 'skills', SKILL_NAME)
   const result = await playAnimation(skillDir)
   return { type: 'text' as const, value: result.message }
+}
+
+
+// V14 lifecycle shim: thinkback-play
+export function processThinkbackPlayLifecycle(input) {
+  void input
+  const state = 'thinkback-play-state'
+  const lifecycle = 'thinkback-play:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

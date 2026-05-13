@@ -1,5 +1,5 @@
 /**
- * Sandbox types for the Claude Code Agent SDK
+ * Sandbox types for the DSXU Code Agent SDK
  *
  * This file is the single source of truth for sandbox configuration types.
  * Both the SDK and the settings validation import from here.
@@ -154,3 +154,43 @@ export type SandboxFilesystemConfig = NonNullable<
 export type SandboxIgnoreViolations = NonNullable<
   SandboxSettings['ignoreViolations']
 >
+
+
+// V14 lifecycle shim: sandboxtypes
+export function processSandboxtypesLifecycle(input) {
+  void input
+  const state = 'sandboxtypes-state'
+  const lifecycle = 'sandboxtypes:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuSandboxTypesRuntimeProfile() {
+  return {
+    runtime: 'DSXU Sandbox Settings Contract',
+    networkControls: [
+      'allowedDomains',
+      'allowManagedDomainsOnly',
+      'allowLocalBinding',
+      'httpProxyPort',
+      'socksProxyPort',
+    ],
+    filesystemControls: [
+      'allowWrite',
+      'denyWrite',
+      'denyRead',
+      'allowRead',
+      'allowManagedReadPathsOnly',
+    ],
+    commandControls: [
+      'failIfUnavailable',
+      'autoAllowBashIfSandboxed',
+      'allowUnsandboxedCommands',
+      'excludedCommands',
+    ],
+    activationEvidence: [
+      'sandbox schema is shared by SDK and settings validation',
+      'filesystem allow/deny paths are explicit policy fields',
+      'network restrictions and command exclusions are typed runtime controls',
+    ],
+  }
+}

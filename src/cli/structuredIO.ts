@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type {
   ElicitResult,
@@ -149,7 +150,7 @@ export class StructuredIO {
   // Tracks tool_use IDs that have been resolved through the normal permission
   // flow (or aborted by a hook). When a duplicate control_response arrives
   // after the original was already handled, this Set prevents the orphan
-  // handler from re-processing it — which would push duplicate assistant
+  // handler from re-processing it ...which would push duplicate assistant
   // messages into mutableMessages and cause a 400 "tool_use ids must be unique"
   // error from the API.
   private readonly resolvedToolUseIds = new Set<string>()
@@ -198,7 +199,7 @@ export class StructuredIO {
 
   /**
    * Queue a user turn to be yielded before the next message from this.input.
-   * Works before iteration starts and mid-stream — read() re-checks
+   * Works before iteration starts and mid-stream ...read() re-checks
    * prependedLines between each yielded message.
    */
   prependUserMessage(content: string): void {
@@ -274,11 +275,11 @@ export class StructuredIO {
 
   /**
    * Inject a control_response message to resolve a pending permission request.
-   * Used by the bridge to feed permission responses from claude.ai into the
+   * Used by DSXU remote providers to feed permission responses into the
    * SDK permission flow.
    *
    * Also sends a control_cancel_request to the SDK consumer so its canUseTool
-   * callback is aborted via the signal — otherwise the callback hangs.
+   * callback is aborted via the signal ...otherwise the callback hangs.
    */
   injectControlResponse(response: SDKControlResponse): void {
     const requestId = response.response?.request_id
@@ -287,7 +288,7 @@ export class StructuredIO {
     if (!request) return
     this.trackResolvedToolUseId(request.request)
     this.pendingRequests.delete(requestId)
-    // Cancel the SDK consumer's canUseTool callback — the bridge won.
+    // Cancel the SDK consumer's canUseTool callback ...the bridge won.
     void this.write({
       type: 'control_cancel_request',
       request_id: requestId,
@@ -310,8 +311,8 @@ export class StructuredIO {
 
   /**
    * Register a callback invoked whenever a can_use_tool control_request
-   * is written to stdout. Used by the bridge to forward permission
-   * requests to claude.ai.
+   * is written to stdout. Used by DSXU remote providers to forward permission
+   * requests to the controlling session.
    */
   setOnControlRequestSent(
     callback: ((request: SDKControlRequest) => void) | undefined,
@@ -321,8 +322,8 @@ export class StructuredIO {
 
   /**
    * Register a callback invoked when a can_use_tool control_response arrives
-   * from the SDK consumer (via stdin). Used by the bridge to cancel the
-   * stale permission prompt on claude.ai when the SDK consumer wins the race.
+   * from the SDK consumer (via stdin). Used by DSXU remote providers to cancel
+   * stale permission prompts when the SDK consumer wins the race.
    */
   setOnControlRequestResolved(
     callback: ((requestId: string) => void) | undefined,
@@ -347,8 +348,8 @@ export class StructuredIO {
       }
       if (message.type === 'update_environment_variables') {
         // Apply environment variable updates directly to process.env.
-        // Used by bridge session runner for auth token refresh
-        // (CLAUDE_CODE_SESSION_ACCESS_TOKEN) which must be readable
+        // Used by DSXU remote session runner for auth token refresh
+        // (DSXU_CODE_SESSION_ACCESS_TOKEN) which must be readable
         // by the REPL process itself, not just child Bash commands.
         const keys = Object.keys(message.variables)
         for (const [key, value] of Object.entries(message.variables)) {
@@ -361,7 +362,7 @@ export class StructuredIO {
       }
       if (message.type === 'control_response') {
         // Close lifecycle for every control_response, including duplicates
-        // and orphans — orphans don't yield to print.ts's main loop, so this
+        // and orphans ...orphans don't yield to print.ts's main loop, so this
         // is the only path that sees them. uuid is server-injected into the
         // payload.
         const uuid =
@@ -399,8 +400,8 @@ export class StructuredIO {
         }
         this.trackResolvedToolUseId(request.request)
         this.pendingRequests.delete(message.response.request_id)
-        // Notify the bridge when the SDK consumer resolves a can_use_tool
-        // request, so it can cancel the stale permission prompt on claude.ai.
+        // Notify the DSXU remote provider when the SDK consumer resolves a
+        // can_use_tool request, so it can cancel the stale permission prompt.
         if (
           request.request.request.subtype === 'can_use_tool' &&
           this.onControlRequestResolved
@@ -612,13 +613,13 @@ export class StructuredIO {
 
         if (winner.source === 'hook') {
           if (winner.decision) {
-            // Hook decided — abort the pending SDK request.
+            // Hook decided ...abort the pending SDK request.
             // Suppress the expected AbortError rejection from sdkPromise.
             sdkPromise.catch(() => {})
             hookAbortController.abort()
             return winner.decision
           }
-          // Hook passed through (no decision) — wait for the SDK prompt
+          // Hook passed through (no decision) ...wait for the SDK prompt
           const sdkResult = await sdkPromise
           return permissionPromptToolResultToPermissionDecision(
             sdkResult.result,
@@ -628,7 +629,7 @@ export class StructuredIO {
           )
         }
 
-        // SDK prompt responded first — use its result (hook still running
+        // SDK prompt responded first ...use its result (hook still running
         // in background but its result will be ignored)
         return permissionPromptToolResultToPermissionDecision(
           winner.result,

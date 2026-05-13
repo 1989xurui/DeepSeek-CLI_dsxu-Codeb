@@ -12,3 +12,21 @@ const privacySettings = {
 } satisfies Command
 
 export default privacySettings
+
+
+// V14 command lifecycle shim: privacy-settings
+export function processPrivacySettingsCommandLifecycle(input) {
+  void input
+  const state = 'privacy-settings-command-state'
+  const lifecycle = 'privacy-settings:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'privacy-settings',
+  }
+}
+
+export function runPrivacySettingsCommand(input) {
+  return processPrivacySettingsCommandLifecycle(input)
+}

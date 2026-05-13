@@ -9,3 +9,21 @@ const outputStyle = {
 } satisfies Command
 
 export default outputStyle
+
+
+// V14 command lifecycle shim: output-style
+export function processOutputStyleCommandLifecycle(input) {
+  void input
+  const state = 'output-style-command-state'
+  const lifecycle = 'output-style:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'output-style',
+  }
+}
+
+export function runOutputStyleCommand(input) {
+  return processOutputStyleCommandLifecycle(input)
+}

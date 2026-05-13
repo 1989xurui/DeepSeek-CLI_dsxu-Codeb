@@ -6,9 +6,10 @@ import {
 import { invalidateOverageCreditGrantCache } from '../../services/api/overageCreditGrant.js'
 import { type ExtraUsage, fetchUtilization } from '../../services/api/usage.js'
 import { getSubscriptionType } from '../../utils/auth.js'
-import { hasClaudeAiBillingAccess } from '../../utils/billing.js'
+import { hasDSXUAiBillingAccess } from '../../utils/billing.js'
 import { openBrowser } from '../../utils/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 
 type ExtraUsageResult =
@@ -24,13 +25,21 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
   // /extra-usage more than once while iterating on the claim flow.
   invalidateOverageCreditGrantCache()
 
+  if (isDsxuRuntimeMode()) {
+    return {
+      type: 'message',
+      value:
+        'DSXU Code usage is managed by the local DSXU cost ledger and provider billing settings. Use /cost for this session, and configure DeepSeek/provider limits in DSXU model settings.',
+    }
+  }
+
   const subscriptionType = getSubscriptionType()
   const isTeamOrEnterprise =
     subscriptionType === 'team' || subscriptionType === 'enterprise'
-  const hasBillingAccess = hasClaudeAiBillingAccess()
+  const hasBillingAccess = hasDSXUAiBillingAccess()
 
   if (!hasBillingAccess && isTeamOrEnterprise) {
-    // Mirror apps/claude-ai useHasUnlimitedOverage(): if overage is enabled
+    // Mirror apps/dsxu-ai useHasUnlimitedOverage(): if overage is enabled
     // with no monthly cap, there is nothing to request. On fetch error, fall
     // through and let the user ask (matching web's "err toward show" behavior).
     let extraUsage: ExtraUsage | null | undefined
@@ -102,8 +111,8 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
   }
 
   const url = isTeamOrEnterprise
-    ? 'https://claude.ai/admin-settings/usage'
-    : 'https://claude.ai/settings/usage'
+    ? 'https://docs.dsxu.local/admin/usage'
+    : 'https://docs.dsxu.local/usage'
 
   try {
     const opened = await openBrowser(url)
@@ -115,4 +124,34 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
       value: `Failed to open browser. Please visit ${url} to manage extra usage.`,
     }
   }
+}
+
+export function getDsxuExtraUsageRuntimeProfile(): {
+  command: '/extra-usage'
+  runtime: 'DSXU Provider Usage Guard'
+  activationEvidence: readonly string[]
+  legacyIsolation: readonly string[]
+} {
+  return {
+    command: '/extra-usage',
+    runtime: 'DSXU Provider Usage Guard',
+    activationEvidence: [
+      'DSXU_CODE_MODE returns local provider-usage guidance before legacy cloud billing checks',
+      'DSXU users are directed to /cost and DSXU model settings',
+      'no legacy cloud usage URL is opened in DSXU runtime',
+    ],
+    legacyIsolation: [
+      'legacy cloud admin/settings usage URLs are legacy-only',
+      'provider admin request APIs are bypassed in DSXU runtime',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: extra-usage-core
+export function processExtraUsageCoreLifecycle(input) {
+  void input
+  const state = 'extra-usage-core-state'
+  const lifecycle = 'extra-usage-core:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

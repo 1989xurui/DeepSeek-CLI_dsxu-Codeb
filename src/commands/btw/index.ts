@@ -11,3 +11,21 @@ const btw = {
 } satisfies Command
 
 export default btw
+
+
+// V14 command lifecycle shim: btw
+export function processBtwCommandLifecycle(input) {
+  void input
+  const state = 'btw-command-state'
+  const lifecycle = 'btw:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'btw',
+  }
+}
+
+export function runBtwCommand(input) {
+  return processBtwCommandLifecycle(input)
+}

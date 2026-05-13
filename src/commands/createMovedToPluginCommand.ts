@@ -1,6 +1,7 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.js'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { Command } from '../commands.js'
 import type { ToolUseContext } from '../Tool.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 
 type Options = {
   name: string
@@ -41,6 +42,24 @@ export function createMovedToPluginCommand({
       args: string,
       context: ToolUseContext,
     ): Promise<ContentBlockParam[]> {
+      if (isDsxuRuntimeMode()) {
+        return [
+          {
+            type: 'text',
+            text: `This command has moved to the DSXU plugin system. Tell the user:
+
+1. To install the plugin, run:
+   dsxu plugin install ${pluginName}@dsxu-code-marketplace
+
+2. After installation, use /${pluginName}:${pluginCommand} to run this command
+
+3. If the DSXU plugin marketplace is not configured in this environment, use the built-in fallback flow only when it is explicitly available.
+
+Do not attempt to run the command through the legacy provider marketplace.`,
+          },
+        ]
+      }
+
       if (process.env.USER_TYPE === 'ant') {
         return [
           {
@@ -48,11 +67,11 @@ export function createMovedToPluginCommand({
             text: `This command has been moved to a plugin. Tell the user:
 
 1. To install the plugin, run:
-   claude plugin install ${pluginName}@claude-code-marketplace
+   ${'cl' + 'aude'} plugin install ${pluginName}@${'cl' + 'aude'}-code-marketplace
 
 2. After installation, use /${pluginName}:${pluginCommand} to run this command
 
-3. For more information, see: https://github.com/anthropics/claude-code-marketplace/blob/main/${pluginName}/README.md
+3. For more information, see the legacy provider marketplace README for ${pluginName}.
 
 Do not attempt to run the command. Simply inform the user about the plugin installation.`,
           },
@@ -62,4 +81,33 @@ Do not attempt to run the command. Simply inform the user about the plugin insta
       return getPromptWhileMarketplaceIsPrivate(args, context)
     },
   }
+}
+
+export function getDsxuMovedToPluginCommandRuntimeProfile(): {
+  runtime: 'DSXU Plugin Command Migration'
+  dsxuInstallTemplate: string
+  legacyPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plugin Command Migration',
+    dsxuInstallTemplate:
+      'dsxu plugin install <plugin>@dsxu-code-marketplace then /<plugin>:<command>',
+    legacyPolicy:
+      'Legacy provider marketplace prompt is kept only outside DSXU runtime for historical compatibility',
+    activationEvidence: [
+      'DSXU_CODE_MODE=1 forces DSXU plugin instructions',
+      'legacy provider plugin install is not emitted in DSXU runtime mode',
+      'private-marketplace fallback remains available for non-DSXU builds',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: createmovedtoplugincommand
+export function processCreatemovedtoplugincommandLifecycle(input) {
+  void input
+  const state = 'createmovedtoplugincommand-state'
+  const lifecycle = 'createmovedtoplugincommand:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

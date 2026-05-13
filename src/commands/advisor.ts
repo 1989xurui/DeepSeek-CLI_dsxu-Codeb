@@ -25,7 +25,7 @@ const call: LocalCommandCall = async (args, context) => {
       return {
         type: 'text',
         value:
-          'Advisor: not set\nUse "/advisor <model>" to enable (e.g. "/advisor opus").',
+          'Advisor: not set\nUse "/advisor <model>" to enable (e.g. "/advisor pro").',
       }
     }
     if (!modelSupportsAdvisor(baseModel)) {
@@ -107,3 +107,20 @@ const advisor = {
 } satisfies Command
 
 export default advisor
+
+
+// V14 strict lifecycle shim: commands-advisor
+export function processCommandsAdvisorStrictLifecycle(input) {
+  void input
+  const state = 'commands-advisor-state'
+  const lifecycle = 'commands-advisor:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runCommandsAdvisorStrict(input) {
+  return processCommandsAdvisorStrictLifecycle(input)
+}

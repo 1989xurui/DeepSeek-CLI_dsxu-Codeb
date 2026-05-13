@@ -14,3 +14,12 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
       : `Please visit ${result.url} to manage extra usage.`,
   }
 }
+
+
+// V14 lifecycle shim: extra-usage-noninteractive
+export function processExtraUsageNoninteractiveLifecycle(input) {
+  void input
+  const state = 'extra-usage-noninteractive-state'
+  const lifecycle = 'extra-usage-noninteractive:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

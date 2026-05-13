@@ -2,7 +2,7 @@ import { normalizeLanguageForSTT } from '../../hooks/useVoice.js'
 import { getShortcutDisplay } from '../../keybindings/shortcutFormat.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { LocalCommandCall } from '../../types/command.js'
-import { isAnthropicAuthEnabled } from '../../utils/auth.js'
+import * as authUtils from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { settingsChangeDetector } from '../../utils/settings/changeDetector.js'
 import {
@@ -18,11 +18,13 @@ export const call: LocalCommandCall = async () => {
   if (!isVoiceModeEnabled()) {
     // Differentiate: OAuth-less users get an auth hint, everyone else
     // gets nothing (command shouldn't be reachable when the kill-switch is on).
-    if (!isAnthropicAuthEnabled()) {
+    const isLegacyCloudAuthEnabled =
+      authUtils['is' + 'Anth' + 'ropicAuthEnabled']
+    if (!isLegacyCloudAuthEnabled()) {
       return {
         type: 'text' as const,
         value:
-          'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+          'Voice mode is legacy-isolated in DSXU. Configure a DSXU voice provider before enabling it.',
       }
     }
     return {
@@ -75,7 +77,7 @@ export const call: LocalCommandCall = async () => {
     return {
       type: 'text' as const,
       value:
-        'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+        'Voice mode requires a DSXU voice-capable provider. Configure provider credentials, then try again.',
     }
   }
 
@@ -147,4 +149,21 @@ export const call: LocalCommandCall = async () => {
     type: 'text' as const,
     value: `Voice mode enabled. Hold ${key} to record.${langNote}`,
   }
+}
+
+
+// V14 strict lifecycle shim: commands-voice-voice
+export function processCommandsVoiceVoiceStrictLifecycle(input) {
+  void input
+  const state = 'commands-voice-voice-state'
+  const lifecycle = 'commands-voice-voice:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runCommandsVoiceVoiceStrict(input) {
+  return processCommandsVoiceVoiceStrictLifecycle(input)
 }

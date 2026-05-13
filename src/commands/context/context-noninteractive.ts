@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { microcompactMessages } from '../../services/compact/microCompact.js'
 import type { AppState } from '../../state/AppStateStore.js'
@@ -12,6 +13,10 @@ import { formatTokens } from '../../utils/format.js'
 import { getMessagesAfterCompactBoundary } from '../../utils/messages.js'
 import { getSourceDisplayName } from '../../utils/settings/constants.js'
 import { plural } from '../../utils/stringUtils.js'
+
+function shouldShowInternalContextBreakdown(): boolean {
+  return process.env.USER_TYPE === 'ant' || process.env.DSXU_CODE_MODE === '1'
+}
 
 /**
  * Shared data-collection path for `/context` (slash command) and the SDK
@@ -96,6 +101,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
     model,
     memoryFiles,
     mcpTools,
+    deferredBuiltinTools,
     agents,
     skills,
     messageBreakdown,
@@ -107,8 +113,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   output += `**Model:** ${model}  \n`
   output += `**Tokens:** ${formatTokens(totalTokens)} / ${formatTokens(rawMaxTokens)} (${percentage}%)\n`
 
-  // Context-collapse status. Always show when the runtime gate is on —
-  // the user needs to know which strategy is managing their context
+  // Context-collapse status. Always show when the runtime gate is on ...  // the user needs to know which strategy is managing their context
   // even before anything has fired.
   if (feature('CONTEXT_COLLAPSE')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
@@ -203,9 +208,9 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (
     systemTools &&
     systemTools.length > 0 &&
-    process.env.USER_TYPE === 'ant'
+    shouldShowInternalContextBreakdown()
   ) {
-    output += `### [ANT-ONLY] System Tools\n\n`
+    output += `### System Tools\n\n`
     output += `| Tool | Tokens |\n`
     output += `|------|--------|\n`
     for (const tool of systemTools) {
@@ -214,13 +219,31 @@ function formatContextAsMarkdownTable(data: ContextData): string {
     output += `\n`
   }
 
+  // Deferred system tools are real DSXU mainline capabilities that are loaded
+  // on demand through ToolSearch. Show them explicitly so `/context` reflects
+  // LSP, task, and other deferred coding capabilities instead of hiding them
+  // behind a single aggregate token row.
+  if (
+    deferredBuiltinTools &&
+    deferredBuiltinTools.length > 0 &&
+    shouldShowInternalContextBreakdown()
+  ) {
+    output += `### Deferred System Tools\n\n`
+    output += `| Tool | Loaded | Tokens |\n`
+    output += `|------|--------|--------|\n`
+    for (const tool of deferredBuiltinTools) {
+      output += `| ${tool.name} | ${tool.isLoaded ? 'yes' : 'no'} | ${formatTokens(tool.tokens)} |\n`
+    }
+    output += `\n`
+  }
+
   // System prompt sections (ant-only)
   if (
     systemPromptSections &&
     systemPromptSections.length > 0 &&
-    process.env.USER_TYPE === 'ant'
+    shouldShowInternalContextBreakdown()
   ) {
-    output += `### [ANT-ONLY] System Prompt Sections\n\n`
+    output += `### System Prompt Sections\n\n`
     output += `| Section | Tokens |\n`
     output += `|---------|--------|\n`
     for (const section of systemPromptSections) {
@@ -289,8 +312,8 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   }
 
   // Message breakdown (ant-only)
-  if (messageBreakdown && process.env.USER_TYPE === 'ant') {
-    output += `### [ANT-ONLY] Message Breakdown\n\n`
+  if (messageBreakdown && shouldShowInternalContextBreakdown()) {
+    output += `### Message Breakdown\n\n`
     output += `| Category | Tokens |\n`
     output += `|----------|--------|\n`
     output += `| Tool calls | ${formatTokens(messageBreakdown.toolCallTokens)} |\n`

@@ -1,4 +1,4 @@
-import type { Command } from '../../commands.js'
+import { LEGACY_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
 import {
   isVoiceGrowthBookEnabled,
   isVoiceModeEnabled,
@@ -7,8 +7,8 @@ import {
 const voice = {
   type: 'local',
   name: 'voice',
-  description: 'Toggle voice mode',
-  availability: ['claude-ai'],
+  description: 'Toggle DSXU voice provider mode (legacy isolated)',
+  availability: [LEGACY_CLOUD_AVAILABILITY],
   isEnabled: () => isVoiceGrowthBookEnabled(),
   get isHidden() {
     return !isVoiceModeEnabled()
@@ -18,3 +18,21 @@ const voice = {
 } satisfies Command
 
 export default voice
+
+
+// V14 command lifecycle shim: voice
+export function processVoiceCommandLifecycle(input) {
+  void input
+  const state = 'voice-command-state'
+  const lifecycle = 'voice:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'voice',
+  }
+}
+
+export function runVoiceCommand(input) {
+  return processVoiceCommandLifecycle(input)
+}

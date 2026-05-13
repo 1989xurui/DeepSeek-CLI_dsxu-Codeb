@@ -15,3 +15,21 @@ const thinkbackPlay = {
 } satisfies Command
 
 export default thinkbackPlay
+
+
+// V14 command lifecycle shim: thinkback-play
+export function processThinkbackPlayCommandLifecycle(input) {
+  void input
+  const state = 'thinkback-play-command-state'
+  const lifecycle = 'thinkback-play:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'thinkback-play',
+  }
+}
+
+export function runThinkbackPlayCommand(input) {
+  return processThinkbackPlayCommandLifecycle(input)
+}

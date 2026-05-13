@@ -7,17 +7,11 @@ import { getIsNonInteractiveSession } from 'src/bootstrap/state.js'
 import type { AttributedCounter } from '../bootstrap/state.js'
 import { getSessionCounter, setMeter } from '../bootstrap/state.js'
 import { shutdownLspServerManager } from '../services/lsp/manager.js'
-import { populateOAuthAccountInfoIfNeeded } from '../services/oauth/client.js'
 import {
   initializePolicyLimitsLoadingPromise,
   isPolicyLimitsEligible,
 } from '../services/policyLimits/index.js'
-import {
-  initializeRemoteManagedSettingsLoadingPromise,
-  isEligibleForRemoteManagedSettings,
-  waitForRemoteManagedSettingsToLoad,
-} from '../services/remoteManagedSettings/index.js'
-import { preconnectAnthropicApi } from '../utils/apiPreconnect.js'
+import { preconnectProviderApi } from '../utils/apiPreconnect.js'
 import { applyExtraCACertsFromConfig } from '../utils/caCertsConfig.js'
 import { registerCleanup } from '../utils/cleanupRegistry.js'
 import { enableConfigs, recordFirstStartTime } from '../utils/config.js'
@@ -25,7 +19,12 @@ import { logForDebugging } from '../utils/debug.js'
 import { detectCurrentRepository } from '../utils/detectRepository.js'
 import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
 import { initJetBrainsDetection } from '../utils/envDynamic.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuRuntimeMode,
+  isEnvTruthy,
+  isLegacyProviderServiceShellAllowed,
+} from '../utils/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog is dynamically imported in the error path to avoid loading React at init
 import {
@@ -53,6 +52,36 @@ import { setShellIfWindows } from '../utils/windowsPaths.js'
 
 // Track if telemetry has been initialized to prevent double initialization
 let telemetryInitialized = false
+
+function shouldLoadLegacyProviderServiceShell(): boolean {
+  return !isDsxuRuntimeMode() || isLegacyProviderServiceShellAllowed()
+}
+
+async function populateLegacyOAuthAccountInfoIfAllowed(): Promise<void> {
+  if (!shouldLoadLegacyProviderServiceShell()) return
+  try {
+    const { populateOAuthAccountInfoIfNeeded } = await import(
+      '../services/oauth/client.js'
+    )
+    await populateOAuthAccountInfoIfNeeded()
+  } catch (error) {
+    logForDebugging(
+      `[init] legacy OAuth account-info populate skipped: ${errorMessage(error)}`,
+      { level: 'warn' },
+    )
+  }
+}
+
+async function initializeRemoteManagedSettingsIfAllowed(): Promise<void> {
+  if (!shouldLoadLegacyProviderServiceShell()) return
+  const {
+    initializeRemoteManagedSettingsLoadingPromise,
+    isEligibleForRemoteManagedSettings,
+  } = await import('../services/remoteManagedSettings/index.js')
+  if (isEligibleForRemoteManagedSettings()) {
+    initializeRemoteManagedSettingsLoadingPromise()
+  }
+}
 
 export const init = memoize(async (): Promise<void> => {
   const initStartTime = Date.now()
@@ -105,9 +134,9 @@ export const init = memoize(async (): Promise<void> => {
     })
     profileCheckpoint('init_after_1p_event_logging')
 
-    // Populate OAuth account info if it is not already cached in config. This is needed since the
-    // OAuth account info may not be populated when logging in through the VSCode extension.
-    void populateOAuthAccountInfoIfNeeded()
+    // DSXU default local-coding mainline must not activate the legacy
+    // provider OAuth shell. Keep the migration path behind an explicit flag.
+    void populateLegacyOAuthAccountInfoIfAllowed()
     profileCheckpoint('init_after_oauth_populate')
 
     // Initialize JetBrains IDE detection asynchronously (populates cache for later sync access)
@@ -120,9 +149,7 @@ export const init = memoize(async (): Promise<void> => {
     // Initialize the loading promise early so that other systems (like plugin hooks)
     // can await remote settings loading. The promise includes a timeout to prevent
     // deadlocks if loadRemoteManagedSettings() is never called (e.g., Agent SDK tests).
-    if (isEligibleForRemoteManagedSettings()) {
-      initializeRemoteManagedSettingsLoadingPromise()
-    }
+    await initializeRemoteManagedSettingsIfAllowed()
     if (isPolicyLimitsEligible()) {
       initializePolicyLimitsLoadingPromise()
     }
@@ -150,33 +177,26 @@ export const init = memoize(async (): Promise<void> => {
     logForDebugging('[init] configureGlobalAgents complete')
     profileCheckpoint('init_network_configured')
 
-    // Preconnect to the Anthropic API — overlap TCP+TLS handshake
+    // Preconnect to the configured provider API — overlap TCP+TLS handshake
     // (~100-200ms) with the ~100ms of action-handler work before the API
     // request. After CA certs + proxy agents are configured so the warmed
     // connection uses the right transport. Fire-and-forget; skipped for
     // proxy/mTLS/unix/cloud-provider where the SDK's dispatcher wouldn't
     // reuse the global pool.
-    preconnectAnthropicApi()
+    preconnectProviderApi()
 
-    // CCR upstreamproxy: start the local CONNECT relay so agent subprocesses
-    // can reach org-configured upstreams with credential injection. Gated on
-    // CLAUDE_CODE_REMOTE + GrowthBook; fail-open on any error. Lazy import so
-    // non-CCR startups don't pay the module load. The getUpstreamProxyEnv
-    // function is registered with subprocessEnv.ts so subprocess spawning can
-    // inject proxy vars without a static import of the upstreamproxy module.
-    if (isEnvTruthy(process.env.CLAUDE_CODE_REMOTE)) {
-      try {
-        const { initUpstreamProxy, getUpstreamProxyEnv } = await import(
-          '../upstreamproxy/upstreamproxy.js'
-        )
-        const { registerUpstreamProxyEnvFn } = await import(
-          '../utils/subprocessEnv.js'
-        )
-        registerUpstreamProxyEnvFn(getUpstreamProxyEnv)
-        await initUpstreamProxy()
-      } catch (err) {
+    // Legacy provider upstream proxy. DSXU no longer starts this old shell,
+    // even with the migration flag; remote/provider work must route through
+    // the DSXU provider contract instead.
+    if (isEnvTruthy(getDsxuCodeEnv('REMOTE'))) {
+      if (!shouldLoadLegacyProviderServiceShell()) {
         logForDebugging(
-          `[init] upstreamproxy init failed: ${err instanceof Error ? err.message : String(err)}; continuing without proxy`,
+          '[init] DSXU_CODE_REMOTE ignored on the default DSXU local mainline; set DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL=1 only for isolated legacy provider migration work.',
+          { level: 'warn' },
+        )
+      } else {
+        logForDebugging(
+          '[init] legacy upstream proxy shell is archived; DSXU provider contract owns remote/session routing.',
           { level: 'warn' },
         )
       }
@@ -245,44 +265,66 @@ export const init = memoize(async (): Promise<void> => {
  * This should only be called once, after the trust dialog has been accepted.
  */
 export function initializeTelemetryAfterTrust(): void {
-  if (isEligibleForRemoteManagedSettings()) {
-    // For SDK/headless mode with beta tracing, initialize eagerly first
-    // to ensure the tracer is ready before the first query runs.
-    // The async path below will still run but doInitializeTelemetry() guards against double init.
-    if (getIsNonInteractiveSession() && isBetaTracingEnabled()) {
-      void doInitializeTelemetry().catch(error => {
-        logForDebugging(
-          `[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`,
-          { level: 'error' },
-        )
-      })
-    }
-    logForDebugging(
-      '[3P telemetry] Waiting for remote managed settings before telemetry init',
-    )
-    void waitForRemoteManagedSettingsToLoad()
-      .then(async () => {
-        logForDebugging(
-          '[3P telemetry] Remote managed settings loaded, initializing telemetry',
-        )
-        // Re-apply env vars to pick up remote settings before initializing telemetry.
-        applyConfigEnvironmentVariables()
-        await doInitializeTelemetry()
-      })
-      .catch(error => {
-        logForDebugging(
-          `[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`,
-          { level: 'error' },
-        )
-      })
-  } else {
+  if (!shouldLoadLegacyProviderServiceShell()) {
     void doInitializeTelemetry().catch(error => {
       logForDebugging(
         `[3P telemetry] Telemetry init failed: ${errorMessage(error)}`,
         { level: 'error' },
       )
     })
+    return
   }
+
+  void import('../services/remoteManagedSettings/index.js')
+    .then(remoteSettings => {
+      if (remoteSettings.isEligibleForRemoteManagedSettings()) {
+        // For SDK/headless mode with beta tracing, initialize eagerly first
+        // to ensure the tracer is ready before the first query runs.
+        // The async path below will still run but doInitializeTelemetry() guards against double init.
+        if (getIsNonInteractiveSession() && isBetaTracingEnabled()) {
+          void doInitializeTelemetry().catch(error => {
+            logForDebugging(
+              `[3P telemetry] Eager telemetry init failed (beta tracing): ${errorMessage(error)}`,
+              { level: 'error' },
+            )
+          })
+        }
+        logForDebugging(
+          '[3P telemetry] Waiting for remote managed settings before telemetry init',
+        )
+        void remoteSettings
+          .waitForRemoteManagedSettingsToLoad()
+          .then(async () => {
+            logForDebugging(
+              '[3P telemetry] Remote managed settings loaded, initializing telemetry',
+            )
+            // Re-apply env vars to pick up remote settings before initializing telemetry.
+            applyConfigEnvironmentVariables()
+            await doInitializeTelemetry()
+          })
+          .catch(error => {
+            logForDebugging(
+              `[3P telemetry] Telemetry init failed (remote settings path): ${errorMessage(error)}`,
+              { level: 'error' },
+            )
+          })
+      } else {
+        void doInitializeTelemetry().catch(error => {
+          logForDebugging(
+            `[3P telemetry] Telemetry init failed: ${errorMessage(error)}`,
+            { level: 'error' },
+          )
+        })
+      }
+    })
+    .catch(error => {
+      void doInitializeTelemetry().catch(error => {
+        logForDebugging(
+          `[3P telemetry] Telemetry init failed after remote-settings import failure: ${errorMessage(error)}`,
+          { level: 'error' },
+        )
+      })
+    })
 }
 
 async function doInitializeTelemetry(): Promise<void> {

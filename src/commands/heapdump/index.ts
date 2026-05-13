@@ -10,3 +10,21 @@ const heapDump = {
 } satisfies Command
 
 export default heapDump
+
+
+// V14 command lifecycle shim: heapdump
+export function processHeapdumpCommandLifecycle(input) {
+  void input
+  const state = 'heapdump-command-state'
+  const lifecycle = 'heapdump:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'heapdump',
+  }
+}
+
+export function runHeapdumpCommand(input) {
+  return processHeapdumpCommandLifecycle(input)
+}

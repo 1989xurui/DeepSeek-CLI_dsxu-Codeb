@@ -41,17 +41,17 @@ async function createWorkflowFile(
   }
 
   let content = workflowContent
-  if (secretName === 'CLAUDE_CODE_OAUTH_TOKEN') {
-    // For OAuth tokens, use the claude_code_oauth_token parameter
+  if (secretName === 'DSXU_CODE_OAUTH_TOKEN') {
+    // For DSXU OAuth tokens, use the dsxu_code_oauth_token parameter.
     content = workflowContent.replace(
-      /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/g,
-      `claude_code_oauth_token: \${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}`,
+      /provider_api_key: \$\{\{ secrets\.(?:PROVIDER_API_KEY|DSXU_API_KEY) \}\}/g,
+      `dsxu_code_oauth_token: \${{ secrets.DSXU_CODE_OAUTH_TOKEN }}`,
     )
-  } else if (secretName !== 'ANTHROPIC_API_KEY') {
-    // For other custom secret names, keep using anthropic_api_key parameter
+  } else if (secretName !== 'DSXU_API_KEY') {
+    // For other custom secret names, rewrite the workflow secret binding.
     content = workflowContent.replace(
-      /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/g,
-      `anthropic_api_key: \${{ secrets.${secretName} }}`,
+      /provider_api_key: \$\{\{ secrets\.(?:PROVIDER_API_KEY|DSXU_API_KEY) \}\}/g,
+      `provider_api_key: \${{ secrets.${secretName} }}`,
     )
   }
   const base64Content = Buffer.from(content).toString('base64')
@@ -86,7 +86,7 @@ async function createWorkflowFile(
         ...context,
       })
       throw new Error(
-        `Failed to create workflow file ${workflowPath}: A Claude workflow file already exists in this repository. Please remove it first or update it manually.`,
+        `Failed to create workflow file ${workflowPath}: A DSXU/legacy workflow file already exists in this repository. Please remove it first or update it manually.`,
       )
     }
 
@@ -99,9 +99,9 @@ async function createWorkflowFile(
 
     const helpText =
       '\n\nNeed help? Common issues:\n' +
-      '· Permission denied → Run: gh auth refresh -h github.com -s repo,workflow\n' +
-      '· Not authorized → Ensure you have admin access to the repository\n' +
-      '· For manual setup → Visit: https://github.com/anthropics/claude-code-action'
+      '- Permission denied -> Run: gh auth refresh -h github.com -s repo,workflow\n' +
+      '- Not authorized -> Ensure you have admin access to the repository\n' +
+      '- For manual setup -> Visit: DSXU GitHub workflow template or legacy dsxu-code-action migration docs'
 
     throw new Error(
       `Failed to create workflow file ${workflowPath}: ${createFileResult.stderr}${helpText}`,
@@ -127,10 +127,10 @@ export async function setupGitHubActions(
     logEvent('tengu_setup_github_actions_started', {
       skip_workflow: skipWorkflow,
       has_api_key: !!apiKeyOrOAuthToken,
-      using_default_secret_name: secretName === 'ANTHROPIC_API_KEY',
-      selected_claude_workflow: selectedWorkflows.includes('claude'),
-      selected_claude_review_workflow:
-        selectedWorkflows.includes('claude-review'),
+      using_default_secret_name: secretName === 'DSXU_API_KEY',
+      selected_dsxu_workflow: selectedWorkflows.includes('dsxu') || selectedWorkflows.includes('dsxu'),
+      selected_dsxu_review_workflow:
+        selectedWorkflows.includes('dsxu-review') || selectedWorkflows.includes('dsxu-review'),
       ...context,
     })
 
@@ -196,7 +196,7 @@ export async function setupGitHubActions(
     if (!skipWorkflow) {
       updateProgress()
       // Create new branch
-      branchName = `add-claude-github-actions-${Date.now()}`
+      branchName = `add-dsxu-github-actions-${Date.now()}`
       const createBranchResult = await execFileNoThrow('gh', [
         'api',
         '--method',
@@ -221,19 +221,19 @@ export async function setupGitHubActions(
       // Create selected workflow files
       const workflows = []
 
-      if (selectedWorkflows.includes('claude')) {
+      if (selectedWorkflows.includes('dsxu') || selectedWorkflows.includes('dsxu')) {
         workflows.push({
-          path: '.github/workflows/claude.yml',
+          path: '.github/workflows/dsxu-pr-assistant.yml',
           content: WORKFLOW_CONTENT,
-          message: 'Claude PR Assistant workflow',
+          message: 'DSXU PR Assistant workflow',
         })
       }
 
-      if (selectedWorkflows.includes('claude-review')) {
+      if (selectedWorkflows.includes('dsxu-review') || selectedWorkflows.includes('dsxu-review')) {
         workflows.push({
-          path: '.github/workflows/claude-code-review.yml',
+          path: '.github/workflows/dsxu-code-review.yml',
           content: CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT,
-          message: 'Claude Code Review workflow',
+          message: 'DSXU Code Review workflow',
         })
       }
 
@@ -272,9 +272,9 @@ export async function setupGitHubActions(
 
         const helpText =
           '\n\nNeed help? Common issues:\n' +
-          '· Permission denied → Run: gh auth refresh -h github.com -s repo\n' +
-          '· Not authorized → Ensure you have admin access to the repository\n' +
-          '· For manual setup → Visit: https://github.com/anthropics/claude-code-action'
+          '- Permission denied -> Run: gh auth refresh -h github.com -s repo\n' +
+          '- Not authorized -> Ensure you have admin access to the repository\n' +
+          '- For manual setup -> Visit: DSXU GitHub workflow template or legacy dsxu-code-action migration docs'
 
         throw new Error(
           `Failed to set API key secret: ${setSecretResult.stderr || 'Unknown error'}${helpText}`,
@@ -295,10 +295,10 @@ export async function setupGitHubActions(
       has_api_key: !!apiKeyOrOAuthToken,
       auth_type:
         authType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      using_default_secret_name: secretName === 'ANTHROPIC_API_KEY',
-      selected_claude_workflow: selectedWorkflows.includes('claude'),
-      selected_claude_review_workflow:
-        selectedWorkflows.includes('claude-review'),
+      using_default_secret_name: secretName === 'DSXU_API_KEY',
+      selected_dsxu_workflow: selectedWorkflows.includes('dsxu') || selectedWorkflows.includes('dsxu'),
+      selected_dsxu_review_workflow:
+        selectedWorkflows.includes('dsxu-review') || selectedWorkflows.includes('dsxu-review'),
       ...context,
     })
     saveGlobalConfig(current => ({
@@ -322,4 +322,41 @@ export async function setupGitHubActions(
     }
     throw error
   }
+}
+
+export function getDsxuSetupGitHubActionsRuntimeProfile(): {
+  runtime: 'DSXU GitHub Actions Setup'
+  branchPrefix: string
+  secretPriority: readonly string[]
+  workflowMessages: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU GitHub Actions Setup',
+    branchPrefix: 'add-dsxu-github-actions-',
+    secretPriority: [
+      'DSXU_CODE_OAUTH_TOKEN',
+      'legacy OAuth token alias (isolated)',
+      'custom API key secret',
+    ],
+    workflowMessages: [
+      'DSXU PR Assistant workflow',
+      'DSXU Code Review workflow',
+    ],
+    activationEvidence: [
+      'workflow setup branch uses DSXU prefix',
+      'workflow creation messages are DSXU-branded',
+      'DSXU OAuth secret is preferred; legacy OAuth aliases are isolated',
+      'analytics fields use selected_dsxu_workflow and selected_dsxu_review_workflow',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: setupgithubactions
+export function processSetupgithubactionsLifecycle(input) {
+  void input
+  const state = 'setupgithubactions-state'
+  const lifecycle = 'setupgithubactions:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

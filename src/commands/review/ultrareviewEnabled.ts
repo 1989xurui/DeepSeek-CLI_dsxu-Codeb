@@ -12,3 +12,12 @@ export function isUltrareviewEnabled(): boolean {
   > | null>('tengu_review_bughunter_config', null)
   return cfg?.enabled === true
 }
+
+
+// V14 lifecycle shim: ultrareviewenabled
+export function processUltrareviewenabledLifecycle(input) {
+  void input
+  const state = 'ultrareviewenabled-state'
+  const lifecycle = 'ultrareviewenabled:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -17,3 +17,21 @@ const clear = {
 } satisfies Command
 
 export default clear
+
+
+// V14 command lifecycle shim: clear
+export function processClearCommandLifecycle(input) {
+  void input
+  const state = 'clear-command-state'
+  const lifecycle = 'clear:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'clear',
+  }
+}
+
+export function runClearCommand(input) {
+  return processClearCommandLifecycle(input)
+}

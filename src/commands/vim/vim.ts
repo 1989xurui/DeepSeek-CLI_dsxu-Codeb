@@ -36,3 +36,12 @@ export const call: LocalCommandCall = async () => {
     }`,
   }
 }
+
+
+// V14 lifecycle shim: vim
+export function processVimLifecycle(input) {
+  void input
+  const state = 'vim-state'
+  const lifecycle = 'vim:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

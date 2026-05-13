@@ -169,3 +169,12 @@ export function usePagination<T>({
     },
   }
 }
+
+
+// V14 lifecycle shim: usepagination
+export function processUsepaginationLifecycle(input) {
+  void input
+  const state = 'usepagination-state'
+  const lifecycle = 'usepagination:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

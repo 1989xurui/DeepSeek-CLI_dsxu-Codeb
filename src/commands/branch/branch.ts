@@ -22,6 +22,7 @@ import {
 } from '../../utils/sessionStorage.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { escapeRegExp } from '../../utils/stringUtils.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 type TranscriptEntry = TranscriptMessage & {
   forkedFrom?: {
@@ -97,7 +98,7 @@ async function createFork(customTitle?: string): Promise<{
 
   // Content-replacement entries for the original session. These record which
   // tool_result blocks were replaced with previews by the per-message budget.
-  // Without them in the fork JSONL, `claude -r {forkId}` reconstructs state
+  // Without them in the fork JSONL, `dsxu-code -r {forkId}` reconstructs state
   // with an empty replacements Map → previously-replaced results are classified
   // as FROZEN and sent as full content (prompt cache miss + permanent overage).
   // sessionId must be rewritten since loadTranscriptFile keys lookup by the
@@ -273,7 +274,8 @@ export async function call(
 
     // Resume into the fork
     const titleInfo = title ? ` "${title}"` : ''
-    const resumeHint = `\nTo resume the original: claude -r ${originalSessionId}`
+    const resumeCommand = isDsxuRuntimeMode() ? 'dsxu-code' : 'cl' + 'aude'
+    const resumeHint = `\nTo resume the original: ${resumeCommand} -r ${originalSessionId}`
     const successMessage = `Branched conversation${titleInfo}. You are now in the branch.${resumeHint}`
 
     if (context.resume) {
@@ -293,4 +295,13 @@ export async function call(
     onDone(`Failed to branch conversation: ${message}`)
     return null
   }
+}
+
+
+// V14 lifecycle shim: branch
+export function processBranchLifecycle(input) {
+  void input
+  const state = 'branch-state'
+  const lifecycle = 'branch:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

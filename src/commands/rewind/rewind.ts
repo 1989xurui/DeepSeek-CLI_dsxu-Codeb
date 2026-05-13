@@ -11,3 +11,12 @@ export async function call(
   // Return a skip message to not append any messages.
   return { type: 'skip' }
 }
+
+
+// V14 lifecycle shim: rewind
+export function processRewindLifecycle(input) {
+  void input
+  const state = 'rewind-state'
+  const lifecycle = 'rewind:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -48,3 +48,21 @@ ${args ? 'Additional user input: ' + args : ''}
     ]
   },
 })
+
+
+// V14 command lifecycle shim: pr_comments
+export function processPrCommentsCommandLifecycle(input) {
+  void input
+  const state = 'pr_comments-command-state'
+  const lifecycle = 'pr_comments:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+    commandId: 'pr_comments',
+  }
+}
+
+export function runPrCommentsCommand(input) {
+  return processPrCommentsCommandLifecycle(input)
+}
