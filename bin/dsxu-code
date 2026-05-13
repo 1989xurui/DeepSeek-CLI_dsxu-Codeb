@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+export PATH="$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="${LC_ALL:-C.UTF-8}"
+export PYTHONIOENCODING="${PYTHONIOENCODING:-utf-8}"
+case "$(uname -s 2>/dev/null || true)" in
+  Linux*)
+    DSXU_WSL_TOOL_BIN="$HOME/.dsxu/tools/ripgrep/x64-linux"
+    DSXU_REPO_TOOL_BIN="$ROOT_DIR/src/utils/vendor/ripgrep/x64-linux"
+    if [ -x "$DSXU_WSL_TOOL_BIN/rg" ] && "$DSXU_WSL_TOOL_BIN/rg" --version >/dev/null 2>&1; then
+      DSXU_VENDOR_BIN="$DSXU_WSL_TOOL_BIN"
+    elif [ -x "$DSXU_REPO_TOOL_BIN/rg" ] && "$DSXU_REPO_TOOL_BIN/rg" --version >/dev/null 2>&1; then
+      DSXU_VENDOR_BIN="$DSXU_REPO_TOOL_BIN"
+    else
+      DSXU_VENDOR_BIN=""
+      echo "[DSXU] vendored rg is unavailable in WSL; run the DSXU toolchain selfcheck/repair before search-heavy tasks." >&2
+    fi
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    DSXU_VENDOR_BIN="$ROOT_DIR/src/utils/vendor/ripgrep/x64-win32"
+    ;;
+  *)
+    DSXU_VENDOR_BIN=""
+    ;;
+esac
+if [ -n "$DSXU_VENDOR_BIN" ] && [ -d "$DSXU_VENDOR_BIN" ]; then
+  export PATH="$DSXU_VENDOR_BIN:$PATH"
+fi
+export DSXU_CODE_MODE=1
+export DSXU_PRODUCT_NAME="${DSXU_PRODUCT_NAME:-DSXU Code}"
+export DSXU_MODEL_PROVIDER="${DSXU_MODEL_PROVIDER:-deepseek}"
+export DSXU_MODEL_GATEWAY="${DSXU_MODEL_GATEWAY:-direct}"
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "[DSXU] bun runtime not found. Expected it at ~/.bun/bin/bun or on PATH." >&2
+  exit 127
+fi
+
+exec bun --env-file=.env ./src/entrypoints/dsxu-code.tsx "$@"

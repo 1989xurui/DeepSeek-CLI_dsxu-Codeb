@@ -4,7 +4,6 @@ import { getExtendedTools } from './extended-tools'
 import { getDebugTools } from './debug-tools'
 import { BlastRadiusTool } from './blast-radius'
 import { AccessibilityTreeTool } from './accessibility-tree'
-import { getFullToolCapabilityPool, getFullToolPoolSnapshot } from './claude-tools-bridge'
 
 export type ToolCapabilityPoolName =
   | 'core'
@@ -13,7 +12,6 @@ export type ToolCapabilityPoolName =
   | 'debug'
   | 'analysis'
   | 'full_absorb'
-  | 'claude_all'
   | 'complete'
 
 export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinition[] {
@@ -36,13 +34,9 @@ export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinit
         BlastRadiusTool,
         AccessibilityTreeTool,
       ])
-    case 'claude_all':
-      // 只返回 Claude 工具
-      const { getAllClaudeTools } = require('./claude-tools-bridge')
-      return getAllClaudeTools()
     case 'complete':
-      // 返回所有工具（Claude + DSXU）
-      return getFullToolCapabilityPool()
+      // V14 provider cleanup: complete only represents the DSXU-owned tool capability pool.
+      return getToolCapabilityPool('full_absorb')
     default:
       return []
   }

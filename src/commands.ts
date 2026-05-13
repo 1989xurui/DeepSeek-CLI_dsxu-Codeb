@@ -3,15 +3,14 @@ import addDir from './commands/add-dir/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
 import btw from './commands/btw/index.js'
-import goodClaude from './commands/good-claude/index.js'
 import issue from './commands/issue/index.js'
 import feedback from './commands/feedback/index.js'
 import clear from './commands/clear/index.js'
 import color from './commands/color/index.js'
-import commit from './commands/commit.js'
+import commit from './commands/dsxu-commit.js'
 import copy from './commands/copy/index.js'
 import desktop from './commands/desktop/index.js'
-import commitPushPr from './commands/commit-push-pr.js'
+import commitPushPr from './commands/dsxu-commit-push-pr.js'
 import compact from './commands/compact/index.js'
 import config from './commands/config/index.js'
 import { context, contextNonInteractive } from './commands/context/index.js'
@@ -46,7 +45,7 @@ import tasks from './commands/tasks/index.js'
 import teleport from './commands/teleport/index.js'
 /* eslint-disable @typescript-eslint/no-require-imports */
 const agentsPlatform =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'ant' && process.env.DSXU_CODE_MODE !== '1'
     ? require('./commands/agents-platform/index.js').default
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -70,13 +69,8 @@ const briefCommand =
 const assistantCommand = feature('KAIROS')
   ? require('./commands/assistant/index.js').default
   : null
-const bridge = feature('BRIDGE_MODE')
-  ? require('./commands/bridge/index.js').default
-  : null
-const remoteControlServerCommand =
-  feature('DAEMON') && feature('BRIDGE_MODE')
-    ? require('./commands/remoteControlServer/index.js').default
-    : null
+const bridge = null
+const remoteControlServerCommand = null
 const voiceCommand = feature('VOICE_MODE')
   ? require('./commands/voice/index.js').default
   : null
@@ -137,7 +131,6 @@ import reloadPlugins from './commands/reload-plugins/index.js'
 import rewind from './commands/rewind/index.js'
 import heapDump from './commands/heapdump/index.js'
 import mockLimits from './commands/mock-limits/index.js'
-import bridgeKick from './commands/bridge-kick.js'
 import version from './commands/version.js'
 import summary from './commands/summary/index.js'
 import {
@@ -167,8 +160,9 @@ import {
   clearPluginSkillsCache,
 } from './utils/plugins/loadPluginCommands.js'
 import memoize from 'lodash-es/memoize.js'
-import { isUsing3PServices, isClaudeAISubscriber } from './utils/auth.js'
-import { isFirstPartyAnthropicBaseUrl } from './utils/model/providers.js'
+import { isUsing3PServices, isDSXUAISubscriber } from './utils/auth.js'
+import { isFirstPartyProviderBaseUrl } from './utils/model/providers.js'
+import { isDsxuRuntimeMode } from './utils/envUtils.js'
 import env from './commands/env/index.js'
 import exit from './commands/exit/index.js'
 import exportCommand from './commands/export/index.js'
@@ -190,7 +184,7 @@ import stats from './commands/stats/index.js'
 const usageReport: Command = {
   type: 'prompt',
   name: 'insights',
-  description: 'Generate a report analyzing your Claude Code sessions',
+  description: 'Generate a report analyzing your DSXU Code sessions',
   contentLength: 0,
   progressMessage: 'analyzing your sessions',
   source: 'builtin',
@@ -220,21 +214,20 @@ export type {
   ResumeEntrypoint,
 } from './types/command.js'
 export { getCommandName, isCommandEnabled } from './types/command.js'
+export { LEGACY_CLOUD_AVAILABILITY } from './types/command.js'
 
 // Commands that get eliminated from the external build
-export const INTERNAL_ONLY_COMMANDS = [
+export const INTERNAL_ONLY_COMMANDS = memoize((): Command[] => [
   backfillSessions,
   breakCache,
   bughunter,
   commit,
   commitPushPr,
   ctx_viz,
-  goodClaude,
   issue,
   initVerifiers,
   ...(forceSnip ? [forceSnip] : []),
   mockLimits,
-  bridgeKick,
   version,
   ...(ultraplan ? [ultraplan] : []),
   ...(subscribePr ? [subscribePr] : []),
@@ -251,7 +244,7 @@ export const INTERNAL_ONLY_COMMANDS = [
   debugToolCall,
   agentsPlatform,
   autofixPr,
-].filter(Boolean)
+].filter(Boolean))
 
 // Declared as a function so that we don't run this until getCommands is called,
 // since underlying functions read from config, which can't be read at module initialization time
@@ -341,7 +334,7 @@ const COMMANDS = memoize((): Command[] => [
   ...(workflowsCmd ? [workflowsCmd] : []),
   ...(torch ? [torch] : []),
   ...(process.env.USER_TYPE === 'ant' && !process.env.IS_DEMO
-    ? INTERNAL_ONLY_COMMANDS
+    ? INTERNAL_ONLY_COMMANDS()
     : []),
 ])
 
@@ -405,30 +398,65 @@ const getWorkflowCommands = feature('WORKFLOW_SCRIPTS')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
+const STARTUP_COMMAND_SOURCE_TIMEOUT_MS = Number.parseInt(
+  process.env.DSXU_COMMAND_SOURCE_TIMEOUT_MS ?? '5000',
+  10,
+)
+
+async function withStartupCommandSourceTimeout<T>(
+  label: string,
+  promise: Promise<T>,
+  fallback: T,
+): Promise<T> {
+  if (!Number.isFinite(STARTUP_COMMAND_SOURCE_TIMEOUT_MS)) {
+    return promise
+  }
+
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>(resolve => {
+        timer = setTimeout(() => {
+          logForDebugging(
+            `[STARTUP] ${label} command source timed out after ${STARTUP_COMMAND_SOURCE_TIMEOUT_MS}ms; continuing without it`,
+          )
+          resolve(fallback)
+        }, STARTUP_COMMAND_SOURCE_TIMEOUT_MS)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 /**
  * Filters commands by their declared `availability` (auth/provider requirement).
  * Commands without `availability` are treated as universal.
  * This runs before `isEnabled()` so that provider-gated commands are hidden
  * regardless of feature-flag state.
  *
- * Not memoized — auth state can change mid-session (e.g. after /login),
+ * Not memoized -auth state can change mid-session (e.g. after /login),
  * so this must be re-evaluated on every getCommands() call.
  */
 export function meetsAvailabilityRequirement(cmd: Command): boolean {
   if (!cmd.availability) return true
   for (const a of cmd.availability) {
     switch (a) {
-      case 'claude-ai':
-        if (isClaudeAISubscriber()) return true
+      case 'dsxu':
+        if (isDsxuRuntimeMode()) return true
+        break
+      case 'dsxu-ai':
+        if (isDSXUAISubscriber()) return true
         break
       case 'console':
-        // Console API key user = direct 1P API customer (not 3P, not claude.ai).
-        // Excludes 3P (Bedrock/Vertex/Foundry) who don't set ANTHROPIC_BASE_URL
+        // Console API key user = direct first-party API customer (not 3P, not legacy cloud).
+        // Excludes 3P (Bedrock/Vertex/Foundry) who don't set PROVIDER_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (
-          !isClaudeAISubscriber() &&
+          !isDSXUAISubscriber() &&
           !isUsing3PServices() &&
-          isFirstPartyAnthropicBaseUrl()
+          isFirstPartyProviderBaseUrl()
         )
           return true
         break
@@ -453,8 +481,14 @@ const loadAllCommands = memoize(async (cwd: string): Promise<Command[]> => {
     workflowCommands,
   ] = await Promise.all([
     getSkills(cwd),
-    getPluginCommands(),
-    getWorkflowCommands ? getWorkflowCommands(cwd) : Promise.resolve([]),
+    withStartupCommandSourceTimeout('plugin', getPluginCommands(), []),
+    getWorkflowCommands
+      ? withStartupCommandSourceTimeout(
+          'workflow',
+          getWorkflowCommands(cwd),
+          [],
+        )
+      : Promise.resolve([]),
   ])
 
   return [
@@ -526,7 +560,7 @@ export function clearCommandMemoizationCaches(): void {
   getSlashCommandToolSkills.cache?.clear?.()
   // getSkillIndex in skillSearch/localSearch.ts is a separate memoization layer
   // built ON TOP of getSkillToolCommands/getCommands. Clearing only the inner
-  // caches is a no-op for the outer — lodash memoize returns the cached result
+  // caches is a no-op for the outer -lodash memoize returns the cached result
   // without ever reaching the cleared inners. Must clear it explicitly.
   clearSkillIndexCache?.()
 }
@@ -643,14 +677,14 @@ export const REMOTE_SAFE_COMMANDS: Set<Command> = new Set([
  *
  * 'local-jsx' commands are blocked by type (they render Ink UI) and
  * 'prompt' commands are allowed by type (they expand to text sent to the
- * model) — this set only gates 'local' commands.
+ * model) -this set only gates 'local' commands.
  *
  * When adding a new 'local' command that should work from mobile, add it
  * here. Default is blocked.
  */
 export const BRIDGE_SAFE_COMMANDS: Set<Command> = new Set(
   [
-    compact, // Shrink context — useful mid-session from a phone
+    compact, // Shrink context -useful mid-session from a phone
     clear, // Wipe transcript
     cost, // Show session cost
     summary, // Summarize conversation
@@ -751,4 +785,35 @@ export function formatDescriptionWithSource(cmd: Command): string {
   }
 
   return `${cmd.description} (${getSettingSourceName(cmd.source)})`
+}
+
+export function getDsxuCommandRegistryRuntimeProfile(): {
+  runtime: 'DSXU Command Registry'
+  commandSources: readonly string[]
+  remoteSafeCount: number
+  bridgeSafeCount: number
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Command Registry',
+    commandSources: [
+      'bundled skills',
+      'builtin plugin skills',
+      'skill directories',
+      'workflow commands',
+      'plugin commands',
+      'plugin skills',
+      'built-in commands',
+      'dynamic skills',
+      'MCP skill commands',
+    ],
+    remoteSafeCount: REMOTE_SAFE_COMMANDS.size,
+    bridgeSafeCount: BRIDGE_SAFE_COMMANDS.size,
+    activationEvidence: [
+      'getCommands loads all command sources then filters by availability and isEnabled',
+      'DSXU availability can expose DSXU-only commands without legacy cloud subscriber state',
+      'dynamic skills are inserted before built-in commands when newly discovered',
+      'remote and bridge command allowlists prevent local-only UI/fs/git commands from leaking into remote surfaces',
+    ],
+  }
 }

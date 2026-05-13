@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+ROOT_DIR="/mnt/d/DSXU-code"
+cd "$ROOT_DIR" || {
+  echo "[DSXU] Cannot enter $ROOT_DIR" >&2
+  read -r -p "Press Enter to close..." _
+  exit 1
+}
+
+export PATH="$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin:${PATH:-}"
+DSXU_WSL_TOOL_BIN="$HOME/.dsxu/tools/ripgrep/x64-linux"
+DSXU_REPO_TOOL_BIN="$ROOT_DIR/src/utils/vendor/ripgrep/x64-linux"
+if [ -x "$DSXU_WSL_TOOL_BIN/rg" ] && "$DSXU_WSL_TOOL_BIN/rg" --version >/dev/null 2>&1; then
+  DSXU_VENDOR_BIN="$DSXU_WSL_TOOL_BIN"
+elif [ -x "$DSXU_REPO_TOOL_BIN/rg" ] && "$DSXU_REPO_TOOL_BIN/rg" --version >/dev/null 2>&1; then
+  DSXU_VENDOR_BIN="$DSXU_REPO_TOOL_BIN"
+else
+  DSXU_VENDOR_BIN=""
+  echo "[DSXU] vendored rg is unavailable in WSL; run the DSXU toolchain selfcheck/repair before search-heavy tasks." >&2
+fi
+if [ -d "$DSXU_VENDOR_BIN" ]; then
+  export PATH="$DSXU_VENDOR_BIN:$PATH"
+fi
+export LANG="${LANG:-C.UTF-8}"
+export LC_ALL="${LC_ALL:-C.UTF-8}"
+export TERM="${TERM:-xterm-256color}"
+export COLORTERM="${COLORTERM:-truecolor}"
+export FORCE_COLOR="${FORCE_COLOR:-1}"
+export DSXU_CODE_MODE=1
+export DSXU_MODEL_PROVIDER="${DSXU_MODEL_PROVIDER:-deepseek}"
+export DSXU_MODEL_GATEWAY="${DSXU_MODEL_GATEWAY:-direct}"
+
+if [ -t 0 ] && command -v stty >/dev/null 2>&1; then
+  tty_size="$(stty size 2>/dev/null || true)"
+  tty_rows="${tty_size%% *}"
+  tty_cols="${tty_size##* }"
+  if [ -z "$tty_rows" ] || [ -z "$tty_cols" ] ||
+     [ "$tty_rows" -lt 5 ] 2>/dev/null ||
+     [ "$tty_cols" -lt 20 ] 2>/dev/null ||
+     [ "$tty_cols" -gt 1000 ] 2>/dev/null; then
+    stty rows "${DSXU_WSL_FALLBACK_ROWS:-40}" cols "${DSXU_WSL_FALLBACK_COLS:-120}" 2>/dev/null || true
+  fi
+fi
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "[DSXU] bun runtime not found. Expected it at ~/.bun/bin/bun or on PATH." >&2
+  read -r -p "Press Enter to close..." _
+  exit 127
+fi
+
+./bin/dsxu-code "$@"
+status=$?
+
+echo
+if [ "$status" -eq 0 ]; then
+  echo "[DSXU] DSXU Code session ended."
+else
+  echo "[DSXU] DSXU Code exited with status $status."
+fi
+
+if [ "${DSXU_KEEP_WSL_OPEN:-1}" = "1" ] && [ -t 0 ]; then
+  echo "[DSXU] Keeping this WSL window open. Type 'exit' or close the window when ready."
+  exec bash -l
+fi
+
+exit "$status"
