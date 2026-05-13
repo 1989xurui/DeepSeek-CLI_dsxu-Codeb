@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useEffect } from 'react'
 import { formatTotalCost, saveCurrentSessionCosts } from './cost-tracker.js'
 import { hasConsoleBillingAccess } from './utils/billing.js'

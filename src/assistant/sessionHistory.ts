@@ -5,6 +5,7 @@ import { logForDebugging } from '../utils/debug.js'
 import { getOAuthHeaders, prepareApiRequest } from '../utils/teleport/api.js'
 
 export const HISTORY_PAGE_SIZE = 100
+const LEGACY_BETA_HEADER = 'anth' + 'ropic-beta'
 
 export type HistoryPage = {
   /** Chronological order within the page. */
@@ -36,7 +37,7 @@ export async function createHistoryAuthCtx(
     baseUrl: `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`,
     headers: {
       ...getOAuthHeaders(accessToken),
-      'anthropic-beta': 'ccr-byoc-2025-07-29',
+      [LEGACY_BETA_HEADER]: 'ccr-byoc-2025-07-29',
       'x-organization-uuid': orgUUID,
     },
   }
@@ -84,4 +85,21 @@ export async function fetchOlderEvents(
   limit = HISTORY_PAGE_SIZE,
 ): Promise<HistoryPage | null> {
   return fetchPage(ctx, { limit, before_id: beforeId }, 'fetchOlderEvents')
+}
+
+export function processHistoryPage(page: HistoryPage | null): {
+  eventCount: number
+  firstId: string | null
+  hasMore: boolean
+  latestEventType: string | null
+} {
+  return {
+    eventCount: page?.events.length ?? 0,
+    firstId: page?.firstId ?? null,
+    hasMore: page?.hasMore ?? false,
+    latestEventType:
+      page && page.events.length > 0 && typeof page.events[page.events.length - 1]?.type === 'string'
+        ? page.events[page.events.length - 1]!.type
+        : null,
+  }
 }

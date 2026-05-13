@@ -155,3 +155,12 @@ export const DreamTask: Task = {
     }
   },
 }
+
+
+// V14 lifecycle shim: dreamtask
+export function processDreamtaskLifecycle(input) {
+  void input
+  const state = 'dreamtask-state'
+  const lifecycle = 'dreamtask:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

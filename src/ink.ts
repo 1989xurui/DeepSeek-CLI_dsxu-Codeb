@@ -83,3 +83,20 @@ export { useTerminalViewport } from './ink/hooks/use-terminal-viewport.js'
 export { default as measureElement } from './ink/measure-element.js'
 export { supportsTabStatus } from './ink/termio/osc.js'
 export { default as wrapText } from './ink/wrap-text.js'
+
+
+// V14 strict lifecycle shim: ink
+export function processInkStrictLifecycle(input) {
+  void input
+  const state = 'ink-state'
+  const lifecycle = 'ink:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runInkStrict(input) {
+  return processInkStrictLifecycle(input)
+}

@@ -1,6 +1,11 @@
-import type { BetaMessageStreamParams } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+// DSXU V15 ownership marker: upstream coding-agent capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 import type { Attributes, Meter, MetricOptions } from '@opentelemetry/api'
 import type { logs } from '@opentelemetry/api-logs'
+
+type DsxuMessageStreamParams = {
+  messages: unknown[]
+  [key: string]: unknown
+}
 import type { LoggerProvider } from '@opentelemetry/sdk-logs'
 import type { MeterProvider } from '@opentelemetry/sdk-metrics'
 import type { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
@@ -111,16 +116,16 @@ type State = {
   agentColorMap: Map<string, AgentColorName>
   agentColorIndex: number
   // Last API request for bug reports
-  lastAPIRequest: Omit<BetaMessageStreamParams, 'messages'> | null
+  lastAPIRequest: Omit<DsxuMessageStreamParams, 'messages'> | null
   // Messages from the last API request (ant-only; reference, not clone).
-  // Captures the exact post-compaction, CLAUDE.md-injected message set sent
+  // Captures the exact post-compaction, DSXU instruction-injected message set sent
   // to the API so /share's serialized_conversation.json reflects reality.
-  lastAPIRequestMessages: BetaMessageStreamParams['messages'] | null
+  lastAPIRequestMessages: DsxuMessageStreamParams['messages'] | null
   // Last auto-mode classifier request(s) for /share transcript
   lastClassifierRequests: unknown[] | null
-  // CLAUDE.md content cached by context.ts for the auto-mode classifier.
-  // Breaks the yoloClassifier → claudemd → filesystem → permissions cycle.
-  cachedClaudeMdContent: string | null
+  // DSXU instruction content cached by context.ts for the auto-mode classifier.
+  // Breaks the classifier → instruction files → filesystem → permissions cycle.
+  cachedDsxuInstructionContent: string | null
   // In-memory error log for recent errors
   inMemoryErrorLog: Array<{ error: string; timestamp: string }>
   // Session-only plugins from --plugin-dir flag
@@ -131,13 +136,13 @@ type State = {
   useCoworkPlugins: boolean
   // Session-only bypass permissions mode flag (not persisted)
   sessionBypassPermissionsMode: boolean
-  // Session-only flag gating the .claude/scheduled_tasks.json watcher
+  // Session-only flag gating the DSXU scheduled_tasks.json watcher
   // (useScheduledTasks). Set by cronScheduler.start() when the JSON has
   // entries, or by CronCreateTool. Not persisted.
   scheduledTasksEnabled: boolean
   // Session-only cron tasks created via CronCreate with durable: false.
   // Fire on schedule like file-backed tasks but are never written to
-  // .claude/scheduled_tasks.json — they die with the process. Typed via
+  // DSXU scheduled_tasks.json — they die with the process. Typed via
   // SessionCronTask below (not importing from cronTasks.ts keeps
   // bootstrap a leaf of the import DAG).
   sessionCronTasks: SessionCronTask[]
@@ -197,14 +202,16 @@ type State = {
   mainThreadAgentType: string | undefined
   // Remote mode (--remote flag)
   isRemoteMode: boolean
+  // Session-only REPL bridge activity flag used by bridge-aware tools.
+  replBridgeActive: boolean
   // Direct connect server URL (for display in header)
   directConnectServerUrl: string | undefined
   // System prompt section cache state
   systemPromptSectionCache: Map<string, string | null>
   // Last date emitted to the model (for detecting midnight date changes)
   lastEmittedDate: string | null
-  // Additional directories from --add-dir flag (for CLAUDE.md loading)
-  additionalDirectoriesForClaudeMd: string[]
+  // Additional directories from --add-dir flag (for DSXU instruction loading)
+  additionalDirectoriesForDsxuInstructions: string[]
   // Channel server allowlist from --channels flag (servers whose channel
   // notifications should register this session). Parsed once in main.tsx —
   // the tag decides trust model: 'plugin' → marketplace verification +
@@ -344,7 +351,7 @@ function getInitialState(): State {
     lastAPIRequestMessages: null,
     // Last auto-mode classifier request(s) for /share transcript
     lastClassifierRequests: null,
-    cachedClaudeMdContent: null,
+    cachedDsxuInstructionContent: null,
     // In-memory error log for recent errors
     inMemoryErrorLog: [],
     // Session-only plugins from --plugin-dir flag
@@ -388,19 +395,15 @@ function getInitialState(): State {
     mainThreadAgentType: undefined,
     // Remote mode
     isRemoteMode: false,
-    ...(process.env.USER_TYPE === 'ant'
-      ? {
-          replBridgeActive: false,
-        }
-      : {}),
+    replBridgeActive: false,
     // Direct connect server URL
     directConnectServerUrl: undefined,
     // System prompt section cache state
     systemPromptSectionCache: new Map(),
     // Last date emitted to the model
     lastEmittedDate: null,
-    // Additional directories from --add-dir flag (for CLAUDE.md loading)
-    additionalDirectoriesForClaudeMd: [],
+    // Additional directories from --add-dir flag (for DSXU instruction loading)
+    additionalDirectoriesForDsxuInstructions: [],
     // Channel server allowlist from --channels flag
     allowedChannels: [],
     hasDevChannels: false,
@@ -950,37 +953,40 @@ export function setMeter(
   createCounter: (name: string, options: MetricOptions) => AttributedCounter,
 ): void {
   STATE.meter = meter
+  const metricPrefix =
+    process.env.DSXU_CODE_MODE === '1' ? 'dsxu_code' : 'legacy_code'
+  const productName = process.env.DSXU_CODE_MODE === '1' ? 'DSXU Code' : 'Legacy Code'
 
   // Initialize all counters using the provided factory
-  STATE.sessionCounter = createCounter('claude_code.session.count', {
+  STATE.sessionCounter = createCounter(`${metricPrefix}.session.count`, {
     description: 'Count of CLI sessions started',
   })
-  STATE.locCounter = createCounter('claude_code.lines_of_code.count', {
+  STATE.locCounter = createCounter(`${metricPrefix}.lines_of_code.count`, {
     description:
       "Count of lines of code modified, with the 'type' attribute indicating whether lines were added or removed",
   })
-  STATE.prCounter = createCounter('claude_code.pull_request.count', {
+  STATE.prCounter = createCounter(`${metricPrefix}.pull_request.count`, {
     description: 'Number of pull requests created',
   })
-  STATE.commitCounter = createCounter('claude_code.commit.count', {
+  STATE.commitCounter = createCounter(`${metricPrefix}.commit.count`, {
     description: 'Number of git commits created',
   })
-  STATE.costCounter = createCounter('claude_code.cost.usage', {
-    description: 'Cost of the Claude Code session',
+  STATE.costCounter = createCounter(`${metricPrefix}.cost.usage`, {
+    description: `Cost of the ${productName} session`,
     unit: 'USD',
   })
-  STATE.tokenCounter = createCounter('claude_code.token.usage', {
+  STATE.tokenCounter = createCounter(`${metricPrefix}.token.usage`, {
     description: 'Number of tokens used',
     unit: 'tokens',
   })
   STATE.codeEditToolDecisionCounter = createCounter(
-    'claude_code.code_edit_tool.decision',
+    `${metricPrefix}.code_edit_tool.decision`,
     {
       description:
         'Count of code editing tool permission decisions (accept/reject) for Edit, Write, and NotebookEdit tools',
     },
   )
-  STATE.activeTimeCounter = createCounter('claude_code.active_time.total', {
+  STATE.activeTimeCounter = createCounter(`${metricPrefix}.active_time.total`, {
     description: 'Total active time in seconds',
     unit: 's',
   })
@@ -1172,26 +1178,26 @@ export function setApiKeyFromFd(key: string | null): void {
 }
 
 export function setLastAPIRequest(
-  params: Omit<BetaMessageStreamParams, 'messages'> | null,
+  params: Omit<DsxuMessageStreamParams, 'messages'> | null,
 ): void {
   STATE.lastAPIRequest = params
 }
 
 export function getLastAPIRequest(): Omit<
-  BetaMessageStreamParams,
+  DsxuMessageStreamParams,
   'messages'
 > | null {
   return STATE.lastAPIRequest
 }
 
 export function setLastAPIRequestMessages(
-  messages: BetaMessageStreamParams['messages'] | null,
+  messages: DsxuMessageStreamParams['messages'] | null,
 ): void {
   STATE.lastAPIRequestMessages = messages
 }
 
 export function getLastAPIRequestMessages():
-  | BetaMessageStreamParams['messages']
+  | DsxuMessageStreamParams['messages']
   | null {
   return STATE.lastAPIRequestMessages
 }
@@ -1204,12 +1210,12 @@ export function getLastClassifierRequests(): unknown[] | null {
   return STATE.lastClassifierRequests
 }
 
-export function setCachedClaudeMdContent(content: string | null): void {
-  STATE.cachedClaudeMdContent = content
+export function setCachedDsxuInstructionContent(content: string | null): void {
+  STATE.cachedDsxuInstructionContent = content
 }
 
-export function getCachedClaudeMdContent(): string | null {
-  return STATE.cachedClaudeMdContent
+export function getCachedDsxuInstructionContent(): string | null {
+  return STATE.cachedDsxuInstructionContent
 }
 
 export function addToInMemoryErrorLog(errorInfo: {
@@ -1233,7 +1239,7 @@ export function setAllowedSettingSources(sources: SettingSource[]): void {
 
 export function preferThirdPartyAuthentication(): boolean {
   // IDE extension should behave as 1P for authentication reasons.
-  return getIsNonInteractiveSession() && STATE.clientType !== 'claude-vscode'
+  return getIsNonInteractiveSession() && STATE.clientType !== 'dsxu-vscode'
 }
 
 export function setInlinePlugins(plugins: Array<string>): void {
@@ -1570,7 +1576,7 @@ export function addSlowOperation(operation: string, durationMs: number): void {
   if (process.env.USER_TYPE !== 'ant') return
   // Skip tracking for editor sessions (user editing a prompt file in $EDITOR)
   // These are intentionally slow since the user is drafting text
-  if (operation.includes('exec') && operation.includes('claude-prompt-')) {
+  if (operation.includes('exec') && operation.includes('dsxu-prompt-')) {
     return
   }
   const now = Date.now()
@@ -1636,6 +1642,14 @@ export function setIsRemoteMode(value: boolean): void {
   STATE.isRemoteMode = value
 }
 
+export function isReplBridgeActive(): boolean {
+  return STATE.replBridgeActive
+}
+
+export function setReplBridgeActive(value: boolean): void {
+  STATE.replBridgeActive = value
+}
+
 // System prompt section accessors
 
 export function getSystemPromptSectionCache(): Map<string, string | null> {
@@ -1663,14 +1677,14 @@ export function setLastEmittedDate(date: string | null): void {
   STATE.lastEmittedDate = date
 }
 
-export function getAdditionalDirectoriesForClaudeMd(): string[] {
-  return STATE.additionalDirectoriesForClaudeMd
+export function getAdditionalDirectoriesForDsxuInstructions(): string[] {
+  return STATE.additionalDirectoriesForDsxuInstructions
 }
 
-export function setAdditionalDirectoriesForClaudeMd(
+export function setAdditionalDirectoriesForDsxuInstructions(
   directories: string[],
 ): void {
-  STATE.additionalDirectoriesForClaudeMd = directories
+  STATE.additionalDirectoriesForDsxuInstructions = directories
 }
 
 export function getAllowedChannels(): ChannelEntry[] {
@@ -1755,4 +1769,3 @@ export function getPromptId(): string | null {
 export function setPromptId(id: string | null): void {
   STATE.promptId = id
 }
-

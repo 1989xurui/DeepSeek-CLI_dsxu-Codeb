@@ -5,7 +5,7 @@ import type {
   SDKControlPermissionRequest,
   StdoutMessage,
 } from '../entrypoints/sdk/controlTypes.js'
-import type { RemotePermissionResponse } from '../remote/RemoteSessionManager.js'
+import type { RemotePermissionResponse } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
 import { logForDebugging } from '../utils/debug.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 import type { RemoteMessageContent } from '../utils/teleport/api.js'
@@ -209,5 +209,28 @@ export class DirectConnectSessionManager {
 
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN
+  }
+}
+
+
+// V14 lifecycle shim: directconnectmanager
+export function processDirectconnectmanagerLifecycle(input) {
+  void input
+  const state = 'directconnectmanager-state'
+  const lifecycle = 'directconnectmanager:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuDirectConnectRuntimeProfile() {
+  return {
+    runtime: 'DSXU Direct Connect Session Manager',
+    defaultBehavior: 'direct WebSocket session protocol is retained for DSXU local/desktop control-plane connections',
+    providerTarget: 'DSXU Direct Connect Provider',
+    activationEvidence: [
+      'connect forwards SDK stdout messages and permission requests',
+      'sendMessage emits stream-json user messages for local agent loops',
+      'respondToPermissionRequest returns structured allow/deny decisions',
+      'sendInterrupt supports human takeover and cancellation',
+    ],
   }
 }

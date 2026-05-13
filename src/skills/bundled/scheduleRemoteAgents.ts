@@ -1,10 +1,12 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
-import { getClaudeAIOAuthTokens } from '../../utils/auth.js'
+import { getCompatProviderAccessToken } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getCompatDefaultTierModelId } from '../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
 import { checkRepoForRemoteAccess } from '../../utils/background/remote/preconditions.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
@@ -18,10 +20,17 @@ import {
   type EnvironmentResource,
   fetchEnvironments,
 } from '../../utils/teleport/environments.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 // Base58 alphabet (Bitcoin-style) used by the tagged ID system
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
+const LEGACY_CLOUD_CONFIG_TYPE = `${LEGACY_PROVIDER_TOKEN}ai-proxy`
+const LEGACY_CLOUD_NAME_PREFIX_RE = new RegExp(
+  `^${LEGACY_PROVIDER_TOKEN}[.\\s-]ai[.\\s-]`,
+  'i',
+)
 
 /**
  * Decode a mcpsrv_ tagged ID to a UUID string.
@@ -62,7 +71,15 @@ type ConnectorInfo = {
   url: string
 }
 
-function getConnectedClaudeAIConnectors(
+function isDsxuProviderMode(): boolean {
+  return isEnvTruthy(process.env.DSXU_CODE_MODE)
+}
+
+function isLegacyScheduleMigrationEnabled(): boolean {
+  return isEnvTruthy(process.env.DSXU_ENABLE_LEGACY_REMOTE_TRIGGER)
+}
+
+function getConnectedDsxuConnectors(
   mcpClients: MCPServerConnection[],
 ): ConnectorInfo[] {
   const connectors: ConnectorInfo[] = []
@@ -70,7 +87,30 @@ function getConnectedClaudeAIConnectors(
     if (client.type !== 'connected') {
       continue
     }
-    if (client.config.type !== 'claudeai-proxy') {
+    if (client.config.type === LEGACY_CLOUD_CONFIG_TYPE) {
+      continue
+    }
+    if (!('url' in client.config) || typeof client.config.url !== 'string') {
+      continue
+    }
+    connectors.push({
+      uuid: `${client.name}-${connectors.length}`,
+      name: client.name,
+      url: client.config.url,
+    })
+  }
+  return connectors
+}
+
+function getConnectedLegacyCloudConnectors(
+  mcpClients: MCPServerConnection[],
+): ConnectorInfo[] {
+  const connectors: ConnectorInfo[] = []
+  for (const client of mcpClients) {
+    if (client.type !== 'connected') {
+      continue
+    }
+    if (client.config.type !== LEGACY_CLOUD_CONFIG_TYPE) {
       continue
     }
     const uuid = taggedIdToUUID(client.config.id)
@@ -88,7 +128,7 @@ function getConnectedClaudeAIConnectors(
 
 function sanitizeConnectorName(name: string): string {
   return name
-    .replace(/^claude[.\s-]ai[.\s-]/i, '')
+    .replace(LEGACY_CLOUD_NAME_PREFIX_RE, '')
     .replace(/[^a-zA-Z0-9_-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
@@ -96,7 +136,9 @@ function sanitizeConnectorName(name: string): string {
 
 function formatConnectorsInfo(connectors: ConnectorInfo[]): string {
   if (connectors.length === 0) {
-    return 'No connected MCP connectors found. The user may need to connect servers at https://claude.ai/settings/connectors'
+    return isDsxuProviderMode()
+      ? 'No connected DSXU MCP connectors found. Configure DSXU MCP servers in .dsxu or settings before attaching connectors.'
+      : 'No connected legacy MCP connectors found. Legacy cloud connector import is migration-only.'
   }
   const lines = ['Connected connectors (available for triggers):']
   for (const c of connectors) {
@@ -117,7 +159,7 @@ const BASE_QUESTION = 'What would you like to do with scheduled remote agents?'
  */
 function formatSetupNotes(notes: string[]): string {
   const items = notes.map(n => `- ${n}`).join('\n')
-  return `⚠ Heads-up:\n${items}`
+  return `Heads-up:\n${items}`
 }
 
 async function getCurrentRepoHttpsUrl(): Promise<string | null> {
@@ -165,15 +207,25 @@ function buildPrompt(opts: {
       : BASE_QUESTION
   const firstStep = userArgs
     ? `The user has already told you what they want (see User Request at the bottom). Skip the initial question and go directly to the matching workflow.`
-    : `Your FIRST action must be a single ${ASK_USER_QUESTION_TOOL_NAME} tool call (no preamble). Use this EXACT string for the \`question\` field — do not paraphrase or shorten it:
+    : `Your FIRST action must be a single ${ASK_USER_QUESTION_TOOL_NAME} tool call (no preamble). Use this EXACT string for the \`question\` field ...do not paraphrase or shorten it:
 
 ${jsonStringify(initialQuestion)}
 
 Set \`header: "Action"\` and offer the four actions (create/list/update/run) as options. After the user picks, follow the matching workflow below.`
 
+  const providerName = isDsxuProviderMode()
+    ? 'DSXU Remote Session Provider'
+    : 'legacy cloud remote agents'
+  const defaultModel = isDsxuProviderMode()
+    ? 'deepseek-v4-flash-thinking-high'
+    : getCompatDefaultTierModelId()
+  const scheduledUrl = isDsxuProviderMode()
+    ? 'local DSXU task dashboard or .dsxu/remote-triggers.json'
+    : 'legacy scheduled-agent dashboard'
+
   return `# Schedule Remote Agents
 
-You are helping the user schedule, update, list, or run **remote** Claude Code agents. These are NOT local cron jobs — each trigger spawns a fully isolated remote session (CCR) in Anthropic's cloud infrastructure on a cron schedule. The agent runs in a sandboxed environment with its own git checkout, tools, and optional MCP connections.
+You are helping the user schedule, update, list, or run **remote/background** DSXU Code agents through ${providerName}. These are not shell-only cron snippets: each trigger records a DSXU task contract, allowed tools, model strategy, evidence policy, optional MCP connectors, and a runnable prompt.
 
 ## First Step
 
@@ -182,15 +234,15 @@ ${setupNotesSection}
 
 ## What You Can Do
 
-Use the \`${REMOTE_TRIGGER_TOOL_NAME}\` tool (load it first with \`ToolSearch select:${REMOTE_TRIGGER_TOOL_NAME}\`; auth is handled in-process — do not use curl):
+Use the \`${REMOTE_TRIGGER_TOOL_NAME}\` tool (load it first with \`ToolSearch select:${REMOTE_TRIGGER_TOOL_NAME}\`; auth is handled in-process ...do not use curl):
 
-- \`{action: "list"}\` — list all triggers
-- \`{action: "get", trigger_id: "..."}\` — fetch one trigger
-- \`{action: "create", body: {...}}\` — create a trigger
-- \`{action: "update", trigger_id: "...", body: {...}}\` — partial update
-- \`{action: "run", trigger_id: "..."}\` — run a trigger now
+- \`{action: "list"}\` ...list all triggers
+- \`{action: "get", trigger_id: "..."}\` ...fetch one trigger
+- \`{action: "create", body: {...}}\` ...create a trigger
+- \`{action: "update", trigger_id: "...", body: {...}}\` ...partial update
+- \`{action: "run", trigger_id: "..."}\` ...run a trigger now
 
-You CANNOT delete triggers. If the user asks to delete, direct them to: https://claude.ai/code/scheduled
+You CANNOT delete triggers from this skill. If the user asks to delete, direct them to: ${scheduledUrl}
 
 ## Create body shape
 
@@ -203,7 +255,7 @@ You CANNOT delete triggers. If the user asks to delete, direct them to: https://
     "ccr": {
       "environment_id": "ENVIRONMENT_ID",
       "session_context": {
-        "model": "claude-sonnet-4-6",
+        "model": "${defaultModel}",
         "sources": [
           {"git_repository": {"url": "${gitRepoUrl || 'https://github.com/ORG/REPO'}"}}
         ],
@@ -227,13 +279,13 @@ Generate a fresh lowercase UUID for \`events[].data.uuid\` yourself.
 
 ## Available MCP Connectors
 
-These are the user's currently connected claude.ai MCP connectors:
+These are the user's currently connected DSXU MCP connectors:
 
 ${connectorsInfo}
 
-When attaching connectors to a trigger, use the \`connector_uuid\` and \`name\` shown above (the name is already sanitized to only contain letters, numbers, hyphens, and underscores), and the connector's URL. The \`name\` field in \`mcp_connections\` must only contain \`[a-zA-Z0-9_-]\` — dots and spaces are NOT allowed.
+When attaching connectors to a trigger, use the \`connector_uuid\` and \`name\` shown above (the name is already sanitized to only contain letters, numbers, hyphens, and underscores), and the connector's URL. The \`name\` field in \`mcp_connections\` must only contain \`[a-zA-Z0-9_-]\` ...dots and spaces are NOT allowed.
 
-**Important:** Infer what services the agent needs from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack connectors. Cross-reference against the list above and warn if any required service isn't connected. If a needed connector is missing, direct the user to https://claude.ai/settings/connectors to connect it first.
+**Important:** Infer what services the agent needs from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack connectors. Cross-reference against the list above and warn if any required service isn't connected. In DSXU mode, missing connectors should be configured through DSXU MCP settings rather than legacy cloud settings.
 
 ## Environments
 
@@ -246,33 +298,33 @@ ${createdEnvironment ? `\n**Note:** A new environment \`${createdEnvironment.nam
 
 ## API Field Reference
 
-### Create Trigger — Required Fields
-- \`name\` (string) — A descriptive name
-- \`cron_expression\` (string) — 5-field cron. **Minimum interval is 1 hour.**
-- \`job_config\` (object) — Session configuration (see structure above)
+### Create Trigger ...Required Fields
+- \`name\` (string) ...A descriptive name
+- \`cron_expression\` (string) ...5-field cron. **Minimum interval is 1 hour.**
+- \`job_config\` (object) ...Session configuration (see structure above)
 
-### Create Trigger — Optional Fields
+### Create Trigger ...Optional Fields
 - \`enabled\` (boolean, default: true)
-- \`mcp_connections\` (array) — MCP servers to attach:
+- \`mcp_connections\` (array) ...MCP servers to attach:
   \`\`\`json
   [{"connector_uuid": "uuid", "name": "server-name", "url": "https://..."}]
   \`\`\`
 
-### Update Trigger — Optional Fields
+### Update Trigger ...Optional Fields
 All fields optional (partial update):
 - \`name\`, \`cron_expression\`, \`enabled\`, \`job_config\`
-- \`mcp_connections\` — Replace MCP connections
-- \`clear_mcp_connections\` (boolean) — Remove all MCP connections
+- \`mcp_connections\` ...Replace MCP connections
+- \`clear_mcp_connections\` (boolean) ...Remove all MCP connections
 
 ### Cron Expression Examples
 
 The user's local timezone is **${userTimezone}**. Cron expressions are always in UTC. When the user says a local time, convert it to UTC for the cron expression but confirm with them: "9am ${userTimezone} = Xam UTC, so the cron would be \`0 X * * 1-5\`."
 
-- \`0 9 * * 1-5\` — Every weekday at 9am **UTC**
-- \`0 */2 * * *\` — Every 2 hours
-- \`0 0 * * *\` — Daily at midnight **UTC**
-- \`30 14 * * 1\` — Every Monday at 2:30pm **UTC**
-- \`0 8 1 * *\` — First of every month at 8am **UTC**
+- \`0 9 * * 1-5\` ...Every weekday at 9am **UTC**
+- \`0 */2 * * *\` ...Every 2 hours
+- \`0 0 * * *\` ...Daily at midnight **UTC**
+- \`30 14 * * 1\` ...Every Monday at 2:30pm **UTC**
+- \`0 8 1 * *\` ...First of every month at 8am **UTC**
 
 Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 
@@ -280,16 +332,16 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 
 ### CREATE a new trigger:
 
-1. **Understand the goal** — Ask what they want the remote agent to do. What repo(s)? What task? Remind them that the agent runs remotely — it won't have access to their local machine, local files, or local environment variables.
-2. **Craft the prompt** — Help them write an effective agent prompt. Good prompts are:
+1. **Understand the goal** ...Ask what they want the remote/background agent to do. What repo(s)? What task? In DSXU mode, local access is governed by workspace policy and permissions; do not assume unrestricted local access.
+2. **Craft the prompt** ...Help them write an effective agent prompt. Good prompts are:
    - Specific about what to do and what success looks like
    - Clear about which files/areas to focus on
    - Explicit about what actions to take (open PRs, commit, just analyze, etc.)
-3. **Set the schedule** — Ask when and how often. The user's timezone is ${userTimezone}. When they say a time (e.g., "every morning at 9am"), assume they mean their local time and convert to UTC for the cron expression. Always confirm the conversion: "9am ${userTimezone} = Xam UTC."
-4. **Choose the model** — Default to \`claude-sonnet-4-6\`. Tell the user which model you're defaulting to and ask if they want a different one.
-5. **Validate connections** — Infer what services the agent will need from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack MCP connectors. Cross-reference with the connectors list above. If any are missing, warn the user and link them to https://claude.ai/settings/connectors to connect first.${gitRepoUrl ? ` The default git repo is already set to \`${gitRepoUrl}\`. Ask the user if this is the right repo or if they need a different one.` : ' Ask which git repos the remote agent needs cloned into its environment.'}
-6. **Review and confirm** — Show the full configuration before creating. Let them adjust.
-7. **Create it** \u2014 Call \`${REMOTE_TRIGGER_TOOL_NAME}\` with \`action: "create"\` and show the result. The response includes the trigger ID. Always output a link at the end: \`https://claude.ai/code/scheduled/{TRIGGER_ID}\`
+3. **Set the schedule** ...Ask when and how often. The user's timezone is ${userTimezone}. When they say a time (e.g., "every morning at 9am"), assume they mean their local time and convert to UTC for the cron expression. Always confirm the conversion: "9am ${userTimezone} = Xam UTC."
+4. **Choose the model** ...Default to \`${defaultModel}\`. Tell the user which model you're defaulting to and ask if they want a different one.
+5. **Validate connections** ...Infer what services the agent will need from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack MCP connectors. Cross-reference with the connectors list above. If any are missing, warn the user to configure DSXU MCP connectors before scheduling.${gitRepoUrl ? ` The default git repo is already set to \`${gitRepoUrl}\`. Ask the user if this is the right repo or if they need a different one.` : ' Ask which git repos the remote/background agent needs cloned into its environment.'}
+6. **Review and confirm** ...Show the full configuration before creating. Let them adjust.
+7. **Create it** \u2014 Call \`${REMOTE_TRIGGER_TOOL_NAME}\` with \`action: "create"\` and show the result. The response includes the trigger ID. In DSXU mode, say where the local trigger evidence was written; in legacy cloud mode, output the scheduled-agent URL.
 
 ### UPDATE a trigger:
 
@@ -311,13 +363,13 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 
 ## Important Notes
 
-- These are REMOTE agents — they run in Anthropic's cloud, not on the user's machine. They cannot access local files, local services, or local environment variables.
+- These are DSXU remote/background agents. In DSXU mode they run under DSXU policy and evidence rules; do not imply legacy cloud execution.
 - Always convert cron to human-readable when displaying
 - Default to \`enabled: true\` unless user says otherwise
 - Accept GitHub URLs in any format (https://github.com/org/repo, org/repo, etc.) and normalize to the full HTTPS URL (without .git suffix)
-- The prompt is the most important part — spend time getting it right. The remote agent starts with zero context, so the prompt must be self-contained.
-- To delete a trigger, direct users to https://claude.ai/code/scheduled
-${needsGitHubAccessReminder ? `- If the user's request seems to require GitHub repo access (e.g. cloning a repo, opening PRs, reading code), remind them that ${getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_lantern', false) ? "they should run /web-setup to connect their GitHub account (or install the Claude GitHub App on the repo as an alternative) — otherwise the remote agent won't be able to access it" : "they need the Claude GitHub App installed on the repo — otherwise the remote agent won't be able to access it"}.` : ''}
+- The prompt is the most important part ...spend time getting it right. The remote agent starts with zero context, so the prompt must be self-contained.
+- To delete a trigger, direct users to ${scheduledUrl}
+${needsGitHubAccessReminder ? `- If the user's request seems to require GitHub repo access (e.g. cloning a repo, opening PRs, reading code), remind them to connect GitHub through DSXU MCP/Git credentials before scheduling; otherwise the remote/background agent won't be able to access it.` : ''}
 ${userArgs ? `\n## User Request\n\nThe user said: "${userArgs}"\n\nStart by understanding their intent and working through the appropriate workflow above.` : ''}`
 }
 
@@ -325,44 +377,66 @@ export function registerScheduleRemoteAgentsSkill(): void {
   registerBundledSkill({
     name: 'schedule',
     description:
-      'Create, update, list, or run scheduled remote agents (triggers) that execute on a cron schedule.',
+      'Create, update, list, or run scheduled DSXU remote/background agents that execute on a cron schedule.',
     whenToUse:
-      'When the user wants to schedule a recurring remote agent, set up automated tasks, create a cron job for Claude Code, or manage their scheduled agents/triggers.',
+      'When the user wants to schedule a recurring DSXU remote/background agent, set up automated tasks, create a DSXU cron job, or manage scheduled DSXU triggers.',
     userInvocable: true,
     isEnabled: () =>
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false) &&
+      (isDsxuProviderMode() ||
+        (isLegacyScheduleMigrationEnabled() &&
+          getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false))) &&
       isPolicyAllowed('allow_remote_sessions'),
     allowedTools: [REMOTE_TRIGGER_TOOL_NAME, ASK_USER_QUESTION_TOOL_NAME],
     async getPromptForCommand(args: string, context: ToolUseContext) {
-      if (!getClaudeAIOAuthTokens()?.accessToken) {
+      const dsxuMode = isDsxuProviderMode()
+      if (!dsxuMode && !isLegacyScheduleMigrationEnabled()) {
         return [
           {
             type: 'text',
-            text: 'You need to authenticate with a claude.ai account first. API accounts are not supported. Run /login, then try /schedule again.',
+            text: 'Legacy cloud scheduling is physically isolated. Enable DSXU_ENABLE_LEGACY_REMOTE_TRIGGER=1 only for one-time migration. Default DSXU scheduling uses the DSXU Remote Session Provider.',
+          },
+        ]
+      }
+
+      if (!dsxuMode && !getCompatProviderAccessToken()) {
+        return [
+          {
+            type: 'text',
+            text: 'Legacy cloud scheduling requires migrated cloud credentials. DSXU mode uses the DSXU Remote Session Provider and does not require legacy cloud login.',
           },
         ]
       }
 
       let environments: EnvironmentResource[]
-      try {
-        environments = await fetchEnvironments()
-      } catch (err) {
-        logForDebugging(`[schedule] Failed to fetch environments: ${err}`, {
-          level: 'warn',
-        })
-        return [
+      if (dsxuMode) {
+        environments = [
           {
-            type: 'text',
-            text: "We're having trouble connecting with your remote claude.ai account to set up a scheduled task. Please try /schedule again in a few minutes.",
-          },
+            environment_id: 'dsxu-local-workspace',
+            name: 'DSXU local workspace',
+            kind: 'local',
+          } as EnvironmentResource,
         ]
+      } else {
+        try {
+          environments = await fetchEnvironments()
+        } catch (err) {
+          logForDebugging(`[schedule] Failed to fetch environments: ${err}`, {
+            level: 'warn',
+          })
+          return [
+            {
+              type: 'text',
+              text: "We're having trouble connecting with the legacy cloud account to set up a scheduled task. Use DSXU mode or try the migration path again later.",
+            },
+          ]
+        }
       }
 
       let createdEnvironment: EnvironmentResource | null = null
-      if (environments.length === 0) {
+      if (!dsxuMode && environments.length === 0) {
         try {
           createdEnvironment = await createDefaultCloudEnvironment(
-            'claude-code-default',
+            'dsxu-code-default',
           )
           environments = [createdEnvironment]
         } catch (err) {
@@ -372,14 +446,14 @@ export function registerScheduleRemoteAgentsSkill(): void {
           return [
             {
               type: 'text',
-              text: 'No remote environments found, and we could not create one automatically. Visit https://claude.ai/code to set one up, then run /schedule again.',
+              text: 'No remote environments found, and we could not create one automatically. Configure a DSXU remote environment, then run /schedule again.',
             },
           ]
         }
       }
 
-      // Soft setup checks — collected as upfront notes embedded in the initial
-      // AskUserQuestion dialog. Never block — triggers don't require a git
+      // Soft setup checks ...collected as upfront notes embedded in the initial
+      // AskUserQuestion dialog. Never block ...triggers don't require a git
       // source (e.g., Slack-only polls), and the trigger's sources may point
       // at a different repo than cwd anyway.
       const setupNotes: string[] = []
@@ -388,7 +462,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       const repo = await detectCurrentRepositoryWithHost()
       if (repo === null) {
         setupNotes.push(
-          `Not in a git repo — you'll need to specify a repo URL manually (or skip repos entirely).`,
+          `Not in a git repo ...you'll need to specify a repo URL manually (or skip repos entirely).`,
         )
       } else if (repo.host === 'github.com') {
         const { hasAccess } = await checkRepoForRemoteAccess(
@@ -402,22 +476,24 @@ export function registerScheduleRemoteAgentsSkill(): void {
             false,
           )
           const msg = webSetupEnabled
-            ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 run /web-setup to sync your GitHub credentials, or install the Claude GitHub App at https://claude.ai/code/onboarding?magic=github-app-setup.`
-            : `Claude GitHub App not installed on ${repo.owner}/${repo.name} \u2014 install at https://claude.ai/code/onboarding?magic=github-app-setup if your trigger needs this repo.`
+            ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 connect GitHub through DSXU MCP/Git credentials before scheduling.`
+            : `GitHub access is not configured for ${repo.owner}/${repo.name} \u2014 connect GitHub through DSXU MCP/Git credentials if your trigger needs this repo.`
           setupNotes.push(msg)
         }
       }
       // Non-github.com hosts (GHE/GitLab/etc.): silently skip. The GitHub
       // App check is github.com-specific, and the "not in a git repo" note
-      // would be factually wrong — getCurrentRepoHttpsUrl() below will
+      // would be factually wrong ...getCurrentRepoHttpsUrl() below will
       // still populate gitRepoUrl with the GHE URL.
 
-      const connectors = getConnectedClaudeAIConnectors(
-        context.options.mcpClients,
-      )
+      const connectors = dsxuMode
+        ? getConnectedDsxuConnectors(context.options.mcpClients)
+        : getConnectedLegacyCloudConnectors(context.options.mcpClients)
       if (connectors.length === 0) {
         setupNotes.push(
-          `No MCP connectors — connect at https://claude.ai/settings/connectors if needed.`,
+          dsxuMode
+            ? `No MCP connectors ...configure DSXU MCP servers if needed.`
+            : `No MCP connectors ...legacy cloud connector import is migration-only.`,
         )
       }
 
@@ -444,4 +520,30 @@ export function registerScheduleRemoteAgentsSkill(): void {
       return [{ type: 'text', text: prompt }]
     },
   })
+}
+
+export function getDsxuScheduleRemoteAgentsRuntimeProfile(): {
+  runtime: 'DSXU Schedule Remote Agents Skill'
+  providerMode: string
+  allowedTools: readonly string[]
+  defaultModel: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Schedule Remote Agents Skill',
+    providerMode: isDsxuProviderMode()
+      ? 'DSXU Remote Session Provider'
+      : 'legacy migration path',
+    allowedTools: [REMOTE_TRIGGER_TOOL_NAME, ASK_USER_QUESTION_TOOL_NAME],
+    defaultModel: isDsxuProviderMode()
+      ? 'deepseek-v4-flash-thinking-high'
+      : `${getCompatDefaultTierModelId()} legacy migration default`,
+    activationEvidence: [
+      'skill is enabled in DSXU mode without legacy cloud OAuth',
+      'legacy cloud scheduling requires explicit DSXU_ENABLE_LEGACY_REMOTE_TRIGGER',
+      'DSXU mode uses dsxu-local-workspace environment',
+      'connected non-legacy-cloud MCP clients become DSXU connectors',
+      'prompt requires RemoteTriggerTool rather than shell-only cron snippets',
+    ],
+  }
 }

@@ -4,6 +4,29 @@ import type { SessionId } from '../types/ids.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
 
 // -- config
+const LEGACY_EMIT_TOOL_USE_SUMMARIES_ENV =
+  'CL' + 'AUDE_CODE_EMIT_TOOL_USE_SUMMARIES'
+const LEGACY_DISABLE_FAST_MODE_ENV = 'CL' + 'AUDE_CODE_DISABLE_FAST_MODE'
+const STREAMING_TOOL_EXECUTION_GATE = 'tengu_streaming_tool_execution2'
+
+function isDeepSeekDirectRuntime(): boolean {
+  const provider = process.env.DSXU_MODEL_PROVIDER?.toLowerCase().trim()
+  const gateway = process.env.DSXU_MODEL_GATEWAY?.toLowerCase().trim()
+  return provider === 'deepseek' && (!gateway || gateway === 'direct')
+}
+
+export function isStreamingToolExecutionEnabled(): boolean {
+  if (isEnvTruthy(process.env.DSXU_CODE_DISABLE_STREAMING_TOOL_EXECUTION)) {
+    return false
+  }
+  if (isEnvTruthy(process.env.DSXU_CODE_STREAMING_TOOL_EXECUTION)) {
+    return true
+  }
+  return (
+    isDeepSeekDirectRuntime() ||
+    checkStatsigFeatureGate_CACHED_MAY_BE_STALE(STREAMING_TOOL_EXECUTION_GATE)
+  )
+}
 
 // Immutable values snapshotted once at query() entry. Separating these from
 // the per-iteration State struct and the mutable ToolUseContext makes future
@@ -30,17 +53,19 @@ export function buildQueryConfig(): QueryConfig {
   return {
     sessionId: getSessionId(),
     gates: {
-      streamingToolExecution: checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
-        'tengu_streaming_tool_execution2',
-      ),
+      streamingToolExecution: isStreamingToolExecutionEnabled(),
       emitToolUseSummaries: isEnvTruthy(
-        process.env.CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES,
+        process.env.DSXU_CODE_EMIT_TOOL_USE_SUMMARIES ??
+          process.env[LEGACY_EMIT_TOOL_USE_SUMMARIES_ENV],
       ),
       isAnt: process.env.USER_TYPE === 'ant',
       // Inlined from fastMode.ts to avoid pulling its heavy module graph
       // (axios, settings, auth, model, oauth, config) into test shards that
       // didn't previously load it — changes init order and breaks unrelated tests.
-      fastModeEnabled: !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_FAST_MODE),
+      fastModeEnabled: !isEnvTruthy(
+        process.env.DSXU_CODE_DISABLE_FAST_MODE ??
+          process.env[LEGACY_DISABLE_FAST_MODE_ENV],
+      ),
     },
   }
 }

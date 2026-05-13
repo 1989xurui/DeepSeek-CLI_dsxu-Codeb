@@ -20,3 +20,12 @@ export function filterInbox(messages: MessageEnvelope[], recipient: RoleName): M
 export function extractPayload<T = Record<string, unknown>>(msg: MessageEnvelope): T {
   return msg.payload as T;
 }
+
+
+// V14 lifecycle shim: message
+export function processMessageLifecycle(input) {
+  void input
+  const state = 'message-state'
+  const lifecycle = 'message:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

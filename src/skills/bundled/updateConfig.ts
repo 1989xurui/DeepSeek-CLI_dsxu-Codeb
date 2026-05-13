@@ -1,6 +1,5 @@
-import { toJSONSchema } from 'zod/v4'
-import { SettingsSchema } from '../../utils/settings/types.js'
-import { jsonStringify } from '../../utils/slowOperations.js'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import { generateSettingsJSONSchema } from '../../utils/settings/schemaOutput.js'
 import { registerBundledSkill } from '../bundledSkills.js'
 
 /**
@@ -8,8 +7,49 @@ import { registerBundledSkill } from '../bundledSkills.js'
  * This keeps the skill prompt in sync with the actual types.
  */
 function generateSettingsSchema(): string {
-  const jsonSchema = toJSONSchema(SettingsSchema(), { io: 'input' })
-  return jsonStringify(jsonSchema, null, 2)
+  return generateSettingsJSONSchema()
+    .replaceAll('DSXU Code', 'DSXU Code')
+    .replaceAll('DSXU', 'DSXU')
+    .replaceAll('dsxu-code-settings.json', 'dsxu-code-settings.json')
+    .replaceAll('DSXU.md', 'DSXU.md')
+    .replaceAll('.dsxu', '.dsxu')
+    .replaceAll('~/.dsxu/plans/', '~/.dsxu/plans/')
+}
+
+export function getDsxuUpdateConfigSkillRuntimeProfile(): {
+  skill: 'update-config'
+  configFiles: readonly string[]
+  capabilityGroups: readonly string[]
+  activationEvidence: readonly string[]
+  safetyChecks: readonly string[]
+} {
+  return {
+    skill: 'update-config',
+    configFiles: [
+      '~/.dsxu/settings.json',
+      '.dsxu/settings.json',
+      '.dsxu/settings.local.json',
+    ],
+    capabilityGroups: [
+      'permissions',
+      'hooks',
+      'environment variables',
+      'MCP server configuration',
+      'plugin configuration',
+      'model/default view settings',
+    ],
+    activationEvidence: [
+      'registerUpdateConfigSkill exposes a user-invocable DSXU config skill',
+      'settings schema is generated dynamically from the actual Zod schema',
+      '[hooks-only] mode narrows output to hook configuration and verification flow',
+    ],
+    safetyChecks: [
+      'read before write',
+      'merge arrays instead of replacing existing settings',
+      'pipe-test hooks before persisting',
+      'validate JSON and matcher shape after edit',
+    ],
+  }
 }
 
 const SETTINGS_EXAMPLES_DOCS = `## Settings File Locations
@@ -18,11 +58,11 @@ Choose the appropriate file based on scope:
 
 | File | Scope | Git | Use For |
 |------|-------|-----|---------|
-| \`~/.claude/settings.json\` | Global | N/A | Personal preferences for all projects |
-| \`.claude/settings.json\` | Project | Commit | Team-wide hooks, permissions, plugins |
-| \`.claude/settings.local.json\` | Project | Gitignore | Personal overrides for this project |
+| \`~/.dsxu/settings.json\` | Global | N/A | Personal preferences for all projects |
+| \`.dsxu/settings.json\` | Project | Commit | Team-wide hooks, permissions, plugins |
+| \`.dsxu/settings.local.json\` | Project | Gitignore | Personal overrides for this project |
 
-Settings load in order: user → project → local (later overrides earlier).
+Settings load in order: user - project - local (later overrides earlier).
 
 ## Settings Schema Reference
 
@@ -30,7 +70,7 @@ Settings load in order: user → project → local (later overrides earlier).
 \`\`\`json
 {
   "permissions": {
-    "allow": ["Bash(npm:*)", "Edit(.claude)", "Read"],
+    "allow": ["Bash(npm:*)", "Edit(.dsxu)", "Read"],
     "deny": ["Bash(rm -rf:*)"],
     "ask": ["Write(/etc/*)"],
     "defaultMode": "default" | "plan" | "acceptEdits" | "dontAsk",
@@ -57,7 +97,7 @@ Settings load in order: user → project → local (later overrides earlier).
 ### Model & Agent
 \`\`\`json
 {
-  "model": "sonnet",  // or "opus", "haiku", full model ID
+  "model": "flash",  // or "flash-max", "pro", full DeepSeek model ID
   "agent": "agent-name",
   "alwaysThinkingEnabled": true
 }
@@ -87,11 +127,11 @@ Set \`commit\` or \`pr\` to empty string \`""\` to hide that attribution.
 \`\`\`json
 {
   "enabledPlugins": {
-    "formatter@anthropic-tools": true
+    "formatter@dsxu-tools": true
   }
 }
 \`\`\`
-Plugin syntax: \`plugin-name@source\` where source is \`claude-code-marketplace\`, \`claude-plugins-official\`, or \`builtin\`.
+Plugin syntax: \`plugin-name@source\` where source is \`dsxu-code-marketplace\`, \`dsxu-plugins-official\`, or \`builtin\`.
 
 ### Other Settings
 - \`language\`: Preferred response language (e.g., "japanese")
@@ -109,7 +149,7 @@ Plugin syntax: \`plugin-name@source\` where source is \`claude-code-marketplace\
 
 const HOOKS_DOCS = `## Hooks Configuration
 
-Hooks run commands at specific points in Claude Code's lifecycle.
+Hooks run commands at specific points in DSXU Code's lifecycle.
 
 ### Hook Structure
 \`\`\`json
@@ -141,7 +181,7 @@ Hooks run commands at specific points in Claude Code's lifecycle.
 | PostToolUse | Tool name | Run after successful tool |
 | PostToolUseFailure | Tool name | Run after tool fails |
 | Notification | Notification type | Run on notifications |
-| Stop | - | Run when Claude stops (including clear, resume, compact) |
+| Stop | - | Run when DSXU Code stops (including clear, resume, compact) |
 | PreCompact | "manual"/"auto" | Before compaction |
 | PostCompact | "manual"/"auto" | After compaction (receives summary) |
 | UserPromptSubmit | - | When user submits |
@@ -235,7 +275,7 @@ Hooks can return JSON to control behavior:
       "matcher": "Bash",
       "hooks": [{
         "type": "command",
-        "command": "jq -r '.tool_input.command' >> ~/.claude/bash-log.txt"
+        "command": "jq -r '.tool_input.command' >> ~/.dsxu/bash-log.txt"
       }]
     }]
   }
@@ -268,55 +308,55 @@ echo '{"systemMessage": "Session complete!"}'
 
 const HOOK_VERIFICATION_FLOW = `## Constructing a Hook (with verification)
 
-Given an event, matcher, target file, and desired behavior, follow this flow. Each step catches a different failure class — a hook that silently does nothing is worse than no hook.
+Given an event, matcher, target file, and desired behavior, follow this flow. Each step catches a different failure class - a hook that silently does nothing is worse than no hook.
 
 1. **Dedup check.** Read the target file. If a hook already exists on the same event+matcher, show the existing command and ask: keep it, replace it, or add alongside.
 
-2. **Construct the command for THIS project — don't assume.** The hook receives JSON on stdin. Build a command that:
-   - Extracts any needed payload safely — use \`jq -r\` into a quoted variable or \`{ read -r f; ... "$f"; }\`, NOT unquoted \`| xargs\` (splits on spaces)
+2. **Construct the command for THIS project - don't assume.** The hook receives JSON on stdin. Build a command that:
+   - Extracts any needed payload safely - use \`jq -r\` into a quoted variable or \`{ read -r f; ... "$f"; }\`, NOT unquoted \`| xargs\` (splits on spaces)
    - Invokes the underlying tool the way this project runs it (npx/bunx/yarn/pnpm? Makefile target? globally-installed?)
    - Skips inputs the tool doesn't handle (formatters often have \`--ignore-unknown\`; if not, guard by extension)
-   - Stays RAW for now — no \`|| true\`, no stderr suppression. You'll wrap it after the pipe-test passes.
+   - Stays RAW for now - no \`|| true\`, no stderr suppression. You'll wrap it after the pipe-test passes.
 
 3. **Pipe-test the raw command.** Synthesize the stdin payload the hook will receive and pipe it directly:
    - \`Pre|PostToolUse\` on \`Write|Edit\`: \`echo '{"tool_name":"Edit","tool_input":{"file_path":"<a real file from this repo>"}}' | <cmd>\`
    - \`Pre|PostToolUse\` on \`Bash\`: \`echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' | <cmd>\`
    - \`Stop\`/\`UserPromptSubmit\`/\`SessionStart\`: most commands don't read stdin, so \`echo '{}' | <cmd>\` suffices
 
-   Check exit code AND side effect (file actually formatted, test actually ran). If it fails you get a real error — fix (wrong package manager? tool not installed? jq path wrong?) and retest. Once it works, wrap with \`2>/dev/null || true\` (unless the user wants a blocking check).
+   Check exit code AND side effect (file actually formatted, test actually ran). If it fails you get a real error - fix (wrong package manager? tool not installed? jq path wrong?) and retest. Once it works, wrap with \`2>/dev/null || true\` (unless the user wants a blocking check).
 
-4. **Write the JSON.** Merge into the target file (schema shape in the "Hook Structure" section above). If this creates \`.claude/settings.local.json\` for the first time, add it to .gitignore — the Write tool doesn't auto-gitignore it.
+4. **Write the JSON.** Merge into the target file (schema shape in the "Hook Structure" section above). If this creates \`.dsxu/settings.local.json\` for the first time, add it to .gitignore - the Write tool doesn't auto-gitignore it.
 
 5. **Validate syntax + schema in one shot:**
 
    \`jq -e '.hooks.<event>[] | select(.matcher == "<matcher>") | .hooks[] | select(.type == "command") | .command' <target-file>\`
 
-   Exit 0 + prints your command = correct. Exit 4 = matcher doesn't match. Exit 5 = malformed JSON or wrong nesting. A broken settings.json silently disables ALL settings from that file — fix any pre-existing malformation too.
+   Exit 0 + prints your command = correct. Exit 4 = matcher doesn't match. Exit 5 = malformed JSON or wrong nesting. A broken settings.json silently disables ALL settings from that file - fix any pre-existing malformation too.
 
-6. **Prove the hook fires** — only for \`Pre|PostToolUse\` on a matcher you can trigger in-turn (\`Write|Edit\` via Edit, \`Bash\` via Bash). \`Stop\`/\`UserPromptSubmit\`/\`SessionStart\` fire outside this turn — skip to step 7.
+6. **Prove the hook fires** - only for \`Pre|PostToolUse\` on a matcher you can trigger in-turn (\`Write|Edit\` via Edit, \`Bash\` via Bash). \`Stop\`/\`UserPromptSubmit\`/\`SessionStart\` fire outside this turn - skip to step 7.
 
-   For a **formatter** on \`PostToolUse\`/\`Write|Edit\`: introduce a detectable violation via Edit (two consecutive blank lines, bad indentation, missing semicolon — something this formatter corrects; NOT trailing whitespace, Edit strips that before writing), re-read, confirm the hook **fixed** it. For **anything else**: temporarily prefix the command in settings.json with \`echo "$(date) hook fired" >> /tmp/claude-hook-check.txt; \`, trigger the matching tool (Edit for \`Write|Edit\`, a harmless \`true\` for \`Bash\`), read the sentinel file.
+   For a **formatter** on \`PostToolUse\`/\`Write|Edit\`: introduce a detectable violation via Edit (two consecutive blank lines, bad indentation, missing semicolon - something this formatter corrects; NOT trailing whitespace, Edit strips that before writing), re-read, confirm the hook **fixed** it. For **anything else**: temporarily prefix the command in settings.json with \`echo "$(date) hook fired" >> /tmp/dsxu-hook-check.txt; \`, trigger the matching tool (Edit for \`Write|Edit\`, a harmless \`true\` for \`Bash\`), read the sentinel file.
 
-   **Always clean up** — revert the violation, strip the sentinel prefix — whether the proof passed or failed.
+   **Always clean up** - revert the violation, strip the sentinel prefix - whether the proof passed or failed.
 
-   **If proof fails but pipe-test passed and \`jq -e\` passed**: the settings watcher isn't watching \`.claude/\` — it only watches directories that had a settings file when this session started. The hook is written correctly. Tell the user to open \`/hooks\` once (reloads config) or restart — you can't do this yourself; \`/hooks\` is a user UI menu and opening it ends this turn.
+   **If proof fails but pipe-test passed and \`jq -e\` passed**: the settings watcher isn't watching \`.dsxu/\` yet - it only watches directories that had a settings file when this session started. The hook is written correctly. Tell the user to open \`/hooks\` once (reloads config) or restart - you can't do this yourself; \`/hooks\` is a user UI menu and opening it ends this turn.
 
-7. **Handoff.** Tell the user the hook is live (or needs \`/hooks\`/restart per the watcher caveat). Point them at \`/hooks\` to review, edit, or disable it later. The UI only shows "Ran N hooks" if a hook errors or is slow — silent success is invisible by design.
+7. **Handoff.** Tell the user the hook is live (or needs \`/hooks\`/restart per the watcher caveat). Point them at \`/hooks\` to review, edit, or disable it later. The UI only shows "Ran N hooks" if a hook errors or is slow - silent success is invisible by design.
 `
 
 const UPDATE_CONFIG_PROMPT = `# Update Config Skill
 
-Modify Claude Code configuration by updating settings.json files.
+Modify DSXU Code configuration by updating settings.json files.
 
 ## When Hooks Are Required (Not Memory)
 
 If the user wants something to happen automatically in response to an EVENT, they need a **hook** configured in settings.json. Memory/preferences cannot trigger automated actions.
 
 **These require hooks:**
-- "Before compacting, ask me what to preserve" → PreCompact hook
-- "After writing files, run prettier" → PostToolUse hook with Write|Edit matcher
-- "When I run bash commands, log them" → PreToolUse hook with Bash matcher
-- "Always run tests after code changes" → PostToolUse hook
+- "Before compacting, ask me what to preserve" - PreCompact hook
+- "After writing files, run prettier" - PostToolUse hook with Write|Edit matcher
+- "When I run bash commands, log them" - PreToolUse hook with Bash matcher
+- "Always run tests after code changes" - PostToolUse hook
 
 **Hook events:** PreToolUse, PostToolUse, PreCompact, PostCompact, Stop, Notification, SessionStart
 
@@ -368,7 +408,7 @@ When adding to permission arrays or hook arrays, **merge with existing**, don't 
   "permissions": {
     "allow": [
       "Bash(git:*)",      // existing
-      "Edit(.claude)",    // existing
+      "Edit(.dsxu)",    // existing
       "Bash(npm:*)"       // new
     ]
   }
@@ -385,10 +425,10 @@ ${HOOK_VERIFICATION_FLOW}
 
 ### Adding a Hook
 
-User: "Format my code after Claude writes it"
+User: "Format my code after DSXU writes it"
 
 1. **Clarify**: Which formatter? (prettier, gofmt, etc.)
-2. **Read**: \`.claude/settings.json\` (or create if missing)
+2. **Read**: \`.dsxu/settings.json\` (or create if missing)
 3. **Merge**: Add to existing hooks, don't replace
 4. **Result**:
 \`\`\`json
@@ -434,19 +474,19 @@ User: "Set DEBUG=true"
 ## Troubleshooting Hooks
 
 If a hook isn't running:
-1. **Check the settings file** - Read ~/.claude/settings.json or .claude/settings.json
+1. **Check the settings file** - Read ~/.dsxu/settings.json or .dsxu/settings.json
 2. **Verify JSON syntax** - Invalid JSON silently fails
 3. **Check the matcher** - Does it match the tool name? (e.g., "Bash", "Write", "Edit")
 4. **Check hook type** - Is it "command", "prompt", or "agent"?
 5. **Test the command** - Run the hook command manually to see if it works
-6. **Use --debug** - Run \`claude --debug\` to see hook execution logs
+6. **Use --debug** - Run \`dsxu-code --debug\` to see hook execution logs
 `
 
 export function registerUpdateConfigSkill(): void {
   registerBundledSkill({
     name: 'update-config',
     description:
-      'Use this skill to configure the Claude Code harness via settings.json. Automated behaviors ("from now on when X", "each time X", "whenever X", "before/after X") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions ("allow X", "add permission", "move permission to"), env vars ("set X=Y"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: "allow npm commands", "add bq permission to global settings", "move permission to user settings", "set DEBUG=true", "when claude stops show X". For simple settings like theme/model, use Config tool.',
+      'Use this skill to configure the DSXU Code harness via settings.json. Automated behaviors ("from now on when X", "each time X", "whenever X", "before/after X") require hooks configured in settings.json - the harness executes these, not the model, so memory/preferences cannot fulfill them. Also use for: permissions ("allow X", "add permission", "move permission to"), env vars ("set X=Y"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: "allow npm commands", "add bq permission to global settings", "move permission to user settings", "set DEBUG=true", "when dsxu stops show X". For simple settings like theme/model, use Config tool.',
     allowedTools: ['Read'],
     userInvocable: true,
     async getPromptForCommand(args) {

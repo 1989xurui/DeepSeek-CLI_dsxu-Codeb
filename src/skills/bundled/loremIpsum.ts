@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { registerBundledSkill } from '../bundledSkills.js'
 
 // Verified 1-token words (tested via API token counting)

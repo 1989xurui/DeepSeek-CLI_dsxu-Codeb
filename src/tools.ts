@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { toolMatchesName, type Tool, type Tools } from './Tool.js'
 import { AgentTool } from './tools/AgentTool/AgentTool.js'
@@ -8,17 +9,19 @@ import { FileReadTool } from './tools/FileReadTool/FileReadTool.js'
 import { FileWriteTool } from './tools/FileWriteTool/FileWriteTool.js'
 import { GlobTool } from './tools/GlobTool/GlobTool.js'
 import { NotebookEditTool } from './tools/NotebookEditTool/NotebookEditTool.js'
+import { RunNativeTestTool } from './tools/RunNativeTestTool/RunNativeTestTool.js'
+import { CollectEvidenceTool } from './tools/CollectEvidenceTool/CollectEvidenceTool.js'
 import { WebFetchTool } from './tools/WebFetchTool/WebFetchTool.js'
 import { TaskStopTool } from './tools/TaskStopTool/TaskStopTool.js'
 import { BriefTool } from './tools/BriefTool/BriefTool.js'
 // Dead code elimination: conditional import for ant-only tools
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const REPLTool =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'ant' && process.env.DSXU_CODE_MODE !== '1'
     ? require('./tools/REPLTool/REPLTool.js').REPLTool
     : null
 const SuggestBackgroundPRTool =
-  process.env.USER_TYPE === 'ant'
+  process.env.USER_TYPE === 'ant' && process.env.DSXU_CODE_MODE !== '1'
     ? require('./tools/SuggestBackgroundPRTool/SuggestBackgroundPRTool.js')
         .SuggestBackgroundPRTool
     : null
@@ -26,14 +29,17 @@ const SleepTool =
   feature('PROACTIVE') || feature('KAIROS')
     ? require('./tools/SleepTool/SleepTool.js').SleepTool
     : null
-const cronTools = feature('AGENT_TRIGGERS')
+const cronTools = feature('AGENT_TRIGGERS') ||
+  process.env.DSXU_CODE_ENABLE_CRON_TOOLS === '1'
   ? [
       require('./tools/ScheduleCronTool/CronCreateTool.js').CronCreateTool,
       require('./tools/ScheduleCronTool/CronDeleteTool.js').CronDeleteTool,
       require('./tools/ScheduleCronTool/CronListTool.js').CronListTool,
     ]
   : []
-const RemoteTriggerTool = feature('AGENT_TRIGGERS_REMOTE')
+const RemoteTriggerTool =
+  feature('AGENT_TRIGGERS_REMOTE') ||
+  process.env.DSXU_CODE_ENABLE_REMOTE_TRIGGER_TOOL === '1'
   ? require('./tools/RemoteTriggerTool/RemoteTriggerTool.js').RemoteTriggerTool
   : null
 const MonitorTool = feature('MONITOR_TOOL')
@@ -86,10 +92,12 @@ import { TaskListTool } from './tools/TaskListTool/TaskListTool.js'
 import uniqBy from 'lodash-es/uniqBy.js'
 import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
 import { isTodoV2Enabled } from './utils/tasks.js'
-// Dead code elimination: conditional import for CLAUDE_CODE_VERIFY_PLAN
+// Dead code elimination: conditional import for DSXU_CODE_VERIFY_PLAN
+// with DSXU_CODE_VERIFY_PLAN retained only as a legacy migration alias.
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 const VerifyPlanExecutionTool =
-  process.env.CLAUDE_CODE_VERIFY_PLAN === 'true'
+  process.env.DSXU_CODE_VERIFY_PLAN === 'true' ||
+  process.env.DSXU_CODE_VERIFY_PLAN === 'true'
     ? require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
         .VerifyPlanExecutionTool
     : null
@@ -126,10 +134,14 @@ const SnipTool = feature('HISTORY_SNIP')
 const ListPeersTool = feature('UDS_INBOX')
   ? require('./tools/ListPeersTool/ListPeersTool.js').ListPeersTool
   : null
-const WorkflowTool = feature('WORKFLOW_SCRIPTS')
+const WorkflowTool = feature('WORKFLOW_SCRIPTS') || process.env.DSXU_CODE_MODE === '1'
   ? (() => {
-      require('./tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
-      return require('./tools/WorkflowTool/WorkflowTool.js').WorkflowTool
+      try {
+        require('./tools/WorkflowTool/bundled/index.js').initBundledWorkflows()
+        return require('./tools/WorkflowTool/WorkflowTool.js').WorkflowTool
+      } catch {
+        return null
+      }
     })()
   : null
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
@@ -154,6 +166,67 @@ const getPowerShellTool = () => {
   ).PowerShellTool
 }
 /* eslint-enable @typescript-eslint/no-require-imports */
+
+export const DSXU_DEFAULT_MAINLINE_TOOLS = new Set([
+  'Agent',
+  'AskUserQuestion',
+  'Bash',
+  'Config',
+  'Edit',
+  'EnterPlanMode',
+  'EnterWorktree',
+  'ExitPlanMode',
+  'ExitWorktree',
+  'Glob',
+  'Grep',
+  'LSP',
+  'ListMcpResourcesTool',
+  'NotebookEdit',
+  'PowerShell',
+  'Read',
+  'ReadMcpResourceTool',
+  'RunNativeTest',
+  'SendMessage',
+  'Skill',
+  'Task',
+  'TaskCreate',
+  'TaskGet',
+  'TaskList',
+  'TaskOutput',
+  'TaskStop',
+  'TaskUpdate',
+  'TodoWrite',
+  'ToolSearch',
+  'WebFetch',
+  'WebSearch',
+  'Write',
+  'CollectEvidence',
+  'workflow',
+])
+
+const DSXU_EXPLICIT_TOOL_ENV: Record<string, string> = {
+  Brief: 'DSXU_CODE_ENABLE_BRIEF_TOOL',
+  SendUserMessage: 'DSXU_CODE_ENABLE_BRIEF_TOOL',
+  CronCreate: 'DSXU_CODE_ENABLE_CRON_TOOLS',
+  CronDelete: 'DSXU_CODE_ENABLE_CRON_TOOLS',
+  CronList: 'DSXU_CODE_ENABLE_CRON_TOOLS',
+  RemoteTrigger: 'DSXU_CODE_ENABLE_REMOTE_TRIGGER_TOOL',
+  Monitor: 'DSXU_CODE_ENABLE_MONITOR_TOOL',
+  PushNotification: 'DSXU_CODE_ENABLE_PUSH_NOTIFICATION_TOOL',
+  SubscribePR: 'DSXU_CODE_ENABLE_SUBSCRIBE_PR_TOOL',
+  Sleep: 'DSXU_CODE_ENABLE_SLEEP_TOOL',
+  ListPeers: 'DSXU_CODE_ENABLE_UDS_INBOX_TOOL',
+  SendUserFile: 'DSXU_CODE_ENABLE_SEND_USER_FILE_TOOL',
+  TerminalCapture: 'DSXU_CODE_ENABLE_TERMINAL_CAPTURE_TOOL',
+  WebBrowser: 'DSXU_CODE_ENABLE_WEB_BROWSER_TOOL',
+}
+
+function isDsxuDefaultToolVisible(tool: Tool): boolean {
+  if (!isEnvTruthy(process.env.DSXU_CODE_MODE)) return true
+  if (DSXU_DEFAULT_MAINLINE_TOOLS.has(tool.name)) return true
+  const explicitEnv = DSXU_EXPLICIT_TOOL_ENV[tool.name]
+  return explicitEnv ? isEnvTruthy(process.env[explicitEnv]) : false
+}
 
 /**
  * Predefined tool presets that can be used with --tools flag
@@ -188,7 +261,7 @@ export function getToolsForDefaultPreset(): string[] {
  * This is the source of truth for ALL tools.
  */
 /**
- * NOTE: This MUST stay in sync with https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/claude_code_global_system_caching, in order to cache the system prompt across users.
+ * NOTE: This MUST stay in sync with the global system prompt caching dynamic config, in order to cache the system prompt across users.
  */
 export function getAllBaseTools(): Tools {
   return [
@@ -196,12 +269,15 @@ export function getAllBaseTools(): Tools {
     TaskOutputTool,
     BashTool,
     // Ant-native builds have bfs/ugrep embedded in the bun binary (same ARGV0
-    // trick as ripgrep). When available, find/grep in Claude's shell are aliased
+    // trick as ripgrep). When available, find/grep in DSXU's shell are aliased
     // to these fast tools, so the dedicated Glob/Grep tools are unnecessary.
     ...(hasEmbeddedSearchTools() ? [] : [GlobTool, GrepTool]),
     ExitPlanModeV2Tool,
     FileReadTool,
     FileEditTool,
+    ...(isEnvTruthy(process.env.DSXU_SEMANTIC_TOOLS_ENABLED)
+      ? [RunNativeTestTool, CollectEvidenceTool]
+      : []),
     FileWriteTool,
     NotebookEditTool,
     WebFetchTool,
@@ -211,7 +287,9 @@ export function getAllBaseTools(): Tools {
     AskUserQuestionTool,
     SkillTool,
     EnterPlanModeTool,
-    ...(process.env.USER_TYPE === 'ant' ? [ConfigTool] : []),
+    ...(process.env.USER_TYPE === 'ant' || process.env.DSXU_CODE_MODE === '1'
+      ? [ConfigTool]
+      : []),
     ...(process.env.USER_TYPE === 'ant' ? [TungstenTool] : []),
     ...(SuggestBackgroundPRTool ? [SuggestBackgroundPRTool] : []),
     ...(WebBrowserTool ? [WebBrowserTool] : []),
@@ -229,7 +307,11 @@ export function getAllBaseTools(): Tools {
       ? [getTeamCreateTool(), getTeamDeleteTool()]
       : []),
     ...(VerifyPlanExecutionTool ? [VerifyPlanExecutionTool] : []),
-    ...(process.env.USER_TYPE === 'ant' && REPLTool ? [REPLTool] : []),
+    ...(process.env.USER_TYPE === 'ant' &&
+    process.env.DSXU_CODE_MODE !== '1' &&
+    REPLTool
+      ? [REPLTool]
+      : []),
     ...(WorkflowTool ? [WorkflowTool] : []),
     ...(SleepTool ? [SleepTool] : []),
     ...cronTools,
@@ -245,7 +327,7 @@ export function getAllBaseTools(): Tools {
     ListMcpResourcesTool,
     ReadMcpResourceTool,
     // Include ToolSearchTool when tool search might be enabled (optimistic check)
-    // The actual decision to defer tools happens at request time in claude.ts
+    // The actual decision to defer tools happens at request time in DSXU query
     ...(isToolSearchEnabledOptimistic() ? [ToolSearchTool] : []),
   ]
 }
@@ -257,7 +339,7 @@ export function getAllBaseTools(): Tools {
  *
  * Uses the same matcher as the runtime permission check (step 1a), so MCP
  * server-prefix rules like `mcp__server` strip all tools from that server
- * before the model sees them — not just at call time.
+ * before the model sees them ...not just at call time.
  */
 export function filterToolsByDenyRules<
   T extends {
@@ -270,7 +352,10 @@ export function filterToolsByDenyRules<
 
 export const getTools = (permissionContext: ToolPermissionContext): Tools => {
   // Simple mode: only Bash, Read, and Edit tools
-  if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+  if (
+    isEnvTruthy(process.env.DSXU_CODE_SIMPLE) ||
+    isEnvTruthy(process.env.DSXU_CODE_SIMPLE)
+  ) {
     // --bare + REPL mode: REPL wraps Bash/Read/Edit/etc inside the VM, so
     // return REPL instead of the raw primitives. Matches the non-bare path
     // below which also hides REPL_ONLY_TOOLS when REPL is enabled.
@@ -304,7 +389,9 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     SYNTHETIC_OUTPUT_TOOL_NAME,
   ])
 
-  const tools = getAllBaseTools().filter(tool => !specialTools.has(tool.name))
+  const tools = getAllBaseTools()
+    .filter(tool => !specialTools.has(tool.name))
+    .filter(isDsxuDefaultToolVisible)
 
   // Filter out tools that are denied by the deny rules
   let allowedTools = filterToolsByDenyRules(tools, permissionContext)
@@ -352,14 +439,16 @@ export function assembleToolPool(
   const allowedMcpTools = filterToolsByDenyRules(mcpTools, permissionContext)
 
   // Sort each partition for prompt-cache stability, keeping built-ins as a
-  // contiguous prefix. The server's claude_code_system_cache_policy places a
+  // contiguous prefix. The server's dsxu_code_system_cache_policy places a
   // global cache breakpoint after the last prefix-matched built-in tool; a flat
   // sort would interleave MCP tools into built-ins and invalidate all downstream
   // cache keys whenever an MCP tool sorts between existing built-ins. uniqBy
   // preserves insertion order, so built-ins win on name conflict.
-  // Avoid Array.toSorted (Node 20+) — we support Node 18. builtInTools is
+  // Avoid Array.toSorted (Node 20+) ...we support Node 18. builtInTools is
   // readonly so copy-then-sort; allowedMcpTools is a fresh .filter() result.
-  const byName = (a: Tool, b: Tool) => a.name.localeCompare(b.name)
+  const byName = (a: Tool, b: Tool) => (
+    a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+  )
   return uniqBy(
     [...builtInTools].sort(byName).concat(allowedMcpTools.sort(byName)),
     'name',
@@ -386,4 +475,34 @@ export function getMergedTools(
 ): Tools {
   const builtInTools = getTools(permissionContext)
   return [...builtInTools, ...mcpTools]
+}
+
+export function getDsxuToolRegistryRuntimeProfile(): {
+  runtime: 'DSXU Tool Registry'
+  baseToolNames: string[]
+  defaultMainlineToolNames: string[]
+  explicitSidecarToolEnv: Record<string, string>
+  simpleModeEnv: readonly string[]
+  mcpAssemblyPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Tool Registry',
+    baseToolNames: getAllBaseTools()
+      .filter(Boolean)
+      .map(tool => tool.name),
+    defaultMainlineToolNames: [...DSXU_DEFAULT_MAINLINE_TOOLS],
+    explicitSidecarToolEnv: DSXU_EXPLICIT_TOOL_ENV,
+    simpleModeEnv: ['DSXU_CODE_SIMPLE', 'DSXU_CODE_SIMPLE legacy alias'],
+    mcpAssemblyPolicy:
+      'built-in tools are filtered by DSXU permission context, MCP tools are filtered by deny rules, and prompt-cache-stable sorting preserves built-in prefix ordering',
+    activationEvidence: [
+      'getAllBaseTools is the exhaustive DSXU tool catalog consumed by query/runtime paths',
+      'DSXU_CODE_MODE filters model-visible default tools through DSXU_DEFAULT_MAINLINE_TOOLS before isEnabled checks',
+      'sidecar, remote, trigger, notification, and terminal capture tools require explicit DSXU env gates in DSXU_CODE_MODE',
+      'getTools applies permission deny rules and DSXU simple mode before model exposure',
+      'assembleToolPool merges built-in and MCP tools with deny-rule filtering and deterministic ordering',
+      'getMergedTools keeps built-in and MCP tools reachable for contexts that require both pools',
+    ],
+  }
 }

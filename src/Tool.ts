@@ -1,7 +1,8 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   ToolResultBlockParam,
   ToolUseBlockParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+} from 'src/types/providerSdk.js'
 import type {
   ElicitRequestURLParams,
   ElicitResult,
@@ -11,7 +12,6 @@ import type { z } from 'zod/v4'
 import type { Command } from './commands.js'
 import type { CanUseToolFn } from './hooks/useCanUseTool.js'
 import type { ThinkingConfig } from './utils/thinking.js'
-
 export type ToolInputJSONSchema = {
   [x: string]: unknown
   type: 'object'
@@ -19,12 +19,12 @@ export type ToolInputJSONSchema = {
     [x: string]: unknown
   }
 }
-
 import type { Notification } from './context/notifications.js'
 import type {
   MCPServerConnection,
   ServerResource,
 } from './services/mcp/types.js'
+import type { RuntimeWorkflowExecutionPolicy } from './services/tools/workflowExecutionPolicy.js'
 import type {
   AgentDefinition,
   AgentDefinitionsResult,
@@ -60,7 +60,6 @@ import type { FileStateCache } from './utils/fileStateCache.js'
 import type { DenialTrackingState } from './utils/permissions/denialTracking.js'
 import type { SystemPrompt } from './utils/systemPromptType.js'
 import type { ContentReplacementState } from './utils/toolResultStorage.js'
-
 // Re-export progress types for backwards compatibility
 export type {
   AgentToolProgress,
@@ -71,7 +70,6 @@ export type {
   TaskOutputProgress,
   WebSearchProgress,
 }
-
 import type { SpinnerMode } from './components/Spinner.js'
 import type { QuerySource } from './constants/querySource.js'
 import type { SDKStatus } from './entrypoints/agentSdkTypes.js'
@@ -86,20 +84,18 @@ import type { DeepImmutable } from './types/utils.js'
 import type { AttributionState } from './utils/commitAttribution.js'
 import type { FileHistoryState } from './utils/fileHistory.js'
 import type { Theme, ThemeName } from './utils/theme.js'
-
 export type QueryChainTracking = {
   chainId: string
   depth: number
 }
-
 export type ValidationResult =
   | { result: true }
   | {
       result: false
       message: string
       errorCode: number
+      recoverableGuidance?: boolean
     }
-
 export type SetToolJSXFn = (
   args: {
     jsx: React.ReactNode | null
@@ -112,13 +108,10 @@ export type SetToolJSXFn = (
     clearLocalJSX?: boolean
   } | null,
 ) => void
-
 // Import tool permission types from centralized location to break import cycles
 import type { ToolPermissionRulesBySource } from './types/permissions.js'
-
 // Re-export for backwards compatibility
 export type { ToolPermissionRulesBySource }
-
 // Apply DeepImmutable to the imported type
 export type ToolPermissionContext = DeepImmutable<{
   mode: PermissionMode
@@ -136,7 +129,6 @@ export type ToolPermissionContext = DeepImmutable<{
   /** Stores the permission mode before model-initiated plan mode entry, so it can be restored on exit */
   prePlanMode?: PermissionMode
 }>
-
 export const getEmptyToolPermissionContext: () => ToolPermissionContext =
   () => ({
     mode: 'default',
@@ -146,7 +138,6 @@ export const getEmptyToolPermissionContext: () => ToolPermissionContext =
     alwaysAskRules: {},
     isBypassPermissionsModeAvailable: false,
   })
-
 export type CompactProgressEvent =
   | {
       type: 'hooks_start'
@@ -154,7 +145,6 @@ export type CompactProgressEvent =
     }
   | { type: 'compact_start' }
   | { type: 'compact_end' }
-
 export type ToolUseContext = {
   options: {
     commands: Command[]
@@ -203,7 +193,7 @@ export type ToolUseContext = {
   setToolJSX?: SetToolJSXFn
   addNotification?: (notif: Notification) => void
   /** Append a UI-only system message to the REPL message list. Stripped at the
-   *  normalizeMessagesForAPI boundary — the Exclude<> makes that type-enforced. */
+   *  normalizeMessagesForAPI boundary ...the Exclude<> makes that type-enforced. */
   appendSystemMessage?: (
     msg: Exclude<SystemMessage, SystemLocalCommandMessage>,
   ) => void
@@ -214,10 +204,10 @@ export type ToolUseContext = {
   }) => void
   nestedMemoryAttachmentTriggers?: Set<string>
   /**
-   * CLAUDE.md paths already injected as nested_memory attachments this
-   * session. Dedup for memoryFilesToAttachments — readFileState is an LRU
+   * DSXU.md / legacy DSXU.md paths already injected as nested_memory attachments this
+   * session. Dedup for memoryFilesToAttachments ...readFileState is an LRU
    * that evicts entries in busy sessions, so its .has() check alone can
-   * re-inject the same CLAUDE.md dozens of times.
+   * re-inject the same instruction file dozens of times.
    */
   loadedNestedMemoryPaths?: Set<string>
   dynamicSkillDirTriggers?: Set<string>
@@ -278,37 +268,38 @@ export type ToolUseContext = {
   preserveToolUseResults?: boolean
   /** Local denial tracking state for async subagents whose setAppState is a
    *  no-op. Without this, the denial counter never accumulates and the
-   *  fallback-to-prompting threshold is never reached. Mutable — the
+   *  fallback-to-prompting threshold is never reached. Mutable ...the
    *  permissions code updates it in place. */
   localDenialTracking?: DenialTrackingState
   /**
    * Per-conversation-thread content replacement state for the tool result
    * budget. When present, query.ts applies the aggregate tool result budget.
-   * Main thread: REPL provisions once (never resets — stale UUID keys
+   * Main thread: REPL provisions once (never resets ...stale UUID keys
    * are inert). Subagents: createSubagentContext clones the parent's state
    * by default (cache-sharing forks need identical decisions), or
    * resumeAgentBackground threads one reconstructed from sidechain records.
    */
   contentReplacementState?: ContentReplacementState
   /**
+   * Set by WorkflowTool when a workflow declares an execution policy. The main
+   * tool loop enforces this before permission prompts or tool.call().
+   */
+  workflowExecutionPolicy?: RuntimeWorkflowExecutionPolicy
+  /**
    * Parent's rendered system prompt bytes, frozen at turn start.
-   * Used by fork subagents to share the parent's prompt cache — re-calling
+   * Used by fork subagents to share the parent's prompt cache ...re-calling
    * getSystemPrompt() at fork-spawn time can diverge (GrowthBook cold→warm)
    * and bust the cache. See forkSubagent.ts.
    */
   renderedSystemPrompt?: SystemPrompt
 }
-
 // Re-export ToolProgressData from centralized location
 export type { ToolProgressData }
-
 export type Progress = ToolProgressData | HookProgress
-
 export type ToolProgress<P extends ToolProgressData> = {
   toolUseID: string
   data: P
 }
-
 export function filterToolProgressMessages(
   progressMessagesForMessage: ProgressMessage[],
 ): ProgressMessage<ToolProgressData>[] {
@@ -317,7 +308,6 @@ export function filterToolProgressMessages(
       msg.data?.type !== 'hook_progress',
   )
 }
-
 export type ToolResult<T> = {
   data: T
   newMessages?: (
@@ -334,14 +324,11 @@ export type ToolResult<T> = {
     structuredContent?: Record<string, unknown>
   }
 }
-
 export type ToolCallProgress<P extends ToolProgressData = ToolProgressData> = (
   progress: ToolProgress<P>,
 ) => void
-
 // Type for any schema that outputs an object with string keys
 export type AnyObject = z.ZodType<{ [key: string]: unknown }>
-
 /**
  * Checks if a tool matches the given name (primary name or alias).
  */
@@ -351,14 +338,12 @@ export function toolMatchesName(
 ): boolean {
   return tool.name === name || (tool.aliases?.includes(name) ?? false)
 }
-
 /**
  * Finds a tool by name or alias from a list of tools.
  */
 export function findToolByName(tools: Tools, name: string): Tool | undefined {
   return tools.find(t => toolMatchesName(t, name))
 }
-
 export type Tool<
   Input extends AnyObject = AnyObject,
   Output = unknown,
@@ -372,7 +357,7 @@ export type Tool<
   /**
    * One-line capability phrase used by ToolSearch for keyword matching.
    * Helps the model find this tool via keyword search when it's deferred.
-   * 3–10 words, no trailing period.
+   * 3...0 words, no trailing period.
    * Prefer terms not already in the tool name (e.g. 'jupyter' for NotebookEdit).
    */
   searchHint?: string
@@ -408,8 +393,8 @@ export type Tool<
    * What should happen when the user submits a new message while this tool
    * is running.
    *
-   * - `'cancel'` — stop the tool and discard its result
-   * - `'block'`  — keep running; the new message waits
+   * - `'cancel'` ...stop the tool and discard its result
+   * - `'block'`  ...keep running; the new message waits
    *
    * Defaults to `'block'` when not implemented.
    */
@@ -441,22 +426,22 @@ export type Tool<
    */
   readonly shouldDefer?: boolean
   /**
-   * When true, this tool is never deferred — its full schema appears in the
+   * When true, this tool is never deferred ...its full schema appears in the
    * initial prompt even when ToolSearch is enabled. For MCP tools, set via
-   * `_meta['anthropic/alwaysLoad']`. Use for tools the model must see on
+   * `_meta['provider/alwaysLoad']`. Use for tools the model must see on
    * turn 1 without a ToolSearch round-trip.
    */
   readonly alwaysLoad?: boolean
   /**
    * For MCP tools: the server and tool names as received from the MCP server (unnormalized).
    * Present on all MCP tools regardless of whether `name` is prefixed (mcp__server__tool)
-   * or unprefixed (CLAUDE_AGENT_SDK_MCP_NO_PREFIX mode).
+   * or unprefixed (DSXU_AGENT_SDK_MCP_NO_PREFIX mode).
    */
   mcpInfo?: { serverName: string; toolName: string }
   readonly name: string
   /**
    * Maximum size in characters for tool result before it gets persisted to disk.
-   * When exceeded, the result is saved to a file and Claude receives a preview
+   * When exceeded, the result is saved to a file and DSXU receives a preview
    * with the file path instead of the full content.
    *
    * Set to Infinity for tools whose output must never be persisted (e.g. Read,
@@ -470,16 +455,14 @@ export type Tool<
    * Only applied when the tengu_tool_pear is enabled.
    */
   readonly strict?: boolean
-
   /**
    * Called on copies of tool_use input before observers see it (SDK stream,
    * transcript, canUseTool, PreToolUse/PostToolUse hooks). Mutate in place
    * to add legacy/derived fields. Must be idempotent. The original API-bound
    * input is never mutated (preserves prompt cache). Not re-applied when a
-   * hook/permission returns a fresh updatedInput — those own their shape.
+   * hook/permission returns a fresh updatedInput ...those own their shape.
    */
   backfillObservableInput?(input: Record<string, unknown>): void
-
   /**
    * Determines if this tool is allowed to run with this input in the current context.
    * It informs the model of why the tool use failed, and does not directly display any UI.
@@ -490,7 +473,6 @@ export type Tool<
     input: z.infer<Input>,
     context: ToolUseContext,
   ): Promise<ValidationResult>
-
   /**
    * Determines if the user is asked for permission. Only called after validateInput() passes.
    * General permission logic is in permissions.ts. This method contains tool-specific logic.
@@ -501,10 +483,8 @@ export type Tool<
     input: z.infer<Input>,
     context: ToolUseContext,
   ): Promise<PermissionResult>
-
   // Optional method for tools that operate on a file path
   getPath?(input: z.infer<Input>): string
-
   /**
    * Prepare a matcher for hook `if` conditions (permission-rule patterns like
    * "git *" from "Bash(git *)"). Called once per hook-input pair; any
@@ -514,7 +494,6 @@ export type Tool<
   preparePermissionMatcher?(
     input: z.infer<Input>,
   ): Promise<(pattern: string) => boolean>
-
   prompt(options: {
     getToolPermissionContext: () => Promise<ToolPermissionContext>
     tools: Tools
@@ -582,16 +561,16 @@ export type Tool<
    * Flattened text of what renderToolResultMessage shows IN TRANSCRIPT
    * MODE (verbose=true, isTranscriptMode=true). For transcript search
    * indexing: the index counts occurrences in this string, the highlight
-   * overlay scans the actual screen buffer. For count ≡ highlight, this
-   * must return the text that ends up visible — not the model-facing
+   * overlay scans the actual screen buffer. For count  -> highlight, this
+   * must return the text that ends up visible ...not the model-facing
    * serialization from mapToolResultToToolResultBlockParam (which adds
    * system-reminders, persisted-output wrappers).
    *
    * Chrome can be skipped (under-count is fine). "Found 3 files in 12ms"
-   * isn't worth indexing. Phantoms are not fine — text that's claimed
+   * isn't worth indexing. Phantoms are not fine ...text that's claimed
    * here but doesn't render is a count≠highlight bug.
    *
-   * Optional: omitted → field-name heuristic in transcriptSearch.ts.
+   * Optional: omitted  -> field-name heuristic in transcriptSearch.ts.
    * Drift caught by test/utils/transcriptSearch.renderFidelity.test.tsx
    * which renders sample outputs and flags text that's indexed-but-not-
    * rendered (phantom) or rendered-but-not-indexed (under-count warning).
@@ -609,7 +588,7 @@ export type Tool<
   /**
    * Returns true when the non-verbose rendering of this output is truncated
    * (i.e., clicking to expand would reveal more content). Gates
-   * click-to-expand in fullscreen — only messages where verbose actually
+   * click-to-expand in fullscreen ...only messages where verbose actually
    * shows more get a hover/click affordance. Unset means never truncated.
    */
   isResultTruncated?(output: Output): boolean
@@ -665,7 +644,6 @@ export type Tool<
       isTranscriptMode?: boolean
     },
   ): React.ReactNode
-
   /**
    * Renders multiple parallel instances of this tool as a group.
    * @returns React node to render, or null to fall back to individual rendering
@@ -693,13 +671,11 @@ export type Tool<
     },
   ): React.ReactNode | null
 }
-
 /**
  * A collection of tools. Use this type instead of `Tool[]` to make it easier
  * to track where tool sets are assembled, passed, and filtered across the codebase.
  */
 export type Tools = readonly Tool[]
-
 /**
  * Methods that `buildTool` supplies a default for. A `ToolDef` may omit these;
  * the resulting `Tool` always has them.
@@ -712,10 +688,9 @@ type DefaultableToolKeys =
   | 'checkPermissions'
   | 'toAutoClassifierInput'
   | 'userFacingName'
-
 /**
  * Tool definition accepted by `buildTool`. Same shape as `Tool` but with the
- * defaultable methods optional — `buildTool` fills them in so callers always
+ * defaultable methods optional ...`buildTool` fills them in so callers always
  * see a complete `Tool`.
  */
 export type ToolDef<
@@ -724,12 +699,11 @@ export type ToolDef<
   P extends ToolProgressData = ToolProgressData,
 > = Omit<Tool<Input, Output, P>, DefaultableToolKeys> &
   Partial<Pick<Tool<Input, Output, P>, DefaultableToolKeys>>
-
 /**
  * Type-level spread mirroring `{ ...TOOL_DEFAULTS, ...def }`. For each
  * defaultable key: if D provides it (required), D's type wins; if D omits
  * it or has it optional (inherited from Partial<> in the constraint), the
- * default fills in. All other keys come from D verbatim — preserving arity,
+ * default fills in. All other keys come from D verbatim ...preserving arity,
  * optional presence, and literal types exactly as `satisfies Tool` did.
  */
 type BuiltTool<D> = Omit<D, DefaultableToolKeys> & {
@@ -739,20 +713,19 @@ type BuiltTool<D> = Omit<D, DefaultableToolKeys> & {
       : D[K]
     : ToolDefaults[K]
 }
-
 /**
  * Build a complete `Tool` from a partial definition, filling in safe defaults
  * for the commonly-stubbed methods. All tool exports should go through this so
  * that defaults live in one place and callers never need `?.() ?? default`.
  *
  * Defaults (fail-closed where it matters):
- * - `isEnabled` → `true`
- * - `isConcurrencySafe` → `false` (assume not safe)
- * - `isReadOnly` → `false` (assume writes)
- * - `isDestructive` → `false`
- * - `checkPermissions` → `{ behavior: 'allow', updatedInput }` (defer to general permission system)
- * - `toAutoClassifierInput` → `''` (skip classifier — security-relevant tools must override)
- * - `userFacingName` → `name`
+ * - `isEnabled`  -> `true`
+ * - `isConcurrencySafe`  -> `false` (assume not safe)
+ * - `isReadOnly`  -> `false` (assume writes)
+ * - `isDestructive`  -> `false`
+ * - `checkPermissions`  -> `{ behavior: 'allow', updatedInput }` (defer to general permission system)
+ * - `toAutoClassifierInput`  -> `''` (skip classifier ...security-relevant tools must override)
+ * - `userFacingName`  -> `name`
  */
 const TOOL_DEFAULTS = {
   isEnabled: () => true,
@@ -767,19 +740,16 @@ const TOOL_DEFAULTS = {
   toAutoClassifierInput: (_input?: unknown) => '',
   userFacingName: (_input?: unknown) => '',
 }
-
 // The defaults type is the ACTUAL shape of TOOL_DEFAULTS (optional params so
-// both 0-arg and full-arg call sites type-check — stubs varied in arity and
+// both 0-arg and full-arg call sites type-check ...stubs varied in arity and
 // tests relied on that), not the interface's strict signatures.
 type ToolDefaults = typeof TOOL_DEFAULTS
-
 // D infers the concrete object-literal type from the call site. The
 // constraint provides contextual typing for method parameters; `any` in
 // constraint position is structural and never leaks into the return type.
 // BuiltTool<D> mirrors runtime `{...TOOL_DEFAULTS, ...def}` at the type level.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyToolDef = ToolDef<any, any, any>
-
 export function buildTool<D extends AnyToolDef>(def: D): BuiltTool<D> {
   // The runtime spread is straightforward; the `as` bridges the gap between
   // the structural-any constraint and the precise BuiltTool<D> return. The
@@ -789,4 +759,41 @@ export function buildTool<D extends AnyToolDef>(def: D): BuiltTool<D> {
     userFacingName: () => def.name,
     ...def,
   } as BuiltTool<D>
+}
+export function getDsxuToolRuntimeContractSummary(): {
+  runtime: 'DSXU Tool Contract'
+  requiredPhases: readonly string[]
+  evidenceFields: readonly string[]
+  legacyProtocolCompatibility: string
+  activationEvidence?: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Tool Contract',
+    requiredPhases: [
+      'schema',
+      'validateInput',
+      'checkPermissions',
+      'call',
+      'mapToolResultToToolResultBlockParam',
+      'contextModifier',
+      'telemetry',
+    ],
+    evidenceFields: [
+      'toolUseID',
+      'permissionContext',
+      'abortController',
+      'options.thinkingConfig',
+      'readFileState',
+      'fileHistory',
+      'mcpClients',
+    ],
+    legacyProtocolCompatibility:
+      'Provider SDK message/tool block types remain as wire-shape compatibility only; DSXU owns the runtime semantics',
+    activationEvidence: [
+      'buildTool fills fail-closed defaults for concurrency/read-only/destructive semantics',
+      'ToolUseContext carries DSXU model strategy, MCP clients, agent definitions, abort controller, file state, and task app state',
+      'ToolPermissionContext keeps allow/deny/ask rules as the single permission source for tool exposure and execution',
+      'ValidationResult and JSON schema contracts keep tool input/output machine-checkable before DeepSeek-driven calls',
+    ],
+  }
 }

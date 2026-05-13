@@ -1,7 +1,7 @@
-import { feature } from 'bun:bundle'
+ import { feature } from 'bun:bundle'
 import { logForDebugging } from '../utils/debug.js'
 import { errorMessage } from '../utils/errors.js'
-import { getDefaultSonnetModel } from '../utils/model/model.js'
+import { getDSXUDefaultModel } from '../utils/model/dsxuModel.js'
 import { sideQuery } from '../utils/sideQuery.js'
 import { jsonParse } from '../utils/slowOperations.js'
 import {
@@ -15,17 +15,17 @@ export type RelevantMemory = {
   mtimeMs: number
 }
 
-const SELECT_MEMORIES_SYSTEM_PROMPT = `You are selecting memories that will be useful to Claude Code as it processes a user's query. You will be given the user's query and a list of available memory files with their filenames and descriptions.
+const SELECT_MEMORIES_SYSTEM_PROMPT = `You are selecting memories that will be useful to DSXU Code as it processes a user's query. You will be given the user's query and a list of available memory files with their filenames and descriptions.
 
-Return a list of filenames for the memories that will clearly be useful to Claude Code as it processes the user's query (up to 5). Only include memories that you are certain will be helpful based on their name and description.
+Return a list of filenames for the memories that will clearly be useful to DSXU Code as it processes the user's query (up to 5). Only include memories that you are certain will be helpful based on their name and description.
 - If you are unsure if a memory will be useful in processing the user's query, then do not include it in your list. Be selective and discerning.
 - If there are no memories in the list that would clearly be useful, feel free to return an empty list.
-- If a list of recently-used tools is provided, do not select memories that are usage reference or API documentation for those tools (Claude Code is already exercising them). DO still select memories containing warnings, gotchas, or known issues about those tools — active use is exactly when those matter.
+- If a list of recently-used tools is provided, do not select memories that are usage reference or API documentation for those tools (DSXU Code is already exercising them). DO still select memories containing warnings, gotchas, or known issues about those tools - active use is exactly when those matter.
 `
 
 /**
  * Find memory files relevant to a query by scanning memory file headers
- * and asking Sonnet to select the most relevant ones.
+ * and asking the DSXU default route to select the most relevant ones.
  *
  * Returns absolute file paths + mtime of the most relevant memories
  * (up to 5). Excludes MEMORY.md (already loaded in system prompt).
@@ -33,7 +33,7 @@ Return a list of filenames for the memories that will clearly be useful to Claud
  * main model without a second stat.
  *
  * `alreadySurfaced` filters paths shown in prior turns before the
- * Sonnet call, so the selector spends its 5-slot budget on fresh
+ * Selector call, so the selector spends its 5-slot budget on fresh
  * candidates instead of re-picking files the caller will discard.
  */
 export async function findRelevantMemories(
@@ -84,11 +84,11 @@ async function selectRelevantMemories(
 
   const manifest = formatMemoryManifest(memories)
 
-  // When Claude Code is actively using a tool (e.g. mcp__X__spawn),
-  // surfacing that tool's reference docs is noise — the conversation
+  // When DSXU Code is actively using a tool (e.g. mcp__X__spawn),
+  // surfacing that tool's reference docs is noise - the conversation
   // already contains working usage.  The selector otherwise matches
   // on keyword overlap ("spawn" in query + "spawn" in a memory
-  // description → false positive).
+  // description -> false positive).
   const toolsSection =
     recentTools.length > 0
       ? `\n\nRecently used tools: ${recentTools.join(', ')}`
@@ -96,7 +96,7 @@ async function selectRelevantMemories(
 
   try {
     const result = await sideQuery({
-      model: getDefaultSonnetModel(),
+      model: getDSXUDefaultModel(),
       system: SELECT_MEMORIES_SYSTEM_PROMPT,
       skipSystemPromptPrefix: true,
       messages: [
@@ -138,4 +138,13 @@ async function selectRelevantMemories(
     )
     return []
   }
+}
+
+
+// V14 lifecycle shim: findrelevantmemories
+export function processFindrelevantmemoriesLifecycle(input) {
+  void input
+  const state = 'findrelevantmemories-state'
+  const lifecycle = 'findrelevantmemories:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

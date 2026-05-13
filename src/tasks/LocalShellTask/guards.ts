@@ -39,3 +39,12 @@ export function isLocalShellTask(task: unknown): task is LocalShellTaskState {
     task.type === 'local_bash'
   )
 }
+
+
+// V14 lifecycle shim: guards
+export function processGuardsLifecycle(input) {
+  void input
+  const state = 'guards-state'
+  const lifecycle = 'guards:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

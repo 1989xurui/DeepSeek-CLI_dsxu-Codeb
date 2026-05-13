@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * LocalMainSessionTask - Handles backgrounding the main session query.
  *
@@ -44,6 +45,7 @@ import {
   recordSidechainTranscript,
 } from '../utils/sessionStorage.js'
 import {
+  ensureTaskOutputTerminalMarker,
   evictTaskOutput,
   getTaskOutputPath,
   initTaskOutputAsSymlink,
@@ -100,7 +102,7 @@ export function registerMainSessionTask(
   const taskId = generateMainSessionTaskId()
 
   // Link output to an isolated per-task transcript file (same layout as
-  // sub-agents). Do NOT use getTranscriptPath() — that's the main session's
+  // sub-agents). Do NOT use getTranscriptPath() ...that's the main session's
   // file, and writing there from a background query after /clear would corrupt
   // the post-clear conversation. The isolated path lets this task survive
   // /clear: the symlink re-link in clearConversation handles session ID changes.
@@ -192,18 +194,16 @@ export function completeMainSessionTask(
     }
   })
 
-  void evictTaskOutput(taskId)
-
   // Only send notification if task is still backgrounded (not foregrounded)
   // If foregrounded, user is watching it directly - no notification needed
   if (wasBackgrounded) {
-    enqueueMainSessionNotification(
+    void enqueueMainSessionNotificationAfterOutputReady({
       taskId,
-      'Background session',
-      success ? 'completed' : 'failed',
+      description: 'Background session',
+      status: success ? 'completed' : 'failed',
       setAppState,
       toolUseId,
-    )
+    })
   } else {
     // Foregrounded: no XML notification (TUI user is watching), but SDK
     // consumers still need to see the task_started bookend close.
@@ -215,7 +215,30 @@ export function completeMainSessionTask(
       toolUseId,
       summary: 'Background session',
     })
+    void ensureTaskOutputTerminalMarker(
+      taskId,
+      success ? 'completed' : 'failed',
+      'Background session',
+    ).then(() => evictTaskOutput(taskId))
   }
+}
+
+async function enqueueMainSessionNotificationAfterOutputReady({
+  taskId,
+  description,
+  status,
+  setAppState,
+  toolUseId,
+}: {
+  taskId: string
+  description: string
+  status: 'completed' | 'failed'
+  setAppState: SetAppState
+  toolUseId?: string
+}): Promise<void> {
+  await ensureTaskOutputTerminalMarker(taskId, status, description)
+  enqueueMainSessionNotification(taskId, description, status, setAppState, toolUseId)
+  await evictTaskOutput(taskId)
 }
 
 /**
@@ -364,7 +387,7 @@ export function startBackgroundSession({
   // Wrap in agent context so skill invocations scope to this task's agentId
   // (not null). This lets clearInvokedSkills(preservedAgentIds) selectively
   // preserve this task's skills across /clear. AsyncLocalStorage isolates
-  // concurrent async chains — this wrapper doesn't affect the foreground.
+  // concurrent async chains ...this wrapper doesn't affect the foreground.
   const agentContext: SubagentContext = {
     agentId: taskId,
     agentType: 'subagent',
@@ -385,7 +408,7 @@ export function startBackgroundSession({
         ...queryParams,
       })) {
         if (abortSignal.aborted) {
-          // Aborted mid-stream — completeMainSessionTask won't be reached.
+          // Aborted mid-stream ...completeMainSessionTask won't be reached.
           // chat:killAgents path already marked notified + emitted; stopTask path did not.
           let alreadyNotified = false
           updateTaskState(taskId, setAppState, task => {
@@ -410,7 +433,7 @@ export function startBackgroundSession({
 
         bgMessages.push(event)
 
-        // Per-message write (matches runAgent.ts pattern) — gives live
+        // Per-message write (matches runAgent.ts pattern) ...gives live
         // TaskOutput progress and keeps the transcript file current even if
         // /clear re-links the symlink mid-run.
         void recordSidechainTranscript([event], taskId, lastRecordedUuid).catch(

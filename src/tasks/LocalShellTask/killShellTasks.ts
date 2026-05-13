@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Pure (non-React) kill helpers for LocalShellTask.
 // Extracted so runAgent.ts can kill agent-scoped bash tasks without pulling
 // React/Ink into its module graph (same rationale as guards.ts).
@@ -68,7 +69,7 @@ export function killShellTasksForAgent(
       killTask(taskId, setAppState)
     }
   }
-  // Purge any queued notifications addressed to this agent — its query loop
+  // Purge any queued notifications addressed to this agent ...its query loop
   // has exited and won't drain them. killTask fires 'killed' notifications
   // asynchronously; drop the ones already queued and any that land later sit
   // harmlessly (no consumer matches a dead agentId).

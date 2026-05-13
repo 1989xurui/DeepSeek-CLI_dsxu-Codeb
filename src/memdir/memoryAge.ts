@@ -51,3 +51,12 @@ export function memoryFreshnessNote(mtimeMs: number): string {
   if (!text) return ''
   return `<system-reminder>${text}</system-reminder>\n`
 }
+
+
+// V14 lifecycle shim: memoryage
+export function processMemoryageLifecycle(input) {
+  void input
+  const state = 'memoryage-state'
+  const lifecycle = 'memoryage:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

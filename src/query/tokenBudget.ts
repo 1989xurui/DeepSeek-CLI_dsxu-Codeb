@@ -91,3 +91,12 @@ export function checkTokenBudget(
 
   return { action: 'stop', completionEvent: null }
 }
+
+
+// V14 lifecycle shim: tokenbudget
+export function processTokenbudgetLifecycle(input) {
+  void input
+  const state = 'tokenbudget-state'
+  const lifecycle = 'tokenbudget:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

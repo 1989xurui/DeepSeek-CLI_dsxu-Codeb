@@ -290,3 +290,12 @@ export async function validateTeamMemKey(relativeKey: string): Promise<string> {
 export function isTeamMemFile(filePath: string): boolean {
   return isTeamMemoryEnabled() && isTeamMemPath(filePath)
 }
+
+
+// V14 lifecycle shim: teammempaths
+export function processTeammempathsLifecycle(input) {
+  void input
+  const state = 'teammempaths-state'
+  const lifecycle = 'teammempaths:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

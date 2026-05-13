@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { getShortcutDisplay } from '../keybindings/shortcutFormat.js'
 import { isExtractModeActive } from '../memdir/paths.js'
@@ -37,7 +38,6 @@ import {
 import type { SystemPrompt } from '../utils/systemPromptType.js'
 import { getTaskListId, listTasks } from '../utils/tasks.js'
 import { getAgentName, getTeamName, isTeammate } from '../utils/teammate.js'
-
 /* eslint-disable @typescript-eslint/no-require-imports */
 const extractMemoriesModule = feature('EXTRACT_MEMORIES')
   ? (require('../services/extractMemories/extractMemories.js') as typeof import('../services/extractMemories/extractMemories.js'))
@@ -45,9 +45,7 @@ const extractMemoriesModule = feature('EXTRACT_MEMORIES')
 const jobClassifierModule = feature('TEMPLATES')
   ? (require('../jobs/classifier.js') as typeof import('../jobs/classifier.js'))
   : null
-
 /* eslint-enable @typescript-eslint/no-require-imports */
-
 import type { QuerySource } from '../constants/querySource.js'
 import { executeAutoDream } from '../services/autoDream/autoDream.js'
 import { executePromptSuggestion } from '../services/PromptSuggestion/promptSuggestion.js'
@@ -56,12 +54,10 @@ import {
   createCacheSafeParams,
   saveCacheSafeParams,
 } from '../utils/forkedAgent.js'
-
 type StopHookResult = {
   blockingErrors: Message[]
   preventContinuation: boolean
 }
-
 export async function* handleStopHooks(
   messagesForQuery: Message[],
   assistantMessages: AssistantMessage[],
@@ -80,7 +76,6 @@ export async function* handleStopHooks(
   StopHookResult
 > {
   const hookStartTime = Date.now()
-
   const stopHookContext: REPLHookContext = {
     messages: [...messagesForQuery, ...assistantMessages],
     systemPrompt,
@@ -89,36 +84,35 @@ export async function* handleStopHooks(
     toolUseContext,
     querySource,
   }
-  // Only save params for main session queries — subagents must not overwrite.
+  // Only save params for main session queries ...subagents must not overwrite.
   // Outside the prompt-suggestion gate: the REPL /btw command and the
   // side_question SDK control_request both read this snapshot, and neither
   // depends on prompt suggestions being enabled.
   if (querySource === 'repl_main_thread' || querySource === 'sdk') {
     saveCacheSafeParams(createCacheSafeParams(stopHookContext))
   }
-
   // Template job classification: when running as a dispatched job, classify
   // state after each turn. Gate on repl_main_thread so background forks
   // (extract-memories, auto-dream) don't pollute the timeline with their own
   // assistant messages. Await the classifier so state.json is written before
-  // the turn returns — otherwise `claude list` shows stale state for the gap.
+  // the turn returns ...otherwise `dsxu list` shows stale state for the gap.
   // Env key hardcoded (vs importing JOB_ENV_KEY from jobs/state) to match the
   // require()-gated jobs/ import pattern above; spawn.test.ts asserts the
   // string matches.
   if (
     feature('TEMPLATES') &&
-    process.env.CLAUDE_JOB_DIR &&
+    process.env.DSXU_JOB_DIR &&
     querySource.startsWith('repl_main_thread') &&
     !toolUseContext.agentId
   ) {
-    // Full turn history — assistantMessages resets each queryLoop iteration,
+    // Full turn history ...assistantMessages resets each queryLoop iteration,
     // so tool calls from earlier iterations (Agent spawn, then summary) need
     // messagesForQuery to be visible in the tool-call summary.
     const turnAssistantMessages = stopHookContext.messages.filter(
       (m): m is AssistantMessage => m.type === 'assistant',
     )
     const p = jobClassifierModule!
-      .classifyAndWriteState(process.env.CLAUDE_JOB_DIR, turnAssistantMessages)
+      .classifyAndWriteState(process.env.DSXU_JOB_DIR, turnAssistantMessages)
       .catch(err => {
         logForDebugging(`[job] classifier error: ${errorMessage(err)}`, {
           level: 'error',
@@ -135,7 +129,7 @@ export async function* handleStopHooks(
   // or forked agents contending for resources during shutdown.
   if (!isBareMode()) {
     // Inline env check for dead code elimination in external builds
-    if (!isEnvDefinedFalsy(process.env.CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION)) {
+    if (!isEnvDefinedFalsy(process.env.DSXU_CODE_ENABLE_PROMPT_SUGGESTION)) {
       void executePromptSuggestion(stopHookContext)
     }
     if (
@@ -155,11 +149,10 @@ export async function* handleStopHooks(
       void executeAutoDream(stopHookContext, toolUseContext.appendSystemMessage)
     }
   }
-
   // chicago MCP: auto-unhide + lock release at turn end.
-  // Main thread only — the CU lock is a process-wide module-level variable,
+  // Main thread only ...the CU lock is a process-wide module-level variable,
   // so a subagent's stopHooks releasing it leaves the main thread's cleanup
-  // seeing isLockHeldLocally()===false → no exit notification, and unhides
+  // seeing isLockHeldLocally()===false  -> no exit notification, and unhides
   // mid-turn. Subagents don't start CU sessions so this is a pure skip.
   if (feature('CHICAGO_MCP') && !toolUseContext.agentId) {
     try {
@@ -168,15 +161,13 @@ export async function* handleStopHooks(
       )
       await cleanupComputerUseAfterTurn(toolUseContext)
     } catch {
-      // Failures are silent — this is dogfooding cleanup, not critical path
+      // Failures are silent ...this is dogfooding cleanup, not critical path
     }
   }
-
   try {
     const blockingErrors = []
     const appState = toolUseContext.getAppState()
     const permissionMode = appState.toolPermissionContext.mode
-
     const generator = executeStopHooks(
       permissionMode,
       toolUseContext.abortController.signal,
@@ -187,7 +178,6 @@ export async function* handleStopHooks(
       [...messagesForQuery, ...assistantMessages],
       toolUseContext.agentType,
     )
-
     // Consume all progress messages and get blocking errors
     let stopHookToolUseID = ''
     let hookCount = 0
@@ -196,7 +186,6 @@ export async function* handleStopHooks(
     let hasOutput = false
     const hookErrors: string[] = []
     const hookInfos: StopHookInfo[] = []
-
     for await (const result of generator) {
       if (result.message) {
         yield result.message
@@ -278,13 +267,11 @@ export async function* handleStopHooks(
           hookEvent: 'Stop',
         })
       }
-
       // Check if we were aborted during hook execution
       if (toolUseContext.abortController.signal.aborted) {
         logEvent('tengu_pre_stop_hooks_cancelled', {
           queryChainId: toolUseContext.queryTracking
             ?.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-
           queryDepth: toolUseContext.queryTracking?.depth,
         })
         yield createUserInterruptionMessage({
@@ -293,7 +280,6 @@ export async function* handleStopHooks(
         return { blockingErrors: [], preventContinuation: true }
       }
     }
-
     // Create summary system message if hooks ran
     if (hookCount > 0) {
       yield createStopHookSummaryMessage(
@@ -306,7 +292,6 @@ export async function* handleStopHooks(
         'suggestion',
         stopHookToolUseID,
       )
-
       // Send notification about errors (shown in verbose/transcript mode via ctrl+o)
       if (hookErrors.length > 0) {
         const expandShortcut = getShortcutDisplay(
@@ -321,16 +306,13 @@ export async function* handleStopHooks(
         })
       }
     }
-
     if (preventedContinuation) {
       return { blockingErrors: [], preventContinuation: true }
     }
-
     // Collect blocking errors from stop hooks
     if (blockingErrors.length > 0) {
       return { blockingErrors, preventContinuation: false }
     }
-
     // After Stop hooks pass, run TeammateIdle and TaskCompleted hooks if this is a teammate
     if (isTeammate()) {
       const teammateName = getAgentName() ?? ''
@@ -338,17 +320,15 @@ export async function* handleStopHooks(
       const teammateBlockingErrors: Message[] = []
       let teammatePreventedContinuation = false
       let teammateStopReason: string | undefined
-      // Each hook executor generates its own toolUseID — capture from progress
+      // Each hook executor generates its own toolUseID ...capture from progress
       // messages (same pattern as stopHookToolUseID at L142), not the Stop ID.
       let teammateHookToolUseID = ''
-
       // Run TaskCompleted hooks for any in-progress tasks owned by this teammate
       const taskListId = getTaskListId()
       const tasks = await listTasks(taskListId)
       const inProgressTasks = tasks.filter(
         t => t.status === 'in_progress' && t.owner === teammateName,
       )
-
       for (const task of inProgressTasks) {
         const taskCompletedGenerator = executeTaskCompletedHooks(
           task.id,
@@ -361,7 +341,6 @@ export async function* handleStopHooks(
           undefined,
           toolUseContext,
         )
-
         for await (const result of taskCompletedGenerator) {
           if (result.message) {
             if (
@@ -398,7 +377,6 @@ export async function* handleStopHooks(
           }
         }
       }
-
       // Run TeammateIdle hooks
       const teammateIdleGenerator = executeTeammateIdleHooks(
         teammateName,
@@ -406,7 +384,6 @@ export async function* handleStopHooks(
         permissionMode,
         toolUseContext.abortController.signal,
       )
-
       for await (const result of teammateIdleGenerator) {
         if (result.message) {
           if (result.message.type === 'progress' && result.message.toolUseID) {
@@ -439,11 +416,9 @@ export async function* handleStopHooks(
           return { blockingErrors: [], preventContinuation: true }
         }
       }
-
       if (teammatePreventedContinuation) {
         return { blockingErrors: [], preventContinuation: true }
       }
-
       if (teammateBlockingErrors.length > 0) {
         return {
           blockingErrors: teammateBlockingErrors,
@@ -451,13 +426,11 @@ export async function* handleStopHooks(
         }
       }
     }
-
     return { blockingErrors: [], preventContinuation: false }
   } catch (error) {
     const durationMs = Date.now() - hookStartTime
     logEvent('tengu_stop_hook_error', {
       duration: durationMs,
-
       queryChainId: toolUseContext.queryTracking
         ?.chainId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       queryDepth: toolUseContext.queryTracking?.depth,

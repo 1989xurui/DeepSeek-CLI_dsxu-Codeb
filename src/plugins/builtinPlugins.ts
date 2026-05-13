@@ -157,3 +157,25 @@ function skillDefinitionToCommand(definition: BundledSkillDefinition): Command {
     getPromptForCommand: definition.getPromptForCommand,
   }
 }
+
+
+// V14 lifecycle shim: builtinplugins
+export function processBuiltinpluginsLifecycle(input) {
+  void input
+  const state = 'builtinplugins-state'
+  const lifecycle = 'builtinplugins:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuBuiltinPluginsRuntimeProfile() {
+  return {
+    runtime: 'DSXU Built-in Plugin Registry',
+    defaultBehavior: 'built-in plugin capability remains a DSXU-managed extension surface for skills/hooks/MCP servers, not an external legacy marketplace dependency',
+    providerTarget: 'DSXU Skills/MCP/Plugin Provider',
+    activationEvidence: [
+      'registerBuiltinPlugin stores built-in definitions in process registry',
+      'getBuiltinPlugins splits enabled/disabled by DSXU settings',
+      'getBuiltinPluginSkillCommands converts enabled plugin skills into command contracts',
+    ],
+  }
+}

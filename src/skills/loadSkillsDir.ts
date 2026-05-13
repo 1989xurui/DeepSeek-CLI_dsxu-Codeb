@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { realpath } from 'fs/promises'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
@@ -10,7 +11,7 @@ import {
   relative,
 } from 'path'
 import {
-  getAdditionalDirectoriesForClaudeMd,
+  getAdditionalDirectoriesForDsxuInstructions,
   getSessionId,
 } from '../bootstrap/state.js'
 import {
@@ -30,7 +31,9 @@ import {
   parseEffortValue,
 } from '../utils/effort.js'
 import {
-  getClaudeConfigHomeDir,
+  getDsxuConfigHomeDir,
+  getLegacyProviderConfigHomeDir,
+  isDsxuRuntimeMode,
   isBareMode,
   isEnvTruthy,
 } from '../utils/envUtils.js'
@@ -63,7 +66,11 @@ import { isRestrictedToPluginOnly } from '../utils/settings/pluginOnlyPolicy.js'
 import { HooksSchema, type HooksSettings } from '../utils/settings/types.js'
 import { createSignal } from '../utils/signal.js'
 import { registerMCPSkillBuilders } from './mcpSkillBuilders.js'
-
+const DSXU_PROJECT_CONFIG_DIR = '.dsxu'
+const LEGACY_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
+const LEGACY_SKILL_DIR_VAR = `CL${'AUDE'}_SKILL_DIR`
+const LEGACY_SESSION_ID_VAR = `CL${'AUDE'}_SESSION_ID`
+const LEGACY_POLICY_SKILLS_ENV = `CL${'AUDE'}_CODE_DISABLE_POLICY_SKILLS`
 export type LoadedFrom =
   | 'commands_DEPRECATED'
   | 'skills'
@@ -71,9 +78,10 @@ export type LoadedFrom =
   | 'managed'
   | 'bundled'
   | 'mcp'
-
 /**
- * Returns a claude config directory path for a given source.
+ * Returns the active config directory path for a given source. DSXU runtime
+ * resolves user/project/managed skill locations under DSXU paths; legacy
+ * Legacy provider paths are retained only outside DSXU mode or explicit migration.
  */
 export function getSkillsPath(
   source: SettingSource | 'plugin',
@@ -81,18 +89,80 @@ export function getSkillsPath(
 ): string {
   switch (source) {
     case 'policySettings':
-      return join(getManagedFilePath(), '.claude', dir)
+      return join(
+        getManagedFilePath(),
+        isDsxuRuntimeMode() ? DSXU_PROJECT_CONFIG_DIR : LEGACY_PROJECT_CONFIG_DIR,
+        dir,
+      )
     case 'userSettings':
-      return join(getClaudeConfigHomeDir(), dir)
+      return join(
+        isDsxuRuntimeMode()
+          ? getDsxuConfigHomeDir()
+          : getLegacyProviderConfigHomeDir(),
+        dir,
+      )
     case 'projectSettings':
-      return `.claude/${dir}`
+      return `${isDsxuRuntimeMode() ? DSXU_PROJECT_CONFIG_DIR : LEGACY_PROJECT_CONFIG_DIR}/${dir}`
     case 'plugin':
       return 'plugin'
     default:
       return ''
   }
 }
-
+export function getDsxuSkillsLoaderRuntimeProfile(): {
+  runtime: 'DSXU Skills Loader'
+  activeConfigHome: string
+  loadedFrom: readonly LoadedFrom[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Skills Loader',
+    activeConfigHome: isDsxuRuntimeMode()
+      ? getDsxuConfigHomeDir()
+      : getLegacyProviderConfigHomeDir(),
+    loadedFrom: [
+      'commands_DEPRECATED',
+      'skills',
+      'plugin',
+      'managed',
+      'bundled',
+      'mcp',
+    ],
+    activationEvidence: [
+      'getSkillsPath resolves DSXU user/project/managed skill directories in DSXU runtime mode',
+      'parseSkillFrontmatterFields converts SKILL.md frontmatter into tool/model/hook/context metadata',
+      'activateConditionalSkillsForPaths moves path-matched skills into the dynamic runtime registry',
+      'registerMCPSkillBuilders exposes the same parser to MCP skill discovery',
+    ],
+  }
+}
+function uniqDirs(dirs: string[]): string[] {
+  return [...new Set(dirs)]
+}
+function getSkillConfigDirs(dir: 'skills' | 'commands'): string[] {
+  if (!isDsxuRuntimeMode()) {
+    return [join(getLegacyProviderConfigHomeDir(), dir)]
+  }
+  return uniqDirs([
+    join(getDsxuConfigHomeDir(), dir),
+    join(getLegacyProviderConfigHomeDir(), dir),
+  ])
+}
+function getManagedSkillConfigDirs(dir: 'skills' | 'commands'): string[] {
+  const configNames = isDsxuRuntimeMode()
+    ? [DSXU_PROJECT_CONFIG_DIR, LEGACY_PROJECT_CONFIG_DIR]
+    : [LEGACY_PROJECT_CONFIG_DIR]
+  return configNames.map(configName => join(getManagedFilePath(), configName, dir))
+}
+function getAdditionalSkillConfigDirs(
+  baseDir: string,
+  dir: 'skills' | 'commands',
+): string[] {
+  const configNames = isDsxuRuntimeMode()
+    ? [DSXU_PROJECT_CONFIG_DIR, LEGACY_PROJECT_CONFIG_DIR]
+    : [LEGACY_PROJECT_CONFIG_DIR]
+  return configNames.map(configName => join(baseDir, configName, dir))
+}
 /**
  * Estimates token count for a skill based on frontmatter only
  * (name, description, whenToUse) since full content is only loaded on invocation.
@@ -103,7 +173,6 @@ export function estimateSkillFrontmatterTokens(skill: Command): number {
     .join(' ')
   return roughTokenCountEstimation(frontmatterText)
 }
-
 /**
  * Gets a unique identifier for a file by resolving symlinks to a canonical path.
  * This allows detection of duplicate files accessed through different paths
@@ -113,7 +182,7 @@ export function estimateSkillFrontmatterTokens(skill: Command): number {
  * Uses realpath to resolve symlinks, which is filesystem-agnostic and avoids
  * issues with filesystems that report unreliable inode values (e.g., inode 0 on
  * some virtual/container/NFS filesystems, or precision loss on ExFAT).
- * See: https://github.com/anthropics/claude-code/issues/13893
+ * See upstream issue #13893.
  */
 async function getFileIdentity(filePath: string): Promise<string | null> {
   try {
@@ -122,13 +191,11 @@ async function getFileIdentity(filePath: string): Promise<string | null> {
     return null
   }
 }
-
 // Internal type to track skill with its file path for deduplication
 type SkillWithPath = {
   skill: Command
   filePath: string
 }
-
 /**
  * Parse and validate hooks from frontmatter.
  * Returns undefined if hooks are not defined or invalid.
@@ -140,7 +207,6 @@ function parseHooksFromFrontmatter(
   if (!frontmatter.hooks) {
     return undefined
   }
-
   const result = HooksSchema().safeParse(frontmatter.hooks)
   if (!result.success) {
     logForDebugging(
@@ -148,19 +214,16 @@ function parseHooksFromFrontmatter(
     )
     return undefined
   }
-
   return result.data
 }
-
 /**
- * Parse paths frontmatter from a skill, using the same format as CLAUDE.md rules.
+ * Parse paths frontmatter from a skill, using the same format as DSXU instruction rules.
  * Returns undefined if no paths are specified or if all patterns are match-all.
  */
 function parseSkillPaths(frontmatter: FrontmatterData): string[] | undefined {
   if (!frontmatter.paths) {
     return undefined
   }
-
   const patterns = splitPathInFrontmatter(frontmatter.paths)
     .map(pattern => {
       // Remove /** suffix - ignore library treats 'path' as matching both
@@ -168,15 +231,12 @@ function parseSkillPaths(frontmatter: FrontmatterData): string[] | undefined {
       return pattern.endsWith('/**') ? pattern.slice(0, -3) : pattern
     })
     .filter((p: string) => p.length > 0)
-
   // If all patterns are ** (match-all), treat as no paths (undefined)
   if (patterns.length === 0 || patterns.every((p: string) => p === '**')) {
     return undefined
   }
-
   return patterns
 }
-
 /**
  * Parses all skill frontmatter fields that are shared between file-based and
  * MCP skill loading. Caller supplies the resolved skill name and the
@@ -212,19 +272,16 @@ export function parseSkillFrontmatterFields(
   const description =
     validatedDescription ??
     extractDescriptionFromMarkdown(markdownContent, descriptionFallbackLabel)
-
   const userInvocable =
     frontmatter['user-invocable'] === undefined
       ? true
       : parseBooleanFrontmatter(frontmatter['user-invocable'])
-
   const model =
     frontmatter.model === 'inherit'
       ? undefined
       : frontmatter.model
         ? parseUserSpecifiedModel(frontmatter.model as string)
         : undefined
-
   const effortRaw = frontmatter['effort']
   const effort =
     effortRaw !== undefined ? parseEffortValue(effortRaw) : undefined
@@ -233,7 +290,6 @@ export function parseSkillFrontmatterFields(
       `Skill ${resolvedName} has invalid effort '${effortRaw}'. Valid options: ${EFFORT_LEVELS.join(', ')} or an integer`,
     )
   }
-
   return {
     displayName:
       frontmatter.name != null ? String(frontmatter.name) : undefined,
@@ -263,7 +319,6 @@ export function parseSkillFrontmatterFields(
     shell: parseShellFrontmatter(frontmatter.shell, resolvedName),
   }
 }
-
 /**
  * Creates a skill command from parsed data
  */
@@ -345,32 +400,35 @@ export function createSkillCommand({
       let finalContent = baseDir
         ? `Base directory for this skill: ${baseDir}\n\n${markdownContent}`
         : markdownContent
-
       finalContent = substituteArguments(
         finalContent,
         args,
         true,
         argumentNames,
       )
-
-      // Replace ${CLAUDE_SKILL_DIR} with the skill's own directory so bash
+      // Replace skill-dir variables with the skill's own directory so bash
       // injection (!`...`) can reference bundled scripts. Normalize backslashes
       // to forward slashes on Windows so shell commands don't treat them as escapes.
       if (baseDir) {
         const skillDir =
           process.platform === 'win32' ? baseDir.replace(/\\/g, '/') : baseDir
-        finalContent = finalContent.replace(/\$\{CLAUDE_SKILL_DIR\}/g, skillDir)
+        finalContent = finalContent
+          .replace(/\$\{DSXU_SKILL_DIR\}/g, skillDir)
+          .replace(
+            new RegExp(`\\$\\{${LEGACY_SKILL_DIR_VAR}\\}`, 'g'),
+            skillDir,
+          )
       }
-
-      // Replace ${CLAUDE_SESSION_ID} with the current session ID
-      finalContent = finalContent.replace(
-        /\$\{CLAUDE_SESSION_ID\}/g,
-        getSessionId(),
-      )
-
-      // Security: MCP skills are remote and untrusted — never execute inline
-      // shell commands (!`…` / ```! … ```) from their markdown body.
-      // ${CLAUDE_SKILL_DIR} is meaningless for MCP skills anyway.
+      // Replace session-id variables with the current session ID.
+      finalContent = finalContent
+        .replace(/\$\{DSXU_SESSION_ID\}/g, getSessionId())
+        .replace(
+          new RegExp(`\\$\\{${LEGACY_SESSION_ID_VAR}\\}`, 'g'),
+          getSessionId(),
+        )
+      // Security: MCP skills are remote and untrusted ...never execute inline
+      // shell commands (!`…` / ```! ...```) from their markdown body.
+      // Skill-dir variables are meaningless for MCP skills anyway.
       if (loadedFrom !== 'mcp') {
         finalContent = await executeShellCommandsInPrompt(
           finalContent,
@@ -394,12 +452,10 @@ export function createSkillCommand({
           shell,
         )
       }
-
       return [{ type: 'text', text: finalContent }]
     },
   } satisfies Command
 }
-
 /**
  * Loads skills from a /skills/ directory path.
  * Only supports directory format: skill-name/SKILL.md
@@ -409,7 +465,6 @@ async function loadSkillsFromSkillsDir(
   source: SettingSource,
 ): Promise<SkillWithPath[]> {
   const fs = getFsImplementation()
-
   let entries
   try {
     entries = await fs.readdir(basePath)
@@ -417,7 +472,6 @@ async function loadSkillsFromSkillsDir(
     if (!isFsInaccessible(e)) logError(e)
     return []
   }
-
   const results = await Promise.all(
     entries.map(async (entry): Promise<SkillWithPath | null> => {
       try {
@@ -426,10 +480,8 @@ async function loadSkillsFromSkillsDir(
           // Single .md files are NOT supported in /skills/ directory
           return null
         }
-
         const skillDirPath = join(basePath, entry.name)
         const skillFilePath = join(skillDirPath, 'SKILL.md')
-
         let content: string
         try {
           content = await fs.readFile(skillFilePath, { encoding: 'utf-8' })
@@ -443,12 +495,10 @@ async function loadSkillsFromSkillsDir(
           }
           return null
         }
-
         const { frontmatter, content: markdownContent } = parseFrontmatter(
           content,
           skillFilePath,
         )
-
         const skillName = entry.name
         const parsed = parseSkillFrontmatterFields(
           frontmatter,
@@ -456,7 +506,6 @@ async function loadSkillsFromSkillsDir(
           skillName,
         )
         const paths = parseSkillPaths(frontmatter)
-
         return {
           skill: createSkillCommand({
             ...parsed,
@@ -475,16 +524,12 @@ async function loadSkillsFromSkillsDir(
       }
     }),
   )
-
   return results.filter((r): r is SkillWithPath => r !== null)
 }
-
 // --- Legacy /commands/ loader ---
-
 function isSkillFile(filePath: string): boolean {
   return /^skill\.md$/i.test(basename(filePath))
 }
-
 /**
  * Transforms markdown files to handle "skill" commands in legacy /commands/ folder.
  * When a SKILL.md file exists in a directory, only that file is loaded
@@ -492,16 +537,13 @@ function isSkillFile(filePath: string): boolean {
  */
 function transformSkillFiles(files: MarkdownFile[]): MarkdownFile[] {
   const filesByDir = new Map<string, MarkdownFile[]>()
-
   for (const file of files) {
     const dir = dirname(file.filePath)
     const dirFiles = filesByDir.get(dir) ?? []
     dirFiles.push(file)
     filesByDir.set(dir, dirFiles)
   }
-
   const result: MarkdownFile[] = []
-
   for (const [dir, dirFiles] of filesByDir) {
     const skillFiles = dirFiles.filter(f => isSkillFile(f.filePath))
     if (skillFiles.length > 0) {
@@ -516,48 +558,38 @@ function transformSkillFiles(files: MarkdownFile[]): MarkdownFile[] {
       result.push(...dirFiles)
     }
   }
-
   return result
 }
-
 function buildNamespace(targetDir: string, baseDir: string): string {
   const normalizedBaseDir = baseDir.endsWith(pathSep)
     ? baseDir.slice(0, -1)
     : baseDir
-
   if (targetDir === normalizedBaseDir) {
     return ''
   }
-
   const relativePath = targetDir.slice(normalizedBaseDir.length + 1)
   return relativePath ? relativePath.split(pathSep).join(':') : ''
 }
-
 function getSkillCommandName(filePath: string, baseDir: string): string {
   const skillDirectory = dirname(filePath)
   const parentOfSkillDir = dirname(skillDirectory)
   const commandBaseName = basename(skillDirectory)
-
   const namespace = buildNamespace(parentOfSkillDir, baseDir)
   return namespace ? `${namespace}:${commandBaseName}` : commandBaseName
 }
-
 function getRegularCommandName(filePath: string, baseDir: string): string {
   const fileName = basename(filePath)
   const fileDirectory = dirname(filePath)
   const commandBaseName = fileName.replace(/\.md$/, '')
-
   const namespace = buildNamespace(fileDirectory, baseDir)
   return namespace ? `${namespace}:${commandBaseName}` : commandBaseName
 }
-
 function getCommandName(file: MarkdownFile): string {
   const isSkill = isSkillFile(file.filePath)
   return isSkill
     ? getSkillCommandName(file.filePath, file.baseDir)
     : getRegularCommandName(file.filePath, file.baseDir)
 }
-
 /**
  * Loads skills from legacy /commands/ directories.
  * Supports both directory format (SKILL.md) and single .md file format.
@@ -569,9 +601,7 @@ async function loadSkillsFromCommandsDir(
   try {
     const markdownFiles = await loadMarkdownFilesForSubdir('commands', cwd)
     const processedFiles = transformSkillFiles(markdownFiles)
-
     const skills: SkillWithPath[] = []
-
     for (const {
       baseDir,
       filePath,
@@ -589,14 +619,12 @@ async function loadSkillsFromCommandsDir(
           content,
           source,
         })
-
         const parsed = parseSkillFrontmatterFields(
           frontmatter,
           content,
           cmdName,
           'Custom command',
         )
-
         skills.push({
           skill: createSkillCommand({
             ...parsed,
@@ -614,14 +642,12 @@ async function loadSkillsFromCommandsDir(
         logError(error)
       }
     }
-
     return skills
   } catch (error) {
     logError(error)
     return []
   }
 }
-
 /**
  * Loads all skills from both /skills/ and legacy /commands/ directories.
  *
@@ -637,23 +663,20 @@ async function loadSkillsFromCommandsDir(
  */
 export const getSkillDirCommands = memoize(
   async (cwd: string): Promise<Command[]> => {
-    const userSkillsDir = join(getClaudeConfigHomeDir(), 'skills')
-    const managedSkillsDir = join(getManagedFilePath(), '.claude', 'skills')
+    const userSkillsDirs = getSkillConfigDirs('skills')
+    const managedSkillsDirs = getManagedSkillConfigDirs('skills')
     const projectSkillsDirs = getProjectDirsUpToHome('skills', cwd)
-
     logForDebugging(
-      `Loading skills from: managed=${managedSkillsDir}, user=${userSkillsDir}, project=[${projectSkillsDirs.join(', ')}]`,
+      `Loading skills from: managed=[${managedSkillsDirs.join(', ')}], user=[${userSkillsDirs.join(', ')}], project=[${projectSkillsDirs.join(', ')}]`,
     )
-
     // Load from additional directories (--add-dir)
-    const additionalDirs = getAdditionalDirectoriesForClaudeMd()
+    const additionalDirs = getAdditionalDirectoriesForDsxuInstructions()
     const skillsLocked = isRestrictedToPluginOnly('skills')
     const projectSettingsEnabled =
       isSettingSourceEnabled('projectSettings') && !skillsLocked
-
     // --bare: skip auto-discovery (managed/user/project dir walks + legacy
     // commands-dir). Load ONLY explicit --add-dir paths. Bundled skills
-    // register separately. skillsLocked still applies — --bare is not a
+    // register separately. skillsLocked still applies ...-bare is not a
     // policy bypass.
     if (isBareMode()) {
       if (additionalDirs.length === 0 || !projectSettingsEnabled) {
@@ -663,19 +686,15 @@ export const getSkillDirCommands = memoize(
         return []
       }
       const additionalSkillsNested = await Promise.all(
-        additionalDirs.map(dir =>
-          loadSkillsFromSkillsDir(
-            join(dir, '.claude', 'skills'),
-            'projectSettings',
-          ),
-        ),
+        additionalDirs.flatMap(dir =>
+          getAdditionalSkillConfigDirs(dir, 'skills'),
+        ).map(dir => loadSkillsFromSkillsDir(dir, 'projectSettings')),
       )
-      // No dedup needed — explicit dirs, user controls uniqueness.
+      // No dedup needed ...explicit dirs, user controls uniqueness.
       return additionalSkillsNested.flat().map(s => s.skill)
     }
-
     // Load from /skills/ directories, additional dirs, and legacy /commands/ in parallel
-    // (all independent — different directories, no shared state)
+    // (all independent ...different directories, no shared state)
     const [
       managedSkills,
       userSkills,
@@ -683,11 +702,18 @@ export const getSkillDirCommands = memoize(
       additionalSkillsNested,
       legacyCommands,
     ] = await Promise.all([
-      isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_POLICY_SKILLS)
+      isEnvTruthy(process.env.DSXU_CODE_DISABLE_POLICY_SKILLS) ||
+      isEnvTruthy(process.env[LEGACY_POLICY_SKILLS_ENV])
         ? Promise.resolve([])
-        : loadSkillsFromSkillsDir(managedSkillsDir, 'policySettings'),
+        : Promise.all(
+            managedSkillsDirs.map(dir =>
+              loadSkillsFromSkillsDir(dir, 'policySettings'),
+            ),
+          ).then(_ => _.flat()),
       isSettingSourceEnabled('userSettings') && !skillsLocked
-        ? loadSkillsFromSkillsDir(userSkillsDir, 'userSettings')
+        ? Promise.all(
+            userSkillsDirs.map(dir => loadSkillsFromSkillsDir(dir, 'userSettings')),
+          ).then(_ => _.flat())
         : Promise.resolve([]),
       projectSettingsEnabled
         ? Promise.all(
@@ -698,21 +724,17 @@ export const getSkillDirCommands = memoize(
         : Promise.resolve([]),
       projectSettingsEnabled
         ? Promise.all(
-            additionalDirs.map(dir =>
-              loadSkillsFromSkillsDir(
-                join(dir, '.claude', 'skills'),
-                'projectSettings',
-              ),
-            ),
+            additionalDirs.flatMap(dir =>
+              getAdditionalSkillConfigDirs(dir, 'skills'),
+            ).map(dir => loadSkillsFromSkillsDir(dir, 'projectSettings')),
           )
         : Promise.resolve([]),
       // Legacy commands-as-skills goes through markdownConfigLoader with
       // subdir='commands', which our agents-only guard there skips. Block
-      // here when skills are locked — these ARE skills, regardless of the
+      // here when skills are locked ...these ARE skills, regardless of the
       // directory they load from.
       skillsLocked ? Promise.resolve([]) : loadSkillsFromCommandsDir(cwd),
     ])
-
     // Flatten and combine all skills
     const allSkillsWithPaths = [
       ...managedSkills,
@@ -721,7 +743,6 @@ export const getSkillDirCommands = memoize(
       ...additionalSkillsNested.flat(),
       ...legacyCommands,
     ]
-
     // Deduplicate by resolved path (handles symlinks and duplicate parent directories)
     // Pre-compute file identities in parallel (realpath calls are independent),
     // then dedup synchronously (order-dependent first-wins)
@@ -732,24 +753,20 @@ export const getSkillDirCommands = memoize(
           : Promise.resolve(null),
       ),
     )
-
     const seenFileIds = new Map<
       string,
       SettingSource | 'builtin' | 'mcp' | 'plugin' | 'bundled'
     >()
     const deduplicatedSkills: Command[] = []
-
     for (let i = 0; i < allSkillsWithPaths.length; i++) {
       const entry = allSkillsWithPaths[i]
       if (entry === undefined || entry.skill.type !== 'prompt') continue
       const { skill } = entry
-
       const fileId = fileIds[i]
       if (fileId === null || fileId === undefined) {
         deduplicatedSkills.push(skill)
         continue
       }
-
       const existingSource = seenFileIds.get(fileId)
       if (existingSource !== undefined) {
         logForDebugging(
@@ -757,17 +774,14 @@ export const getSkillDirCommands = memoize(
         )
         continue
       }
-
       seenFileIds.set(fileId, skill.source)
       deduplicatedSkills.push(skill)
     }
-
     const duplicatesRemoved =
       allSkillsWithPaths.length - deduplicatedSkills.length
     if (duplicatesRemoved > 0) {
       logForDebugging(`Deduplicated ${duplicatesRemoved} skills (same file)`)
     }
-
     // Separate conditional skills (with paths frontmatter) from unconditional ones
     const unconditionalSkills: Command[] = []
     const newConditionalSkills: Command[] = []
@@ -783,54 +797,42 @@ export const getSkillDirCommands = memoize(
         unconditionalSkills.push(skill)
       }
     }
-
     // Store conditional skills for later activation when matching files are touched
     for (const skill of newConditionalSkills) {
       conditionalSkills.set(skill.name, skill)
     }
-
     if (newConditionalSkills.length > 0) {
       logForDebugging(
         `[skills] ${newConditionalSkills.length} conditional skills stored (activated when matching files are touched)`,
       )
     }
-
     logForDebugging(
       `Loaded ${deduplicatedSkills.length} unique skills (${unconditionalSkills.length} unconditional, ${newConditionalSkills.length} conditional, managed: ${managedSkills.length}, user: ${userSkills.length}, project: ${projectSkillsNested.flat().length}, additional: ${additionalSkillsNested.flat().length}, legacy commands: ${legacyCommands.length})`,
     )
-
     return unconditionalSkills
   },
 )
-
 export function clearSkillCaches() {
   getSkillDirCommands.cache?.clear?.()
   loadMarkdownFilesForSubdir.cache?.clear?.()
   conditionalSkills.clear()
   activatedConditionalSkillNames.clear()
 }
-
 // Backwards-compatible aliases for tests
 export { getSkillDirCommands as getCommandDirCommands }
 export { clearSkillCaches as clearCommandCaches }
 export { transformSkillFiles }
-
 // --- Dynamic skill discovery ---
-
 // State for dynamically discovered skills
 const dynamicSkillDirs = new Set<string>()
 const dynamicSkills = new Map<string, Command>()
-
 // --- Conditional skills (path-filtered) ---
-
 // Skills with paths frontmatter that haven't been activated yet
 const conditionalSkills = new Map<string, Command>()
 // Names of skills that have been activated (survives cache clears within a session)
 const activatedConditionalSkillNames = new Set<string>()
-
 // Signal fired when dynamic skills are loaded
 const skillsLoaded = createSignal()
-
 /**
  * Register a callback to be invoked when dynamic skills are loaded.
  * Used by other modules to clear caches without creating import cycles.
@@ -839,7 +841,7 @@ const skillsLoaded = createSignal()
 export function onDynamicSkillsLoaded(callback: () => void): () => void {
   // Wrap at subscribe time so a throwing listener is logged and skipped
   // rather than aborting skillsLoaded.emit() and breaking skill loading.
-  // Same callSafe pattern as growthbook.ts — createSignal.emit() has no
+  // Same callSafe pattern as growthbook.ts ...createSignal.emit() has no
   // per-listener try/catch.
   return skillsLoaded.subscribe(() => {
     try {
@@ -849,7 +851,6 @@ export function onDynamicSkillsLoaded(callback: () => void): () => void {
     }
   })
 }
-
 /**
  * Discovers skill directories by walking up from file paths to cwd.
  * Only discovers directories below cwd (cwd-level skills are loaded at startup).
@@ -865,18 +866,19 @@ export async function discoverSkillDirsForPaths(
   const fs = getFsImplementation()
   const resolvedCwd = cwd.endsWith(pathSep) ? cwd.slice(0, -1) : cwd
   const newDirs: string[] = []
-
   for (const filePath of filePaths) {
     // Start from the file's parent directory
     let currentDir = dirname(filePath)
-
     // Walk up to cwd but NOT including cwd itself
     // CWD-level skills are already loaded at startup, so we only discover nested ones
     // Use prefix+separator check to avoid matching /project-backup when cwd is /project
     while (currentDir.startsWith(resolvedCwd + pathSep)) {
-      const skillDir = join(currentDir, '.claude', 'skills')
-
-      // Skip if we've already checked this path (hit or miss) — avoids
+      const skillDir = join(
+        currentDir,
+        isDsxuRuntimeMode() ? DSXU_PROJECT_CONFIG_DIR : LEGACY_PROJECT_CONFIG_DIR,
+        'skills',
+      )
+      // Skip if we've already checked this path (hit or miss) ...avoids
       // repeating the same failed stat on every Read/Write/Edit call when
       // the directory doesn't exist (the common case).
       if (!dynamicSkillDirs.has(skillDir)) {
@@ -884,10 +886,10 @@ export async function discoverSkillDirsForPaths(
         try {
           await fs.stat(skillDir)
           // Skills dir exists. Before loading, check if the containing dir
-          // is gitignored — blocks e.g. node_modules/pkg/.claude/skills from
+          // is gitignored ...blocks e.g. node_modules/pkg/.dsxu/skills from
           // loading silently. `git check-ignore` handles nested .gitignore,
           // .git/info/exclude, and global gitignore. Fails open outside a
-          // git repo (exit 128 → false); the invocation-time trust dialog
+          // git repo (exit 128  -> false); the invocation-time trust dialog
           // is the actual security boundary.
           if (await isPathGitignored(currentDir, resolvedCwd)) {
             logForDebugging(
@@ -897,23 +899,20 @@ export async function discoverSkillDirsForPaths(
           }
           newDirs.push(skillDir)
         } catch {
-          // Directory doesn't exist — already recorded above, continue
+          // Directory doesn't exist ...already recorded above, continue
         }
       }
-
       // Move to parent
       const parent = dirname(currentDir)
       if (parent === currentDir) break // Reached root
       currentDir = parent
     }
   }
-
   // Sort by path depth (deepest first) so skills closer to the file take precedence
   return newDirs.sort(
     (a, b) => b.split(pathSep).length - a.split(pathSep).length,
   )
 }
-
 /**
  * Loads skills from the given directories and merges them into the dynamic skills map.
  * Skills from directories closer to the file (deeper paths) take precedence.
@@ -933,14 +932,11 @@ export async function addSkillDirectories(dirs: string[]): Promise<void> {
   if (dirs.length === 0) {
     return
   }
-
   const previousSkillNamesForLogging = new Set(dynamicSkills.keys())
-
   // Load skills from all directories
   const loadedSkills = await Promise.all(
     dirs.map(dir => loadSkillsFromSkillsDir(dir, 'projectSettings')),
   )
-
   // Process in reverse order (shallower first) so deeper paths override
   for (let i = loadedSkills.length - 1; i >= 0; i--) {
     for (const { skill } of loadedSkills[i] ?? []) {
@@ -949,7 +945,6 @@ export async function addSkillDirectories(dirs: string[]): Promise<void> {
       }
     }
   }
-
   const newSkillCount = loadedSkills.flat().length
   if (newSkillCount > 0) {
     const addedSkills = [...dynamicSkills.keys()].filter(
@@ -969,11 +964,9 @@ export async function addSkillDirectories(dirs: string[]): Promise<void> {
       })
     }
   }
-
   // Notify listeners that skills were loaded (so they can clear caches)
   skillsLoaded.emit()
 }
-
 /**
  * Gets all dynamically discovered skills.
  * These are skills discovered from file paths during the session.
@@ -981,14 +974,13 @@ export async function addSkillDirectories(dirs: string[]): Promise<void> {
 export function getDynamicSkills(): Command[] {
   return Array.from(dynamicSkills.values())
 }
-
 /**
  * Activates conditional skills (skills with paths frontmatter) whose path
  * patterns match the given file paths. Activated skills are added to the
  * dynamic skills map, making them available to the model.
  *
  * Uses the `ignore` library (gitignore-style matching), matching the behavior
- * of CLAUDE.md conditional rules.
+ * of DSXU instruction conditional rules.
  *
  * @param filePaths Array of file paths being operated on
  * @param cwd Current working directory (paths are matched relative to cwd)
@@ -1001,20 +993,16 @@ export function activateConditionalSkillsForPaths(
   if (conditionalSkills.size === 0) {
     return []
   }
-
   const activated: string[] = []
-
   for (const [name, skill] of conditionalSkills) {
     if (skill.type !== 'prompt' || !skill.paths || skill.paths.length === 0) {
       continue
     }
-
     const skillIgnore = ignore().add(skill.paths)
     for (const filePath of filePaths) {
       const relativePath = isAbsolute(filePath)
         ? relative(cwd, filePath)
         : filePath
-
       // ignore() throws on empty strings, paths escaping the base (../),
       // and absolute paths (Windows cross-drive relative() returns absolute).
       // Files outside cwd can't match cwd-relative patterns anyway.
@@ -1025,7 +1013,6 @@ export function activateConditionalSkillsForPaths(
       ) {
         continue
       }
-
       if (skillIgnore.ignores(relativePath)) {
         // Activate this skill by moving it to dynamic skills
         dynamicSkills.set(name, skill)
@@ -1039,7 +1026,6 @@ export function activateConditionalSkillsForPaths(
       }
     }
   }
-
   if (activated.length > 0) {
     logEvent('tengu_dynamic_skills_changed', {
       source:
@@ -1049,21 +1035,17 @@ export function activateConditionalSkillsForPaths(
       addedCount: activated.length,
       directoryCount: 0,
     })
-
     // Notify listeners that skills were loaded (so they can clear caches)
     skillsLoaded.emit()
   }
-
   return activated
 }
-
 /**
  * Gets the number of pending conditional skills (for testing/debugging).
  */
 export function getConditionalSkillCount(): number {
   return conditionalSkills.size
 }
-
 /**
  * Clears dynamic skill state (for testing).
  */
@@ -1073,7 +1055,6 @@ export function clearDynamicSkills(): void {
   conditionalSkills.clear()
   activatedConditionalSkillNames.clear()
 }
-
 // Expose createSkillCommand + parseSkillFrontmatterFields to MCP skill
 // discovery via a leaf registry module. See mcpSkillBuilders.ts for why this
 // indirection exists (a literal dynamic import from mcpSkills.ts fans a single

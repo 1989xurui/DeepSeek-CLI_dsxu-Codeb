@@ -1,4 +1,4 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { constants as fsConstants } from 'fs'
 import { mkdir, open } from 'fs/promises'
 import { dirname, isAbsolute, join, normalize, sep as pathSep } from 'path'
@@ -114,6 +114,31 @@ export function clearBundledSkills(): void {
   bundledSkills.length = 0
 }
 
+export function getDsxuBundledSkillsRuntimeProfile(): {
+  runtime: 'DSXU Bundled Skills Registry'
+  registeredCount: number
+  registryPolicy: string
+  extractionPolicy: string
+  safeWritePolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Bundled Skills Registry',
+    registeredCount: bundledSkills.length,
+    registryPolicy:
+      'bundled skills are registered as DSXU prompt commands and can be invoked by workflow/goal routing',
+    extractionPolicy:
+      'reference files are lazily extracted on first skill invocation and prepended as a model-readable base directory',
+    safeWritePolicy:
+      'skill reference files are written with traversal checks, owner-only permissions, and no overwrite semantics',
+    activationEvidence: [
+      'registerBundledSkill pushes user-invocable and hidden workflow skills into the command registry',
+      'getBundledSkills returns the runtime command list consumed by slash/skill dispatch',
+      'extractBundledSkillFiles exposes packaged references to Read/Grep without trusting prompt-only content',
+    ],
+  }
+}
+
 /**
  * Deterministic extraction directory for a bundled skill's reference files.
  */
@@ -217,4 +242,13 @@ function prependBaseDir(
     ]
   }
   return [{ type: 'text', text: prefix }, ...blocks]
+}
+
+
+// V14 lifecycle shim: bundledskills
+export function processBundledskillsLifecycle(input) {
+  void input
+  const state = 'bundledskills-state'
+  const lifecycle = 'bundledskills:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

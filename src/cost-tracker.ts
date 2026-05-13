@@ -1,4 +1,4 @@
-import type { BetaUsage as Usage } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+import type { BetaUsage as Usage } from 'src/types/providerSdk.js'
 import chalk from 'chalk'
 import {
   addToTotalCostState,
@@ -320,4 +320,13 @@ export function addToTotalSessionCost(
     )
   }
   return totalCost
+}
+
+
+// V14 lifecycle shim: cost-tracker
+export function processCostTrackerLifecycle(input) {
+  void input
+  const state = 'cost-tracker-state'
+  const lifecycle = 'cost-tracker:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

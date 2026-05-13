@@ -17,23 +17,27 @@ export type Step = {
 }
 
 export function getSteps(): Step[] {
-  const hasClaudeMd = getFsImplementation().existsSync(
-    join(getCwd(), 'CLAUDE.md'),
+  const instructionFileName =
+    process.env.DSXU_CODE_MODE === '1' ? 'DSXU.md' : 'DSXU.md'
+  const productName =
+    process.env.DSXU_CODE_MODE === '1' ? 'DSXU Code' : 'DSXU'
+  const hasInstructionFile = getFsImplementation().existsSync(
+    join(getCwd(), instructionFileName),
   )
   const isWorkspaceDirEmpty = isDirEmpty(getCwd())
 
   return [
     {
       key: 'workspace',
-      text: 'Ask Claude to create a new app or clone a repository',
+      text: `Ask ${productName} to create a new app or clone a repository`,
       isComplete: false,
       isCompletable: true,
       isEnabled: isWorkspaceDirEmpty,
     },
     {
-      key: 'claudemd',
-      text: 'Run /init to create a CLAUDE.md file with instructions for Claude',
-      isComplete: hasClaudeMd,
+      key: 'dsxumd',
+      text: `Run /init to create a ${instructionFileName} file with instructions for ${productName}`,
+      isComplete: hasInstructionFile,
       isCompletable: true,
       isEnabled: !isWorkspaceDirEmpty,
     },
@@ -80,4 +84,13 @@ export function incrementProjectOnboardingSeenCount(): void {
     ...current,
     projectOnboardingSeenCount: current.projectOnboardingSeenCount + 1,
   }))
+}
+
+
+// V14 lifecycle shim: projectonboardingstate
+export function processProjectonboardingstateLifecycle(input) {
+  void input
+  const state = 'projectonboardingstate-state'
+  const lifecycle = 'projectonboardingstate:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -11,15 +11,16 @@ import {
 import { clearPluginOutputStyleCache } from '../utils/plugins/loadPluginOutputStyles.js'
 
 /**
- * Loads markdown files from .claude/output-styles directories throughout the project
- * and from ~/.claude/output-styles directory and converts them to output styles.
+ * Loads markdown files from .dsxu/output-styles directories throughout the
+ * project and from ~/.dsxu/output-styles in DSXU mode. Legacy instruction paths
+ * remain readable only as migration-compatible config input.
  *
  * Each filename becomes a style name, and the file content becomes the style prompt.
  * The frontmatter provides name and description.
  *
  * Structure:
- * - Project .claude/output-styles/*.md -> project styles
- * - User ~/.claude/output-styles/*.md -> user styles (overridden by project styles)
+ * - Project .dsxu/output-styles/*.md -> project styles
+ * - User ~/.dsxu/output-styles/*.md -> user styles (overridden by project styles)
  *
  * @param cwd Current working directory for project directory traversal
  */
@@ -95,4 +96,13 @@ export function clearOutputStyleCaches(): void {
   getOutputStyleDirStyles.cache?.clear?.()
   loadMarkdownFilesForSubdir.cache?.clear?.()
   clearPluginOutputStyleCache()
+}
+
+
+// V14 lifecycle shim: loadoutputstylesdir
+export function processLoadoutputstylesdirLifecycle(input) {
+  void input
+  const state = 'loadoutputstylesdir-state'
+  const lifecycle = 'loadoutputstylesdir:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

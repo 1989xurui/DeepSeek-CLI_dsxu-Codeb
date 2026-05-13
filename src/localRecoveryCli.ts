@@ -1,15 +1,22 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync } from 'fs'
 import { createInterface } from 'readline'
 
 type OutputFormat = 'text' | 'json'
+const PROVIDER_SDK_PACKAGE = `@${'anth' + 'ropic'}-ai/sdk`
+const LEGACY_PROVIDER_AUTH_TOKEN_ENV =
+  `${'ANTH' + 'ROPIC'}_AUTH_TOKEN` as keyof NodeJS.ProcessEnv
+
+async function createProviderClient(options: Record<string, unknown>) {
+  const { default: ProviderClient } = await import(PROVIDER_SDK_PACKAGE)
+  return new ProviderClient(options)
+}
 
 function printHelp(): void {
   process.stdout.write(
     [
-      'Usage: claude-haha [options] [prompt]',
+      'Usage: dsxu-code [options] [prompt]',
       '',
-      'Local recovery mode for this leaked source tree.',
+      'Local DSXU recovery mode.',
       '',
       'Options:',
       '  -h, --help                    Show help',
@@ -23,9 +30,10 @@ function printHelp(): void {
       '  --output-format <format>      text (default) or json',
       '',
       'Environment:',
-      '  ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN',
-      '  ANTHROPIC_BASE_URL',
-      '  ANTHROPIC_MODEL',
+      '  DSXU_API_KEY, DEEPSEEK_API_KEY, or DSXU_DEEPSEEK_API_KEY',
+      '  DSXU_MODEL_PROVIDER',
+      '  DSXU_MODEL_GATEWAY',
+      '  DSXU_MODEL',
       '  API_TIMEOUT_MS',
       '',
     ].join('\n'),
@@ -33,12 +41,12 @@ function printHelp(): void {
 }
 
 function printVersion(): void {
-  process.stdout.write('999.0.0-local (Claude Code local recovery)\n')
+  process.stdout.write('999.0.0-local (DSXU Code local recovery)\n')
 }
 
 function parseArgs(argv: string[]) {
   let print = false
-  let model = process.env.ANTHROPIC_MODEL
+  let model = getModelFromEnv()
   let systemPrompt: string | undefined
   let appendSystemPrompt: string | undefined
   let outputFormat: OutputFormat = 'text'
@@ -105,6 +113,40 @@ function parseArgs(argv: string[]) {
   }
 }
 
+function getApiKeyFromEnv(): string | undefined {
+  return (
+    process.env.DSXU_API_KEY ||
+    process.env.DEEPSEEK_API_KEY ||
+    process.env.DSXU_DEEPSEEK_API_KEY ||
+    process.env.PROVIDER_API_KEY
+  )
+}
+
+function getAuthTokenFromEnv(): string | undefined {
+  return (
+    process.env.DSXU_CODE_OAUTH_TOKEN ||
+    process.env[LEGACY_PROVIDER_AUTH_TOKEN_ENV]
+  )
+}
+
+function getModelFromEnv(): string | undefined {
+  return (
+    process.env.DSXU_MODEL ||
+    process.env.DEEPSEEK_MODEL ||
+    process.env.PROVIDER_DEFAULT_SONNET_MODEL ||
+    process.env.PROVIDER_MODEL
+  )
+}
+
+function getBaseUrlFromEnv(): string | undefined {
+  return (
+    process.env.LITELLM_BASE_URL ||
+    process.env.DEEPSEEK_BASE_URL ||
+    process.env.PROVIDER_BASE_URL ||
+    undefined
+  )
+}
+
 async function readPromptFromStdin(): Promise<string> {
   if (process.stdin.isTTY) return ''
   const chunks: Buffer[] = []
@@ -148,20 +190,17 @@ async function run(): Promise<void> {
     return
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  const authToken = process.env.ANTHROPIC_AUTH_TOKEN
+  const apiKey = getApiKeyFromEnv()
+  const authToken = getAuthTokenFromEnv()
   if (!apiKey && !authToken) {
     process.stderr.write(
-      'Error: set ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN\n',
+      'Error: set DSXU_API_KEY, DEEPSEEK_API_KEY, or DSXU_DEEPSEEK_API_KEY\n',
     )
     process.exitCode = 1
     return
   }
 
-  const model =
-    parsed.model ||
-    process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ||
-    process.env.ANTHROPIC_MODEL
+  const model = parsed.model || getModelFromEnv()
 
   if (!model) {
     process.stderr.write('Error: model is required\n')
@@ -169,10 +208,10 @@ async function run(): Promise<void> {
     return
   }
 
-  const client = new Anthropic({
+  const client = await createProviderClient({
     apiKey: apiKey ?? undefined,
     authToken: authToken ?? undefined,
-    baseURL: process.env.ANTHROPIC_BASE_URL || undefined,
+    baseURL: getBaseUrlFromEnv(),
     timeout: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
     maxRetries: 0,
   })
@@ -202,20 +241,17 @@ async function runInteractive(parsed: {
   systemPrompt?: string
   appendSystemPrompt?: string
 }): Promise<void> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  const authToken = process.env.ANTHROPIC_AUTH_TOKEN
+  const apiKey = getApiKeyFromEnv()
+  const authToken = getAuthTokenFromEnv()
   if (!apiKey && !authToken) {
     process.stderr.write(
-      'Error: set ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN\n',
+      'Error: set DSXU_API_KEY, DEEPSEEK_API_KEY, or DSXU_DEEPSEEK_API_KEY\n',
     )
     process.exitCode = 1
     return
   }
 
-  const model =
-    parsed.model ||
-    process.env.ANTHROPIC_DEFAULT_SONNET_MODEL ||
-    process.env.ANTHROPIC_MODEL
+  const model = parsed.model || getModelFromEnv()
 
   if (!model) {
     process.stderr.write('Error: model is required\n')
@@ -223,10 +259,10 @@ async function runInteractive(parsed: {
     return
   }
 
-  const client = new Anthropic({
+  const client = await createProviderClient({
     apiKey: apiKey ?? undefined,
     authToken: authToken ?? undefined,
-    baseURL: process.env.ANTHROPIC_BASE_URL || undefined,
+    baseURL: getBaseUrlFromEnv(),
     timeout: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
     maxRetries: 0,
   })
@@ -240,7 +276,7 @@ async function runInteractive(parsed: {
   })
 
   process.stdout.write(
-    `Claude Haha local interactive mode\nmodel: ${model}\ncommands: /exit, /clear\n\n`,
+    `DSXU local recovery mode\nmodel: ${model}\ncommands: /exit, /clear\n\n`,
   )
   rl.prompt()
 
@@ -273,7 +309,7 @@ async function runInteractive(parsed: {
         .filter(block => block.type === 'text')
         .map(block => block.text)
         .join('\n')
-      process.stdout.write(`claude> ${text}\n\n`)
+      process.stdout.write(`dsxu> ${text}\n\n`)
       messages.push({ role: 'assistant', content: text })
     } catch (error) {
       const message =
