@@ -117,6 +117,7 @@ export type OwnerGitClosureBoard = {
     | 'review-owner-git-signoff'
     | 'review-pending-deletion-signoff'
     | 'collect-target-reference-raw-logs'
+    | 'collect-deferred-eval-raw-live-logs'
     | 'review-deferred-product-absorption'
     | 'resolve-workspace-artifact-policy'
     | 'run-final-release-tests'
@@ -238,7 +239,9 @@ export function buildOwnerGitClosureBoard(
         `deferredEvalIds=${input.deferredEvalIds.join(',')}`,
       ],
       signoffCondition: 'same-task target-reference raw logs and delta report are complete; deferred evals use the same evidence schema',
-      nextAction: input.p12RawNextAction,
+      nextAction: input.p12RawStatus === 'PASS' && input.deferredEvalIds.length > 0
+        ? 'collect deferred eval raw/live evidence through the same evidence schema'
+        : input.p12RawNextAction,
       redlines: p12Blocking,
     },
     {
@@ -353,7 +356,9 @@ export function buildOwnerGitClosureBoard(
       : lanes.find(lane => lane.status !== 'PASS')?.id === 'OGC-02'
         ? 'review-pending-deletion-signoff'
         : lanes.find(lane => lane.status !== 'PASS')?.id === 'OGC-03'
-          ? 'collect-target-reference-raw-logs'
+          ? input.p12RawStatus === 'PASS' && input.deferredEvalIds.length > 0
+            ? 'collect-deferred-eval-raw-live-logs'
+            : 'collect-target-reference-raw-logs'
           : lanes.find(lane => lane.status !== 'PASS')?.id === 'OGC-04'
             ? 'review-deferred-product-absorption'
             : lanes.find(lane => lane.status !== 'PASS')?.id === 'OGC-05'

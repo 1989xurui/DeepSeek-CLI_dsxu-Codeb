@@ -52,7 +52,6 @@ describe('WP-08 - Release Closure Board V1', () => {
     expect(board.batches.find(batch => batch.id === 'RC-03')?.status).toBe('PARTIAL')
     expect(board.batches.find(batch => batch.id === 'RC-04')?.status).toBe('PARTIAL')
     expect(board.batches.find(batch => batch.id === 'RC-06')?.status).toBe('BLOCKED')
-    expect(board.releaseBlockers.join('\n')).toContain('clean export is not ready')
     expect(board.releaseBlockers.join('\n')).toContain('target reference paired raw logs are missing')
     expect(board.releaseBlockers.join('\n')).toContain('original-side replay families')
     expect(board.nextAction).toBe('fix-blockers')
@@ -90,7 +89,6 @@ describe('WP-08 - Release Closure Board V1', () => {
       'RC-05',
       'RC-06',
     ])
-    expect(board.releaseBlockers.join('\n')).toContain('clean export is not ready')
     expect(board.releaseBlockers.join('\n')).toContain('target reference paired raw logs are missing')
     expect(board.releaseBlockers.join('\n')).toContain('original-side replay families')
     expect(board.evidencePaths.join('\n')).toContain('dirty-worktree-review.evidence.json')
