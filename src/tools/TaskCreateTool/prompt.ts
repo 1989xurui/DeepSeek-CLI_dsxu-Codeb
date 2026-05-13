@@ -52,5 +52,30 @@ All tasks are created with status \`pending\`.
 - Create tasks with clear, specific subjects that describe the outcome
 - After creating tasks, use TaskUpdate to set up dependencies (blocks/blockedBy) if needed
 ${teammateTips}- Check TaskList first to avoid creating duplicate tasks
+
+## DSXU Weak-Model Discipline
+
+- When to use: create tasks for multi-step coding work, plan-mode execution, Agent/teammate coordination, or user requests that need visible progress tracking.
+- When not to use: do not create tasks for a single trivial lookup, purely conversational replies, or as a substitute for actually inspecting files.
+- Recovery after failure: if tasks become stale, duplicated, blocked, or superseded, read TaskList/TaskGet and update existing tasks instead of creating another parallel list.
+- Weak-model anti-pattern: do not mark planned work as done, do not create vague tasks without scope or acceptance, and do not use tasks to hide unresolved failures.
+- Verification / evidence: each task should have a concrete completion signal such as file evidence, command output, PASS marker, or explicit PARTIAL/FAIL condition.
 `
+}
+
+
+// V14 strict lifecycle shim: tools-TaskCreateTool-prompt
+export function processToolsTaskCreateToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-TaskCreateTool-prompt-state'
+  const lifecycle = 'tools-TaskCreateTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsTaskCreateToolPromptStrict(input) {
+  return processToolsTaskCreateToolPromptStrictLifecycle(input)
 }

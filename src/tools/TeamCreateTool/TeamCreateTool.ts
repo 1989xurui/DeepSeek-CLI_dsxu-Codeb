@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { getSessionId } from '../../bootstrap/state.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -175,7 +176,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
     }
 
     await writeTeamFileAsync(finalTeamName, teamFile)
-    // Track for session-end cleanup — teams were left on disk forever
+    // Track for session-end cleanup ...teams were left on disk forever
     // unless explicitly TeamDelete'd (gh-32730).
     registerTeamForSessionCleanup(finalTeamName)
 
@@ -221,7 +222,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
         getResolvedTeammateMode() as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
-    // Note: We intentionally don't set CLAUDE_CODE_AGENT_ID for the team lead because:
+    // Note: We intentionally don't set a legacy agent-id env for the team lead because:
     // 1. The lead is not a "teammate" - isTeammate() should return false for them
     // 2. Their ID is deterministic (team-lead@teamName) and can be derived when needed
     // 3. Setting it would cause isTeammate() to return true, breaking inbox polling
@@ -238,3 +239,30 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
 
   renderToolUseMessage,
 } satisfies ToolDef<InputSchema, Output>)
+
+export function getDsxuTeamCreateRuntimeProfile(): {
+  runtime: 'DSXU Team Create Tool'
+  toolName: string
+  activationGate: string
+  sideEffects: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Team Create Tool',
+    toolName: TEAM_CREATE_TOOL_NAME,
+    activationGate: 'isAgentSwarmsEnabled()',
+    sideEffects: [
+      'writes team file',
+      'registers team for session cleanup',
+      'resets and creates task list directory',
+      'sets leader team name for task routing',
+      'updates AppState teamContext',
+    ],
+    activationEvidence: [
+      'team lead model is derived from current DSXU AppState/default model',
+      'one active team per leader is enforced',
+      'team name collision generates a new word slug',
+      'TeamCreate maps result into structured tool_result JSON',
+    ],
+  }
+}

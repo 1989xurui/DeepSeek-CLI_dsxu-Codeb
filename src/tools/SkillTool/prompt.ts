@@ -28,6 +28,14 @@ export const DEFAULT_CHAR_BUDGET = 8_000 // Fallback: 1% of 200k × 4
 // since the cap is generous enough to preserve the core use case.
 export const MAX_LISTING_DESC_CHARS = 250
 
+export const DSXU_SKILL_TOOL_DISCIPLINE = `
+DSXU weak-model discipline:
+- When to use: invoke Skill when an available skill directly matches the user task, named slash command, file type, or domain workflow.
+- When not to use: do not use Skill for built-in CLI commands, generic local file work, shell execution, MCP resources, LSP lookups, or as a vague planning shortcut.
+- Recovery after failure: if the skill is unavailable or already loaded, follow the loaded instructions or continue with normal DSXU tools and report the reason.
+- Weak-model anti-pattern: never mention that a skill could help without actually invoking it when the match is required.
+- Verification / evidence: cite the loaded skill name and the concrete artifact, command, render, or check that proves the skill workflow was followed.`
+
 export function getCharBudget(contextWindowTokens?: number): number {
   if (Number(process.env.SLASH_COMMAND_TOOL_CHAR_BUDGET)) {
     return Number(process.env.SLASH_COMMAND_TOOL_CHAR_BUDGET)
@@ -192,6 +200,8 @@ Important:
 - Do not invoke a skill that is already running
 - Do not use this tool for built-in CLI commands (like /help, /clear, etc.)
 - If you see a <${COMMAND_NAME_TAG}> tag in the current conversation turn, the skill has ALREADY been loaded - follow the instructions directly instead of calling this tool again
+
+${DSXU_SKILL_TOOL_DISCIPLINE}
 `
 })
 

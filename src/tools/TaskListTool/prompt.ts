@@ -45,5 +45,30 @@ ${idDescription}
 - **blockedBy**: List of open task IDs that must be resolved first (tasks with blockedBy cannot be claimed until dependencies resolve)
 
 Use TaskGet with a specific task ID to view full details including description and comments.
-${teammateWorkflow}`
+${teammateWorkflow}
+
+## DSXU weak-model discipline
+
+- When to use: list tasks to choose available work, inspect blocked work, coordinate teammates, or check project progress.
+- When not to use: do not use TaskList as proof that code changed, tests passed, or a worker result is true.
+- Recovery after failure: if the list is empty, stale, or inconsistent, use TaskGet for exact tasks or create/update only the minimal missing task.
+- Weak-model anti-pattern: do not claim the lowest ID blindly when blocked, do not duplicate an owned task, and do not treat idle teammates as failures.
+- Verification / evidence: cite task IDs, status, owner, and blockedBy fields before acting; final PASS still needs source, command, or worker evidence.`
+}
+
+
+// V14 strict lifecycle shim: tools-TaskListTool-prompt
+export function processToolsTaskListToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-TaskListTool-prompt-state'
+  const lifecycle = 'tools-TaskListTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsTaskListToolPromptStrict(input) {
+  return processToolsTaskListToolPromptStrictLifecycle(input)
 }

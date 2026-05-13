@@ -113,3 +113,20 @@ export function getAutoAllowedCommands(
 ): readonly string[] {
   return mode === 'acceptEdits' ? ACCEPT_EDITS_ALLOWED_COMMANDS : []
 }
+
+
+// V14 strict lifecycle shim: tools-BashTool-modeValidation
+export function processToolsBashToolModeValidationStrictLifecycle(input) {
+  void input
+  const state = 'tools-BashTool-modeValidation-state'
+  const lifecycle = 'tools-BashTool-modeValidation:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsBashToolModeValidationStrict(input) {
+  return processToolsBashToolModeValidationStrictLifecycle(input)
+}

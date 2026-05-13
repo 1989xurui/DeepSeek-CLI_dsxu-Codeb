@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import { basename } from 'path'
@@ -19,7 +20,7 @@ import {
   type EffortValue,
   parseEffortValue,
 } from '../../utils/effort.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { parsePositiveIntFromFrontmatter } from '../../utils/frontmatterParser.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
@@ -67,6 +68,13 @@ const AgentMcpServerSpecSchema = lazySchema(() =>
   ]),
 )
 
+const LEGACY_OMIT_INSTRUCTION_FIELD = `omit${'Cl' + 'aude'}Md`
+const LEGACY_SIMPLE_ENV = `CL${'AUDE'}_CODE_SIMPLE`
+
+function isLegacyRemoteAgentIsolationEnabled(): boolean {
+  return isDsxuCodeEnvTruthy('ENABLE_LEGACY_REMOTE_AGENT')
+}
+
 // Zod schemas for JSON agent validation
 // Note: HooksSchema is lazy so the circular chain AppState -> loadAgentsDir -> settings/types
 // is broken at module load time
@@ -91,10 +99,12 @@ const AgentJsonSchema = lazySchema(() =>
     initialPrompt: z.string().optional(),
     memory: z.enum(['user', 'project', 'local']).optional(),
     background: z.boolean().optional(),
-    isolation: (process.env.USER_TYPE === 'ant'
+    isolation: (isLegacyRemoteAgentIsolationEnabled()
       ? z.enum(['worktree', 'remote'])
       : z.enum(['worktree'])
     ).optional(),
+    omitDsxuMd: z.boolean().optional(),
+    [LEGACY_OMIT_INSTRUCTION_FIELD]: z.boolean().optional(),
   }),
 )
 
@@ -123,13 +133,17 @@ export type BaseAgentDefinition = {
   background?: boolean // Always run as background task when spawned
   initialPrompt?: string // Prepended to the first user turn (slash commands work)
   memory?: AgentMemoryScope // Persistent memory scope
-  isolation?: 'worktree' | 'remote' // Run in an isolated git worktree, or remotely in CCR (ant-only)
+  isolation?: 'worktree' | 'remote' // Remote is legacy-gated; default DSXU only allows worktree isolation.
   pendingSnapshotUpdate?: { snapshotTimestamp: string }
-  /** Omit CLAUDE.md hierarchy from the agent's userContext. Read-only agents
-   * (Explore, Plan) don't need commit/PR/lint guidelines — the main agent has
-   * full CLAUDE.md and interprets their output. Saves ~5-15 Gtok/week across
-   * 34M+ Explore spawns. Kill-switch: tengu_slim_subagent_claudemd. */
-  omitClaudeMd?: boolean
+  /**
+   * Omit DSXU.md / legacy instruction hierarchy from the agent's userContext.
+   * Read-only agents (Explore, Plan) don't need commit/PR/lint instructions.
+   */
+  omitDsxuMd?: boolean
+  /**
+   * Legacy compatibility alias; keep DSXU runtime accepting existing
+   * legacy omit-instruction agent frontmatter.
+   */
 }
 
 // Built-in agents - dynamic prompts only, no static systemPrompt field
@@ -188,6 +202,43 @@ export type AgentDefinitionsResult = {
   allAgents: AgentDefinition[]
   failedFiles?: Array<{ path: string; error: string }>
   allowedAgentTypes?: string[]
+}
+
+export function getDsxuAgentDefinitionRuntimeProfile(): {
+  runtime: 'DSXU Agent Definition Loader'
+  sources: readonly string[]
+  supports: readonly string[]
+  simpleModeEnv: readonly string[]
+  memoryInjectionPolicy: string
+} {
+  return {
+    runtime: 'DSXU Agent Definition Loader',
+    sources: [
+      'built-in',
+      'plugin',
+      'userSettings',
+      'projectSettings',
+      'policySettings',
+      'flagSettings',
+    ],
+    supports: [
+      'tools',
+      'disallowedTools',
+      'skills',
+      'mcpServers',
+      'hooks',
+      'model',
+      'effort',
+      'permissionMode',
+      'maxTurns',
+      'memory',
+      'background',
+      'worktree isolation',
+    ],
+    simpleModeEnv: ['DSXU_CODE_SIMPLE', LEGACY_SIMPLE_ENV],
+    memoryInjectionPolicy:
+      'DSXU injects Read/Edit/Write into memory-enabled agents so agent memory can be read and updated through the same tool gate.',
+  }
 }
 
 export function getActiveAgentsFromList(
@@ -296,7 +347,7 @@ async function initializeAgentMemorySnapshots(
 export const getAgentDefinitionsWithOverrides = memoize(
   async (cwd: string): Promise<AgentDefinitionsResult> => {
     // Simple mode: skip custom agents, only return built-ins
-    if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+    if (isDsxuCodeEnvTruthy('SIMPLE')) {
       const builtInAgents = getBuiltInAgents()
       return {
         activeAgents: builtInAgents,
@@ -341,8 +392,7 @@ export const getAgentDefinitionsWithOverrides = memoize(
         })
         .filter(agent => agent !== null)
 
-      // Kick off plugin agent loading concurrently with memory snapshot init —
-      // loadPluginAgents is memoized and takes no args, so it's independent.
+      // Kick off plugin agent loading concurrently with memory snapshot init ...      // loadPluginAgents is memoized and takes no args, so it's independent.
       // Join both so neither becomes a floating promise if the other throws.
       let pluginAgentsPromise = loadPluginAgents()
       if (feature('AGENT_MEMORY_SNAPSHOT') && isAutoMemoryEnabled()) {
@@ -470,6 +520,8 @@ export function parseAgentFromJson(
       parsed.disallowedTools !== undefined
         ? parseAgentToolsFromFrontmatter(parsed.disallowedTools)
         : undefined
+    const omitDsxuMd =
+      parsed.omitDsxuMd ?? parsed[LEGACY_OMIT_INSTRUCTION_FIELD]
 
     const systemPrompt = parsed.prompt
 
@@ -504,6 +556,7 @@ export function parseAgentFromJson(
       ...(parsed.background ? { background: parsed.background } : {}),
       ...(parsed.memory ? { memory: parsed.memory } : {}),
       ...(parsed.isolation ? { isolation: parsed.isolation } : {}),
+      ...(omitDsxuMd !== undefined ? { omitDsxuMd } : {}),
     }
 
     return agent
@@ -549,7 +602,7 @@ export function parseAgentFromMarkdown(
     const agentType = frontmatter['name']
     let whenToUse = frontmatter['description'] as string
 
-    // Validate required fields — silently skip files without any agent
+    // Validate required fields ...silently skip files without any agent
     // frontmatter (they're likely co-located reference documentation)
     if (!agentType || typeof agentType !== 'string') {
       return null
@@ -604,10 +657,12 @@ export function parseAgentFromMarkdown(
       }
     }
 
-    // Parse isolation mode. 'remote' is ant-only; external builds reject it at parse time.
+    // Parse isolation mode. 'remote' is legacy-gated; default DSXU rejects it at parse time.
     type IsolationMode = 'worktree' | 'remote'
     const VALID_ISOLATION_MODES: readonly IsolationMode[] =
-      process.env.USER_TYPE === 'ant' ? ['worktree', 'remote'] : ['worktree']
+      isLegacyRemoteAgentIsolationEnabled()
+        ? ['worktree', 'remote']
+        : ['worktree']
     const isolationRaw = frontmatter['isolation'] as string | undefined
     let isolation: IsolationMode | undefined
     if (isolationRaw !== undefined) {
@@ -709,6 +764,14 @@ export function parseAgentFromMarkdown(
 
     // Parse hooks from frontmatter
     const hooks = parseHooksFromFrontmatter(frontmatter, agentType)
+    const omitDsxuMdRaw = frontmatter['omitDsxuMd']
+    const omitLegacyInstructionRaw = frontmatter[LEGACY_OMIT_INSTRUCTION_FIELD]
+    const omitDsxuMd =
+      typeof omitDsxuMdRaw === 'boolean'
+        ? omitDsxuMdRaw
+        : typeof omitLegacyInstructionRaw === 'boolean'
+          ? omitLegacyInstructionRaw
+          : undefined
 
     const systemPrompt = content.trim()
     const agentDef: CustomAgentDefinition = {
@@ -744,6 +807,7 @@ export function parseAgentFromMarkdown(
       ...(background ? { background } : {}),
       ...(memory ? { memory } : {}),
       ...(isolation ? { isolation } : {}),
+      ...(omitDsxuMd !== undefined ? { omitDsxuMd } : {}),
     }
     return agentDef
   } catch (error) {

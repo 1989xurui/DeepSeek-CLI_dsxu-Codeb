@@ -1,0 +1,279 @@
+{
+  "generatedAt": "2026-04-25T00:39:42.541Z",
+  "scenarioCount": 5,
+  "passedCount": 5,
+  "failedCount": 0,
+  "averageScore": 100,
+  "rows": [
+    {
+      "scenario": "bugfix",
+      "taskKind": "bugfix",
+      "passed": true,
+      "score": 100,
+      "workflow": {
+        "hasContract": true,
+        "stepCount": 5,
+        "requiredEvidenceCount": 4,
+        "outputEnvelope": [
+          "root_cause",
+          "patch_summary",
+          "changed_files",
+          "verification_result"
+        ]
+      },
+      "context": {
+        "budget": "medium",
+        "tokenBudget": 64000,
+        "evidenceFirst": true,
+        "avoidsWholeRepoDump": true,
+        "recordsDropReasons": true
+      },
+      "runners": {
+        "attempted": [
+          "semantic_symbol_search",
+          "static_analysis_scan"
+        ],
+        "succeeded": [
+          "semantic_symbol_search",
+          "static_analysis_scan"
+        ],
+        "blocked": [],
+        "failed": [],
+        "evidenceIds": [
+          "semantic_symbol_search-1",
+          "semgrep-0-info"
+        ]
+      },
+      "qualityLoop": {
+        "verifyPassed": true,
+        "reviewApproved": true,
+        "recoveryNeeded": false,
+        "recoveryAction": "continue",
+        "canRelease": true,
+        "canResume": true
+      },
+      "releaseGate": {
+        "status": "pass",
+        "score": 100,
+        "blockers": []
+      },
+      "blockers": []
+    },
+    {
+      "scenario": "feature",
+      "taskKind": "feature",
+      "passed": true,
+      "score": 100,
+      "workflow": {
+        "hasContract": true,
+        "stepCount": 5,
+        "requiredEvidenceCount": 3,
+        "outputEnvelope": [
+          "implementation_plan",
+          "changed_files",
+          "tests_or_checks",
+          "usage_notes"
+        ]
+      },
+      "context": {
+        "budget": "medium",
+        "tokenBudget": 64000,
+        "evidenceFirst": true,
+        "avoidsWholeRepoDump": true,
+        "recordsDropReasons": true
+      },
+      "runners": {
+        "attempted": [
+          "semantic_symbol_search",
+          "ast_structural_search"
+        ],
+        "succeeded": [
+          "semantic_symbol_search",
+          "ast_structural_search"
+        ],
+        "blocked": [],
+        "failed": [],
+        "evidenceIds": [
+          "semantic_symbol_search-1",
+          "ast-grep-ts-1"
+        ]
+      },
+      "qualityLoop": {
+        "verifyPassed": true,
+        "reviewApproved": true,
+        "recoveryNeeded": false,
+        "recoveryAction": "continue",
+        "canRelease": true,
+        "canResume": true
+      },
+      "releaseGate": {
+        "status": "pass",
+        "score": 100,
+        "blockers": []
+      },
+      "blockers": []
+    },
+    {
+      "scenario": "review",
+      "taskKind": "review",
+      "passed": true,
+      "score": 100,
+      "workflow": {
+        "hasContract": true,
+        "stepCount": 4,
+        "requiredEvidenceCount": 3,
+        "outputEnvelope": [
+          "findings",
+          "risk_summary",
+          "testing_gaps"
+        ]
+      },
+      "context": {
+        "budget": "medium",
+        "tokenBudget": 64000,
+        "evidenceFirst": true,
+        "avoidsWholeRepoDump": true,
+        "recordsDropReasons": true
+      },
+      "runners": {
+        "attempted": [
+          "semantic_reference_lookup",
+          "static_analysis_scan"
+        ],
+        "succeeded": [
+          "semantic_reference_lookup",
+          "static_analysis_scan"
+        ],
+        "blocked": [],
+        "failed": [],
+        "evidenceIds": [
+          "semantic_reference_lookup-1",
+          "semgrep-0-info"
+        ]
+      },
+      "qualityLoop": {
+        "verifyPassed": true,
+        "reviewApproved": true,
+        "recoveryNeeded": false,
+        "recoveryAction": "continue",
+        "canRelease": true,
+        "canResume": true
+      },
+      "releaseGate": {
+        "status": "pass",
+        "score": 100,
+        "blockers": []
+      },
+      "blockers": []
+    },
+    {
+      "scenario": "recovery",
+      "taskKind": "recovery",
+      "passed": true,
+      "score": 100,
+      "workflow": {
+        "hasContract": true,
+        "stepCount": 3,
+        "requiredEvidenceCount": 4,
+        "outputEnvelope": [
+          "failure_class",
+          "recovery_action",
+          "resume_plan",
+          "verification_result"
+        ]
+      },
+      "context": {
+        "budget": "medium",
+        "tokenBudget": 64000,
+        "evidenceFirst": true,
+        "avoidsWholeRepoDump": true,
+        "recordsDropReasons": true
+      },
+      "runners": {
+        "attempted": [],
+        "succeeded": [],
+        "blocked": [],
+        "failed": [],
+        "evidenceIds": []
+      },
+      "qualityLoop": {
+        "verifyPassed": true,
+        "reviewApproved": true,
+        "recoveryNeeded": false,
+        "recoveryAction": "continue",
+        "canRelease": true,
+        "canResume": true
+      },
+      "releaseGate": {
+        "status": "pass",
+        "score": 100,
+        "blockers": []
+      },
+      "blockers": []
+    },
+    {
+      "scenario": "repo_understanding",
+      "taskKind": "repo_understanding",
+      "passed": true,
+      "score": 100,
+      "workflow": {
+        "hasContract": true,
+        "stepCount": 4,
+        "requiredEvidenceCount": 3,
+        "outputEnvelope": [
+          "repo_map_summary",
+          "relevant_files",
+          "answer_with_evidence"
+        ]
+      },
+      "context": {
+        "budget": "large",
+        "tokenBudget": 200000,
+        "evidenceFirst": true,
+        "avoidsWholeRepoDump": true,
+        "recordsDropReasons": true
+      },
+      "runners": {
+        "attempted": [
+          "semantic_symbol_search",
+          "semantic_reference_lookup",
+          "repo_context_pack"
+        ],
+        "succeeded": [
+          "semantic_symbol_search",
+          "semantic_reference_lookup",
+          "repo_context_pack"
+        ],
+        "blocked": [],
+        "failed": [],
+        "evidenceIds": [
+          "semantic_symbol_search-1",
+          "semantic_reference_lookup-1",
+          "repomix-1-large"
+        ]
+      },
+      "qualityLoop": {
+        "verifyPassed": true,
+        "reviewApproved": true,
+        "recoveryNeeded": false,
+        "recoveryAction": "continue",
+        "canRelease": true,
+        "canResume": true
+      },
+      "releaseGate": {
+        "status": "pass",
+        "score": 100,
+        "blockers": []
+      },
+      "blockers": []
+    }
+  ],
+  "verdict": {
+    "allFiveTaskClassesCovered": true,
+    "allWorkflowsMainline": true,
+    "allRunnersEvidenceBacked": true,
+    "allQualityLoopsClosed": true,
+    "readyForRealModelTrial": true,
+    "conclusion": "V15 P1-C08 passed: DSXU coding workflow can run five task classes through workflow, runners, evidence, quality loop, and release gate."
+  }
+}

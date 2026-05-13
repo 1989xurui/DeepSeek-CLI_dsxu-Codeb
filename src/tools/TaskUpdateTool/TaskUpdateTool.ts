@@ -1,6 +1,5 @@
-import { feature } from 'bun:bundle'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import {
@@ -26,7 +25,10 @@ import {
   getTeamName,
 } from '../../utils/teammate.js'
 import { writeToMailbox } from '../../utils/teammateMailbox.js'
-import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'
+import {
+  getDsxuVerificationNudgeText,
+  isDsxuVerificationAgentEnabled,
+} from '../AgentTool/built-in/verificationAgent.js'
 import { TASK_UPDATE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 
@@ -332,8 +334,7 @@ export const TaskUpdateTool = buildTool({
     // does not touch the public SDK surface.
     let verificationNudgeNeeded = false
     if (
-      feature('VERIFICATION_AGENT') &&
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_hive_evidence', false) &&
+      isDsxuVerificationAgentEnabled() &&
       !context.agentId &&
       updates.status === 'completed'
     ) {
@@ -394,7 +395,7 @@ export const TaskUpdateTool = buildTool({
     }
 
     if (verificationNudgeNeeded) {
-      resultContent += `\n\nNOTE: You just closed out 3+ tasks and none of them was a verification step. Before writing your final summary, spawn the verification agent (subagent_type="${VERIFICATION_AGENT_TYPE}"). You cannot self-assign PARTIAL by listing caveats in your summary — only the verifier issues a verdict.`
+      resultContent += getDsxuVerificationNudgeText()
     }
 
     return {

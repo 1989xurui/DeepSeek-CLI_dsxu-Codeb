@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * PowerShell Constrained Language Mode allowed types.
  *
@@ -5,14 +6,14 @@
  * under AppLocker/WDAC system lockdown. Any type NOT in this set is considered
  * unsafe for untrusted code execution.
  *
- * We invert this: type literals not in this set → ask. One canonical check
+ * We invert this: type literals not in this set  -> ask. One canonical check
  * replaces enumerating individual dangerous types (named pipes, reflection,
  * process spawning, P/Invoke marshaling, etc.). Microsoft maintains the list.
  *
  * Source: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_language_modes
  *
  * Normalization: entries stored lowercase, short AND full names where both
- * exist (PS resolves type accelerators like [int] → System.Int32 at runtime;
+ * exist (PS resolves type accelerators like [int]  -> System.Int32 at runtime;
  * we match against what the AST emits, which is the literal text).
  */
 export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
@@ -20,8 +21,8 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     // Type accelerators (short names as they appear in AST TypeName.Name)
     // SECURITY: 'adsi' and 'adsisearcher' REMOVED. Both are Active Directory
     // Service Interface types that perform NETWORK BINDS when cast:
-    //   [adsi]'LDAP://evil.com/...' → connects to LDAP server
-    //   [adsisearcher]'(objectClass=user)' → binds to AD and queries
+    //   [adsi]'LDAP://evil.com/...'  -> connects to LDAP server
+    //   [adsisearcher]'(objectClass=user)'  -> binds to AD and queries
     // Microsoft's CLM allows these because it's for Windows admins in trusted
     // domains; we block them since the target isn't validated.
     'alias',
@@ -38,7 +39,7 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'cimclass',
     'cimconverter',
     'ciminstance',
-    // 'cimsession' REMOVED — see wmi/adsi comment below
+    // 'cimsession' REMOVED ...see wmi/adsi comment below
     'cimtype',
     'cmdletbinding',
     'cultureinfo',
@@ -113,8 +114,8 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     // WMI type casts perform WMI queries which can target remote computers
     // (network request) and access dangerous classes like Win32_Process.
     // cimsession creates a CIM session (network connection to remote host).
-    //   [wmi]'\\evil-host\root\cimv2:Win32_Process.Handle="1"' → remote WMI
-    //   [wmisearcher]'SELECT * FROM Win32_Process' → runs WQL query
+    //   [wmi]'\\evil-host\root\cimv2:Win32_Process.Handle="1"'  -> remote WMI
+    //   [wmisearcher]'SELECT * FROM Win32_Process'  -> runs WQL query
     // Same rationale as adsi/adsisearcher removal above.
     'x500distinguishedname',
     'x509certificate',
@@ -153,7 +154,7 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'system.security.cryptography.x509certificates.x509certificate',
     'system.security.cryptography.x509certificates.x500distinguishedname',
     'system.xml.xmldocument',
-    // System.Management.Automation.* — FQ equivalents of PS-specific accelerators
+    // System.Management.Automation.* ...FQ equivalents of PS-specific accelerators
     'system.management.automation.pscredential',
     'system.management.automation.pscustomobject',
     'system.management.automation.pslistmodifier',
@@ -164,8 +165,8 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'system.management.automation.switchparameter',
     'system.management.automation.wildcardpattern',
     'system.management.automation.language.nullstring',
-    // Microsoft.Management.Infrastructure.* — FQ equivalents of CIM accelerators
-    // SECURITY: cimsession FQ REMOVED — same network-bind hazard as short name
+    // Microsoft.Management.Infrastructure.* ...FQ equivalents of CIM accelerators
+    // SECURITY: cimsession FQ REMOVED ...same network-bind hazard as short name
     // (creates a CIM session to a remote host).
     'microsoft.management.infrastructure.cimclass',
     'microsoft.management.infrastructure.cimconverter',
@@ -173,7 +174,7 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     'microsoft.management.infrastructure.cimtype',
     // FQ equivalents of remaining short-name accelerators
     // SECURITY: DirectoryEntry/DirectorySearcher/ManagementObject/
-    // ManagementClass/ManagementObjectSearcher FQ REMOVED — same network-bind
+    // ManagementClass/ManagementObjectSearcher FQ REMOVED ...same network-bind
     // hazard as short names adsi/adsisearcher/wmi/wmiclass/wmisearcher
     // (LDAP bind, remote WMI). See short-name removal comments above.
     'system.collections.specialized.ordereddictionary',
@@ -182,18 +183,17 @@ export const CLM_ALLOWED_TYPES: ReadonlySet<string> = new Set(
     // normalizeTypeName strips [] before lookup, so store the base name
     'object',
     'system.object',
-    // ModuleSpecification — full qualified name
+    // ModuleSpecification ...full qualified name
     'microsoft.powershell.commands.modulespecification',
   ].map(t => t.toLowerCase()),
 )
-
 /**
  * Normalize a type name from AST TypeName.FullName or TypeName.Name.
  * Handles array suffix ([]) and generic brackets.
  */
 export function normalizeTypeName(name: string): string {
-  // Strip array suffix: "String[]" → "string" (arrays of allowed types are allowed)
-  // Strip generic args: "List[int]" → "list" (conservative — the generic wrapper
+  // Strip array suffix: "String[]"  -> "string" (arrays of allowed types are allowed)
+  // Strip generic args: "List[int]"  -> "list" (conservative ...the generic wrapper
   // might be unsafe even if the type arg is safe, so we check the outer type)
   return name
     .toLowerCase()
@@ -201,10 +201,9 @@ export function normalizeTypeName(name: string): string {
     .replace(/\[.*\]$/, '')
     .trim()
 }
-
 /**
  * True if typeName (from AST) is in Microsoft's CLM allowlist.
- * Types NOT in this set trigger ask — they access system APIs CLM blocks.
+ * Types NOT in this set trigger ask ...they access system APIs CLM blocks.
  */
 export function isClmAllowedType(typeName: string): boolean {
   return CLM_ALLOWED_TYPES.has(normalizeTypeName(typeName))

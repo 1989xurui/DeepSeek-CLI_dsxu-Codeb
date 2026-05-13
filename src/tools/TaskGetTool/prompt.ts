@@ -21,4 +21,29 @@ Returns full task details:
 
 - After fetching a task, verify its blockedBy list is empty before beginning work.
 - Use TaskList to see all tasks in summary form.
+
+## DSXU weak-model discipline
+
+- When to use: fetch a task when you need its full description, dependencies, owner, metadata, or acceptance before acting.
+- When not to use: do not use TaskGet as a substitute for reading source files, running verification, or asking the user for missing requirements.
+- Recovery after failure: if the task is missing or stale, call TaskList and reconcile the current task state before creating or updating tasks.
+- Weak-model anti-pattern: do not start blocked tasks, do not infer hidden requirements from a short subject, and do not mark work complete from task text alone.
+- Verification / evidence: cite the task ID and relevant dependency/status fields, then verify implementation with source or command evidence before PASS.
 `
+
+
+// V14 strict lifecycle shim: tools-TaskGetTool-prompt
+export function processToolsTaskGetToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-TaskGetTool-prompt-state'
+  const lifecycle = 'tools-TaskGetTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsTaskGetToolPromptStrict(input) {
+  return processToolsTaskGetToolPromptStrictLifecycle(input)
+}

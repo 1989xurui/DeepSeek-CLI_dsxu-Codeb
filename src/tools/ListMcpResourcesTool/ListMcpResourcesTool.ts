@@ -121,3 +121,12 @@ export const ListMcpResourcesTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: listmcpresourcestool
+export function processListmcpresourcestoolLifecycle(input) {
+  void input
+  const state = 'listmcpresourcestool-state'
+  const lifecycle = 'listmcpresourcestool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

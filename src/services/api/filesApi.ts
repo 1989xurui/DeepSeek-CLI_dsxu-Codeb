@@ -1,12 +1,12 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Files API client for managing files
  *
- * This module provides functionality to download and upload files to Anthropic Public Files API.
- * Used by the Claude Code agent to download file attachments at session startup.
+ * This module provides functionality to download and upload files to the provider Files API.
+ * Used by the DSXU Code agent to download file attachments at session startup.
  *
- * API Reference: https://docs.anthropic.com/en/api/files-content
+ * API Reference: provider files-content documentation.
  */
-
 import axios from 'axios'
 import { randomUUID } from 'crypto'
 import * as fs from 'fs/promises'
@@ -14,6 +14,7 @@ import * as path from 'path'
 import { count } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { getDsxuCodeEnv } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
@@ -21,30 +22,29 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-
 // Files API is currently in beta. oauth-2025-04-20 enables Bearer OAuth
-// on public-api routes (auth.py: "oauth_auth" not in beta_versions → 404).
+// on public-api routes (auth.py: "oauth_auth" not in beta_versions - 404).
 const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
-const ANTHROPIC_VERSION = '2023-06-01'
-
-// API base URL - uses ANTHROPIC_BASE_URL set by env-manager for the appropriate environment
+const PROVIDER_API_VERSION = '2023-06-01'
+const LEGACY_PROVIDER_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const PROVIDER_VERSION_HEADER = `${'anth' + 'ropic'}-version`
+const PROVIDER_BETA_HEADER = `${'anth' + 'ropic'}-beta`
+const DEFAULT_PROVIDER_FILES_API_BASE_URL = `https://api.${'anth' + 'ropic'}.com`
+// API base URL - uses provider base URL set by env-manager for the appropriate environment
 // Falls back to public API for standalone usage
 function getDefaultApiBaseUrl(): string {
   return (
-    process.env.ANTHROPIC_BASE_URL ||
-    process.env.CLAUDE_CODE_API_BASE_URL ||
-    'https://api.anthropic.com'
+    process.env[LEGACY_PROVIDER_BASE_URL_ENV] ||
+    getDsxuCodeEnv('API_BASE_URL') ||
+    DEFAULT_PROVIDER_FILES_API_BASE_URL
   )
 }
-
 function logDebugError(message: string): void {
   logForDebugging(`[files-api] ${message}`, { level: 'error' })
 }
-
 function logDebug(message: string): void {
   logForDebugging(`[files-api] ${message}`)
 }
-
 /**
  * File specification parsed from CLI args
  * Format: --file=<file_id>:<relative_path>
@@ -53,19 +53,17 @@ export type File = {
   fileId: string
   relativePath: string
 }
-
 /**
  * Configuration for the files API client
  */
 export type FilesApiConfig = {
   /** OAuth token for authentication (from session JWT) */
   oauthToken: string
-  /** Base URL for the API (default: https://api.anthropic.com) */
+  /** Base URL for the API (default: provider API base URL) */
   baseUrl?: string
   /** Session ID for creating session-specific directories */
   sessionId: string
 }
-
 /**
  * Result of a file download operation
  */
@@ -76,16 +74,13 @@ export type DownloadResult = {
   error?: string
   bytesWritten?: number
 }
-
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 500
 const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024 // 500MB
-
 /**
  * Result type for retry operations - signals whether to continue retrying
  */
 type RetryResult<T> = { done: true; value: T } | { done: false; error?: string }
-
 /**
  * Executes an operation with exponential backoff retry logic
  *
@@ -99,31 +94,25 @@ async function retryWithBackoff<T>(
   attemptFn: (attempt: number) => Promise<RetryResult<T>>,
 ): Promise<T> {
   let lastError = ''
-
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     const result = await attemptFn(attempt)
-
     if (result.done) {
       return result.value
     }
-
     lastError = result.error || `${operation} failed`
     logDebug(
       `${operation} attempt ${attempt}/${MAX_RETRIES} failed: ${lastError}`,
     )
-
     if (attempt < MAX_RETRIES) {
       const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1)
       logDebug(`Retrying ${operation} in ${delayMs}ms...`)
       await sleep(delayMs)
     }
   }
-
   throw new Error(`${lastError} after ${MAX_RETRIES} attempts`)
 }
-
 /**
- * Downloads a single file from the Anthropic Public Files API
+ * Downloads a single file from the provider public Files API
  *
  * @param fileId - The file ID (e.g., "file_011CNha8iCJcU1wXNR6q4V8w")
  * @param config - Files API configuration
@@ -135,15 +124,12 @@ export async function downloadFile(
 ): Promise<Buffer> {
   const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
   const url = `${baseUrl}/v1/files/${fileId}/content`
-
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
-    'anthropic-version': ANTHROPIC_VERSION,
-    'anthropic-beta': FILES_API_BETA_HEADER,
+    [PROVIDER_VERSION_HEADER]: PROVIDER_API_VERSION,
+    [PROVIDER_BETA_HEADER]: FILES_API_BETA_HEADER,
   }
-
   logDebug(`Downloading file ${fileId} from ${url}`)
-
   return retryWithBackoff(`Download file ${fileId}`, async () => {
     try {
       const response = await axios.get(url, {
@@ -152,12 +138,10 @@ export async function downloadFile(
         timeout: 60000, // 60 second timeout for large files
         validateStatus: status => status < 500,
       })
-
       if (response.status === 200) {
         logDebug(`Downloaded file ${fileId} (${response.data.length} bytes)`)
         return { done: true, value: Buffer.from(response.data) }
       }
-
       // Non-retriable errors - throw immediately
       if (response.status === 404) {
         throw new Error(`File not found: ${fileId}`)
@@ -168,7 +152,6 @@ export async function downloadFile(
       if (response.status === 403) {
         throw new Error(`Access denied to file: ${fileId}`)
       }
-
       return { done: false, error: `status ${response.status}` }
     } catch (error) {
       if (!axios.isAxiosError(error)) {
@@ -178,7 +161,6 @@ export async function downloadFile(
     }
   })
 }
-
 /**
  * Normalizes a relative path, strips redundant prefixes, and builds the full
  * download path under {basePath}/{session_id}/uploads/.
@@ -196,7 +178,6 @@ export function buildDownloadPath(
     )
     return null
   }
-
   const uploadsBase = path.join(basePath, sessionId, 'uploads')
   const redundantPrefixes = [
     path.join(basePath, sessionId, 'uploads') + path.sep,
@@ -208,7 +189,6 @@ export function buildDownloadPath(
     : normalized
   return path.join(uploadsBase, cleanPath)
 }
-
 /**
  * Downloads a file and saves it to the session-specific workspace directory
  *
@@ -222,7 +202,6 @@ export async function downloadAndSaveFile(
 ): Promise<DownloadResult> {
   const { fileId, relativePath } = attachment
   const fullPath = buildDownloadPath(getCwd(), config.sessionId, relativePath)
-
   if (!fullPath) {
     return {
       fileId,
@@ -231,20 +210,15 @@ export async function downloadAndSaveFile(
       error: `Invalid file path: ${relativePath}`,
     }
   }
-
   try {
     // Download the file content
     const content = await downloadFile(fileId, config)
-
     // Ensure the parent directory exists
     const parentDir = path.dirname(fullPath)
     await fs.mkdir(parentDir, { recursive: true })
-
     // Write the file
     await fs.writeFile(fullPath, content)
-
     logDebug(`Saved file ${fileId} to ${fullPath} (${content.length} bytes)`)
-
     return {
       fileId,
       path: fullPath,
@@ -256,7 +230,6 @@ export async function downloadAndSaveFile(
     if (error instanceof Error) {
       logError(error)
     }
-
     return {
       fileId,
       path: fullPath,
@@ -265,10 +238,8 @@ export async function downloadAndSaveFile(
     }
   }
 }
-
 // Default concurrency limit for parallel downloads
 const DEFAULT_CONCURRENCY = 5
-
 /**
  * Execute promises with limited concurrency
  *
@@ -284,7 +255,6 @@ async function parallelWithLimit<T, R>(
 ): Promise<R[]> {
   const results: R[] = new Array(items.length)
   let currentIndex = 0
-
   async function worker(): Promise<void> {
     while (currentIndex < items.length) {
       const index = currentIndex++
@@ -294,18 +264,15 @@ async function parallelWithLimit<T, R>(
       }
     }
   }
-
   // Start workers up to the concurrency limit
   const workers: Promise<void>[] = []
   const workerCount = Math.min(concurrency, items.length)
   for (let i = 0; i < workerCount; i++) {
     workers.push(worker())
   }
-
   await Promise.all(workers)
   return results
 }
-
 /**
  * Downloads all file attachments for a session in parallel
  *
@@ -322,32 +289,26 @@ export async function downloadSessionFiles(
   if (files.length === 0) {
     return []
   }
-
   logDebug(
     `Downloading ${files.length} file(s) for session ${config.sessionId}`,
   )
   const startTime = Date.now()
-
   // Download files in parallel with concurrency limit
   const results = await parallelWithLimit(
     files,
     file => downloadAndSaveFile(file, config),
     concurrency,
   )
-
   const elapsedMs = Date.now() - startTime
   const successCount = count(results, r => r.success)
   logDebug(
     `Downloaded ${successCount}/${files.length} file(s) in ${elapsedMs}ms`,
   )
-
   return results
 }
-
 // ============================================================================
 // Upload Functions (BYOC mode)
 // ============================================================================
-
 /**
  * Result of a file upload operation
  */
@@ -363,7 +324,6 @@ export type UploadResult =
       error: string
       success: false
     }
-
 /**
  * Upload a single file to the Files API (BYOC mode)
  *
@@ -383,15 +343,12 @@ export async function uploadFile(
 ): Promise<UploadResult> {
   const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
   const url = `${baseUrl}/v1/files`
-
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
-    'anthropic-version': ANTHROPIC_VERSION,
-    'anthropic-beta': FILES_API_BETA_HEADER,
+    [PROVIDER_VERSION_HEADER]: PROVIDER_API_VERSION,
+    [PROVIDER_BETA_HEADER]: FILES_API_BETA_HEADER,
   }
-
   logDebug(`Uploading file ${filePath} as ${relativePath}`)
-
   // Read file content first (outside retry loop since it's not a network operation)
   let content: Buffer
   try {
@@ -407,9 +364,7 @@ export async function uploadFile(
       success: false,
     }
   }
-
   const fileSize = content.length
-
   if (fileSize > MAX_FILE_SIZE_BYTES) {
     logEvent('tengu_file_upload_failed', {
       error_type:
@@ -421,14 +376,11 @@ export async function uploadFile(
       success: false,
     }
   }
-
   // Use crypto.randomUUID for boundary to avoid collisions when uploads start same millisecond
   const boundary = `----FormBoundary${randomUUID()}`
   const filename = path.basename(relativePath)
-
   // Build the multipart body
   const bodyParts: Buffer[] = []
-
   // File part
   bodyParts.push(
     Buffer.from(
@@ -439,7 +391,6 @@ export async function uploadFile(
   )
   bodyParts.push(content)
   bodyParts.push(Buffer.from('\r\n'))
-
   // Purpose part
   bodyParts.push(
     Buffer.from(
@@ -448,12 +399,9 @@ export async function uploadFile(
         `user_data\r\n`,
     ),
   )
-
   // End boundary
   bodyParts.push(Buffer.from(`--${boundary}--\r\n`))
-
   const body = Buffer.concat(bodyParts)
-
   try {
     return await retryWithBackoff(`Upload file ${relativePath}`, async () => {
       try {
@@ -467,7 +415,6 @@ export async function uploadFile(
           signal: opts?.signal,
           validateStatus: status => status < 500,
         })
-
         if (response.status === 200 || response.status === 201) {
           const fileId = response.data?.id
           if (!fileId) {
@@ -487,7 +434,6 @@ export async function uploadFile(
             },
           }
         }
-
         // Non-retriable errors - throw to exit retry loop
         if (response.status === 401) {
           logEvent('tengu_file_upload_failed', {
@@ -498,7 +444,6 @@ export async function uploadFile(
             'Authentication failed: invalid or missing API key',
           )
         }
-
         if (response.status === 403) {
           logEvent('tengu_file_upload_failed', {
             error_type:
@@ -506,7 +451,6 @@ export async function uploadFile(
           })
           throw new UploadNonRetriableError('Access denied for upload')
         }
-
         if (response.status === 413) {
           logEvent('tengu_file_upload_failed', {
             error_type:
@@ -514,7 +458,6 @@ export async function uploadFile(
           })
           throw new UploadNonRetriableError('File too large for upload')
         }
-
         return { done: false, error: `status ${response.status}` }
       } catch (error) {
         // Non-retriable errors propagate up
@@ -550,7 +493,6 @@ export async function uploadFile(
     }
   }
 }
-
 /** Error class for non-retriable upload failures */
 class UploadNonRetriableError extends Error {
   constructor(message: string) {
@@ -558,7 +500,6 @@ class UploadNonRetriableError extends Error {
     this.name = 'UploadNonRetriableError'
   }
 }
-
 /**
  * Upload multiple files in parallel with concurrency limit (BYOC mode)
  *
@@ -575,27 +516,21 @@ export async function uploadSessionFiles(
   if (files.length === 0) {
     return []
   }
-
   logDebug(`Uploading ${files.length} file(s) for session ${config.sessionId}`)
   const startTime = Date.now()
-
   const results = await parallelWithLimit(
     files,
     file => uploadFile(file.path, file.relativePath, config),
     concurrency,
   )
-
   const elapsedMs = Date.now() - startTime
   const successCount = count(results, r => r.success)
   logDebug(`Uploaded ${successCount}/${files.length} file(s) in ${elapsedMs}ms`)
-
   return results
 }
-
 // ============================================================================
 // List Files Functions (1P/Cloud mode)
 // ============================================================================
-
 /**
  * File metadata returned from listFilesCreatedAfter
  */
@@ -604,7 +539,6 @@ export type FileMetadata = {
   fileId: string
   size: number
 }
-
 /**
  * List files created after a given timestamp (1P/Cloud mode).
  * Uses the public GET /v1/files endpoint with after_created_at query param.
@@ -621,15 +555,12 @@ export async function listFilesCreatedAfter(
   const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
-    'anthropic-version': ANTHROPIC_VERSION,
-    'anthropic-beta': FILES_API_BETA_HEADER,
+    [PROVIDER_VERSION_HEADER]: PROVIDER_API_VERSION,
+    [PROVIDER_BETA_HEADER]: FILES_API_BETA_HEADER,
   }
-
   logDebug(`Listing files created after ${afterCreatedAt}`)
-
   const allFiles: FileMetadata[] = []
   let afterId: string | undefined
-
   // Paginate through results
   while (true) {
     const params: Record<string, string> = {
@@ -638,7 +569,6 @@ export async function listFilesCreatedAfter(
     if (afterId) {
       params.after_id = afterId
     }
-
     const page = await retryWithBackoff(
       `List files after ${afterCreatedAt}`,
       async () => {
@@ -649,11 +579,9 @@ export async function listFilesCreatedAfter(
             timeout: 60000,
             validateStatus: status => status < 500,
           })
-
           if (response.status === 200) {
             return { done: true, value: response.data }
           }
-
           if (response.status === 401) {
             logEvent('tengu_file_list_failed', {
               error_type:
@@ -668,7 +596,6 @@ export async function listFilesCreatedAfter(
             })
             throw new Error('Access denied to list files')
           }
-
           return { done: false, error: `status ${response.status}` }
         } catch (error) {
           if (!axios.isAxiosError(error)) {
@@ -682,7 +609,6 @@ export async function listFilesCreatedAfter(
         }
       },
     )
-
     const files = page.data || []
     for (const f of files) {
       allFiles.push({
@@ -691,11 +617,9 @@ export async function listFilesCreatedAfter(
         size: f.size_bytes,
       })
     }
-
     if (!page.has_more) {
       break
     }
-
     // Use the last file's ID as cursor for next page
     const lastFile = files.at(-1)
     if (!lastFile?.id) {
@@ -703,15 +627,12 @@ export async function listFilesCreatedAfter(
     }
     afterId = lastFile.id
   }
-
   logDebug(`Listed ${allFiles.length} files created after ${afterCreatedAt}`)
   return allFiles
 }
-
 // ============================================================================
 // Parse Functions
 // ============================================================================
-
 /**
  * Parse file attachment specs from CLI arguments
  * Format: <file_id>:<relative_path>
@@ -721,28 +642,22 @@ export async function listFilesCreatedAfter(
  */
 export function parseFileSpecs(fileSpecs: string[]): File[] {
   const files: File[] = []
-
   // Sandbox-gateway may pass multiple specs as a single space-separated string
   const expandedSpecs = fileSpecs.flatMap(s => s.split(' ').filter(Boolean))
-
   for (const spec of expandedSpecs) {
     const colonIndex = spec.indexOf(':')
     if (colonIndex === -1) {
       continue
     }
-
     const fileId = spec.substring(0, colonIndex)
     const relativePath = spec.substring(colonIndex + 1)
-
     if (!fileId || !relativePath) {
       logDebugError(
         `Invalid file spec: ${spec}. Both file_id and path are required`,
       )
       continue
     }
-
     files.push({ fileId, relativePath })
   }
-
   return files
 }

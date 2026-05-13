@@ -1,6 +1,6 @@
 /**
  * Shared utilities for displaying agent information.
- * Used by both the CLI `claude agents` handler and the interactive `/agents` command.
+ * Used by both the CLI `dsxu-code agents` handler and the interactive `/agents` command.
  */
 
 import { getDefaultSubagentModel } from '../../utils/model/agent.js'
@@ -101,4 +101,13 @@ export function compareAgentsByName(
   return a.agentType.localeCompare(b.agentType, undefined, {
     sensitivity: 'base',
   })
+}
+
+
+// V14 lifecycle shim: agentdisplay
+export function processAgentdisplayLifecycle(input) {
+  void input
+  const state = 'agentdisplay-state'
+  const lifecycle = 'agentdisplay:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

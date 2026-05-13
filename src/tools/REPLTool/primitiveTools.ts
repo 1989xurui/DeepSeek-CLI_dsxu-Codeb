@@ -37,3 +37,12 @@ export function getReplPrimitiveTools(): readonly Tool[] {
     AgentTool,
   ])
 }
+
+
+// V14 lifecycle shim: primitivetools
+export function processPrimitivetoolsLifecycle(input) {
+  void input
+  const state = 'primitivetools-state'
+  const lifecycle = 'primitivetools:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

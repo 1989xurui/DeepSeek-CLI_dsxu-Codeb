@@ -1,3 +1,4 @@
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import {
   getSettingsForSource,
   updateSettingsForSource,
@@ -16,6 +17,7 @@ import {
  * settings here would cause infinite re-runs + silent global promotion.
  */
 export function migrateFennecToOpus(): void {
+  if (isDsxuRuntimeMode()) return
   if (process.env.USER_TYPE !== 'ant') {
     return
   }
@@ -41,5 +43,27 @@ export function migrateFennecToOpus(): void {
         fastMode: true,
       })
     }
+  }
+}
+
+
+// V14 lifecycle shim: migratefennectoopus
+export function processMigratefennectoopusLifecycle(input) {
+  void input
+  const state = 'migratefennectoopus-state'
+  const lifecycle = 'migratefennectoopus:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuFennecMigrationRuntimeProfile() {
+  return {
+    runtime: 'DSXU Fennec/Opus Migration Boundary',
+    defaultBehavior: 'legacy provider alias migration is disabled in DSXU runtime so DeepSeek defaults are preserved',
+    providerTarget: 'DSXU DeepSeek Model Policy',
+    activationEvidence: [
+      'migrateFennecToOpus returns immediately in DSXU mode',
+      'legacy first-party aliases are not promoted into DSXU user settings',
+      'fast-mode semantics are handled by DSXU thinking/cost router instead',
+    ],
   }
 }

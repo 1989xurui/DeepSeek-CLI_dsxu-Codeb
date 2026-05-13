@@ -4,18 +4,18 @@ import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
 import { join } from 'path'
 import { z } from 'zod/v4'
-import { OAUTH_BETA_HEADER } from '../../constants/oauth.js'
-import { getAnthropicClient } from '../../services/api/client.js'
-import { isClaudeAISubscriber } from '../auth.js'
+import { DSXU_CONTROL_AUTH_BETA_HEADER } from '../../constants/oauth.js'
+import { getProviderClient } from '../../services/api/client.js'
+import { isLegacyCloudSubscriber } from '../auth.js'
 import { logForDebugging } from '../debug.js'
-import { getClaudeConfigHomeDir } from '../envUtils.js'
+import { getLegacyProviderConfigHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import { isEssentialTrafficOnly } from '../privacyLevel.js'
 import { jsonStringify } from '../slowOperations.js'
-import { getAPIProvider, isFirstPartyAnthropicBaseUrl } from './providers.js'
+import { getAPIProvider, isFirstPartyProviderBaseUrl } from './providers.js'
 
-// .strip() — don't persist internal-only fields (mycro_deployments etc.) to disk
+// .strip() -?don't persist internal-only fields (mycro_deployments etc.) to disk
 const ModelCapabilitySchema = lazySchema(() =>
   z
     .object({
@@ -36,7 +36,7 @@ const CacheFileSchema = lazySchema(() =>
 export type ModelCapability = z.infer<ReturnType<typeof ModelCapabilitySchema>>
 
 function getCacheDir(): string {
-  return join(getClaudeConfigHomeDir(), 'cache')
+  return join(getLegacyProviderConfigHomeDir(), 'cache')
 }
 
 function getCachePath(): string {
@@ -46,7 +46,7 @@ function getCachePath(): string {
 function isModelCapabilitiesEligible(): boolean {
   if (process.env.USER_TYPE !== 'ant') return false
   if (getAPIProvider() !== 'firstParty') return false
-  if (!isFirstPartyAnthropicBaseUrl()) return false
+  if (!isFirstPartyProviderBaseUrl()) return false
   return true
 }
 
@@ -57,7 +57,7 @@ function sortForMatching(models: ModelCapability[]): ModelCapability[] {
   )
 }
 
-// Keyed on cache path so tests that set CLAUDE_CONFIG_DIR get a fresh read
+// Keyed on cache path so tests that set legacy provider config envs get a fresh read
 const loadCache = memoize(
   (path: string): ModelCapability[] | null => {
     try {
@@ -87,10 +87,12 @@ export async function refreshModelCapabilities(): Promise<void> {
   if (isEssentialTrafficOnly()) return
 
   try {
-    const anthropic = await getAnthropicClient({ maxRetries: 1 })
-    const betas = isClaudeAISubscriber() ? [OAUTH_BETA_HEADER] : undefined
+    const providerClient = await getProviderClient({ maxRetries: 1 })
+    const betas = isLegacyCloudSubscriber()
+      ? [DSXU_CONTROL_AUTH_BETA_HEADER]
+      : undefined
     const parsed: ModelCapability[] = []
-    for await (const entry of anthropic.models.list({ betas })) {
+    for await (const entry of providerClient.models.list({ betas })) {
       const result = ModelCapabilitySchema().safeParse(entry)
       if (result.success) parsed.push(result.data)
     }
@@ -115,4 +117,13 @@ export async function refreshModelCapabilities(): Promise<void> {
       `[modelCapabilities] fetch failed: ${error instanceof Error ? error.message : 'unknown'}`,
     )
   }
+}
+
+
+// V14 lifecycle shim: modelcapabilities
+export function processModelcapabilitiesLifecycle(input) {
+  void input
+  const state = 'modelcapabilities-state'
+  const lifecycle = 'modelcapabilities:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

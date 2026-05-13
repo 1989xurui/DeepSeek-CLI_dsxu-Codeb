@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { open } from 'fs/promises'
 import * as path from 'path'
 import { pathToFileURL } from 'url'
@@ -23,6 +24,7 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { uniq } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT, toError } from '../../utils/errors.js'
 import { execFileNoThrowWithCwd } from '../../utils/execFileNoThrow.js'
 import { getFsImplementation } from '../../utils/fsOperations.js'
@@ -135,6 +137,12 @@ export const LSPTool = buildTool({
   userFacingName,
   shouldDefer: true,
   isEnabled() {
+    if (
+      isEnvTruthy(process.env.DSXU_CODE_MODE) &&
+      isEnvTruthy(process.env.ENABLE_LSP_TOOL)
+    ) {
+      return true
+    }
     return isLspConnected()
   },
   get inputSchema(): InputSchema {
@@ -343,7 +351,7 @@ export const LSPTool = buildTool({
           input.operation === 'workspaceSymbol')
       ) {
         if (input.operation === 'workspaceSymbol') {
-          // SymbolInformation has location.uri — filter by extracting locations
+          // SymbolInformation has location.uri ...filter by extracting locations
           const symbols = result as SymbolInformation[]
           const locations = symbols
             .filter(s => s?.location?.uri)
@@ -537,7 +545,7 @@ function countUniqueFiles(locations: Location[]): number {
  */
 function uriToFilePath(uri: string): string {
   let filePath = uri.replace(/^file:\/\//, '')
-  // On Windows, file:///C:/path becomes /C:/path — strip the leading slash
+  // On Windows, file:///C:/path becomes /C:/path ...strip the leading slash
   if (/^\/[A-Za-z]:/.test(filePath)) {
     filePath = filePath.slice(1)
   }

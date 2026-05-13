@@ -1,12 +1,12 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import {
-  getClaudeAIOAuthTokens,
   hasProfileScope,
-  isClaudeAISubscriber,
+  isLegacyCloudSubscriber,
 } from '../../utils/auth.js'
+import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import { getAuthHeaders } from '../../utils/http.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
 
 export type RateLimit = {
@@ -31,12 +31,12 @@ export type Utilization = {
 }
 
 export async function fetchUtilization(): Promise<Utilization | null> {
-  if (!isClaudeAISubscriber() || !hasProfileScope()) {
+  if (!isLegacyCloudSubscriber() || !hasProfileScope()) {
     return {}
   }
 
   // Skip API call if OAuth token is expired to avoid 401 errors
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getCompatProviderTokens()
   if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
     return null
   }
@@ -48,7 +48,7 @@ export async function fetchUtilization(): Promise<Utilization | null> {
 
   const headers = {
     'Content-Type': 'application/json',
-    'User-Agent': getClaudeCodeUserAgent(),
+    'User-Agent': getDSXUCodeUserAgent(),
     ...authResult.headers,
   }
 
@@ -60,4 +60,18 @@ export async function fetchUtilization(): Promise<Utilization | null> {
   })
 
   return response.data
+}
+
+export async function processUsageLifecycle(): Promise<{
+  state: 'available' | 'unavailable'
+  lifecycle: string
+  usage: Utilization | null
+}> {
+  const usage = await fetchUtilization()
+  const state = usage === null ? 'unavailable' : 'available'
+  return {
+    state,
+    lifecycle: `usage:${state}`,
+    usage,
+  }
 }

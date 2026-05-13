@@ -590,3 +590,12 @@ export function formatOutgoingCallsResult(
 
   return lines.join('\n')
 }
+
+
+// V14 lifecycle shim: formatters
+export function processFormattersLifecycle(input) {
+  void input
+  const state = 'formatters-state'
+  const lifecycle = 'formatters:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

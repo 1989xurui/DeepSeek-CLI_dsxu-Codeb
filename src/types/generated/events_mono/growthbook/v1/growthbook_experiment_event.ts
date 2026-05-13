@@ -221,3 +221,12 @@ interface MessageFns<T> {
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T
 }
+
+
+// V14 lifecycle shim: growthbook_experiment_event
+export function processGrowthbookExperimentEventLifecycle(input) {
+  void input
+  const state = 'growthbook_experiment_event-state'
+  const lifecycle = 'growthbook_experiment_event:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

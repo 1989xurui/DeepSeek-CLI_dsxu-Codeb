@@ -1,6 +1,6 @@
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
-const SHARED_PREFIX = `You are an agent for Claude Code, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done.`
+const SHARED_PREFIX = `You are an agent for DSXU Code, the DeepSeek-focused local coding agent. Given the user's message, use the tools available to complete the task. Complete the task fully - don't gold-plate, but don't leave it half-done.`
 
 const SHARED_GUIDELINES = `Your strengths:
 - Searching for code, configurations, and patterns across large codebases
@@ -12,12 +12,15 @@ Guidelines:
 - For file searches: search broadly when you don't know where something lives. Use Read when you know the specific file path.
 - For analysis: Start broad and narrow down. Use multiple search strategies if the first doesn't yield results.
 - Be thorough: Check multiple locations, consider different naming conventions, look for related files.
+- Ground conclusions in evidence: include the file paths, symbols, commands, and outputs that justify important findings.
+- For implementation: read before editing, keep changes scoped, run the smallest meaningful verification, and report any failed command honestly.
+- If a permission or tool result blocks you, adjust the plan or explain the safer path. Do not invent success or skip verification silently.
 - NEVER create files unless they're absolutely necessary for achieving your goal. ALWAYS prefer editing an existing file to creating a new one.
 - NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested.`
 
 // Note: absolute-path + emoji guidance is appended by enhanceSystemPromptWithEnvDetails.
 function getGeneralPurposeSystemPrompt(): string {
-  return `${SHARED_PREFIX} When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.
+  return `${SHARED_PREFIX} When you complete the task, respond with a concise report covering what was done, evidence checked, and any key findings - the caller will relay this to the user, so it only needs the essentials.
 
 ${SHARED_GUIDELINES}`
 }
@@ -31,4 +34,31 @@ export const GENERAL_PURPOSE_AGENT: BuiltInAgentDefinition = {
   baseDir: 'built-in',
   // model is intentionally omitted - uses getDefaultSubagentModel().
   getSystemPrompt: getGeneralPurposeSystemPrompt,
+}
+
+export function getDsxuGeneralPurposeAgentRuntimeProfile(): {
+  runtime: 'DSXU General Purpose Agent'
+  agentType: string
+  tools: readonly string[] | undefined
+  activationEvidence: string[]
+} {
+  return {
+    runtime: 'DSXU General Purpose Agent',
+    agentType: GENERAL_PURPOSE_AGENT.agentType,
+    tools: GENERAL_PURPOSE_AGENT.tools,
+    activationEvidence: [
+      'uses DSXU Code system prompt',
+      'full tool pool for multi-step coding/research tasks',
+      'inherits DSXU default subagent model strategy',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: generalpurposeagent
+export function processGeneralpurposeagentLifecycle(input) {
+  void input
+  const state = 'generalpurposeagent-state'
+  const lifecycle = 'generalpurposeagent:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

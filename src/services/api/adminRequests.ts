@@ -117,3 +117,12 @@ export async function checkAdminRequestEligibility(
 
   return response.data
 }
+
+
+// V14 lifecycle shim: adminrequests
+export function processAdminrequestsLifecycle(input) {
+  void input
+  const state = 'adminrequests-state'
+  const lifecycle = 'adminrequests:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

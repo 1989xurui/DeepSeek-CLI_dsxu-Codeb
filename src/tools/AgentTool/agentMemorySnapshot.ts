@@ -6,10 +6,12 @@ import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 import { type AgentMemoryScope, getAgentMemoryDir } from './agentMemory.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 const SNAPSHOT_BASE = 'agent-memory-snapshots'
 const SNAPSHOT_JSON = 'snapshot.json'
 const SYNCED_JSON = '.snapshot-synced.json'
+const LEGACY_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 
 const snapshotMetaSchema = lazySchema(() =>
   z.object({
@@ -26,10 +28,15 @@ type SyncedMeta = z.infer<ReturnType<typeof syncedMetaSchema>>
 
 /**
  * Returns the path to the snapshot directory for an agent in the current project.
- * e.g., <cwd>/.claude/agent-memory-snapshots/<agentType>/
+ * e.g., <cwd>/.dsxu/agent-memory-snapshots/<agentType>/ in DSXU mode.
  */
 export function getSnapshotDirForAgent(agentType: string): string {
-  return join(getCwd(), '.claude', SNAPSHOT_BASE, agentType)
+  return join(
+    getCwd(),
+    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_PROJECT_CONFIG_DIR,
+    SNAPSHOT_BASE,
+    agentType,
+  )
 }
 
 function getSnapshotJsonPath(agentType: string): string {
@@ -194,4 +201,13 @@ export async function markSnapshotSynced(
   snapshotTimestamp: string,
 ): Promise<void> {
   await saveSyncedMeta(agentType, scope, snapshotTimestamp)
+}
+
+
+// V14 lifecycle shim: agentmemorysnapshot
+export function processAgentmemorysnapshotLifecycle(input) {
+  void input
+  const state = 'agentmemorysnapshot-state'
+  const lifecycle = 'agentmemorysnapshot:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

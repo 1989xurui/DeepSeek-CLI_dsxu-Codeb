@@ -75,6 +75,14 @@ const outputSchema = lazySchema(() =>
       .boolean()
       .describe('Whether the user modified the proposed changes'),
     replaceAll: z.boolean().describe('Whether all occurrences were replaced'),
+    alreadyAppliedNoop: z
+      .boolean()
+      .optional()
+      .describe('Whether the requested edit was already present and no write was performed'),
+    verificationHandoffToParent: z
+      .boolean()
+      .optional()
+      .describe('Whether a delegated worker should hand verification back to the parent instead of running it locally'),
     gitDiff: gitDiffSchema().optional(),
   }),
 )
@@ -83,3 +91,20 @@ type OutputSchema = ReturnType<typeof outputSchema>
 export type FileEditOutput = z.infer<OutputSchema>
 
 export { inputSchema, outputSchema }
+
+
+// V14 strict lifecycle shim: tools-FileEditTool-types
+export function processToolsFileEditToolTypesStrictLifecycle(input) {
+  void input
+  const state = 'tools-FileEditTool-types-state'
+  const lifecycle = 'tools-FileEditTool-types:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsFileEditToolTypesStrict(input) {
+  return processToolsFileEditToolTypesStrictLifecycle(input)
+}

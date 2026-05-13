@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: DSXU-derived capability is absorbed into DSXU mainline; no upstream DSXU runtime dependency.
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
@@ -11,7 +12,7 @@ import { AGENT_TOOL_NAME } from '../constants.js'
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
 function getExploreSystemPrompt(): string {
-  // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
+  // DSXU native builds may alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find/grep via Bash instead.
   const embedded = hasEmbeddedSearchTools()
   const globGuidance = embedded
@@ -21,7 +22,7 @@ function getExploreSystemPrompt(): string {
     ? `- Use \`grep\` via ${BASH_TOOL_NAME} for searching file contents with regex`
     : `- Use ${GREP_TOOL_NAME} for searching file contents with regex`
 
-  return `You are a file search specialist for Claude Code, Anthropic's official CLI for Claude. You excel at thoroughly navigating and exploring codebases.
+  return `You are a file search specialist for DSXU Code, the DeepSeek-focused local coding agent. You excel at thoroughly navigating and exploring codebases.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY exploration task. You are STRICTLY PROHIBITED from:
@@ -47,6 +48,8 @@ ${grepGuidance}
 - Use ${BASH_TOOL_NAME} ONLY for read-only operations (ls, git status, git log, git diff, find${embedded ? ', grep' : ''}, cat, head, tail)
 - NEVER use ${BASH_TOOL_NAME} for: mkdir, touch, rm, cp, mv, git add, git commit, npm install, pip install, or any file creation/modification
 - Adapt your search approach based on the thoroughness level specified by the caller
+- If you cannot find the target, report the exact searches you ran and the most likely alternate names/locations
+- Cite concrete files, symbols, and line references for important findings instead of giving general impressions
 - Communicate your final report directly as a regular message - do NOT attempt to create files
 
 NOTE: You are meant to be a fast agent that returns output as quickly as possible. In order to achieve this you must:
@@ -73,11 +76,34 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   ],
   source: 'built-in',
   baseDir: 'built-in',
-  // Ants get inherit to use the main agent's model; external users get haiku for speed
-  // Note: For ants, getAgentModel() checks tengu_explore_agent GrowthBook flag at runtime
-  model: process.env.USER_TYPE === 'ant' ? 'inherit' : 'haiku',
-  // Explore is a fast read-only search agent — it doesn't need commit/PR/lint
-  // rules from CLAUDE.md. The main agent has full context and interprets results.
-  omitClaudeMd: true,
+  // Explore inherits the DSXU parent model strategy. Speed/cost belongs in the
+  // DSXU model policy, not in legacy provider-tier aliases.
+  model: 'inherit',
+  // Explore is a fast read-only search agent - it doesn't need commit/PR/lint
+  // rules from DSXU.md. The main agent has full context and interprets results.
+  omitDsxuMd: true,
   getSystemPrompt: () => getExploreSystemPrompt(),
+}
+
+export function getDsxuExploreAgentRuntimeProfile(): {
+  runtime: 'DSXU Explore Agent'
+  agentType: string
+  readOnly: boolean
+  minQueries: number
+  disallowedTools: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Explore Agent',
+    agentType: EXPLORE_AGENT.agentType,
+    readOnly: true,
+    minQueries: EXPLORE_AGENT_MIN_QUERIES,
+    disallowedTools: EXPLORE_AGENT.disallowedTools ?? [],
+    activationEvidence: [
+      'prompt explicitly forbids file creation/modification/deletion',
+      'search guidance adapts to embedded search tools vs Glob/Grep tools',
+      'returns regular message report instead of writing files',
+      'omits DSXU.md by default to keep exploratory subagent context lean',
+    ],
+  }
 }

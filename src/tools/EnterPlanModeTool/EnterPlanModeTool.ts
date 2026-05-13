@@ -108,14 +108,15 @@ DO NOT write or edit any files except the plan file. Detailed workflow instructi
       : `${message}
 
 In plan mode, you should:
-1. Thoroughly explore the codebase to understand existing patterns
-2. Identify similar features and architectural approaches
-3. Consider multiple approaches and their trade-offs
-4. Use AskUserQuestion if you need to clarify the approach
-5. Design a concrete implementation strategy
-6. When ready, use ExitPlanMode to present your plan for approval
+1. Explore the codebase in a read-only way using focused Glob, Grep, Read, LSP, or MCP resource tools
+2. Define a scope fence: allowed files/directories, denied files/directories, allowed tools, and denied tools
+3. Identify similar features and architectural approaches only until the scope is clear
+4. Use AskUserQuestion only for concrete missing requirements or trade-offs, not for asking whether the plan is OK
+5. Design a concrete implementation strategy listing files to edit and expected changes
+6. Define acceptance criteria: command/test/check, PASS marker or observable result, and PARTIAL/FAIL conditions
+7. When ready, use ExitPlanMode to present your plan for approval
 
-Remember: DO NOT write or edit any files yet. This is a read-only exploration and planning phase.`
+Remember: DO NOT write or edit any files yet except the plan file. This is a read-only exploration and planning phase.`
 
     return {
       type: 'tool_result',
@@ -124,3 +125,12 @@ Remember: DO NOT write or edit any files yet. This is a read-only exploration an
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: enterplanmodetool
+export function processEnterplanmodetoolLifecycle(input) {
+  void input
+  const state = 'enterplanmodetool-state'
+  const lifecycle = 'enterplanmodetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

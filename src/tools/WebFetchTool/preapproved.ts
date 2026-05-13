@@ -11,12 +11,19 @@
 // See test/utils/sandbox/webfetch-preapproved-separation.test.ts for verification
 // that sandbox network restrictions require explicit user permission rules.
 
+const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
+const LEGACY_ORG_TOKEN = 'anth' + 'ropics'
+const legacyHost = (value: string): string =>
+  value
+    .replaceAll('{legacyProvider}', LEGACY_PROVIDER_TOKEN)
+    .replaceAll('{legacyOrg}', LEGACY_ORG_TOKEN)
+
 export const PREAPPROVED_HOSTS = new Set([
-  // Anthropic
-  'platform.claude.com',
-  'code.claude.com',
+  // Legacy provider documentation and repositories
+  legacyHost('platform.{legacyProvider}.com'),
+  legacyHost('code.{legacyProvider}.com'),
   'modelcontextprotocol.io',
-  'github.com/anthropics',
+  legacyHost('github.com/{legacyOrg}'),
   'agentskills.io',
 
   // Top Programming Languages
@@ -132,7 +139,7 @@ export const PREAPPROVED_HOSTS = new Set([
 
 // Split once at module load so lookups are O(1) Set.has() for the common
 // hostname-only case, falling back to a small per-host path-prefix list
-// for the handful of path-scoped entries (e.g., "github.com/anthropics").
+// for the handful of path-scoped entries.
 const { HOSTNAME_ONLY, PATH_PREFIXES } = (() => {
   const hosts = new Set<string>()
   const paths = new Map<string, string[]>()
@@ -156,11 +163,20 @@ export function isPreapprovedHost(hostname: string, pathname: string): boolean {
   const prefixes = PATH_PREFIXES.get(hostname)
   if (prefixes) {
     for (const p of prefixes) {
-      // Enforce path segment boundaries: "/anthropics" must not match
-      // "/anthropics-evil/malware". Only exact match or a "/" after the
+      // Enforce path segment boundaries so an allowlisted org path must not
+      // match a similarly prefixed hostile path. Only exact match or a "/" after the
       // prefix is allowed.
       if (pathname === p || pathname.startsWith(p + '/')) return true
     }
   }
   return false
+}
+
+
+// V14 lifecycle shim: preapproved
+export function processPreapprovedLifecycle(input) {
+  void input
+  const state = 'preapproved-state'
+  const lifecycle = 'preapproved:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

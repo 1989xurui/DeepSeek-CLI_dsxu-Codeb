@@ -1,14 +1,18 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { promises as fsp } from 'fs'
 import { getSdkAgentProgressSummariesEnabled } from '../../bootstrap/state.js'
 import { getSystemPrompt } from '../../constants/prompts.js'
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import type { ToolUseContext } from '../../Tool.js'
-import { registerAsyncAgent } from '../../tasks/LocalAgentTask/LocalAgentTask.js'
+import {
+  createAgentTaskRuntimeMetadata,
+  registerAsyncAgent,
+} from '../../tasks/LocalAgentTask/LocalAgentTask.js'
 import { assembleToolPool } from '../../tools.js'
 import { asAgentId } from '../../types/ids.js'
 import { runWithAgentContext } from '../../utils/agentContext.js'
-import { runWithCwdOverride } from '../../utils/cwd.js'
+import { getCwd, runWithCwdOverride } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   createUserMessage,
@@ -33,7 +37,6 @@ import { FORK_AGENT, isForkSubagentEnabled } from './forkSubagent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 import { isBuiltInAgent } from './loadAgentsDir.js'
 import { runAgent } from './runAgent.js'
-
 export type ResumeAgentResult = {
   agentId: string
   description: string
@@ -59,7 +62,6 @@ export async function resumeAgentBackground({
   const rootSetAppState =
     toolUseContext.setAppStateForTasks ?? toolUseContext.setAppState
   const permissionMode = appState.toolPermissionContext.mode
-
   const [transcript, meta] = await Promise.all([
     getAgentTranscript(asAgentId(agentId)),
     readAgentMetadata(asAgentId(agentId)),
@@ -95,8 +97,7 @@ export async function resumeAgentBackground({
     const now = new Date()
     await fsp.utimes(resumedWorktreePath, now, now)
   }
-
-  // Skip filterDeniedAgents re-gating — original spawn already passed permission checks
+  // Skip filterDeniedAgents re-gating ...original spawn already passed permission checks
   let selectedAgent: AgentDefinition
   let isResumedFork = false
   if (meta?.agentType === FORK_AGENT.agentType) {
@@ -110,9 +111,7 @@ export async function resumeAgentBackground({
   } else {
     selectedAgent = GENERAL_PURPOSE_AGENT
   }
-
   const uiDescription = meta?.description ?? '(resumed)'
-
   let forkParentSystemPrompt: SystemPrompt | undefined
   if (isResumedFork) {
     if (toolUseContext.renderedSystemPrompt) {
@@ -146,7 +145,6 @@ export async function resumeAgentBackground({
       )
     }
   }
-
   // Resolve model for analytics metadata (runAgent resolves its own internally)
   const resolvedAgentModel = getAgentModel(
     selectedAgent.model,
@@ -154,7 +152,6 @@ export async function resumeAgentBackground({
     undefined,
     permissionMode,
   )
-
   const workerPermissionContext = {
     ...appState.toolPermissionContext,
     mode: selectedAgent.permissionMode ?? 'acceptEdits',
@@ -162,7 +159,6 @@ export async function resumeAgentBackground({
   const workerTools = isResumedFork
     ? toolUseContext.options.tools
     : assembleToolPool(workerPermissionContext, appState.mcp.tools)
-
   const runAgentParams: Parameters<typeof runAgent>[0] = {
     agentDefinition: selectedAgent,
     promptMessages: [
@@ -178,7 +174,7 @@ export async function resumeAgentBackground({
     ),
     model: undefined,
     // Fork resume: pass parent's system prompt (cache-identical prefix).
-    // Non-fork: undefined → runAgent recomputes under wrapWithCwd so
+    // Non-fork: undefined  -> runAgent recomputes under wrapWithCwd so
     // getCwd() sees resumedWorktreePath.
     override: isResumedFork
       ? { systemPrompt: forkParentSystemPrompt }
@@ -193,8 +189,18 @@ export async function resumeAgentBackground({
     description: meta?.description,
     contentReplacementState: resumedReplacementState,
   }
-
-  // Skip name-registry write — original entry persists from the initial spawn
+  const resumedRuntime = createAgentTaskRuntimeMetadata({
+    owner: selectedAgent.agentType,
+    prompt,
+    cwd: resumedWorktreePath ?? getCwd(),
+    isolation: isResumedFork
+      ? 'fork_context_inheritance'
+      : resumedWorktreePath
+        ? 'worktree_isolation'
+        : 'none',
+    recoverPath: 'send_message_continuation',
+  })
+  // Skip name-registry write ...original entry persists from the initial spawn
   const agentBackgroundTask = registerAsyncAgent({
     agentId,
     description: uiDescription,
@@ -202,8 +208,8 @@ export async function resumeAgentBackground({
     selectedAgent,
     setAppState: rootSetAppState,
     toolUseId: toolUseContext.toolUseId,
+    runtime: resumedRuntime,
   })
-
   const metadata = {
     prompt,
     resolvedAgentModel,
@@ -211,8 +217,18 @@ export async function resumeAgentBackground({
     startTime,
     agentType: selectedAgent.agentType,
     isAsync: true,
+    runtimeEvidence: {
+      ...resumedRuntime,
+      taskId: agentBackgroundTask.agentId,
+      taskType: 'local_agent' as const,
+      lifecycleState: 'running' as const,
+      placement: 'background' as const,
+      outputPath: getTaskOutputPath(agentBackgroundTask.agentId),
+      progressEventCount: 0,
+      canAbort: true,
+      canRecover: true,
+    },
   }
-
   const asyncAgentContext = {
     agentId,
     parentSessionId: getParentSessionId(),
@@ -223,10 +239,8 @@ export async function resumeAgentBackground({
     invocationKind: 'resume' as const,
     invocationEmitted: false,
   }
-
   const wrapWithCwd = <T>(fn: () => T): T =>
     resumedWorktreePath ? runWithCwdOverride(resumedWorktreePath, fn) : fn()
-
   void runWithAgentContext(asyncAgentContext, () =>
     wrapWithCwd(() =>
       runAsyncAgentLifecycle({
@@ -256,7 +270,6 @@ export async function resumeAgentBackground({
       }),
     ),
   )
-
   return {
     agentId,
     description: uiDescription,

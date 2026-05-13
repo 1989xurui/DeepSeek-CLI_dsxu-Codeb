@@ -151,3 +151,12 @@ export function shouldUseSandbox(input: Partial<SandboxInput>): boolean {
 
   return true
 }
+
+
+// V14 lifecycle shim: shouldusesandbox
+export function processShouldusesandboxLifecycle(input) {
+  void input
+  const state = 'shouldusesandbox-state'
+  const lifecycle = 'shouldusesandbox:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

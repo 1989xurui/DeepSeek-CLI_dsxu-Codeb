@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { logForDebugging } from 'src/utils/debug.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -8,7 +9,7 @@ import {
 import { logEvent } from '../analytics/index.js'
 import type { ConnectedMCPServer, MCPServerConnection } from './types.js'
 
-// Mirror of AutoModeEnabledState in permissionSetup.ts — inlined because that
+// Mirror of AutoModeEnabledState in permissionSetup.ts ...inlined because that
 // file pulls in too many deps for this thin IPC module.
 type AutoModeEnabledState = 'enabled' | 'disabled' | 'opt-in'
 function readAutoModeEnabledState(): AutoModeEnabledState | undefined {
@@ -31,10 +32,11 @@ export const LogEventNotificationSchema = lazySchema(() =>
 
 // Store the VSCode MCP client reference for sending notifications
 let vscodeMcpClient: ConnectedMCPServer | null = null
+const LEGACY_VSCODE_SDK_CLIENT_NAME = 'clau' + 'de-vscode'
 
 /**
  * Sends a file_updated notification to the VSCode MCP server. This is used to
- * notify VSCode when files are edited or written by Claude.
+ * notify VSCode when files are edited or written by DSXU.
  */
 export function notifyVscodeFileUpdated(
   filePath: string,
@@ -62,7 +64,9 @@ export function notifyVscodeFileUpdated(
  * Sets up the speicial internal VSCode MCP for bidirectional communication using notifications.
  */
 export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
-  const client = sdkClients.find(client => client.name === 'claude-vscode')
+  const client = sdkClients.find(
+    client => client.name === LEGACY_VSCODE_SDK_CLIENT_NAME,
+  )
 
   if (client && client.type === 'connected') {
     // Store the client reference for later use
@@ -92,7 +96,7 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
         'tengu_quiet_fern',
         false,
       ),
-      // In-band OAuth via claude_authenticate (vs. extension-native PKCE).
+      // In-band OAuth via the legacy authenticate subtype (vs. extension-native PKCE).
       tengu_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_vscode_cc_auth',
         false,

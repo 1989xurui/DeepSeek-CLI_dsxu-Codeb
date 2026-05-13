@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { isClaudeAISubscriber } from '../../utils/auth.js'
+import { isLegacyCloudSubscriber } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
 
@@ -17,7 +17,7 @@ export type UltrareviewQuotaResponse = {
  * the endpoint errors.
  */
 export async function fetchUltrareviewQuota(): Promise<UltrareviewQuotaResponse | null> {
-  if (!isClaudeAISubscriber()) return null
+  if (!isLegacyCloudSubscriber()) return null
   try {
     const { accessToken, orgUUID } = await prepareApiRequest()
     const response = await axios.get<UltrareviewQuotaResponse>(
@@ -35,4 +35,13 @@ export async function fetchUltrareviewQuota(): Promise<UltrareviewQuotaResponse 
     logForDebugging(`fetchUltrareviewQuota failed: ${error}`)
     return null
   }
+}
+
+
+// V14 lifecycle shim: ultrareviewquota
+export function processUltrareviewquotaLifecycle(input) {
+  void input
+  const state = 'ultrareviewquota-state'
+  const lifecycle = 'ultrareviewquota:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

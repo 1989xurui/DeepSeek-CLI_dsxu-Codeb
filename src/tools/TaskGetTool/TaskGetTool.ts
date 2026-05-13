@@ -126,3 +126,12 @@ export const TaskGetTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: taskgettool
+export function processTaskgettoolLifecycle(input) {
+  void input
+  const state = 'taskgettool-state'
+  const lifecycle = 'taskgettool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

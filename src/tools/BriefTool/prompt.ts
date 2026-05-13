@@ -3,6 +3,14 @@ export const LEGACY_BRIEF_TOOL_NAME = 'Brief'
 
 export const DESCRIPTION = 'Send a message to the user'
 
+export const DSXU_BRIEF_TOOL_DISCIPLINE = `
+DSXU weak-model discipline:
+- When to use: use this for user-visible answers, status checkpoints with real information, blockers, and final PASS/PARTIAL/FAIL summaries.
+- When not to use: do not use Brief for hidden agent-to-agent coordination, vague "done" messages without evidence, or content that belongs in tool calls.
+- Recovery after failure: if a prior visible message omitted the real result, send a corrected concise summary with evidence instead of assuming the user saw detail text.
+- Weak-model anti-pattern: do not put the important answer only in plain text outside Brief, and do not claim completion without verification evidence.
+- Verification / evidence: final Brief messages should cite files, commands, test output, report paths, or explicitly say what was not verified.`
+
 export const BRIEF_TOOL_PROMPT = `Send a message the user will read. Text outside this tool is visible in the detail view, but most won't open it — the answer lives here.
 
 \`message\` supports markdown. \`attachments\` takes file paths (absolute or cwd-relative) for images, diffs, logs.
@@ -20,3 +28,20 @@ If you can answer right away, send the answer. If you need to go look — run a 
 For longer work: ack → work → result. Between those, send a checkpoint when something useful happened — a decision you made, a surprise you hit, a phase boundary. Skip the filler ("running tests...") — a checkpoint earns its place by carrying information.
 
 Keep messages tight — the decision, the file:line, the PR number. Second person always ("your config"), never third.`
+
+
+// V14 strict lifecycle shim: tools-BriefTool-prompt
+export function processToolsBriefToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-BriefTool-prompt-state'
+  const lifecycle = 'tools-BriefTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsBriefToolPromptStrict(input) {
+  return processToolsBriefToolPromptStrictLifecycle(input)
+}

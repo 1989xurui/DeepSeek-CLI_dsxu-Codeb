@@ -5,10 +5,10 @@ export const WEB_SEARCH_TOOL_NAME = 'WebSearch'
 export function getWebSearchPrompt(): string {
   const currentMonthYear = getLocalMonthYear()
   return `
-- Allows Claude to search the web and use the results to inform responses
+- Allows DSXU to search the web and use the results to inform responses
 - Provides up-to-date information for current events and recent data
 - Returns search result information formatted as search result blocks, including links as markdown hyperlinks
-- Use this tool for accessing information beyond Claude's knowledge cutoff
+- Use this tool for accessing information beyond the model knowledge cutoff
 - Searches are performed automatically within a single API call
 
 CRITICAL REQUIREMENT - You MUST follow this:
@@ -30,5 +30,12 @@ Usage notes:
 IMPORTANT - Use the correct year in search queries:
   - The current month is ${currentMonthYear}. You MUST use this year when searching for recent information, documentation, or current events.
   - Example: If the user asks for "latest React docs", search for "React documentation" with the current year, NOT last year
+
+DSXU weak-model discipline:
+- When to use: search the web for current, recent, unstable, or external facts that cannot be trusted from local knowledge.
+- When not to use: do not use WebSearch for local repository files, implementation details already in the workspace, or secrets/private data.
+- Recovery after failure: if results are weak or conflicting, narrow the query, prefer primary sources, and report uncertainty instead of inventing a definitive answer.
+- Weak-model anti-pattern: do not omit sources, do not cite search snippets as if they are full documents, and do not mix web claims with local test PASS.
+- Verification / evidence: include a Sources section with relevant URLs and separate web-source evidence from local command/test evidence.
 `
 }

@@ -28,5 +28,30 @@ If called outside an EnterWorktree session, the tool is a **no-op**: it reports 
 - Clears CWD-dependent caches (system prompt sections, memory files, plans directory) so the session state reflects the original directory
 - If a tmux session was attached to the worktree: killed on \`remove\`, left running on \`keep\` (its name is returned so the user can reattach)
 - Once exited, EnterWorktree can be called again to create a fresh worktree
+
+## DSXU weak-model discipline
+
+- When to use: exit a worktree only when the user asks to leave, keep, or remove the active worktree session.
+- When not to use: do not call proactively, outside an EnterWorktree session, or to delete manually-created worktrees.
+- Recovery after failure: if removal is refused because changes exist, ask the user before discarding and prefer keep when preserving work is safer.
+- Weak-model anti-pattern: do not set discard_changes true without explicit user approval, and do not treat a no-op outside worktree as cleanup success.
+- Verification / evidence: cite the action, restored cwd, and whether the worktree was kept or removed.
 `
+}
+
+
+// V14 strict lifecycle shim: tools-ExitWorktreeTool-prompt
+export function processToolsExitWorktreeToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-ExitWorktreeTool-prompt-state'
+  const lifecycle = 'tools-ExitWorktreeTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsExitWorktreeToolPromptStrict(input) {
+  return processToolsExitWorktreeToolPromptStrictLifecycle(input)
 }

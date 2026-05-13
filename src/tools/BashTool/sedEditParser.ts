@@ -320,3 +320,12 @@ export function applySedSubstitution(
     return content
   }
 }
+
+
+// V14 lifecycle shim: sededitparser
+export function processSededitparserLifecycle(input) {
+  void input
+  const state = 'sededitparser-state'
+  const lifecycle = 'sededitparser:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

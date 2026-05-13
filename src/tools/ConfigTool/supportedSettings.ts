@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { getRemoteControlAtStartup } from '../../utils/config.js'
 import {
@@ -98,7 +99,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
           .filter(o => o.value !== null)
           .map(o => o.value as string)
       } catch {
-        return ['sonnet', 'opus', 'haiku']
+        return ['flash', 'flash-max', 'pro']
       }
     },
     validateOnWrite: v => validateModel(String(v)),
@@ -122,7 +123,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
     source: 'settings',
     type: 'string',
     description:
-      'Preferred language for Claude responses and voice dictation (e.g., "japanese", "spanish")',
+      'Preferred language for DSXU responses and voice dictation (e.g., "japanese", "spanish")',
   },
   teammateMode: {
     source: 'global',
@@ -167,7 +168,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
           source: 'global' as const,
           type: 'boolean' as const,
           description:
-            'Push to your mobile device when idle after Claude finishes (requires Remote Control)',
+            'Push to your mobile device when idle after DSXU finishes (requires Remote Control)',
         },
         inputNeededNotifEnabled: {
           source: 'global' as const,
@@ -179,7 +180,7 @@ export const SUPPORTED_SETTINGS: Record<string, SettingConfig> = {
           source: 'global' as const,
           type: 'boolean' as const,
           description:
-            'Allow Claude to push to your mobile device when it deems it appropriate (requires Remote Control)',
+            'Allow DSXU to push to your mobile device when it deems it appropriate (requires Remote Control)',
         },
       }
     : {}),

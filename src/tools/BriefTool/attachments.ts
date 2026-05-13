@@ -11,7 +11,7 @@ import { stat } from 'fs/promises'
 import type { ValidationResult } from '../../Tool.js'
 
 import { getCwd } from '../../utils/cwd.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { getErrnoCode } from '../../utils/errors.js'
 import { IMAGE_EXTENSION_REGEX } from '../../utils/imagePaste.js'
 import { expandPath } from '../../utils/path.js'
@@ -21,6 +21,21 @@ export type ResolvedAttachment = {
   size: number
   isImage: boolean
   file_uuid?: string
+}
+
+export function getDsxuBriefAttachmentRuntimeProfile(): {
+  runtime: 'DSXU Brief Attachment Resolver'
+  uploadEnv: readonly string[]
+  legacyUploadEnv: readonly string[]
+  validationPolicy: string
+} {
+  return {
+    runtime: 'DSXU Brief Attachment Resolver',
+    uploadEnv: ['DSXU_CODE_BRIEF_UPLOAD'],
+    legacyUploadEnv: ['DSXU_CODE_BRIEF_UPLOAD'],
+    validationPolicy:
+      'DSXU validates local attachment existence, regular-file status, permissions, image classification, and optional bridge upload before evidence rendering.',
+  }
 }
 
 export async function validateAttachmentPaths(
@@ -83,16 +98,16 @@ export async function resolveAttachments(
   // Dynamic import inside the feature() guard so upload.ts (axios, crypto,
   // zod, auth utils, MIME map) is fully eliminated from non-BRIDGE_MODE
   // builds. A static import would force module-scope evaluation regardless
-  // of the guard inside uploadBriefAttachment — CLAUDE.md: "helpers defined
+  // of the guard inside uploadBriefAttachment — DSXU.md: "helpers defined
   // outside remain in the build even if never called".
   if (feature('BRIDGE_MODE')) {
     // Headless/SDK callers never set appState.replBridgeEnabled (only the TTY
-    // REPL does, at main.tsx init). CLAUDE_CODE_BRIEF_UPLOAD lets a host that
+    // REPL does, at main.tsx init). DSXU_CODE_BRIEF_UPLOAD lets a host that
     // runs the CLI as a subprocess opt in — e.g. the cowork desktop bridge,
-    // which already passes CLAUDE_CODE_OAUTH_TOKEN for auth.
+    // while legacy hosts may still pass DSXU_CODE_OAUTH_TOKEN for migration.
     const shouldUpload =
       uploadCtx.replBridgeEnabled ||
-      isEnvTruthy(process.env.CLAUDE_CODE_BRIEF_UPLOAD)
+      isDsxuCodeEnvTruthy('BRIEF_UPLOAD')
     const { uploadBriefAttachment } = await import('./upload.js')
     const uuids = await Promise.all(
       stated.map(a =>

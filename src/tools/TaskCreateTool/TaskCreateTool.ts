@@ -136,3 +136,12 @@ export const TaskCreateTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: taskcreatetool
+export function processTaskcreatetoolLifecycle(input) {
+  void input
+  const state = 'taskcreatetool-state'
+  const lifecycle = 'taskcreatetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

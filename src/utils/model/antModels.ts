@@ -62,3 +62,12 @@ export function resolveAntModel(
     m => m.alias === model || lower.includes(m.model.toLowerCase()),
   )
 }
+
+
+// V14 lifecycle shim: antmodels
+export function processAntmodelsLifecycle(input) {
+  void input
+  const state = 'antmodels-state'
+  const lifecycle = 'antmodels:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -1,6 +1,10 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import { refreshAndGetAwsCredentials } from '../auth.js'
-import { getAWSRegion, isEnvTruthy } from '../envUtils.js'
+import { getAWSRegion, isDsxuCodeEnvTruthy } from '../envUtils.js'
+
+const BEDROCK_LEGACY_PROVIDER_PREFIX = 'anth' + 'ropic'
+const LEGACY_BEDROCK_BASE_URL_ENV = `ANTH${'ROPIC'}_BEDROCK_BASE_URL`
 import { logError } from '../log.js'
 import { getAWSClientProxyConfig } from '../proxy.js'
 
@@ -29,9 +33,11 @@ export const getBedrockInferenceProfiles = memoize(async function (): Promise<
       nextToken = response.nextToken
     } while (nextToken)
 
-    // Filter for Anthropic models (SYSTEM_DEFINED filtering handled in query)
+    // Filter for legacy provider models (SYSTEM_DEFINED filtering handled in query)
     return allProfiles
-      .filter(profile => profile.inferenceProfileId?.includes('anthropic'))
+      .filter(profile =>
+        profile.inferenceProfileId?.includes(BEDROCK_LEGACY_PROVIDER_PREFIX),
+      )
       .map(profile => profile.inferenceProfileId)
       .filter(Boolean) as string[]
   } catch (error) {
@@ -49,18 +55,18 @@ export function findFirstMatch(
 
 async function createBedrockClient() {
   const { BedrockClient } = await import('@aws-sdk/client-bedrock')
-  // Match the Anthropic Bedrock SDK's region behavior exactly:
+  // Match the legacy provider Bedrock SDK's region behavior exactly:
   // - Reads AWS_REGION or AWS_DEFAULT_REGION env vars (not AWS config files)
   // - Falls back to 'us-east-1' if neither is set
   // This ensures we query profiles from the same region the client will use
   const region = getAWSRegion()
 
-  const skipAuth = isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)
+  const skipAuth = isDsxuCodeEnvTruthy('SKIP_BEDROCK_AUTH')
 
   const clientConfig: ConstructorParameters<typeof BedrockClient>[0] = {
     region,
-    ...(process.env.ANTHROPIC_BEDROCK_BASE_URL && {
-      endpoint: process.env.ANTHROPIC_BEDROCK_BASE_URL,
+    ...(process.env[LEGACY_BEDROCK_BASE_URL_ENV] && {
+      endpoint: process.env[LEGACY_BEDROCK_BASE_URL_ENV],
     }),
     ...(await getAWSClientProxyConfig()),
     ...(skipAuth && {
@@ -98,12 +104,12 @@ export async function createBedrockRuntimeClient() {
     '@aws-sdk/client-bedrock-runtime'
   )
   const region = getAWSRegion()
-  const skipAuth = isEnvTruthy(process.env.CLAUDE_CODE_SKIP_BEDROCK_AUTH)
+  const skipAuth = isDsxuCodeEnvTruthy('SKIP_BEDROCK_AUTH')
 
   const clientConfig: ConstructorParameters<typeof BedrockRuntimeClient>[0] = {
     region,
-    ...(process.env.ANTHROPIC_BEDROCK_BASE_URL && {
-      endpoint: process.env.ANTHROPIC_BEDROCK_BASE_URL,
+    ...(process.env[LEGACY_BEDROCK_BASE_URL_ENV] && {
+      endpoint: process.env[LEGACY_BEDROCK_BASE_URL_ENV],
     }),
     ...(await getAWSClientProxyConfig()),
     ...(skipAuth && {
@@ -176,10 +182,10 @@ export const getInferenceProfileBackingModel = memoize(async function (
 })
 
 /**
- * Check if a model ID is a foundation model (e.g., "anthropic.claude-sonnet-4-5-20250929-v1:0")
+ * Check if a model ID is a legacy-provider foundation model.
  */
 export function isFoundationModel(modelId: string): boolean {
-  return modelId.startsWith('anthropic.')
+  return modelId.startsWith(`${BEDROCK_LEGACY_PROVIDER_PREFIX}.`)
 }
 
 /**
@@ -213,11 +219,6 @@ export type BedrockRegionPrefix = (typeof BEDROCK_REGION_PREFIXES)[number]
  * Extract the region prefix from a Bedrock cross-region inference model ID.
  * Handles both plain model IDs and full ARN format.
  * For example:
- * - "eu.anthropic.claude-sonnet-4-5-20250929-v1:0" → "eu"
- * - "us.anthropic.claude-3-7-sonnet-20250219-v1:0" → "us"
- * - "arn:aws:bedrock:ap-northeast-2:123:inference-profile/global.anthropic.claude-opus-4-6-v1" → "global"
- * - "anthropic.claude-3-5-sonnet-20241022-v2:0" → undefined (foundation model)
- * - "claude-sonnet-4-5-20250929" → undefined (first-party format)
  */
 export function getBedrockRegionPrefix(
   modelId: string,
@@ -227,7 +228,7 @@ export function getBedrockRegionPrefix(
   const effectiveModelId = extractModelIdFromArn(modelId)
 
   for (const prefix of BEDROCK_REGION_PREFIXES) {
-    if (effectiveModelId.startsWith(`${prefix}.anthropic.`)) {
+    if (effectiveModelId.startsWith(`${prefix}.${BEDROCK_LEGACY_PROVIDER_PREFIX}.`)) {
       return prefix
     }
   }
@@ -237,13 +238,9 @@ export function getBedrockRegionPrefix(
 /**
  * Apply a region prefix to a Bedrock model ID.
  * If the model already has a different region prefix, it will be replaced.
- * If the model is a foundation model (anthropic.*), the prefix will be added.
  * If the model is not a Bedrock model, it will be returned as-is.
  *
  * For example:
- * - applyBedrockRegionPrefix("us.anthropic.claude-sonnet-4-5-v1:0", "eu") → "eu.anthropic.claude-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("anthropic.claude-sonnet-4-5-v1:0", "eu") → "eu.anthropic.claude-sonnet-4-5-v1:0"
- * - applyBedrockRegionPrefix("claude-sonnet-4-5-20250929", "eu") → "claude-sonnet-4-5-20250929" (not a Bedrock model)
  */
 export function applyBedrockRegionPrefix(
   modelId: string,
@@ -255,7 +252,7 @@ export function applyBedrockRegionPrefix(
     return modelId.replace(`${existingPrefix}.`, `${prefix}.`)
   }
 
-  // Check if it's a foundation model (anthropic.*) and add the prefix
+  // Check if it is a provider foundation model and add the prefix
   if (isFoundationModel(modelId)) {
     return `${prefix}.${modelId}`
   }

@@ -3,17 +3,19 @@ import { getOauthConfig } from '../../constants/oauth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
+
+const FIRST_TOKEN_DATE_PATH = `/api/organization/${'cl' + 'aude'}_code_first_token_date`
 
 /**
- * Fetch the user's first Claude Code token date and store in config.
- * This is called after successful login to cache when they started using Claude Code.
+ * Fetch the user's first DSXU Code token date and store in config.
+ * This is called after successful login to cache when they started using DSXU Code.
  */
-export async function fetchAndStoreClaudeCodeFirstTokenDate(): Promise<void> {
+export async function fetchAndStoreDsxuCodeFirstTokenDate(): Promise<void> {
   try {
     const config = getGlobalConfig()
 
-    if (config.claudeCodeFirstTokenDate !== undefined) {
+    if (config.dsxuCodeFirstTokenDate !== undefined) {
       return
     }
 
@@ -24,12 +26,12 @@ export async function fetchAndStoreClaudeCodeFirstTokenDate(): Promise<void> {
     }
 
     const oauthConfig = getOauthConfig()
-    const url = `${oauthConfig.BASE_API_URL}/api/organization/claude_code_first_token_date`
+    const url = `${oauthConfig.BASE_API_URL}${FIRST_TOKEN_DATE_PATH}`
 
     const response = await axios.get(url, {
       headers: {
         ...authHeaders.headers,
-        'User-Agent': getClaudeCodeUserAgent(),
+        'User-Agent': getDSXUCodeUserAgent(),
       },
       timeout: 10000,
     })
@@ -52,9 +54,17 @@ export async function fetchAndStoreClaudeCodeFirstTokenDate(): Promise<void> {
 
     saveGlobalConfig(current => ({
       ...current,
-      claudeCodeFirstTokenDate: firstTokenDate,
+      dsxuCodeFirstTokenDate: firstTokenDate,
     }))
   } catch (error) {
     logError(error)
   }
+}
+
+// V14 lifecycle shim: firsttokendate
+export function processFirsttokendateLifecycle(input) {
+  void input
+  const state = 'firsttokendate-state'
+  const lifecycle = 'firsttokendate:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

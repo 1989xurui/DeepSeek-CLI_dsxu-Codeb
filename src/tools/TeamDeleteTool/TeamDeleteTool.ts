@@ -137,3 +137,12 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
   renderToolUseMessage,
   renderToolResultMessage,
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: teamdeletetool
+export function processTeamdeletetoolLifecycle(input) {
+  void input
+  const state = 'teamdeletetool-state'
+  const lifecycle = 'teamdeletetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

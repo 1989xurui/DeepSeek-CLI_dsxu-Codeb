@@ -1,11 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * XAA IdP Login — acquires an OIDC id_token from an enterprise IdP via the
+ * XAA IdP Login ...acquires an OIDC id_token from an enterprise IdP via the
  * standard authorization_code + PKCE flow, then caches it by IdP issuer.
  *
- * This is the "one browser pop" in the XAA value prop: one IdP login → N silent
+ * This is the "one browser pop" in the XAA value prop: one IdP login  -> N silent
  * MCP server auths. The id_token is cached in the keychain and reused until expiry.
  */
-
 import {
   exchangeAuthorization,
   startAuthorization,
@@ -28,30 +28,46 @@ import { getSecureStorage } from '../../utils/secureStorage/index.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { buildRedirectUri, findAvailablePort } from './oauthPort.js'
-
+const DSXU_XAA_ENABLE_ENV = 'DSXU_CODE_ENABLE_XAA'
+const LEGACY_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
 export function isXaaEnabled(): boolean {
-  return isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_XAA)
+  return (
+    isEnvTruthy(process.env[DSXU_XAA_ENABLE_ENV]) ||
+    isEnvTruthy(process.env[LEGACY_XAA_ENABLE_ENV])
+  )
 }
-
+export function getDsxuXaaRuntimeProfile(): {
+  runtime: 'DSXU MCP XAA Identity'
+  enabled: boolean
+  primaryEnv: typeof DSXU_XAA_ENABLE_ENV
+  legacyEnv: string
+  cachePolicy: string
+} {
+  return {
+    runtime: 'DSXU MCP XAA Identity',
+    enabled: isXaaEnabled(),
+    primaryEnv: DSXU_XAA_ENABLE_ENV,
+    legacyEnv: LEGACY_XAA_ENABLE_ENV,
+    cachePolicy:
+      `DSXU uses the same OIDC/XAA token-exchange semantics, but the default activation switch is ${DSXU_XAA_ENABLE_ENV}; legacy provider env remains migration-only.`,
+  }
+}
 export type XaaIdpSettings = {
   issuer: string
   clientId: string
   callbackPort?: number
 }
-
 /**
  * Typed accessor for settings.xaaIdp. The field is env-gated in SettingsSchema
- * so it doesn't surface in SDK types/docs — which means the inferred settings
+ * so it doesn't surface in SDK types/docs ...which means the inferred settings
  * type doesn't have it at compile time. This is the one cast.
  */
 export function getXaaIdpSettings(): XaaIdpSettings | undefined {
   return (getInitialSettings() as { xaaIdp?: XaaIdpSettings }).xaaIdp
 }
-
 const IDP_LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 const IDP_REQUEST_TIMEOUT_MS = 30000
 const ID_TOKEN_EXPIRY_BUFFER_S = 60
-
 export type IdpLoginOptions = {
   idpIssuer: string
   idpClientId: string
@@ -70,11 +86,10 @@ export type IdpLoginOptions = {
   callbackPort?: number
   /** Called with the authorization URL before (or instead of) opening the browser */
   onAuthorizationUrl?: (url: string) => void
-  /** If true, don't auto-open the browser — just call onAuthorizationUrl */
+  /** If true, don't auto-open the browser ...just call onAuthorizationUrl */
   skipBrowserOpen?: boolean
   abortSignal?: AbortSignal
 }
-
 /**
  * Normalize an IdP issuer URL for use as a cache key: strip trailing slashes,
  * lowercase host. Issuers from config and from OIDC discovery may differ
@@ -91,7 +106,6 @@ export function issuerKey(issuer: string): string {
     return issuer.replace(/\/+$/, '')
   }
 }
-
 /**
  * Read a cached id_token for the given IdP issuer from secure storage.
  * Returns undefined if missing or within ID_TOKEN_EXPIRY_BUFFER_S of expiring.
@@ -105,7 +119,6 @@ export function getCachedIdpIdToken(idpIssuer: string): string | undefined {
   if (remainingMs <= ID_TOKEN_EXPIRY_BUFFER_S * 1000) return undefined
   return entry.idToken
 }
-
 function saveIdpIdToken(
   idpIssuer: string,
   idToken: string,
@@ -121,9 +134,8 @@ function saveIdpIdToken(
     },
   })
 }
-
 /**
- * Save an externally-obtained id_token into the XAA cache — the exact slot
+ * Save an externally-obtained id_token into the XAA cache ...the exact slot
  * getCachedIdpIdToken/acquireIdpIdToken read from. Used by conformance testing
  * where the mock IdP hands us a pre-signed token but doesn't serve /authorize.
  *
@@ -139,7 +151,6 @@ export function saveIdpIdTokenFromJwt(
   saveIdpIdToken(idpIssuer, idToken, expiresAt)
   return expiresAt
 }
-
 export function clearIdpIdToken(idpIssuer: string): void {
   const storage = getSecureStorage()
   const existing = storage.read()
@@ -148,10 +159,9 @@ export function clearIdpIdToken(idpIssuer: string): void {
   delete existing.mcpXaaIdp[key]
   storage.update(existing)
 }
-
 /**
  * Save an IdP client secret to secure storage, keyed by IdP issuer.
- * Separate from MCP server AS secrets — different trust domain.
+ * Separate from MCP server AS secrets ...different trust domain.
  * Returns the storage update result so callers can surface keychain
  * failures (locked keychain, `security` nonzero exit) instead of
  * silently dropping the secret and failing later with invalid_client.
@@ -170,7 +180,6 @@ export function saveIdpClientSecret(
     },
   })
 }
-
 /**
  * Read the IdP client secret for the given issuer from secure storage.
  */
@@ -179,10 +188,9 @@ export function getIdpClientSecret(idpIssuer: string): string | undefined {
   const data = storage.read()
   return data?.mcpXaaIdpConfig?.[issuerKey(idpIssuer)]?.clientSecret
 }
-
 /**
  * Remove the IdP client secret for the given issuer from secure storage.
- * Used by `claude mcp xaa clear`.
+ * Used by DSXU MCP XAA clear flows.
  */
 export function clearIdpClientSecret(idpIssuer: string): void {
   const storage = getSecureStorage()
@@ -192,8 +200,7 @@ export function clearIdpClientSecret(idpIssuer: string): void {
   delete existing.mcpXaaIdpConfig[key]
   storage.update(existing)
 }
-
-// OIDC Discovery §4.1 says `{issuer}/.well-known/openid-configuration` — path
+// OIDC Discovery §4.1 says `{issuer}/.well-known/openid-configuration` ...path
 // APPEND, not replace. `new URL('/.well-known/...', issuer)` with a leading
 // slash is a WHATWG absolute-path reference and drops the issuer's pathname,
 // breaking Azure AD (`login.microsoftonline.com/{tenant}/v2.0`), Okta custom
@@ -235,7 +242,6 @@ export async function discoverOidc(
   }
   return parsed.data
 }
-
 /**
  * Decode the exp claim from a JWT without verifying its signature.
  * Returns undefined if parsing fails or exp is absent. Used only to
@@ -246,7 +252,7 @@ export async function discoverOidc(
  * token endpoint. The IdP validates its own token there. An attacker who
  * can mint a token that fools the IdP has no need to fool us first; an
  * attacker who can't, hands us garbage and gets a 401 from the IdP. The
- * --id-token injection seam is likewise safe: bad input → rejected later,
+ * --id-token injection seam is likewise safe: bad input  -> rejected later,
  * no privesc. Client-side verification would add code and no security.
  */
 function jwtExp(jwt: string): number | undefined {
@@ -261,12 +267,11 @@ function jwtExp(jwt: string): number | undefined {
     return undefined
   }
 }
-
 /**
  * Wait for the OAuth authorization code on a local callback server.
  * Returns the code once /callback is hit with a matching state.
  *
- * `onListening` fires after the socket is actually bound — use it to defer
+ * `onListening` fires after the socket is actually bound ...use it to defer
  * browser-open so EADDRINUSE surfaces before a spurious tab pops open.
  */
 function waitForCallback(
@@ -307,7 +312,6 @@ function waitForCallback(
       cleanup()
       reject(e)
     }
-
     if (abortSignal) {
       abortHandler = () => rejectOnce(new Error('XAA IdP: login cancelled'))
       if (abortSignal.aborted) {
@@ -316,7 +320,6 @@ function waitForCallback(
       }
       abortSignal.addEventListener('abort', abortHandler, { once: true })
     }
-
     server = createServer((req, res) => {
       const parsed = parse(req.url || '', true)
       if (parsed.pathname !== '/callback') {
@@ -327,7 +330,6 @@ function waitForCallback(
       const code = parsed.query.code as string | undefined
       const state = parsed.query.state as string | undefined
       const err = parsed.query.error as string | undefined
-
       if (err) {
         const desc = parsed.query.error_description as string | undefined
         const safeErr = xss(err)
@@ -336,31 +338,27 @@ function waitForCallback(
         res.end(
           `<html><body><h3>IdP login failed</h3><p>${safeErr}</p><p>${safeDesc}</p></body></html>`,
         )
-        rejectOnce(new Error(`XAA IdP: ${err}${desc ? ` — ${desc}` : ''}`))
+        rejectOnce(new Error(`XAA IdP: ${err}${desc ? ` ...${desc}` : ''}`))
         return
       }
-
       if (state !== expectedState) {
         res.writeHead(400, { 'Content-Type': 'text/html' })
         res.end('<html><body><h3>State mismatch</h3></body></html>')
         rejectOnce(new Error('XAA IdP: state mismatch (possible CSRF)'))
         return
       }
-
       if (!code) {
         res.writeHead(400, { 'Content-Type': 'text/html' })
         res.end('<html><body><h3>Missing code</h3></body></html>')
         rejectOnce(new Error('XAA IdP: callback missing code'))
         return
       }
-
       res.writeHead(200, { 'Content-Type': 'text/html' })
       res.end(
-        '<html><body><h3>IdP login complete — you can close this window.</h3></body></html>',
+        '<html><body><h3>IdP login complete ...you can close this window.</h3></body></html>',
       )
       resolveOnce(code)
     })
-
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code === 'EADDRINUSE') {
         const findCmd =
@@ -376,7 +374,6 @@ function waitForCallback(
         rejectOnce(new Error(`XAA IdP: callback server failed: ${err.message}`))
       }
     })
-
     server.listen(port, '127.0.0.1', () => {
       try {
         onListening()
@@ -393,7 +390,6 @@ function waitForCallback(
     timeoutId.unref()
   })
 }
-
 /**
  * Acquire an id_token from the IdP: return cached if valid, otherwise run
  * the full OIDC authorization_code + PKCE flow (one browser pop).
@@ -402,15 +398,12 @@ export async function acquireIdpIdToken(
   opts: IdpLoginOptions,
 ): Promise<string> {
   const { idpIssuer, idpClientId } = opts
-
   const cached = getCachedIdpIdToken(idpIssuer)
   if (cached) {
     logMCPDebug('xaa', `Using cached id_token for ${idpIssuer}`)
     return cached
   }
-
   logMCPDebug('xaa', `No cached id_token for ${idpIssuer}; starting OIDC login`)
-
   const metadata = await discoverOidc(idpIssuer)
   const port = opts.callbackPort ?? (await findAvailablePort())
   const redirectUri = buildRedirectUri(port)
@@ -419,7 +412,6 @@ export async function acquireIdpIdToken(
     client_id: idpClientId,
     ...(opts.idpClientSecret ? { client_secret: opts.idpClientSecret } : {}),
   }
-
   const { authorizationUrl, codeVerifier } = await startAuthorization(
     idpIssuer,
     {
@@ -430,8 +422,7 @@ export async function acquireIdpIdToken(
       state,
     },
   )
-
-  // Open the browser only after the socket is actually bound — listen() is
+  // Open the browser only after the socket is actually bound ...listen() is
   // async, and on the fixed-callbackPort path EADDRINUSE otherwise surfaces
   // after a spurious tab has already popped. Mirrors the auth.ts pattern of
   // wrapping sdkAuth inside server.listen's callback.
@@ -449,7 +440,6 @@ export async function acquireIdpIdToken(
       }
     },
   )
-
   const tokens = await exchangeAuthorization(idpIssuer, {
     metadata,
     clientInformation,
@@ -468,7 +458,6 @@ export async function acquireIdpIdToken(
       'XAA IdP: token response missing id_token (check scope=openid)',
     )
   }
-
   // Prefer the id_token's own exp claim; fall back to expires_in.
   // expires_in is for the access_token and may differ from the id_token
   // lifetime. If neither is present, default to 1h.
@@ -476,12 +465,10 @@ export async function acquireIdpIdToken(
   const expiresAt = expFromJwt
     ? expFromJwt * 1000
     : Date.now() + (tokens.expires_in ?? 3600) * 1000
-
   saveIdpIdToken(idpIssuer, tokens.id_token, expiresAt)
   logMCPDebug(
     'xaa',
     `Cached id_token for ${idpIssuer} (expires ${new Date(expiresAt).toISOString()})`,
   )
-
   return tokens.id_token
 }

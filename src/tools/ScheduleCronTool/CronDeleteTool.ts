@@ -93,3 +93,12 @@ export const CronDeleteTool = buildTool({
   renderToolUseMessage: renderDeleteToolUseMessage,
   renderToolResultMessage: renderDeleteResultMessage,
 } satisfies ToolDef<InputSchema, DeleteOutput>)
+
+
+// V14 lifecycle shim: crondeletetool
+export function processCrondeletetoolLifecycle(input) {
+  void input
+  const state = 'crondeletetool-state'
+  const lifecycle = 'crondeletetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

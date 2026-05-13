@@ -7,6 +7,7 @@ import {
   getSettingsForSource,
   updateSettingsForSource,
 } from '../utils/settings/settings.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 
 /**
  * Migrate users who had "sonnet[1m]" saved to the explicit "sonnet-4-5-20250929[1m]".
@@ -23,6 +24,8 @@ import {
  * tracked by a completion flag in global config.
  */
 export function migrateSonnet1mToSonnet45(): void {
+  if (isDsxuRuntimeMode()) return
+
   const config = getGlobalConfig()
   if (config.sonnet1m45MigrationComplete) {
     return
@@ -45,4 +48,13 @@ export function migrateSonnet1mToSonnet45(): void {
     ...current,
     sonnet1m45MigrationComplete: true,
   }))
+}
+
+
+// V14 lifecycle shim: migratesonnet1mtosonnet45
+export function processMigratesonnet1mtosonnet45Lifecycle(input) {
+  void input
+  const state = 'migratesonnet1mtosonnet45-state'
+  const lifecycle = 'migratesonnet1mtosonnet45:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

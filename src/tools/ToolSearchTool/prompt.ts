@@ -28,6 +28,15 @@ const PROMPT_HEAD = `Fetches full schema definitions for deferred tools so they 
 
 `
 
+const DSXU_TOOL_SEARCH_DISCIPLINE = `
+
+DSXU weak-model discipline:
+- When to use: fetch the full schema for a deferred tool only after its name appears and the task truly needs that tool.
+- When not to use: do not use ToolSearch to discover normal file tools, bypass the default mainline tool pool, or load remote/experimental tools without explicit need.
+- Recovery after failure: if no tool matches, continue with available DSXU tools or report the missing capability instead of inventing a tool call.
+- Weak-model anti-pattern: do not fetch many unrelated tools, do not treat a tool name as callable before schema is returned, and do not use ToolSearch as a planning substitute.
+- Verification / evidence: cite the selected tool schema name returned by ToolSearch before using it, and do not claim a deferred tool ran until its actual tool result exists.`
+
 // Matches isDeferredToolsDeltaEnabled in toolSearch.ts (not imported —
 // toolSearch.ts imports from this file). When enabled: tools announced
 // via system-reminder attachments. When disabled: prepended
@@ -57,10 +66,10 @@ Query forms:
  * - It has shouldDefer: true
  *
  * A tool is NEVER deferred if it has alwaysLoad: true (MCP tools set this via
- * _meta['anthropic/alwaysLoad']). This check runs first, before any other rule.
+ * _meta legacy always-load flag). This check runs first, before any other rule.
  */
 export function isDeferredTool(tool: Tool): boolean {
-  // Explicit opt-out via _meta['anthropic/alwaysLoad'] — tool appears in the
+  // Explicit opt-out via legacy always-load metadata — tool appears in the
   // initial prompt with full schema. Checked first so MCP tools can opt out.
   if (tool.alwaysLoad === true) return false
 
@@ -117,5 +126,5 @@ export function formatDeferredToolLine(tool: Tool): string {
 }
 
 export function getPrompt(): string {
-  return PROMPT_HEAD + getToolLocationHint() + PROMPT_TAIL
+  return PROMPT_HEAD + getToolLocationHint() + PROMPT_TAIL + DSXU_TOOL_SEARCH_DISCIPLINE
 }

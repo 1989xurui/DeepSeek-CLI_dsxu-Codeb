@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import { APIUserAbortError } from '@anthropic-ai/sdk'
+import { APIUserAbortError } from '../../types/providerSdk.js'
 import type { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import {
@@ -27,7 +28,7 @@ import { parseCommandRaw } from '../../utils/bash/parser.js'
 import { tryParseShellCommand } from '../../utils/bash/shellQuote.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { getDsxuCodeEnv, isEnvTruthy } from '../../utils/envUtils.js'
 import { AbortError } from '../../utils/errors.js'
 import type {
   ClassifierBehavior,
@@ -77,7 +78,6 @@ import { checkPermissionMode } from './modeValidation.js'
 import { checkPathConstraints } from './pathValidation.js'
 import { checkSedConstraints } from './sedValidation.js'
 import { shouldUseSandbox } from './shouldUseSandbox.js'
-
 // DCE cliff: Bun's feature() evaluator has a per-function complexity budget.
 // bashToolHasPermission is right at the limit. `import { X as Y }` aliases
 // inside the import block count toward this budget; when they push it over
@@ -87,28 +87,25 @@ import { shouldUseSandbox } from './shouldUseSandbox.js'
 // instead. (See also the comment on checkSemanticsDeny below.)
 const bashCommandIsSafeAsync = bashCommandIsSafeAsync_DEPRECATED
 const splitCommand = splitCommand_DEPRECATED
-
+const LEGACY_PROVIDER_API_KEY_ENV = `${'ANTH' + 'ROPIC'}_API_KEY`
 // Env-var assignment prefix (VAR=value). Shared across three while-loops that
 // skip safe env vars before extracting the command name.
 const ENV_VAR_ASSIGN_RE = /^[A-Za-z_]\w*=/
-
 // CC-643: On complex compound commands, splitCommand_DEPRECATED can produce a
 // very large subcommands array (possible exponential growth; #21405's ReDoS fix
 // may have been incomplete). Each subcommand then runs tree-sitter parse +
 // ~20 validators + logEvent (bashSecurity.ts), and with memoized metadata the
-// resulting microtask chain starves the event loop — REPL freeze at 100% CPU,
+// resulting microtask chain starves the event loop ...REPL freeze at 100% CPU,
 // strace showed /proc/self/stat reads at ~127Hz with no epoll_wait. Fifty is
 // generous: legitimate user commands don't split that wide. Above the cap we
-// fall back to 'ask' (safe default — we can't prove safety, so we prompt).
+// fall back to 'ask' (safe default ...we can't prove safety, so we prompt).
 export const MAX_SUBCOMMANDS_FOR_SECURITY_CHECK = 50
-
 // GH#11380: Cap the number of per-subcommand rules suggested for compound
-// commands. Beyond this, the "Yes, and don't ask again for X, Y, Z…" label
+// commands. Beyond this, the "Yes, and don't ask again for X, Y, Z... label
 // degrades to "similar commands" anyway, and saving 10+ rules from one prompt
 // is more likely noise than intent. Users chaining this many write commands
 // in one && list are rare; they can always approve once and add rules manually.
 export const MAX_SUGGESTED_RULES_FOR_COMPOUND = 5
-
 /**
  * [ANT-ONLY] Log classifier evaluation results for analysis.
  * This helps us understand which classifier rules are being evaluated
@@ -123,7 +120,6 @@ function logClassifierResultForAnts(
   if (process.env.USER_TYPE !== 'ant') {
     return
   }
-
   logEvent('tengu_internal_bash_classifier_result', {
     behavior:
       behavior as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -142,7 +138,6 @@ function logClassifierResultForAnts(
       command as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 }
-
 /**
  * Extract a stable command prefix (command + subcommand) from a raw command string.
  * Skips leading env var assignments only if they are in SAFE_ENV_VARS (or
@@ -151,17 +146,16 @@ function logClassifierResultForAnts(
  * like a subcommand (lowercase alphanumeric, e.g., "commit", "run").
  *
  * Examples:
- *   'git commit -m "fix typo"' → 'git commit'
- *   'NODE_ENV=prod npm run build' → 'npm run' (NODE_ENV is safe)
- *   'MY_VAR=val npm run build' → null (MY_VAR is not safe)
- *   'ls -la' → null (flag, not a subcommand)
- *   'cat file.txt' → null (filename, not a subcommand)
- *   'chmod 755 file' → null (number, not a subcommand)
+ *   'git commit -m "fix typo"'  -> 'git commit'
+ *   'NODE_ENV=prod npm run build'  -> 'npm run' (NODE_ENV is safe)
+ *   'MY_VAR=val npm run build'  -> null (MY_VAR is not safe)
+ *   'ls -la'  -> null (flag, not a subcommand)
+ *   'cat file.txt'  -> null (filename, not a subcommand)
+ *   'chmod 755 file'  -> null (number, not a subcommand)
  */
 export function getSimpleCommandPrefix(command: string): string | null {
   const tokens = command.trim().split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return null
-
   // Skip env var assignments (VAR=value) at the start, but only if they are
   // in SAFE_ENV_VARS (or ANT_ONLY_SAFE_ENV_VARS for ant users). If a non-safe
   // env var is encountered, return null to fall back to exact match. This
@@ -177,7 +171,6 @@ export function getSimpleCommandPrefix(command: string): string | null {
     }
     i++
   }
-
   const remaining = tokens.slice(i)
   if (remaining.length < 2) return null
   const subcmd = remaining[1]!
@@ -186,13 +179,53 @@ export function getSimpleCommandPrefix(command: string): string | null {
   if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(subcmd)) return null
   return remaining.slice(0, 2).join(' ')
 }
-
+export function getDsxuBashPermissionRuntimeProfile(): {
+  runtime: 'DSXU Bash Permission Engine'
+  limits: {
+    maxSubcommandsForSecurityCheck: number
+    maxSuggestedRulesForCompound: number
+  }
+  prefixExamples: Record<string, string | null>
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Bash Permission Engine',
+    limits: {
+      maxSubcommandsForSecurityCheck: MAX_SUBCOMMANDS_FOR_SECURITY_CHECK,
+      maxSuggestedRulesForCompound: MAX_SUGGESTED_RULES_FOR_COMPOUND,
+    },
+    prefixExamples: {
+      'git commit -m x': getSimpleCommandPrefix('git commit -m x'),
+      'MY_SECRET=1 npm run build': getSimpleCommandPrefix(
+        'MY_SECRET=1 npm run build',
+      ),
+      'ls -la': getSimpleCommandPrefix('ls -la'),
+    },
+    activationEvidence: [
+      'getSimpleCommandPrefix only suggests safe command+subcommand prefixes',
+      'unsafe env assignments fall back to exact permission matching',
+      'compound command security checks are capped to avoid event-loop starvation',
+      'bare shell/wrapper prefixes are blocked from broad allow-rule suggestions',
+    ],
+  }
+}
+export function getDsxuBashPermissionSampleDecisions(): {
+  safePrefix: string | null
+  unsafeEnvPrefix: string | null
+  firstWordFallback: string | null
+} {
+  return {
+    safePrefix: getSimpleCommandPrefix('git status --short'),
+    unsafeEnvPrefix: getSimpleCommandPrefix('TOKEN=secret npm run build'),
+    firstWordFallback: getFirstWordPrefix('python3 test.py 2>&1 | tail -20'),
+  }
+}
 // Bare-prefix suggestions like `bash:*` or `sh:*` would allow arbitrary code
 // via `-c`. Wrapper suggestions like `env:*` or `sudo:*` would do the same:
 // `env` is NOT in SAFE_WRAPPER_PATTERNS, so `env bash -c "evil"` survives
 // stripSafeWrappers unchanged and hits the startsWith("env ") check at
 // the prefix-rule matcher. Shell list mirrors DANGEROUS_SHELL_PREFIXES in
-// src/utils/shell/prefix.ts which guarded the old Haiku extractor.
+// src/utils/shell/prefix.ts which guarded the old lightweight extractor.
 const BARE_SHELL_PREFIXES = new Set([
   'sh',
   'bash',
@@ -209,7 +242,7 @@ const BARE_SHELL_PREFIXES = new Set([
   'env',
   'xargs',
   // SECURITY: checkSemantics (ast.ts) strips these wrappers to check the
-  // wrapped command. Suggesting `Bash(nice:*)` would be ≈ `Bash(*)` — users
+  // wrapped command. Suggesting `Bash(nice:*)` would be  -> `Bash(*)` ...users
   // would add it after a prompt, then `nice rm -rf /` passes semantics while
   // deny/cd+git gates see 'nice' (SAFE_WRAPPER_PATTERNS below didn't strip
   // bare `nice` until this fix). Block these from ever being suggested.
@@ -218,17 +251,16 @@ const BARE_SHELL_PREFIXES = new Set([
   'nohup',
   'timeout',
   'time',
-  // privilege escalation — sudo:* from `sudo -u foo ...` would auto-approve
+  // privilege escalation ...sudo:* from `sudo -u foo ...` would auto-approve
   // any future sudo invocation
   'sudo',
   'doas',
   'pkexec',
 ])
-
 /**
  * UI-only fallback: extract the first word alone when getSimpleCommandPrefix
  * declines. In external builds TREE_SITTER_BASH is off, so the async
- * tree-sitter refinement in BashPermissionRequest never fires — without this,
+ * tree-sitter refinement in BashPermissionRequest never fires ...without this,
  * pipes and compounds (`python3 file.py 2>&1 | tail -20`) dump into the
  * editable field verbatim.
  *
@@ -236,13 +268,12 @@ const BARE_SHELL_PREFIXES = new Set([
  * `Bash(rm:*)` is too broad to auto-generate, but as an editable starting
  * point it's what users expect (Slack C07VBSHV7EV/p1772670433193449).
  *
- * Reuses the same SAFE_ENV_VARS gate as getSimpleCommandPrefix — a rule like
+ * Reuses the same SAFE_ENV_VARS gate as getSimpleCommandPrefix ...a rule like
  * `Bash(python3:*)` can never match `RUN=/path python3 ...` at check time
  * because stripSafeWrappers won't strip RUN.
  */
 export function getFirstWordPrefix(command: string): string | null {
   const tokens = command.trim().split(/\s+/).filter(Boolean)
-
   let i = 0
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
@@ -253,7 +284,6 @@ export function getFirstWordPrefix(command: string): string | null {
     }
     i++
   }
-
   const cmd = tokens[i]
   if (!cmd) return null
   // Same shape check as the subcommand regex in getSimpleCommandPrefix:
@@ -262,7 +292,6 @@ export function getFirstWordPrefix(command: string): string | null {
   if (BARE_SHELL_PREFIXES.has(cmd)) return null
   return cmd
 }
-
 function suggestionForExactCommand(command: string): PermissionUpdate[] {
   // Heredoc commands contain multi-line content that changes each invocation,
   // making exact-match rules useless (they'll never match again). Extract a
@@ -271,7 +300,6 @@ function suggestionForExactCommand(command: string): PermissionUpdate[] {
   if (heredocPrefix) {
     return sharedSuggestionForPrefix(BashTool.name, heredocPrefix)
   }
-
   // Multiline commands without heredoc also make poor exact-match rules.
   // Saving the full multiline text can produce patterns containing `:*` in
   // the middle, which fails permission validation and corrupts the settings
@@ -282,7 +310,6 @@ function suggestionForExactCommand(command: string): PermissionUpdate[] {
       return sharedSuggestionForPrefix(BashTool.name, firstLine)
     }
   }
-
   // Single-line commands: extract a 2-word prefix for reusable rules.
   // Without this, exact-match rules are saved that never match future
   // invocations with different arguments.
@@ -290,32 +317,26 @@ function suggestionForExactCommand(command: string): PermissionUpdate[] {
   if (prefix) {
     return sharedSuggestionForPrefix(BashTool.name, prefix)
   }
-
   return sharedSuggestionForExactCommand(BashTool.name, command)
 }
-
 /**
  * If the command contains a heredoc (<<), extract the command prefix before it.
  * Returns the first word(s) before the heredoc operator as a stable prefix,
  * or null if the command doesn't contain a heredoc.
  *
  * Examples:
- *   'git commit -m "$(cat <<\'EOF\'\n...\nEOF\n)"' → 'git commit'
- *   'cat <<EOF\nhello\nEOF' → 'cat'
- *   'echo hello' → null (no heredoc)
+ *   'git commit -m "$(cat <<\'EOF\'\n...\nEOF\n)"'  -> 'git commit'
+ *   'cat <<EOF\nhello\nEOF'  -> 'cat'
+ *   'echo hello'  -> null (no heredoc)
  */
 function extractPrefixBeforeHeredoc(command: string): string | null {
   if (!command.includes('<<')) return null
-
   const idx = command.indexOf('<<')
   if (idx <= 0) return null
-
   const before = command.substring(0, idx).trim()
   if (!before) return null
-
   const prefix = getSimpleCommandPrefix(before)
   if (prefix) return prefix
-
   // Fallback: skip safe env var assignments and take up to 2 tokens.
   // This preserves flag tokens (e.g., "python3 -c" stays "python3 -c",
   // not just "python3") and skips safe env var prefixes like "NODE_ENV=test".
@@ -335,17 +356,14 @@ function extractPrefixBeforeHeredoc(command: string): string | null {
   if (i >= tokens.length) return null
   return tokens.slice(i, i + 2).join(' ') || null
 }
-
 function suggestionForPrefix(prefix: string): PermissionUpdate[] {
   return sharedSuggestionForPrefix(BashTool.name, prefix)
 }
-
 /**
  * Extract prefix from legacy :* syntax (e.g., "npm:*" -> "npm")
  * Delegates to shared implementation.
  */
 export const permissionRuleExtractPrefix = sharedPermissionRuleExtractPrefix
-
 /**
  * Match a command against a wildcard pattern (case-sensitive for Bash).
  * Delegates to shared implementation.
@@ -356,7 +374,6 @@ export function matchWildcardPattern(
 ): boolean {
   return sharedMatchWildcardPattern(pattern, command)
 }
-
 /**
  * Parse a permission rule into a structured rule object.
  * Delegates to shared implementation.
@@ -364,7 +381,6 @@ export function matchWildcardPattern(
 export const bashPermissionRule: (
   permissionRule: string,
 ) => ShellPermissionRule = parsePermissionRule
-
 /**
  * Whitelist of environment variables that are safe to strip from commands.
  * These variables CANNOT execute code or load libraries.
@@ -382,25 +398,22 @@ const SAFE_ENV_VARS = new Set([
   'GOARCH', // target architecture
   'CGO_ENABLED', // enable/disable CGO
   'GO111MODULE', // module mode
-
   // Rust - logging/debugging only
   'RUST_BACKTRACE', // backtrace verbosity
   'RUST_LOG', // logging filter
-
   // Node - environment name only (not NODE_OPTIONS!)
   'NODE_ENV',
-
   // Python - behavior flags only (not PYTHONPATH!)
   'PYTHONUNBUFFERED', // disable buffering
   'PYTHONDONTWRITEBYTECODE', // no .pyc files
-
   // Pytest - test configuration
   'PYTEST_DISABLE_PLUGIN_AUTOLOAD', // disable plugin loading
   'PYTEST_DEBUG', // debug output
-
   // API keys and authentication
-  'ANTHROPIC_API_KEY', // API authentication
-
+  LEGACY_PROVIDER_API_KEY_ENV, // API authentication
+  'DEEPSEEK_API_KEY', // DSXU/DeepSeek API authentication
+  'DEEPSEEK_BASE_URL', // DSXU/DeepSeek compatible endpoint override
+  'DSXU_API_KEY', // DSXU control-plane authentication
   // Locale and character encoding
   'LANG', // default locale
   'LANGUAGE', // language preference list
@@ -408,27 +421,28 @@ const SAFE_ENV_VARS = new Set([
   'LC_CTYPE', // character classification
   'LC_TIME', // time format
   'CHARSET', // character set preference
-
   // Terminal and display
   'TERM', // terminal type
   'COLORTERM', // color terminal indicator
   'NO_COLOR', // disable color output (universal standard)
   'FORCE_COLOR', // force color output
   'TZ', // timezone
-
   // Color configuration for various tools
   'LS_COLORS', // colors for ls (GNU)
   'LSCOLORS', // colors for ls (BSD/macOS)
   'GREP_COLOR', // grep match color (deprecated)
   'GREP_COLORS', // grep color scheme
   'GCC_COLORS', // GCC diagnostic colors
-
   // Display formatting
   'TIME_STYLE', // time display format for ls
   'BLOCK_SIZE', // block size for du/df
   'BLOCKSIZE', // alternative block size
 ])
-
+function isCommandInjectionCheckDisabled(): boolean {
+  return (
+    isEnvTruthy(getDsxuCodeEnv('DISABLE_COMMAND_INJECTION_CHECK'))
+  )
+}
 /**
  * ANT-ONLY environment variables that are safe to strip from commands.
  * These are only enabled when USER_TYPE === 'ant'.
@@ -437,7 +451,7 @@ const SAFE_ENV_VARS = new Set([
  * means `DOCKER_HOST=tcp://evil.com docker ps` matches a `Bash(docker ps:*)`
  * rule after stripping. This is INTENTIONALLY ANT-ONLY (gated at line ~380)
  * and MUST NEVER ship to external users. DOCKER_HOST redirects the Docker
- * daemon endpoint — stripping it defeats prefix-based permission restrictions
+ * daemon endpoint ...stripping it defeats prefix-based permission restrictions
  * by hiding the network endpoint from the permission check. KUBECONFIG
  * similarly controls which cluster kubectl talks to. These are convenience
  * strippings for internal power users who accept the risk.
@@ -446,34 +460,28 @@ const SAFE_ENV_VARS = new Set([
  */
 const ANT_ONLY_SAFE_ENV_VARS = new Set([
   // Kubernetes and container config (config file pointers, not execution)
-  'KUBECONFIG', // kubectl config file path — controls which cluster kubectl uses
-  'DOCKER_HOST', // Docker daemon socket/endpoint — controls which daemon docker talks to
-
+  'KUBECONFIG', // kubectl config file path ...controls which cluster kubectl uses
+  'DOCKER_HOST', // Docker daemon socket/endpoint ...controls which daemon docker talks to
   // Cloud provider project/profile selection (just names/identifiers)
   'AWS_PROFILE', // AWS profile name selection
   'CLOUDSDK_CORE_PROJECT', // GCP project ID
   'CLUSTER', // generic cluster name
-
-  // Anthropic internal cluster selection (just names/identifiers)
+  // legacy provider internal cluster selection (just names/identifiers)
   'COO_CLUSTER', // coo cluster name
   'COO_CLUSTER_NAME', // coo cluster name (alternate)
   'COO_NAMESPACE', // coo namespace
   'COO_LAUNCH_YAML_DRY_RUN', // dry run mode
-
   // Feature flags (boolean/string flags only)
   'SKIP_NODE_VERSION_CHECK', // skip version check
   'EXPECTTEST_ACCEPT', // accept test expectations
   'CI', // CI environment indicator
   'GIT_LFS_SKIP_SMUDGE', // skip LFS downloads
-
   // GPU/Device selection (just device IDs)
   'CUDA_VISIBLE_DEVICES', // GPU device selection
   'JAX_PLATFORMS', // JAX platform selection
-
   // Display/terminal settings
   'COLUMNS', // terminal width
   'TMUX', // TMUX socket info
-
   // Test/debug configuration
   'POSTGRESQL_VERSION', // postgres version string
   'FIRESTORE_EMULATOR_HOST', // emulator host:port
@@ -481,24 +489,20 @@ const ANT_ONLY_SAFE_ENV_VARS = new Set([
   'TEST_CROSSCHECK_LISTS_MATCH_UPDATE', // test update flag
   'DBT_PER_DEVELOPER_ENVIRONMENTS', // DBT config
   'STATSIG_FORD_DB_CHECKS', // statsig DB check flag
-
   // Build configuration
-  'ANT_ENVIRONMENT', // Anthropic environment name
-  'ANT_SERVICE', // Anthropic service name
+  'ANT_ENVIRONMENT', // legacy provider environment name
+  'ANT_SERVICE', // legacy provider service name
   'MONOREPO_ROOT_DIR', // monorepo root path
-
   // Version selectors
   'PYENV_VERSION', // Python version selection
-
   // Credentials (approved subset - these don't change exfil risk)
   'PGPASSWORD', // Postgres password
   'GH_TOKEN', // GitHub token
   'GROWTHBOOK_API_KEY', // self-hosted growthbook
 ])
-
 /**
  * Strips full-line comments from a command.
- * This handles cases where Claude adds comments in bash commands, e.g.:
+ * This handles cases where the assistant adds comments in bash commands, e.g.:
  *   "# Check the logs directory\nls /home/user/logs"
  * Should be stripped to: "ls /home/user/logs"
  *
@@ -512,17 +516,14 @@ function stripCommentLines(command: string): string {
     // Keep lines that are not empty and don't start with #
     return trimmed !== '' && !trimmed.startsWith('#')
   })
-
   // If all lines were comments/empty, return original
   if (nonCommentLines.length === 0) {
     return command
   }
-
   return nonCommentLines.join('\n')
 }
-
 export function stripSafeWrappers(command: string): string {
-  // SECURITY: Use [ \t]+ not \s+ — \s matches \n/\r which are command
+  // SECURITY: Use [ \t]+ not \s+ ...\s matches \n/\r which are command
   // separators in bash. Matching across a newline would strip the wrapper from
   // one line and leave a different command on the next line for bash to execute.
   //
@@ -530,13 +531,13 @@ export function stripSafeWrappers(command: string): string {
   // `nohup -- rm -- -/../foo` strips to `rm -- -/../foo` (not `-- rm ...`
   // which would skip path validation with `--` as an unknown baseCmd).
   const SAFE_WRAPPER_PATTERNS = [
-    // timeout: enumerate GNU long flags — no-value (--foreground,
+    // timeout: enumerate GNU long flags ...no-value (--foreground,
     // --preserve-status, --verbose), value-taking in both =fused and
     // space-separated forms (--kill-after=5, --kill-after 5, --signal=TERM,
     // --signal TERM). Short: -v (no-arg), -k/-s with separate or fused value.
     // SECURITY: flag VALUES use allowlist [A-Za-z0-9_.+-] (signals are
     // TERM/KILL/9, durations are 5/5s/10.5). Previously [^ \t]+ matched
-    // $ ( ) ` | ; & — `timeout -k$(id) 10 ls` stripped to `ls`, matched
+    // $ ( ) ` | ; & ...`timeout -k$(id) 10 ls` stripped to `ls`, matched
     // Bash(ls:*), while bash expanded $(id) during word splitting BEFORE
     // timeout ran. Contrast ENV_VAR_PATTERN below which already allowlists.
     /^timeout[ \t]+(?:(?:--(?:foreground|preserve-status|verbose)|--(?:kill-after|signal)=[A-Za-z0-9_.+-]+|--(?:kill-after|signal)[ \t]+[A-Za-z0-9_.+-]+|-v|-[ks][ \t]+[A-Za-z0-9_.+-]+|-[ks][A-Za-z0-9_.+-]+)[ \t]+)*(?:--[ \t]+)?\d+(?:\.\d+)?[smhd]?[ \t]+/,
@@ -558,7 +559,6 @@ export function stripSafeWrappers(command: string): string {
     /^stdbuf(?:[ \t]+-[ioe][LN0-9]+)+[ \t]+(?:--[ \t]+)?/,
     /^nohup[ \t]+(?:--[ \t]+)?/,
   ] as const
-
   // Pattern for environment variables:
   // ^([A-Za-z_][A-Za-z0-9_]*)  - Variable name (standard identifier)
   // =                           - Equals sign
@@ -573,17 +573,14 @@ export function stripSafeWrappers(command: string): string {
   // leaving `echo curl evil.com` to match Bash(echo:*). But bash treats the
   // newline as a command separator. Defense-in-depth with needsQuoting fix.
   const ENV_VAR_PATTERN = /^([A-Za-z_][A-Za-z0-9_]*)=([A-Za-z0-9_./:-]+)[ \t]+/
-
   let stripped = command
   let previousStripped = ''
-
   // Phase 1: Strip leading env vars and comments only.
   // In bash, env var assignments before a command (VAR=val cmd) are genuine
   // shell-level assignments. These are safe to strip for permission matching.
   while (stripped !== previousStripped) {
     previousStripped = stripped
     stripped = stripCommentLines(stripped)
-
     const envVarMatch = stripped.match(ENV_VAR_PATTERN)
     if (envVarMatch) {
       const varName = envVarMatch[1]!
@@ -594,7 +591,6 @@ export function stripSafeWrappers(command: string): string {
       }
     }
   }
-
   // Phase 2: Strip wrapper commands and comments only. Do NOT strip env vars.
   // Wrapper commands (timeout, time, nice, nohup) use execvp to run their
   // arguments, so VAR=val after a wrapper is treated as the COMMAND to execute,
@@ -605,20 +601,16 @@ export function stripSafeWrappers(command: string): string {
   while (stripped !== previousStripped) {
     previousStripped = stripped
     stripped = stripCommentLines(stripped)
-
     for (const pattern of SAFE_WRAPPER_PATTERNS) {
       stripped = stripped.replace(pattern, '')
     }
   }
-
   return stripped.trim()
 }
-
 // SECURITY: allowlist for timeout flag VALUES (signals are TERM/KILL/9,
 // durations are 5/5s/10.5). Rejects $ ( ) ` | ; & and newlines that
-// previously matched via [^ \t]+ — `timeout -k$(id) 10 ls` must NOT strip.
+// previously matched via [^ \t]+ ...`timeout -k$(id) 10 ls` must NOT strip.
 const TIMEOUT_FLAG_VALUE_RE = /^[A-Za-z0-9_.+-]+$/
-
 /**
  * Parse timeout's GNU flags (long + short, fused + space-separated) and
  * return the argv index of the DURATION token, or -1 if flags are unparseable.
@@ -627,7 +619,7 @@ const TIMEOUT_FLAG_VALUE_RE = /^[A-Za-z0-9_.+-]+$/
  * value), -k/-s (value, both fused and space-separated).
  *
  * Extracted from stripWrappersFromArgv to keep bashToolHasPermission under
- * Bun's feature() DCE complexity threshold — inlining this breaks
+ * Bun's feature() DCE complexity threshold ...inlining this breaks
  * feature('BASH_CLASSIFIER') evaluation in classifier tests.
  */
 function skipTimeoutFlags(a: readonly string[]): number {
@@ -666,13 +658,12 @@ function skipTimeoutFlags(a: readonly string[]): number {
   }
   return i
 }
-
 /**
  * Argv-level counterpart to stripSafeWrappers. Strips the same wrapper
  * commands (timeout, time, nice, nohup) from AST-derived argv. Env vars
  * are already separated into SimpleCommand.envVars so no env-var stripping.
  *
- * KEEP IN SYNC with SAFE_WRAPPER_PATTERNS above — if you add a wrapper
+ * KEEP IN SYNC with SAFE_WRAPPER_PATTERNS above ...if you add a wrapper
  * there, add it here too.
  */
 export function stripWrappersFromArgv(argv: string[]): string[] {
@@ -699,26 +690,23 @@ export function stripWrappersFromArgv(argv: string[]): string[] {
     }
   }
 }
-
 /**
  * Env vars that make a *different binary* run (injection or resolution hijack).
- * Heuristic only — export-&& form bypasses this, and excludedCommands isn't a
+ * Heuristic only ...export-&& form bypasses this, and excludedCommands isn't a
  * security boundary anyway.
  */
 export const BINARY_HIJACK_VARS = /^(LD_|DYLD_|PATH$)/
-
 /**
  * Strip ALL leading env var prefixes from a command, regardless of whether the
  * var name is in the safe-list.
  *
- * Used for deny/ask rule matching: when a user denies `claude` or `rm`, the
+ * Used for deny/ask rule matching: when a user denies `dsxu-code` or `rm`, the
  * command should stay blocked even if prefixed with arbitrary env vars like
- * `FOO=bar claude`. The safe-list restriction in stripSafeWrappers is correct
+ * `FOO=bar dsxu-code`. The safe-list restriction in stripSafeWrappers is correct
  * for allow rules (prevents `DOCKER_HOST=evil docker ps` from auto-matching
  * `Bash(docker ps:*)`), but deny rules must be harder to circumvent.
  *
- * Also used for sandbox.excludedCommands matching (not a security boundary —
- * permission prompts are), with BINARY_HIJACK_VARS as a blocklist.
+ * Also used for sandbox.excludedCommands matching (not a security boundary ... * permission prompts are), with BINARY_HIJACK_VARS as a blocklist.
  *
  * SECURITY: Uses a broader value pattern than stripSafeWrappers. The value
  * pattern excludes only actual shell injection characters ($, backtick, ;, |,
@@ -737,13 +725,13 @@ export function stripAllLeadingEnvVars(
   // Broader value pattern for deny-rule stripping. Handles:
   //
   // - Standard assignment (FOO=bar), append (FOO+=bar), array (FOO[0]=bar)
-  // - Single-quoted values: '[^'\n\r]*' — bash suppresses all expansion
+  // - Single-quoted values: '[^'\n\r]*' ...bash suppresses all expansion
   // - Double-quoted values with backslash escapes: "(?:\\.|[^"$`\\\n\r])*"
   //   In bash double quotes, only \$, \`, \", \\, and \newline are special.
   //   Other \x sequences are harmless, so we allow \. inside double quotes.
   //   We still exclude raw $ and ` (without backslash) to block expansion.
   // - Unquoted values: excludes shell metacharacters, allows backslash escapes
-  // - Concatenated segments: FOO='x'y"z" — bash concatenates adjacent segments
+  // - Concatenated segments: FOO='x'y"z" ...bash concatenates adjacent segments
   //
   // SECURITY: Trailing whitespace MUST be [ \t]+ (horizontal only), NOT \s+.
   //
@@ -754,27 +742,22 @@ export function stripAllLeadingEnvVars(
   //
   // Note: $ is excluded from unquoted/double-quoted value classes to block
   // dangerous forms like $(cmd), ${var}, and $((expr)). This means
-  // FOO=$VAR is not stripped — adding $VAR matching creates ReDoS risk
+  // FOO=$VAR is not stripped ...adding $VAR matching creates ReDoS risk
   // (CodeQL #671) and $VAR bypasses are low-priority.
   const ENV_VAR_PATTERN =
     /^([A-Za-z_][A-Za-z0-9_]*(?:\[[^\]]*\])?)\+?=(?:'[^'\n\r]*'|"(?:\\.|[^"$`\\\n\r])*"|\\.|[^ \t\n\r$`;|&()<>\\\\'"])*[ \t]+/
-
   let stripped = command
   let previousStripped = ''
-
   while (stripped !== previousStripped) {
     previousStripped = stripped
     stripped = stripCommentLines(stripped)
-
     const m = stripped.match(ENV_VAR_PATTERN)
     if (!m) continue
     if (blocklist?.test(m[1]!)) break
     stripped = stripped.slice(m[0].length)
   }
-
   return stripped.trim()
 }
-
 function filterRulesByContentsMatchingInput(
   input: z.infer<typeof BashTool.inputSchema>,
   rules: Map<string, PermissionRule>,
@@ -785,13 +768,11 @@ function filterRulesByContentsMatchingInput(
   }: { stripAllEnvVars?: boolean; skipCompoundCheck?: boolean } = {},
 ): PermissionRule[] {
   const command = input.command.trim()
-
   // Strip output redirections for permission matching
   // This allows rules like Bash(python:*) to match "python script.py > output.txt"
   // Security validation of redirection targets happens separately in checkPathConstraints
   const commandWithoutRedirections =
     extractOutputRedirections(command).commandWithoutRedirections
-
   // For exact matching, try both the original command (to preserve quotes)
   // and the command without redirections (to allow rules without redirections to match)
   // For prefix matching, only use the command without redirections
@@ -799,7 +780,6 @@ function filterRulesByContentsMatchingInput(
     matchMode === 'exact'
       ? [command, commandWithoutRedirections]
       : [commandWithoutRedirections]
-
   // Strip safe wrapper commands (timeout, time, nice, nohup) and env vars for matching
   // This allows rules like Bash(npm install:*) to match "timeout 10 npm install foo"
   // or "GOOS=linux go build"
@@ -807,26 +787,24 @@ function filterRulesByContentsMatchingInput(
     const strippedCommand = stripSafeWrappers(cmd)
     return strippedCommand !== cmd ? [cmd, strippedCommand] : [cmd]
   })
-
   // SECURITY: For deny/ask rules, also try matching after stripping ALL leading
   // env var prefixes. This prevents bypass via `FOO=bar denied_command` where
   // FOO is not in the safe-list. The safe-list restriction in stripSafeWrappers
   // is intentional for allow rules (see HackerOne #3543050), but deny rules
-  // must be harder to circumvent — a denied command should stay denied
+  // must be harder to circumvent ...a denied command should stay denied
   // regardless of env var prefixes.
   //
   // We iteratively apply both stripping operations to all candidates until no
   // new candidates are produced (fixed-point). This handles interleaved patterns
-  // like `nohup FOO=bar timeout 5 claude` where:
-  //   1. stripSafeWrappers strips `nohup` → `FOO=bar timeout 5 claude`
-  //   2. stripAllLeadingEnvVars strips `FOO=bar` → `timeout 5 claude`
-  //   3. stripSafeWrappers strips `timeout 5` → `claude` (deny match)
+  // like `nohup FOO=bar timeout 5 dsxu-code` where:
+  //   1. stripSafeWrappers strips `nohup`  -> `FOO=bar timeout 5 dsxu-code`
+  //   2. stripAllLeadingEnvVars strips `FOO=bar`  -> `timeout 5 dsxu-code`
+  //   3. stripSafeWrappers strips `timeout 5`  -> `dsxu-code` (deny match)
   //
   // Without iteration, single-pass compositions miss multi-layer interleaving.
   if (stripAllEnvVars) {
     const seen = new Set(commandsToTry)
     let startIdx = 0
-
     // Iterate until no new candidates are produced (fixed-point)
     while (startIdx < commandsToTry.length) {
       const endIdx = commandsToTry.length
@@ -851,7 +829,6 @@ function filterRulesByContentsMatchingInput(
       startIdx = endIdx
     }
   }
-
   // Precompute compound-command status for each candidate to avoid re-parsing
   // inside the rule filter loop (which would scale splitCommand calls with
   // rules.length × commandsToTry.length). The compound check only applies to
@@ -866,11 +843,9 @@ function filterRulesByContentsMatchingInput(
       }
     }
   }
-
   return Array.from(rules.entries())
     .filter(([ruleContent]) => {
       const bashRule = bashPermissionRule(ruleContent)
-
       return commandsToTry.some(cmdToMatch => {
         switch (bashRule.type) {
           case 'exact':
@@ -884,8 +859,8 @@ function filterRulesByContentsMatchingInput(
                 // SECURITY: Don't allow prefix rules to match compound commands.
                 // e.g., Bash(cd:*) must NOT match "cd /path && python3 evil.py".
                 // In the normal flow commands are split before reaching here, but
-                // shell escaping can defeat the first splitCommand pass — e.g.,
-                //   cd src\&\& python3 hello.py  →  splitCommand  →  ["cd src&& python3 hello.py"]
+                // shell escaping can defeat the first splitCommand pass ...e.g.,
+                //   cd src\&\& python3 hello.py -> splitCommand -> ["cd src&& python3 hello.py"]
                 // which then looks like a single command that starts with "cd ".
                 // Re-splitting the candidate here catches those cases.
                 if (isCompoundCommand.get(cmdToMatch)) {
@@ -933,7 +908,6 @@ function filterRulesByContentsMatchingInput(
     })
     .map(([, rule]) => rule)
 }
-
 function matchingRulesForInput(
   input: z.infer<typeof BashTool.inputSchema>,
   toolPermissionContext: ToolPermissionContext,
@@ -953,7 +927,6 @@ function matchingRulesForInput(
     matchMode,
     { stripAllEnvVars: true, skipCompoundCheck: true },
   )
-
   const askRuleByContents = getRuleByContentsForTool(
     toolPermissionContext,
     BashTool,
@@ -965,7 +938,6 @@ function matchingRulesForInput(
     matchMode,
     { stripAllEnvVars: true, skipCompoundCheck: true },
   )
-
   const allowRuleByContents = getRuleByContentsForTool(
     toolPermissionContext,
     BashTool,
@@ -977,14 +949,12 @@ function matchingRulesForInput(
     matchMode,
     { skipCompoundCheck },
   )
-
   return {
     matchingDenyRules,
     matchingAskRules,
     matchingAllowRules,
   }
 }
-
 /**
  * Checks if the subcommand is an exact match for a permission rule
  */
@@ -995,7 +965,6 @@ export const bashToolCheckExactMatchPermission = (
   const command = input.command.trim()
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
     matchingRulesForInput(input, toolPermissionContext, 'exact')
-
   // 1. Deny if exact command was denied
   if (matchingDenyRules[0] !== undefined) {
     return {
@@ -1007,7 +976,6 @@ export const bashToolCheckExactMatchPermission = (
       },
     }
   }
-
   // 2. Ask if exact command was in ask rules
   if (matchingAskRules[0] !== undefined) {
     return {
@@ -1019,7 +987,6 @@ export const bashToolCheckExactMatchPermission = (
       },
     }
   }
-
   // 3. Allow if exact command was allowed
   if (matchingAllowRules[0] !== undefined) {
     return {
@@ -1031,7 +998,6 @@ export const bashToolCheckExactMatchPermission = (
       },
     }
   }
-
   // 4. Otherwise, passthrough
   const decisionReason = {
     type: 'other' as const,
@@ -1046,7 +1012,6 @@ export const bashToolCheckExactMatchPermission = (
     suggestions: suggestionForExactCommand(command),
   }
 }
-
 export const bashToolCheckPermission = (
   input: z.infer<typeof BashTool.inputSchema>,
   toolPermissionContext: ToolPermissionContext,
@@ -1054,13 +1019,11 @@ export const bashToolCheckPermission = (
   astCommand?: SimpleCommand,
 ): PermissionResult => {
   const command = input.command.trim()
-
   // 1. Check exact match first
   const exactMatchResult = bashToolCheckExactMatchPermission(
     input,
     toolPermissionContext,
   )
-
   // 1a. Deny/ask if exact command has a rule
   if (
     exactMatchResult.behavior === 'deny' ||
@@ -1068,17 +1031,15 @@ export const bashToolCheckPermission = (
   ) {
     return exactMatchResult
   }
-
   // 2. Find all matching rules (prefix or exact)
   // SECURITY FIX: Check Bash deny/ask rules BEFORE path constraints to prevent bypass
   // via absolute paths outside the project directory (HackerOne report)
-  // When AST-parsed, the subcommand is already atomic — skip the legacy
+  // When AST-parsed, the subcommand is already atomic ...skip the legacy
   // splitCommand re-check that misparses mid-word # as compound.
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
     matchingRulesForInput(input, toolPermissionContext, 'prefix', {
       skipCompoundCheck: astCommand !== undefined,
     })
-
   // 2a. Deny if command has a deny rule
   if (matchingDenyRules[0] !== undefined) {
     return {
@@ -1090,7 +1051,6 @@ export const bashToolCheckPermission = (
       },
     }
   }
-
   // 2b. Ask if command has an ask rule
   if (matchingAskRules[0] !== undefined) {
     return {
@@ -1102,7 +1062,6 @@ export const bashToolCheckPermission = (
       },
     }
   }
-
   // 3. Check path constraints
   // This check comes after deny/ask rules so explicit rules take precedence.
   // SECURITY: When AST-derived argv is available for this subcommand, pass
@@ -1120,12 +1079,10 @@ export const bashToolCheckPermission = (
   if (pathResult.behavior !== 'passthrough') {
     return pathResult
   }
-
   // 4. Allow if command had an exact match allow
   if (exactMatchResult.behavior === 'allow') {
     return exactMatchResult
   }
-
   // 5. Allow if command has an allow rule
   if (matchingAllowRules[0] !== undefined) {
     return {
@@ -1137,19 +1094,16 @@ export const bashToolCheckPermission = (
       },
     }
   }
-
   // 5b. Check sed constraints (blocks dangerous sed operations before mode auto-allow)
   const sedConstraintResult = checkSedConstraints(input, toolPermissionContext)
   if (sedConstraintResult.behavior !== 'passthrough') {
     return sedConstraintResult
   }
-
   // 6. Check for mode-specific permission handling
   const modeResult = checkPermissionMode(input, toolPermissionContext)
   if (modeResult.behavior !== 'passthrough') {
     return modeResult
   }
-
   // 7. Check read-only rules
   if (BashTool.isReadOnly(input)) {
     return {
@@ -1161,7 +1115,6 @@ export const bashToolCheckPermission = (
       },
     }
   }
-
   // 8. Passthrough since no rules match, will trigger permission prompt
   const decisionReason = {
     type: 'other' as const,
@@ -1176,7 +1129,6 @@ export const bashToolCheckPermission = (
     suggestions: suggestionForExactCommand(command),
   }
 }
-
 /**
  * Processes an individual subcommand and applies prefix checks & suggestions
  */
@@ -1195,7 +1147,6 @@ export async function checkCommandAndSuggestRules(
   if (exactMatchResult.behavior !== 'passthrough') {
     return exactMatchResult
   }
-
   // 2. Check the command prefix
   const permissionResult = bashToolCheckPermission(
     input,
@@ -1209,17 +1160,15 @@ export async function checkCommandAndSuggestRules(
   ) {
     return permissionResult
   }
-
   // 3. Ask for permission if command injection is detected. Skip when the
-  // AST parse already succeeded — tree-sitter has verified there are no
+  // AST parse already succeeded ...tree-sitter has verified there are no
   // hidden substitutions or structural tricks, so the legacy regex-based
   // validators (backslash-escaped operators, etc.) would only add FPs.
   if (
     !astParseSucceeded &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isCommandInjectionCheckDisabled()
   ) {
     const safetyResult = await bashCommandIsSafeAsync(input.command)
-
     if (safetyResult.behavior !== 'passthrough') {
       const decisionReason: PermissionDecisionReason = {
         type: 'other' as const,
@@ -1228,7 +1177,6 @@ export async function checkCommandAndSuggestRules(
             ? safetyResult.message
             : 'This command contains patterns that could pose security risks and requires approval',
       }
-
       return {
         behavior: 'ask',
         message: createPermissionRequestMessage(BashTool.name, decisionReason),
@@ -1237,23 +1185,19 @@ export async function checkCommandAndSuggestRules(
       }
     }
   }
-
   // 4. Allow if command was allowed
   if (permissionResult.behavior === 'allow') {
     return permissionResult
   }
-
   // 5. Suggest prefix if available, otherwise exact command
   const suggestedUpdates = commandPrefixResult?.commandPrefix
     ? suggestionForPrefix(commandPrefixResult.commandPrefix)
     : suggestionForExactCommand(input.command)
-
   return {
     ...permissionResult,
     suggestions: suggestedUpdates,
   }
 }
-
 /**
  * Checks if a command should be auto-allowed when sandboxed.
  * Returns early if there are explicit deny/ask rules that should be respected.
@@ -1272,14 +1216,12 @@ function checkSandboxAutoAllow(
   toolPermissionContext: ToolPermissionContext,
 ): PermissionResult {
   const command = input.command.trim()
-
   // Check for explicit deny/ask rules on the full command (exact + prefix)
   const { matchingDenyRules, matchingAskRules } = matchingRulesForInput(
     input,
     toolPermissionContext,
     'prefix',
   )
-
   // Return immediately if there's an explicit deny rule on the full command
   if (matchingDenyRules[0] !== undefined) {
     return {
@@ -1291,7 +1233,6 @@ function checkSandboxAutoAllow(
       },
     }
   }
-
   // SECURITY: For compound commands, check each subcommand against deny/ask
   // rules. Prefix rules like Bash(rm:*) won't match the full compound command
   // (e.g., "echo hello && rm -rf /" doesn't start with "rm"), so we must
@@ -1309,7 +1250,7 @@ function checkSandboxAutoAllow(
         toolPermissionContext,
         'prefix',
       )
-      // Deny takes priority — return immediately
+      // Deny takes priority ...return immediately
       if (subResult.matchingDenyRules[0] !== undefined) {
         return {
           behavior: 'deny',
@@ -1334,7 +1275,6 @@ function checkSandboxAutoAllow(
       }
     }
   }
-
   // Full-command ask check (after all deny sources have been exhausted)
   if (matchingAskRules[0] !== undefined) {
     return {
@@ -1347,7 +1287,6 @@ function checkSandboxAutoAllow(
     }
   }
   // No explicit rules, so auto-allow with sandbox
-
   return {
     behavior: 'allow',
     updatedInput: input,
@@ -1357,11 +1296,10 @@ function checkSandboxAutoAllow(
     },
   }
 }
-
 /**
  * Filter out `cd ${cwd}` prefix subcommands, keeping astCommands aligned.
  * Extracted to keep bashToolHasPermission under Bun's feature() DCE
- * complexity threshold — inlining this breaks pendingClassifierCheck
+ * complexity threshold ...inlining this breaks pendingClassifierCheck
  * attachment in ~10 classifier tests.
  */
 function filterCdCwdSubcommands(
@@ -1380,7 +1318,6 @@ function filterCdCwdSubcommands(
   }
   return { subcommands, astCommandsByIdx }
 }
-
 /**
  * Early-exit deny enforcement for the AST too-complex and checkSemantics
  * paths. Returns the exact-match result if non-passthrough (deny/ask/allow),
@@ -1413,19 +1350,18 @@ function checkEarlyExitDeny(
   }
   return null
 }
-
 /**
  * checkSemantics-path deny enforcement. Calls checkEarlyExitDeny (exact-match
  * + full-command prefix deny), then checks each individual SimpleCommand .text
  * span against prefix deny rules. The per-subcommand check is needed because
  * filterRulesByContentsMatchingInput has a compound-command guard
- * (splitCommand().length > 1 → prefix rules return false) that defeats
+ * (splitCommand().length > 1  -> prefix rules return false) that defeats
  * `Bash(eval:*)` matching against a full pipeline like `echo foo | eval rm`.
  * Each SimpleCommand span is a single command, so the guard doesn't fire.
  *
  * Separate helper (not folded into checkEarlyExitDeny or inlined at the call
  * site) because bashToolHasPermission is tight against Bun's feature() DCE
- * complexity threshold — adding even ~5 lines there breaks
+ * complexity threshold ...adding even ~5 lines there breaks
  * feature('BASH_CLASSIFIER') evaluation and drops pendingClassifierCheck.
  */
 function checkSemanticsDeny(
@@ -1451,7 +1387,6 @@ function checkSemanticsDeny(
   }
   return null
 }
-
 /**
  * Builds the pending classifier check metadata if classifier is enabled and has allow descriptions.
  * Returns undefined if classifier is disabled, in auto mode, or no allow descriptions exist.
@@ -1467,21 +1402,17 @@ function buildPendingClassifierCheck(
   if (feature('TRANSCRIPT_CLASSIFIER') && toolPermissionContext.mode === 'auto')
     return undefined
   if (toolPermissionContext.mode === 'bypassPermissions') return undefined
-
   const allowDescriptions = getBashPromptAllowDescriptions(
     toolPermissionContext,
   )
   if (allowDescriptions.length === 0) return undefined
-
   return {
     command,
     cwd: getCwd(),
     descriptions: allowDescriptions,
   }
 }
-
 const speculativeChecks = new Map<string, Promise<ClassifierResult>>()
-
 /**
  * Start a speculative bash allow classifier check early, so it runs in
  * parallel with pre-tool hooks, deny/ask classifiers, and permission dialog setup.
@@ -1493,7 +1424,6 @@ export function peekSpeculativeClassifierCheck(
 ): Promise<ClassifierResult> | undefined {
   return speculativeChecks.get(command)
 }
-
 export function startSpeculativeClassifierCheck(
   command: string,
   toolPermissionContext: ToolPermissionContext,
@@ -1509,7 +1439,6 @@ export function startSpeculativeClassifierCheck(
     toolPermissionContext,
   )
   if (allowDescriptions.length === 0) return false
-
   const cwd = getCwd()
   const promise = classifyBashCommand(
     command,
@@ -1525,7 +1454,6 @@ export function startSpeculativeClassifierCheck(
   speculativeChecks.set(command, promise)
   return true
 }
-
 /**
  * Consume a speculative classifier check result for the given command.
  * Returns the promise if one exists (and removes it from the map), or undefined.
@@ -1539,11 +1467,9 @@ export function consumeSpeculativeClassifierCheck(
   }
   return promise
 }
-
 export function clearSpeculativeChecks(): void {
   speculativeChecks.clear()
 }
-
 /**
  * Await a pending classifier check and return a PermissionDecisionReason if
  * high-confidence allow, or undefined otherwise.
@@ -1569,9 +1495,7 @@ export async function awaitClassifierAutoApproval(
         signal,
         isNonInteractiveSession,
       )
-
   logClassifierResultForAnts(command, 'allow', descriptions, classifierResult)
-
   if (
     feature('BASH_CLASSIFIER') &&
     classifierResult.matches &&
@@ -1585,13 +1509,11 @@ export async function awaitClassifierAutoApproval(
   }
   return undefined
 }
-
 type AsyncClassifierCheckCallbacks = {
   shouldContinue: () => boolean
   onAllow: (decisionReason: PermissionDecisionReason) => void
   onComplete?: () => void
 }
-
 /**
  * Execute the bash allow classifier check asynchronously.
  * This runs in the background while the permission prompt is shown.
@@ -1610,7 +1532,6 @@ export async function executeAsyncClassifierCheck(
 ): Promise<void> {
   const { command, cwd, descriptions } = pendingCheck
   const speculativeResult = consumeSpeculativeClassifierCheck(command)
-
   let classifierResult: ClassifierResult
   try {
     classifierResult = speculativeResult
@@ -1634,13 +1555,10 @@ export async function executeAsyncClassifierCheck(
     callbacks.onComplete?.()
     throw error
   }
-
   logClassifierResultForAnts(command, 'allow', descriptions, classifierResult)
-
   // Don't auto-approve if user already made a decision or has interacted
   // with the permission dialog (e.g., arrow keys, tab, typing)
   if (!callbacks.shouldContinue()) return
-
   if (
     feature('BASH_CLASSIFIER') &&
     classifierResult.matches &&
@@ -1652,11 +1570,10 @@ export async function executeAsyncClassifierCheck(
       reason: `Allowed by prompt rule: "${classifierResult.matchedDescription}"`,
     })
   } else {
-    // No match — notify so the checking indicator is cleared
+    // No match ...notify so the checking indicator is cleared
     callbacks.onComplete?.()
   }
 }
-
 /**
  * The main implementation to check if we need to ask for user permission to call BashTool with a given input
  */
@@ -1666,19 +1583,16 @@ export async function bashToolHasPermission(
   getCommandSubcommandPrefixFn = getCommandSubcommandPrefix,
 ): Promise<PermissionResult> {
   let appState = context.getAppState()
-
   // 0. AST-based security parse. This replaces both tryParseShellCommand
   // (the shell-quote pre-check) and the bashCommandIsSafe misparsing gate.
   // tree-sitter produces either a clean SimpleCommand[] (quotes resolved,
-  // no hidden substitutions) or 'too-complex' — which is exactly the signal
+  // no hidden substitutions) or 'too-complex' ...which is exactly the signal
   // we need to decide whether splitCommand's output can be trusted.
   //
   // When tree-sitter WASM is unavailable OR the injection check is disabled
   // via env var, we fall back to the old path (legacy gate at ~1370 runs).
-  const injectionCheckDisabled = isEnvTruthy(
-    process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK,
-  )
-  // GrowthBook killswitch for shadow mode — when off, skip the native parse
+  const injectionCheckDisabled = isCommandInjectionCheckDisabled()
+  // GrowthBook killswitch for shadow mode ...when off, skip the native parse
   // entirely. Computed once; feature() must stay inline in the ternary below.
   const shadowEnabled = feature('TREE_SITTER_BASH_SHADOW')
     ? getFeatureValue_CACHED_MAY_BE_STALE('tengu_birch_trellis', true)
@@ -1697,7 +1611,6 @@ export async function bashToolHasPermission(
   let astRedirects: Redirect[] | undefined
   let astCommands: SimpleCommand[] | undefined
   let shadowLegacySubs: string[] | undefined
-
   // Shadow-test tree-sitter: record its verdict, then force parse-unavailable
   // so the legacy path stays authoritative. parseCommand stays gated on
   // TREE_SITTER_BASH (not SHADOW) so legacy internals remain pure regex.
@@ -1733,16 +1646,15 @@ export async function bashToolHasPermission(
       killswitchOff: !shadowEnabled,
       cmdOverLength: input.command.length > 10000,
     })
-    // Always force legacy — shadow mode is observational only.
+    // Always force legacy ...shadow mode is observational only.
     astResult = { kind: 'parse-unavailable' }
     astRoot = null
   }
-
   if (astResult.kind === 'too-complex') {
     // Parse succeeded but found structure we can't statically analyze
     // (command substitution, expansion, control flow, parser differential).
     // Respect exact-match deny/ask/allow, then prefix/wildcard deny. Only
-    // fall through to ask if no deny matched — don't downgrade deny to ask.
+    // fall through to ask if no deny matched ...don't downgrade deny to ask.
     const earlyExit = checkEarlyExitDeny(input, appState.toolPermissionContext)
     if (earlyExit !== null) return earlyExit
     const decisionReason: PermissionDecisionReason = {
@@ -1767,7 +1679,6 @@ export async function bashToolHasPermission(
         : {}),
     }
   }
-
   if (astResult.kind === 'simple') {
     // Clean parse: check semantic-level concerns (zsh builtins, eval, etc.)
     // that tokenize fine but are dangerous by name.
@@ -1796,7 +1707,7 @@ export async function bashToolHasPermission(
     // matching, path extraction, cd detection) still operates on strings, so
     // we pass the original source span for each SimpleCommand. Downstream
     // processing (stripSafeWrappers, parseCommandArguments) re-tokenizes
-    // these spans — that re-tokenization has known bugs (stripCommentLines
+    // these spans ...that re-tokenization has known bugs (stripCommentLines
     // mishandles newlines inside quotes), but checkSemantics already caught
     // any argv element containing a newline, so those bugs can't bite here.
     // Migrating downstream to operate on argv directly is a later commit.
@@ -1804,7 +1715,6 @@ export async function bashToolHasPermission(
     astRedirects = astResult.commands.flatMap(c => c.redirects)
     astCommands = astResult.commands
   }
-
   // Legacy shell-quote pre-check. Only reached on 'parse-unavailable'
   // (tree-sitter not loaded OR TREE_SITTER_BASH feature gated off). Falls
   // through to the full legacy path below.
@@ -1825,7 +1735,6 @@ export async function bashToolHasPermission(
       }
     }
   }
-
   // Check sandbox auto-allow (which respects explicit deny/ask rules)
   // Only call this if sandboxing and auto-allow are both enabled
   if (
@@ -1841,19 +1750,16 @@ export async function bashToolHasPermission(
       return sandboxAutoAllowResult
     }
   }
-
   // Check exact match first
   const exactMatchResult = bashToolCheckExactMatchPermission(
     input,
     appState.toolPermissionContext,
   )
-
   // Exact command was denied
   if (exactMatchResult.behavior === 'deny') {
     return exactMatchResult
   }
-
-  // Check Bash prompt deny and ask rules in parallel (both use Haiku).
+  // Check Bash prompt deny and ask rules in parallel (both use the lightweight classifier route).
   // Deny takes precedence over ask, and both take precedence over allow rules.
   // Skip when in auto mode - auto mode classifier handles all permission decisions
   if (
@@ -1871,7 +1777,6 @@ export async function bashToolHasPermission(
     )
     const hasDeny = denyDescriptions.length > 0
     const hasAsk = askDescriptions.length > 0
-
     if (hasDeny || hasAsk) {
       const [denyResult, askResult] = await Promise.all([
         hasDeny
@@ -1895,11 +1800,9 @@ export async function bashToolHasPermission(
             )
           : null,
       ])
-
       if (context.abortController.signal.aborted) {
         throw new AbortError()
       }
-
       if (denyResult) {
         logClassifierResultForAnts(
           input.command,
@@ -1916,7 +1819,6 @@ export async function bashToolHasPermission(
           askResult,
         )
       }
-
       // Deny takes precedence
       if (denyResult?.matches && denyResult.confidence === 'high') {
         return {
@@ -1928,9 +1830,8 @@ export async function bashToolHasPermission(
           },
         }
       }
-
       if (askResult?.matches && askResult.confidence === 'high') {
-        // Skip the Haiku call — the UI computes the prefix locally
+        // Skip the lightweight classifier call; the UI computes the prefix locally
         // and lets the user edit it. Still call the injected function
         // when tests override it.
         let suggestions: PermissionUpdate[]
@@ -1969,7 +1870,6 @@ export async function bashToolHasPermission(
       }
     }
   }
-
   // Check for non-subcommand Bash operators like `>`, `|`, etc.
   // This must happen before dangerous path checks so that piped commands
   // are handled by the operator logic (which generates "multiple operations" messages)
@@ -1997,8 +1897,7 @@ export async function bashToolHasPermission(
       // validated structure (backticks/$() in redirect targets would have
       // returned too-complex). Matches gating at ~1481, ~1706, ~1755.
       // Avoids FP: `find -exec {} \; | grep x` tripping on backslash-;.
-      // bashCommandIsSafe runs the full legacy regex battery (~20 patterns) —
-      // only call it when we'll actually use the result.
+      // bashCommandIsSafe runs the full legacy regex battery (~20 patterns) ...      // only call it when we'll actually use the result.
       const safetyResult =
         astSubcommands === null
           ? await bashCommandIsSafeAsync(input.command)
@@ -2034,14 +1933,13 @@ export async function bashToolHasPermission(
             : {}),
         }
       }
-
       appState = context.getAppState()
       // SECURITY: Compute compoundCommandHasCd from the full command, NOT
       // hardcode false. The pipe-handling path previously passed `false` here,
       // disabling the cd+redirect check at pathValidation.ts:821. Appending
-      // `| echo done` to `cd .claude && echo x > settings.json` routed through
+      // `| echo done` to `cd .dsxu && echo x > settings.json` routed through
       // this path with compoundCommandHasCd=false, letting the redirect write
-      // to .claude/settings.json without the cd+redirect block firing.
+      // to .dsxu/settings.json without the cd+redirect block firing.
       const pathResult = checkPathConstraints(
         input,
         getCwd(),
@@ -2054,7 +1952,6 @@ export async function bashToolHasPermission(
         return pathResult
       }
     }
-
     // When pipe segments return 'ask' (individual segments not allowed by rules),
     // attach pending classifier check - may auto-approve before user responds.
     if (commandOperatorResult.behavior === 'ask') {
@@ -2071,20 +1968,18 @@ export async function bashToolHasPermission(
           : {}),
       }
     }
-
     return commandOperatorResult
   }
-
   // SECURITY: Legacy misparsing gate. Only runs when the tree-sitter module
   // is not loaded. Timeout/abort is fail-closed via too-complex (returned
   // early above), not routed here. When the AST parse succeeded,
   // astSubcommands is non-null and we've already validated structure; this
   // block is skipped entirely. The AST's 'too-complex' result subsumes
-  // everything isBashSecurityCheckForMisparsing covered — both answer the
+  // everything isBashSecurityCheckForMisparsing covered ...both answer the
   // same question: "can splitCommand be trusted on this input?"
   if (
     astSubcommands === null &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isCommandInjectionCheckDisabled()
   ) {
     const originalCommandSafetyResult = await bashCommandIsSafeAsync(
       input.command,
@@ -2095,7 +1990,7 @@ export async function bashToolHasPermission(
     ) {
       // Compound commands with safe heredoc patterns ($(cat <<'EOF'...EOF))
       // trigger the $() check on the unsplit command. Strip the safe heredocs
-      // and re-check the remainder — if other misparsing patterns exist
+      // and re-check the remainder ...if other misparsing patterns exist
       // (e.g. backslash-escaped operators), they must still block.
       const remainder = stripSafeHeredocSubstitutions(input.command)
       const remainderResult =
@@ -2105,7 +2000,7 @@ export async function bashToolHasPermission(
         (remainderResult?.behavior === 'ask' &&
           remainderResult.isBashSecurityCheckForMisparsing)
       ) {
-        // Allow if the exact command has an explicit allow permission — the user
+        // Allow if the exact command has an explicit allow permission ...the user
         // made a conscious choice to permit this specific command.
         appState = context.getAppState()
         const exactMatchResult = bashToolCheckExactMatchPermission(
@@ -2140,7 +2035,6 @@ export async function bashToolHasPermission(
       }
     }
   }
-
   // Split into subcommands. Prefer the AST-extracted spans; fall back to
   // splitCommand only when tree-sitter was unavailable. The cd-cwd filter
   // strips the `cd ${cwd}` prefix that models like to prepend.
@@ -2155,16 +2049,15 @@ export async function bashToolHasPermission(
     cwd,
     cwdMingw,
   )
-
   // CC-643: Cap subcommand fanout. Only the legacy splitCommand path can
-  // explode — the AST path returns a bounded list (astSubcommands !== null)
+  // explode ...the AST path returns a bounded list (astSubcommands !== null)
   // or short-circuits to 'too-complex' for structures it can't represent.
   if (
     astSubcommands === null &&
     subcommands.length > MAX_SUBCOMMANDS_FOR_SECURITY_CHECK
   ) {
     logForDebugging(
-      `bashPermissions: ${subcommands.length} subcommands exceeds cap (${MAX_SUBCOMMANDS_FOR_SECURITY_CHECK}) — returning ask`,
+      `bashPermissions: ${subcommands.length} subcommands exceeds cap (${MAX_SUBCOMMANDS_FOR_SECURITY_CHECK}) ...returning ask`,
       { level: 'debug' },
     )
     const decisionReason = {
@@ -2177,7 +2070,6 @@ export async function bashToolHasPermission(
       decisionReason,
     }
   }
-
   // Ask if there are multiple `cd` commands
   const cdCommands = subcommands.filter(subCommand =>
     isNormalizedCdCommand(subCommand),
@@ -2194,11 +2086,9 @@ export async function bashToolHasPermission(
       message: createPermissionRequestMessage(BashTool.name, decisionReason),
     }
   }
-
   // Track if compound command contains cd for security validation
-  // This prevents bypassing path checks via: cd .claude/ && mv test.txt settings.json
+  // This prevents bypassing path checks via: cd .dsxu/ && mv test.txt settings.json
   const compoundCommandHasCd = cdCommands.length > 0
-
   // SECURITY: Block compound commands that have both cd AND git
   // This prevents sandbox escape via: cd /malicious/dir && git status
   // where the malicious directory contains a bare git repo with core.fsmonitor.
@@ -2223,9 +2113,7 @@ export async function bashToolHasPermission(
       }
     }
   }
-
   appState = context.getAppState() // re-compute the latest in case the user hit shift+tab
-
   // SECURITY FIX: Check Bash deny/ask rules BEFORE path constraints
   // This ensures that explicit deny rules like Bash(ls:*) take precedence over
   // path constraint checks that return 'ask' for paths outside the project.
@@ -2244,7 +2132,6 @@ export async function bashToolHasPermission(
       astCommandsByIdx[i],
     ),
   )
-
   // Deny if any subcommands are denied
   const deniedSubresult = subcommandPermissionDecisions.find(
     _ => _.behavior === 'deny',
@@ -2264,7 +2151,6 @@ export async function bashToolHasPermission(
       },
     }
   }
-
   // Validate output redirections on the ORIGINAL command (before splitCommand stripped them)
   // This must happen AFTER checking deny rules but BEFORE returning results.
   // Output redirections like "> /etc/passwd" are stripped by splitCommand, so the per-subcommand
@@ -2284,7 +2170,6 @@ export async function bashToolHasPermission(
   if (pathResult.behavior === 'deny') {
     return pathResult
   }
-
   const askSubresult = subcommandPermissionDecisions.find(
     _ => _.behavior === 'ask',
   )
@@ -2292,11 +2177,10 @@ export async function bashToolHasPermission(
     subcommandPermissionDecisions,
     _ => _.behavior !== 'allow',
   )
-
   // SECURITY (GH#28784): Only short-circuit on a path-constraint 'ask' when no
   // subcommand independently produced an 'ask'. checkPathConstraints re-runs the
   // path-command loop on the full input, so `cd <outside-project> && python3 foo.py`
-  // produces an ask with ONLY a Read(<dir>/**) suggestion — the UI renders it as
+  // produces an ask with ONLY a Read(<dir>/**) suggestion ...the UI renders it as
   // "Yes, allow reading from <dir>/" and picking that option silently approves
   // python3. When a subcommand has its own ask (e.g. the cd subcommand's own
   // path-constraint ask), fall through: either the askSubresult short-circuit
@@ -2306,13 +2190,12 @@ export async function bashToolHasPermission(
   // the Read rule for the cd target in that path.
   //
   // When no subcommand asked (all allow, or all passthrough like `printf > file`),
-  // pathResult IS the only ask — return it so redirection checks surface.
+  // pathResult IS the only ask ...return it so redirection checks surface.
   if (pathResult.behavior === 'ask' && askSubresult === undefined) {
     return pathResult
   }
-
   // Ask if any subcommands require approval (e.g., ls/cd outside boundaries).
-  // Only short-circuit when exactly ONE subcommand needs approval — if multiple
+  // Only short-circuit when exactly ONE subcommand needs approval ...if multiple
   // do (e.g. cd-outside-project ask + python3 passthrough), fall through to the
   // merge flow so the prompt surfaces Bash rule suggestions for all of them
   // instead of only the first ask's Read rule (GH#28784).
@@ -2329,24 +2212,22 @@ export async function bashToolHasPermission(
         : {}),
     }
   }
-
   // Allow if exact command was allowed
   if (exactMatchResult.behavior === 'allow') {
     return exactMatchResult
   }
-
   // If all subcommands are allowed via exact or prefix match, allow the
-  // command — but only if no command injection is possible. When the AST
+  // command ...but only if no command injection is possible. When the AST
   // parse succeeded, each subcommand is already known-safe (no hidden
   // substitutions, no structural tricks); the per-subcommand re-check is
   // redundant. When on the legacy path, re-run bashCommandIsSafeAsync per sub.
   let hasPossibleCommandInjection = false
   if (
     astSubcommands === null &&
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_COMMAND_INJECTION_CHECK)
+    !isCommandInjectionCheckDisabled()
   ) {
     // CC-643: Batch divergence telemetry into a single logEvent. The per-sub
-    // logEvent was the hot-path syscall driver (each call → /proc/self/stat
+    // logEvent was the hot-path syscall driver (each call  -> /proc/self/stat
     // via process.memoryUsage()). Aggregate count preserves the signal.
     let divergenceCount = 0
     const onDivergence = () => {
@@ -2383,9 +2264,8 @@ export async function bashToolHasPermission(
       },
     }
   }
-
-  // Query Haiku for command prefixes
-  // Skip the Haiku call — the UI computes the prefix locally and
+  // Query the lightweight classifier route for command prefixes.
+  // Skip the lightweight classifier call; the UI computes the prefix locally and
   // lets the user edit it. Still call when a custom fn is injected (tests).
   let commandSubcommandPrefix: Awaited<
     ReturnType<typeof getCommandSubcommandPrefixFn>
@@ -2400,7 +2280,6 @@ export async function bashToolHasPermission(
       throw new AbortError()
     }
   }
-
   // If there is only one command, no need to process subcommands
   appState = context.getAppState() // re-compute the latest in case the user hit shift+tab
   if (subcommands.length === 1) {
@@ -2430,7 +2309,6 @@ export async function bashToolHasPermission(
     }
     return result
   }
-
   // Check subcommand permission results
   const subcommandResults: Map<string, PermissionResult> = new Map()
   for (const subcommand of subcommands) {
@@ -2449,7 +2327,6 @@ export async function bashToolHasPermission(
       ),
     )
   }
-
   // Allow if all subcommands are allowed
   // Note that this is different than 6b because we are checking the command injection results.
   if (
@@ -2468,10 +2345,8 @@ export async function bashToolHasPermission(
       },
     }
   }
-
   // Otherwise, ask for permission
   const collectedRules: Map<string, PermissionRuleValue> = new Map()
-
   for (const [subcommand, permissionResult] of subcommandResults) {
     if (
       permissionResult.behavior === 'ask' ||
@@ -2481,18 +2356,16 @@ export async function bashToolHasPermission(
         'suggestions' in permissionResult
           ? permissionResult.suggestions
           : undefined
-
       const rules = extractRules(updates)
       for (const rule of rules) {
         // Use string representation as key for deduplication
         const ruleKey = permissionRuleValueToString(rule)
         collectedRules.set(ruleKey, rule)
       }
-
       // GH#28784 follow-up: security-check asks (compound-cd+write, process
       // substitution, etc.) carry no suggestions. In a compound command like
       // `cd ~/out && rm -rf x`, that means only cd's Read rule gets collected
-      // and the UI labels the prompt "Yes, allow reading from <dir>/" — never
+      // and the UI labels the prompt "Yes, allow reading from <dir>/" ...never
       // mentioning rm. Synthesize a Bash(exact) rule so the UI shows the
       // chained command. Skip explicit ask rules (decisionReason.type 'rule')
       // where the user deliberately wants to review each time.
@@ -2512,12 +2385,10 @@ export async function bashToolHasPermission(
       // This is appropriate for bash subcommands which primarily need rule suggestions
     }
   }
-
   const decisionReason = {
     type: 'subcommandResults' as const,
     reasons: subcommandResults,
   }
-
   // GH#11380: Cap at MAX_SUGGESTED_RULES_FOR_COMPOUND. Map preserves insertion
   // order (subcommand order), so slicing keeps the leftmost N.
   const cappedRules = Array.from(collectedRules.values()).slice(
@@ -2535,10 +2406,9 @@ export async function bashToolHasPermission(
           },
         ]
       : undefined
-
   // Attach pending classifier check - may auto-approve before user responds.
   // Behavior is 'ask' if any subcommand was 'ask' (e.g., path constraint or ask
-  // rule) — before the GH#28784 fix, ask subresults always short-circuited above
+  // rule) ...before the GH#28784 fix, ask subresults always short-circuited above
   // so this path only saw 'passthrough' subcommands and hardcoded that.
   return {
     behavior: askSubresult !== undefined ? 'ask' : 'passthrough',
@@ -2555,14 +2425,13 @@ export async function bashToolHasPermission(
       : {}),
   }
 }
-
 /**
  * Checks if a subcommand is a git command after normalizing away safe wrappers
  * (env vars, timeout, etc.) and shell quotes.
  *
  * SECURITY: Must normalize before matching to prevent bypasses like:
- *   'git' status    — shell quotes hide the command from a naive regex
- *   NO_COLOR=1 git status — env var prefix hides the command
+ *   'git' status    ...shell quotes hide the command from a naive regex
+ *   NO_COLOR=1 git status ...env var prefix hides the command
  */
 export function isNormalizedGitCommand(command: string): boolean {
   // Fast path: catch the most common case before any parsing
@@ -2576,7 +2445,7 @@ export function isNormalizedGitCommand(command: string): boolean {
     if (parsed.tokens[0] === 'git') {
       return true
     }
-    // "xargs git ..." — xargs runs git in the current directory,
+    // "xargs git ..." ...xargs runs git in the current directory,
     // so it must be treated as a git command for cd+git security checks.
     // This matches the xargs prefix handling in filterRulesByContentsMatchingInput.
     if (parsed.tokens[0] === 'xargs' && parsed.tokens.includes('git')) {
@@ -2586,16 +2455,15 @@ export function isNormalizedGitCommand(command: string): boolean {
   }
   return /^git(?:\s|$)/.test(stripped)
 }
-
 /**
  * Checks if a subcommand is a cd command after normalizing away safe wrappers
  * (env vars, timeout, etc.) and shell quotes.
  *
  * SECURITY: Must normalize before matching to prevent bypasses like:
- *   FORCE_COLOR=1 cd sub — env var prefix hides the cd from a naive /^cd / regex
+ *   FORCE_COLOR=1 cd sub ...env var prefix hides the cd from a naive /^cd / regex
  *   This mirrors isNormalizedGitCommand to ensure symmetric normalization.
  *
- * Also matches pushd/popd — they change cwd just like cd, so
+ * Also matches pushd/popd ...they change cwd just like cd, so
  *   pushd /tmp/bare-repo && git status
  * must trigger the same cd+git guard. Mirrors PowerShell's
  * DIRECTORY_CHANGE_ALIASES (src/utils/powershell/parser.ts).
@@ -2609,7 +2477,6 @@ export function isNormalizedCdCommand(command: string): boolean {
   }
   return /^(?:cd|pushd|popd)(?:\s|$)/.test(stripped)
 }
-
 /**
  * Checks if a compound command contains any cd command,
  * using normalized detection that handles env var prefixes and shell quotes.

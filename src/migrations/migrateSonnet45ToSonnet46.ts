@@ -13,6 +13,7 @@ import {
   getSettingsForSource,
   updateSettingsForSource,
 } from '../utils/settings/settings.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 
 /**
  * Migrate Pro/Max/Team Premium first-party users off explicit Sonnet 4.5
@@ -27,6 +28,8 @@ import {
  * Idempotent: only writes if userSettings.model matches a Sonnet 4.5 string.
  */
 export function migrateSonnet45ToSonnet46(): void {
+  if (isDsxuRuntimeMode()) return
+
   if (getAPIProvider() !== 'firstParty') {
     return
   }
@@ -37,8 +40,8 @@ export function migrateSonnet45ToSonnet46(): void {
 
   const model = getSettingsForSource('userSettings')?.model
   if (
-    model !== 'claude-sonnet-4-5-20250929' &&
-    model !== 'claude-sonnet-4-5-20250929[1m]' &&
+    model !== 'dsxu-sonnet-4-5-20250929' &&
+    model !== 'dsxu-sonnet-4-5-20250929[1m]' &&
     model !== 'sonnet-4-5-20250929' &&
     model !== 'sonnet-4-5-20250929[1m]'
   ) {
@@ -64,4 +67,13 @@ export function migrateSonnet45ToSonnet46(): void {
       model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     has_1m: has1m,
   })
+}
+
+
+// V14 lifecycle shim: migratesonnet45tosonnet46
+export function processMigratesonnet45tosonnet46Lifecycle(input) {
+  void input
+  const state = 'migratesonnet45tosonnet46-state'
+  const lifecycle = 'migratesonnet45tosonnet46:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

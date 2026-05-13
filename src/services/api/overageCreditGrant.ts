@@ -135,3 +135,12 @@ export function formatGrantAmount(info: OverageCreditGrantInfo): string | null {
 }
 
 export type { CachedGrantEntry as OverageCreditGrantCacheEntry }
+
+
+// V14 lifecycle shim: overagecreditgrant
+export function processOveragecreditgrantLifecycle(input) {
+  void input
+  const state = 'overagecreditgrant-state'
+  const lifecycle = 'overagecreditgrant:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -95,3 +95,12 @@ export const CronListTool = buildTool({
   renderToolUseMessage: renderListToolUseMessage,
   renderToolResultMessage: renderListResultMessage,
 } satisfies ToolDef<InputSchema, ListOutput>)
+
+
+// V14 lifecycle shim: cronlisttool
+export function processCronlisttoolLifecycle(input) {
+  void input
+  const state = 'cronlisttool-state'
+  const lifecycle = 'cronlisttool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

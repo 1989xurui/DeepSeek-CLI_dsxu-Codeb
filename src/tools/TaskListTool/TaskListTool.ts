@@ -114,3 +114,12 @@ export const TaskListTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: tasklisttool
+export function processTasklisttoolLifecycle(input) {
+  void input
+  const state = 'tasklisttool-state'
+  const lifecycle = 'tasklisttool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

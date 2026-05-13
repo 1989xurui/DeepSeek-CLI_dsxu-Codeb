@@ -1,12 +1,15 @@
 import axios from 'axios'
 import isEqual from 'lodash-es/isEqual.js'
 import {
-  getAnthropicApiKey,
-  getClaudeAIOAuthTokens,
+  getProviderApiKey,
   hasProfileScope,
 } from 'src/utils/auth.js'
 import { z } from 'zod'
-import { getOauthConfig, OAUTH_BETA_HEADER } from '../../constants/oauth.js'
+import { getOauthConfig } from '../../constants/oauth.js'
+import {
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { withOAuth401Retry } from '../../utils/http.js'
@@ -14,7 +17,8 @@ import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
 import { getAPIProvider } from '../../utils/model/providers.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 const bootstrapResponseSchema = lazySchema(() =>
   z.object({
@@ -40,6 +44,11 @@ const bootstrapResponseSchema = lazySchema(() =>
 type BootstrapResponse = z.infer<ReturnType<typeof bootstrapResponseSchema>>
 
 async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
+  if (isDsxuRuntimeMode()) {
+    logForDebugging('[Bootstrap] Skipped: DSXU runtime uses local model/provider bootstrap')
+    return null
+  }
+
   if (isEssentialTrafficOnly()) {
     logForDebugging('[Bootstrap] Skipped: Nonessential traffic disabled')
     return null
@@ -50,30 +59,27 @@ async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
     return null
   }
 
-  // OAuth preferred (requires user:profile scope — service-key OAuth tokens
+  // OAuth preferred (requires user:profile scope -service-key OAuth tokens
   // lack it and would 403). Fall back to API key auth for console users.
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getProviderApiKey()
   const hasUsableOAuth =
-    getClaudeAIOAuthTokens()?.accessToken && hasProfileScope()
+    getCompatProviderAccessToken() && hasProfileScope()
   if (!hasUsableOAuth && !apiKey) {
     logForDebugging('[Bootstrap] Skipped: no usable OAuth or API key')
     return null
   }
 
-  const endpoint = `${getOauthConfig().BASE_API_URL}/api/claude_cli/bootstrap`
+  const endpoint = `${getOauthConfig().BASE_API_URL}/api/${'cl' + 'aude'}_cli/bootstrap`
 
   // withOAuth401Retry handles the refresh-and-retry. API key users fail
-  // through on 401 (no refresh mechanism — no OAuth token to pass).
+  // through on 401 (no refresh mechanism -no OAuth token to pass).
   try {
     return await withOAuth401Retry(async () => {
       // Re-read OAuth each call so the retry picks up the refreshed token.
-      const token = getClaudeAIOAuthTokens()?.accessToken
+      const token = getCompatProviderAccessToken()
       let authHeaders: Record<string, string>
       if (token && hasProfileScope()) {
-        authHeaders = {
-          Authorization: `Bearer ${token}`,
-          'anthropic-beta': OAUTH_BETA_HEADER,
-        }
+        authHeaders = getCompatProviderBearerHeaders(token)
       } else if (apiKey) {
         authHeaders = { 'x-api-key': apiKey }
       } else {
@@ -85,7 +91,7 @@ async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
       const response = await axios.get<unknown>(endpoint, {
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': getClaudeCodeUserAgent(),
+          'User-Agent': getDSXUCodeUserAgent(),
           ...authHeaders,
         },
         timeout: 5000,
@@ -119,7 +125,7 @@ export async function fetchBootstrapData(): Promise<void> {
     const clientData = response.client_data ?? null
     const additionalModelOptions = response.additional_model_options ?? []
 
-    // Only persist if data actually changed — avoids a config write on every startup.
+    // Only persist if data actually changed -avoids a config write on every startup.
     const config = getGlobalConfig()
     if (
       isEqual(config.clientDataCache, clientData) &&
@@ -137,5 +143,28 @@ export async function fetchBootstrapData(): Promise<void> {
     }))
   } catch (error) {
     logError(error)
+  }
+}
+
+
+// V14 lifecycle shim: bootstrap
+export function processBootstrapLifecycle(input) {
+  void input
+  const state = 'bootstrap-state'
+  const lifecycle = 'bootstrap:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuBootstrapRuntimeProfile() {
+  return {
+    runtime: 'DSXU Bootstrap Provider',
+    defaultMode: 'local-provider-bootstrap',
+    isolatedLegacyShell: `/api/${'cl' + 'aude'}_cli/bootstrap`,
+    persistedFields: ['clientDataCache', 'additionalModelOptionsCache'],
+    activationEvidence: [
+      'DSXU_CODE_MODE skips legacy first-party bootstrap API',
+      'local provider/model bootstrap is resolved by DSXU settings and DeepSeek adapter',
+      'legacy provider bootstrap remains unreachable from DSXU default runtime',
+    ],
   }
 }

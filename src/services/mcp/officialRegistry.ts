@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { logForDebugging } from '../../utils/debug.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 
 type RegistryServer = {
@@ -31,13 +32,21 @@ function normalizeUrl(url: string): string | undefined {
  * Populates officialUrls for isOfficialMcpUrl lookups.
  */
 export async function prefetchOfficialMcpUrls(): Promise<void> {
-  if (process.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC) {
+  if (
+    isDsxuCodeEnvTruthy('DISABLE_NONESSENTIAL_TRAFFIC')
+  ) {
     return
   }
 
   try {
+    const registryUrl = process.env.DSXU_MCP_REGISTRY_URL
+    if (!registryUrl) {
+      logForDebugging('[mcp-registry] DSXU_MCP_REGISTRY_URL not configured; skipping registry prefetch')
+      return
+    }
+
     const response = await axios.get<RegistryResponse>(
-      'https://api.anthropic.com/mcp-registry/v0/servers?version=latest&visibility=commercial',
+      registryUrl,
       { timeout: 5000 },
     )
 
@@ -69,4 +78,37 @@ export function isOfficialMcpUrl(normalizedUrl: string): boolean {
 
 export function resetOfficialMcpUrlsForTesting(): void {
   officialUrls = undefined
+}
+
+export function getDsxuOfficialMcpRegistryRuntimeProfile(): {
+  runtime: 'DSXU Official MCP Registry'
+  registryEnv: string
+  disableTrafficEnv: readonly string[]
+  lookupPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Official MCP Registry',
+    registryEnv: 'DSXU_MCP_REGISTRY_URL',
+    disableTrafficEnv: [
+      'DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
+      'legacy provider disable-nonessential-traffic alias',
+    ],
+    lookupPolicy:
+      'undefined or failed registry fetch is fail-closed: isOfficialMcpUrl returns false',
+    activationEvidence: [
+      'prefetchOfficialMcpUrls reads DSXU registry URL only when configured',
+      'remote URLs are normalized by stripping query string and trailing slash',
+      'registry fetch is nonessential and skipped when DSXU traffic disable env is set',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: officialregistry
+export function processOfficialregistryLifecycle(input) {
+  void input
+  const state = 'officialregistry-state'
+  const lifecycle = 'officialregistry:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

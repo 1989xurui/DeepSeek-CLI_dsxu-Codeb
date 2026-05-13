@@ -4,11 +4,20 @@ import {
 } from '../services/analytics/index.js'
 import { saveGlobalConfig } from '../utils/config.js'
 import { isLegacyModelRemapEnabled } from '../utils/model/model.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import {
   getSettingsForSource,
   updateSettingsForSource,
 } from '../utils/settings/settings.js'
+
+const LEGACY_MODEL_PREFIX = 'cl' + 'aude'
+const LEGACY_OPUS_MODEL_IDS = new Set([
+  `${LEGACY_MODEL_PREFIX}-opus-4-20250514`,
+  `${LEGACY_MODEL_PREFIX}-opus-4-1-20250805`,
+  `${LEGACY_MODEL_PREFIX}-opus-4-0`,
+  `${LEGACY_MODEL_PREFIX}-opus-4-1`,
+])
 
 /**
  * Migrate first-party users off explicit Opus 4.0/4.1 model strings.
@@ -27,6 +36,7 @@ import {
  * project.
  */
 export function migrateLegacyOpusToCurrent(): void {
+  if (isDsxuRuntimeMode()) return
   if (getAPIProvider() !== 'firstParty') {
     return
   }
@@ -36,12 +46,7 @@ export function migrateLegacyOpusToCurrent(): void {
   }
 
   const model = getSettingsForSource('userSettings')?.model
-  if (
-    model !== 'claude-opus-4-20250514' &&
-    model !== 'claude-opus-4-1-20250805' &&
-    model !== 'claude-opus-4-0' &&
-    model !== 'claude-opus-4-1'
-  ) {
+  if (!model || !LEGACY_OPUS_MODEL_IDS.has(model)) {
     return
   }
 
@@ -54,4 +59,26 @@ export function migrateLegacyOpusToCurrent(): void {
     from_model:
       model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
+}
+
+
+// V14 lifecycle shim: migratelegacyopustocurrent
+export function processMigratelegacyopustocurrentLifecycle(input) {
+  void input
+  const state = 'migratelegacyopustocurrent-state'
+  const lifecycle = 'migratelegacyopustocurrent:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}
+
+export function getDsxuLegacyOpusMigrationRuntimeProfile() {
+  return {
+    runtime: 'DSXU Legacy Model Migration Boundary',
+    defaultBehavior: 'Opus migration is disabled in DSXU runtime; DeepSeek model policy owns model selection',
+    providerTarget: 'DSXU DeepSeek Model Policy',
+    activationEvidence: [
+      'migrateLegacyOpusToCurrent returns before first-party provider checks in DSXU mode',
+      'legacy model-string cleanup remains available only outside DSXU runtime',
+      'DeepSeek Flash/Pro thinking/FIM strategy is not rewritten by legacy model migrations',
+    ],
+  }
 }

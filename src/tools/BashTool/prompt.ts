@@ -1,10 +1,11 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { prependBullets } from '../../constants/prompts.js'
 import { getAttributionTexts } from '../../utils/attribution.js'
 import { hasEmbeddedSearchTools } from '../../utils/embeddedTools.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { shouldIncludeGitInstructions } from '../../utils/gitSettings.js'
-import { getClaudeTempDir } from '../../utils/permissions/filesystem.js'
+import { getDsxuTempDir } from '../../utils/permissions/filesystem.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import {
@@ -32,8 +33,38 @@ export function getMaxTimeoutMs(): number {
   return getMaxBashTimeoutMs()
 }
 
+export function getDsxuBashPromptRuntimeProfile(): {
+  runtime: 'DSXU Bash Prompt'
+  timeoutMs: {
+    default: number
+    max: number
+  }
+  backgroundDisableEnv: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Bash Prompt',
+    timeoutMs: {
+      default: getDefaultTimeoutMs(),
+      max: getMaxTimeoutMs(),
+    },
+    backgroundDisableEnv: [
+      'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
+      'legacy provider disable-background-tasks alias',
+    ],
+    activationEvidence: [
+      'prompt steers file read/edit/write/search to dedicated DSXU tools instead of shell',
+      'background task guidance avoids polling and sleep loops',
+      'git safety instructions forbid destructive commands and hook bypass unless explicitly requested',
+      'sandbox section is normalized for prompt-cache stability',
+    ],
+  }
+}
+
 function getBackgroundUsageNote(): string | null {
-  if (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS)) {
+  if (
+    isDsxuCodeEnvTruthy('DISABLE_BACKGROUND_TASKS')
+  ) {
     return null
   }
   return "You can use the `run_in_background` parameter to run the command in the background. Only use this if you don't need the result immediately and are OK being notified when the command completes later. You do not need to check the output right away - you'll be notified when it finishes. You do not need to use '&' at the end of the command when using this parameter."
@@ -54,7 +85,9 @@ function getCommitAndPRInstructions(): string {
 
   // For ant users, use the short version pointing to skills
   if (process.env.USER_TYPE === 'ant') {
-    const skillsSection = !isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)
+    const skillsSection = !(
+      isDsxuCodeEnvTruthy('SIMPLE')
+    )
       ? `For git commits and pull requests, use the \`/commit\` and \`/commit-push-pr\` skills:
 - \`/commit\` - Create a git commit with staged changes
 - \`/commit-push-pr\` - Commit, push, and create a pull request
@@ -89,7 +122,7 @@ Git Safety Protocol:
 - NEVER run destructive git commands (push --force, reset --hard, checkout ., restore ., clean -f, branch -D) unless the user explicitly requests these actions. Taking unauthorized destructive actions is unhelpful and can result in lost work, so it's best to ONLY run these commands when given direct instructions 
 - NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it
 - NEVER run force push to main/master, warn the user if they request it
-- CRITICAL: Always create NEW commits rather than amending, unless the user explicitly requests a git amend. When a pre-commit hook fails, the commit did NOT happen — so --amend would modify the PREVIOUS commit, which may result in destroying work or losing previous changes. Instead, after hook failure, fix the issue, re-stage, and create a NEW commit
+- CRITICAL: Always create NEW commits rather than amending, unless the user explicitly requests a git amend. When a pre-commit hook fails, the commit did NOT happen ...so --amend would modify the PREVIOUS commit, which may result in destroying work or losing previous changes. Instead, after hook failure, fix the issue, re-stage, and create a NEW commit
 - When staging files, prefer adding specific files by name rather than using "git add -A" or "git add .", which can accidentally include sensitive files (.env, credentials) or large binaries
 - NEVER commit changes unless the user explicitly asks you to. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive
 
@@ -162,7 +195,7 @@ Important:
 
 // SandboxManager merges config from multiple sources (settings layers, defaults,
 // CLI flags) without deduping, so paths like ~/.cache appear 3× in allowOnly.
-// Dedup here before inlining into the prompt — affects only what the model sees,
+// Dedup here before inlining into the prompt ...affects only what the model sees,
 // not sandbox enforcement. Saves ~150-200 tokens/request when sandbox is enabled.
 function dedup<T>(arr: T[] | undefined): T[] | undefined {
   if (!arr || arr.length === 0) return arr
@@ -182,12 +215,12 @@ function getSimpleSandboxSection(): string {
   const allowUnsandboxedCommands =
     SandboxManager.areUnsandboxedCommandsAllowed()
 
-  // Replace the per-UID temp dir literal (e.g. /private/tmp/claude-1001/) with
-  // "$TMPDIR" so the prompt is identical across users — avoids busting the
+  // Replace the per-UID temp dir literal (e.g. /private/tmp/dsxu-1001/) with
+  // "$TMPDIR" so the prompt is identical across users ...avoids busting the
   // cross-user global prompt cache. The sandbox already sets $TMPDIR at runtime.
-  const claudeTempDir = getClaudeTempDir()
+  const dsxuTempDir = getDsxuTempDir()
   const normalizeAllowOnly = (paths: string[]): string[] =>
-    [...new Set(paths)].map(p => (p === claudeTempDir ? '$TMPDIR' : p))
+    [...new Set(paths)].map(p => (p === dsxuTempDir ? '$TMPDIR' : p))
 
   const filesystemConfig = {
     read: {
@@ -273,7 +306,7 @@ function getSimpleSandboxSection(): string {
 }
 
 export function getSimplePrompt(): string {
-  // Ant-native builds alias find/grep to embedded bfs/ugrep in Claude's shell,
+  // Native builds alias find/grep to embedded bfs/ugrep in DSXU's shell,
   // so we don't steer away from them (and Glob/Grep tools are removed).
   const embedded = hasEmbeddedSearchTools()
 
@@ -308,18 +341,18 @@ export function getSimplePrompt(): string {
   ]
 
   const sleepSubitems = [
-    'Do not sleep between commands that can run immediately — just run them.',
+    'Do not sleep between commands that can run immediately ...just run them.',
     ...(feature('MONITOR_TOOL')
       ? [
           'Use the Monitor tool to stream events from a background process (each stdout line is a notification). For one-shot "wait until done," use Bash with run_in_background instead.',
         ]
       : []),
-    'If your command is long running and you would like to be notified when it finishes — use `run_in_background`. No sleep needed.',
-    'Do not retry failing commands in a sleep loop — diagnose the root cause.',
-    'If waiting for a background task you started with `run_in_background`, you will be notified when it completes — do not poll.',
+    'If your command is long running and you would like to be notified when it finishes ...use `run_in_background`. No sleep needed.',
+    'Do not retry failing commands in a sleep loop ...diagnose the root cause.',
+    'If waiting for a background task you started with `run_in_background`, you will be notified when it completes ...do not poll.',
     ...(feature('MONITOR_TOOL')
       ? [
-          '`sleep N` as the first command with N ≥ 2 is blocked. If you need a delay (rate limiting, deliberate pacing), keep it under 2 seconds.',
+          'sleep N as the first command with N >= 2 is blocked. If you need a delay (rate limiting, deliberate pacing), keep it under 2 seconds.',
         ]
       : [
           'If you must poll an external process, use a check command (e.g. `gh run view`) rather than sleeping first.',
@@ -329,7 +362,8 @@ export function getSimplePrompt(): string {
   const backgroundNote = getBackgroundUsageNote()
 
   const instructionItems: Array<string | string[]> = [
-    'If your command will create new directories or files, first use this tool to run `ls` to verify the parent directory exists and is the correct location.',
+    `Use ${GLOB_TOOL_NAME}/${GREP_TOOL_NAME}/${FILE_READ_TOOL_NAME} for project discovery and source inspection. Do not use Bash \`ls\`, \`dir\`, \`find\`, \`cat\`, \`head\`, \`sed\`, or \`grep\` when the dedicated DSXU tools can provide the evidence.`,
+    'Only verify a parent directory through Bash when no dedicated DSXU evidence exists, the command is allowed, and the task explicitly needs shell-level filesystem state.',
     'Always quote file paths that contain spaces with double quotes in your command (e.g., cd "path with spaces/file.txt")',
     'Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.',
     `You may specify an optional timeout in milliseconds (up to ${getMaxTimeoutMs()}ms / ${getMaxTimeoutMs() / 60000} minutes). By default, your command will timeout after ${getDefaultTimeoutMs()}ms (${getDefaultTimeoutMs() / 60000} minutes).`,
@@ -338,6 +372,15 @@ export function getSimplePrompt(): string {
     multipleCommandsSubitems,
     'For git commands:',
     gitSubitems,
+    'DSXU weak-model discipline:',
+    [
+      'When to use: use Bash for Unix/WSL commands, package/test/build commands, git inspection, and process checks that need a shell.',
+      `When not to use: do not use Bash for file reads/searches/edits/writes when ${FILE_READ_TOOL_NAME}/${GREP_TOOL_NAME}/${GLOB_TOOL_NAME}/${FILE_EDIT_TOOL_NAME}/${FILE_WRITE_TOOL_NAME} can do it; do not use it to enumerate a project just because the task is open-ended or recovery-oriented.`,
+      'Recovery after failure: inspect the exact stderr/stdout, correct one hypothesis, then rerun the smallest proving command; if permission is denied, choose a safer read-only command or ask the user.',
+      'Weak-model anti-pattern: do not pipe downloaded scripts into shell, do not redirect into protected paths, do not repeat failing sleep loops, do not use destructive git or rm commands unless explicitly requested and allowed.',
+      'Task-scope guardrail: if the current task or permission result forbids Bash, directory listing, shell reads, redirection, or chained commands, that narrower rule wins over general Bash examples.',
+      'Verification / evidence: cite the exact command and result that proves the claim; do not report PASS from a command that failed, timed out, was denied, or only produced partial output.',
+    ],
     'Avoid unnecessary `sleep` commands:',
     sleepSubitems,
     ...(embedded
@@ -346,7 +389,7 @@ export function getSimplePrompt(): string {
           // FIRST matching alternative (leftmost-first), unlike GNU find's
           // POSIX leftmost-longest. This silently drops matches when a shorter
           // alternative is a prefix of a longer one.
-          "When using `find -regex` with alternation, put the longest alternative first. Example: use `'.*\\.\\(tsx\\|ts\\)'` not `'.*\\.\\(ts\\|tsx\\)'` — the second form silently skips `.tsx` files.",
+          "When using `find -regex` with alternation, put the longest alternative first. Example: use `'.*\\.\\(tsx\\|ts\\)'` not `'.*\\.\\(ts\\|tsx\\)'` ...the second form silently skips `.tsx` files.",
         ]
       : []),
   ]
@@ -359,7 +402,7 @@ export function getSimplePrompt(): string {
     `IMPORTANT: Avoid using this tool to run ${avoidCommands} commands, unless explicitly instructed or after you have verified that a dedicated tool cannot accomplish your task. Instead, use the appropriate dedicated tool as this will provide a much better experience for the user:`,
     '',
     ...prependBullets(toolPreferenceItems),
-    `While the ${BASH_TOOL_NAME} tool can do similar things, it’s better to use the built-in tools as they provide a better user experience and make it easier to review tool calls and give permission.`,
+    `While the ${BASH_TOOL_NAME} tool can do similar things, it's better to use the built-in tools as they provide a better user experience and make it easier to review tool calls and give permission.`,
     '',
     '# Instructions',
     ...prependBullets(instructionItems),

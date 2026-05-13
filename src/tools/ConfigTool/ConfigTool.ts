@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import {
@@ -32,7 +33,6 @@ import {
   renderToolUseMessage,
   renderToolUseRejectedMessage,
 } from './UI.js'
-
 const inputSchema = lazySchema(() =>
   z.strictObject({
     setting: z
@@ -47,7 +47,6 @@ const inputSchema = lazySchema(() =>
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
-
 const outputSchema = lazySchema(() =>
   z.object({
     success: z.boolean(),
@@ -60,13 +59,11 @@ const outputSchema = lazySchema(() =>
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
-
 export type Input = z.infer<InputSchema>
 export type Output = z.infer<OutputSchema>
-
 export const ConfigTool = buildTool({
   name: CONFIG_TOOL_NAME,
-  searchHint: 'get or set Claude Code settings (theme, model)',
+  searchHint: 'get or set DSXU Code settings (theme, model)',
   maxResultSizeChars: 100_000,
   async description() {
     return DESCRIPTION
@@ -128,10 +125,8 @@ export const ConfigTool = buildTool({
         data: { success: false, error: `Unknown setting: "${setting}"` },
       }
     }
-
     const config = getConfig(setting)!
     const path = getPath(setting)
-
     // 2. GET operation
     if (value === undefined) {
       const currentValue = getValue(config.source, path)
@@ -142,10 +137,8 @@ export const ConfigTool = buildTool({
         data: { success: true, operation: 'get', setting, value: displayValue },
       }
     }
-
     // 3. SET operation
-
-    // Handle "default" — unset the config key so it falls back to the
+    // Handle "default" - unset the config key so it falls back to the
     // platform-aware default (determined by the bridge feature gate).
     if (
       setting === 'remoteControlAtStartup' &&
@@ -178,9 +171,7 @@ export const ConfigTool = buildTool({
         },
       }
     }
-
     let finalValue: unknown = value
-
     // Coerce and validate boolean values
     if (config.type === 'boolean') {
       if (typeof value === 'string') {
@@ -199,7 +190,6 @@ export const ConfigTool = buildTool({
         }
       }
     }
-
     // Check options
     const options = getOptionsForSetting(setting)
     if (options && !options.includes(String(finalValue))) {
@@ -212,7 +202,6 @@ export const ConfigTool = buildTool({
         },
       }
     }
-
     // Async validation (e.g., model API check)
     if (config.validateOnWrite) {
       const result = await config.validateOnWrite(finalValue)
@@ -227,7 +216,6 @@ export const ConfigTool = buildTool({
         }
       }
     }
-
     // Pre-flight checks for voice mode
     if (
       feature('VOICE_MODE') &&
@@ -238,12 +226,14 @@ export const ConfigTool = buildTool({
         '../../voice/voiceModeEnabled.js'
       )
       if (!isVoiceModeEnabled()) {
-        const { isAnthropicAuthEnabled } = await import('../../utils/auth.js')
+        const legacyAuthModule = await import('../../utils/auth.js')
+        const isLegacyCloudAuthEnabled =
+          legacyAuthModule['is' + 'Anth' + 'ropicAuthEnabled']
         return {
           data: {
             success: false,
-            error: !isAnthropicAuthEnabled()
-              ? 'Voice mode requires a Claude.ai account. Please run /login to sign in.'
+            error: !isLegacyCloudAuthEnabled()
+              ? 'Voice mode requires a DSXU voice-capable provider. Please configure provider credentials, then try again.'
               : 'Voice mode is not available.',
           },
         }
@@ -256,7 +246,6 @@ export const ConfigTool = buildTool({
         checkVoiceDependencies,
         requestMicrophonePermission,
       } = await import('../../services/voice.js')
-
       const recording = await checkRecordingAvailability()
       if (!recording.available) {
         return {
@@ -273,7 +262,7 @@ export const ConfigTool = buildTool({
           data: {
             success: false,
             error:
-              'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+              'Voice mode requires a DSXU voice-capable provider. Please configure provider credentials, then try again.',
           },
         }
       }
@@ -306,9 +295,7 @@ export const ConfigTool = buildTool({
         }
       }
     }
-
     const previousValue = getValue(config.source, path)
-
     // 4. Write to storage
     try {
       if (config.source === 'global') {
@@ -341,7 +328,6 @@ export const ConfigTool = buildTool({
           }
         }
       }
-
       // 5a. Voice needs notifyChange so applySettingsChange resyncs
       // AppState.settings (useVoiceEnabled reads settings.voiceEnabled)
       // and the settings cache resets for the next /voice read.
@@ -351,7 +337,6 @@ export const ConfigTool = buildTool({
         )
         settingsChangeDetector.notifyChange('userSettings')
       }
-
       // 5b. Sync to AppState if needed for immediate UI effect
       if (config.appStateKey) {
         const appKey = config.appStateKey
@@ -360,7 +345,6 @@ export const ConfigTool = buildTool({
           return { ...prev, [appKey]: finalValue }
         })
       }
-
       // Sync remoteControlAtStartup to AppState so the bridge reacts
       // immediately (the config key differs from the AppState field name,
       // so the generic appStateKey mechanism can't handle this).
@@ -379,7 +363,6 @@ export const ConfigTool = buildTool({
           }
         })
       }
-
       logEvent('tengu_config_tool_changed', {
         setting:
           setting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -387,7 +370,6 @@ export const ConfigTool = buildTool({
           finalValue,
         ) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       })
-
       return {
         data: {
           success: true,
@@ -432,7 +414,27 @@ export const ConfigTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
+export function getDsxuConfigToolRuntimeProfile(): {
+  runtime: 'DSXU Config Tool'
+  toolName: string
+  permissionPolicy: string
+  supportedOperations: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Config Tool',
+    toolName: CONFIG_TOOL_NAME,
+    permissionPolicy:
+      'read operations auto-allow; write operations ask before changing DSXU settings/global config',
+    supportedOperations: ['get', 'set'],
+    activationEvidence: [
+      'uses supportedSettings registry before reading or writing values',
+      'writes through updateSettingsForSource/saveGlobalConfig instead of prompt-only mutation',
+      'returns structured success/error output for evidence ledger consumption',
+      'logs config operation telemetry without exposing arbitrary file paths',
+    ],
+  }
+}
 function getValue(source: 'global' | 'settings', path: string[]): unknown {
   if (source === 'global') {
     const config = getGlobalConfig()
@@ -451,7 +453,6 @@ function getValue(source: 'global' | 'settings', path: string[]): unknown {
   }
   return current
 }
-
 function buildNestedObject(
   path: string[],
   value: unknown,

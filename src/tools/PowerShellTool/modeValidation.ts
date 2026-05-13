@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * PowerShell permission mode validation.
  *
@@ -5,7 +6,6 @@
  * In acceptEdits mode, filesystem-modifying PowerShell cmdlets are auto-allowed.
  * Follows the same patterns as BashTool/modeValidation.ts.
  */
-
 import type { ToolPermissionContext } from '../../Tool.js'
 import type { PermissionResult } from '../../utils/permissions/PermissionResult.js'
 import type { ParsedPowerShellCommand } from '../../utils/powershell/parser.js'
@@ -21,12 +21,11 @@ import {
   isSafeOutputCommand,
   resolveToCanonical,
 } from './readOnlyValidation.js'
-
 /**
  * Filesystem-modifying cmdlets that are auto-allowed in acceptEdits mode.
  * Stored as canonical (lowercase) cmdlet names.
  *
- * Tier 3 cmdlets with complex parameter binding removed — they fall through to
+ * Tier 3 cmdlets with complex parameter binding removed ...they fall through to
  * 'ask'. Only simple write cmdlets (first positional = -Path) are auto-allowed
  * here, and they get path validation via CMDLET_PATH_CONFIG in pathValidation.ts.
  */
@@ -36,25 +35,22 @@ const ACCEPT_EDITS_ALLOWED_CMDLETS = new Set([
   'remove-item',
   'clear-content',
 ])
-
 function isAcceptEditsAllowedCmdlet(name: string): boolean {
-  // resolveToCanonical handles aliases via COMMON_ALIASES, so e.g. 'rm' → 'remove-item',
-  // 'ac' → 'add-content'. Any alias that resolves to an allowed cmdlet is automatically
+  // resolveToCanonical handles aliases via COMMON_ALIASES, so e.g. 'rm'  -> 'remove-item',
+  // 'ac'  -> 'add-content'. Any alias that resolves to an allowed cmdlet is automatically
   // allowed. Tier 3 cmdlets (new-item, copy-item, move-item, etc.) and their aliases
   // (mkdir, ni, cp, mv, etc.) resolve to cmdlets NOT in the set and fall through to 'ask'.
   const canonical = resolveToCanonical(name)
   return ACCEPT_EDITS_ALLOWED_CMDLETS.has(canonical)
 }
-
 /**
  * New-Item -ItemType values that create filesystem links (reparse points or
- * hard links). All three redirect path resolution at runtime — symbolic links
+ * hard links). All three redirect path resolution at runtime ...symbolic links
  * and junctions are directory/file reparse points; hard links alias a file's
  * inode. Any of these let a later relative-path write land outside the
  * validator's view.
  */
 const LINK_ITEM_TYPES = new Set(['symboliclink', 'junction', 'hardlink'])
-
 /**
  * Check if a lowered, dash-normalized arg (colon-value stripped) is an
  * unambiguous PowerShell abbreviation of New-Item's -ItemType or -Type param.
@@ -67,7 +63,6 @@ function isItemTypeParamAbbrev(p: string): boolean {
     (p.length >= 3 && '-type'.startsWith(p))
   )
 }
-
 /**
  * Detects New-Item creating a filesystem link (-ItemType SymbolicLink /
  * Junction / HardLink, or the -Type alias). Links poison subsequent path
@@ -88,25 +83,25 @@ export function isSymlinkCreatingCommand(cmd: {
   for (let i = 0; i < cmd.args.length; i++) {
     const raw = cmd.args[i] ?? ''
     if (raw.length === 0) continue
-    // Normalize unicode dash prefixes (–, —, ―) and forward-slash (PS 5.1
-    // parameter prefix) → ASCII `-` so prefix comparison works. PS tokenizer
+    // Normalize unicode dash prefixes (... ... ... and forward-slash (PS 5.1
+    // parameter prefix)  -> ASCII `-` so prefix comparison works. PS tokenizer
     // treats all four dash chars plus `/` as parameter markers. (bug #26)
     const normalized =
       PS_TOKENIZER_DASH_CHARS.has(raw[0]!) || raw[0] === '/'
         ? '-' + raw.slice(1)
         : raw
     const lower = normalized.toLowerCase()
-    // Split colon-bound value: -it:SymbolicLink → param='-it', val='symboliclink'
+    // Split colon-bound value: -it:SymbolicLink  -> param='-it', val='symboliclink'
     const colonIdx = lower.indexOf(':', 1)
     const paramRaw = colonIdx > 0 ? lower.slice(0, colonIdx) : lower
-    // Strip backtick escapes: -Item`Type → -ItemType (bug #22)
+    // Strip backtick escapes: -Item`Type  -> -ItemType (bug #22)
     const param = paramRaw.replace(/`/g, '')
     if (!isItemTypeParamAbbrev(param)) continue
     const rawVal =
       colonIdx > 0
         ? lower.slice(colonIdx + 1)
         : (cmd.args[i + 1]?.toLowerCase() ?? '')
-    // Strip backtick escapes from colon-bound value: -it:Sym`bolicLink → symboliclink
+    // Strip backtick escapes from colon-bound value: -it:Sym`bolicLink  -> symboliclink
     // Mirrors the param-name strip at L103. Space-separated args use .value
     // (backtick-resolved by .NET parser), but colon-bound uses .text (raw source).
     // Strip surrounding quotes: -it:'SymbolicLink' or -it:"Junction" (bug #6)
@@ -115,7 +110,6 @@ export function isSymlinkCreatingCommand(cmd: {
   }
   return false
 }
-
 /**
  * Checks if commands should be handled differently based on the current permission mode.
  *
@@ -144,14 +138,12 @@ export function checkPermissionMode(
       message: 'Mode is handled in main permission flow',
     }
   }
-
   if (toolPermissionContext.mode !== 'acceptEdits') {
     return {
       behavior: 'passthrough',
       message: 'No mode-specific validation required',
     }
   }
-
   // acceptEdits mode: check if all commands are filesystem-modifying cmdlets
   if (!parsed.valid) {
     return {
@@ -159,7 +151,6 @@ export function checkPermissionMode(
       message: 'Cannot validate mode for unparsed command',
     }
   }
-
   // SECURITY: Check for subexpressions, script blocks, or member invocations
   // that could be used to smuggle arbitrary code through acceptEdits mode.
   const securityFlags = deriveSecurityFlags(parsed)
@@ -178,9 +169,7 @@ export function checkPermissionMode(
         'Command contains subexpressions, script blocks, or member invocations that require approval',
     }
   }
-
   const segments = getPipelineSegments(parsed)
-
   // SECURITY: Empty segments with valid parse = no commands to check, don't auto-allow
   if (segments.length === 0) {
     return {
@@ -188,15 +177,14 @@ export function checkPermissionMode(
       message: 'No commands found to validate for acceptEdits mode',
     }
   }
-
-  // SECURITY: Compound cwd desync guard — BashTool parity.
+  // SECURITY: Compound cwd desync guard ...BashTool parity.
   // When any statement in a compound contains Set-Location/Push-Location/Pop-Location
   // (or aliases like cd, sl, chdir, pushd, popd), the cwd changes between statements.
   // Path validation resolves relative paths against the stale process cwd, so a write
   // cmdlet in a later statement targets a different directory than the validator checked.
-  // Example: `Set-Location ./.claude; Set-Content ./settings.json '...'` — the validator
+  // Example: `Set-Location ./.dsxu; Set-Content ./settings.json '...'` ...the validator
   // sees ./settings.json as /project/settings.json, but PowerShell writes to
-  // /project/.claude/settings.json. Refuse to auto-allow any write operation in a
+  // /project/.dsxu/settings.json. Refuse to auto-allow any write operation in a
   // compound that contains a cwd-changing command. This matches BashTool's
   // compoundCommandHasCd guard (BashTool/pathValidation.ts:630-655).
   const totalCommands = segments.reduce(
@@ -219,15 +207,15 @@ export function checkPermissionMode(
       return {
         behavior: 'passthrough',
         message:
-          'Compound command contains a directory-changing command (Set-Location/Push-Location/Pop-Location) with a write operation — cannot auto-allow because path validation uses stale cwd',
+          'Compound command contains a directory-changing command (Set-Location/Push-Location/Pop-Location) with a write operation ...cannot auto-allow because path validation uses stale cwd',
       }
     }
     // SECURITY: Link-create compound guard (finding #18). Mirrors the cd
     // guard above. `New-Item -ItemType SymbolicLink -Path ./link -Value /etc;
-    // Get-Content ./link/passwd` — path validation resolves ./link/passwd
+    // Get-Content ./link/passwd` ...path validation resolves ./link/passwd
     // against cwd (no link there at validation time), but runtime follows
     // the just-created link to /etc/passwd. Same TOCTOU shape as cwd desync.
-    // Applies to SymbolicLink, Junction, and HardLink — all three redirect
+    // Applies to SymbolicLink, Junction, and HardLink ...all three redirect
     // path resolution at runtime.
     // No `hasWriteCommand` requirement: read-through-symlink is equally
     // dangerous (exfil via Get-Content ./link/etc/shadow), and any other
@@ -236,25 +224,24 @@ export function checkPermissionMode(
       return {
         behavior: 'passthrough',
         message:
-          'Compound command creates a filesystem link (New-Item -ItemType SymbolicLink/Junction/HardLink) — cannot auto-allow because path validation cannot follow just-created links',
+          'Compound command creates a filesystem link (New-Item -ItemType SymbolicLink/Junction/HardLink) ...cannot auto-allow because path validation cannot follow just-created links',
       }
     }
   }
-
   for (const segment of segments) {
     for (const cmd of segment.commands) {
       if (cmd.elementType !== 'CommandAst') {
         // SECURITY: This guard is load-bearing for THREE cases. Do not narrow it.
         //
         // 1. Expression pipeline sources (designed): '/etc/passwd' | Remove-Item
-        //    — the string literal is CommandExpressionAst, piped value binds to
+        //    ...the string literal is CommandExpressionAst, piped value binds to
         //    -Path. We cannot statically know what path it represents.
         //
         // 2. Control-flow statements (accidental but relied upon):
         //    foreach ($x in ...) { Remove-Item $x }. Non-PipelineAst statements
         //    produce a synthetic CommandExpressionAst entry in segment.commands
         //    (parser.ts transformStatement). Without this guard, Remove-Item $x
-        //    in nestedCommands would be checked below and auto-allowed — but $x
+        //    in nestedCommands would be checked below and auto-allowed ...but $x
         //    is a loop-bound variable we cannot validate.
         //
         // 3. Non-PipelineAst redirection coverage (accidental): cmd && cmd2 > /tmp
@@ -276,35 +263,35 @@ export function checkPermissionMode(
           message: `Command '${cmd.name}' resolved from a path-like name and requires approval`,
         }
       }
-      // SECURITY: elementTypes whitelist — same as isAllowlistedCommand.
+      // SECURITY: elementTypes whitelist ...same as isAllowlistedCommand.
       // deriveSecurityFlags above checks hasSubExpressions/etc. but does NOT
       // flag bare Variable/Other elementTypes. `Remove-Item $env:PATH`:
       //   elementTypes = ['StringConstant', 'Variable']
-      //   deriveSecurityFlags: no subexpression → passes
+      //   deriveSecurityFlags: no subexpression  -> passes
       //   checkPathConstraints: resolves literal text '$env:PATH' as relative
-      //     path → cwd/$env:PATH → inside cwd → allow
-      //   RUNTIME: PowerShell expands $env:PATH → deletes actual env value path
+      //     path  -> cwd/$env:PATH  -> inside cwd  -> allow
+      //   RUNTIME: PowerShell expands $env:PATH  -> deletes actual env value path
       // isAllowlistedCommand rejects non-StringConstant/Parameter; this is the
       // acceptEdits parity gate.
       //
       // Also check colon-bound expression metachars (same as isAllowlistedCommand's
       // colon-bound check). `Remove-Item -Path:(1 > /tmp/x)`:
-      //   elementTypes = ['StringConstant', 'Parameter'] — passes whitelist above
+      //   elementTypes = ['StringConstant', 'Parameter'] ...passes whitelist above
       //   deriveSecurityFlags: ParenExpressionAst in .Argument not detected by
       //     Get-SecurityPatterns (ParenExpressionAst not in FindAll filter)
       //   checkPathConstraints: literal text '-Path:(1 > /tmp/x)' not a path
-      //   RUNTIME: paren evaluates, redirection writes /tmp/x → arbitrary write
+      //   RUNTIME: paren evaluates, redirection writes /tmp/x  -> arbitrary write
       if (cmd.elementTypes) {
         for (let i = 1; i < cmd.elementTypes.length; i++) {
           const t = cmd.elementTypes[i]
           if (t !== 'StringConstant' && t !== 'Parameter') {
             return {
               behavior: 'passthrough',
-              message: `Command argument has unvalidatable type (${t}) — variable paths cannot be statically resolved`,
+              message: `Command argument has unvalidatable type (${t}) ...variable paths cannot be statically resolved`,
             }
           }
           if (t === 'Parameter') {
-            // elementTypes[i] ↔ args[i-1] (elementTypes[0] is the command name).
+            // elementTypes[i]  -> args[i-1] (elementTypes[0] is the command name).
             const arg = cmd.args[i - 1] ?? ''
             const colonIdx = arg.indexOf(':')
             if (colonIdx > 0 && /[$(@{[]/.test(arg.slice(colonIdx + 1))) {
@@ -337,7 +324,7 @@ export function checkPermissionMode(
         }
       }
       // SECURITY: Reject commands with unclassifiable argument types. 'Other'
-      // covers HashtableAst, ConvertExpressionAst, BinaryExpressionAst — all
+      // covers HashtableAst, ConvertExpressionAst, BinaryExpressionAst ...all
       // can contain nested redirections or code that the parser cannot fully
       // decompose. isAllowlistedCommand (readOnlyValidation.ts) already
       // enforces this whitelist via argLeaksValue; this closes the same gap
@@ -351,12 +338,11 @@ export function checkPermissionMode(
         }
       }
     }
-
     // Also check nested commands from control flow statements
     if (segment.nestedCommands) {
       for (const cmd of segment.nestedCommands) {
         if (cmd.elementType !== 'CommandAst') {
-          // SECURITY: Same as above — non-CommandAst element in nested commands
+          // SECURITY: Same as above ...non-CommandAst element in nested commands
           // (control flow bodies) cannot be statically validated as a path source.
           return {
             behavior: 'passthrough',
@@ -391,7 +377,6 @@ export function checkPermissionMode(
       }
     }
   }
-
   // All commands are filesystem-modifying cmdlets -- auto-allow
   return {
     behavior: 'allow',

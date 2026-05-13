@@ -156,3 +156,12 @@ export const ReadMcpResourceTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: readmcpresourcetool
+export function processReadmcpresourcetoolLifecycle(input) {
+  void input
+  const state = 'readmcpresourcetool-state'
+  const lifecycle = 'readmcpresourcetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

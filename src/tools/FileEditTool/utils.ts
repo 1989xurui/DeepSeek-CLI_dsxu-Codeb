@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { type StructuredPatchHunk, structuredPatch } from 'diff'
 import { logError } from 'src/utils/log.js'
 import { expandPath } from 'src/utils/path.js'
@@ -15,13 +16,13 @@ import {
 } from '../../utils/file.js'
 import type { EditInput, FileEdit } from './types.js'
 
-// Claude can't output curly quotes, so we define them as constants here for Claude to use
+// Provider output may miss curly quotes, so DSXU defines them as constants here.
 // in the code. We do this because we normalize curly quotes to straight quotes
 // when applying edits.
-export const LEFT_SINGLE_CURLY_QUOTE = '‘'
-export const RIGHT_SINGLE_CURLY_QUOTE = '’'
-export const LEFT_DOUBLE_CURLY_QUOTE = '“'
-export const RIGHT_DOUBLE_CURLY_QUOTE = '”'
+export const LEFT_SINGLE_CURLY_QUOTE = '\u2018'
+export const RIGHT_SINGLE_CURLY_QUOTE = '\u2019'
+export const LEFT_DOUBLE_CURLY_QUOTE = '\u201c'
+export const RIGHT_DOUBLE_CURLY_QUOTE = '\u201d'
 
 /**
  * Normalizes quotes in a string by converting curly quotes to straight quotes
@@ -87,6 +88,52 @@ export function findActualString(
   if (searchIndex !== -1) {
     // Find the actual string in the file that matches
     return fileContent.substring(searchIndex, searchIndex + searchString.length)
+  }
+
+  // Read renders line-number/table display prefixes for the model. In long
+  // tasks weak models sometimes copy the display tab before each indented
+  // source line into old_string. Strip only display prefixes and accept the
+  // candidate only when it uniquely matches the real file content.
+  const displayPrefixCandidates = [
+    searchString.replace(/^\d+\t/gm, ''),
+    searchString.replace(/^\t(?=[ \t]*\S)/gm, ''),
+    searchString.replace(/^\d+\t/gm, '').replace(/^\t(?=[ \t]*\S)/gm, ''),
+  ]
+  for (const candidate of displayPrefixCandidates) {
+    if (candidate === searchString || candidate.length === 0) {
+      continue
+    }
+    const first = fileContent.indexOf(candidate)
+    const second =
+      first === -1 ? -1 : fileContent.indexOf(candidate, first + candidate.length)
+    if (first !== -1 && second === -1) {
+      return fileContent.substring(first, first + candidate.length)
+    }
+  }
+
+  // Weak models sometimes copy leading indentation from Read's line-number
+  // display rather than from the file itself. Accept a unique match after
+  // removing only leading spaces/tabs on each line. This keeps Edit precise
+  // while preventing repeated stale retries on harmless indent hallucinations.
+  const leadingWhitespaceStripped = searchString.replace(/^[ \t]+/gm, '')
+  if (
+    leadingWhitespaceStripped !== searchString &&
+    leadingWhitespaceStripped.length > 0
+  ) {
+    const first = fileContent.indexOf(leadingWhitespaceStripped)
+    const second =
+      first === -1
+        ? -1
+        : fileContent.indexOf(
+            leadingWhitespaceStripped,
+            first + leadingWhitespaceStripped.length,
+          )
+    if (first !== -1 && second === -1) {
+      return fileContent.substring(
+        first,
+        first + leadingWhitespaceStripped.length,
+      )
+    }
   }
 
   return null
@@ -182,7 +229,7 @@ function applyCurlySingleQuotes(str: string): string {
       const prevIsLetter = prev !== undefined && /\p{L}/u.test(prev)
       const nextIsLetter = next !== undefined && /\p{L}/u.test(next)
       if (prevIsLetter && nextIsLetter) {
-        // Apostrophe in a contraction — use right single curly quote
+        // Apostrophe in a contraction -use right single curly quote
         result.push(RIGHT_SINGLE_CURLY_QUOTE)
       } else {
         result.push(
@@ -524,9 +571,9 @@ export function getEditsForPatch(patch: StructuredPatchHunk[]): FileEdit[] {
 }
 
 /**
- * Contains replacements to de-sanitize strings from Claude
- * Since Claude can't see any of these strings (sanitized in the API)
- * It'll output the sanitized versions in the edit response
+ * Contains replacements to de-sanitize strings from provider output.
+ * Since the model cannot see sanitized strings, it may emit placeholder
+ * versions in the edit response.
  */
 const DESANITIZATIONS: Record<string, string> = {
   '<fnr>': '<function_results>',
@@ -592,7 +639,7 @@ export function normalizeFileEditInput({
     return { file_path, edits }
   }
 
-  // Markdown uses two trailing spaces as a hard line break — stripping would
+  // Markdown uses two trailing spaces as a hard line break -stripping would
   // silently change semantics. Skip stripTrailingWhitespace for .md/.mdx.
   const isMarkdown = /\.(md|mdx)$/i.test(file_path)
 

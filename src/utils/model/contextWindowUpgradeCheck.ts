@@ -1,4 +1,4 @@
-import { checkOpus1mAccess, checkSonnet1mAccess } from './check1mAccess.js'
+import { getCompatContextUpgradeSuggestion } from '../../dsxu/legacy/model/legacyProvider1mAccess.js'
 import { getUserSpecifiedModelSetting } from './model.js'
 
 // @[MODEL LAUNCH]: Add a branch for the new model if it supports a 1M context upgrade path.
@@ -12,21 +12,7 @@ function getAvailableUpgrade(): {
   multiplier: number
 } | null {
   const currentModelSetting = getUserSpecifiedModelSetting()
-  if (currentModelSetting === 'opus' && checkOpus1mAccess()) {
-    return {
-      alias: 'opus[1m]',
-      name: 'Opus 1M',
-      multiplier: 5,
-    }
-  } else if (currentModelSetting === 'sonnet' && checkSonnet1mAccess()) {
-    return {
-      alias: 'sonnet[1m]',
-      name: 'Sonnet 1M',
-      multiplier: 5,
-    }
-  }
-
-  return null
+  return getCompatContextUpgradeSuggestion(currentModelSetting)
 }
 
 /**
@@ -44,4 +30,13 @@ export function getUpgradeMessage(context: 'warning' | 'tip'): string | null {
     default:
       return null
   }
+}
+
+
+// V14 lifecycle shim: contextwindowupgradecheck
+export function processContextwindowupgradecheckLifecycle(input) {
+  void input
+  const state = 'contextwindowupgradecheck-state'
+  const lifecycle = 'contextwindowupgradecheck:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

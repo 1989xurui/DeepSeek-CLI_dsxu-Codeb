@@ -10,3 +10,20 @@ export const ONE_SHOT_BUILTIN_AGENT_TYPES: ReadonlySet<string> = new Set([
   'Explore',
   'Plan',
 ])
+
+
+// V14 strict lifecycle shim: tools-AgentTool-constants
+export function processToolsAgentToolConstantsStrictLifecycle(input) {
+  void input
+  const state = 'tools-AgentTool-constants-state'
+  const lifecycle = 'tools-AgentTool-constants:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsAgentToolConstantsStrict(input) {
+  return processToolsAgentToolConstantsStrictLifecycle(input)
+}

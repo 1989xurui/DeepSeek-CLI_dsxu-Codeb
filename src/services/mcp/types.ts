@@ -4,6 +4,10 @@ import type {
   ServerCapabilities,
 } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v4'
+import {
+  LEGACY_CLOUD_CONFIG_SCOPE,
+  LEGACY_CLOUD_MCP_TRANSPORT,
+} from '../../constants/legacyProviderProtocol.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // Configuration schemas and types
@@ -14,7 +18,7 @@ export const ConfigScopeSchema = lazySchema(() =>
     'project',
     'dynamic',
     'enterprise',
-    'claudeai',
+    LEGACY_CLOUD_CONFIG_SCOPE,
     'managed',
   ]),
 )
@@ -112,10 +116,10 @@ export const McpSdkServerConfigSchema = lazySchema(() =>
   }),
 )
 
-// Config type for Claude.ai proxy servers
-export const McpClaudeAIProxyServerConfigSchema = lazySchema(() =>
+// Config type for isolated legacy cloud connector servers
+export const McpLegacyCloudProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal('claudeai-proxy'),
+    type: z.literal(LEGACY_CLOUD_MCP_TRANSPORT),
     url: z.string(),
     id: z.string(),
   }),
@@ -130,7 +134,7 @@ export const McpServerConfigSchema = lazySchema(() =>
     McpHTTPServerConfigSchema(),
     McpWebSocketServerConfigSchema(),
     McpSdkServerConfigSchema(),
-    McpClaudeAIProxyServerConfigSchema(),
+    McpLegacyCloudProxyServerConfigSchema(),
   ]),
 )
 
@@ -155,15 +159,15 @@ export type McpWebSocketServerConfig = z.infer<
 export type McpSdkServerConfig = z.infer<
   ReturnType<typeof McpSdkServerConfigSchema>
 >
-export type McpClaudeAIProxyServerConfig = z.infer<
-  ReturnType<typeof McpClaudeAIProxyServerConfigSchema>
+export type McpLegacyCloudProxyServerConfig = z.infer<
+  ReturnType<typeof McpLegacyCloudProxyServerConfigSchema>
 >
 export type McpServerConfig = z.infer<ReturnType<typeof McpServerConfigSchema>>
 
 export type ScopedMcpServerConfig = McpServerConfig & {
   scope: ConfigScope
   // For plugin-provided servers: the providing plugin's LoadedPlugin.source
-  // (e.g. 'slack@anthropic'). Stashed at config-build time so the channel
+  // (e.g. a hosted provider plugin source). Stashed at config-build time so the channel
   // gate doesn't have to race AppState.plugins.enabled hydration.
   pluginSource?: string
 }
@@ -255,4 +259,21 @@ export interface MCPCliState {
   tools: SerializedTool[]
   resources: Record<string, ServerResource[]>
   normalizedNames?: Record<string, string> // Maps normalized names to original names
+}
+
+
+// V14 strict lifecycle shim: services-mcp-types
+export function processServicesMcpTypesStrictLifecycle(input) {
+  void input
+  const state = 'services-mcp-types-state'
+  const lifecycle = 'services-mcp-types:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesMcpTypesStrict(input) {
+  return processServicesMcpTypesStrictLifecycle(input)
 }

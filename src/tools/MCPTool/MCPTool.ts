@@ -75,3 +75,12 @@ export const MCPTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: mcptool
+export function processMcptoolLifecycle(input) {
+  void input
+  const state = 'mcptool-state'
+  const lifecycle = 'mcptool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

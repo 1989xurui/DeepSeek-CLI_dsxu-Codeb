@@ -18,4 +18,40 @@ All operations require:
 - line: The line number (1-based, as shown in editors)
 - character: The character offset (1-based, as shown in editors)
 
-Note: LSP servers must be configured for the file type. If no server is available, an error will be returned.`
+Note: LSP servers must be configured for the file type. If no server is available, an error will be returned.
+
+DSXU weak-model discipline:
+- When to use: use LSP for symbol-aware questions such as definitions, references, hover/type info, document symbols, workspace symbols, diagnostics, implementations, and call hierarchy.
+- When not to use: do not use LSP for raw text search, file discovery, broad repository scans, or edits. Use Grep/Glob/Read/Edit for those.
+- Recovery after failure: if no server is available or a symbol lookup fails, fall back to Grep/Glob/Read and explicitly say the evidence is source-inspection fallback.
+- Weak-model anti-pattern: do not hallucinate line numbers, definitions, or diagnostics from a failed LSP response. Verify with source text before reporting.
+- Verification / evidence: cite LSP operation, file path, line/character, and follow with Read when you need exact code text for an edit or user-facing claim.`
+
+export const DSXU_LSP_TOOL_DISCIPLINE = `
+DSXU weak-model discipline:
+- When to use: use LSP for symbol-aware questions such as definitions, references, hover/type info, document symbols, workspace symbols, diagnostics, implementations, and call hierarchy.
+- When not to use: do not use LSP for raw text search, file discovery, broad repository scans, or edits. Use Grep/Glob/Read/Edit for those.
+- Recovery after failure: if no server is available or a symbol lookup fails, fall back to Grep/Glob/Read and explicitly say the evidence is source-inspection fallback.
+- Weak-model anti-pattern: do not hallucinate line numbers, definitions, or diagnostics from a failed LSP response. Verify with source text before reporting.
+- Verification / evidence: cite LSP operation, file path, line/character, and follow with Read when you need exact code text for an edit or user-facing claim.`
+
+export const PROMPT = `${DESCRIPTION}
+
+${DSXU_LSP_TOOL_DISCIPLINE}`
+
+
+// V14 strict lifecycle shim: tools-LSPTool-prompt
+export function processToolsLSPToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-LSPTool-prompt-state'
+  const lifecycle = 'tools-LSPTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsLSPToolPromptStrict(input) {
+  return processToolsLSPToolPromptStrictLifecycle(input)
+}

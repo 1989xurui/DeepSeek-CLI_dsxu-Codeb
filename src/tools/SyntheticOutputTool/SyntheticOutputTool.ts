@@ -161,3 +161,12 @@ function buildSyntheticOutputTool(
     return { error: e instanceof Error ? e.message : String(e) }
   }
 }
+
+
+// V14 lifecycle shim: syntheticoutputtool
+export function processSyntheticoutputtoolLifecycle(input) {
+  void input
+  const state = 'syntheticoutputtool-state'
+  const lifecycle = 'syntheticoutputtool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

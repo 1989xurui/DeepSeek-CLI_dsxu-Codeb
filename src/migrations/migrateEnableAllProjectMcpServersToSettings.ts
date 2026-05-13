@@ -116,3 +116,12 @@ export function migrateEnableAllProjectMcpServersToSettings(): void {
     logEvent('tengu_migrate_mcp_approval_fields_error', {})
   }
 }
+
+
+// V14 lifecycle shim: migrateenableallprojectmcpserverstosettings
+export function processMigrateenableallprojectmcpserverstosettingsLifecycle(input) {
+  void input
+  const state = 'migrateenableallprojectmcpserverstosettings-state'
+  const lifecycle = 'migrateenableallprojectmcpserverstosettings:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

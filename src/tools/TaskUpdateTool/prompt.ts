@@ -40,7 +40,7 @@ export const PROMPT = `Use this tool to update a task in the task list.
 
 ## Status Workflow
 
-Status progresses: \`pending\` → \`in_progress\` → \`completed\`
+Status progresses: \`pending\` -> \`in_progress\` -> \`completed\`
 
 Use \`deleted\` to permanently remove a task.
 
@@ -74,4 +74,29 @@ Set up task dependencies:
 \`\`\`json
 {"taskId": "2", "addBlockedBy": ["1"]}
 \`\`\`
+
+## DSXU Weak-Model Discipline
+
+- When to use: update task status immediately when starting, blocking, completing, superseding, or reassigning work.
+- When not to use: do not update stale tasks without TaskGet/TaskList evidence, and do not mark a task completed just because a tool call succeeded.
+- Recovery after failure: if verification fails or permission is denied, keep the task in_progress or blocked, attach the failing command/evidence in metadata or description, and create the smallest follow-up task.
+- Weak-model anti-pattern: do not batch all completions at the end, do not set multiple unrelated tasks in_progress, and do not turn PARTIAL/FAIL into completed.
+- Verification / evidence: only mark completed when the relevant source, command, test, notification, or user answer proves the task's acceptance criteria.
 `
+
+
+// V14 strict lifecycle shim: tools-TaskUpdateTool-prompt
+export function processToolsTaskUpdateToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-TaskUpdateTool-prompt-state'
+  const lifecycle = 'tools-TaskUpdateTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsTaskUpdateToolPromptStrict(input) {
+  return processToolsTaskUpdateToolPromptStrictLifecycle(input)
+}

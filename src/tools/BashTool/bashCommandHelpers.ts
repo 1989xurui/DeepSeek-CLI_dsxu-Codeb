@@ -263,3 +263,12 @@ async function bashToolCheckCommandOperatorPermissions(
     checkers,
   )
 }
+
+
+// V14 lifecycle shim: bashcommandhelpers
+export function processBashcommandhelpersLifecycle(input) {
+  void input
+  const state = 'bashcommandhelpers-state'
+  const lifecycle = 'bashcommandhelpers:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

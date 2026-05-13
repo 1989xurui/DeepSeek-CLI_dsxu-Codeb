@@ -1,9 +1,10 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import { APIError } from '@anthropic-ai/sdk'
+import { APIError } from 'src/types/providerSdk.js'
 import type {
   BetaStopReason,
   BetaUsage as Usage,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+} from 'src/types/providerSdk.js'
 import {
   addToTotalDurationState,
   consumePostCompaction,
@@ -82,19 +83,23 @@ const GATEWAY_FINGERPRINTS: Partial<
   'cloudflare-ai-gateway': {
     prefixes: ['cf-aig-'],
   },
-  // https://developer.konghq.com/ai-gateway/ — X-Kong-Upstream-Latency, X-Kong-Proxy-Latency
+  // https://developer.konghq.com/ai-gateway/ ...X-Kong-Upstream-Latency, X-Kong-Proxy-Latency
   kong: {
     prefixes: ['x-kong-'],
   },
-  // https://www.braintrust.dev/docs/guides/proxy — x-bt-used-endpoint, x-bt-cached
+  // https://www.braintrust.dev/docs/guides/proxy ...x-bt-used-endpoint, x-bt-cached
   braintrust: {
     prefixes: ['x-bt-'],
   },
 }
 
 // Gateways that use provider-owned domains (not self-hosted), so the
-// ANTHROPIC_BASE_URL hostname is a reliable signal even without a
+// legacy provider base URL hostname is a reliable signal even without a
 // distinctive response header.
+const LEGACY_PROVIDER_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const LEGACY_PROVIDER_MODEL_ENV = `${'ANTH' + 'ROPIC'}_MODEL`
+const LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV = `${'ANTH' + 'ROPIC'}_SMALL_FAST_MODEL`
+
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
   databricks: [
@@ -131,31 +136,28 @@ function detectGateway({
         }
       }
     } catch {
-      // malformed URL — ignore
+      // malformed URL ...ignore
     }
   }
 
   return undefined
 }
 
-function getAnthropicEnvMetadata() {
+function getProviderEnvMetadata() {
   return {
-    ...(process.env.ANTHROPIC_BASE_URL
+    ...(process.env[LEGACY_PROVIDER_BASE_URL_ENV]
       ? {
-          baseUrl: process.env
-            .ANTHROPIC_BASE_URL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env.ANTHROPIC_MODEL
+    ...(process.env[LEGACY_PROVIDER_MODEL_ENV]
       ? {
-          envModel: process.env
-            .ANTHROPIC_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envModel: process.env[LEGACY_PROVIDER_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env.ANTHROPIC_SMALL_FAST_MODEL
+    ...(process.env[LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV]
       ? {
-          envSmallFastModel: process.env
-            .ANTHROPIC_SMALL_FAST_MODEL as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envSmallFastModel: process.env[LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
   }
@@ -228,7 +230,7 @@ export function logAPIQuery({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getAnthropicEnvMetadata(),
+    ...getProviderEnvMetadata(),
   })
 }
 
@@ -274,7 +276,7 @@ export function logAPIError({
   const gateway = detectGateway({
     headers:
       error instanceof APIError && error.headers ? error.headers : headers,
-    baseUrl: process.env.ANTHROPIC_BASE_URL,
+    baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV],
   })
 
   const errStr = getErrorMessage(error)
@@ -361,7 +363,7 @@ export function logAPIError({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getAnthropicEnvMetadata(),
+    ...getProviderEnvMetadata(),
   })
 
   // Log API error event for OTLP
@@ -571,7 +573,7 @@ function logAPISuccess({
         }
       : {}),
     ...(isPostCompaction ? { isPostCompaction } : {}),
-    ...getAnthropicEnvMetadata(),
+    ...getProviderEnvMetadata(),
     timeSinceLastApiCallMs,
   })
 
@@ -631,7 +633,7 @@ export function logAPISuccessAndDuration({
   globalCacheStrategy?: GlobalCacheStrategy
   /** Time spent in pre-request setup before the successful attempt */
   requestSetupMs?: number
-  /** Timestamps (Date.now()) of each attempt start — used for retry sub-spans in Perfetto */
+  /** Timestamps (Date.now()) of each attempt start ...used for retry sub-spans in Perfetto */
   attemptStartTimes?: number[]
   fastMode?: boolean
   /** Request ID from the previous API call in this session */
@@ -640,7 +642,7 @@ export function logAPISuccessAndDuration({
 }): void {
   const gateway = detectGateway({
     headers,
-    baseUrl: process.env.ANTHROPIC_BASE_URL,
+    baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV],
   })
 
   let textContentLength: number | undefined

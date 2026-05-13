@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Shared spawn module for teammate creation.
  * Extracted from TeammateTool to allow reuse by AgentTool.
@@ -69,10 +70,12 @@ import { writeToMailbox } from '../../utils/teammateMailbox.js'
 import type { CustomAgentDefinition } from '../AgentTool/loadAgentsDir.js'
 import { isCustomAgent } from '../AgentTool/loadAgentsDir.js'
 
+const DSXU_TEAMMATE_COMMAND_ENV_VAR = 'DSXU_CODE_TEAMMATE_COMMAND'
+
 function getDefaultTeammateModel(leaderModel: string | null): string {
   const configured = getGlobalConfig().teammateDefaultModel
   if (configured === null) {
-    // User picked "Default" in the /config picker — follow the leader.
+    // User picked "Default" in the /config picker ...follow the leader.
     return leaderModel ?? getHardcodedTeammateModelFallback()
   }
   if (configured !== undefined) {
@@ -191,6 +194,9 @@ async function ensureSession(sessionName: string): Promise<void> {
  * For non-native (node/bun running a script), use process.argv[1].
  */
 function getTeammateCommand(): string {
+  if (process.env[DSXU_TEAMMATE_COMMAND_ENV_VAR]) {
+    return process.env[DSXU_TEAMMATE_COMMAND_ENV_VAR]
+  }
   if (process.env[TEAMMATE_COMMAND_ENV_VAR]) {
     return process.env[TEAMMATE_COMMAND_ENV_VAR]
   }
@@ -300,7 +306,7 @@ export async function generateUniqueTeammateName(
 /**
  * Handle spawn operation using split-pane view (default).
  * When inside tmux: Creates teammates in a shared window with leader on left, teammates on right.
- * When outside tmux: Creates a claude-swarm session with all teammates in a tiled layout.
+ * When outside tmux: Creates a DSXU/legacy swarm session with all teammates in a tiled layout.
  */
 async function handleSpawnSplitPane(
   input: SpawnInput,
@@ -309,7 +315,7 @@ async function handleSpawnSplitPane(
   const { setAppState, getAppState } = context
   const { name, prompt, agent_type, cwd, plan_mode_required } = input
 
-  // Resolve model: 'inherit' → leader's model; undefined → default Opus
+  // Resolve model: 'inherit' uses the leader route; undefined uses the default route.
   const model = resolveTeammateModel(input.model, getAppState().mainLoopModel)
 
   if (!name || !prompt) {
@@ -384,7 +390,7 @@ async function handleSpawnSplitPane(
   // Create a pane in the swarm view
   // - Inside tmux: splits current window (leader on left, teammates on right)
   // - In iTerm2 with it2: uses native iTerm2 split panes
-  // - Outside both: creates claude-swarm session with tiled teammates
+  // - Outside both: creates DSXU/legacy swarm session with tiled teammates
   const { paneId, isFirstTeammate } = await createTeammatePaneInSwarmView(
     sanitizedName,
     teammateColor,
@@ -396,11 +402,11 @@ async function handleSpawnSplitPane(
     await enablePaneBorderStatus()
   }
 
-  // Build the command to spawn Claude Code with teammate identity
+  // Build the command to spawn DSXU Code with teammate identity
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args (replaces CLAUDE_CODE_* env vars)
+  // Build teammate identity CLI args (replaces legacy provider env vars)
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -435,7 +441,7 @@ async function handleSpawnSplitPane(
 
   const flagsStr = inheritedFlags ? ` ${inheritedFlags}` : ''
   // Propagate env vars that teammates need but may not inherit from tmux split-window shells.
-  // Includes CLAUDECODE, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, and API provider vars.
+  // Includes DSXU/legacy agent-team markers and API provider vars.
   const envStr = buildInheritedEnvVars()
   const spawnCommand = `cd ${quote([workingDir])} && env ${envStr} ${quote([binaryPath])} ${teammateArgs}${flagsStr}`
 
@@ -549,7 +555,7 @@ async function handleSpawnSeparateWindow(
   const { setAppState, getAppState } = context
   const { name, prompt, agent_type, cwd, plan_mode_required } = input
 
-  // Resolve model: 'inherit' → leader's model; undefined → default Opus
+  // Resolve model: 'inherit' uses the leader route; undefined uses the default route.
   const model = resolveTeammateModel(input.model, getAppState().mainLoopModel)
 
   if (!name || !prompt) {
@@ -603,11 +609,11 @@ async function handleSpawnSeparateWindow(
 
   const paneId = createWindowResult.stdout.trim()
 
-  // Build the command to spawn Claude Code with teammate identity
+  // Build the command to spawn DSXU Code with teammate identity
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args (replaces CLAUDE_CODE_* env vars)
+  // Build teammate identity CLI args (replaces legacy provider env vars)
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -642,7 +648,7 @@ async function handleSpawnSeparateWindow(
 
   const flagsStr = inheritedFlags ? ` ${inheritedFlags}` : ''
   // Propagate env vars that teammates need but may not inherit from tmux split-window shells.
-  // Includes CLAUDECODE, CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, and API provider vars.
+  // Includes DSXU/legacy agent-team markers and API provider vars.
   const envStr = buildInheritedEnvVars()
   const spawnCommand = `cd ${quote([workingDir])} && env ${envStr} ${quote([binaryPath])} ${teammateArgs}${flagsStr}`
 
@@ -844,7 +850,7 @@ async function handleSpawnInProcess(
   const { setAppState, getAppState } = context
   const { name, prompt, agent_type, plan_mode_required } = input
 
-  // Resolve model: 'inherit' → leader's model; undefined → default Opus
+  // Resolve model: 'inherit' uses the leader route; undefined uses the default route.
   const model = resolveTeammateModel(input.model, getAppState().mainLoopModel)
 
   if (!name || !prompt) {
@@ -1032,7 +1038,7 @@ async function handleSpawnInProcess(
 }
 
 /**
- * Handle spawn operation - creates a new Claude Code instance.
+ * Handle spawn operation - creates a new DSXU Code agent instance.
  * Uses in-process mode when enabled, otherwise uses tmux/iTerm2 split-pane view.
  * Falls back to in-process if pane backend detection fails (e.g., iTerm2 without
  * it2 CLI or tmux installed).
@@ -1090,4 +1096,26 @@ export async function spawnTeammate(
   context: ToolUseContext,
 ): Promise<{ data: SpawnOutput }> {
   return handleSpawn(config, context)
+}
+
+export function getDsxuSpawnMultiAgentRuntimeProfile(): {
+  runtime: 'DSXU Spawn Multi-Agent'
+  teammateCommandEnv: readonly string[]
+  backends: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Spawn Multi-Agent',
+    teammateCommandEnv: [
+      DSXU_TEAMMATE_COMMAND_ENV_VAR,
+      `${TEAMMATE_COMMAND_ENV_VAR} legacy alias`,
+    ],
+    backends: ['in-process', 'tmux', 'iTerm2/split-pane', 'separate-window'],
+    activationEvidence: [
+      'resolveTeammateModel supports inherit and global teammateDefaultModel fallback',
+      'spawnTeammate uses in-process mode when enabled and falls back from unavailable pane backends in auto mode',
+      'spawn output records teammate id, model, pane/session metadata, and plan-mode requirement',
+      'inherited CLI/env flags propagate session permission/model/plugin state to teammates',
+    ],
+  }
 }

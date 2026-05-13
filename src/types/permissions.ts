@@ -7,7 +7,7 @@
  */
 
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 
 // ============================================================================
 // Permission Modes
@@ -313,7 +313,7 @@ export type PermissionDecisionReason =
       type: 'safetyCheck'
       reason: string
       // When true, auto mode lets the classifier evaluate this instead of
-      // forcing a prompt. True for sensitive-file paths (.claude/, .git/,
+      // forcing a prompt. True for sensitive-file paths (legacy config, .git,
       // shell configs) — the classifier can see context and decide. False
       // for Windows path bypass attempts and cross-machine bridge messages.
       classifierApprovable: boolean
@@ -438,4 +438,44 @@ export type ToolPermissionContext = {
   readonly shouldAvoidPermissionPrompts?: boolean
   readonly awaitAutomatedChecksBeforeDialog?: boolean
   readonly prePlanMode?: PermissionMode
+}
+
+
+// V14 strict lifecycle shim: types-permissions
+export function processTypesPermissionsStrictLifecycle(input) {
+  void input
+  const state = 'types-permissions-state'
+  const lifecycle = 'types-permissions:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runTypesPermissionsStrict(input) {
+  return processTypesPermissionsStrictLifecycle(input)
+}
+
+export function getDsxuPermissionTypesRuntimeProfile() {
+  return {
+    runtime: 'DSXU Permission Types',
+    defaultModes: EXTERNAL_PERMISSION_MODES,
+    internalModes: INTERNAL_PERMISSION_MODES,
+    behaviorContract: ['allow', 'ask', 'deny'],
+    decisionReasons: [
+      'rule',
+      'mode',
+      'hook',
+      'classifier',
+      'sandboxOverride',
+      'safetyCheck',
+      'workingDir',
+    ],
+    activationEvidence: [
+      'ToolPermissionContext is the shared DSXU tool-gate contract',
+      'PermissionDecisionReason carries classifier, hook, sandbox, and rule evidence',
+      'PermissionUpdate supports session/project/user/local persistence destinations',
+    ],
+  }
 }

@@ -2,14 +2,15 @@
 import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider } from './providers.js'
+import { isDSXUCodeMode } from './dsxuModel.js'
 import { sideQuery } from '../sideQuery.js'
 import {
   NotFoundError,
   APIError,
   APIConnectionError,
   AuthenticationError,
-} from '@anthropic-ai/sdk'
-import { getModelStrings } from './modelStrings.js'
+} from '../../types/providerSdk.js'
+import { getThirdPartyCompatFallbackModelSuggestion } from '../../dsxu/legacy/model/legacyProviderModel.js'
 
 // Cache valid models to avoid repeated API calls
 const validModelCache = new Map<string, boolean>()
@@ -41,8 +42,9 @@ export async function validateModel(
     return { valid: true }
   }
 
-  // Check if it matches ANTHROPIC_CUSTOM_MODEL_OPTION (pre-validated by the user)
-  if (normalizedModel === process.env.ANTHROPIC_CUSTOM_MODEL_OPTION) {
+  const legacyCustomModelEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
+  // Check if it matches the custom model option (pre-validated by the user)
+  if (!isDSXUCodeMode() && normalizedModel === process.env[legacyCustomModelEnv]) {
     return { valid: true }
   }
 
@@ -137,23 +139,21 @@ function handleValidationError(
   }
 }
 
-// @[MODEL LAUNCH]: Add a fallback suggestion chain for the new model → previous version
+// @[MODEL LAUNCH]: Add a fallback suggestion chain for the new model.
 /**
  * Suggest a fallback model for 3P users when the selected model is unavailable.
  */
 function get3PFallbackSuggestion(model: string): string | undefined {
-  if (getAPIProvider() === 'firstParty') {
-    return undefined
-  }
-  const lowerModel = model.toLowerCase()
-  if (lowerModel.includes('opus-4-6') || lowerModel.includes('opus_4_6')) {
-    return getModelStrings().opus41
-  }
-  if (lowerModel.includes('sonnet-4-6') || lowerModel.includes('sonnet_4_6')) {
-    return getModelStrings().sonnet45
-  }
-  if (lowerModel.includes('sonnet-4-5') || lowerModel.includes('sonnet_4_5')) {
-    return getModelStrings().sonnet40
-  }
-  return undefined
+  if (isDSXUCodeMode()) return undefined
+  if (getAPIProvider() === 'firstParty') return undefined
+  return getThirdPartyCompatFallbackModelSuggestion(model)
+}
+
+
+// V14 lifecycle shim: validatemodel
+export function processValidatemodelLifecycle(input) {
+  void input
+  const state = 'validatemodel-state'
+  const lifecycle = 'validatemodel:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

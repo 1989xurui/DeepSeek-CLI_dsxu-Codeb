@@ -488,3 +488,12 @@ export const NotebookEditTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: notebookedittool
+export function processNotebookedittoolLifecycle(input) {
+  void input
+  const state = 'notebookedittool-state'
+  const lifecycle = 'notebookedittool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

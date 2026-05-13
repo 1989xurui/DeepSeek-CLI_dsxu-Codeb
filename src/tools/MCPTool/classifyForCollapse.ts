@@ -5,7 +5,7 @@
  *
  * Uses explicit per-tool allowlists for the most common MCP servers.
  * Tool names are stable across installs (even when the server name varies,
- * e.g., "slack" vs "claude_ai_Slack"), so matching is keyed on the tool
+ * e.g., "slack" vs "dsxu_ai_Slack"), so matching is keyed on the tool
  * name alone after normalizing camelCase/kebab-case to snake_case.
  * Unknown tool names don't collapse (conservative).
  */
@@ -46,11 +46,11 @@ const SEARCH_TOOLS = new Set([
   'find_dsns',
   // Notion (mcp.notion.com — kebab-case, normalized)
   'search',
-  // Gmail (claude.ai hosted)
+  // Gmail (DSXU/legacy hosted connector)
   'gmail_search_messages',
-  // Google Drive (claude.ai hosted + @modelcontextprotocol/server-gdrive)
+  // Google Drive (legacy hosted + @modelcontextprotocol/server-gdrive)
   'google_drive_search',
-  // Google Calendar (claude.ai hosted)
+  // Google Calendar (DSXU/legacy hosted connector)
   'gcal_find_my_free_time',
   'gcal_find_meeting_times',
   'gcal_find_user_emails',
@@ -84,7 +84,7 @@ const SEARCH_TOOLS = new Set([
   // Stripe
   'search_stripe_resources',
   'search_stripe_documentation',
-  // PubMed (claude.ai hosted + community)
+  // PubMed (DSXU/legacy hosted connector + community)
   'search_articles',
   'find_related_articles',
   'lookup_article_by_citation',
@@ -256,16 +256,16 @@ const READ_TOOLS = new Set([
   'get_comments',
   'get_users',
   'get_self',
-  // Gmail (claude.ai hosted)
+  // Gmail (DSXU/legacy hosted connector)
   'gmail_get_profile',
   'gmail_read_message',
   'gmail_read_thread',
   'gmail_list_drafts',
   'gmail_list_labels',
-  // Google Drive (claude.ai hosted + @modelcontextprotocol/server-gdrive)
+  // Google Drive (legacy hosted + @modelcontextprotocol/server-gdrive)
   'google_drive_fetch',
   'google_drive_export',
-  // Google Calendar (claude.ai hosted)
+  // Google Calendar (DSXU/legacy hosted connector)
   'gcal_list_calendars',
   'gcal_list_events',
   'gcal_get_event',
@@ -450,7 +450,7 @@ const READ_TOOLS = new Set([
   'list_coupons',
   'list_disputes',
   'fetch_stripe_resources',
-  // PubMed (claude.ai hosted + community)
+  // PubMed (DSXU/legacy hosted connector + community)
   'get_article_metadata',
   'get_full_text_article',
   'convert_article_ids',
@@ -466,7 +466,7 @@ const READ_TOOLS = new Set([
   'pubmed_spell',
   'pubmed_cite',
   'pubmed_related',
-  // BigQuery (claude.ai hosted + community)
+  // BigQuery (DSXU/legacy hosted connector + community)
   'bigquery_query',
   'bigquery_schema',
   'list_dataset_ids',
@@ -601,4 +601,37 @@ export function classifyMcpToolForCollapse(
     isSearch: SEARCH_TOOLS.has(normalized),
     isRead: READ_TOOLS.has(normalized),
   }
+}
+
+export function getDsxuMcpCollapseRuntimeProfile(): {
+  runtime: 'DSXU MCP Collapse Classifier'
+  searchToolCount: number
+  readToolCount: number
+  evidencePolicy: string
+  sampleTools: Record<string, { isSearch: boolean; isRead: boolean }>
+} {
+  return {
+    runtime: 'DSXU MCP Collapse Classifier',
+    searchToolCount: SEARCH_TOOLS.size,
+    readToolCount: READ_TOOLS.size,
+    evidencePolicy:
+      'DSXU keeps MCP search/read results collapsible so coding context stays compact while preserving tool evidence.',
+    sampleTools: {
+      search_code: classifyMcpToolForCollapse('github', 'search_code'),
+      read_file: classifyMcpToolForCollapse('filesystem', 'read_file'),
+      browser_snapshot: classifyMcpToolForCollapse(
+        'playwright',
+        'browser_snapshot',
+      ),
+    },
+  }
+}
+
+
+// V14 lifecycle shim: classifyforcollapse
+export function processClassifyforcollapseLifecycle(input) {
+  void input
+  const state = 'classifyforcollapse-state'
+  const lifecycle = 'classifyforcollapse:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

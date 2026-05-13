@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
   ElicitationCompleteNotificationSchema,
@@ -34,8 +35,7 @@ export type ElicitationRequestEvent = {
   signal: AbortSignal
   /**
    * Resolves the elicitation. For explicit elicitations, all actions are
-   * meaningful. For error-based retry (-32042), 'accept' is a no-op —
-   * the retry is driven by onWaitingDismiss instead.
+   * meaningful. For error-based retry (-32042), 'accept' is a no-op ...   * the retry is driven by onWaitingDismiss instead.
    */
   respond: (response: ElicitResult) => void
   /** For URL elicitations: shown after user opens the browser. */
@@ -259,7 +259,7 @@ export async function runElicitationHooks(
 /**
  * Run ElicitationResult hooks after the user has responded, then fire a
  * `elicitation_response` notification. Returns a (potentially modified)
- * ElicitResult — hooks may override the action/content or block the response.
+ * ElicitResult ...hooks may override the action/content or block the response.
  */
 export async function runElicitationResultHooks(
   serverName: string,

@@ -174,3 +174,12 @@ function matchesDotGitPrefix(n: string): boolean {
   // for git~N as the first component.
   return /^git~\d+($|\/)/.test(n)
 }
+
+
+// V14 lifecycle shim: gitsafety
+export function processGitsafetyLifecycle(input) {
+  void input
+  const state = 'gitsafety-state'
+  const lifecycle = 'gitsafety:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

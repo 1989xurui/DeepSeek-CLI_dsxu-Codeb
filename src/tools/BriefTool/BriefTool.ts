@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js'
@@ -5,7 +6,7 @@ import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/gr
 import { logEvent } from '../../services/analytics/index.js'
 import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuRuntimeMode, isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { plural } from '../../utils/stringUtils.js'
 import { resolveAttachments, validateAttachmentPaths } from './attachments.js'
@@ -16,7 +17,6 @@ import {
   LEGACY_BRIEF_TOOL_NAME,
 } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
-
 const inputSchema = lazySchema(() =>
   z.strictObject({
     message: z
@@ -31,13 +31,12 @@ const inputSchema = lazySchema(() =>
     status: z
       .enum(['normal', 'proactive'])
       .describe(
-        "Use 'proactive' when you're surfacing something the user hasn't asked for and needs to see now — task completion while they're away, a blocker you hit, an unsolicited status update. Use 'normal' when replying to something the user just said.",
+        "Use 'proactive' when you're surfacing something the user hasn't asked for and needs to see now ...task completion while they're away, a blocker you hit, an unsolicited status update. Use 'normal' when replying to something the user just said.",
       ),
   }),
 )
 type InputSchema = ReturnType<typeof inputSchema>
-
-// attachments MUST remain optional — resumed sessions replay pre-attachment
+// attachments MUST remain optional ...resumed sessions replay pre-attachment
 // outputs verbatim and a required field would crash the UI renderer on resume.
 const outputSchema = lazySchema(() =>
   z.object({
@@ -57,19 +56,17 @@ const outputSchema = lazySchema(() =>
       .string()
       .optional()
       .describe(
-        'ISO timestamp captured at tool execution on the emitting process. Optional — resumed sessions replay pre-sentAt outputs verbatim.',
+        'ISO timestamp captured at tool execution on the emitting process. Optional ...resumed sessions replay pre-sentAt outputs verbatim.',
       ),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
 export type Output = z.infer<OutputSchema>
-
 const KAIROS_BRIEF_REFRESH_MS = 5 * 60 * 1000
-
 /**
- * Entitlement check — is the user ALLOWED to use Brief? Combines build-time
+ * Entitlement check ...is the user ALLOWED to use Brief? Combines build-time
  * flags with runtime GB gate + assistant-mode passthrough. No opt-in check
- * here — this decides whether opt-in should be HONORED, not whether the user
+ * here ...this decides whether opt-in should be HONORED, not whether the user
  * has opted in.
  *
  * Build-time OR-gated on KAIROS || KAIROS_BRIEF (same pattern as
@@ -80,17 +77,19 @@ const KAIROS_BRIEF_REFRESH_MS = 5 * 60 * 1000
  * listing should be honored. Use `isBriefEnabled()` to decide whether the
  * tool is actually active in the current session.
  *
- * CLAUDE_CODE_BRIEF env var force-grants entitlement for dev/testing —
- * bypasses the GB gate so you can test without being enrolled. Still
+ * DSXU_CODE_BRIEF (or legacy DSXU_CODE_BRIEF) force-grants entitlement for dev/testing ... * bypasses the GB gate so you can test without being enrolled. Still
  * requires an opt-in action to activate (--brief, defaultView, etc.), but
  * the env var alone also sets userMsgOptIn via maybeActivateBrief().
  */
 export function isBriefEntitled(): boolean {
-  // Positive ternary — see docs/feature-gating.md. Negative early-return
+  if (isDsxuRuntimeMode()) {
+    return true
+  }
+  // Positive ternary ...see docs/feature-gating.md. Negative early-return
   // would not eliminate the GB gate string from external builds.
   return feature('KAIROS') || feature('KAIROS_BRIEF')
-    ? getKairosActive() ||
-        isEnvTruthy(process.env.CLAUDE_CODE_BRIEF) ||
+        ? getKairosActive() ||
+        isDsxuCodeEnvTruthy('BRIEF') ||
         getFeatureValue_CACHED_WITH_REFRESH(
           'tengu_kairos_brief',
           false,
@@ -98,7 +97,6 @@ export function isBriefEntitled(): boolean {
         )
     : false
 }
-
 /**
  * Unified activation gate for the Brief tool. Governs model-facing behavior
  * as a unit: tool availability, system prompt section (getBriefSection),
@@ -110,13 +108,13 @@ export function isBriefEntitled(): boolean {
  *   - `/brief` slash command (brief.ts)
  *   - `/config` defaultView picker (Config.tsx)
  *   - SendUserMessage in `--tools` / SDK `tools` option (main.tsx)
- *   - CLAUDE_CODE_BRIEF env var (maybeActivateBrief — dev/testing bypass)
+ *   - DSXU_CODE_BRIEF / legacy DSXU_CODE_BRIEF env var (maybeActivateBrief ...dev/testing bypass)
  * Assistant mode (kairosActive) bypasses opt-in since its system prompt
  * hard-codes "you MUST use SendUserMessage" (systemPrompt.md:14).
  *
- * The GB gate is re-checked here as a kill-switch AND — flipping
+ * The GB gate is re-checked here as a kill-switch AND ...flipping
  * tengu_kairos_brief off mid-session disables the tool on the next 5-min
- * refresh even for opted-in sessions. No opt-in → always false regardless
+ * refresh even for opted-in sessions. No opt-in  -> always false regardless
  * of GB (this is the fix for "brief defaults on for enrolled ants").
  *
  * Called from Tool.isEnabled() (lazy, post-init), never at module scope.
@@ -124,6 +122,9 @@ export function isBriefEntitled(): boolean {
  * caller reaches here.
  */
 export function isBriefEnabled(): boolean {
+  if (isDsxuRuntimeMode()) {
+    return true
+  }
   // Top-level feature() guard is load-bearing for DCE: Bun can constant-fold
   // the ternary to `false` in external builds and then dead-code the BriefTool
   // object. Composing isBriefEntitled() alone (which has its own guard) is
@@ -132,12 +133,31 @@ export function isBriefEnabled(): boolean {
     ? (getKairosActive() || getUserMsgOptIn()) && isBriefEntitled()
     : false
 }
-
+export function getDsxuBriefRuntimeProfile(): {
+  runtime: 'DSXU Brief Tool'
+  forceEnableEnv: readonly string[]
+  activationSignals: readonly string[]
+  legacyPolicy: string
+} {
+  return {
+    runtime: 'DSXU Brief Tool',
+    forceEnableEnv: ['DSXU_CODE_BRIEF', 'DSXU_CODE_BRIEF'],
+    activationSignals: [
+      '--brief',
+      'defaultView: chat',
+      '/brief',
+      'Config defaultView picker',
+      'SendUserMessage SDK/tool option',
+    ],
+    legacyPolicy:
+      'DSXU_CODE_BRIEF is retained only as a migration alias; DSXU_CODE_BRIEF is the primary dev/test switch',
+  }
+}
 export const BriefTool = buildTool({
   name: BRIEF_TOOL_NAME,
   aliases: [LEGACY_BRIEF_TOOL_NAME],
   searchHint:
-    'send a message to the user — your primary visible output channel',
+    'send a message to the user ...your primary visible output channel',
   maxResultSizeChars: 100_000,
   userFacingName() {
     return ''

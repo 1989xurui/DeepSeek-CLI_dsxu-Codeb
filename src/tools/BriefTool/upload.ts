@@ -1,11 +1,10 @@
 /**
  * Upload BriefTool attachments to private_api so web viewers can preview them.
  *
- * When the repl bridge is active, attachment paths are meaningless to a web
- * viewer (they're on Claude's machine). We upload to /api/oauth/file_upload —
- * the same store MessageComposer/SpaceMessage render from — and stash the
- * returned file_uuid alongside the path. Web resolves file_uuid → preview;
- * desktop/local try path first.
+ * When the legacy bridge is explicitly active, attachment paths may point to a
+ * remote machine and cannot be opened directly by a web viewer. Upload to
+ * /api/oauth/file_upload, then stash the returned file_uuid alongside the
+ * path. Web resolves file_uuid to a preview; desktop/local try path first.
  *
  * Best-effort: any failure (no token, bridge off, network error, 4xx) logs
  * debug and returns undefined. The attachment still carries {path, size,
@@ -19,10 +18,6 @@ import { readFile } from 'fs/promises'
 import { basename, extname } from 'path'
 import { z } from 'zod/v4'
 
-import {
-  getBridgeAccessToken,
-  getBridgeBaseUrlOverride,
-} from '../../bridge/bridgeConfig.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -33,10 +28,10 @@ const MAX_UPLOAD_BYTES = 30 * 1024 * 1024
 
 const UPLOAD_TIMEOUT_MS = 30_000
 
-// Backend dispatches on mime: image/* → upload_image_wrapped (writes
-// PREVIEW/THUMBNAIL, no ORIGINAL), everything else → upload_generic_file
+// Backend dispatches on mime: image/* to upload_image_wrapped (writes
+// PREVIEW/THUMBNAIL, no ORIGINAL), everything else to upload_generic_file
 // (ORIGINAL only, no preview). Only whitelist raster formats the
-// transcoder reliably handles — svg/bmp/ico risk a 400, and pdf routes
+// transcoder reliably handles. svg/bmp/ico risk a 400, and pdf routes
 // to upload_pdf_file_wrapped which also skips ORIGINAL. Dispatch
 // viewers use /preview for images and /contents for everything else,
 // so images go image/* and the rest go octet-stream.
@@ -60,18 +55,37 @@ function debug(msg: string): void {
 /**
  * Base URL for uploads. Must match the host the token is valid for.
  *
- * Subprocess hosts (cowork) pass ANTHROPIC_BASE_URL alongside
- * CLAUDE_CODE_OAUTH_TOKEN — prefer that since getOauthConfig() only
- * returns staging when USE_STAGING_OAUTH is set, which such hosts don't
- * set. Without this a staging token hits api.anthropic.com → 401 → silent
- * skip → web viewer sees inert cards with no file_uuid.
+ * DSXU subprocess hosts can pass DSXU_BRIDGE_BASE_URL alongside their
+ * bridge token. Legacy cowork hosts pass PROVIDER_BASE_URL alongside
+ * DSXU_CODE_OAUTH_TOKEN. Prefer explicit DSXU bridge base URL first so staging
+ * tokens do not hit the wrong provider API host and silently skip file_uuid
+ * generation.
  */
-function getBridgeBaseUrl(): string {
+function getBridgeBaseUrl(baseUrlOverride?: string): string {
   return (
-    getBridgeBaseUrlOverride() ??
-    process.env.ANTHROPIC_BASE_URL ??
+    baseUrlOverride ??
+    process.env.DSXU_BRIDGE_BASE_URL ??
+    process.env.PROVIDER_BASE_URL ??
     getOauthConfig().BASE_API_URL
   )
+}
+
+export function getDsxuBriefUploadRuntimeProfile(): {
+  runtime: 'DSXU Brief Upload Provider'
+  maxUploadBytes: number
+  timeoutMs: number
+  preferredBaseUrlEnv: readonly string[]
+  legacyBaseUrlEnv: readonly string[]
+  endpoint: string
+} {
+  return {
+    runtime: 'DSXU Brief Upload Provider',
+    maxUploadBytes: MAX_UPLOAD_BYTES,
+    timeoutMs: UPLOAD_TIMEOUT_MS,
+    preferredBaseUrlEnv: ['DSXU_BRIDGE_BASE_URL'],
+    legacyBaseUrlEnv: ['PROVIDER_BASE_URL'],
+    endpoint: '/api/oauth/file_upload',
+  }
 }
 
 // /api/oauth/file_upload returns one of ChatMessage{Image,Blob,Document}FileSchema.
@@ -104,6 +118,9 @@ export async function uploadBriefAttachment(
       return undefined
     }
 
+    const { getBridgeAccessToken, getBridgeBaseUrlOverride } = await import(
+      '../../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+    )
     const token = getBridgeAccessToken()
     if (!token) {
       debug('skip: no oauth token')
@@ -118,13 +135,13 @@ export async function uploadBriefAttachment(
       return undefined
     }
 
-    const baseUrl = getBridgeBaseUrl()
+    const baseUrl = getBridgeBaseUrl(getBridgeBaseUrlOverride())
     const url = `${baseUrl}/api/oauth/file_upload`
     const filename = basename(fullPath)
     const mimeType = guessMimeType(filename)
     const boundary = `----FormBoundary${randomUUID()}`
 
-    // Manual multipart — same pattern as filesApi.ts. The oauth endpoint takes
+    // Manual multipart, same pattern as filesApi.ts. The oauth endpoint takes
     // a single "file" part (no "purpose" field like the public Files API).
     const body = Buffer.concat([
       Buffer.from(
@@ -163,7 +180,7 @@ export async function uploadBriefAttachment(
         return undefined
       }
 
-      debug(`uploaded ${fullPath} → ${parsed.data.file_uuid} (${size} bytes)`)
+      debug(`uploaded ${fullPath} -> ${parsed.data.file_uuid} (${size} bytes)`)
       return parsed.data.file_uuid
     } catch (e) {
       debug(`upload threw for ${fullPath}: ${e}`)
@@ -171,4 +188,13 @@ export async function uploadBriefAttachment(
     }
   }
   return undefined
+}
+
+
+// V14 lifecycle shim: upload
+export function processUploadLifecycle(input) {
+  void input
+  const state = 'upload-state'
+  const lifecycle = 'upload:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

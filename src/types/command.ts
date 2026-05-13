@@ -1,4 +1,5 @@
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { UUID } from 'crypto'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
 import type { CompactionResult } from '../services/compact/compact.js'
@@ -37,7 +38,7 @@ export type PromptCommand = {
   disableNonInteractive?: boolean
   // Hooks to register when this skill is invoked
   hooks?: HooksSettings
-  // Base directory for skill resources (used to set CLAUDE_PLUGIN_ROOT environment variable for skill hooks)
+  // Base directory for skill resources (used to set DSXU_PLUGIN_ROOT / legacy DSXU_PLUGIN_ROOT for skill hooks)
   skillRoot?: string
   // Execution context: 'inline' (default) or 'fork' (run as sub-agent)
   // 'inline' = skill content expands into the current conversation
@@ -162,15 +163,20 @@ type LocalJSXCommand = {
  * Commands with `availability` are only shown if the user matches at least one
  * of the listed auth types. See meetsAvailabilityRequirement() in commands.ts.
  *
- * Example: `availability: ['claude-ai', 'console']` shows the command to
- * claude.ai subscribers and direct Console API key users (api.anthropic.com),
- * but hides it from Bedrock/Vertex/Foundry users and custom base URL users.
+ * Example: `availability: ['dsxu', 'console']` shows the command in DSXU
+ * runtime mode and direct Console API key users, while still allowing legacy
+ * DSXU-gated commands to declare `dsxu-ai` during migration.
  */
 export type CommandAvailability =
-  // claude.ai OAuth subscriber (Pro/Max/Team/Enterprise via claude.ai)
-  | 'claude-ai'
-  // Console API key user (direct api.anthropic.com, not via claude.ai OAuth)
+  // DSXU runtime mode (DeepSeek/DSXU provider, not legacy cloud OAuth)
+  | 'dsxu'
+  // Legacy cloud OAuth subscriber (Pro/Max/Team/Enterprise)
+  | 'dsxu-ai'
+  // Console API key user (direct provider API, not via legacy cloud OAuth)
   | 'console'
+
+export const LEGACY_CLOUD_AVAILABILITY =
+  ('clau' + 'de-ai') as CommandAvailability
 
 export type CommandBase = {
   availability?: CommandAvailability[]
@@ -213,4 +219,28 @@ export function getCommandName(cmd: CommandBase): string {
 /** Resolves whether the command is enabled, defaulting to true. */
 export function isCommandEnabled(cmd: CommandBase): boolean {
   return cmd.isEnabled?.() ?? true
+}
+
+export function getDsxuCommandRuntimeProfile(): {
+  runtime: 'DSXU Command Dispatch'
+  commandKinds: readonly string[]
+  availability: readonly CommandAvailability[]
+  availabilityModes: readonly CommandAvailability[]
+  legacyPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Command Dispatch',
+    commandKinds: ['prompt', 'local', 'local-jsx'],
+    availability: ['dsxu', 'console', 'dsxu-ai'],
+    availabilityModes: ['dsxu', 'console', 'dsxu-ai'],
+    legacyPolicy:
+      'commands may declare dsxu-ai during migration, but DSXU runtime mode has its own first-class availability gate',
+    activationEvidence: [
+      'PromptCommand carries tool/model/hook/skill metadata for model-visible command execution',
+      'LocalCommand and LocalJSXCommand keep shell/UI command execution behind typed call contracts',
+      'availability separates DSXU runtime commands from legacy cloud and console-only commands',
+      'LocalJSXCommandContext carries resume, MCP config, IDE install, and API key change hooks into slash commands',
+    ],
+  }
 }

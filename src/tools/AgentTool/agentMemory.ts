@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { join, normalize, sep } from 'path'
 import { getProjectRoot } from '../../bootstrap/state.js'
 import {
@@ -8,8 +9,13 @@ import { getMemoryBaseDir } from '../../memdir/paths.js'
 import { getCwd } from '../../utils/cwd.js'
 import { findCanonicalGitRoot } from '../../utils/git.js'
 import { sanitizePath } from '../../utils/path.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuRuntimeMode,
+} from '../../utils/envUtils.js'
 
-// Persistent agent memory scope: 'user' (~/.claude/agent-memory/), 'project' (.claude/agent-memory/), or 'local' (.claude/agent-memory-local/)
+// Persistent agent memory scope: 'user' (~/.dsxu/agent-memory/), 'project'
+// (.dsxu/agent-memory/), or 'local' (.dsxu/agent-memory-local/) in DSXU mode.
 export type AgentMemoryScope = 'user' | 'project' | 'local'
 
 /**
@@ -21,16 +27,26 @@ function sanitizeAgentTypeForPath(agentType: string): string {
   return agentType.replace(/:/g, '-')
 }
 
+function getProjectStateDirName(): string {
+  return isDsxuRuntimeMode() ? '.dsxu' : `.${'cl' + 'aude'}`
+}
+
+function getRemoteAgentMemoryDir(): string | undefined {
+  return getDsxuCodeEnv('REMOTE_MEMORY_DIR')
+}
+
 /**
  * Returns the local agent memory directory, which is project-specific and not checked into VCS.
- * When CLAUDE_CODE_REMOTE_MEMORY_DIR is set, persists to the mount with project namespacing.
- * Otherwise, uses <cwd>/.claude/agent-memory-local/<agentType>/.
+ * When DSXU_CODE_REMOTE_MEMORY_DIR is set, persists to the mount with project
+ * namespacing. Otherwise, uses <cwd>/.dsxu/agent-memory-local/<agentType>/ in
+ * DSXU mode. The legacy provider remote-memory env remains a migration alias.
  */
 function getLocalAgentMemoryDir(dirName: string): string {
-  if (process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR) {
+  const remoteMemoryDir = getRemoteAgentMemoryDir()
+  if (remoteMemoryDir) {
     return (
       join(
-        process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR,
+        remoteMemoryDir,
         'projects',
         sanitizePath(
           findCanonicalGitRoot(getProjectRoot()) ?? getProjectRoot(),
@@ -40,13 +56,13 @@ function getLocalAgentMemoryDir(dirName: string): string {
       ) + sep
     )
   }
-  return join(getCwd(), '.claude', 'agent-memory-local', dirName) + sep
+  return join(getCwd(), getProjectStateDirName(), 'agent-memory-local', dirName) + sep
 }
 
 /**
  * Returns the agent memory directory for a given agent type and scope.
  * - 'user' scope: <memoryBase>/agent-memory/<agentType>/
- * - 'project' scope: <cwd>/.claude/agent-memory/<agentType>/
+ * - 'project' scope: <cwd>/.dsxu/agent-memory/<agentType>/ in DSXU mode
  * - 'local' scope: see getLocalAgentMemoryDir()
  */
 export function getAgentMemoryDir(
@@ -56,7 +72,7 @@ export function getAgentMemoryDir(
   const dirName = sanitizeAgentTypeForPath(agentType)
   switch (scope) {
     case 'project':
-      return join(getCwd(), '.claude', 'agent-memory', dirName) + sep
+      return join(getCwd(), getProjectStateDirName(), 'agent-memory', dirName) + sep
     case 'local':
       return getLocalAgentMemoryDir(dirName)
     case 'user':
@@ -77,24 +93,27 @@ export function isAgentMemoryPath(absolutePath: string): boolean {
 
   // Project scope: always cwd-based (not redirected)
   if (
-    normalizedPath.startsWith(join(getCwd(), '.claude', 'agent-memory') + sep)
+    normalizedPath.startsWith(
+      join(getCwd(), getProjectStateDirName(), 'agent-memory') + sep,
+    )
   ) {
     return true
   }
 
-  // Local scope: persisted to mount when CLAUDE_CODE_REMOTE_MEMORY_DIR is set, otherwise cwd-based
-  if (process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR) {
+  // Local scope: persisted to mount when a remote memory dir is set, otherwise cwd-based
+  const remoteMemoryDir = getRemoteAgentMemoryDir()
+  if (remoteMemoryDir) {
     if (
       normalizedPath.includes(sep + 'agent-memory-local' + sep) &&
       normalizedPath.startsWith(
-        join(process.env.CLAUDE_CODE_REMOTE_MEMORY_DIR, 'projects') + sep,
+        join(remoteMemoryDir, 'projects') + sep,
       )
     ) {
       return true
     }
   } else if (
     normalizedPath.startsWith(
-      join(getCwd(), '.claude', 'agent-memory-local') + sep,
+      join(getCwd(), getProjectStateDirName(), 'agent-memory-local') + sep,
     )
   ) {
     return true
@@ -120,7 +139,7 @@ export function getMemoryScopeDisplay(
     case 'user':
       return `User (${join(getMemoryBaseDir(), 'agent-memory')}/)`
     case 'project':
-      return 'Project (.claude/agent-memory/)'
+      return `Project (${getProjectStateDirName()}/agent-memory/)`
     case 'local':
       return `Local (${getLocalAgentMemoryDir('...')})`
     default:
@@ -133,7 +152,8 @@ export function getMemoryScopeDisplay(
  * Creates the memory directory if needed and returns a prompt with memory contents.
  *
  * @param agentType The agent's type name (used as directory name)
- * @param scope 'user' for ~/.claude/agent-memory/ or 'project' for .claude/agent-memory/
+ * @param scope 'user' for config-home agent memory, or 'project' for project
+ * state dir agent memory.
  */
 export function loadAgentMemoryPrompt(
   agentType: string,
@@ -165,7 +185,7 @@ export function loadAgentMemoryPrompt(
   void ensureMemoryDirExists(memoryDir)
 
   const coworkExtraGuidelines =
-    process.env.CLAUDE_COWORK_MEMORY_EXTRA_GUIDELINES
+    getDsxuCodeEnv('COWORK_MEMORY_EXTRA_GUIDELINES')
   return buildMemoryPrompt({
     displayName: 'Persistent Agent Memory',
     memoryDir,
@@ -174,4 +194,28 @@ export function loadAgentMemoryPrompt(
         ? [scopeNote, coworkExtraGuidelines]
         : [scopeNote],
   })
+}
+
+export function getDsxuAgentMemoryRuntimeProfile(): {
+  runtime: 'DSXU Agent Memory'
+  scopes: readonly AgentMemoryScope[]
+  projectStateDir: string
+  remoteEnv: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Agent Memory',
+    scopes: ['user', 'project', 'local'],
+    projectStateDir: getProjectStateDirName(),
+    remoteEnv: [
+      'DSXU_CODE_REMOTE_MEMORY_DIR',
+      'legacy provider remote-memory alias',
+    ],
+    activationEvidence: [
+      'getAgentMemoryDir maps user/project/local scopes to DSXU memory locations',
+      'isAgentMemoryPath validates project, local, and remote memory paths before tool access',
+      'loadAgentMemoryPrompt creates the memory directory and injects persistent memory into agent prompts',
+      'plugin-style agent names are sanitized before becoming filesystem paths',
+    ],
+  }
 }

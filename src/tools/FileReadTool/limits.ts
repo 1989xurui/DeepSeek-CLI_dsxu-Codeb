@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Read tool output limits.  Two caps apply to text reads:
  *
@@ -9,12 +10,13 @@
  * Known mismatch: maxSizeBytes gates on total file size, not the slice.
  * Tested truncating instead of throwing for explicit-limit reads that
  * exceed the byte cap (#21841, Mar 2026).  Reverted: tool error rate
- * dropped but mean tokens rose — the throw path yields a ~100-byte error
+ * dropped but mean tokens rose ...the throw path yields a ~100-byte error
  * tool-result while truncation yields ~25K tokens of content at the cap.
  */
 import memoize from 'lodash-es/memoize.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { MAX_OUTPUT_SIZE } from 'src/utils/file.js'
+import { getDsxuCodeEnv } from '../../utils/envUtils.js'
 export const DEFAULT_MAX_OUTPUT_TOKENS = 25000
 
 /**
@@ -22,7 +24,7 @@ export const DEFAULT_MAX_OUTPUT_TOKENS = 25000
  * so the caller can fall through to the next precedence tier.
  */
 function getEnvMaxTokens(): number | undefined {
-  const override = process.env.CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS
+  const override = getDsxuCodeEnv('FILE_READ_MAX_OUTPUT_TOKENS')
   if (override) {
     const parsed = parseInt(override, 10)
     if (!isNaN(parsed) && parsed > 0) {
@@ -41,7 +43,7 @@ export type FileReadingLimits = {
 
 /**
  * Default limits for Read tool when the ToolUseContext doesn't supply an
- * override. Memoized so the GrowthBook value is fixed at first call — avoids
+ * override. Memoized so the GrowthBook value is fixed at first call ...avoids
  * the cap changing mid-session as the flag refreshes in the background.
  *
  * Precedence for maxTokens: env var > GrowthBook > DEFAULT_MAX_OUTPUT_TOKENS.
@@ -90,3 +92,26 @@ export const getDefaultFileReadingLimits = memoize((): FileReadingLimits => {
     targetedRangeNudge,
   }
 })
+
+export function getDsxuFileReadLimitsRuntimeProfile(): {
+  runtime: 'DSXU FileRead Limits'
+  defaultMaxOutputTokens: number
+  envOverrides: readonly string[]
+  maxSizeSource: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU FileRead Limits',
+    defaultMaxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
+    envOverrides: [
+      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS',
+      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS (legacy migration alias)',
+    ],
+    maxSizeSource: 'MAX_OUTPUT_SIZE gates total file size before reading',
+    activationEvidence: [
+      'DSXU env override has priority over legacy DSXU env override',
+      'GrowthBook/file-limit override is validated field-by-field',
+      'invalid/zero caps fall back to hardcoded safe defaults',
+    ],
+  }
+}

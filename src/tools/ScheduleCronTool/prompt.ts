@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
 import { DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuRuntimeMode, isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 
 const KAIROS_CRON_REFRESH_MS = 5 * 60 * 1000
 
@@ -26,16 +26,21 @@ export const DEFAULT_MAX_AGE_DAYS =
  *
  * The default is `true` — /loop is GA (announced in changelog). GrowthBook
  * is disabled for Bedrock/Vertex/Foundry and when DISABLE_TELEMETRY /
- * CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC are set; a `false` default would
+ * DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC are set; a `false` default would
  * break /loop for those users (GH #31759). The GB gate now serves purely as
  * a fleet-wide kill switch — flipping it to `false` stops already-running
  * schedulers on their next isKilled poll tick, not just new ones.
  *
- * `CLAUDE_CODE_DISABLE_CRON` is a local override that wins over GB.
- */
+ * `DSXU_CODE_DISABLE_CRON` is a local override that wins over GB.
+  */
 export function isKairosCronEnabled(): boolean {
+  const cronDisabled =
+    isDsxuCodeEnvTruthy('DISABLE_CRON')
+  if (isDsxuRuntimeMode()) {
+    return !cronDisabled
+  }
   return feature('AGENT_TRIGGERS')
-    ? !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_CRON) &&
+    ? !cronDisabled &&
         getFeatureValue_CACHED_WITH_REFRESH(
           'tengu_kairos_cron',
           true,
@@ -50,7 +55,7 @@ export function isKairosCronEnabled(): boolean {
  * the call() site, leaving session-only cron (in-memory, GA) untouched.
  *
  * Defaults to `true` so Bedrock/Vertex/Foundry and DISABLE_TELEMETRY users get
- * durable cron. Does NOT consult CLAUDE_CODE_DISABLE_CRON (that kills the whole
+ * durable cron. Does NOT consult DSXU_CODE_DISABLE_CRON (that kills the whole
  * scheduler via isKairosCronEnabled).
  */
 export function isDurableCronEnabled(): boolean {
@@ -65,23 +70,61 @@ export const CRON_CREATE_TOOL_NAME = 'CronCreate'
 export const CRON_DELETE_TOOL_NAME = 'CronDelete'
 export const CRON_LIST_TOOL_NAME = 'CronList'
 
+const DSXU_CRON_CREATE_DISCIPLINE = `
+
+## DSXU weak-model discipline
+
+- When to use: schedule one-shot or recurring prompts only when the user asks for future/reminder/loop behavior.
+- When not to use: do not use cron for immediate work, hidden background execution, remote provider triggers, or persistent jobs without explicit user intent.
+- Recovery after failure: if the cron expression is ambiguous, ask one concrete time/schedule question; if persistence is unavailable, fall back to session-only with clear wording.
+- Weak-model anti-pattern: do not create durable jobs by default, do not round approximate times to fleet-hot minutes, and do not schedule actions that would bypass permissions.
+- Verification / evidence: cite the cron expression, recurring/durable flags, local timezone assumption, job id, and expiration behavior.`
+
+const DSXU_CRON_DELETE_DISCIPLINE = `
+
+DSXU weak-model discipline:
+- When to use: delete a known scheduled job when the user asks to cancel it or the job is obsolete.
+- When not to use: do not delete unknown jobs or jobs owned by a different explicit user request without confirmation.
+- Recovery after failure: list jobs and confirm the id before retrying.
+- Weak-model anti-pattern: do not treat deletion as task completion.
+- Verification / evidence: cite the job id and deletion result.`
+
+const DSXU_CRON_LIST_DISCIPLINE = `
+
+DSXU weak-model discipline:
+- When to use: list scheduled jobs before update/delete or to answer the user's schedule question.
+- When not to use: do not use this as proof that a scheduled task ran.
+- Recovery after failure: report missing durable/session stores separately.
+- Weak-model anti-pattern: do not infer job execution from list membership.
+- Verification / evidence: cite job ids, schedules, durable/session-only state, and expiration.`
+
+export function getRuntimeProductName(): string {
+  return isDsxuRuntimeMode() ? 'DSXU Code' : 'DSXU'
+}
+
+export function getScheduledTasksPath(): string {
+  return isDsxuRuntimeMode()
+    ? '.dsxu/scheduled_tasks.json'
+    : '.dsxu/scheduled_tasks.json'
+}
+
 export function buildCronCreateDescription(durableEnabled: boolean): string {
   return durableEnabled
-    ? 'Schedule a prompt to run at a future time — either recurring on a cron schedule, or once at a specific time. Pass durable: true to persist to .claude/scheduled_tasks.json; otherwise session-only.'
-    : 'Schedule a prompt to run at a future time within this Claude session — either recurring on a cron schedule, or once at a specific time.'
+    ? `Schedule a prompt to run at a future time — either recurring on a cron schedule, or once at a specific time. Pass durable: true to persist to ${getScheduledTasksPath()}; otherwise session-only.`
+    : `Schedule a prompt to run at a future time within this ${getRuntimeProductName()} session — either recurring on a cron schedule, or once at a specific time.`
 }
 
 export function buildCronCreatePrompt(durableEnabled: boolean): string {
   const durabilitySection = durableEnabled
     ? `## Durability
 
-By default (durable: false) the job lives only in this Claude session — nothing is written to disk, and the job is gone when Claude exits. Pass durable: true to write to .claude/scheduled_tasks.json so the job survives restarts. Only use durable: true when the user explicitly asks for the task to persist ("keep doing this every day", "set this up permanently"). Most "remind me in 5 minutes" / "check back in an hour" requests should stay session-only.`
+By default (durable: false) the job lives only in this ${getRuntimeProductName()} session — nothing is written to disk, and the job is gone when ${getRuntimeProductName()} exits. Pass durable: true to write to ${getScheduledTasksPath()} so the job survives restarts. Only use durable: true when the user explicitly asks for the task to persist ("keep doing this every day", "set this up permanently"). Most "remind me in 5 minutes" / "check back in an hour" requests should stay session-only.`
     : `## Session-only
 
-Jobs live only in this Claude session — nothing is written to disk, and the job is gone when Claude exits.`
+Jobs live only in this ${getRuntimeProductName()} session — nothing is written to disk, and the job is gone when ${getRuntimeProductName()} exits.`
 
   const durableRuntimeNote = durableEnabled
-    ? 'Durable jobs persist to .claude/scheduled_tasks.json and survive session restarts — on next launch they resume automatically. One-shot durable tasks that were missed while the REPL was closed are surfaced for catch-up. Session-only jobs die with the process. '
+    ? `Durable jobs persist to ${getScheduledTasksPath()} and survive session restarts — on next launch they resume automatically. One-shot durable tasks that were missed while the REPL was closed are surfaced for catch-up. Session-only jobs die with the process. `
     : ''
 
   return `Schedule a prompt to be enqueued at a future time. Use for both recurring schedules and one-shot reminders.
@@ -117,19 +160,44 @@ Jobs only fire while the REPL is idle (not mid-query). ${durableRuntimeNote}The 
 
 Recurring tasks auto-expire after ${DEFAULT_MAX_AGE_DAYS} days — they fire one final time, then are deleted. This bounds session lifetime. Tell the user about the ${DEFAULT_MAX_AGE_DAYS}-day limit when scheduling recurring jobs.
 
-Returns a job ID you can pass to ${CRON_DELETE_TOOL_NAME}.`
+Returns a job ID you can pass to ${CRON_DELETE_TOOL_NAME}.${DSXU_CRON_CREATE_DISCIPLINE}`
 }
 
 export const CRON_DELETE_DESCRIPTION = 'Cancel a scheduled cron job by ID'
 export function buildCronDeletePrompt(durableEnabled: boolean): string {
   return durableEnabled
-    ? `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from .claude/scheduled_tasks.json (durable jobs) or the in-memory session store (session-only jobs).`
-    : `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from the in-memory session store.`
+    ? `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from ${getScheduledTasksPath()} (durable jobs) or the in-memory session store (session-only jobs).${DSXU_CRON_DELETE_DISCIPLINE}`
+    : `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from the in-memory session store.${DSXU_CRON_DELETE_DISCIPLINE}`
 }
 
 export const CRON_LIST_DESCRIPTION = 'List scheduled cron jobs'
 export function buildCronListPrompt(durableEnabled: boolean): string {
   return durableEnabled
-    ? `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME}, both durable (.claude/scheduled_tasks.json) and session-only.`
-    : `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME} in this session.`
+    ? `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME}, both durable (${getScheduledTasksPath()}) and session-only.${DSXU_CRON_LIST_DISCIPLINE}`
+    : `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME} in this session.${DSXU_CRON_LIST_DISCIPLINE}`
+}
+
+export function getDsxuCronPromptRuntimeProfile(): {
+  runtime: 'DSXU Cron Prompt'
+  toolNames: readonly string[]
+  durablePath: string
+  disableEnv: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Cron Prompt',
+    toolNames: [
+      CRON_CREATE_TOOL_NAME,
+      CRON_DELETE_TOOL_NAME,
+      CRON_LIST_TOOL_NAME,
+    ],
+    durablePath: getScheduledTasksPath(),
+    disableEnv: ['DSXU_CODE_DISABLE_CRON', 'DSXU_CODE_DISABLE_CRON legacy'],
+    activationEvidence: [
+      'isKairosCronEnabled checks DSXU disable env before legacy alias',
+      'durable cron writes to .dsxu/scheduled_tasks.json in DSXU mode',
+      'prompt differentiates session-only and durable task persistence',
+      'recurring jobs include jitter and max-age guidance for long-running stability',
+    ],
+  }
 }

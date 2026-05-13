@@ -1,9 +1,13 @@
-import type { ClientOptions } from '@anthropic-ai/sdk'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { createHash } from 'crypto'
 import { promises as fs } from 'fs'
 import { dirname, join } from 'path'
 import { getSessionId } from 'src/bootstrap/state.js'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import {
+  getLegacyProviderConfigHomeDir,
+  getDsxuConfigHomeDir,
+  isDsxuRuntimeMode,
+} from '../../utils/envUtils.js'
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 function hashString(str: string): string {
@@ -18,7 +22,7 @@ type DumpState = {
   initialized: boolean
   messageCountSeen: number
   lastInitDataHash: string
-  // Cheap proxy for change detection — skips the expensive stringify+hash
+  // Cheap proxy for change detection ...skips the expensive stringify+hash
   // when model/tools/system are structurally identical to the last call.
   lastInitFingerprint: string
 }
@@ -58,10 +62,33 @@ export function addApiRequestToCache(requestData: unknown): void {
 
 export function getDumpPromptsPath(agentIdOrSessionId?: string): string {
   return join(
-    getClaudeConfigHomeDir(),
+    isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getLegacyProviderConfigHomeDir(),
     'dump-prompts',
     `${agentIdOrSessionId ?? getSessionId()}.jsonl`,
   )
+}
+
+export function getDsxuDumpPromptsRuntimeProfile(): {
+  runtime: 'DSXU Prompt Dump Ledger'
+  storageMode: string
+  activationEvidence: readonly string[]
+  hardening: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Prompt Dump Ledger',
+    storageMode:
+      'DSXU mode writes prompt/debug request ledgers under ~/.dsxu/dump-prompts/{session}.jsonl',
+    activationEvidence: [
+      'createDumpPromptsFetch wraps the model fetch path and captures init/system/tool deltas',
+      'dumpRequest stores user-message deltas without blocking the API request path',
+      'getDumpPromptsPath selects ~/.dsxu in DSXU runtime mode',
+    ],
+    hardening: [
+      'fingerprint avoids repeated large prompt serialization on unchanged tool/system shape',
+      'streaming responses are cloned and parsed best-effort as async evidence',
+      'legacy provider config path is not used when DSXU_CODE_MODE=1',
+    ],
+  }
 }
 
 function appendToFile(filePath: string, entries: string[]): void {
@@ -145,7 +172,7 @@ function dumpRequest(
 
 export function createDumpPromptsFetch(
   agentIdOrSessionId: string,
-): ClientOptions['fetch'] {
+): typeof fetch {
   const filePath = getDumpPromptsPath(agentIdOrSessionId)
 
   return async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -162,8 +189,7 @@ export function createDumpPromptsFetch(
     if (init?.method === 'POST' && init.body) {
       timestamp = new Date().toISOString()
       // Parsing + stringifying the request (system prompt + tool schemas = MBs)
-      // takes hundreds of ms. Defer so it doesn't block the actual API call —
-      // this is debug tooling for /issue, not on the critical path.
+      // takes hundreds of ms. Defer so it doesn't block the actual API call ...      // this is debug tooling for /issue, not on the critical path.
       setImmediate(dumpRequest, init.body as string, timestamp, state, filePath)
     }
 

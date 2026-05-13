@@ -17,6 +17,8 @@ import {
   buildCronCreatePrompt,
   CRON_CREATE_TOOL_NAME,
   DEFAULT_MAX_AGE_DAYS,
+  getRuntimeProductName,
+  getScheduledTasksPath,
   isDurableCronEnabled,
   isKairosCronEnabled,
 } from './prompt.js'
@@ -36,7 +38,7 @@ const inputSchema = lazySchema(() =>
       `true (default) = fire on every cron match until deleted or auto-expired after ${DEFAULT_MAX_AGE_DAYS} days. false = fire once at the next match, then auto-delete. Use false for "remind me at X" one-shot requests with pinned minute/hour/dom/month.`,
     ),
     durable: semanticBoolean(z.boolean().optional()).describe(
-      'true = persist to .claude/scheduled_tasks.json and survive restarts. false (default) = in-memory only, dies when this Claude session ends. Use true only when the user asks the task to survive across sessions.',
+      `true = persist to ${getScheduledTasksPath()} and survive restarts. false (default) = in-memory only, dies when this ${getRuntimeProductName()} session ends. Use true only when the user asks the task to survive across sessions.`,
     ),
   }),
 )
@@ -142,8 +144,8 @@ export const CronCreateTool = buildTool({
   },
   mapToolResultToToolResultBlockParam(output, toolUseID) {
     const where = output.durable
-      ? 'Persisted to .claude/scheduled_tasks.json'
-      : 'Session-only (not written to disk, dies when Claude exits)'
+      ? `Persisted to ${getScheduledTasksPath()}`
+      : `Session-only (not written to disk, dies when ${getRuntimeProductName()} exits)`
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
@@ -155,3 +157,12 @@ export const CronCreateTool = buildTool({
   renderToolUseMessage: renderCreateToolUseMessage,
   renderToolResultMessage: renderCreateResultMessage,
 } satisfies ToolDef<InputSchema, CreateOutput>)
+
+
+// V14 lifecycle shim: croncreatetool
+export function processCroncreatetoolLifecycle(input) {
+  void input
+  const state = 'croncreatetool-state'
+  const lifecycle = 'croncreatetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

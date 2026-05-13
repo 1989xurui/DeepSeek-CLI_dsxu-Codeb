@@ -17,7 +17,7 @@ import {
   withOAuth401Retry,
 } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 
 // Cache expiration: 24 hours
 const GROVE_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
@@ -66,7 +66,7 @@ export const getGroveSettings = memoize(
           {
             headers: {
               ...authHeaders.headers,
-              'User-Agent': getClaudeCodeUserAgent(),
+              'User-Agent': getDSXUCodeUserAgent(),
             },
           },
         )
@@ -74,7 +74,7 @@ export const getGroveSettings = memoize(
       return { success: true, data: response.data }
     } catch (err) {
       logError(err)
-      // Don't cache failures — transient network issues would lock the user
+      // Don't cache failures -?transient network issues would lock the user
       // out of privacy settings for the entire session (deadlock: dialog needs
       // success to render the toggle, toggle calls updateGroveSettings which
       // is the only other place the cache is cleared).
@@ -100,12 +100,12 @@ export async function markGroveNoticeViewed(): Promise<void> {
         {
           headers: {
             ...authHeaders.headers,
-            'User-Agent': getClaudeCodeUserAgent(),
+            'User-Agent': getDSXUCodeUserAgent(),
           },
         },
       )
     })
-    // This mutates grove_notice_viewed_at server-side — Grove.tsx:87 reads it
+    // This mutates grove_notice_viewed_at server-side -?Grove.tsx:87 reads it
     // to decide whether to show the dialog. Without invalidation a same-session
     // remount would read stale viewed_at:null and re-show the dialog.
     getGroveSettings.cache.clear?.()
@@ -134,7 +134,7 @@ export async function updateGroveSettings(
         {
           headers: {
             ...authHeaders.headers,
-            'User-Agent': getClaudeCodeUserAgent(),
+            'User-Agent': getDSXUCodeUserAgent(),
           },
         },
       )
@@ -242,7 +242,7 @@ export const getGroveNoticeConfig = memoize(
           throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
         }
         return axios.get<GroveConfig>(
-          `${getOauthConfig().BASE_API_URL}/api/claude_code_grove`,
+          `${getOauthConfig().BASE_API_URL}${LEGACY_GROVE_PATH}`,
           {
             headers: {
               ...authHeaders.headers,
@@ -305,7 +305,7 @@ export function calculateShouldShowGrove(
     return true
   }
   // Check if we need to remind the user to accept the terms and choose
-  // whether to help improve Claude.
+  // whether to help improve DSXU.
   const reminderFrequency = config.notice_reminder_frequency
   if (reminderFrequency !== null && settings.grove_notice_viewed_at) {
     const daysSinceViewed = Math.floor(
@@ -343,13 +343,13 @@ export async function checkGroveForNonInteractive(): Promise<void> {
     if (config === null || config.notice_is_grace_period) {
       // Grace period is still active - show informational message and continue
       writeToStderr(
-        '\nAn update to our Consumer Terms and Privacy Policy will take effect on October 8, 2025. Run `claude` to review the updated terms.\n\n',
+        '\nAn update to our Consumer Terms and Privacy Policy will take effect on October 8, 2025. Run `dsxu` to review the updated terms.\n\n',
       )
       await markGroveNoticeViewed()
     } else {
       // Grace period has ended - show error message and exit
       writeToStderr(
-        '\n[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on October 8, 2025. You must run `claude` to review the updated terms.\n\n',
+        '\n[ACTION REQUIRED] An update to our Consumer Terms and Privacy Policy has taken effect on October 8, 2025. You must run `dsxu` to review the updated terms.\n\n',
       )
       await gracefulShutdown(1)
     }

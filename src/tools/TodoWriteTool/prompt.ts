@@ -177,6 +177,14 @@ The assistant did not use the todo list because this is a single command executi
      - content: "Fix authentication bug"
      - activeForm: "Fixing authentication bug"
 
+## DSXU Weak-Model Discipline
+
+- When to use: use TodoWrite for multi-step work where the user benefits from visible progress, especially edits plus verification, investigation plus implementation, or recovery after a failure.
+- When not to use: do not use TodoWrite for a single trivial action, a pure explanation, or as a substitute for reading files and proving the task state.
+- Recovery after failure: if a todo cannot be completed, keep it in_progress or add a blocked follow-up with the exact failing command, missing file, or permission denial.
+- Weak-model anti-pattern: do not mark todos complete before verification, do not leave multiple todos in_progress, and do not batch status updates only at the end of the task.
+- Verification / evidence: completed todos must correspond to source evidence, command output, tests, user confirmation, or an explicit PASS/PARTIAL/FAIL result.
+
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `
 

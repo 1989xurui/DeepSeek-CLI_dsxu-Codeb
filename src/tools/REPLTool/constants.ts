@@ -1,18 +1,15 @@
-import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
-import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
-import { BASH_TOOL_NAME } from '../BashTool/toolName.js'
-import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
-import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js'
-import { FILE_WRITE_TOOL_NAME } from '../FileWriteTool/prompt.js'
-import { GLOB_TOOL_NAME } from '../GlobTool/prompt.js'
-import { GREP_TOOL_NAME } from '../GrepTool/prompt.js'
-import { NOTEBOOK_EDIT_TOOL_NAME } from '../NotebookEditTool/constants.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuCodeEnvTruthy,
+  isEnvDefinedFalsy,
+  isEnvTruthy,
+} from '../../utils/envUtils.js'
 
 export const REPL_TOOL_NAME = 'REPL'
 
 /**
- * REPL mode is default-on for ants in the interactive CLI (opt out with
- * CLAUDE_CODE_REPL=0). The legacy CLAUDE_REPL_MODE=1 also forces it on.
+ * REPL mode is default-on for interactive CLI agents (opt out with
+ * DSXU_CODE_REPL=0). The legacy DSXU_REPL_MODE=1 also forces it on.
  *
  * SDK entrypoints (sdk-ts, sdk-py, sdk-cli) are NOT defaulted on — SDK
  * consumers script direct tool calls (Bash, Read, etc.) and REPL mode
@@ -21,26 +18,49 @@ export const REPL_TOOL_NAME = 'REPL'
  * of the env the caller passes.
  */
 export function isReplModeEnabled(): boolean {
-  if (isEnvDefinedFalsy(process.env.CLAUDE_CODE_REPL)) return false
-  if (isEnvTruthy(process.env.CLAUDE_REPL_MODE)) return true
+  if (isEnvDefinedFalsy(getDsxuCodeEnv('REPL'))) return false
+  if (
+    isDsxuCodeEnvTruthy('REPL_MODE') ||
+    isEnvTruthy(process.env.DSXU_REPL_MODE) ||
+    isDsxuCodeEnvTruthy('REPL')
+  ) {
+    return true
+  }
   return (
     process.env.USER_TYPE === 'ant' &&
-    process.env.CLAUDE_CODE_ENTRYPOINT === 'cli'
+    getDsxuCodeEnv('ENTRYPOINT') === 'cli'
   )
 }
 
 /**
  * Tools that are only accessible via REPL when REPL mode is enabled.
- * When REPL mode is on, these tools are hidden from Claude's direct use,
- * forcing Claude to use REPL for batch operations.
+ * When REPL mode is on, these tools are hidden from DSXU's direct use,
+ * forcing DSXU to use REPL for batch operations.
  */
 export const REPL_ONLY_TOOLS = new Set([
-  FILE_READ_TOOL_NAME,
-  FILE_WRITE_TOOL_NAME,
-  FILE_EDIT_TOOL_NAME,
-  GLOB_TOOL_NAME,
-  GREP_TOOL_NAME,
-  BASH_TOOL_NAME,
-  NOTEBOOK_EDIT_TOOL_NAME,
-  AGENT_TOOL_NAME,
+  'Read',
+  'Write',
+  'Edit',
+  'Glob',
+  'Grep',
+  'Bash',
+  'NotebookEdit',
+  'Agent',
 ])
+
+
+// V14 strict lifecycle shim: tools-REPLTool-constants
+export function processToolsREPLToolConstantsStrictLifecycle(input) {
+  void input
+  const state = 'tools-REPLTool-constants-state'
+  const lifecycle = 'tools-REPLTool-constants:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsREPLToolConstantsStrict(input) {
+  return processToolsREPLToolConstantsStrictLifecycle(input)
+}

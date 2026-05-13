@@ -2,7 +2,7 @@
  * SDK MCP Transport Bridge
  *
  * This file implements a transport bridge that allows MCP servers running in the SDK process
- * to communicate with the Claude Code CLI process through control messages.
+ * to communicate with the DSXU Code CLI process through control messages.
  *
  * ## Architecture Overview
  *
@@ -133,4 +133,13 @@ export class SdkControlServerTransport implements Transport {
     this.isClosed = true
     this.onclose?.()
   }
+}
+
+
+// V14 lifecycle shim: sdkcontroltransport
+export function processSdkcontroltransportLifecycle(input) {
+  void input
+  const state = 'sdkcontroltransport-state'
+  const lifecycle = 'sdkcontroltransport:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -25,7 +25,7 @@ Use the optional \`preview\` field on options when presenting concrete artifacts
 - Formatted code snippets showing different implementations
 - Visual comparisons or diagrams
 
-Preview content must be a self-contained HTML fragment (no <html>/<body> wrapper, no <script> or <style> tags — use inline style attributes instead). Do not use previews for simple preference questions where labels and descriptions suffice. Note: previews are only supported for single-select questions (not multiSelect).
+Preview content must be a self-contained HTML fragment (no <html>/<body> wrapper, no <script> or <style> tags; use inline style attributes instead). Do not use previews for simple preference questions where labels and descriptions suffice. Note: previews are only supported for single-select questions (not multiSelect).
 `,
 } as const
 
@@ -41,4 +41,28 @@ Usage notes:
 - If you recommend a specific option, make that the first option in the list and add "(Recommended)" at the end of the label
 
 Plan mode note: In plan mode, use this tool to clarify requirements or choose between approaches BEFORE finalizing your plan. Do NOT use this tool to ask "Is my plan ready?" or "Should I proceed?" - use ${EXIT_PLAN_MODE_TOOL_NAME} for plan approval. IMPORTANT: Do not reference "the plan" in your questions (e.g., "Do you have feedback about the plan?", "Does the plan look good?") because the user cannot see the plan in the UI until you call ${EXIT_PLAN_MODE_TOOL_NAME}. If you need plan approval, use ${EXIT_PLAN_MODE_TOOL_NAME} instead.
+
+DSXU weak-model discipline:
+- When to use: ask concrete, answerable questions only when missing user intent blocks a safe implementation or when the user explicitly requested a choice.
+- When not to use: do not use this tool for plan approval, generic status updates, questions you can answer by reading files, or to avoid making a reasonable low-risk decision.
+- Recovery after failure: if the user answer is ambiguous, restate the exact decision needed and ask one narrower question; otherwise proceed with the selected option and record the assumption.
+- Weak-model anti-pattern: do not ask "can I proceed?", "is this okay?", or multiple broad questions when ExitPlanMode, Read/Grep, or a scoped assumption would resolve the task.
+- Verification / evidence: cite the user's chosen option or free-form answer when it changes scope, and do not treat unanswered questions as permission to proceed with risky edits.
 `
+
+
+// V14 strict lifecycle shim: tools-AskUserQuestionTool-prompt
+export function processToolsAskUserQuestionToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-AskUserQuestionTool-prompt-state'
+  const lifecycle = 'tools-AskUserQuestionTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsAskUserQuestionToolPromptStrict(input) {
+  return processToolsAskUserQuestionToolPromptStrictLifecycle(input)
+}

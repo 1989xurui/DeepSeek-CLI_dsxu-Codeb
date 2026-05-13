@@ -59,3 +59,12 @@ export function migrateAutoUpdatesToSettings(): void {
     })
   }
 }
+
+
+// V14 lifecycle shim: migrateautoupdatestosettings
+export function processMigrateautoupdatestosettingsLifecycle(input) {
+  void input
+  const state = 'migrateautoupdatestosettings-state'
+  const lifecycle = 'migrateautoupdatestosettings:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

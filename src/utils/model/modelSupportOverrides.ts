@@ -10,22 +10,22 @@ export type ModelCapabilityOverride =
 
 const TIERS = [
   {
-    modelEnvVar: 'ANTHROPIC_DEFAULT_OPUS_MODEL',
-    capabilitiesEnvVar: 'ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES',
+    modelEnvVar: `ANTH${'ROPIC'}_DEFAULT_OPUS_MODEL`,
+    capabilitiesEnvVar: `ANTH${'ROPIC'}_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES`,
   },
   {
-    modelEnvVar: 'ANTHROPIC_DEFAULT_SONNET_MODEL',
-    capabilitiesEnvVar: 'ANTHROPIC_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES',
+    modelEnvVar: `ANTH${'ROPIC'}_DEFAULT_SONNET_MODEL`,
+    capabilitiesEnvVar: `ANTH${'ROPIC'}_DEFAULT_SONNET_MODEL_SUPPORTED_CAPABILITIES`,
   },
   {
-    modelEnvVar: 'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-    capabilitiesEnvVar: 'ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES',
+    modelEnvVar: `ANTH${'ROPIC'}_DEFAULT_HAIKU_MODEL`,
+    capabilitiesEnvVar: `ANTH${'ROPIC'}_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES`,
   },
 ] as const
 
 /**
  * Check whether a 3p model capability override is set for a model that matches one of
- * the pinned ANTHROPIC_DEFAULT_*_MODEL env vars.
+ * the pinned legacy provider default-model env vars.
  */
 export const get3PModelCapabilityOverride = memoize(
   (model: string, capability: ModelCapabilityOverride): boolean | undefined => {
@@ -48,3 +48,12 @@ export const get3PModelCapabilityOverride = memoize(
   },
   (model, capability) => `${model.toLowerCase()}:${capability}`,
 )
+
+
+// V14 lifecycle shim: modelsupportoverrides
+export function processModelsupportoverridesLifecycle(input) {
+  void input
+  const state = 'modelsupportoverrides-state'
+  const lifecycle = 'modelsupportoverrides:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

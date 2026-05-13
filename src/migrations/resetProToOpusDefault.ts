@@ -1,10 +1,13 @@
 import { logEvent } from 'src/services/analytics/index.js'
 import { isProSubscriber } from '../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js'
+import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import { getSettings_DEPRECATED } from '../utils/settings/settings.js'
 
 export function resetProToOpusDefault(): void {
+  if (isDsxuRuntimeMode()) return
+
   const config = getGlobalConfig()
 
   if (config.opusProMigrationComplete) {
@@ -48,4 +51,13 @@ export function resetProToOpusDefault(): void {
       had_custom_model: true,
     })
   }
+}
+
+
+// V14 lifecycle shim: resetprotoopusdefault
+export function processResetprotoopusdefaultLifecycle(input) {
+  void input
+  const state = 'resetprotoopusdefault-state'
+  const lifecycle = 'resetprotoopusdefault:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

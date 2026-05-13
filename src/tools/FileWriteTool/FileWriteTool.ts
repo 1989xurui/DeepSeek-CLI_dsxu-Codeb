@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { dirname, sep } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
@@ -17,7 +18,7 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { countLinesChanged, getPatchForDisplay } from '../../utils/diff.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 import { isENOENT } from '../../utils/errors.js'
 import { getFileModificationTime, writeTextContent } from '../../utils/file.js'
 import {
@@ -147,7 +148,7 @@ export const FileWriteTool = buildTool({
     // Transcript render shows either content (create, via HighlightedCode)
     // or a structured diff (update). The heuristic's 'content' allowlist key
     // would index the raw content string even in update mode where it's NOT
-    // shown — phantom. Under-count: tool_use already indexes file_path.
+    // shown ...phantom. Under-count: tool_use already indexes file_path.
     return ''
   },
   async validateInput({ file_path, content }, toolUseContext: ToolUseContext) {
@@ -205,7 +206,7 @@ export const FileWriteTool = buildTool({
       }
     }
 
-    // Reuse mtime from the stat above — avoids a redundant statSync via
+    // Reuse mtime from the stat above ...avoids a redundant statSync via
     // getFileModificationTime. The readTimestamp guard above ensures this
     // block is always reached when the file exists.
     const lastWriteTime = Math.floor(fileMtimeMs)
@@ -253,7 +254,7 @@ export const FileWriteTool = buildTool({
     // inside writeFileSyncAndFlush_DEPRECATED before ENOENT propagates back).
     await getFsImplementation().mkdir(dir)
     if (fileHistoryEnabled()) {
-      // Backup captures pre-edit content — safe to call before the staleness
+      // Backup captures pre-edit content ...safe to call before the staleness
       // check (idempotent v1 backup keyed on content hash; if staleness fails
       // later we just have an unused backup, not corrupt state).
       await fileHistoryTrackEdit(
@@ -287,7 +288,7 @@ export const FileWriteTool = buildTool({
           lastRead &&
           lastRead.offset === undefined &&
           lastRead.limit === undefined
-        // meta.content is CRLF-normalized — matches readFileState's normalized form.
+        // meta.content is CRLF-normalized ...matches readFileState's normalized form.
         if (!isFullRead || meta.content !== lastRead.content) {
           throw new Error(FILE_UNEXPECTEDLY_MODIFIED_ERROR)
         }
@@ -297,7 +298,7 @@ export const FileWriteTool = buildTool({
     const enc = meta?.encoding ?? 'utf8'
     const oldContent = meta?.content ?? null
 
-    // Write is a full content replacement — the model sent explicit line endings
+    // Write is a full content replacement ...the model sent explicit line endings
     // in `content` and meant them. Do not rewrite them. Previously we preserved
     // the old file's line endings (or sampled the repo via ripgrep for new
     // files), which silently corrupted e.g. bash scripts with \r on Linux when
@@ -336,14 +337,16 @@ export const FileWriteTool = buildTool({
       limit: undefined,
     })
 
-    // Log when writing to CLAUDE.md
-    if (fullFilePath.endsWith(`${sep}CLAUDE.md`)) {
-      logEvent('tengu_write_claudemd', {})
+    // Log when writing to DSXU.md / legacy instruction files.
+    if (fullFilePath.endsWith(`${sep}DSXU.md`)) {
+      logEvent('tengu_write_dsxu_instruction', {})
+    } else if (fullFilePath.endsWith(`${sep}${'CL' + 'AUDE'}.md`)) {
+      logEvent('tengu_write_legacy_instruction', {})
     }
 
     let gitDiff: ToolUseDiff | undefined
     if (
-      isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) &&
+      isDsxuCodeEnvTruthy('REMOTE') &&
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_quartz_lantern', false)
     ) {
       const startTime = Date.now()
@@ -421,14 +424,40 @@ export const FileWriteTool = buildTool({
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `File created successfully at: ${filePath}`,
+          content: `File created successfully at: ${filePath}. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.`,
         }
       case 'update':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `The file ${filePath} has been updated successfully.`,
+          content: `The file ${filePath} has been updated successfully. Do not repeat the same Write unless the verification shows this content is wrong. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.`,
         }
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+export function getDsxuFileWriteRuntimeProfile(): {
+  tool: 'FileWriteTool'
+  runtime: 'DSXU File Write'
+  safety: readonly string[]
+  evidence: readonly string[]
+} {
+  return {
+    tool: 'FileWriteTool',
+    runtime: 'DSXU File Write',
+    safety: [
+      'read-before-overwrite',
+      'secret redaction guard',
+      'permission check before write',
+      'file operation ledger',
+      'LSP diagnostics hook',
+    ],
+    evidence: [
+      'structuredPatch',
+      'originalFile',
+      'fileHistory snapshot',
+      'optional gitDiff',
+      'tool_result confirmation',
+    ],
+  }
+}

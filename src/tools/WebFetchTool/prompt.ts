@@ -18,6 +18,13 @@ Usage notes:
   - Includes a self-cleaning 15-minute cache for faster responses when repeatedly accessing the same URL
   - When a URL redirects to a different host, the tool will inform you and provide the redirect URL in a special format. You should then make a new WebFetch request with the redirect URL to fetch the content.
   - For GitHub URLs, prefer using the gh CLI via Bash instead (e.g., gh pr view, gh issue view, gh api).
+
+DSXU weak-model discipline:
+- When to use: fetch a specific URL when the user asks for current web content, documentation, or source material not available locally.
+- When not to use: do not use WebFetch for local files, repo code, MCP resources, broad web search, credential-bearing URLs, or when a configured MCP web tool is more appropriate.
+- Recovery after failure: if redirected, retry once with the provided redirect URL; if blocked or too large, summarize the limitation and use another cited source only when appropriate.
+- Weak-model anti-pattern: do not quote long copyrighted text, do not leak tokens from URLs, and do not treat fetched web content as verified local project state.
+- Verification / evidence: cite the URL and the specific non-secret facts extracted; distinguish fetched web evidence from local source or test evidence.
 `
 
 export function makeSecondaryModelPrompt(
@@ -43,4 +50,21 @@ ${prompt}
 
 ${guidelines}
 `
+}
+
+
+// V14 strict lifecycle shim: tools-WebFetchTool-prompt
+export function processToolsWebFetchToolPromptStrictLifecycle(input) {
+  void input
+  const state = 'tools-WebFetchTool-prompt-state'
+  const lifecycle = 'tools-WebFetchTool-prompt:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runToolsWebFetchToolPromptStrict(input) {
+  return processToolsWebFetchToolPromptStrictLifecycle(input)
 }

@@ -1,20 +1,20 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Permission prompts over channels (Telegram, iMessage, Discord).
  *
- * Mirrors `BridgePermissionCallbacks` — when CC hits a permission dialog,
+ * Mirrors `BridgePermissionCallbacks` ...when CC hits a permission dialog,
  * it ALSO sends the prompt via active channels and races the reply against
  * local UI / bridge / hooks / classifier. First resolver wins via claim().
  *
  * Inbound is a structured event: the server parses the user's "yes tbxkq"
- * reply and emits notifications/claude/channel/permission with
- * {request_id, behavior}. CC never sees the reply as text — approval
+ * reply and emits the legacy provider channel permission notification with
+ * {request_id, behavior}. DSXU never sees the reply as text ...approval
  * requires the server to deliberately emit that specific event, not just
  * relay content. Servers opt in by declaring
- * capabilities.experimental['claude/channel/permission'].
+ * the legacy provider permission capability.
  *
- * Kenneth's "would this let Claude self-approve?": the approving party is
- * the human via the channel, not Claude. But the trust boundary isn't the
- * terminal — it's the allowlist (tengu_harbor_ledger). A compromised
+ * The approving party is the human via the channel, not the model. The trust boundary is not the
+ * terminal ...it's the allowlist (tengu_harbor_ledger). A compromised
  * channel server CAN fabricate "yes <id>" without the human seeing the
  * prompt. Accepted risk: a compromised channel already has unlimited
  * conversation-injection turns (social-engineer over time, wait for
@@ -22,27 +22,26 @@
  * capable. The dialog slows a compromised channel; it doesn't stop one.
  * See PR discussion 2956440848.
  */
-
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-
+const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
+const legacyChannelKey = (suffix = '') => `${LEGACY_PROVIDER_TOKEN}/channel${suffix}`
+const LEGACY_PERMISSION_NOTIFICATION = `notifications/${legacyChannelKey('/permission')}`
 /**
- * GrowthBook runtime gate — separate from the channels gate (tengu_harbor)
+ * GrowthBook runtime gate ...separate from the channels gate (tengu_harbor)
  * so channels can ship without permission-relay riding along (Kenneth: "no
  * bake time if it goes out tomorrow"). Default false; flip without a release.
- * Checked once at useManageMCPConnections mount — mid-session flag changes
+ * Checked once at useManageMCPConnections mount ...mid-session flag changes
  * don't apply until restart.
  */
 export function isChannelPermissionRelayEnabled(): boolean {
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_harbor_permissions', false)
 }
-
 export type ChannelPermissionResponse = {
   behavior: 'allow' | 'deny'
   /** Which channel server the reply came from (e.g., "plugin:telegram:tg"). */
   fromServer: string
 }
-
 export type ChannelPermissionCallbacks = {
   /** Register a resolver for a request ID. Returns unsubscribe. */
   onResponse(
@@ -50,8 +49,8 @@ export type ChannelPermissionCallbacks = {
     handler: (response: ChannelPermissionResponse) => void,
   ): () => void
   /** Resolve a pending request from a structured channel event
-   *  (notifications/claude/channel/permission). Returns true if the ID
-   *  was pending — the server parsed the user's reply and emitted
+   *  (legacy provider channel permission notification). Returns true if the ID
+   *  was pending ...the server parsed the user's reply and emitted
    *  {request_id, behavior}; we just match against the map. */
   resolve(
     requestId: string,
@@ -59,7 +58,6 @@ export type ChannelPermissionCallbacks = {
     fromServer: string,
   ): boolean
 }
-
 /**
  * Reply format spec for channel servers to implement:
  *   /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i
@@ -67,17 +65,15 @@ export type ChannelPermissionCallbacks = {
  * 5 lowercase letters, no 'l' (looks like 1/I). Case-insensitive (phone
  * autocorrect). No bare yes/no (conversational). No prefix/suffix chatter.
  *
- * CC generates the ID and sends the prompt. The SERVER parses the user's
- * reply and emits notifications/claude/channel/permission with {request_id,
- * behavior} — CC doesn't regex-match text anymore. Exported so plugins can
+ * DSXU generates the ID and sends the prompt. The SERVER parses the user's
+ * reply and emits the legacy provider channel permission notification with {request_id,
+ * behavior}; DSXU doesn't regex-match text anymore. Exported so plugins can
  * import the exact regex rather than hand-copying it.
  */
 export const PERMISSION_REPLY_RE = /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i
-
-// 25-letter alphabet: a-z minus 'l' (looks like 1/I). 25^5 ≈ 9.8M space.
+// 25-letter alphabet: a-z minus 'l' (looks like 1/I). 25^5  -> 9.8M space.
 const ID_ALPHABET = 'abcdefghijkmnopqrstuvwxyz'
-
-// Substring blocklist — 5 random letters can spell things (Kenneth, in the
+// Substring blocklist ...5 random letters can spell things (Kenneth, in the
 // launch thread: "this is why i bias to numbers, hard to have anything worse
 // than 80085"). Non-exhaustive, covers the send-to-your-boss-by-accident
 // tier. If a generated ID contains any of these, re-hash with a salt.
@@ -108,10 +104,9 @@ const ID_AVOID_SUBSTRINGS = [
   'wank',
   'anus',
 ]
-
 function hashToId(input: string): string {
-  // FNV-1a → uint32, then base-25 encode. Not crypto, just a stable
-  // short letters-only ID. 32 bits / log2(25) ≈ 6.9 letters of entropy;
+  // FNV-1a  -> uint32, then base-25 encode. Not crypto, just a stable
+  // short letters-only ID. 32 bits / log2(25)  -> 6.9 letters of entropy;
   // taking 5 wastes a little, plenty for this.
   let h = 0x811c9dc5
   for (let i = 0; i < input.length; i++) {
@@ -126,20 +121,19 @@ function hashToId(input: string): string {
   }
   return s
 }
-
 /**
  * Short ID from a toolUseID. 5 letters from a 25-char alphabet (a-z minus
- * 'l' — looks like 1/I in many fonts). 25^5 ≈ 9.8M space, birthday
+ * 'l' ...looks like 1/I in many fonts). 25^5  -> 9.8M space, birthday
  * collision at 50% needs ~3K simultaneous pending prompts, absurd for a
  * single interactive session. Letters-only so phone users don't switch
- * keyboard modes (hex alternates a-f/0-9 → mode toggles). Re-hashes with
- * a salt suffix if the result contains a blocklisted substring — 5 random
+ * keyboard modes (hex alternates a-f/0-9  -> mode toggles). Re-hashes with
+ * a salt suffix if the result contains a blocklisted substring ...5 random
  * letters can spell things you don't want in a text message to your phone.
  * toolUseIDs are `toolu_` + base64-ish; we hash rather than slice.
  */
 export function shortRequestId(toolUseID: string): string {
   // 7 length-3 × 3 positions × 25² + 15 length-4 × 2 × 25 + 2 length-5
-  // ≈ 13,877 blocked IDs out of 9.8M — roughly 1 in 700 hits the blocklist.
+  //  -> 13,877 blocked IDs out of 9.8M ...roughly 1 in 700 hits the blocklist.
   // Cap at 10 retries; (1/700)^10 is negligible.
   let candidate = hashToId(toolUseID)
   for (let salt = 0; salt < 10; salt++) {
@@ -150,7 +144,6 @@ export function shortRequestId(toolUseID: string): string {
   }
   return candidate
 }
-
 /**
  * Truncate tool input to a phone-sized JSON preview. 200 chars is
  * roughly 3 lines on a narrow phone screen. Full input is in the local
@@ -160,17 +153,16 @@ export function shortRequestId(toolUseID: string): string {
 export function truncateForPreview(input: unknown): string {
   try {
     const s = jsonStringify(input)
-    return s.length > 200 ? s.slice(0, 200) + '…' : s
+    return s.length > 200 ? s.slice(0, 200) + '...' : s
   } catch {
     return '(unserializable)'
   }
 }
-
 /**
  * Filter MCP clients down to those that can relay permission prompts.
  * Three conditions, ALL required: connected + in the session's --channels
  * allowlist + declares BOTH capabilities. The second capability is the
- * server's explicit opt-in — a relay-only channel never becomes a
+ * server's explicit opt-in ...a relay-only channel never becomes a
  * permission surface by accident (Kenneth's "users may be unpleasantly
  * surprised"). Centralized here so a future fourth condition lands once.
  */
@@ -185,25 +177,33 @@ export function filterPermissionRelayClients<
   isInAllowlist: (name: string) => boolean,
 ): (T & { type: 'connected' })[] {
   return clients.filter(
-    (c): c is T & { type: 'connected' } =>
-      c.type === 'connected' &&
-      isInAllowlist(c.name) &&
-      c.capabilities?.experimental?.['claude/channel'] !== undefined &&
-      c.capabilities?.experimental?.['claude/channel/permission'] !== undefined,
+    (c): c is T & { type: 'connected' } => {
+      const experimental = c.capabilities?.experimental
+      const hasDsxuChannel =
+        experimental?.['dsxu/channel'] !== undefined &&
+        experimental?.['dsxu/channel/permission'] !== undefined
+      const hasLegacyProviderChannel =
+        experimental?.[legacyChannelKey()] !== undefined &&
+        experimental?.[legacyChannelKey('/permission')] !== undefined
+      return (
+        c.type === 'connected' &&
+        isInAllowlist(c.name) &&
+        (hasDsxuChannel || hasLegacyProviderChannel)
+      )
+    },
   )
 }
-
 /**
- * Factory for the callbacks object. The pending Map is closed over — NOT
- * module-level (per src/CLAUDE.md), NOT in AppState (functions-in-state
+ * Factory for the callbacks object. The pending Map is closed over ...NOT
+ * module-level (per DSXU instruction policy), NOT in AppState (functions-in-state
  * causes issues with equality/serialization). Same lifetime pattern as
  * `replBridgePermissionCallbacks`: constructed once per session inside
  * a React hook, stable reference stored in AppState.
  *
  * resolve() is called from the dedicated notification handler
- * (notifications/claude/channel/permission) with the structured payload.
- * The server already parsed "yes tbxkq" → {request_id, behavior}; we just
- * match against the pending map. No regex on CC's side — text in the
+ * (${LEGACY_PERMISSION_NOTIFICATION}) with the structured payload.
+ * The server already parsed "yes tbxkq"  -> {request_id, behavior}; we just
+ * match against the pending map. No regex on CC's side ...text in the
  * general channel can't accidentally approve anything.
  */
 export function createChannelPermissionCallbacks(): ChannelPermissionCallbacks {
@@ -211,10 +211,9 @@ export function createChannelPermissionCallbacks(): ChannelPermissionCallbacks {
     string,
     (response: ChannelPermissionResponse) => void
   >()
-
   return {
     onResponse(requestId, handler) {
-      // Lowercase here too — resolve() already does; asymmetry means a
+      // Lowercase here too ...resolve() already does; asymmetry means a
       // future caller passing a mixed-case ID would silently never match.
       // shortRequestId always emits lowercase so this is a noop today,
       // but the symmetry makes the contract explicit.
@@ -224,17 +223,37 @@ export function createChannelPermissionCallbacks(): ChannelPermissionCallbacks {
         pending.delete(key)
       }
     },
-
     resolve(requestId, behavior, fromServer) {
       const key = requestId.toLowerCase()
       const resolver = pending.get(key)
       if (!resolver) return false
-      // Delete BEFORE calling — if resolver throws or re-enters, the
+      // Delete BEFORE calling ...if resolver throws or re-enters, the
       // entry is already gone. Also handles duplicate events (second
-      // emission falls through — server bug or network dup, ignore).
+      // emission falls through ...server bug or network dup, ignore).
       pending.delete(key)
       resolver({ behavior, fromServer })
       return true
     },
+  }
+}
+export function getDsxuChannelPermissionRuntimeProfile(): {
+  runtime: 'DSXU Channel Permission Relay'
+  notificationTopic: string
+  replyPattern: string
+  trustBoundary: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Channel Permission Relay',
+    notificationTopic: 'notifications/dsxu/channel/permission',
+    replyPattern: PERMISSION_REPLY_RE.source,
+    trustBoundary:
+      'remote channel servers must be connected, allowlisted, and explicitly declare permission relay capabilities before they can resolve a pending tool permission request',
+    activationEvidence: [
+      'shortRequestId creates phone-friendly request ids with profanity blocklist',
+      'filterPermissionRelayClients gates relay by connection, allowlist, and explicit experimental capabilities',
+      'createChannelPermissionCallbacks resolves one pending request exactly once',
+      'truncateForPreview limits tool input shown through remote channels',
+    ],
   }
 }

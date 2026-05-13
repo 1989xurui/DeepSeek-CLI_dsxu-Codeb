@@ -2,6 +2,10 @@ import { getSettings_DEPRECATED } from '../settings/settings.js'
 import { isModelAlias, isModelFamilyAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'
 import { resolveOverriddenModel } from './modelStrings.js'
+import {
+  hasCompatProviderModelPrefix,
+  withCompatProviderModelPrefix,
+} from '../../dsxu/legacy/model/legacyProviderModelAllowlist.js'
 
 /**
  * Check if a model belongs to a given family by checking if its name
@@ -11,7 +15,7 @@ function modelBelongsToFamily(model: string, family: string): boolean {
   if (model.includes(family)) {
     return true
   }
-  // Resolve aliases like "best" → "claude-opus-4-6" to check family membership
+  // Resolve aliases like "best" to a provider-specific model ID.
   if (isModelAlias(model)) {
     const resolved = parseUserSpecifiedModel(model).toLowerCase()
     return resolved.includes(family)
@@ -22,7 +26,7 @@ function modelBelongsToFamily(model: string, family: string): boolean {
 /**
  * Check if a model name starts with a prefix at a segment boundary.
  * The prefix must match up to the end of the name or a "-" separator.
- * e.g. "claude-opus-4-5" matches "claude-opus-4-5-20251101" but not "claude-opus-4-50".
+ * The prefix must stop at a segment boundary so version families do not bleed together.
  */
 function prefixMatchesModel(modelName: string, prefix: string): boolean {
   if (!modelName.startsWith(prefix)) {
@@ -33,8 +37,8 @@ function prefixMatchesModel(modelName: string, prefix: string): boolean {
 
 /**
  * Check if a model matches a version-prefix entry in the allowlist.
- * Supports shorthand like "opus-4-5" (mapped to "claude-opus-4-5") and
- * full prefixes like "claude-opus-4-5". Resolves input aliases before matching.
+ * Supports shorthand by mapping it to the hidden compatibility provider prefix.
+ * Resolves input aliases before matching.
  */
 function modelMatchesVersionPrefix(model: string, entry: string): boolean {
   // Resolve the input model to a full name if it's an alias
@@ -42,14 +46,14 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
     ? parseUserSpecifiedModel(model).toLowerCase()
     : model
 
-  // Try the entry as-is (e.g. "claude-opus-4-5")
+  // Try the entry as-is.
   if (prefixMatchesModel(resolvedModel, entry)) {
     return true
   }
-  // Try with "claude-" prefix (e.g. "opus-4-5" → "claude-opus-4-5")
+  // Try with the hidden compatibility model prefix for compatibility allowlists.
   if (
-    !entry.startsWith('claude-') &&
-    prefixMatchesModel(resolvedModel, `claude-${entry}`)
+    !hasCompatProviderModelPrefix(entry) &&
+    prefixMatchesModel(resolvedModel, withCompatProviderModelPrefix(entry))
   ) {
     return true
   }
@@ -58,9 +62,8 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
 
 /**
  * Check if a family alias is narrowed by more specific entries in the allowlist.
- * When the allowlist contains both "opus" and "opus-4-5", the specific entry
- * takes precedence — "opus" alone would be a wildcard, but "opus-4-5" narrows
- * it to only that version.
+ * When the allowlist contains both a family alias and a specific version entry,
+ * the specific entry takes precedence; the family alias alone remains a wildcard.
  */
 function familyHasSpecificEntries(
   family: string,
@@ -70,10 +73,9 @@ function familyHasSpecificEntries(
     if (isModelFamilyAlias(entry)) {
       continue
     }
-    // Check if entry is a version-qualified variant of this family
-    // e.g., "opus-4-5" or "claude-opus-4-5-20251101" for the "opus" family
+    // Check if entry is a version-qualified variant of this family.
     // Must match at a segment boundary (followed by '-' or end) to avoid
-    // false positives like "opusplan" matching "opus"
+    // false positives where a plan-mode alias starts with the same family text.
     const idx = entry.indexOf(family)
     if (idx === -1) {
       continue
@@ -91,11 +93,10 @@ function familyHasSpecificEntries(
  * If availableModels is not set, all models are allowed.
  *
  * Matching tiers:
- * 1. Family aliases ("opus", "sonnet", "haiku") — wildcard for the entire family,
- *    UNLESS more specific entries for that family also exist (e.g., "opus-4-5").
+ * 1. Family aliases wildcard the entire family,`n *    UNLESS more specific entries for that family also exist.
  *    In that case, the family wildcard is ignored and only the specific entries apply.
- * 2. Version prefixes ("opus-4-5", "claude-opus-4-5") — any build of that version
- * 3. Full model IDs ("claude-opus-4-5-20251101") — exact match only
+ * 2. Version prefixes and provider-prefixed variants match any build of that version
+ * 3. Full model IDs require exact match only
  */
 export function isModelAllowed(model: string): boolean {
   const settings = getSettings_DEPRECATED() || {}
@@ -112,9 +113,7 @@ export function isModelAllowed(model: string): boolean {
   const normalizedAllowlist = availableModels.map(m => m.trim().toLowerCase())
 
   // Direct match (alias-to-alias or full-name-to-full-name)
-  // Skip family aliases that have been narrowed by specific entries —
-  // e.g., "opus" in ["opus", "opus-4-5"] should NOT directly match,
-  // because the admin intends to restrict to opus 4.5 only.
+  // Skip family aliases that have been narrowed by specific entries.
   if (normalizedAllowlist.includes(normalizedModel)) {
     if (
       !isModelFamilyAlias(normalizedModel) ||
@@ -126,7 +125,6 @@ export function isModelAllowed(model: string): boolean {
 
   // Family-level aliases in the allowlist match any model in that family,
   // but only if no more specific entries exist for that family.
-  // e.g., ["opus"] allows all opus, but ["opus", "opus-4-5"] only allows opus 4.5.
   for (const entry of normalizedAllowlist) {
     if (
       isModelFamilyAlias(entry) &&
@@ -156,8 +154,7 @@ export function isModelAllowed(model: string): boolean {
     }
   }
 
-  // Version-prefix matching: "opus-4-5" or "claude-opus-4-5" matches
-  // "claude-opus-4-5-20251101" at a segment boundary
+  // Version-prefix matching supports family shorthand and provider-prefixed variants.
   for (const entry of normalizedAllowlist) {
     if (!isModelFamilyAlias(entry) && !isModelAlias(entry)) {
       if (modelMatchesVersionPrefix(normalizedModel, entry)) {
@@ -167,4 +164,13 @@ export function isModelAllowed(model: string): boolean {
   }
 
   return false
+}
+
+
+// V14 lifecycle shim: modelallowlist
+export function processModelallowlistLifecycle(input) {
+  void input
+  const state = 'modelallowlist-state'
+  const lifecycle = 'modelallowlist:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

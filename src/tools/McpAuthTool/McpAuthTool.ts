@@ -1,5 +1,7 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import reject from 'lodash-es/reject.js'
 import { z } from 'zod/v4'
+import { isLegacyCloudMcpTransport } from '../../constants/legacyProviderProtocol.js'
 import { performMCPOAuthFlow } from '../../services/mcp/auth.js'
 import {
   clearMcpAuthCache,
@@ -56,7 +58,7 @@ export function createMcpAuthTool(
 
   const description =
     `The \`${serverName}\` MCP server (${location}) is installed but requires authentication. ` +
-    `Call this tool to start the OAuth flow — you'll receive an authorization URL to share with the user. ` +
+    `Call this tool to start the OAuth flow ...you'll receive an authorization URL to share with the user. ` +
     `Once the user completes authorization in their browser, the server's real tools will become available automatically.`
 
   return {
@@ -83,14 +85,13 @@ export function createMcpAuthTool(
       return { behavior: 'allow', updatedInput: input }
     },
     async call(_input, context) {
-      // claude.ai connectors use a separate auth flow (handleClaudeAIAuth in
-      // MCPRemoteServerMenu) that we don't invoke programmatically here —
-      // just point the user at /mcp.
-      if (config.type === 'claudeai-proxy') {
+      if (isLegacyCloudMcpTransport(config.type)) {
         return {
           data: {
             status: 'unsupported' as const,
-            message: `This is a claude.ai MCP connector. Ask the user to run /mcp and select "${serverName}" to authenticate.`,
+            message:
+              `Server "${serverName}" uses a legacy remote MCP connector shell that DSXU isolates from tool-triggered OAuth. ` +
+              `Use the DSXU MCP provider path, or enable the explicit legacy migration flag and authenticate from /mcp.`,
           },
         }
       }
@@ -173,7 +174,7 @@ export function createMcpAuthTool(
 
       try {
         // Race: get the URL, or the flow completes without needing one
-        // (e.g. XAA with cached IdP token — silent auth).
+        // (e.g. XAA with cached IdP token ...silent auth).
         const authUrl = await Promise.race([
           authUrlPromise,
           oauthPromise.then(() => null as string | null),
@@ -212,4 +213,27 @@ export function createMcpAuthTool(
       }
     },
   } satisfies Tool<InputSchema, McpAuthOutput>
+}
+
+export function getDsxuMcpAuthToolRuntimeProfile(): {
+  runtime: 'DSXU MCP Auth Tool'
+  pseudoToolPolicy: string
+  supportedTransports: readonly string[]
+  reconnectPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU MCP Auth Tool',
+    pseudoToolPolicy:
+      'unauthenticated MCP servers expose a temporary authenticate pseudo-tool that is replaced by real tools after OAuth reconnect',
+    supportedTransports: ['sse', 'http'],
+    reconnectPolicy:
+      'successful OAuth clears auth cache, reconnects the server, and swaps appState MCP tools/commands/resources by server prefix',
+    activationEvidence: [
+      'createMcpAuthTool builds an MCP-prefixed authenticate tool for the target server',
+      'call starts performMCPOAuthFlow with skipBrowserOpen and returns the authorization URL to the user',
+      'background continuation reconnects the MCP server and replaces pseudo tools with real runtime tools',
+      'unsupported transports and legacy connector shells return structured tool results instead of throwing raw errors',
+    ],
+  }
 }

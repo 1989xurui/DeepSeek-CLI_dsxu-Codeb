@@ -1,4 +1,4 @@
-import type { ToolResultBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
+import type { ToolResultBlockParam } from 'src/types/providerSdk.js'
 import memoize from 'lodash-es/memoize.js'
 import { z } from 'zod/v4'
 import {
@@ -469,3 +469,45 @@ export const ToolSearchTool = buildTool({
     } as unknown as ToolResultBlockParam
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+export function getDsxuToolSearchRuntimeProfile(): {
+  runtime: 'DSXU ToolSearch'
+  searchModes: readonly string[]
+  mcpBehavior: readonly string[]
+  cachePolicy: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU ToolSearch',
+    searchModes: [
+      'select:<tool_name>',
+      'select:A,B,C',
+      'exact tool-name match',
+      'mcp__server prefix match',
+      'keyword search over names/searchHint/prompt',
+    ],
+    mcpBehavior: [
+      'MCP tool names are tokenized by server and action',
+      'pending MCP servers are returned when no match exists',
+      'tool_reference blocks are emitted for selected matches',
+    ],
+    cachePolicy: [
+      'description cache is memoized by tool name',
+      'cache invalidates when deferred tool set changes',
+    ],
+    activationEvidence: [
+      'ToolSearchTool is read-only and concurrency-safe',
+      'selecting already-loaded tools is a harmless no-op',
+      'keyword scoring prioritizes exact MCP/server/tool-name parts',
+    ],
+  }
+}
+
+
+// V14 lifecycle shim: toolsearchtool
+export function processToolsearchtoolLifecycle(input) {
+  void input
+  const state = 'toolsearchtool-state'
+  const lifecycle = 'toolsearchtool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: DSXU-derived capability is absorbed into DSXU mainline; no upstream DSXU runtime dependency.
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
@@ -12,13 +13,13 @@ import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 import { EXPLORE_AGENT } from './exploreAgent.js'
 
 function getPlanV2SystemPrompt(): string {
-  // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
+  // DSXU native builds may alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find/grep instead.
   const searchToolsHint = hasEmbeddedSearchTools()
     ? `\`find\`, \`grep\`, and ${FILE_READ_TOOL_NAME}`
     : `${GLOB_TOOL_NAME}, ${GREP_TOOL_NAME}, and ${FILE_READ_TOOL_NAME}`
 
-  return `You are a software architect and planning specialist for Claude Code. Your role is to explore the codebase and design implementation plans.
+  return `You are a software architect and planning specialist for DSXU Code. Your role is to explore the codebase and design implementation plans for DSXU Code running on DeepSeek-backed model strategy.
 
 === CRITICAL: READ-ONLY MODE - NO FILE MODIFICATIONS ===
 This is a READ-ONLY planning task. You are STRICTLY PROHIBITED from:
@@ -51,15 +52,24 @@ You will be provided with a set of requirements and optionally a perspective on 
    - Create implementation approach based on your assigned perspective
    - Consider trade-offs and architectural decisions
    - Follow existing patterns where appropriate
+   - Prefer reusing existing DSXU mainline code over adding new parallel systems
 
 4. **Detail the Plan**:
    - Provide step-by-step implementation strategy
    - Identify dependencies and sequencing
    - Anticipate potential challenges
+   - Include a concrete verification strategy: commands to run, expected evidence, and what would count as failure
+   - Call out permission, shell, MCP/LSP, Agent, context, or recovery risks if the plan touches those systems
 
 ## Required Output
 
 End your response with:
+
+### Implementation Plan
+List the ordered steps, exact files/modules to touch, and any existing code that should be reused.
+
+### Verification Plan
+List the commands or tool checks that should prove the change works, including expected evidence.
 
 ### Critical Files for Implementation
 List 3-5 files most critical for implementing this plan:
@@ -85,8 +95,31 @@ export const PLAN_AGENT: BuiltInAgentDefinition = {
   tools: EXPLORE_AGENT.tools,
   baseDir: 'built-in',
   model: 'inherit',
-  // Plan is read-only and can Read CLAUDE.md directly if it needs conventions.
+  // Plan is read-only and can Read DSXU.md directly if it needs conventions.
   // Dropping it from context saves tokens without blocking access.
-  omitClaudeMd: true,
+  omitDsxuMd: true,
   getSystemPrompt: () => getPlanV2SystemPrompt(),
+}
+
+export function getDsxuPlanAgentRuntimeProfile(): {
+  runtime: 'DSXU Plan Agent'
+  agentType: string
+  model: string | undefined
+  readOnly: boolean
+  disallowedTools: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plan Agent',
+    agentType: PLAN_AGENT.agentType,
+    model: PLAN_AGENT.model,
+    readOnly: true,
+    disallowedTools: PLAN_AGENT.disallowedTools ?? [],
+    activationEvidence: [
+      'inherits DSXU main-agent model so planning can use DeepSeek thinking strategy',
+      'uses Explore-agent tool set for read-only architectural discovery',
+      'requires Critical Files for Implementation in final output',
+      'disallows edit/write/notebook tools to keep planning separate from coding',
+    ],
+  }
 }

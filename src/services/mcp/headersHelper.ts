@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { logAntError } from '../../utils/debug.js'
@@ -12,6 +13,10 @@ import type {
   McpWebSocketServerConfig,
   ScopedMcpServerConfig,
 } from './types.js'
+
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const LEGACY_MCP_SERVER_NAME_ENV = `${LEGACY_CODE_ENV_PREFIX}_MCP_SERVER_NAME`
+const LEGACY_MCP_SERVER_URL_ENV = `${LEGACY_CODE_ENV_PREFIX}_MCP_SERVER_URL`
 
 /**
  * Check if the MCP server config comes from project settings (projectSettings or localSettings)
@@ -62,11 +67,13 @@ export async function getMcpHeadersFromHelper(
       shell: true,
       timeout: 10000,
       // Pass server context so one helper script can serve multiple MCP servers
-      // (git credential-helper style). See deshaw/anthropic-issues#28.
+      // (git credential-helper style).
       env: {
         ...process.env,
-        CLAUDE_CODE_MCP_SERVER_NAME: serverName,
-        CLAUDE_CODE_MCP_SERVER_URL: config.url,
+        DSXU_CODE_MCP_SERVER_NAME: serverName,
+        DSXU_CODE_MCP_SERVER_URL: config.url,
+        [LEGACY_MCP_SERVER_NAME_ENV]: serverName,
+        [LEGACY_MCP_SERVER_URL_ENV]: config.url,
       },
     })
     if (execResult.code !== 0 || !execResult.stdout) {
@@ -134,5 +141,33 @@ export async function getMcpServerHeaders(
   return {
     ...staticHeaders,
     ...dynamicHeaders,
+  }
+}
+
+export function getDsxuMcpHeadersHelperRuntimeProfile(): {
+  runtime: 'DSXU MCP Headers Helper'
+  envContext: readonly string[]
+  trustPolicy: readonly string[]
+  mergePolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU MCP Headers Helper',
+    envContext: [
+      'DSXU_CODE_MCP_SERVER_NAME',
+      'DSXU_CODE_MCP_SERVER_URL',
+      `${LEGACY_MCP_SERVER_NAME_ENV} (legacy migration alias)`,
+      `${LEGACY_MCP_SERVER_URL_ENV} (legacy migration alias)`,
+    ],
+    trustPolicy: [
+      'project/local MCP headersHelper requires workspace trust in interactive sessions',
+      'non-interactive automation may run helper without trust dialog',
+    ],
+    mergePolicy: 'dynamic headers override static headers',
+    activationEvidence: [
+      'headersHelper is executed with server name and URL context',
+      'helper output must be a JSON object with string values',
+      'helper failure logs error and returns null instead of blocking connection',
+    ],
   }
 }

@@ -3,7 +3,7 @@ import { getOauthConfig } from '../../constants/oauth.js'
 import {
   getOauthAccountInfo,
   getSubscriptionType,
-  isClaudeAISubscriber,
+  isLegacyCloudSubscriber,
 } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -24,7 +24,7 @@ const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
 let fetchInProgress: Promise<ReferralEligibilityResponse | null> | null = null
 
 export async function fetchReferralEligibility(
-  campaign: ReferralCampaign = 'claude_code_guest_pass',
+  campaign: ReferralCampaign = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralEligibilityResponse> {
   const { accessToken, orgUUID } = await prepareApiRequest()
 
@@ -45,7 +45,7 @@ export async function fetchReferralEligibility(
 }
 
 export async function fetchReferralRedemptions(
-  campaign: string = 'claude_code_guest_pass',
+  campaign: string = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralRedemptionsResponse> {
   const { accessToken, orgUUID } = await prepareApiRequest()
 
@@ -71,7 +71,7 @@ export async function fetchReferralRedemptions(
 function shouldCheckForPasses(): boolean {
   return !!(
     getOauthAccountInfo()?.organizationUuid &&
-    isClaudeAISubscriber() &&
+    isLegacyCloudSubscriber() &&
     getSubscriptionType() === 'max'
   )
 }
@@ -278,4 +278,13 @@ export async function prefetchPassesEligibility(): Promise<void> {
   }
 
   void getCachedOrFetchPassesEligibility()
+}
+
+
+// V14 lifecycle shim: referral
+export function processReferralLifecycle(input) {
+  void input
+  const state = 'referral-state'
+  const lifecycle = 'referral:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -242,7 +243,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
           continue
         }
 
-        // Skip hook_blocking_error in result.message — blockingError path
+        // Skip hook_blocking_error in result.message ...blockingError path
         // below creates the same attachment (see #31301 / PostToolUse above).
         if (
           result.message &&
@@ -322,7 +323,7 @@ export async function* runPostToolUseFailureHooks<Input extends AnyObject>(
  * Resolve a PreToolUse hook's permission result into a final PermissionDecision.
  *
  * Encapsulates the invariant that hook 'allow' does NOT bypass settings.json
- * deny/ask rules — checkRuleBasedPermissions still applies (inc-4788 analog).
+ * deny/ask rules ...checkRuleBasedPermissions still applies (inc-4788 analog).
  * Also handles the requiresUserInteraction/requireCanUseTool guards and the
  * 'ask' forceDecision passthrough.
  *
@@ -347,7 +348,7 @@ export async function resolveHookPermissionDecision(
   if (hookPermissionResult?.behavior === 'allow') {
     const hookInput = hookPermissionResult.updatedInput ?? input
 
-    // Hook provided updatedInput for an interactive tool — the hook IS the
+    // Hook provided updatedInput for an interactive tool ...the hook IS the
     // user interaction (e.g. headless wrapper that collected AskUserQuestion
     // answers). Treat as non-interactive for the rule-check path.
     const interactionSatisfied =
@@ -389,7 +390,7 @@ export async function resolveHookPermissionDecision(
       )
       return { decision: ruleCheck, input: hookInput }
     }
-    // ask rule — dialog required despite hook approval
+    // ask rule ...dialog required despite hook approval
     logForDebugging(
       `Hook approved tool use for ${tool.name}, but ask rule requires prompt`,
     )
@@ -410,7 +411,7 @@ export async function resolveHookPermissionDecision(
     return { decision: hookPermissionResult, input }
   }
 
-  // No hook decision or 'ask' — normal permission flow, possibly with
+  // No hook decision or 'ask' ...normal permission flow, possibly with
   // forceDecision so the dialog shows the hook's ask message.
   const forceDecision =
     hookPermissionResult?.behavior === 'ask' ? hookPermissionResult : undefined

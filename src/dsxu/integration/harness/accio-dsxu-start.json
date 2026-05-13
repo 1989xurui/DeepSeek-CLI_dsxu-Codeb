@@ -1,0 +1,17 @@
+{
+    "generatedAt":  "2026-04-25T07:40:05.7827156Z",
+    "mock":  false,
+    "apiStarted":  false,
+    "apiHealthy":  true,
+    "bridgeStarted":  true,
+    "bridgeHealthy":  true,
+    "accioStarted":  true,
+    "dsxuApi":  "http://127.0.0.1:8787",
+    "accioBridge":  "http://127.0.0.1:7001",
+    "gatewayBaseUrl":  "http://127.0.0.1:7001",
+    "accioGatewayUrl":  "http://127.0.0.1:7001/api",
+    "adkModel":  "1Helix-DSXU",
+    "chatModel":  "dsxu-coding",
+    "accioEnvironment":  "offline",
+    "accioSettingsPath":  "C:\\Users\\h\\.accio\\settings.jsonc"
+}

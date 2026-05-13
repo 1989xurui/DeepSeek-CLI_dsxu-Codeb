@@ -1,12 +1,13 @@
-import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getSessionId } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { isTodoV2Enabled } from '../../utils/tasks.js'
 import { TodoListSchema } from '../../utils/todo/types.js'
-import { VERIFICATION_AGENT_TYPE } from '../AgentTool/constants.js'
+import {
+  getDsxuVerificationNudgeText,
+  isDsxuVerificationAgentEnabled,
+} from '../AgentTool/built-in/verificationAgent.js'
 import { TODO_WRITE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, PROMPT } from './prompt.js'
 
@@ -75,8 +76,7 @@ export const TodoWriteTool = buildTool({
     // happen ("when the last task closed, the loop exited").
     let verificationNudgeNeeded = false
     if (
-      feature('VERIFICATION_AGENT') &&
-      getFeatureValue_CACHED_MAY_BE_STALE('tengu_hive_evidence', false) &&
+      isDsxuVerificationAgentEnabled() &&
       !context.agentId &&
       allDone &&
       todos.length >= 3 &&
@@ -104,7 +104,7 @@ export const TodoWriteTool = buildTool({
   mapToolResultToToolResultBlockParam({ verificationNudgeNeeded }, toolUseID) {
     const base = `Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable`
     const nudge = verificationNudgeNeeded
-      ? `\n\nNOTE: You just closed out 3+ tasks and none of them was a verification step. Before writing your final summary, spawn the verification agent (subagent_type="${VERIFICATION_AGENT_TYPE}"). You cannot self-assign PARTIAL by listing caveats in your summary \u2014 only the verifier issues a verdict.`
+      ? getDsxuVerificationNudgeText()
       : ''
     return {
       tool_use_id: toolUseID,
@@ -113,3 +113,12 @@ export const TodoWriteTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: todowritetool
+export function processTodowritetoolLifecycle(input) {
+  void input
+  const state = 'todowritetool-state'
+  const lifecycle = 'todowritetool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

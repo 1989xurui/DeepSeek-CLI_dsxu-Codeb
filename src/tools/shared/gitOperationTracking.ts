@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Shell-agnostic git operation tracking for usage metrics.
  *
@@ -7,13 +8,11 @@
  * work identically for Bash and PowerShell (both invoke git/gh/glab/curl as
  * external binaries with the same argv syntax).
  */
-
 import { getCommitCounter, getPrCounter } from '../../bootstrap/state.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-
 /**
  * Build a regex that matches `git <subcmd>` while tolerating git's global
  * options between `git` and the subcommand (e.g. `-c key=val`, `-C path`,
@@ -25,13 +24,11 @@ function gitCmdRe(subcmd: string, suffix = ''): RegExp {
     `\\bgit(?:\\s+-[cC]\\s+\\S+|\\s+--\\S+=\\S+)*\\s+${subcmd}\\b${suffix}`,
   )
 }
-
 const GIT_COMMIT_RE = gitCmdRe('commit')
 const GIT_PUSH_RE = gitCmdRe('push')
 const GIT_CHERRY_PICK_RE = gitCmdRe('cherry-pick')
 const GIT_MERGE_RE = gitCmdRe('merge', '(?!-)')
 const GIT_REBASE_RE = gitCmdRe('rebase')
-
 export type CommitKind = 'committed' | 'amended' | 'cherry-picked'
 export type BranchAction = 'merged' | 'rebased'
 export type PrAction =
@@ -41,7 +38,6 @@ export type PrAction =
   | 'commented'
   | 'closed'
   | 'ready'
-
 const GH_PR_ACTIONS: readonly { re: RegExp; action: PrAction; op: string }[] = [
   { re: /\bgh\s+pr\s+create\b/, action: 'created', op: 'pr_create' },
   { re: /\bgh\s+pr\s+edit\b/, action: 'edited', op: 'pr_edit' },
@@ -50,7 +46,6 @@ const GH_PR_ACTIONS: readonly { re: RegExp; action: PrAction; op: string }[] = [
   { re: /\bgh\s+pr\s+close\b/, action: 'closed', op: 'pr_close' },
   { re: /\bgh\s+pr\s+ready\b/, action: 'ready', op: 'pr_ready' },
 ]
-
 /**
  * Parse PR info from a GitHub PR URL.
  * Returns { prNumber, prUrl, prRepository } or null if not a valid PR URL.
@@ -68,13 +63,11 @@ function parsePrUrl(
   }
   return null
 }
-
 /** Find a GitHub PR URL embedded anywhere in stdout and parse it. */
 function findPrInStdout(stdout: string): ReturnType<typeof parsePrUrl> {
   const m = stdout.match(/https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/pull\/\d+/)
   return m ? parsePrUrl(m[0]) : null
 }
-
 // Exported for testing purposes
 export function parseGitCommitId(stdout: string): string | undefined {
   // git commit output: [branch abc1234] message
@@ -82,7 +75,6 @@ export function parseGitCommitId(stdout: string): string | undefined {
   const match = stdout.match(/\[[\w./-]+(?: \(root-commit\))? ([0-9a-f]+)\]/)
   return match?.[1]
 }
-
 /**
  * Parse branch name from git push output. Push writes progress to stderr but
  * the ref update line ("abc..def  branch -> branch", "* [new branch]
@@ -96,19 +88,17 @@ function parseGitPushBranch(output: string): string | undefined {
   )
   return match?.[1]
 }
-
 /**
- * gh pr merge/close/ready print "✓ <Verb> pull request owner/repo#1234" with
+ * gh pr merge/close/ready print " -> <Verb> pull request owner/repo#1234" with
  * no URL. Extract the PR number from the text.
  */
 function parsePrNumberFromText(stdout: string): number | undefined {
   const match = stdout.match(/[Pp]ull request (?:\S+#)?#?(\d+)/)
   return match?.[1] ? parseInt(match[1], 10) : undefined
 }
-
 /**
  * Extract target ref from `git merge <ref>` / `git rebase <ref>` command.
- * Skips flags and keywords — first non-flag argument is the ref.
+ * Skips flags and keywords ...first non-flag argument is the ref.
  */
 function parseRefFromCommand(
   command: string,
@@ -123,14 +113,13 @@ function parseRefFromCommand(
   }
   return undefined
 }
-
 /**
  * Scan bash command + output for git operations worth surfacing in the
  * collapsed tool-use summary ("committed a1b2c3, created PR #42, ran 3 bash
  * commands"). Checks the command to avoid matching SHAs/URLs that merely
  * appear in unrelated output (e.g. `git log`).
  *
- * Pass stdout+stderr concatenated — git push writes the ref update to stderr.
+ * Pass stdout+stderr concatenated ...git push writes the ref update to stderr.
  */
 export function detectGitOperation(
   command: string,
@@ -184,7 +173,6 @@ export function detectGitOperation(
   }
   return result
 }
-
 // Exported for testing purposes
 export function trackGitOperations(
   command: string,
@@ -195,7 +183,6 @@ export function trackGitOperations(
   if (!success) {
     return
   }
-
   if (GIT_COMMIT_RE.test(command)) {
     logEvent('tengu_git_operation', {
       operation:

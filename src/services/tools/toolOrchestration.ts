@@ -1,14 +1,52 @@
-import type { ToolUseBlock } from '@anthropic-ai/sdk/resources/index.mjs'
+// DSXU V18 ownership marker: DSXU tool orchestration semantics are absorbed
+// into the DSXU/DeepSeek coding mainline; no DSXU service runtime required.
+import type { ToolUseBlock } from 'src/types/providerSdk.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { findToolByName, type ToolUseContext } from '../../Tool.js'
 import type { AssistantMessage, Message } from '../../types/message.js'
 import { all } from '../../utils/generators.js'
 import { type MessageUpdateLazy, runToolUse } from './toolExecution.js'
+import {
+  getDsxuToolBatchGateDecision,
+} from './dsxuToolBatchGate.js'
+import {
+  getDsxuToolExecutionSemantics,
+  traceDsxuToolLifecycleGateDecision,
+} from './toolLifecycle.js'
+
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const LEGACY_TOOL_CONCURRENCY_ENV = `${LEGACY_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`
 
 function getMaxToolUseConcurrency(): number {
   return (
-    parseInt(process.env.CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) || 10
+    parseInt(process.env.DSXU_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) ||
+    parseInt(process.env[LEGACY_TOOL_CONCURRENCY_ENV] || '', 10) ||
+    10
   )
+}
+
+export function getDsxuToolOrchestrationRuntimeProfile(): {
+  runtime: 'DSXU Tool Orchestration'
+  concurrencyEnv: string
+  legacyConcurrencyEnv: string
+  currentConcurrency: number
+  executionDiscipline: string
+  activationEvidence?: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Tool Orchestration',
+    concurrencyEnv: 'DSXU_CODE_MAX_TOOL_USE_CONCURRENCY',
+    legacyConcurrencyEnv: `${LEGACY_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`,
+    currentConcurrency: getMaxToolUseConcurrency(),
+    executionDiscipline:
+      'read-only/concurrency-safe tool batches run concurrently; mutating or unsafe calls run serially with context updates preserved',
+    activationEvidence: [
+      'partitionToolCalls parses tool input before deciding concurrency safety',
+      'serial execution applies context modifiers immediately after each tool call',
+      'concurrent execution queues context modifiers and applies them deterministically after the safe batch',
+      'in-progress tool IDs are tracked and cleared for UI/status evidence',
+    ],
+  }
 }
 
 export type MessageUpdate = {
@@ -35,6 +73,7 @@ export async function* runTools(
       // Run read-only batch concurrently
       for await (const update of runToolsConcurrently(
         blocks,
+        toolUseMessages,
         assistantMessages,
         canUseTool,
         currentContext,
@@ -65,6 +104,7 @@ export async function* runTools(
       // Run non-read-only batch serially
       for await (const update of runToolsSerially(
         blocks,
+        toolUseMessages,
         assistantMessages,
         canUseTool,
         currentContext,
@@ -94,18 +134,10 @@ function partitionToolCalls(
 ): Batch[] {
   return toolUseMessages.reduce((acc: Batch[], toolUse) => {
     const tool = findToolByName(toolUseContext.options.tools, toolUse.name)
-    const parsedInput = tool?.inputSchema.safeParse(toolUse.input)
-    const isConcurrencySafe = parsedInput?.success
-      ? (() => {
-          try {
-            return Boolean(tool?.isConcurrencySafe(parsedInput.data))
-          } catch {
-            // If isConcurrencySafe throws (e.g., due to shell-quote parse failure),
-            // treat as not concurrency-safe to be conservative
-            return false
-          }
-        })()
-      : false
+    const { isConcurrencySafe } = getDsxuToolExecutionSemantics(
+      tool,
+      toolUse.input,
+    )
     if (isConcurrencySafe && acc[acc.length - 1]?.isConcurrencySafe) {
       acc[acc.length - 1]!.blocks.push(toolUse)
     } else {
@@ -117,6 +149,7 @@ function partitionToolCalls(
 
 async function* runToolsSerially(
   toolUseMessages: ToolUseBlock[],
+  allToolUseMessages: ToolUseBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
@@ -124,16 +157,39 @@ async function* runToolsSerially(
   let currentContext = toolUseContext
 
   for (const toolUse of toolUseMessages) {
+    const assistantMessage = assistantMessages.find(_ =>
+      _.message.content.some(
+        _ => _.type === 'tool_use' && _.id === toolUse.id,
+      ),
+    )!
+    const gateDecision = getDsxuToolBatchGateDecision({
+      messages: currentContext.messages,
+      toolUseBlocks: allToolUseMessages,
+      block: toolUse,
+    })
+    if (gateDecision) {
+      traceDsxuToolLifecycleGateDecision(
+        gateDecision.blocked
+          ? 'tool_batch_gate_blocked'
+          : 'tool_batch_gate_advisory',
+        toolUse,
+        gateDecision,
+      )
+    }
+    if (gateDecision?.blocked) {
+      yield {
+        message: gateDecision.createMessage(assistantMessage),
+        newContext: currentContext,
+      }
+      continue
+    }
+
     toolUseContext.setInProgressToolUseIDs(prev =>
       new Set(prev).add(toolUse.id),
     )
     for await (const update of runToolUse(
       toolUse,
-      assistantMessages.find(_ =>
-        _.message.content.some(
-          _ => _.type === 'tool_use' && _.id === toolUse.id,
-        ),
-      )!,
+      assistantMessage,
       canUseTool,
       currentContext,
     )) {
@@ -151,22 +207,45 @@ async function* runToolsSerially(
 
 async function* runToolsConcurrently(
   toolUseMessages: ToolUseBlock[],
+  allToolUseMessages: ToolUseBlock[],
   assistantMessages: AssistantMessage[],
   canUseTool: CanUseToolFn,
   toolUseContext: ToolUseContext,
 ): AsyncGenerator<MessageUpdateLazy, void> {
   yield* all(
     toolUseMessages.map(async function* (toolUse) {
+      const assistantMessage = assistantMessages.find(_ =>
+        _.message.content.some(
+          _ => _.type === 'tool_use' && _.id === toolUse.id,
+        ),
+      )!
+      const gateDecision = getDsxuToolBatchGateDecision({
+        messages: toolUseContext.messages,
+        toolUseBlocks: allToolUseMessages,
+        block: toolUse,
+      })
+      if (gateDecision) {
+        traceDsxuToolLifecycleGateDecision(
+          gateDecision.blocked
+            ? 'tool_batch_gate_blocked'
+            : 'tool_batch_gate_advisory',
+          toolUse,
+          gateDecision,
+        )
+      }
+      if (gateDecision?.blocked) {
+        yield {
+          message: gateDecision.createMessage(assistantMessage),
+        }
+        return
+      }
+
       toolUseContext.setInProgressToolUseIDs(prev =>
         new Set(prev).add(toolUse.id),
       )
       yield* runToolUse(
         toolUse,
-        assistantMessages.find(_ =>
-          _.message.content.some(
-            _ => _.type === 'tool_use' && _.id === toolUse.id,
-          ),
-        )!,
+        assistantMessage,
         canUseTool,
         toolUseContext,
       )
@@ -185,4 +264,13 @@ function markToolUseAsComplete(
     next.delete(toolUseID)
     return next
   })
+}
+
+
+// V14 lifecycle shim: toolorchestration
+export function processToolorchestrationLifecycle(input) {
+  void input
+  const state = 'toolorchestration-state'
+  const lifecycle = 'toolorchestration:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

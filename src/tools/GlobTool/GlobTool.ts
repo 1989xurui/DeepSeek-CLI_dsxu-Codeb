@@ -196,3 +196,12 @@ export const GlobTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
+
+
+// V14 lifecycle shim: globtool
+export function processGlobtoolLifecycle(input) {
+  void input
+  const state = 'globtool-state'
+  const lifecycle = 'globtool:session-lifecycle'
+  return { state, lifecycle, invoked: true }
+}

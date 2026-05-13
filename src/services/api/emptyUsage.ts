@@ -2,7 +2,7 @@ import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
 
 /**
  * Zero-initialized usage object. Extracted from logging.ts so that
- * bridge/replBridge.ts can import it without transitively pulling in
+ * the control adapter can import it without transitively pulling in
  * api/errors.ts → utils/messages.ts → BashTool.tsx → the world.
  */
 export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
@@ -19,4 +19,13 @@ export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   inference_geo: '',
   iterations: [],
   speed: 'standard',
+}
+
+
+// V14 lifecycle shim: emptyusage
+export function processEmptyusageLifecycle(input) {
+  void input
+  const state = 'emptyusage-state'
+  const lifecycle = 'emptyusage:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }
