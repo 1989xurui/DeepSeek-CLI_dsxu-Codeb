@@ -68,6 +68,7 @@ export type OwnerGitClosureBoardInput = {
   deferredProductIds: readonly string[]
   localArtifactPolicyKnown: boolean
   permissionBlockedResidualCount: number
+  permissionResidueExternalClosureStatus?: OwnerGitClosureStatus | 'NOT_PROVIDED'
   cleanExportReady: boolean
   releaseClosureStatus: OwnerGitClosureStatus
   canCreateCleanExport: boolean
@@ -146,6 +147,7 @@ export function buildOwnerGitClosureBoard(
   const legacyMainlineKeepOwnerSliceCount = input.legacyMainlineKeepOwnerSliceCount ?? 0
   const legacyMainlineReviewBeforeKeepCount = input.legacyMainlineReviewBeforeKeepCount ?? 0
   const legacyMainlineReplaceDeleteCandidateCount = input.legacyMainlineReplaceDeleteCandidateCount ?? 0
+  const permissionResidueExternalClosureStatus = input.permissionResidueExternalClosureStatus ?? 'NOT_PROVIDED'
   const ownerDirtyBlocking = [
     ...(input.unknownDirtyCount > 0 ? ['unknown dirty paths remain'] : []),
     ...(input.mainlineReviewBeforeKeepCount > 0 ? ['mainline review-before-keep slices remain'] : []),
@@ -169,6 +171,7 @@ export function buildOwnerGitClosureBoard(
   ]
   const workspaceBlocking = [
     ...(input.localArtifactPolicyKnown ? [] : ['local artifact policy is not recorded']),
+    ...(permissionResidueExternalClosureStatus === 'BLOCKED' ? ['permission residue external closure is blocked'] : []),
   ]
   const finalBlocking = [
     ...(input.cleanExportReady ? [] : ['clean export is not ready']),
@@ -262,16 +265,21 @@ export function buildOwnerGitClosureBoard(
     {
       id: 'OGC-05',
       name: 'workspace artifact policy',
-      status: laneStatus(workspaceBlocking, input.untrackedCount > 0 || input.permissionBlockedResidualCount > 0),
+      status: laneStatus(
+        workspaceBlocking,
+        input.untrackedCount > 0 ||
+          (input.permissionBlockedResidualCount > 0 && permissionResidueExternalClosureStatus !== 'PASS'),
+      ),
       owner: 'Workspace / Release Hygiene',
       scope: '.git, node_modules, .dsxu evidence store, untracked files, and permission-blocked residues',
       currentEvidence: [
         `untrackedCount=${input.untrackedCount}`,
         `deletedCount=${input.deletedCount}`,
         `permissionBlockedResidualCount=${input.permissionBlockedResidualCount}`,
+        `permissionResidueExternalClosureStatus=${permissionResidueExternalClosureStatus}`,
       ],
       signoffCondition: 'local-only artifacts are excluded from release/export and permission-blocked residues remain explicit external closure items',
-      nextAction: input.permissionBlockedResidualCount > 0
+      nextAction: input.permissionBlockedResidualCount > 0 && permissionResidueExternalClosureStatus !== 'PASS'
         ? 'resolve permission-blocked residues externally; do not force local cleanup'
         : 'keep artifact exclusion policy until final export review',
       redlines: workspaceBlocking,

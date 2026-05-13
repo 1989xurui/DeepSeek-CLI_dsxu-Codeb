@@ -202,9 +202,10 @@ describe('OGC-06 - Final Release Preflight Register V1', () => {
     expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('P12 target collection family backlog slots remain')
     expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('owner/Git signoff')
     expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('pending deletion Git review')
-    expect(register.gitStatusReductionGate.blockedBy.join('\n')).toContain('workspace artifact policy or permission residues still require review')
+    expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('workspace artifact policy or permission residues still require review')
     expect(register.stages.find(stage => stage.id === 'FRP-01')?.status).toBe('PASS')
     expect(register.stages.find(stage => stage.id === 'FRP-02')?.status).toBe('PASS')
+    expect(register.stages.find(stage => stage.id === 'FRP-04')?.evidence.join('\n')).toContain('permissionResidueExternalClosureStatus=PASS')
     expect(register.stages.find(stage => stage.id === 'FRP-03')?.evidence.join('\n')).toContain('p12CollectionBacklogCount=0')
     expect(register.stages.map(stage => stage.id)).toEqual([
       'FRP-01',

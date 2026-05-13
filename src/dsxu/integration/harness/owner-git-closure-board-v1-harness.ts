@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import {
   buildOwnerGitClosureBoard,
@@ -13,6 +13,10 @@ import { buildPendingDeletionReview } from '../../engine/pending-deletion-review
 import { buildReleaseClosureBoard } from '../../engine/release-closure-board-v1'
 import { buildToolRuntimeDirtyReview } from '../../engine/tool-runtime-dirty-review-v1'
 import { buildToolRuntimeDuplicationDecision } from '../../engine/tool-runtime-duplication-decision-v1'
+import {
+  WORKSPACE_PERMISSION_BLOCKED_RESIDUES,
+  validateWorkspacePermissionResidueClosureManifest,
+} from '../../engine/workspace-artifact-policy-register-v1'
 import { runP12RawComparisonHarness } from './phase12-raw-comparison-v1-harness'
 import { runV18DirtyQuarantineLedgerHarness } from '../../engine/v18-dirty-quarantine-ledger'
 import { runV18OpenSourcePackageGateHarness } from '../../engine/v18-open-source-package-gate'
@@ -29,13 +33,92 @@ async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
 }
 
+async function readJsonIfExists(path: string): Promise<unknown | null> {
+  try {
+    return JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, ''))
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') return null
+    throw error
+  }
+}
+
 function hasBlockingSignoffRedline(redlines: readonly string[]): boolean {
   return redlines.some(redline => /missing|unknown|no entries|restore policy/i.test(redline))
+}
+
+function buildPermissionResidueExternalClosureState(input: unknown | null): {
+  status: 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_PROVIDED'
+  signedCount: number
+  rejectedCount: number
+  adjustRequestedCount: number
+  staleCount: number
+  unsignedCount: number
+  redlines: readonly string[]
+} {
+  if (!input) {
+    return {
+      status: 'NOT_PROVIDED',
+      signedCount: 0,
+      rejectedCount: 0,
+      adjustRequestedCount: 0,
+      staleCount: 0,
+      unsignedCount: WORKSPACE_PERMISSION_BLOCKED_RESIDUES.length,
+      redlines: [],
+    }
+  }
+  const validation = validateWorkspacePermissionResidueClosureManifest(input)
+  if (validation.status === 'BLOCKED') {
+    return {
+      status: 'BLOCKED',
+      signedCount: 0,
+      rejectedCount: 0,
+      adjustRequestedCount: 0,
+      staleCount: 0,
+      unsignedCount: WORKSPACE_PERMISSION_BLOCKED_RESIDUES.length,
+      redlines: validation.redlines,
+    }
+  }
+  const states = WORKSPACE_PERMISSION_BLOCKED_RESIDUES.map(residue => {
+    const decision = validation.acceptedDecisions.find(item => item.residueId === residue.residueId)
+    const stale = Boolean(decision && decision.sourcePath !== residue.sourcePath)
+    return { decision, stale }
+  })
+  const signedCount = states.filter(item => item.decision?.decision === 'sign' && !item.stale).length
+  const rejectedCount = states.filter(item => item.decision?.decision === 'reject').length
+  const adjustRequestedCount = states.filter(item => item.decision?.decision === 'adjust').length
+  const staleCount = states.filter(item => item.stale).length
+  const unsignedCount = states.filter(item => !item.decision).length
+  const status = signedCount === WORKSPACE_PERMISSION_BLOCKED_RESIDUES.length &&
+    rejectedCount === 0 &&
+    adjustRequestedCount === 0 &&
+    staleCount === 0 &&
+    unsignedCount === 0
+    ? 'PASS'
+    : rejectedCount > 0 || adjustRequestedCount > 0 || staleCount > 0
+      ? 'BLOCKED'
+      : 'PARTIAL'
+
+  return {
+    status,
+    signedCount,
+    rejectedCount,
+    adjustRequestedCount,
+    staleCount,
+    unsignedCount,
+    redlines: [
+      ...states.flatMap((item, index) => item.stale
+        ? [`${WORKSPACE_PERMISSION_BLOCKED_RESIDUES[index].residueId}: signed sourcePath does not match current residue path`]
+        : []),
+      ...(rejectedCount > 0 ? ['permission residue closure rejected one or more residues'] : []),
+      ...(adjustRequestedCount > 0 ? ['permission residue closure requested adjustment for one or more residues'] : []),
+    ],
+  }
 }
 
 export async function runOwnerGitClosureBoardHarness(options: {
   evidenceDir?: string
   targetReferenceManifestPath?: string
+  permissionResidueClosureManifestPath?: string
 } = {}): Promise<OwnerGitClosureBoardHarnessResult> {
   const evidenceDir = options.evidenceDir ?? join(process.cwd(), '.dsxu', 'trace', 'owner-git-closure-board-v1')
   await mkdir(evidenceDir, { recursive: true })
@@ -50,6 +133,11 @@ export async function runOwnerGitClosureBoardHarness(options: {
       targetReferenceManifestPath: options.targetReferenceManifestPath,
     }),
   ])
+  const permissionResidueClosureManifestPath = options.permissionResidueClosureManifestPath ??
+    join(process.cwd(), '.dsxu', 'trace', 'workspace-permission-residue-closure-v1', 'workspace-permission-residue-closure-manifest.json')
+  const permissionResidueExternalClosure = buildPermissionResidueExternalClosureState(
+    await readJsonIfExists(permissionResidueClosureManifestPath),
+  )
 
   const pendingDeletionReview = buildPendingDeletionReview(packageGate.pendingDeletionClosure)
   const dirtyWorktreeReview = buildDirtyWorktreeReview(dirtyLedger)
@@ -245,6 +333,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     deferredProductIds: DEFERRED_PRODUCT_IDS,
     localArtifactPolicyKnown: true,
     permissionBlockedResidualCount: 5,
+    permissionResidueExternalClosureStatus: permissionResidueExternalClosure.status,
     cleanExportReady: packageGate.cleanExportReady,
     releaseClosureStatus: releaseClosureBoard.status === 'PRECHECK_PARTIAL' ? 'PARTIAL' : releaseClosureBoard.status,
     canCreateCleanExport: cleanExportReadiness.canCreateCleanExport && releaseClosureBoard.canPerformActualCleanup,
@@ -286,6 +375,7 @@ export async function runOwnerGitClosureBoardHarness(options: {
     legacyMainlineReview,
     toolRuntimeReview,
     toolRuntimeDuplicationDecision,
+    permissionResidueExternalClosure,
     rawComparison,
     cleanExportReadiness,
     releaseClosureBoard,
