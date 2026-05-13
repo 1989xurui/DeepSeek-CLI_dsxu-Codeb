@@ -16,3 +16,7 @@ node_modules
 /隔离处理/
 /非dsxu-code项目文件/
 /原代码*/
+
+# DSXU local ACL residues: non-source adapter backup placeholders.
+/src/dsxu/engine/adapters/bash-adapter.ts.backup
+/src/dsxu/engine/adapters/file-edit-adapter.ts.backup
