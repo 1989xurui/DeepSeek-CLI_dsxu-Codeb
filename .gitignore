@@ -1,8 +1,18 @@
-.env
+﻿.env
 .env.*
 !.env.example
 node_modules
 .dsxu/
 .dsevo/
 .trash/
-.claude/settings.local.json
+.dsxu/settings.local.json
+
+# DSXU release hygiene: local evidence, archives, and runtime scratch files.
+/tmp/
+/outputs/
+/undefined/
+/.dsevo-kill-switch-test/
+/real_failure_task.txt
+/隔离处理/
+/非dsxu-code项目文件/
+/原代码*/

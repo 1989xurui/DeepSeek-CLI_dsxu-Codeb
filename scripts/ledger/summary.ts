@@ -187,7 +187,6 @@ function printSummary(stats: ReturnType<typeof calculateStats>): void {
   }
 
   console.log();
-
   // 总统计
   console.log(`历史总计: ${formatCurrency(stats.total.cost)} (${stats.total.requests} 次请求)`);
   console.log();
