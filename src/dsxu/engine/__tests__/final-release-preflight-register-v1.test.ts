@@ -196,10 +196,15 @@ describe('OGC-06 - Final Release Preflight Register V1', () => {
       'permission residue and workspace policy',
       'final tests and clean export',
     ])
-    expect(register.gitStatusReductionGate.currentDirtyTotal).toBeGreaterThan(0)
+    expect(register.gitStatusReductionGate.currentDirtyTotal).toBe(0)
     expect(register.gitStatusReductionGate.canReduceGitStatusNow).toBe(false)
     expect(register.gitStatusReductionGate.blockedBy.join('\n')).toContain('P12-19 raw evidence: target reference paired raw logs are missing')
     expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('P12 target collection family backlog slots remain')
+    expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('owner/Git signoff')
+    expect(register.gitStatusReductionGate.blockedBy.join('\n')).not.toContain('pending deletion Git review')
+    expect(register.gitStatusReductionGate.blockedBy.join('\n')).toContain('workspace artifact policy or permission residues still require review')
+    expect(register.stages.find(stage => stage.id === 'FRP-01')?.status).toBe('PASS')
+    expect(register.stages.find(stage => stage.id === 'FRP-02')?.status).toBe('PASS')
     expect(register.stages.find(stage => stage.id === 'FRP-03')?.evidence.join('\n')).toContain('p12CollectionBacklogCount=0')
     expect(register.stages.map(stage => stage.id)).toEqual([
       'FRP-01',
