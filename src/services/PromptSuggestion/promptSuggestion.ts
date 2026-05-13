@@ -1,9 +1,14 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import type { Message } from '../../types/message.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
 import { count } from '../../utils/array.js'
-import { isEnvDefinedFalsy, isEnvTruthy } from '../../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isEnvDefinedFalsy,
+  isEnvTruthy,
+} from '../../utils/envUtils.js'
 import { toError } from '../../utils/errors.js'
 import {
   type CacheSafeParams,
@@ -23,7 +28,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { currentLimits } from '../claudeAiLimits.js'
+import { currentLimits } from '../dsxuLimits.js'
 import { isSpeculationEnabled, startSpeculation } from './speculation.js'
 
 let currentAbortController: AbortController | null = null
@@ -36,7 +41,7 @@ export function getPromptVariant(): PromptVariant {
 
 export function shouldEnablePromptSuggestion(): boolean {
   // Env var overrides everything (for testing)
-  const envOverride = process.env.CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION
+  const envOverride = getDsxuCodeEnv('ENABLE_PROMPT_SUGGESTION')
   if (isEnvDefinedFalsy(envOverride)) {
     logEvent('tengu_prompt_suggestion_init', {
       enabled: false,
@@ -97,6 +102,37 @@ export function abortPromptSuggestion(): void {
   if (currentAbortController) {
     currentAbortController.abort()
     currentAbortController = null
+  }
+}
+
+export function getDsxuPromptSuggestionRuntimeProfile(): {
+  runtime: 'DSXU Prompt Suggestion'
+  env: readonly string[]
+  suppressReasons: readonly string[]
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Prompt Suggestion',
+    env: [
+      'DSXU_CODE_ENABLE_PROMPT_SUGGESTION',
+      'legacy provider prompt-suggestion alias',
+    ],
+    suppressReasons: [
+      'disabled',
+      'pending_permission',
+      'elicitation_active',
+      'plan_mode',
+      'rate_limit',
+      'early_conversation',
+      'last_response_error',
+      'aborted',
+    ],
+    activationEvidence: [
+      'DSXU env override is checked before legacy alias',
+      'suggestions are disabled in non-interactive sessions and swarm teammates',
+      'pending permissions, elicitations, and plan mode suppress generation',
+      'tryGenerateSuggestion uses forked-agent cache-safe params before writing promptSuggestion into AppState',
+    ],
   }
 }
 
@@ -255,7 +291,7 @@ export function getParentCacheSuppressReason(
     : null
 }
 
-const SUGGESTION_PROMPT = `[SUGGESTION MODE: Suggest what the user might naturally type next into Claude Code.]
+const SUGGESTION_PROMPT = `[SUGGESTION MODE: Suggest what the user might naturally type next into DSXU Code.]
 
 FIRST: Look at the user's recent messages and original request.
 
@@ -264,19 +300,19 @@ Your job is to predict what THEY would type - not what you think they should do.
 THE TEST: Would they think "I was just about to type that"?
 
 EXAMPLES:
-User asked "fix the bug and run tests", bug is fixed → "run the tests"
-After code written → "try it out"
-Claude offers options → suggest the one the user would likely pick, based on conversation
-Claude asks to continue → "yes" or "go ahead"
-Task complete, obvious follow-up → "commit this" or "push it"
-After error or misunderstanding → silence (let them assess/correct)
+User asked "fix the bug and run tests", bug is fixed - "run the tests"
+After code written - "try it out"
+DSXU offers options - suggest the one the user would likely pick, based on conversation
+DSXU asks to continue - "yes" or "go ahead"
+Task complete, obvious follow-up - "commit this" or "push it"
+After error or misunderstanding - silence (let them assess/correct)
 
 Be specific: "run the tests" beats "continue".
 
 NEVER SUGGEST:
 - Evaluative ("looks good", "thanks")
 - Questions ("what about...?")
-- Claude-voice ("Let me...", "I'll...", "Here's...")
+- Assistant-voice ("Let me...", "I'll...", "Here's...")
 - New ideas they didn't ask about
 - Multiple sentences
 
@@ -308,10 +344,10 @@ export async function generateSuggestion(
   // DO NOT override any API parameter that differs from the parent request.
   // The fork piggybacks on the main thread's prompt cache by sending identical
   // cache-key params. The billing cache key includes more than just
-  // system/tools/model/messages/thinking — empirically, setting effortValue
+  // system/tools/model/messages/thinking - empirically, setting effortValue
   // or maxOutputTokens on the fork (even via output_config or getAppState)
   // busts cache. PR #18143 tried effort:'low' and caused a 45x spike in cache
-  // writes (92.7% → 61% hit rate). The only safe overrides are:
+  // writes (92.7% - 61% hit rate). The only safe overrides are:
   //   - abortController (not sent to API)
   //   - skipTranscript (client-side only)
   //   - skipCacheWrite (controls cache_control markers, not the cache key)
@@ -329,7 +365,7 @@ export async function generateSuggestion(
     skipCacheWrite: true,
   })
 
-  // Check ALL messages - model may loop (try tool → denied → text in next message)
+  // Check ALL messages - model may loop (try tool - denied - text in next message)
   // Also extract the requestId from the first assistant message for RL dataset joins
   const firstAssistantMsg = result.messages.find(m => m.type === 'assistant')
   const generationRequestId =
@@ -380,7 +416,7 @@ export function shouldFilterSuggestion(
     ],
     [
       'meta_wrapped',
-      // Model wraps meta-reasoning in parens/brackets: (silence — ...), [no suggestion]
+      // Model wraps meta-reasoning in parens/brackets: (silence - ...), [no suggestion]
       () => /^\(.*\)$|^\[.*\]$/.test(suggestion),
     ],
     [
@@ -397,7 +433,7 @@ export function shouldFilterSuggestion(
       'too_few_words',
       () => {
         if (wordCount >= 2) return false
-        // Allow slash commands — these are valid user commands
+        // Allow slash commands - these are valid user commands
         if (suggestion.startsWith('/')) return false
         // Allow common single-word inputs that are valid user commands
         const ALLOWED_SINGLE_WORDS = new Set([
@@ -437,7 +473,7 @@ export function shouldFilterSuggestion(
         ),
     ],
     [
-      'claude_voice',
+      'assistant_voice',
       () =>
         /^(let me|i'll|i've|i'm|i can|i would|i think|i notice|here's|here is|here are|that's|this is|this will|you can|you should|you could|sure,|of course|certainly)/i.test(
           suggestion,

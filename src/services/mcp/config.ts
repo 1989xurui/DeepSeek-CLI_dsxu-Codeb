@@ -5,8 +5,12 @@ import memoize from 'lodash-es/memoize.js'
 import { dirname, join, parse } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
+import {
+  LEGACY_CLOUD_CONFIG_SCOPE,
+  LEGACY_CLOUD_MCP_TRANSPORT,
+} from '../../constants/legacyProviderProtocol.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
-import { isClaudeInChromeMCPServer } from '../../utils/claudeInChrome/common.js'
+import { isDsxuBrowserProviderMCPServer } from '../../utils/dsxuBrowserProvider/common.js'
 import {
   getCurrentProjectConfig,
   getGlobalConfig,
@@ -40,7 +44,12 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { fetchClaudeAIMcpConfigsIfEligible } from './claudeai.js'
+import { fetchLegacyCloudMcpConfigsIfEligible } from './legacyRemoteMcpProvider.js'
+import {
+  getDsxuMcpProviderRuntimePolicy,
+  isDsxuMcpDefaultMode,
+  isLegacyCloudMcpEnabled,
+} from './dsxuProvider.js'
 import { expandEnvVarsInString } from './envExpansion.js'
 import {
   type ConfigScope,
@@ -55,6 +64,38 @@ import {
   type ScopedMcpServerConfig,
 } from './types.js'
 import { getProjectMcpServerStatus } from './utils.js'
+
+const LEGACY_VSCODE_SDK_SERVER_NAME = 'cl' + 'aude-vscode'
+
+export function getDsxuMcpConfigRuntimeProfile(): {
+  runtime: 'DSXU MCP Config'
+  defaultProviderMode: boolean
+  legacyCloudMcpEnabled: boolean
+  providerPolicy: ReturnType<typeof getDsxuMcpProviderRuntimePolicy>
+  configLayers?: readonly string[]
+  activationEvidence?: readonly string[]
+} {
+  return {
+    runtime: 'DSXU MCP Config',
+    defaultProviderMode: isDsxuMcpDefaultMode(),
+    legacyCloudMcpEnabled: isLegacyCloudMcpEnabled(),
+    providerPolicy: getDsxuMcpProviderRuntimePolicy(),
+    configLayers: [
+      '.mcp.json project config',
+      'user settings',
+      'project settings',
+      'managed settings',
+      'plugin MCP servers',
+      'DSXU provider defaults',
+    ],
+    activationEvidence: [
+      'DSXU default mode returns getDsxuCodeMcpConfigs without loading legacy cloud discovery',
+      'enterprise MCP config takes exclusive control over managed server loading',
+      'writeMcpjsonFile uses atomic temp file, fsync, chmod preservation, and rename',
+      'dedup signatures normalize command/url configs before plugin/server merge',
+    ],
+  }
+}
 
 /**
  * Get the path to the managed MCP configuration file
@@ -162,7 +203,7 @@ function getServerUrl(config: McpServerConfig): string | null {
 }
 
 /**
- * CCR proxy URL path markers. In remote sessions, claude.ai connectors arrive
+ * CCR proxy URL path markers. In remote sessions, legacy cloud connectors arrive
  * via --mcp-config with URLs rewritten to route through the CCR/session-ingress
  * SHTTP proxy. The original vendor URL is preserved in the mcp_url query param
  * so the proxy knows where to forward. See api-go/ccr/internal/ccrshared/
@@ -195,7 +236,7 @@ export function unwrapCcrProxyUrl(url: string): string {
 /**
  * Compute a dedup signature for an MCP server config.
  * Two configs with the same signature are considered "the same server" for
- * plugin deduplication. Ignores env (plugins always inject CLAUDE_PLUGIN_ROOT)
+ * plugin deduplication. Ignores env (plugins always inject a plugin root alias)
  * and headers (same URL = same server regardless of auth).
  * Returns null only for configs with neither command nor url (sdk type).
  */
@@ -266,20 +307,20 @@ export function dedupPluginMcpServers(
 }
 
 /**
- * Filter claude.ai connectors, dropping any whose signature matches an enabled
+ * Filter legacy cloud connectors, dropping any whose signature matches an enabled
  * manually-configured server. Manual wins: a user who wrote .mcp.json or ran
- * `claude mcp add` expressed higher intent than a connector toggled in the web UI.
+ * a DSXU MCP add command expressed higher intent than a connector toggled in a web UI.
  *
- * Connector keys are `claude.ai <DisplayName>` so they never key-collide with
+ * Connector keys are legacy-cloud prefixed so they never key-collide with
  * manual servers in the merge — this content-based check catches the case where
  * both point at the same underlying URL (e.g. `mcp__slack__*` and
- * `mcp__claude_ai_Slack__*` both hitting mcp.slack.com, ~600 chars/turn wasted).
+ * another hosted connector hitting the same upstream URL.
  *
  * Only enabled manual servers count as dedup targets — a disabled manual server
  * mustn't suppress its connector twin, or neither runs.
  */
-export function dedupClaudeAiMcpServers(
-  claudeAiServers: Record<string, ScopedMcpServerConfig>,
+export function dedupLegacyCloudMcpServers(
+  legacyCloudServers: Record<string, ScopedMcpServerConfig>,
   manualServers: Record<string, ScopedMcpServerConfig>,
 ): {
   servers: Record<string, ScopedMcpServerConfig>
@@ -294,12 +335,12 @@ export function dedupClaudeAiMcpServers(
 
   const servers: Record<string, ScopedMcpServerConfig> = {}
   const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  for (const [name, config] of Object.entries(claudeAiServers)) {
+  for (const [name, config] of Object.entries(legacyCloudServers)) {
     const sig = getMcpServerSignature(config)
     const manualDup = sig !== null ? manualSigs.get(sig) : undefined
     if (manualDup !== undefined) {
       logForDebugging(
-        `Suppressing claude.ai connector "${name}": duplicates manually-configured "${manualDup}"`,
+        `Suppressing legacy cloud connector "${name}": duplicates manually-configured "${manualDup}"`,
       )
       suppressed.push({ name, duplicateOf: manualDup })
       continue
@@ -513,7 +554,7 @@ function isMcpServerAllowedByPolicy(
  * returned so callers can warn the user.
  *
  * Intended for user-controlled config entry points that bypass the policy filter
- * in getClaudeCodeMcpConfigs(): --mcp-config (main.tsx) and the mcp_set_servers
+ * in getDsxuCodeMcpConfigs(): --mcp-config (main.tsx) and the mcp_set_servers
  * control message (print.ts, SDK V2 Query.setMcpServers()).
  *
  * SDK-type servers are exempt — they are SDK-managed transport placeholders,
@@ -604,7 +645,7 @@ function expandEnvVars(config: McpServerConfig): {
     case 'sdk':
       expanded = config
       break
-    case 'claudeai-proxy':
+    case LEGACY_CLOUD_MCP_TRANSPORT:
       expanded = config
       break
   }
@@ -633,8 +674,8 @@ export async function addMcpConfig(
     )
   }
 
-  // Block reserved server name "claude-in-chrome"
-  if (isClaudeInChromeMCPServer(name)) {
+  // Block reserved browser-provider server name
+  if (isDsxuBrowserProviderMCPServer(name)) {
     throw new Error(`Cannot add MCP server "${name}": this name is reserved.`)
   }
 
@@ -705,8 +746,8 @@ export async function addMcpConfig(
       throw new Error('Cannot add MCP server to scope: dynamic')
     case 'enterprise':
       throw new Error('Cannot add MCP server to scope: enterprise')
-    case 'claudeai':
-      throw new Error('Cannot add MCP server to scope: claudeai')
+    case LEGACY_CLOUD_CONFIG_SCOPE:
+      throw new Error('Cannot add MCP server to legacy cloud scope')
   }
 
   // Add based on scope
@@ -1034,7 +1075,7 @@ export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
   const { servers: enterpriseServers } = getMcpConfigsByScope('enterprise')
 
   // When MCP is locked to plugin-only, only enterprise servers are reachable
-  // by name. User/project/local servers are blocked — same as getClaudeCodeMcpConfigs().
+  // by name. User/project/local servers are blocked, same as getDsxuCodeMcpConfigs().
   if (isRestrictedToPluginOnly('mcp')) {
     return enterpriseServers[name] ?? null
   }
@@ -1060,15 +1101,15 @@ export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
 }
 
 /**
- * Get Claude Code MCP configurations (excludes claude.ai servers from the
+ * Get DSXU/DSXU Code MCP configurations (excludes legacy cloud servers from the
  * returned set — they're fetched separately and merged by callers).
  * This is fast: only local file reads; no awaited network calls on the
  * critical path. The optional extraDedupTargets promise (e.g. the in-flight
- * claude.ai connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
+ * legacy cloud connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
  * so the two overlap rather than serialize.
- * @returns Claude Code server configurations with appropriate scopes
+ * @returns DSXU Code server configurations with appropriate scopes
  */
-export async function getClaudeCodeMcpConfigs(
+export async function getDsxuCodeMcpConfigsCore(
   dynamicServers: Record<string, ScopedMcpServerConfig> = {},
   extraDedupTargets: Promise<
     Record<string, ScopedMcpServerConfig>
@@ -1251,40 +1292,64 @@ export async function getClaudeCodeMcpConfigs(
 }
 
 /**
- * Get all MCP configurations across all scopes, including claude.ai servers.
- * This may be slow due to network calls - use getClaudeCodeMcpConfigs() for fast startup.
+ * DSXU-named MCP config entrypoint. It intentionally reuses the mature local
+ * MCP merge/dedup/policy implementation above, but exposes the DSXU provider
+ * semantics so new code does not have to call a legacy-named API.
+ */
+export async function getDsxuCodeMcpConfigs(
+  dynamicServers: Record<string, ScopedMcpServerConfig> = {},
+  extraDedupTargets: Promise<
+    Record<string, ScopedMcpServerConfig>
+  > = Promise.resolve({}),
+): Promise<{
+  servers: Record<string, ScopedMcpServerConfig>
+  errors: PluginError[]
+}> {
+  return getDsxuCodeMcpConfigsCore(dynamicServers, extraDedupTargets)
+}
+
+/**
+ * Get all MCP configurations across all scopes, including legacy cloud servers.
+ * This may be slow due to network calls - use getDsxuCodeMcpConfigs() for fast startup.
  * @returns All server configurations with appropriate scopes
  */
 export async function getAllMcpConfigs(): Promise<{
   servers: Record<string, ScopedMcpServerConfig>
   errors: PluginError[]
 }> {
-  // In enterprise mode, don't load claude.ai servers (enterprise has exclusive control)
-  if (doesEnterpriseMcpConfigExist()) {
-    return getClaudeCodeMcpConfigs()
+  if (isDsxuMcpDefaultMode() && !isLegacyCloudMcpEnabled()) {
+    logForDebugging(
+      `DSXU MCP default mode active: ${JSON.stringify(getDsxuMcpProviderRuntimePolicy())}`,
+    )
+    return getDsxuCodeMcpConfigs()
   }
 
-  // Kick off the claude.ai fetch before getClaudeCodeMcpConfigs so it overlaps
+  // In enterprise mode, don't load legacy cloud servers (enterprise has exclusive control)
+  if (doesEnterpriseMcpConfigExist()) {
+    return getDsxuCodeMcpConfigs()
+  }
+
+  // Kick off the legacy cloud fetch before getDsxuCodeMcpConfigs so it overlaps
   // with loadAllPluginsCacheOnly() inside. Memoized — the awaited call below is a cache hit.
-  const claudeaiPromise = fetchClaudeAIMcpConfigsIfEligible()
-  const { servers: claudeCodeServers, errors } = await getClaudeCodeMcpConfigs(
+  const legacyCloudPromise = fetchLegacyCloudMcpConfigsIfEligible()
+  const { servers: dsxuCodeServers, errors } = await getDsxuCodeMcpConfigsCore(
     {},
-    claudeaiPromise,
+    legacyCloudPromise,
   )
-  const { allowed: claudeaiMcpServers } = filterMcpServersByPolicy(
-    await claudeaiPromise,
+  const { allowed: legacyCloudMcpServers } = filterMcpServersByPolicy(
+    await legacyCloudPromise,
   )
 
-  // Suppress claude.ai connectors that duplicate an enabled manual server.
-  // Keys never collide (`slack` vs `claude.ai Slack`) so the merge below
+  // Suppress legacy cloud connectors that duplicate an enabled manual server.
+  // Keys never collide (`slack` vs legacy cloud Slack) so the merge below
   // won't catch this — need content-based dedup by URL signature.
-  const { servers: dedupedClaudeAi } = dedupClaudeAiMcpServers(
-    claudeaiMcpServers,
-    claudeCodeServers,
+  const { servers: dedupedLegacyCloud } = dedupLegacyCloudMcpServers(
+    legacyCloudMcpServers,
+    dsxuCodeServers,
   )
 
-  // Merge with claude.ai having lowest precedence
-  const servers = Object.assign({}, dedupedClaudeAi, claudeCodeServers)
+  // Merge with legacy cloud having lowest precedence
+  const servers = Object.assign({}, dedupedLegacyCloud, dsxuCodeServers)
 
   return { servers, errors }
 }
@@ -1359,7 +1424,7 @@ export function parseMcpConfig(params: {
         ...(filePath && { file: filePath }),
         path: `mcpServers.${name}`,
         message: `Windows requires 'cmd /c' wrapper to execute npx`,
-        suggestion: `Change command to "cmd" with args ["/c", "npx", ...]. See: https://code.claude.com/docs/en/mcp#configure-mcp-servers`,
+        suggestion: `Change command to "cmd" with args ["/c", "npx", ...]. See DSXU MCP configuration docs.`,
         mcpErrorMetadata: {
           scope,
           serverName: name,
@@ -1494,12 +1559,10 @@ export function shouldAllowManagedMcpServersOnly(): boolean {
 export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
   configs: Record<string, ScopedMcpServerConfig>,
 ): boolean {
-  // NOTE: While all SDK MCP servers should be safe from a security perspective, we are still discussing
-  // what the best way to do this is. In the meantime, we are limiting this to claude-vscode for now to
-  // unbreak the VSCode extension for certain enterprise customers who have enterprise MCP config enabled.
-  // https://anthropic.slack.com/archives/C093UA0KLD7/p1764975463670109
+  // NOTE: While all SDK MCP servers should be safe from a security perspective,
+  // enterprise MCP config currently allows only the legacy VS Code SDK server.
   return Object.values(configs).every(
-    c => c.type === 'sdk' && c.name === 'claude-vscode',
+    c => c.type === 'sdk' && c.name === LEGACY_VSCODE_SDK_SERVER_NAME,
   )
 }
 

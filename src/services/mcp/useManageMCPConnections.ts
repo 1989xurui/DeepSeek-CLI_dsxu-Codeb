@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { basename } from 'path'
 import { useCallback, useEffect, useRef } from 'react'
@@ -42,10 +43,10 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import {
-  dedupClaudeAiMcpServers,
+  dedupLegacyCloudMcpServers,
   doesEnterpriseMcpConfigExist,
   filterMcpServersByPolicy,
-  getClaudeCodeMcpConfigs,
+  getDsxuCodeMcpConfigs,
   isMcpServerDisabled,
   setMcpServerEnabled,
 } from 'src/services/mcp/config.js'
@@ -69,6 +70,7 @@ import {
   ChannelPermissionNotificationSchema,
   findChannelEntry,
   gateChannelServer,
+  LEGACY_CHANNEL_PERMISSION_METHOD,
   wrapChannelMessage,
 } from './channelNotification.js'
 import {
@@ -77,9 +79,19 @@ import {
   isChannelPermissionRelayEnabled,
 } from './channelPermissions.js'
 import {
-  clearClaudeAIMcpConfigsCache,
-  fetchClaudeAIMcpConfigsIfEligible,
-} from './claudeai.js'
+  clearLegacyCloudMcpConfigsCache,
+  fetchLegacyCloudMcpConfigsIfEligible,
+} from './legacyRemoteMcpProvider.js'
+import {
+  getLegacyCloudMcpDisabledReason,
+  isDsxuMcpDefaultMode,
+  isLegacyCloudMcpEnabled,
+} from './dsxuProvider.js'
+import {
+  LEGACY_CLOUD_CHANNEL_CAPABILITY,
+  LEGACY_CLOUD_CHANNEL_METHOD,
+  LEGACY_CLOUD_CONFIG_SCOPE,
+} from '../../constants/legacyProviderProtocol.js'
 import { registerElicitationHandler } from './elicitationHandler.js'
 import { getMcpPrefix } from './mcpStringUtils.js'
 import { commandBelongsToServer, excludeStalePluginClients } from './utils.js'
@@ -89,6 +101,33 @@ const MAX_RECONNECT_ATTEMPTS = 5
 const INITIAL_BACKOFF_MS = 1000
 const MAX_BACKOFF_MS = 30000
 
+export function getDsxuMcpConnectionRuntimeProfile(): {
+  runtime: 'DSXU MCP Connection Manager'
+  defaultProviderMode: boolean
+  legacyCloudEnabled: boolean
+  reconnectPolicy: {
+    maxAttempts: number
+    initialBackoffMs: number
+    maxBackoffMs: number
+  }
+  activationEvidence: string[]
+} {
+  return {
+    runtime: 'DSXU MCP Connection Manager',
+    defaultProviderMode: isDsxuMcpDefaultMode(),
+    legacyCloudEnabled: isLegacyCloudMcpEnabled(),
+    reconnectPolicy: {
+      maxAttempts: MAX_RECONNECT_ATTEMPTS,
+      initialBackoffMs: INITIAL_BACKOFF_MS,
+      maxBackoffMs: MAX_BACKOFF_MS,
+    },
+    activationEvidence: [
+      'loads DSXU/user/project/plugin MCP configs through getDsxuCodeMcpConfigs',
+      'blocks legacy cloud connectors unless explicit migration flag is enabled',
+      'refreshes tools/prompts/resources into AppState for Tool/Skill/MCP activation',
+    ],
+  }
+}
 /**
  * Create a unique key for a plugin error to enable deduplication
  */
@@ -96,7 +135,6 @@ function getErrorKey(error: PluginError): string {
   const plugin = 'plugin' in error ? error.plugin : 'no-plugin'
   return `${error.type}:${error.source}:${plugin}`
 }
-
 /**
  * Add errors to AppState, deduplicating to avoid showing the same error multiple times
  */
@@ -147,7 +185,7 @@ export function useManageMCPConnections(
   const store = useAppStateStore()
   const _authVersion = useAppState(s => s.authVersion)
   // Incremented by /reload-plugins (refreshActivePlugins) to pick up newly
-  // enabled plugin MCP servers. getClaudeCodeMcpConfigs() reads loadAllPlugins()
+  // enabled plugin MCP servers. getDsxuCodeMcpConfigs() reads loadAllPlugins()
   // which has been cleared by refreshActivePlugins, so the effects below see
   // fresh plugin data on re-run.
   const _pluginReconnectKey = useAppState(s => s.mcp.pluginReconnectKey)
@@ -157,14 +195,14 @@ export function useManageMCPConnections(
   const reconnectTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // Dedup the --channels blocked warning per skip kind so that a user who
-  // sees "run /login" (auth skip), logs in, then hits the policy gate
+  // sees the provider-specific auth hint, logs in, then hits the policy gate
   // gets a second toast.
   const channelWarnedKindsRef = useRef<
     Set<'disabled' | 'auth' | 'policy' | 'marketplace' | 'allowlist'>
   >(new Set())
-  // Channel permission callbacks — constructed once, stable ref. Stored in
+  // Channel permission callbacks - constructed once, stable ref. Stored in
   // AppState so interactiveHandler can subscribe. The pending Map lives inside
-  // the closure (not module-level, not AppState — functions-in-state is brittle).
+  // the closure (not module-level, not AppState - functions-in-state is brittle).
   const channelPermCallbacksRef = useRef<ChannelPermissionCallbacks | null>(
     null,
   )
@@ -175,16 +213,16 @@ export function useManageMCPConnections(
     channelPermCallbacksRef.current = createChannelPermissionCallbacks()
   }
   // Store callbacks in AppState so interactiveHandler.ts can reach them via
-  // ctx.toolUseContext.getAppState(). One-time set — the ref is stable.
+  // ctx.toolUseContext.getAppState(). One-time set - the ref is stable.
   useEffect(() => {
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       const callbacks = channelPermCallbacksRef.current
       if (!callbacks) return
-      // GrowthBook runtime gate — separate from channels so channels can
+      // GrowthBook runtime gate - separate from channels so channels can
       // ship without this. Checked at mount; mid-session flips need restart.
-      // If off, callbacks never go into AppState → interactiveHandler sees
-      // undefined → never sends → intercept has nothing pending → "yes tbxkq"
-      // flows to Claude as normal chat. One gate, full disable.
+      // If off, callbacks never go into AppState - interactiveHandler sees
+      // undefined - never sends - intercept has nothing pending - "yes tbxkq"
+      // flows to the model as normal chat. One gate, full disable.
       if (!isChannelPermissionRelayEnabled()) return
       setAppState(prev => {
         if (prev.channelPermissionCallbacks === callbacks) return prev
@@ -467,7 +505,7 @@ export function useManageMCPConnections(
             }
           }
 
-          // Channel push: notifications/claude/channel → enqueue().
+          // Channel push: legacy cloud channel - enqueue().
           // Gate decides whether to register the handler; connection stays
           // up either way (allowedMcpServers controls that).
           if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
@@ -477,7 +515,7 @@ export function useManageMCPConnections(
               client.config.pluginSource,
             )
             const entry = findChannelEntry(client.name, getAllowedChannels())
-            // Plugin identifier for telemetry — log name@marketplace for any
+            // Plugin identifier for telemetry - log name@marketplace for any
             // plugin-kind entry (same tier as tengu_plugin_installed, which
             // logs arbitrary plugin_id+marketplace_name ungated). server-kind
             // names are MCP-server-name tier; those are opt-in-only elsewhere
@@ -487,7 +525,7 @@ export function useManageMCPConnections(
               entry?.kind === 'plugin'
                 ? (`${entry.name}@${entry.marketplace}` as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS)
                 : undefined
-            // Skip capability-miss — every non-channel MCP server trips it.
+            // Skip capability-miss - every non-channel MCP server trips it.
             if (gate.action === 'register' || gate.kind !== 'capability') {
               logEvent('tengu_mcp_channel_gate', {
                 registered: gate.action === 'register',
@@ -510,7 +548,7 @@ export function useManageMCPConnections(
                     const { content, meta } = notification.params
                     logMCPDebug(
                       client.name,
-                      `notifications/claude/channel: ${content.slice(0, 80)}`,
+                      `${notification.method}: ${content.slice(0, 80)}`,
                     )
                     logEvent('tengu_mcp_channel_message', {
                       content_length: content.length,
@@ -530,15 +568,15 @@ export function useManageMCPConnections(
                     })
                   },
                 )
-                // Permission-reply handler — separate event, separate
+                // Permission-reply handler - separate event, separate
                 // capability. Only registers if the server declares
-                // claude/channel/permission (same opt-in check as the send
+                // the legacy permission capability (same opt-in check as the send
                 // path in interactiveHandler.ts). Server parses the user's
                 // reply and emits {request_id, behavior}; no regex on our
                 // side, text in the general channel can't accidentally match.
                 if (
                   client.capabilities?.experimental?.[
-                    'claude/channel/permission'
+                    LEGACY_CLOUD_CHANNEL_CAPABILITY + '/permission'
                   ] !== undefined
                 ) {
                   client.client.setNotificationHandler(
@@ -553,20 +591,23 @@ export function useManageMCPConnections(
                         ) ?? false
                       logMCPDebug(
                         client.name,
-                        `notifications/claude/channel/permission: ${request_id} → ${behavior} (${resolved ? 'matched pending' : 'no pending entry — stale or unknown ID'})`,
+                        `legacy cloud channel permission: ${request_id} - ${behavior} (${resolved ? 'matched pending' : 'no pending entry - stale or unknown ID'})`,
                       )
                     },
                   )
                 }
                 break
               case 'skip':
-                // Idempotent teardown so a register→skip re-gate (e.g.
+                // Idempotent teardown so a register - skip re-gate (e.g.
                 // effect re-runs after /logout) actually removes the live
                 // handler. Without this, mid-session demotion is one-way:
                 // the gate says skip but the earlier handler keeps enqueuing.
-                // Map.delete — safe when never registered.
+                // Map.delete - safe when never registered.
                 client.client.removeNotificationHandler(
-                  'notifications/claude/channel',
+                  LEGACY_CLOUD_CHANNEL_METHOD,
+                )
+                client.client.removeNotificationHandler(
+                  LEGACY_CHANNEL_PERMISSION_METHOD,
                 )
                 client.client.removeNotificationHandler(
                   CHANNEL_PERMISSION_METHOD,
@@ -579,7 +620,7 @@ export function useManageMCPConnections(
                 // blocked. This is the only
                 // user-visible signal (logMCPDebug above requires --debug).
                 // Capability/session skips are expected noise and stay
-                // debug-only. marketplace/allowlist run after session — if
+                // debug-only. marketplace/allowlist run after session - if
                 // we're here with those kinds, the user asked for it.
                 if (
                   gate.kind !== 'capability' &&
@@ -597,9 +638,11 @@ export function useManageMCPConnections(
                     gate.kind === 'disabled'
                       ? 'Channels are not currently available'
                       : gate.kind === 'auth'
-                        ? 'Channels require claude.ai authentication · run /login'
+                        ? isDsxuMcpDefaultMode()
+                          ? 'Channels require DSXU MCP Provider authorization'
+                          : 'Channels require legacy cloud authentication - run /login'
                         : gate.kind === 'policy'
-                          ? 'Channels are not enabled for your org · have an administrator set channelsEnabled: true in managed settings'
+                          ? 'Channels are not enabled for your org - have an administrator set channelsEnabled: true in managed settings'
                           : gate.reason
                   addNotification({
                     key: `channels-blocked-${gate.kind}`,
@@ -676,7 +719,7 @@ export function useManageMCPConnections(
                   type: 'prompts' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                 })
                 try {
-                  // Skills come from resources, not prompts — don't invalidate their
+                  // Skills come from resources, not prompts - don't invalidate their
                   // cache here. fetchMcpSkillsForClient returns the cached result.
                   fetchCommandsForClient.cache.delete(client.name)
                   const [mcpPrompts, mcpSkills] = await Promise.all([
@@ -689,7 +732,7 @@ export function useManageMCPConnections(
                     ...client,
                     commands: [...mcpPrompts, ...mcpSkills],
                   })
-                  // MCP skills changed — invalidate skill-search index so
+                  // MCP skills changed - invalidate skill-search index so
                   // next discovery rebuilds with the new set.
                   clearSkillIndexCache?.()
                 } catch (error) {
@@ -733,7 +776,7 @@ export function useManageMCPConnections(
                       resources: newResources,
                       commands: [...mcpPrompts, ...mcpSkills],
                     })
-                    // MCP skills changed — invalidate skill-search index so
+                    // MCP skills changed - invalidate skill-search index so
                     // next discovery rebuilds with the new set.
                     clearSkillIndexCache?.()
                   } else {
@@ -765,15 +808,15 @@ export function useManageMCPConnections(
   // Initialize all servers to pending state if they don't exist in appState.
   // Re-runs on session change (/clear) and on /reload-plugins (pluginReconnectKey).
   // On plugin reload, also disconnects stale plugin MCP servers (scope 'dynamic')
-  // that no longer appear in configs — prevents ghost tools from disabled plugins.
-  // Skip claude.ai dedup here to avoid blocking on the network fetch; the connect
+  // that no longer appear in configs - prevents ghost tools from disabled plugins.
+  // Skip legacy cloud dedup here to avoid blocking on the network fetch; the connect
   // useEffect below runs immediately after and dedups before connecting.
   const sessionId = getSessionId()
   useEffect(() => {
     async function initializeServersAsPending() {
       const { servers: existingConfigs, errors: mcpErrors } = isStrictMcpConfig
         ? { servers: {}, errors: [] }
-        : await getClaudeCodeMcpConfigs(dynamicMcpConfig)
+        : await getDsxuCodeMcpConfigs(dynamicMcpConfig)
       const configs = { ...existingConfigs, ...dynamicMcpConfig }
 
       // Add MCP errors to plugin errors for UI visibility (deduplicated)
@@ -788,16 +831,16 @@ export function useManageMCPConnections(
           prevState.mcp,
           configs,
         )
-        // Clean up stale connections. Fire-and-forget — state updaters must
+        // Clean up stale connections. Fire-and-forget - state updaters must
         // be synchronous. Three hazards to defuse before calling cleanup:
         //   1. Pending reconnect timer would fire with the OLD config.
         //   2. onclose (set at L254) starts reconnectWithBackoff with the
-        //      OLD config from its closure — it checks isMcpServerDisabled
+        //      OLD config from its closure - it checks isMcpServerDisabled
         //      but config-changed servers aren't disabled, so it'd race the
         //      fresh connection and last updateServer wins.
         //   3. clearServerCache internally calls connectToServer (memoized).
         //      For never-connected servers (disabled/pending/failed) the
-        //      cache is empty → real connect attempt → spawn/OAuth just to
+        //      cache is empty - real connect attempt - spawn/OAuth just to
         //      immediately kill it. Only connected servers need cleanup.
         for (const s of stale) {
           const timer = reconnectTimersRef.current.get(s.name)
@@ -853,40 +896,49 @@ export function useManageMCPConnections(
     _pluginReconnectKey,
   ])
 
-  // Load MCP configs and connect to servers
-  // Two-phase loading: Claude Code configs first (fast), then claude.ai configs (may be slow)
+  // Load MCP configs and connect to servers.
+  // DSXU default mode only loads DSXU/user/project/plugin configs. Legacy
+  // cloud connectors are migration-only and must be explicitly enabled.
   useEffect(() => {
     let cancelled = false
 
     async function loadAndConnectMcpConfigs() {
-      // Clear claude.ai MCP cache so we fetch fresh configs with current auth
-      // state. This is important when authVersion changes (e.g., after login/
-      // logout). Kick off the fetch now so it overlaps with loadAllPlugins()
-      // inside getClaudeCodeMcpConfigs; it's awaited only at the dedup step.
-      // Phase 2 below awaits the same promise — no second network call.
-      let claudeaiPromise: Promise<Record<string, ScopedMcpServerConfig>>
-      if (isStrictMcpConfig || doesEnterpriseMcpConfigExist()) {
-        claudeaiPromise = Promise.resolve({})
+      let legacyCloudPromise: Promise<Record<string, ScopedMcpServerConfig>>
+      const allowLegacyCloud =
+        !isStrictMcpConfig &&
+        !doesEnterpriseMcpConfigExist() &&
+        (!isDsxuMcpDefaultMode() || isLegacyCloudMcpEnabled())
+      if (allowLegacyCloud) {
+        clearLegacyCloudMcpConfigsCache()
+        legacyCloudPromise = fetchLegacyCloudMcpConfigsIfEligible()
       } else {
-        clearClaudeAIMcpConfigsCache()
-        claudeaiPromise = fetchClaudeAIMcpConfigsIfEligible()
+        legacyCloudPromise = Promise.resolve({})
+        if (isDsxuMcpDefaultMode() && !isLegacyCloudMcpEnabled()) {
+          logMCPDebug(
+            'useManageMCPConnections',
+            getLegacyCloudMcpDisabledReason(),
+          )
+        }
       }
 
-      // Phase 1: Load Claude Code configs. Plugin MCP servers that duplicate a
-      // --mcp-config entry or a claude.ai connector are suppressed here so they
-      // don't connect alongside the connector in Phase 2.
-      const { servers: claudeCodeConfigs, errors: mcpErrors } =
+      // Phase 1: Load DSXU Code configs. Plugin MCP servers that duplicate a
+      // --mcp-config entry or an explicitly enabled legacy connector are
+      // suppressed here so they don't connect twice.
+      const { servers: dsxuCodeConfigs, errors: mcpErrors } =
         isStrictMcpConfig
           ? { servers: {}, errors: [] }
-          : await getClaudeCodeMcpConfigs(dynamicMcpConfig, claudeaiPromise)
+          : await getDsxuCodeMcpConfigs(
+              dynamicMcpConfig,
+              legacyCloudPromise,
+            )
       if (cancelled) return
 
       // Add MCP errors to plugin errors for UI visibility (deduplicated)
       addErrorsToAppState(setAppState, mcpErrors)
 
-      const configs = { ...claudeCodeConfigs, ...dynamicMcpConfig }
+      const configs = { ...dsxuCodeConfigs, ...dynamicMcpConfig }
 
-      // Start connecting to Claude Code servers (don't wait - runs concurrently with Phase 2)
+      // Start connecting to DSXU Code servers (don't wait - runs concurrently with optional migration connectors)
       // Filter out disabled servers to avoid unnecessary connection attempts
       const enabledConfigs = Object.fromEntries(
         Object.entries(configs).filter(([name]) => !isMcpServerDisabled(name)),
@@ -901,32 +953,32 @@ export function useManageMCPConnections(
         )
       })
 
-      // Phase 2: Await claude.ai configs (started above; memoized — no second fetch)
-      let claudeaiConfigs: Record<string, ScopedMcpServerConfig> = {}
-      if (!isStrictMcpConfig) {
-        claudeaiConfigs = filterMcpServersByPolicy(
-          await claudeaiPromise,
+      // Phase 2: Optional legacy cloud migration connectors.
+      let legacyCloudConfigs: Record<string, ScopedMcpServerConfig> = {}
+      if (allowLegacyCloud) {
+        legacyCloudConfigs = filterMcpServersByPolicy(
+          await legacyCloudPromise,
         ).allowed
         if (cancelled) return
 
-        // Suppress claude.ai connectors that duplicate an enabled manual server.
-        // Keys never collide (`slack` vs `claude.ai Slack`) so the merge below
-        // won't catch this — need content-based dedup by URL signature.
-        if (Object.keys(claudeaiConfigs).length > 0) {
-          const { servers: dedupedClaudeAi } = dedupClaudeAiMcpServers(
-            claudeaiConfigs,
+        // Suppress legacy connectors that duplicate an enabled manual server.
+        // Keys never collide (`slack` vs `legacy cloud Slack`) so the merge below
+        // won't catch this - need content-based dedup by URL signature.
+        if (Object.keys(legacyCloudConfigs).length > 0) {
+          const { servers: dedupedLegacyCloud } = dedupLegacyCloudMcpServers(
+            legacyCloudConfigs,
             configs,
           )
-          claudeaiConfigs = dedupedClaudeAi
+          legacyCloudConfigs = dedupedLegacyCloud
         }
 
-        if (Object.keys(claudeaiConfigs).length > 0) {
-          // Add claude.ai servers as pending immediately so they show up in UI
+        if (Object.keys(legacyCloudConfigs).length > 0) {
+          // Add migration servers as pending immediately so they show up in UI
           setAppState(prevState => {
             const existingServerNames = new Set(
               prevState.mcp.clients.map(c => c.name),
             )
-            const newClients = Object.entries(claudeaiConfigs)
+            const newClients = Object.entries(legacyCloudConfigs)
               .filter(([name]) => !existingServerNames.has(name))
               .map(([name, config]) => ({
                 name,
@@ -946,32 +998,32 @@ export function useManageMCPConnections(
           })
 
           // Now start connecting (only enabled servers)
-          const enabledClaudeaiConfigs = Object.fromEntries(
-            Object.entries(claudeaiConfigs).filter(
+          const enabledLegacyCloudConfigs = Object.fromEntries(
+            Object.entries(legacyCloudConfigs).filter(
               ([name]) => !isMcpServerDisabled(name),
             ),
           )
           getMcpToolsCommandsAndResources(
             onConnectionAttempt,
-            enabledClaudeaiConfigs,
+            enabledLegacyCloudConfigs,
           ).catch(error => {
             logMCPError(
               'useManageMcpConnections',
-              `Failed to get claude.ai MCP resources: ${errorMessage(error)}`,
+              `Failed to get legacy cloud MCP resources: ${errorMessage(error)}`,
             )
           })
         }
       }
 
       // Log server counts after both phases complete
-      const allConfigs = { ...configs, ...claudeaiConfigs }
+      const allConfigs = { ...configs, ...legacyCloudConfigs }
       const counts = {
         enterprise: 0,
         global: 0,
         project: 0,
         user: 0,
         plugin: 0,
-        claudeai: 0,
+        legacyCloud: 0,
       }
       // Ant-only: collect stdio command basenames to correlate with RSS/FPS
       // metrics. Stdio servers like rust-analyzer can be heavy and we want to
@@ -983,7 +1035,8 @@ export function useManageMCPConnections(
         else if (serverConfig.scope === 'project') counts.project++
         else if (serverConfig.scope === 'local') counts.user++
         else if (serverConfig.scope === 'dynamic') counts.plugin++
-        else if (serverConfig.scope === 'claudeai') counts.claudeai++
+        else if (serverConfig.scope === LEGACY_CLOUD_CONFIG_SCOPE)
+          counts.legacyCloud++
 
         if (
           process.env.USER_TYPE === 'ant' &&

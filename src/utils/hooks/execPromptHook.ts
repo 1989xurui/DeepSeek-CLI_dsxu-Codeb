@@ -1,6 +1,7 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
-import { queryModelWithoutStreaming } from '../../services/api/claude.js'
+import { queryModelWithoutStreaming } from '../../services/api/dsxu.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type { Message } from '../../types/message.js'
 import { createAttachmentMessage } from '../attachments.js'
@@ -51,7 +52,7 @@ export async function execPromptHook(
       `Hooks: Querying model with ${messagesToQuery.length} messages`,
     )
 
-    // Query the model with Haiku
+    // Query the small-model route
     const hookTimeoutMs = hook.timeout ? hook.timeout * 1000 : 30000
 
     // Combined signal: aborts if either the hook signal or timeout triggers
@@ -62,7 +63,7 @@ export async function execPromptHook(
       const response = await queryModelWithoutStreaming({
         messages: messagesToQuery,
         systemPrompt: asSystemPrompt([
-          `You are evaluating a hook in Claude Code.
+          `You are evaluating a hook in DSXU Code.
 
 Your response must be a JSON object matching one of the following schemas:
 1. If the condition is met, return: {"ok": true}

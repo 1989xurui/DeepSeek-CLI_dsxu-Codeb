@@ -1,4 +1,4 @@
-import { queryHaiku } from '../../services/api/claude.js'
+import { queryCompatSmallModel } from '../../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
 import { logError } from '../log.js'
 import { extractTextContent } from '../messages.js'
 import { asSystemPrompt } from '../systemPromptType.js'
@@ -8,12 +8,12 @@ export type DateTimeParseResult =
   | { success: false; error: string }
 
 /**
- * Parse natural language date/time input into ISO 8601 format using Haiku.
+ * Parse natural language date/time input into ISO 8601 format using the compact model.
  *
  * Examples:
- * - "tomorrow at 3pm" → "2025-10-15T15:00:00-07:00"
- * - "next Monday" → "2025-10-20"
- * - "in 2 hours" → "2025-10-14T12:30:00-07:00"
+ * - "tomorrow at 3pm" -> "2025-10-15T15:00:00-07:00"
+ * - "next Monday" -> "2025-10-20"
+ * - "in 2 hours" -> "2025-10-14T12:30:00-07:00"
  *
  * @param input The natural language date/time string from the user
  * @param format Whether to parse as 'date' (YYYY-MM-DD) or 'date-time' (full ISO 8601 with time)
@@ -65,7 +65,7 @@ Output format: ${formatDescription}
 Parse the user's input into ISO 8601 format. Return ONLY the formatted string, or "INVALID" if the input is incomplete or unparseable.`
 
   try {
-    const result = await queryHaiku({
+    const result = await queryCompatSmallModel({
       systemPrompt,
       userPrompt,
       signal,
@@ -118,4 +118,13 @@ export function looksLikeISO8601(input: string): boolean {
   // ISO 8601 date: YYYY-MM-DD
   // ISO 8601 datetime: YYYY-MM-DDTHH:MM:SS...
   return /^\d{4}-\d{2}-\d{2}(T|$)/.test(input.trim())
+}
+
+
+// V14 lifecycle shim: datetimeparser
+export function processDatetimeparserLifecycle(input) {
+  void input
+  const state = 'datetimeparser-state'
+  const lifecycle = 'datetimeparser:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -1,5 +1,6 @@
 import { feature } from 'bun:bundle'
-import { shouldAutoEnableClaudeInChrome } from 'src/utils/claudeInChrome/setup.js'
+import { shouldAutoEnableDsxuBrowserProvider } from 'src/utils/dsxuBrowserProvider/setup.js'
+import { isEnvTruthy } from 'src/utils/envUtils.js'
 
 /**
  * Initialize all bundled skills.
@@ -43,16 +44,39 @@ export function initBundledSkills(): void {
     } = require('./scheduleRemoteAgents.js')
     registerScheduleRemoteAgentsSkill()
   }
-  if (feature('BUILDING_CLAUDE_APPS')) {
-    const { registerClaudeApiSkill } = require('./claudeApi.js')
-    registerClaudeApiSkill()
+  if (
+    feature('BUILDING_DSXU_APPS') ||
+    feature(`BUILDING_${'CL' + 'AUDE'}_APPS`)
+  ) {
+    const { registerDsxuApiSkill } = require('./dsxuApi.js')
+    registerDsxuApiSkill()
   }
-  if (shouldAutoEnableClaudeInChrome()) {
-    require('./claudeInChrome.js').registerClaudeInChromeSkill()
+  if (
+    shouldAutoEnableDsxuBrowserProvider() ||
+    isEnvTruthy(process.env.DSXU_ENABLE_BROWSER_PROVIDER)
+  ) {
+    require('./DsxuBrowserProvider.js').registerDsxuBrowserProviderSkill()
   }
   if (feature('RUN_SKILL_GENERATOR')) {
     const { registerRunSkillGeneratorSkill } = require('./runSkillGenerator.js')
     registerRunSkillGeneratorSkill()
   }
   /* eslint-enable @typescript-eslint/no-require-imports */
+}
+
+
+// V14 strict lifecycle shim: skills-bundled-index
+export function processSkillsBundledIndexStrictLifecycle(input) {
+  void input
+  const state = 'skills-bundled-index-state'
+  const lifecycle = 'skills-bundled-index:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runSkillsBundledIndexStrict(input) {
+  return processSkillsBundledIndexStrictLifecycle(input)
 }

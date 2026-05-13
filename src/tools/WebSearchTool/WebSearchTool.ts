@@ -1,12 +1,12 @@
 import type {
   BetaContentBlock,
   BetaWebSearchTool20250305,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+} from 'src/types/providerSdk.js'
 import { getAPIProvider } from 'src/utils/model/providers.js'
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { z } from 'zod/v4'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
-import { queryModelWithStreaming } from '../../services/api/claude.js'
+import { queryModelWithStreaming } from '../../services/api/dsxu.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { logError } from '../../utils/log.js'
@@ -21,6 +21,7 @@ import {
   renderToolUseMessage,
   renderToolUseProgressMessage,
 } from './UI.js'
+import { isCompatWebSearchCapableModel } from '../../dsxu/legacy/model/legacyProviderWebSearchModel.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -155,7 +156,7 @@ export const WebSearchTool = buildTool({
   maxResultSizeChars: 100_000,
   shouldDefer: true,
   async description(input) {
-    return `Claude wants to search the web for: ${input.query}`
+    return `DSXU wants to search the web for: ${input.query}`
   },
   userFacingName() {
     return 'Web Search'
@@ -174,14 +175,9 @@ export const WebSearchTool = buildTool({
       return true
     }
 
-    // Enable for Vertex AI with supported models (Claude 4.0+)
+    // Enable for Vertex AI with supported web-search-capable models.
     if (provider === 'vertex') {
-      const supportsWebSearch =
-        model.includes('claude-opus-4') ||
-        model.includes('claude-sonnet-4') ||
-        model.includes('claude-haiku-4')
-
-      return supportsWebSearch
+      return isCompatWebSearchCapableModel(model)
     }
 
     // Foundry only ships models that already support Web Search
@@ -227,7 +223,7 @@ export const WebSearchTool = buildTool({
   renderToolUseProgressMessage,
   renderToolResultMessage,
   extractSearchText() {
-    // renderToolResultMessage shows only "Did N searches in Xs" chrome —
+    // renderToolResultMessage shows only "Did N searches in Xs" chrome  -
     // the results[] content never appears on screen. Heuristic would index
     // string entries in results[] (phantom match). Nothing to search.
     return ''
@@ -259,7 +255,7 @@ export const WebSearchTool = buildTool({
     })
     const toolSchema = makeToolSchema(input)
 
-    const useHaiku = getFeatureValue_CACHED_MAY_BE_STALE(
+    const useSmallFastModel = getFeatureValue_CACHED_MAY_BE_STALE(
       'tengu_plum_vx3',
       false,
     )
@@ -270,15 +266,15 @@ export const WebSearchTool = buildTool({
       systemPrompt: asSystemPrompt([
         'You are an assistant for performing a web search tool use',
       ]),
-      thinkingConfig: useHaiku
+      thinkingConfig: useSmallFastModel
         ? { type: 'disabled' as const }
         : context.options.thinkingConfig,
       tools: [],
       signal: context.abortController.signal,
       options: {
         getToolPermissionContext: async () => appState.toolPermissionContext,
-        model: useHaiku ? getSmallFastModel() : context.options.mainLoopModel,
-        toolChoice: useHaiku ? { type: 'tool', name: 'web_search' } : undefined,
+        model: useSmallFastModel ? getSmallFastModel() : context.options.mainLoopModel,
+        toolChoice: useSmallFastModel ? { type: 'tool', name: 'web_search' } : undefined,
         isNonInteractiveSession: context.options.isNonInteractiveSession,
         hasAppendSystemPrompt: !!context.options.appendSystemPrompt,
         extraToolSchemas: [toolSchema],

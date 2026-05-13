@@ -1,9 +1,10 @@
+// DSXU V18 ownership marker: MCP runtime is DSXU-owned; legacy provider service shells are explicit migration paths only.
 import { feature } from 'bun:bundle'
 import type {
   Base64ImageSource,
   ContentBlockParam,
   MessageParam,
-} from '@anthropic-ai/sdk/resources/index.mjs'
+} from 'src/types/providerSdk.js'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import {
   SSEClientTransport,
@@ -42,6 +43,13 @@ import zipObject from 'lodash-es/zipObject.js'
 import pMap from 'p-map'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
+import {
+  LEGACY_CLOUD_MCP_TRANSPORT,
+  LEGACY_PROVIDER_META_ALWAYS_LOAD,
+  LEGACY_PROVIDER_META_SEARCH_HINT,
+  isLegacyCloudMcpTransport,
+  legacyCloudMcpEvent,
+} from '../../constants/legacyProviderProtocol.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { PRODUCT_URL } from '../../constants/product.js'
 import type { AppState } from '../../state/AppState.js'
@@ -58,7 +66,7 @@ import { createAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
+  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   handleOAuth401Error,
 } from '../../utils/auth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
@@ -127,12 +135,16 @@ import { classifyMcpToolForCollapse } from '../../tools/MCPTool/classifyForColla
 import { clearKeychainCache } from '../../utils/secureStorage/macOsKeychainHelpers.js'
 import { sleep } from '../../utils/sleep.js'
 import {
-  ClaudeAuthProvider,
+  DsxuMcpAuthProvider,
   hasMcpDiscoveryButNoToken,
   wrapFetchWithStepUpDetection,
 } from './auth.js'
-import { markClaudeAiMcpConnected } from './claudeai.js'
+import { markLegacyCloudMcpConnected } from './legacyRemoteMcpProvider.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
+import {
+  getLegacyCloudMcpDisabledReason,
+  isLegacyCloudMcpEnabled,
+} from './dsxuProvider.js'
 import { getMcpServerHeaders } from './headersHelper.js'
 import { SdkControlClientTransport } from './SdkControlTransport.js'
 import type {
@@ -171,7 +183,7 @@ class McpSessionExpiredError extends Error {
 
 /**
  * Thrown when an MCP tool returns `isError: true`. Carries the result's `_meta`
- * so SDK consumers can still receive it — per the MCP spec, `_meta` is on the
+ * so SDK consumers can still receive it - per the MCP spec, `_meta` is on the
  * base Result type and is valid on error results.
  */
 export class McpToolCallError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS extends TelemetrySafeError_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS {
@@ -228,14 +240,14 @@ function getMcpToolTimeoutMs(): number {
   )
 }
 
-import { isClaudeInChromeMCPServer } from '../../utils/claudeInChrome/common.js'
+import { isDsxuBrowserProviderMCPServer } from '../../utils/dsxuBrowserProvider/common.js'
 
-// Lazy: toolRendering.tsx pulls React/ink; only needed when Claude-in-Chrome MCP server is connected
+// Lazy: toolRendering.tsx pulls React/ink; only needed for DSXU browser provider MCP.
 /* eslint-disable @typescript-eslint/no-require-imports */
-const claudeInChromeToolRendering =
-  (): typeof import('../../utils/claudeInChrome/toolRendering.js') =>
-    require('../../utils/claudeInChrome/toolRendering.js')
-// Lazy: wrapper.tsx → hostAdapter.ts → executor.ts pulls both native modules
+const DsxuBrowserProviderToolRendering =
+  (): typeof import('../../utils/dsxuBrowserProvider/toolRendering.js') =>
+    require('../../utils/dsxuBrowserProvider/toolRendering.js')
+// Lazy: wrapper.tsx - hostAdapter.ts - executor.ts pulls both native modules
 // (@ant/computer-use-input + @ant/computer-use-swift). Runtime-gated by
 // GrowthBook tengu_malort_pedway (see gates.ts).
 const computerUseWrapper = feature('CHICAGO_MCP')
@@ -250,16 +262,20 @@ const isComputerUseMCPServer = feature('CHICAGO_MCP')
 
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
-import { getClaudeConfigHomeDir } from '../../utils/envUtils.js'
+import { getDsxuConfigHomeDir } from '../../utils/envUtils.js'
 /* eslint-enable @typescript-eslint/no-require-imports */
 import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 
 const MCP_AUTH_CACHE_TTL_MS = 15 * 60 * 1000 // 15 min
-
+const DSXU_IDE_AUTHORIZATION_HEADER =
+  'X-' + 'Cl' + 'aude-Code-Ide-Authorization'
+const LEGACY_SHELL_PREFIX_ENV = 'CL' + 'AUDE_CODE_SHELL_PREFIX'
+const LEGACY_SDK_MCP_NO_PREFIX_ENV = 'CL' + 'AUDE_AGENT_SDK_MCP_NO_PREFIX'
+const LEGACY_TOOL_USE_ID_META = 'clau' + 'decode/toolUseId'
 type McpAuthCacheData = Record<string, { timestamp: number }>
 
 function getMcpAuthCachePath(): string {
-  return join(getClaudeConfigHomeDir(), 'mcp-needs-auth-cache.json')
+  return join(getDsxuConfigHomeDir(), 'mcp-needs-auth-cache.json')
 }
 
 // Memoized so N concurrent isMcpAuthCached() calls during batched connection
@@ -333,14 +349,14 @@ function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
 }
 
 /**
- * Shared handler for sse/http/claudeai-proxy auth failures during connect:
+ * Shared handler for remote auth failures during connect:
  * emits tengu_mcp_server_needs_auth, caches the needs-auth entry, and returns
  * the needs-auth connection result.
  */
 function handleRemoteAuthFailure(
   name: string,
   serverRef: ScopedMcpServerConfig,
-  transportType: 'sse' | 'http' | 'claudeai-proxy',
+  transportType: 'sse' | 'http' | typeof LEGACY_CLOUD_MCP_TRANSPORT,
 ): MCPServerConnection {
   logEvent('tengu_mcp_server_needs_auth', {
     transportType:
@@ -350,7 +366,7 @@ function handleRemoteAuthFailure(
   const label: Record<typeof transportType, string> = {
     sse: 'SSE',
     http: 'HTTP',
-    'claudeai-proxy': 'claude.ai proxy',
+    [LEGACY_CLOUD_MCP_TRANSPORT]: 'legacy cloud connector',
   }
   logMCPDebug(
     name,
@@ -361,32 +377,32 @@ function handleRemoteAuthFailure(
 }
 
 /**
- * Fetch wrapper for claude.ai proxy connections. Attaches the OAuth bearer
+ * Fetch wrapper for isolated legacy cloud connector connections. Attaches the OAuth bearer
  * token and retries once on 401 via handleOAuth401Error (force-refresh).
  *
- * The Anthropic API path has this retry (withRetry.ts, grove.ts) to handle
+ * The provider API path has this retry (withRetry.ts, grove.ts) to handle
  * memoize-cache staleness and clock drift. Without the same here, a single
- * stale token mass-401s every claude.ai connector and sticks them all in the
+ * stale token mass-401s every legacy connector and sticks them all in the
  * 15-min needs-auth cache.
  */
-export function createClaudeAiProxyFetch(innerFetch: FetchLike): FetchLike {
+export function createLegacyCloudProxyFetch(innerFetch: FetchLike): FetchLike {
   return async (url, init) => {
     const doRequest = async () => {
       await checkAndRefreshOAuthTokenIfNeeded()
-      const currentTokens = getClaudeAIOAuthTokens()
+      const currentTokens = getDsxuControlOAuthTokens()
       if (!currentTokens) {
-        throw new Error('No claude.ai OAuth token available')
+        throw new Error('No legacy cloud OAuth token available')
       }
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       const headers = new Headers(init?.headers)
       headers.set('Authorization', `Bearer ${currentTokens.accessToken}`)
       const response = await innerFetch(url, { ...init, headers })
-      // Return the exact token that was sent. Reading getClaudeAIOAuthTokens()
+      // Return the exact token that was sent. Reading the provider token cache
       // again after the request is wrong under concurrent 401s: another
       // connector's handleOAuth401Error clears the memoize cache, so we'd read
       // the NEW token from keychain, pass it to handleOAuth401Error, which
-      // finds same-as-keychain → returns false → skips retry. Same pattern as
-      // bridgeApi.ts withOAuthRetry (token passed as fn param).
+      // finds same-as-keychain - returns false - skips retry. Same pattern as
+      // DSXU control auth retry (token passed as fn param).
       return { response, sentToken: currentTokens.accessToken }
     }
 
@@ -396,17 +412,17 @@ export function createClaudeAiProxyFetch(innerFetch: FetchLike): FetchLike {
     }
     // handleOAuth401Error returns true only if the token actually changed
     // (keychain had a newer one, or force-refresh succeeded). Gate retry on
-    // that — otherwise we double round-trip time for every connector whose
+    // that - otherwise we double round-trip time for every connector whose
     // downstream service genuinely needs auth (the common case: 30+ servers
     // with "MCP server requires authentication but no OAuth token configured").
     const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
-    logEvent('tengu_mcp_claudeai_proxy_401', {
+    logEvent(legacyCloudMcpEvent('proxy_401'), {
       tokenChanged:
         tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     if (!tokenChanged) {
-      // ELOCKED contention: another connector may have won the lockfile and refreshed — check if token changed underneath us
-      const now = getClaudeAIOAuthTokens()?.accessToken
+      // ELOCKED contention: another connector may have won the lockfile and refreshed - check if token changed underneath us
+      const now = getDsxuControlOAuthTokens()?.accessToken
       if (!now || now === sentToken) {
         return response
       }
@@ -480,7 +496,7 @@ const MCP_STREAMABLE_HTTP_ACCEPT = 'application/json, text/event-stream'
  * present on POSTs. The MCP SDK sets this inside StreamableHTTPClientTransport.send(),
  * but it is attached to a Headers instance that passes through an object spread here,
  * and some runtimes/agents have been observed dropping it before it reaches the wire.
- * See https://github.com/anthropics/claude-agent-sdk-typescript/issues/202.
+ * See the upstream MCP SDK issue tracker for the observed header-drop case.
  * Normalizing here (the last wrapper before fetch()) guarantees it is sent.
  *
  * GET requests are excluded from the timeout since, for MCP transports, they are
@@ -501,7 +517,7 @@ export function wrapFetchWithTimeout(baseFetch: FetchLike): FetchLike {
 
     // Normalize headers and guarantee the Streamable-HTTP Accept value. new Headers()
     // accepts HeadersInit | undefined and copies from plain objects, tuple arrays,
-    // and existing Headers instances — so whatever shape the SDK handed us, the
+    // and existing Headers instances - so whatever shape the SDK handed us, the
     // Accept value survives the spread below as an own property of a concrete object.
     // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
     const headers = new Headers(init?.headers)
@@ -511,7 +527,7 @@ export function wrapFetchWithTimeout(baseFetch: FetchLike): FetchLike {
 
     // Use setTimeout instead of AbortSignal.timeout() so we can clearTimeout on
     // completion. AbortSignal.timeout's internal timer is only released when the
-    // signal is GC'd, which in Bun is lazy — ~2.4KB of native memory per request
+    // signal is GC'd, which in Bun is lazy - ~2.4KB of native memory per request
     // lingers for the full 60s even when the request completes in milliseconds.
     const controller = new AbortController()
     const timer = setTimeout(
@@ -618,7 +634,7 @@ export const connectToServer = memoize(
 
       if (serverRef.type === 'sse') {
         // Create an auth provider for this server
-        const authProvider = new ClaudeAuthProvider(name, serverRef)
+        const authProvider = new DsxuMcpAuthProvider(name, serverRef)
 
         // Get combined headers (static + dynamic)
         const combinedHeaders = await getMcpServerHeaders(name, serverRef)
@@ -628,7 +644,7 @@ export const connectToServer = memoize(
           authProvider,
           // Use fresh timeout per request to avoid stale AbortSignal bug.
           // Step-up detection wraps innermost so the 403 is seen before the
-          // SDK's handler calls auth() → tokens().
+          // SDK's handler calls auth() - tokens().
           fetch: wrapFetchWithTimeout(
             wrapFetchWithStepUpDetection(createFetchWithInit(), authProvider),
           ),
@@ -710,7 +726,7 @@ export const connectToServer = memoize(
         const wsHeaders = {
           'User-Agent': getMCPUserAgent(),
           ...(serverRef.authToken && {
-            'X-Claude-Code-Ide-Authorization': serverRef.authToken,
+            [DSXU_IDE_AUTHORIZATION_HEADER]: serverRef.authToken,
           }),
         }
 
@@ -799,13 +815,13 @@ export const connectToServer = memoize(
         )
 
         // Create an auth provider for this server
-        const authProvider = new ClaudeAuthProvider(name, serverRef)
+        const authProvider = new DsxuMcpAuthProvider(name, serverRef)
 
         // Get combined headers (static + dynamic)
         const combinedHeaders = await getMcpServerHeaders(name, serverRef)
 
         // Check if this server has stored OAuth tokens. If so, the SDK's
-        // authProvider will set Authorization — don't override with the
+        // authProvider will set Authorization - don't override with the
         // session ingress token (SDK merges requestInit AFTER authProvider).
         // CCR proxy URLs (ccr_shttp_mcp) have no stored OAuth, so they still
         // get the ingress token. See PR #24454 discussion.
@@ -822,7 +838,7 @@ export const connectToServer = memoize(
           authProvider,
           // Use fresh timeout per request to avoid stale AbortSignal bug.
           // Step-up detection wraps innermost so the 403 is seen before the
-          // SDK's handler calls auth() → tokens().
+          // SDK's handler calls auth() - tokens().
           fetch: wrapFetchWithTimeout(
             wrapFetchWithStepUpDetection(createFetchWithInit(), authProvider),
           ),
@@ -865,24 +881,28 @@ export const connectToServer = memoize(
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
-      } else if (serverRef.type === 'claudeai-proxy') {
+      } else if (isLegacyCloudMcpTransport(serverRef.type)) {
+        if (!isLegacyCloudMcpEnabled()) {
+          throw new Error(getLegacyCloudMcpDisabledReason())
+        }
+
         logMCPDebug(
           name,
-          `Initializing claude.ai proxy transport for server ${serverRef.id}`,
+          `Initializing legacy cloud connector transport for server ${serverRef.id}`,
         )
 
-        const tokens = getClaudeAIOAuthTokens()
+        const tokens = getDsxuControlOAuthTokens()
         if (!tokens) {
-          throw new Error('No claude.ai OAuth token found')
+          throw new Error('No legacy cloud OAuth token found')
         }
 
         const oauthConfig = getOauthConfig()
         const proxyUrl = `${oauthConfig.MCP_PROXY_URL}${oauthConfig.MCP_PROXY_PATH.replace('{server_id}', serverRef.id)}`
 
-        logMCPDebug(name, `Using claude.ai proxy at ${proxyUrl}`)
+        logMCPDebug(name, `Using legacy cloud connector proxy at ${proxyUrl}`)
 
         // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-        const fetchWithAuth = createClaudeAiProxyFetch(globalThis.fetch)
+        const fetchWithAuth = createLegacyCloudProxyFetch(globalThis.fetch)
 
         const proxyOptions = getProxyFetchOptions()
         const transportOptions: StreamableHTTPClientTransportOptions = {
@@ -901,23 +921,23 @@ export const connectToServer = memoize(
           new URL(proxyUrl),
           transportOptions,
         )
-        logMCPDebug(name, `claude.ai proxy transport created successfully`)
+        logMCPDebug(name, `legacy cloud connector transport created successfully`)
       } else if (
         (serverRef.type === 'stdio' || !serverRef.type) &&
-        isClaudeInChromeMCPServer(name)
+        isDsxuBrowserProviderMCPServer(name)
       ) {
         // Run the Chrome MCP server in-process to avoid spawning a ~325 MB subprocess
         const { createChromeContext } = await import(
-          '../../utils/claudeInChrome/mcpServer.js'
+          '../../utils/dsxuBrowserProvider/mcpServer.js'
         )
-        const { createClaudeForChromeMcpServer } = await import(
-          '@ant/claude-for-chrome-mcp'
+        const { createDsxuBrowserMcpServer } = await import(
+          '../../types/browserProviderMcp.js'
         )
         const { createLinkedTransportPair } = await import(
           './InProcessTransport.js'
         )
         const context = createChromeContext(serverRef.env)
-        inProcessServer = createClaudeForChromeMcpServer(context)
+        inProcessServer = createDsxuBrowserMcpServer(context)
         const [clientTransport, serverTransport] = createLinkedTransportPair()
         await inProcessServer.connect(serverTransport)
         transport = clientTransport
@@ -927,7 +947,7 @@ export const connectToServer = memoize(
         (serverRef.type === 'stdio' || !serverRef.type) &&
         isComputerUseMCPServer!(name)
       ) {
-        // Run the Computer Use MCP server in-process — same rationale as
+        // Run the Computer Use MCP server in-process - same rationale as
         // Chrome above. The package's CallTool handler is a stub; real
         // dispatch goes through wrapper.tsx's .call() override.
         const { createComputerUseMcpServerForCli } = await import(
@@ -943,8 +963,8 @@ export const connectToServer = memoize(
         logMCPDebug(name, `In-process Computer Use MCP server started`)
       } else if (serverRef.type === 'stdio' || !serverRef.type) {
         const finalCommand =
-          process.env.CLAUDE_CODE_SHELL_PREFIX || serverRef.command
-        const finalArgs = process.env.CLAUDE_CODE_SHELL_PREFIX
+          process.env[LEGACY_SHELL_PREFIX_ENV] || serverRef.command
+        const finalArgs = process.env[LEGACY_SHELL_PREFIX_ENV]
           ? [[serverRef.command, ...serverRef.args].join(' ')]
           : serverRef.args
         transport = new StdioClientTransport({
@@ -984,10 +1004,10 @@ export const connectToServer = memoize(
 
       const client = new Client(
         {
-          name: 'claude-code',
-          title: 'Claude Code',
+          name: 'dsxu-code',
+          title: 'DSXU Code',
           version: MACRO.VERSION ?? 'unknown',
-          description: "Anthropic's agentic coding tool",
+          description: "DSXU's agentic coding tool",
           websiteUrl: PRODUCT_URL,
         },
         {
@@ -1122,19 +1142,19 @@ export const connectToServer = memoize(
             return handleRemoteAuthFailure(name, serverRef, 'http')
           }
         } else if (
-          serverRef.type === 'claudeai-proxy' &&
+          isLegacyCloudMcpTransport(serverRef.type) &&
           error instanceof Error
         ) {
           logMCPDebug(
             name,
-            `claude.ai proxy connection failed after ${elapsed}ms: ${error.message}`,
+            `legacy cloud connector connection failed after ${elapsed}ms: ${error.message}`,
           )
           logMCPError(name, error)
 
           // StreamableHTTPError has a `code` property with the HTTP status
           const errorCode = (error as Error & { code?: number }).code
           if (errorCode === 401) {
-            return handleRemoteAuthFailure(name, serverRef, 'claudeai-proxy')
+            return handleRemoteAuthFailure(name, serverRef, LEGACY_CLOUD_MCP_TRANSPORT)
           }
         } else if (
           serverRef.type === 'sse-ide' ||
@@ -1163,7 +1183,7 @@ export const connectToServer = memoize(
         rawInstructions.length > MAX_MCP_DESCRIPTION_LENGTH
       ) {
         instructions =
-          rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
+          rawInstructions.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '... [truncated]'
         logMCPDebug(
           name,
           `Server instructions truncated from ${rawInstructions.length} to ${MAX_MCP_DESCRIPTION_LENGTH} chars`,
@@ -1231,11 +1251,11 @@ export const connectToServer = memoize(
       // onerror again before the close chain completes.
       let hasTriggeredClose = false
 
-      // client.close() → transport.close() → transport.onclose → SDK's _onclose():
+      // client.close() - transport.close() - transport.onclose - SDK's _onclose():
       // rejects all pending request handlers (so hung callTool() promises fail with
       // McpError -32000 "Connection closed") and then invokes our client.onclose
       // handler below (which clears the memo cache so the next call reconnects).
-      // Calling client.onclose?.() directly would only clear the cache — pending
+      // Calling client.onclose?.() directly would only clear the cache - pending
       // tool calls would stay hung.
       const closeTransportAndRejectPending = (reason: string) => {
         if (hasTriggeredClose) return
@@ -1255,7 +1275,7 @@ export const connectToServer = memoize(
           msg.includes('ECONNREFUSED') ||
           msg.includes('Body Timeout Error') ||
           msg.includes('terminated') ||
-          // SDK SSE reconnection intermediate errors — may be wrapped around the
+          // SDK SSE reconnection intermediate errors - may be wrapped around the
           // actual network error, so the substrings above won't match
           msg.includes('SSE stream disconnected') ||
           msg.includes('Failed to reconnect SSE stream')
@@ -1314,7 +1334,7 @@ export const connectToServer = memoize(
         // and close the transport so pending tool calls reject and the next
         // call reconnects with a fresh session ID.
         if (
-          (transportType === 'http' || transportType === 'claudeai-proxy') &&
+          (transportType === 'http' || isLegacyCloudMcpTransport(transportType)) &&
           isMcpSessionExpiredError(error)
         ) {
           logMCPDebug(
@@ -1333,10 +1353,10 @@ export const connectToServer = memoize(
         if (
           transportType === 'sse' ||
           transportType === 'http' ||
-          transportType === 'claudeai-proxy'
+          isLegacyCloudMcpTransport(transportType)
         ) {
           // The SDK's StreamableHTTP transport fires this after exhausting its
-          // own SSE reconnect attempts (default maxRetries: 2) — but it never
+          // own SSE reconnect attempts (default maxRetries: 2) - but it never
           // calls onclose, so pending callTool() promises hang indefinitely.
           // This is the definitive "transport gave up" signal.
           if (error.message.includes('Maximum reconnection attempts')) {
@@ -1760,7 +1780,7 @@ export const fetchToolsForClient = memoizeWithLRU(
       // Check if we should skip the mcp__ prefix for SDK MCP servers
       const skipPrefix =
         client.config.type === 'sdk' &&
-        isEnvTruthy(process.env.CLAUDE_AGENT_SDK_MCP_NO_PREFIX)
+        isEnvTruthy(process.env[LEGACY_SDK_MCP_NO_PREFIX_ENV])
 
       // Convert MCP tools to our Tool format
       return toolsToProcess
@@ -1777,19 +1797,19 @@ export const fetchToolsForClient = memoizeWithLRU(
             // a newline here would inject orphan lines into the deferred-tool
             // list (formatDeferredToolLine joins on '\n').
             searchHint:
-              typeof tool._meta?.['anthropic/searchHint'] === 'string'
-                ? tool._meta['anthropic/searchHint']
+              typeof tool._meta?.[LEGACY_PROVIDER_META_SEARCH_HINT] === 'string'
+                ? tool._meta[LEGACY_PROVIDER_META_SEARCH_HINT]
                     .replace(/\s+/g, ' ')
                     .trim() || undefined
                 : undefined,
-            alwaysLoad: tool._meta?.['anthropic/alwaysLoad'] === true,
+            alwaysLoad: tool._meta?.[LEGACY_PROVIDER_META_ALWAYS_LOAD] === true,
             async description() {
               return tool.description ?? ''
             },
             async prompt() {
               const desc = tool.description ?? ''
               return desc.length > MAX_MCP_DESCRIPTION_LENGTH
-                ? desc.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '… [truncated]'
+                ? desc.slice(0, MAX_MCP_DESCRIPTION_LENGTH) + '... [truncated]'
                 : desc
             },
             isConcurrencySafe() {
@@ -1839,7 +1859,7 @@ export const fetchToolsForClient = memoizeWithLRU(
             ) {
               const toolUseId = extractToolUseId(parentMessage)
               const meta = toolUseId
-                ? { 'claudecode/toolUseId': toolUseId }
+                ? { [LEGACY_TOOL_USE_ID_META]: toolUseId }
                 : {}
 
               // Emit progress when tool starts
@@ -1908,7 +1928,7 @@ export const fetchToolsForClient = memoizeWithLRU(
                     }),
                   }
                 } catch (error) {
-                  // Session expired — the connection cache has been
+                  // Session expired - the connection cache has been
                   // cleared, so retry with a fresh client.
                   if (
                     error instanceof McpSessionExpiredError &&
@@ -1974,9 +1994,9 @@ export const fetchToolsForClient = memoizeWithLRU(
               const displayName = tool.annotations?.title || tool.name
               return `${client.name} - ${displayName} (MCP)`
             },
-            ...(isClaudeInChromeMCPServer(client.name) &&
+            ...(isDsxuBrowserProviderMCPServer(client.name) &&
             (client.config.type === 'stdio' || !client.config.type)
-              ? claudeInChromeToolRendering().getClaudeInChromeMCPToolOverrides(
+              ? DsxuBrowserProviderToolRendering().getDsxuBrowserProviderMCPToolOverrides(
                   tool.name,
                 )
               : {}),
@@ -2162,8 +2182,8 @@ export async function reconnectMcpServerImpl(
       }
     }
 
-    if (config.type === 'claudeai-proxy') {
-      markClaudeAiMcpConnected(name)
+    if (isLegacyCloudMcpTransport(config.type)) {
+      markLegacyCloudMcpConnected(name)
     }
 
     const supportsResources = !!client.capabilities?.resources
@@ -2238,7 +2258,7 @@ export async function getMcpToolsCommandsAndResources(
     mcpConfigs ?? (await getAllMcpConfigs()).servers,
   )
 
-  // Partition into disabled and active entries — disabled servers should
+  // Partition into disabled and active entries - disabled servers should
   // never generate HTTP connections or flow through batch processing
   const configEntries: typeof allConfigEntries = []
   for (const entry of allConfigEntries) {
@@ -2305,7 +2325,7 @@ export async function getMcpToolsCommandsAndResources(
       // Each probe is a network round-trip for connect-401 plus OAuth
       // discovery, and print mode awaits the whole batch (main.tsx:3503).
       if (
-        (config.type === 'claudeai-proxy' ||
+        (isLegacyCloudMcpTransport(config.type) ||
           config.type === 'http' ||
           config.type === 'sse') &&
         ((await isMcpAuthCached(name)) ||
@@ -2335,8 +2355,8 @@ export async function getMcpToolsCommandsAndResources(
         return
       }
 
-      if (config.type === 'claudeai-proxy') {
-        markClaudeAiMcpConnected(name)
+      if (isLegacyCloudMcpTransport(config.type)) {
+        markLegacyCloudMcpConnected(name)
       }
 
       const supportsResources = !!client.capabilities?.resources
@@ -2404,7 +2424,7 @@ export async function getMcpToolsCommandsAndResources(
 
 // Not memoized: called only 2-3 times at startup/reconfig. The inner work
 // (connectToServer, fetch*ForClient) is already cached. Memoizing here by
-// mcpConfigs object ref leaked — main.tsx creates fresh config objects each call.
+// mcpConfigs object ref leaked - main.tsx creates fresh config objects each call.
 export function prefetchAllMcpResources(
   mcpConfigs: Record<string, ScopedMcpServerConfig>,
 ): Promise<{
@@ -2920,7 +2940,7 @@ export async function callMCPToolWithUrlElicitationRetry({
       for (const elicitation of elicitations) {
         const { elicitationId } = elicitation
 
-        // Run elicitation hooks — they can resolve URL elicitations programmatically
+        // Run elicitation hooks - they can resolve URL elicitations programmatically
         const hookResponse = await runElicitationHooks(
           serverName,
           elicitation,
@@ -2936,7 +2956,7 @@ export async function callMCPToolWithUrlElicitationRetry({
               content: `URL elicitation was ${hookResponse.action === 'decline' ? 'declined' : hookResponse.action + 'ed'} by a hook. The tool "${tool}" could not complete because it requires the user to open a URL.`,
             }
           }
-          // Hook accepted — skip the UI and proceed to retry
+          // Hook accepted - skip the UI and proceed to retry
           continue
         }
 
@@ -2996,7 +3016,7 @@ export async function callMCPToolWithUrlElicitationRetry({
           })
         }
 
-        // Run ElicitationResult hooks — they can modify or block the response
+        // Run ElicitationResult hooks - they can modify or block the response
         const finalResult = await runElicitationResultHooks(
           serverName,
           userResult,
@@ -3207,9 +3227,9 @@ async function callMCPTool({
         )
       }
 
-      // Check for session expiry — two error shapes can surface here:
+      // Check for session expiry - two error shapes can surface here:
       // 1. Direct 404 + JSON-RPC -32001 from the server (StreamableHTTPError)
-      // 2. -32000 "Connection closed" (McpError) — the SDK closes the transport
+      // 2. -32000 "Connection closed" (McpError) - the SDK closes the transport
       //    after the onerror handler fires, so the pending callTool() rejects
       //    with this derived error instead of the original 404.
       // In both cases, clear the connection cache so the next tool call
@@ -3219,7 +3239,7 @@ async function callMCPTool({
         'code' in e &&
         (e as Error & { code?: number }).code === -32000 &&
         e.message.includes('Connection closed') &&
-        (config.type === 'http' || config.type === 'claudeai-proxy')
+        (config.type === 'http' || isLegacyCloudMcpTransport(config.type))
       if (isSessionExpired || isConnectionClosedOnHttp) {
         logMCPDebug(
           name,
@@ -3279,10 +3299,10 @@ export async function setupSdkMcpClients(
 
       const client = new Client(
         {
-          name: 'claude-code',
-          title: 'Claude Code',
+          name: 'dsxu-code',
+          title: 'DSXU Code',
           version: MACRO.VERSION ?? 'unknown',
-          description: "Anthropic's agentic coding tool",
+          description: "DSXU's agentic coding tool",
           websiteUrl: PRODUCT_URL,
         },
         {

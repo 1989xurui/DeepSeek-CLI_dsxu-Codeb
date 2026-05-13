@@ -1,12 +1,13 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * Session title generation via Haiku.
+ * Session title generation via the compact model.
  *
  * Standalone module with minimal dependencies so it can be imported from
  * print.ts (SDK control request handler) without pulling in the React/chalk/
  * git dependency chain that teleport.tsx carries.
  *
  * This is the single source of truth for AI-generated session titles across
- * all surfaces. Previously there were separate Haiku title generators:
+ * all surfaces. Previously there were separate compact-title generators:
  * - teleport.tsx generateTitleAndBranch (6-word title + branch for CCR)
  * - rename/generateSessionName.ts (kebab-case name for /rename)
  * Each remains for backwards compat; new callers should use this module.
@@ -15,7 +16,7 @@
 import { z } from 'zod/v4'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { logEvent } from '../services/analytics/index.js'
-import { queryHaiku } from '../services/api/claude.js'
+import { queryCompatSmallModel } from '../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
 import type { Message } from '../types/message.js'
 import { logForDebugging } from './debug.js'
 import { safeParseJSON } from './json.js'
@@ -26,7 +27,7 @@ import { asSystemPrompt } from './systemPromptType.js'
 const MAX_CONVERSATION_TEXT = 1000
 
 /**
- * Flatten a message array into a single text string for Haiku title input.
+ * Flatten a message array into a single text string for compact-title input.
  * Skips meta/non-human messages. Tail-slices to the last 1000 chars so
  * recent context wins when the conversation is long.
  */
@@ -71,7 +72,7 @@ const titleSchema = lazySchema(() => z.object({ title: z.string() }))
 
 /**
  * Generate a sentence-case session title from a description or first message.
- * Returns null on error or if Haiku returns an unparseable response.
+ * Returns null on error or if compact title generation returns an unparseable response.
  *
  * @param description - The user's first message or a description of the session
  * @param signal - Abort signal for cancellation
@@ -84,7 +85,7 @@ export async function generateSessionTitle(
   if (!trimmed) return null
 
   try {
-    const result = await queryHaiku({
+    const result = await queryCompatSmallModel({
       systemPrompt: asSystemPrompt([SESSION_TITLE_PROMPT]),
       userPrompt: trimmed,
       outputFormat: {
@@ -102,7 +103,7 @@ export async function generateSessionTitle(
       options: {
         querySource: 'generate_session_title',
         agents: [],
-        // Reflect the actual session mode — this module is called from
+        // Reflect the actual session mode; this module is called from
         // both the SDK print path (non-interactive) and the CCR remote
         // session path via useRemoteSession (interactive).
         isNonInteractiveSession: getIsNonInteractiveSession(),

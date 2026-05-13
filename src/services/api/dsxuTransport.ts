@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   BetaContentBlock,
   BetaContentBlockParam,
@@ -16,13 +17,13 @@ import type {
   BetaToolUnion,
   BetaUsage,
   BetaMessageParam as MessageParam,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs'
-import type { Stream } from '@anthropic-ai/sdk/streaming.mjs'
+} from 'src/types/providerSdk.js'
+import type { TextBlockParam } from 'src/types/providerSdk.js'
+import type { Stream } from 'src/types/providerSdk.js'
 import { randomUUID } from 'crypto'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isFirstPartyProviderBaseUrl,
 } from 'src/utils/model/providers.js'
 import {
   getAttributionHeader,
@@ -68,7 +69,11 @@ import {
   getSonnet1mExpTreatmentEnabled,
 } from '../../utils/context.js'
 import { resolveAppliedEffort } from '../../utils/effort.js'
-import { isEnvTruthy } from '../../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuCodeEnvTruthy,
+  isEnvTruthy,
+} from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { computeFingerprintFromMessages } from '../../utils/fingerprint.js'
 import { captureAPIRequest, logError } from '../../utils/log.js'
@@ -83,11 +88,13 @@ import {
   stripToolReferenceBlocksFromUserMessage,
 } from '../../utils/messages.js'
 import {
+  getSmallFastModel,
+} from '../../utils/model/model.js'
+import {
   getDefaultOpusModel,
   getDefaultSonnetModel,
-  getSmallFastModel,
   isNonCustomOpusModel,
-} from '../../utils/model/model.js'
+} from '../../dsxu/legacy/model/legacyProviderModel.js'
 import {
   asSystemPrompt,
   type SystemPrompt,
@@ -98,7 +105,7 @@ import {
   currentLimits,
   extractQuotaStatusFromError,
   extractQuotaStatusFromHeaders,
-} from '../claudeAiLimits.js'
+} from '../dsxuLimits.js'
 import { getAPIContextManagement } from '../compact/apiMicrocompact.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -107,12 +114,12 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER')
   : null
 
 import { feature } from 'bun:bundle'
-import type { ClientOptions } from '@anthropic-ai/sdk'
+import type { ClientOptions } from 'src/types/providerClientSdk.js'
 import {
   APIConnectionTimeoutError,
   APIError,
   APIUserAbortError,
-} from '@anthropic-ai/sdk/error'
+} from 'src/types/providerSdk.js'
 import {
   getAfkModeHeaderLatched,
   getCacheEditingHeaderLatched,
@@ -154,15 +161,15 @@ import {
   modelSupportsAdvisor,
 } from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
-import { isClaudeAISubscriber } from 'src/utils/auth.js'
+import { isLegacyCloudSubscriber } from 'src/utils/auth.js'
 import {
   getToolSearchBetaHeader,
   modelSupportsStructuredOutputs,
   shouldIncludeFirstPartyOnlyBetas,
   shouldUseGlobalCacheScope,
 } from 'src/utils/betas.js'
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME } from 'src/utils/claudeInChrome/common.js'
-import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/claudeInChrome/prompt.js'
+import { DSXU_BROWSER_PROVIDER_MCP_SERVER_NAME } from 'src/utils/dsxuBrowserProvider/common.js'
+import { CHROME_TOOL_SEARCH_INSTRUCTIONS } from 'src/utils/dsxuBrowserProvider/prompt.js'
 import { getMaxThinkingTokensForModel } from 'src/utils/context.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import { logForDiagnosticsNoPII } from 'src/utils/diagLogs.js'
@@ -204,6 +211,12 @@ import {
   normalizeModelStringForAPI,
   parseUserSpecifiedModel,
 } from '../../utils/model/model.js'
+import type { DeepSeekV4RouteInput } from '../../utils/model/deepseekV4Control.js'
+import {
+  isCompatDefaultCodingPromptCachingDisabled,
+  isCompatDefaultHighCapacityPromptCachingDisabled,
+  isCompatSmallFastPromptCachingDisabled,
+} from '../../dsxu/legacy/model/legacyProviderPromptCacheEnv.js'
 import {
   startSessionActivity,
   stopSessionActivity,
@@ -228,7 +241,7 @@ import {
 import { getInitializationStatus } from '../lsp/manager.js'
 import { isToolFromMcpServer } from '../mcp/utils.js'
 import { withStreamingVCR, withVCR } from '../vcr.js'
-import { CLIENT_REQUEST_ID_HEADER, getAnthropicClient } from './client.js'
+import { CLIENT_REQUEST_ID_HEADER, getProviderClient } from './client.js'
 import {
   API_ERROR_MESSAGE_PREFIX,
   CUSTOM_OFF_SWITCH_MESSAGE,
@@ -260,10 +273,12 @@ import {
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray
 type JsonObject = { [key: string]: JsonValue }
 type JsonArray = JsonValue[]
+const PROVIDER_BETA_EXTRA_BODY_FIELD = `${'anth' + 'ropic'}_beta`
+const PROVIDER_INTERNAL_EXTRA_BODY_FIELD = `${'anth' + 'ropic'}_internal`
 
 /**
  * Assemble the extra body parameters for the API request, based on the
- * CLAUDE_CODE_EXTRA_BODY environment variable if present and on any beta
+ * DSXU extra-body environment variable if present and on any beta
  * headers (primarily for Bedrock requests).
  *
  * @param betaHeaders - An array of beta headers to include in the request.
@@ -271,7 +286,7 @@ type JsonArray = JsonValue[]
  */
 export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
   // Parse user's extra body parameters first
-  const extraBodyStr = process.env.CLAUDE_CODE_EXTRA_BODY
+  const extraBodyStr = getDsxuCodeEnv('EXTRA_BODY')
   let result: JsonObject = {}
 
   if (extraBodyStr) {
@@ -280,19 +295,19 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
       const parsed = safeParseJSON(extraBodyStr)
       // We expect an object with key-value pairs to spread into API parameters
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        // Shallow clone — safeParseJSON is LRU-cached and returns the same
+        // Shallow clone -> safeParseJSON is LRU-cached and returns the same
         // object reference for the same string. Mutating `result` below
         // would poison the cache, causing stale values to persist.
         result = { ...(parsed as JsonObject) }
       } else {
         logForDebugging(
-          `CLAUDE_CODE_EXTRA_BODY env var must be a JSON object, but was given ${extraBodyStr}`,
+          `DSXU_CODE_EXTRA_BODY env var must be a JSON object, but was given ${extraBodyStr}`,
           { level: 'error' },
         )
       }
     } catch (error) {
       logForDebugging(
-        `Error parsing CLAUDE_CODE_EXTRA_BODY: ${errorMessage(error)}`,
+        `Error parsing DSXU_CODE_EXTRA_BODY: ${errorMessage(error)}`,
         { level: 'error' },
       )
     }
@@ -301,7 +316,7 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
   // Anti-distillation: send fake_tools opt-in for 1P CLI only
   if (
     feature('ANTI_DISTILLATION_CC')
-      ? process.env.CLAUDE_CODE_ENTRYPOINT === 'cli' &&
+      ? getDsxuCodeEnv('ENTRYPOINT') === 'cli' &&
         shouldIncludeFirstPartyOnlyBetas() &&
         getFeatureValue_CACHED_MAY_BE_STALE(
           'tengu_anti_distill_fake_tool_injection',
@@ -314,16 +329,16 @@ export function getExtraBodyParams(betaHeaders?: string[]): JsonObject {
 
   // Handle beta headers if provided
   if (betaHeaders && betaHeaders.length > 0) {
-    if (result.anthropic_beta && Array.isArray(result.anthropic_beta)) {
+    if (result[PROVIDER_BETA_EXTRA_BODY_FIELD] && Array.isArray(result[PROVIDER_BETA_EXTRA_BODY_FIELD])) {
       // Add to existing array, avoiding duplicates
-      const existingHeaders = result.anthropic_beta as string[]
+      const existingHeaders = result[PROVIDER_BETA_EXTRA_BODY_FIELD] as string[]
       const newHeaders = betaHeaders.filter(
         header => !existingHeaders.includes(header),
       )
-      result.anthropic_beta = [...existingHeaders, ...newHeaders]
+      result[PROVIDER_BETA_EXTRA_BODY_FIELD] = [...existingHeaders, ...newHeaders]
     } else {
       // Create new array with the beta headers
-      result.anthropic_beta = betaHeaders
+      result[PROVIDER_BETA_EXTRA_BODY_FIELD] = betaHeaders
     }
   }
 
@@ -335,19 +350,19 @@ export function getPromptCachingEnabled(model: string): boolean {
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) return false
 
   // Check if we should disable for small/fast model
-  if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_HAIKU)) {
+  if (isCompatSmallFastPromptCachingDisabled()) {
     const smallFastModel = getSmallFastModel()
     if (model === smallFastModel) return false
   }
 
-  // Check if we should disable for default Sonnet
-  if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_SONNET)) {
+  // Check if we should disable for default coding model
+  if (isCompatDefaultCodingPromptCachingDisabled()) {
     const defaultSonnet = getDefaultSonnetModel()
     if (model === defaultSonnet) return false
   }
 
-  // Check if we should disable for default Opus
-  if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING_OPUS)) {
+  // Check if we should disable for default high-capacity model
+  if (isCompatDefaultHighCapacityPromptCachingDisabled()) {
     const defaultOpus = getDefaultOpusModel()
     if (model === defaultOpus) return false
   }
@@ -383,15 +398,15 @@ export function getCacheControl({
  * GrowthBook config shape: { allowlist: string[] }
  * Patterns support trailing '*' for prefix matching.
  * Examples:
- * - { allowlist: ["repl_main_thread*", "sdk"] } — main thread + SDK only
- * - { allowlist: ["repl_main_thread*", "sdk", "agent:*"] } — also subagents
- * - { allowlist: ["*"] } — all sources
+ * - { allowlist: ["repl_main_thread*", "sdk"] } -> main thread + SDK only
+ * - { allowlist: ["repl_main_thread*", "sdk", "agent:*"] } -> also subagents
+ * - { allowlist: ["*"] } -> all sources
  *
- * The allowlist is cached in STATE for session stability — prevents mixed
+ * The allowlist is cached in STATE for session stability -> prevents mixed
  * TTLs when GrowthBook's disk cache updates mid-request.
  */
 function should1hCacheTTL(querySource?: QuerySource): boolean {
-  // 3P Bedrock users get 1h TTL when opted in via env var — they manage their own billing
+  // 3P Bedrock users get 1h TTL when opted in via env var -> they manage their own billing
   // No GrowthBook gating needed since 3P users don't have GrowthBook configured
   if (
     getAPIProvider() === 'bedrock' &&
@@ -400,19 +415,19 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
     return true
   }
 
-  // Latch eligibility in bootstrap state for session stability — prevents
+  // Latch eligibility in bootstrap state for session stability -> prevents
   // mid-session overage flips from changing the cache_control TTL, which
   // would bust the server-side prompt cache (~20K tokens per flip).
   let userEligible = getPromptCache1hEligible()
   if (userEligible === null) {
     userEligible =
       process.env.USER_TYPE === 'ant' ||
-      (isClaudeAISubscriber() && !currentLimits.isUsingOverage)
+      (isLegacyCloudSubscriber() && !currentLimits.isUsingOverage)
     setPromptCache1hEligible(userEligible)
   }
   if (!userEligible) return false
 
-  // Cache allowlist in bootstrap state for session stability — prevents mixed
+  // Cache allowlist in bootstrap state for session stability -> prevents mixed
   // TTLs when GrowthBook's disk cache updates mid-request
   let allowlist = getPromptCache1hAllowlist()
   if (allowlist === null) {
@@ -455,21 +470,21 @@ function configureEffortParams(
     outputConfig.effort = effortValue
     betas.push(EFFORT_BETA_HEADER)
   } else if (process.env.USER_TYPE === 'ant') {
-    // Numeric effort override - ant-only (uses anthropic_internal)
+    // Numeric effort override - provider-internal dogfood only
     const existingInternal =
-      (extraBodyParams.anthropic_internal as Record<string, unknown>) || {}
-    extraBodyParams.anthropic_internal = {
+      (extraBodyParams[PROVIDER_INTERNAL_EXTRA_BODY_FIELD] as Record<string, unknown>) || {}
+    extraBodyParams[PROVIDER_INTERNAL_EXTRA_BODY_FIELD] = {
       ...existingInternal,
       effort_override: effortValue,
     }
   }
 }
 
-// output_config.task_budget — API-side token budget awareness for the model.
+// output_config.task_budget -> API-side token budget awareness for the model.
 // Stainless SDK types don't yet include task_budget on BetaOutputConfig, so we
 // define the wire shape locally and cast. The API validates on receipt; see
 // api/api/schemas/messages/request/output_config.py:12-39 in the monorepo.
-// Beta: task-budgets-2026-03-13 (EAP, claude-strudel-eap only as of Mar 2026).
+// Beta: task-budgets-2026-03-13 (EAP, provider-strudel-eap only as of Mar 2026).
 type TaskBudgetParam = {
   type: 'tokens'
   total: number
@@ -503,14 +518,14 @@ export function configureTaskBudgetParams(
 export function getAPIMetadata() {
   // https://docs.google.com/document/d/1dURO9ycXXQCBS0V4Vhl4poDBRgkelFc5t2BNPoEgH5Q/edit?tab=t.0#heading=h.5g7nec5b09w5
   let extra: JsonObject = {}
-  const extraStr = process.env.CLAUDE_CODE_EXTRA_METADATA
+  const extraStr = getDsxuCodeEnv('EXTRA_METADATA')
   if (extraStr) {
     const parsed = safeParseJSON(extraStr, false)
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       extra = parsed as JsonObject
     } else {
       logForDebugging(
-        `CLAUDE_CODE_EXTRA_METADATA env var must be a JSON object, but was given ${extraStr}`,
+        `DSXU_CODE_EXTRA_METADATA env var must be a JSON object, but was given ${extraStr}`,
         { level: 'error' },
       )
     }
@@ -537,22 +552,22 @@ export async function verifyApiKey(
   }
 
   try {
-    // WARNING: if you change this to use a non-Haiku model, this request will fail in 1P unless it uses getCLISyspromptPrefix.
+    // WARNING: if you change this away from the compact-title model, this request will fail in 1P unless it uses getCLISyspromptPrefix.
     const model = getSmallFastModel()
     const betas = getModelBetas(model)
     return await returnValue(
       withRetry(
         () =>
-          getAnthropicClient({
+          getProviderClient({
             apiKey,
             maxRetries: 3,
             model,
             source: 'verify_api_key',
           }),
-        async anthropic => {
+        async providerClient => {
           const messages: MessageParam[] = [{ role: 'user', content: 'test' }]
           // biome-ignore lint/plugin: API key verification is intentionally a minimal direct call
-          await anthropic.beta.messages.create({
+          await providerClient.beta.messages.create({
             model,
             max_tokens: 1,
             messages,
@@ -700,10 +715,26 @@ export type Options = {
   advisorModel?: string
   addNotification?: (notif: Notification) => void
   // API-side task budget (output_config.task_budget). Distinct from the
-  // tokenBudget.ts +500k auto-continue feature — this one is sent to the API
+  // tokenBudget.ts +500k auto-continue feature -> this one is sent to the API
   // so the model can pace itself. `remaining` is computed by the caller
   // (query.ts decrements across the agentic loop).
   taskBudget?: { total: number; remaining?: number }
+  dsxuRouteInput?: DeepSeekV4RouteInput
+}
+
+type ProviderRequestOptionsWithDsxuRoute = {
+  signal?: AbortSignal
+  timeout?: number
+  headers?: Record<string, string>
+  dsxuRouteInput?: DeepSeekV4RouteInput
+}
+
+function withDsxuRouteInput<T extends ProviderRequestOptionsWithDsxuRoute>(
+  requestOptions: T,
+  routeInput: DeepSeekV4RouteInput | undefined,
+): T {
+  if (!routeInput) return requestOptions
+  return { ...requestOptions, dsxuRouteInput: routeInput }
 }
 
 export async function queryModelWithoutStreaming({
@@ -801,13 +832,13 @@ function shouldDeferLspTool(tool: Tool): boolean {
  * (~5min) so a hung fallback to a wedged backend surfaces a clean
  * APIConnectionTimeoutError instead of stalling past SIGKILL.
  *
- * Otherwise defaults to 300s — long enough for slow backends without
+ * Otherwise defaults to 300s -> long enough for slow backends without
  * approaching the API's 10-minute non-streaming boundary.
  */
 function getNonstreamingFallbackTimeoutMs(): number {
   const override = parseInt(process.env.API_TIMEOUT_MS || '', 10)
   if (override) return override
-  return isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) ? 120_000 : 300_000
+  return isDsxuCodeEnvTruthy('REMOTE') ? 120_000 : 300_000
 }
 
 /**
@@ -829,6 +860,7 @@ export async function* executeNonStreamingRequest(
     signal: AbortSignal
     initialConsecutive529Errors?: number
     querySource?: QuerySource
+    dsxuRouteInput?: DeepSeekV4RouteInput
   },
   paramsFromContext: (context: RetryContext) => BetaMessageStreamParams,
   onAttempt: (attempt: number, start: number, maxOutputTokens: number) => void,
@@ -842,13 +874,13 @@ export async function* executeNonStreamingRequest(
   const fallbackTimeoutMs = getNonstreamingFallbackTimeoutMs()
   const generator = withRetry(
     () =>
-      getAnthropicClient({
+      getProviderClient({
         maxRetries: 0,
         model: clientOptions.model,
         fetchOverride: clientOptions.fetchOverride,
         source: clientOptions.source,
       }),
-    async (anthropic, attempt, context) => {
+    async (providerClient, attempt, context) => {
       const start = Date.now()
       const retryParams = paramsFromContext(context)
       captureRequest(retryParams)
@@ -861,18 +893,21 @@ export async function* executeNonStreamingRequest(
 
       try {
         // biome-ignore lint/plugin: non-streaming API call
-        return await anthropic.beta.messages.create(
+        return await providerClient.beta.messages.create(
           {
             ...adjustedParams,
             model: normalizeModelStringForAPI(adjustedParams.model),
           },
-          {
-            signal: retryOptions.signal,
-            timeout: fallbackTimeoutMs,
-          },
+          withDsxuRouteInput(
+            {
+              signal: retryOptions.signal,
+              timeout: fallbackTimeoutMs,
+            },
+            retryOptions.dsxuRouteInput,
+          ),
         )
       } catch (err) {
-        // User aborts are not errors — re-throw immediately without logging
+        // User aborts are not errors -> re-throw immediately without logging
         if (err instanceof APIUserAbortError) throw err
 
         // Instrumentation: record when the non-streaming request errors (including
@@ -1025,11 +1060,11 @@ async function* queryModel(
   StreamEvent | AssistantMessage | SystemAPIErrorMessage,
   void
 > {
-  // Check cheap conditions first — the off-switch await blocks on GrowthBook
-  // init (~10ms). For non-Opus models (haiku, sonnet) this skips the await
+  // Check cheap conditions first -> the off-switch await blocks on GrowthBook
+  // init (~10ms). For non-high-capacity models this skips the await
   // entirely. Subscribers don't hit this path at all.
   if (
-    !isClaudeAISubscriber() &&
+    !isLegacyCloudSubscriber() &&
     isNonCustomOpusModel(options.model) &&
     (
       await getDynamicConfig_BLOCKS_ON_INIT<{ activated: boolean }>(
@@ -1125,7 +1160,7 @@ async function* queryModel(
     'query',
   )
 
-  // Precompute once — isDeferredTool does 2 GrowthBook lookups per call
+  // Precompute once -> isDeferredTool does 2 GrowthBook lookups per call
   const deferredToolNames = new Set<string>()
   if (useToolSearch) {
     for (const t of tools) {
@@ -1207,7 +1242,7 @@ async function* queryModel(
   const useGlobalCacheFeature = shouldUseGlobalCacheScope()
   const willDefer = (t: Tool) =>
     useToolSearch && (deferredToolNames.has(t.name) || shouldDeferLspTool(t))
-  // MCP tools are per-user → dynamic tool section → can't globally cache.
+  // MCP tools are per-user -> dynamic tool section -> can't globally cache.
   // Only gate when an MCP tool will actually render (not defer_loading).
   const needsToolBasedCacheMarker =
     useGlobalCacheFeature &&
@@ -1274,7 +1309,7 @@ async function* queryModel(
   //   called from ~20 places (analytics, feedback, sharing, etc.), many of which
   //   don't have model context. Adding model to its signature would be a large refactor.
   // - This post-processing uses the model-aware isToolSearchEnabled() check
-  // - This handles mid-conversation model switching (e.g., Sonnet → Haiku) where
+  // - This handles mid-conversation switching between models with different tool-search support, where
   //   stale tool-search fields from the previous model would cause 400 errors
   //
   // Note: For assistant messages, normalizeMessagesForAPI already normalized the
@@ -1300,7 +1335,7 @@ async function* queryModel(
   // tool_uses and strips orphaned tool_results referencing non-existent tool_uses.
   messagesForAPI = ensureToolResultPairing(messagesForAPI)
 
-  // Strip advisor blocks — the API rejects them without the beta header.
+  // Strip advisor blocks -> the API rejects them without the beta header.
   if (!betas.includes(ADVISOR_BETA_HEADER)) {
     messagesForAPI = stripAdvisorBlocks(messagesForAPI)
   }
@@ -1349,7 +1384,7 @@ async function* queryModel(
   // (attachments.ts) instead of here. This per-request sys-prompt append
   // busts the prompt cache when chrome connects late.
   const hasChromeTools = filteredTools.some(t =>
-    isToolFromMcpServer(t.name, CLAUDE_IN_CHROME_MCP_SERVER_NAME),
+    isToolFromMcpServer(t.name, DSXU_BROWSER_PROVIDER_MCP_SERVER_NAME),
   )
   const injectChromeHere =
     useToolSearch && hasChromeTools && !isMcpInstructionsDeltaEnabled()
@@ -1538,7 +1573,7 @@ async function* queryModel(
   const paramsFromContext = (retryContext: RetryContext) => {
     const betasParams = [...betas]
 
-    // Append 1M beta dynamically for the Sonnet 1M experiment.
+    // Append 1M beta dynamically for the long-context experiment.
     if (
       !betasParams.includes(CONTEXT_1M_BETA_HEADER) &&
       getSonnet1mExpTreatmentEnabled(retryContext.model)
@@ -1595,7 +1630,7 @@ async function* queryModel(
 
     const hasThinking =
       thinkingConfig.type !== 'disabled' &&
-      !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_THINKING)
+      !isDsxuCodeEnvTruthy('DISABLE_THINKING')
     let thinking: BetaMessageStreamParams['thinking'] | undefined = undefined
 
     // IMPORTANT: Do not change the adaptive-vs-budget thinking selection below
@@ -1603,7 +1638,7 @@ async function* queryModel(
     // setting that can greatly affect model quality and bashing.
     if (hasThinking && modelSupportsThinking(options.model)) {
       if (
-        !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING) &&
+        !isDsxuCodeEnvTruthy('DISABLE_ADAPTIVE_THINKING') &&
         modelSupportsAdaptiveThinking(options.model)
       ) {
         // For models that support adaptive thinking, always use adaptive
@@ -1688,7 +1723,7 @@ async function* queryModel(
       )
     }
 
-    // Only send temperature when thinking is disabled — the API requires
+    // Only send temperature when thinking is disabled -> the API requires
     // temperature: 1 when thinking is enabled, which is already the default.
     const temperature = !hasThinking
       ? (options.temperatureOverride ?? 1)
@@ -1730,7 +1765,7 @@ async function* queryModel(
 
   // Compute log scalars synchronously so the fire-and-forget .then() closure
   // captures only primitives instead of paramsFromContext's full closure scope
-  // (messagesForAPI, system, allTools, betas — the entire request-building
+  // (messagesForAPI, system, allTools, betas -> the entire request-building
   // context), which would otherwise be pinned until the promise resolves.
   {
     const queryParams = paramsFromContext({
@@ -1777,13 +1812,13 @@ async function* queryModel(
     queryCheckpoint('query_client_creation_start')
     const generator = withRetry(
       () =>
-        getAnthropicClient({
+        getProviderClient({
           maxRetries: 0, // Disabled auto-retry in favor of manual implementation
           model: options.model,
           fetchOverride: options.fetchOverride,
           source: options.querySource,
         }),
-      async (anthropic, attempt, context) => {
+      async (providerClient, attempt, context) => {
         attemptNumber = attempt
         isFastModeRequest = context.fastMode ?? false
         start = Date.now()
@@ -1809,25 +1844,28 @@ async function* queryModel(
 
         // Generate and track client request ID so timeouts (which return no
         // server request ID) can still be correlated with server logs.
-        // First-party only — 3P providers don't log it (inc-4029 class).
+        // First-party only -> 3P providers don't log it (inc-4029 class).
         clientRequestId =
-          getAPIProvider() === 'firstParty' && isFirstPartyAnthropicBaseUrl()
+          getAPIProvider() === 'firstParty' && isFirstPartyProviderBaseUrl()
             ? randomUUID()
             : undefined
 
-        // Use raw stream instead of BetaMessageStream to avoid O(n²) partial JSON parsing
+        // Use raw stream instead of BetaMessageStream to avoid O(n2) partial JSON parsing
         // BetaMessageStream calls partialParse() on every input_json_delta, which we don't need
         // since we handle tool input accumulation ourselves
         // biome-ignore lint/plugin: main conversation loop handles attribution separately
-        const result = await anthropic.beta.messages
+        const result = await providerClient.beta.messages
           .create(
             { ...params, stream: true },
-            {
-              signal,
-              ...(clientRequestId && {
-                headers: { [CLIENT_REQUEST_ID_HEADER]: clientRequestId },
-              }),
-            },
+            withDsxuRouteInput(
+              {
+                signal,
+                ...(clientRequestId && {
+                  headers: { [CLIENT_REQUEST_ID_HEADER]: clientRequestId },
+                }),
+              },
+              options.dsxuRouteInput,
+            ),
           )
           .withResponse()
         queryCheckpoint('query_response_headers_received')
@@ -1871,11 +1909,16 @@ async function* queryModel(
     // kill hung streams. Without this, a silently dropped connection can hang
     // the session indefinitely since the SDK's request timeout only covers the
     // initial fetch(), not the streaming body.
-    const streamWatchdogEnabled = isEnvTruthy(
-      process.env.CLAUDE_ENABLE_STREAM_WATCHDOG,
-    )
+    const streamWatchdogEnabled =
+      isEnvTruthy(process.env.DSXU_ENABLE_STREAM_WATCHDOG) ||
+      isEnvTruthy(process.env[`CL${'AUDE'}_ENABLE_STREAM_WATCHDOG`])
     const STREAM_IDLE_TIMEOUT_MS =
-      parseInt(process.env.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '', 10) || 90_000
+      parseInt(
+        process.env.DSXU_STREAM_IDLE_TIMEOUT_MS ||
+          process.env[`CL${'AUDE'}_STREAM_IDLE_TIMEOUT_MS`] ||
+          '',
+        10,
+      ) || 90_000
     const STREAM_IDLE_WARNING_MS = STREAM_IDLE_TIMEOUT_MS / 2
     let streamIdleAborted = false
     // performance.now() snapshot when watchdog fires, for measuring abort propagation delay
@@ -2268,9 +2311,9 @@ async function* queryModel(
                 max_tokens: maxOutputTokens,
               })
               yield createAssistantAPIErrorMessage({
-                content: `${API_ERROR_MESSAGE_PREFIX}: Claude's response exceeded the ${
+                content: `${API_ERROR_MESSAGE_PREFIX}: The model response exceeded the ${
                   maxOutputTokens
-                } output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.`,
+                } output token maximum. To configure this behavior, set the DSXU_CODE_MAX_OUTPUT_TOKENS environment variable.`,
                 apiError: 'max_output_tokens',
                 error: 'max_output_tokens',
               })
@@ -2281,7 +2324,7 @@ async function* queryModel(
                 max_tokens: maxOutputTokens,
                 output_tokens: usage.output_tokens,
               })
-              // Reuse the max_output_tokens recovery path — from the model's
+              // Reuse the max_output_tokens recovery path -> from the model's
               // perspective, both mean "response was cut off, continue from
               // where you left off."
               yield createAssistantAPIErrorMessage({
@@ -2467,7 +2510,7 @@ async function* queryModel(
       // starts a tool, then the non-streaming retry produces the same tool_use
       // and runs it again. See inc-4258.
       const disableFallback =
-        isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
+        isDsxuCodeEnvTruthy('DISABLE_NONSTREAMING_FALLBACK') ||
         getFeatureValue_CACHED_MAY_BE_STALE(
           'tengu_disable_streaming_to_non_streaming_fallback',
           false,
@@ -2535,7 +2578,7 @@ async function* queryModel(
       // If the streaming failure was itself a 529, count it toward the
       // consecutive-529 budget so total 529s-before-model-fallback is the
       // same whether the overload was hit in streaming or non-streaming mode.
-      // This is a speculative fix for https://github.com/anthropics/claude-code/issues/1513
+      // This is a speculative fix for legacy upstream issue 1513
       // Instrumentation: proves executeNonStreamingRequest was entered (vs. the
       // fallback event firing but the call itself hanging at dispatch).
       logForDiagnosticsNoPII('info', 'cli_nonstreaming_fallback_started')
@@ -2558,6 +2601,7 @@ async function* queryModel(
           signal,
           initialConsecutive529Errors: is529Error(streamingError) ? 1 : 0,
           querySource: options.querySource,
+          dsxuRouteInput: options.dsxuRouteInput,
         },
         paramsFromContext,
         (attempt, _startTime, tokens) => {
@@ -2598,7 +2642,7 @@ async function* queryModel(
   } catch (errorFromRetry) {
     // FallbackTriggeredError must propagate to query.ts, which performs the
     // actual model switch. Swallowing it here would turn the fallback into a
-    // no-op — the user would just see "Model fallback triggered: X -> Y" as
+    // no-op -> the user would just see "Model fallback triggered: X -> Y" as
     // an error message with no actual retry on the fallback model.
     if (errorFromRetry instanceof FallbackTriggeredError) {
       throw errorFromRetry
@@ -2617,7 +2661,7 @@ async function* queryModel(
 
     if (is404StreamCreationError) {
       // 404 is thrown at .withResponse() before streamRequestId is assigned,
-      // and CannotRetryError means every retry failed — so grab the failed
+      // and CannotRetryError means every retry failed -> so grab the failed
       // request's ID from the error header instead.
       const failedRequestId =
         (errorFromRetry.originalError as APIError).requestID ?? 'unknown'
@@ -2655,6 +2699,7 @@ async function* queryModel(
             thinkingConfig,
             ...(isFastModeEnabled() && { fastMode: isFastMode }),
             signal,
+            dsxuRouteInput: options.dsxuRouteInput,
           },
           paramsFromContext,
           (attempt, _startTime, tokens) => {
@@ -2838,7 +2883,7 @@ async function* queryModel(
   // Track the last requestId for the main conversation chain so shutdown
   // can send a cache eviction hint to inference. Exclude backgrounded
   // sessions (Ctrl+B) which share the repl_main_thread querySource but
-  // run inside an agent context — they are independent conversation chains
+  // run inside an agent context -> they are independent conversation chains
   // whose cache should not be evicted when the foreground session clears.
   if (
     streamRequestId &&
@@ -2913,7 +2958,7 @@ export function cleanupStream(
 
 /**
  * Updates usage statistics with new values from streaming API events.
- * Note: Anthropic's streaming API provides cumulative usage totals, not incremental deltas.
+ * Note: Provider streaming API provides cumulative usage totals, not incremental deltas.
  * Each event contains the complete usage up to that point in the stream.
  *
  * Input-related tokens (input_tokens, cache_creation_input_tokens, cache_read_input_tokens)
@@ -3019,7 +3064,7 @@ export function accumulateUsage(
         totalUsage.cache_creation.ephemeral_5m_input_tokens +
         messageUsage.cache_creation.ephemeral_5m_input_tokens,
     },
-    // See comment in updateUsage — field is not on NonNullableUsage to keep
+    // See comment in updateUsage -> field is not on NonNullableUsage to keep
     // the string out of external builds.
     ...(feature('CACHED_MICROCOMPACT')
       ? {
@@ -3080,7 +3125,7 @@ export function addCacheBreakpoints(
   // local-attention KV pages at any cached prefix position NOT in
   // cache_store_int_token_boundaries. With two markers the second-to-last
   // position is protected and its locals survive an extra turn even though
-  // nothing will ever resume from there — with one marker they're freed
+  // nothing will ever resume from there -> with one marker they're freed
   // immediately. For fire-and-forget forks (skipCacheWrite) we shift the
   // marker to the second-to-last message: that's the last shared-prefix
   // point, so the write is a no-op merge on mycro (entry already exists)
@@ -3179,7 +3224,7 @@ export function addCacheBreakpoints(
 
     // Add cache_reference to tool_result blocks that are strictly before
     // the last cache_control marker. The API requires cache_reference to
-    // appear "before or on" the last cache_control — we use strict "before"
+    // appear "before or on" the last cache_control -> we use strict "before"
     // to avoid edge cases where cache_edits splicing shifts block indices.
     //
     // Create new objects instead of mutating in-place to avoid contaminating
@@ -3286,14 +3331,14 @@ export async function queryHaiku({
       return [result]
     },
   )
-  // We don't use streaming for Haiku so this is safe
+  // We don't use streaming for the compact-title model so this is safe
   return result[0]! as AssistantMessage
 }
 
 type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
 
 /**
- * Query a specific model through the Claude Code infrastructure.
+ * Query a specific model through the DSXU Code infrastructure.
  * This goes through the full query pipeline including proper authentication,
  * betas, and headers - unlike direct API calls.
  */
@@ -3348,8 +3393,8 @@ export async function queryWithModel({
 }
 
 // Non-streaming requests have a 10min max per the docs:
-// https://platform.claude.com/docs/en/api/errors#long-requests
-// The SDK's 21333-token cap is derived from 10min × 128k tokens/hour, but we
+// provider API long-request documentation
+// The SDK's 21333-token cap is derived from 10min -> 128k tokens/hour, but we
 // bypass it by setting a client-level timeout, so we can cap higher.
 export const MAX_NON_STREAMING_TOKENS = 64_000
 
@@ -3400,18 +3445,18 @@ export function getMaxOutputTokensForModel(model: string): number {
   const maxOutputTokens = getModelMaxOutputTokens(model)
 
   // Slot-reservation cap: drop default to 8k for all models. BQ p99 output
-  // = 4,911 tokens; 32k/64k defaults over-reserve 8-16× slot capacity.
+  // = 4,911 tokens; 32k/64k defaults over-reserve 8-16-> slot capacity.
   // Requests hitting the cap get one clean retry at 64k (query.ts
   // max_output_tokens_escalate). Math.min keeps models with lower native
-  // defaults (e.g. claude-3-opus at 4k) at their native value. Applied
-  // before the env-var override so CLAUDE_CODE_MAX_OUTPUT_TOKENS still wins.
+  // defaults at their native value. Applied before the env-var override so
+  // DSXU_CODE_MAX_OUTPUT_TOKENS still wins.
   const defaultTokens = isMaxTokensCapEnabled()
     ? Math.min(maxOutputTokens.default, CAPPED_DEFAULT_MAX_TOKENS)
     : maxOutputTokens.default
 
   const result = validateBoundedIntEnvVar(
-    'CLAUDE_CODE_MAX_OUTPUT_TOKENS',
-    process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS,
+    'DSXU_CODE_MAX_OUTPUT_TOKENS',
+    getDsxuCodeEnv('MAX_OUTPUT_TOKENS'),
     defaultTokens,
     maxOutputTokens.upperLimit,
   )

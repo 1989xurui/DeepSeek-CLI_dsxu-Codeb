@@ -1,4 +1,5 @@
-import type { BetaContentBlock } from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
+import type { BetaContentBlock } from 'src/types/providerSdk.js'
 import { randomUUID, type UUID } from 'crypto'
 import { getSessionId } from 'src/bootstrap/state.js'
 import {
@@ -11,7 +12,7 @@ import type {
   SDKMessage,
   SDKRateLimitInfo,
 } from 'src/entrypoints/agentSdkTypes.js'
-import type { ClaudeAILimits } from 'src/services/claudeAiLimits.js'
+import type { DsxuLimits } from 'src/services/dsxuLimits.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import type {
   AssistantMessage,
@@ -22,7 +23,6 @@ import type { DeepImmutable } from 'src/types/utils.js'
 import stripAnsi from 'strip-ansi'
 import { createAssistantMessage } from '../messages.js'
 import { getPlan } from '../plans.js'
-
 export function toInternalMessages(
   messages: readonly DeepImmutable<SDKMessage>[],
 ): Message[] {
@@ -72,9 +72,7 @@ export function toInternalMessages(
     }
   })
 }
-
 type SDKCompactMetadata = SDKCompactBoundaryMessage['compact_metadata']
-
 export function toSDKCompactMetadata(
   meta: CompactMetadata,
 ): SDKCompactMetadata {
@@ -91,9 +89,8 @@ export function toSDKCompactMetadata(
     }),
   }
 }
-
 /**
- * Shared SDK→internal compact_metadata converter.
+ * Shared SDK - internal compact_metadata converter.
  */
 export function fromSDKCompactMetadata(
   meta: SDKCompactMetadata,
@@ -111,7 +108,6 @@ export function fromSDKCompactMetadata(
     }),
   }
 }
-
 export function toSDKMessages(messages: Message[]): SDKMessage[] {
   return messages.flatMap((message): SDKMessage[] => {
     switch (message.type) {
@@ -137,7 +133,7 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
             timestamp: message.timestamp,
             isSynthetic: message.isMeta || message.isVisibleInTranscriptOnly,
             // Structured tool output (not the string content sent to the
-            // model — the full Output object). Rides the protobuf catchall
+            // model - the full Output object). Rides the protobuf catchall
             // so web viewers can read things like BriefTool's file_uuid
             // without it polluting model context.
             ...(message.toolUseResult !== undefined
@@ -179,17 +175,16 @@ export function toSDKMessages(messages: Message[]): SDKMessage[] {
     }
   })
 }
-
 /**
  * Converts local command output (e.g. /voice, /cost) to a well-formed
  * SDKAssistantMessage so downstream consumers (mobile apps, session-ingress
- * v1alpha→v1beta converter) can parse it without schema changes.
+ * v1alpha - v1beta converter) can parse it without schema changes.
  *
  * Emitted as assistant instead of the dedicated SDKLocalCommandOutputMessage
  * because the system/local_command_output subtype is unknown to:
  *   - mobile-apps Android SdkMessageTypes.kt (no local_command_output handler)
  *   - api-go session-ingress convertSystemEvent (only init/compact_boundary)
- * See: https://anthropic.sentry.io/issues/7266299248/ (Android)
+ * Android compatibility note: preserve this mapping for mobile clients.
  *
  * Strips ANSI (e.g. chalk.dim() in /cost) then unwraps the XML wrapper tags.
  */
@@ -202,7 +197,7 @@ export function localCommandOutputToSDKAssistantMessage(
     .replace(/<local-command-stderr>([\s\S]*?)<\/local-command-stderr>/, '$1')
     .trim()
   // createAssistantMessage builds a complete APIAssistantMessage with id, type,
-  // model: SYNTHETIC_MODEL, role, stop_reason, usage — all fields required by
+  // model: SYNTHETIC_MODEL, role, stop_reason, usage - all fields required by
   // downstream deserializers like Android's SdkAssistantMessage.
   const synthetic = createAssistantMessage({ content: cleanContent })
   return {
@@ -213,13 +208,12 @@ export function localCommandOutputToSDKAssistantMessage(
     uuid,
   }
 }
-
 /**
- * Maps internal ClaudeAILimits to the SDK-facing SDKRateLimitInfo type,
+ * Maps internal DsxuLimits to the SDK-facing SDKRateLimitInfo type,
  * stripping internal-only fields like unifiedRateLimitFallbackAvailable.
  */
 export function toSDKRateLimitInfo(
-  limits: ClaudeAILimits | undefined,
+  limits: DsxuLimits | undefined,
 ): SDKRateLimitInfo | undefined {
   if (!limits) {
     return undefined
@@ -250,7 +244,6 @@ export function toSDKRateLimitInfo(
     }),
   }
 }
-
 /**
  * Normalizes tool inputs in assistant message content for SDK consumption.
  * Specifically injects plan content into ExitPlanModeV2 tool inputs since
@@ -264,12 +257,10 @@ function normalizeAssistantMessageForSDK(
   if (!Array.isArray(content)) {
     return message.message
   }
-
   const normalizedContent = content.map((block): BetaContentBlock => {
     if (block.type !== 'tool_use') {
       return block
     }
-
     if (block.name === EXIT_PLAN_MODE_V2_TOOL_NAME) {
       const plan = getPlan()
       if (plan) {
@@ -279,10 +270,8 @@ function normalizeAssistantMessageForSDK(
         }
       }
     }
-
     return block
   })
-
   return {
     ...message.message,
     content: normalizedContent,

@@ -1,5 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk'
-import type { BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages.js'
+import type { BetaToolUnion } from 'src/types/providerSdk.js'
 import {
   getLastApiCompletionTimestamp,
   setLastApiCompletionTimestamp,
@@ -12,19 +11,19 @@ import {
 } from '../constants/system.js'
 import { logEvent } from '../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../services/analytics/metadata.js'
-import { getAPIMetadata } from '../services/api/claude.js'
-import { getAnthropicClient } from '../services/api/client.js'
+import { getAPIMetadata } from '../services/api/dsxu.js'
+import { getProviderClient } from '../services/api/client.js'
 import { getModelBetas, modelSupportsStructuredOutputs } from './betas.js'
 import { computeFingerprint } from './fingerprint.js'
 import { normalizeModelStringForAPI } from './model/model.js'
 
-type MessageParam = Anthropic.MessageParam
-type TextBlockParam = Anthropic.TextBlockParam
-type Tool = Anthropic.Tool
-type ToolChoice = Anthropic.ToolChoice
-type BetaMessage = Anthropic.Beta.Messages.BetaMessage
-type BetaJSONOutputFormat = Anthropic.Beta.Messages.BetaJSONOutputFormat
-type BetaThinkingConfigParam = Anthropic.Beta.Messages.BetaThinkingConfigParam
+type MessageParam = provider.MessageParam
+type TextBlockParam = provider.TextBlockParam
+type Tool = provider.Tool
+type ToolChoice = provider.ToolChoice
+type BetaMessage = provider.Beta.Messages.BetaMessage
+type BetaJSONOutputFormat = provider.Beta.Messages.BetaJSONOutputFormat
+type BetaThinkingConfigParam = provider.Beta.Messages.BetaThinkingConfigParam
 
 export type SideQueryOptions = {
   /** Model to use for the query */
@@ -57,7 +56,7 @@ export type SideQueryOptions = {
   temperature?: number
   /** Thinking budget (enables thinking), or `false` to send `{ type: 'disabled' }`. */
   thinking?: number | false
-  /** Stop sequences — generation stops when any of these strings is emitted */
+  /** Stop sequences -generation stops when any of these strings is emitted */
   stop_sequences?: string[]
   /** Attributes this call in tengu_api_success for COGS joining against reporting.sampling_calls. */
   querySource: QuerySource
@@ -121,7 +120,7 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
     stop_sequences,
   } = opts
 
-  const client = await getAnthropicClient({
+  const client = await getProviderClient({
     maxRetries,
     model,
     source: 'side_query',
@@ -219,4 +218,13 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
   setLastApiCompletionTimestamp(now)
 
   return response
+}
+
+
+// V14 lifecycle shim: sidequery
+export function processSidequeryLifecycle(input) {
+  void input
+  const state = 'sidequery-state'
+  const lifecycle = 'sidequery:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

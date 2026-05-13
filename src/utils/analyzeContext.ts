@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import type { Anthropic } from '@anthropic-ai/sdk'
+import type { BetaMessageParam, BetaToolUnion } from '../types/providerSdk.js'
 import {
   getSystemPrompt,
   SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
@@ -17,7 +18,7 @@ import {
 } from '../services/compact/autoCompact.js'
 import {
   countMessagesTokensWithAPI,
-  countTokensViaHaikuFallback,
+  countTokensViaSmallModelFallback,
   roughTokenCountEstimation,
 } from '../services/tokenEstimation.js'
 import { estimateSkillFrontmatterTokens } from '../skills/loadSkillsDir.js'
@@ -47,11 +48,11 @@ import type {
   UserMessage,
 } from '../types/message.js'
 import { toolToAPISchema } from './api.js'
-import { filterInjectedMemoryFiles, getMemoryFiles } from './claudemd.js'
+import { filterInjectedMemoryFiles, getMemoryFiles } from './dsxuInstructions.js'
 import { getContextWindowForModel } from './context.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
-import { isEnvTruthy } from './envUtils.js'
+import { isBareMode } from './envUtils.js'
 import { errorMessage, toError } from './errors.js'
 import { logError } from './log.js'
 import { normalizeMessagesForAPI } from './messages.js'
@@ -62,6 +63,10 @@ import { buildEffectiveSystemPrompt } from './systemPrompt.js'
 import type { Theme } from './theme.js'
 import { getCurrentUsage } from './tokens.js'
 
+function shouldShowInternalContextBreakdown(): boolean {
+  return process.env.USER_TYPE === 'ant' || process.env.DSXU_CODE_MODE === '1'
+}
+
 const RESERVED_CATEGORY_NAME = 'Autocompact buffer'
 const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
 
@@ -69,14 +74,14 @@ const MANUAL_COMPACT_BUFFER_NAME = 'Compact buffer'
  * Fixed token overhead added by the API when tools are present.
  * The API adds a tool prompt preamble (~500 tokens) once per API call when tools are present.
  * When we count tools individually via the token counting API, each call includes this overhead,
- * leading to N × overhead instead of 1 × overhead for N tools.
+ * leading to N copies of the overhead instead of one copy for N tools.
  * We subtract this overhead from per-tool counts to show accurate tool content sizes.
  */
 export const TOOL_TOKEN_COUNT_OVERHEAD = 500
 
 async function countTokensWithFallback(
-  messages: Anthropic.Beta.Messages.BetaMessageParam[],
-  tools: Anthropic.Beta.Messages.BetaToolUnion[],
+  messages: BetaMessageParam[],
+  tools: BetaToolUnion[],
 ): Promise<number | null> {
   try {
     const result = await countMessagesTokensWithAPI(messages, tools)
@@ -84,7 +89,7 @@ async function countTokensWithFallback(
       return result
     }
     logForDebugging(
-      `countTokensWithFallback: API returned null, trying haiku fallback (${tools.length} tools)`,
+      `countTokensWithFallback: API returned null, trying small-model fallback (${tools.length} tools)`,
     )
   } catch (err) {
     logForDebugging(`countTokensWithFallback: API failed: ${errorMessage(err)}`)
@@ -92,16 +97,19 @@ async function countTokensWithFallback(
   }
 
   try {
-    const fallbackResult = await countTokensViaHaikuFallback(messages, tools)
+    const fallbackResult = await countTokensViaSmallModelFallback(
+      messages,
+      tools,
+    )
     if (fallbackResult === null) {
       logForDebugging(
-        `countTokensWithFallback: haiku fallback also returned null (${tools.length} tools)`,
+        `countTokensWithFallback: small-model fallback also returned null (${tools.length} tools)`,
       )
     }
     return fallbackResult
   } catch (err) {
     logForDebugging(
-      `countTokensWithFallback: haiku fallback failed: ${errorMessage(err)}`,
+      `countTokensWithFallback: small-model fallback failed: ${errorMessage(err)}`,
     )
     logError(err)
     return null
@@ -169,7 +177,7 @@ interface SlashCommandInfo {
 /** Individual skill detail for context display */
 interface SkillFrontmatter {
   name: string
-  source: SettingSource | 'plugin'
+  source: SettingSource | 'plugin' | 'bundled'
   tokens: number
 }
 
@@ -266,7 +274,7 @@ function extractSectionName(content: string): string {
   }
   // Fall back to a truncated preview of the first non-empty line
   const firstLine = content.split('\n').find(l => l.trim().length > 0) ?? ''
-  return firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : firstLine
+  return firstLine.length > 40 ? firstLine.slice(0, 40) + '...' : firstLine
 }
 
 async function countSystemTokens(
@@ -319,25 +327,25 @@ async function countSystemTokens(
 
 async function countMemoryFileTokens(): Promise<{
   memoryFileDetails: MemoryFile[]
-  claudeMdTokens: number
+  memoryFileTokens: number
 }> {
-  // Simple mode disables CLAUDE.md loading, so don't report tokens for them
-  if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
-    return { memoryFileDetails: [], claudeMdTokens: 0 }
+  // Simple mode disables DSXU memory file loading, so don't report tokens for them
+  if (isBareMode()) {
+    return { memoryFileDetails: [], memoryFileTokens: 0 }
   }
 
   const memoryFilesData = filterInjectedMemoryFiles(await getMemoryFiles())
   const memoryFileDetails: MemoryFile[] = []
-  let claudeMdTokens = 0
+  let memoryFileTokens = 0
 
   if (memoryFilesData.length < 1) {
     return {
       memoryFileDetails: [],
-      claudeMdTokens: 0,
+      memoryFileTokens: 0,
     }
   }
 
-  const claudeMdTokenCounts = await Promise.all(
+  const memoryFileTokenCounts = await Promise.all(
     memoryFilesData.map(async file => {
       const tokens = await countTokensWithFallback(
         [{ role: 'user', content: file.content }],
@@ -348,8 +356,8 @@ async function countMemoryFileTokens(): Promise<{
     }),
   )
 
-  for (const { file, tokens } of claudeMdTokenCounts) {
-    claudeMdTokens += tokens
+  for (const { file, tokens } of memoryFileTokenCounts) {
+    memoryFileTokens += tokens
     memoryFileDetails.push({
       path: file.path,
       type: file.type,
@@ -357,7 +365,7 @@ async function countMemoryFileTokens(): Promise<{
     })
   }
 
-  return { claudeMdTokens, memoryFileDetails }
+  return { memoryFileTokens, memoryFileDetails }
 }
 
 async function countBuiltInToolTokens(
@@ -408,11 +416,11 @@ async function countBuiltInToolTokens(
         )
       : 0
 
-  // Build per-tool breakdown for always-loaded tools (ant-only, proportional
+  // Build per-tool breakdown for always-loaded tools (internal breakdown,
   // split of the bulk count based on rough schema size estimation). Excludes
   // SkillTool since its tokens are shown in the separate Skills category.
   let systemToolDetails: SystemToolDetail[] = []
-  if (process.env.USER_TYPE === 'ant') {
+  if (shouldShowInternalContextBreakdown()) {
     const toolsForBreakdown = alwaysLoadedTools.filter(
       t => !toolMatchesName(t, SKILL_TOOL_NAME),
     )
@@ -590,7 +598,8 @@ async function countSkillTokens(
       name: getCommandName(skill),
       source: (skill.type === 'prompt' ? skill.source : 'plugin') as
         | SettingSource
-        | 'plugin',
+        | 'plugin'
+        | 'bundled',
       tokens: estimateSkillFrontmatterTokens(skill),
     }))
 
@@ -642,7 +651,7 @@ export async function countMcpToolTokens(
 
   // Estimate per-tool proportions for display using local estimation.
   // Include name + description + input schema to match what toolToAPISchema
-  // sends — otherwise tools with similar schemas but different descriptions
+  // sends; otherwise tools with similar schemas but different descriptions
   // get identical counts (MCP tools share the same base Zod inputSchema).
   const estimates = await Promise.all(
     mcpTools.map(async t =>
@@ -949,7 +958,7 @@ export async function analyzeContextUsage(
   // Critical operations that should not fail due to skills
   const [
     { systemPromptTokens, systemPromptSections },
-    { claudeMdTokens, memoryFileDetails },
+    { memoryFileTokens, memoryFileDetails },
     {
       builtInToolTokens,
       deferredBuiltinDetails,
@@ -1017,14 +1026,11 @@ export async function analyzeContextUsage(
   }
 
   // Built-in tools right after system prompt (skills shown separately below)
-  // Ant users get a per-tool breakdown via systemToolDetails
+  // Internal users and DSXU Code get a per-tool breakdown via systemToolDetails
   const systemToolsTokens = builtInToolTokens - skillFrontmatterTokens
   if (systemToolsTokens > 0) {
     cats.push({
-      name:
-        process.env.USER_TYPE === 'ant'
-          ? '[ANT-ONLY] System tools'
-          : 'System tools',
+      name: 'System tools',
       tokens: systemToolsTokens,
       color: 'inactive',
     })
@@ -1070,11 +1076,11 @@ export async function analyzeContextUsage(
   }
 
   // Memory files after custom agents
-  if (claudeMdTokens > 0) {
+  if (memoryFileTokens > 0) {
     cats.push({
       name: 'Memory files',
-      tokens: claudeMdTokens,
-      color: 'claude',
+      tokens: memoryFileTokens,
+      color: 'brand',
     })
   }
 
@@ -1104,9 +1110,9 @@ export async function analyzeContextUsage(
 
   // Reserved space after messages (not counted in actualUsage shown to user).
   // Under reactive-only mode (cobalt_raccoon), proactive autocompact never
-  // fires and the reserved buffer is a lie — skip it entirely and let Free
+  // fires and the reserved buffer is a lie, so skip it entirely and let Free
   // space fill the grid. feature() guard keeps the flag string out of
-  // external builds. Same for context-collapse (marble_origami) — collapse
+  // external builds. Same for context-collapse (marble_origami); collapse
   // owns the threshold ladder and autocompact is suppressed in
   // shouldAutoCompact, so the 33k buffer shown here would be a lie too.
   let reservedTokens = 0
@@ -1126,7 +1132,7 @@ export async function analyzeContextUsage(
     }
   }
   if (skipReservedBuffer) {
-    // No buffer category pushed — reactive compaction is transparent and
+    // No buffer category pushed; reactive compaction is transparent and
     // doesn't need a visible reservation in the grid.
   } else if (isAutoCompact && autoCompactThreshold !== undefined) {
     // Autocompact buffer (from effective context)
@@ -1351,11 +1357,11 @@ export async function analyzeContextUsage(
     memoryFiles: memoryFileDetails,
     mcpTools: mcpToolDetails,
     deferredBuiltinTools:
-      process.env.USER_TYPE === 'ant' ? deferredBuiltinDetails : undefined,
+      shouldShowInternalContextBreakdown() ? deferredBuiltinDetails : undefined,
     systemTools:
-      process.env.USER_TYPE === 'ant' ? systemToolDetails : undefined,
+      shouldShowInternalContextBreakdown() ? systemToolDetails : undefined,
     systemPromptSections:
-      process.env.USER_TYPE === 'ant' ? systemPromptSections : undefined,
+      shouldShowInternalContextBreakdown() ? systemPromptSections : undefined,
     agents: agentDetails,
     slashCommands:
       slashCommandTokens > 0
@@ -1378,5 +1384,18 @@ export async function analyzeContextUsage(
     isAutoCompactEnabled: isAutoCompact,
     messageBreakdown: formattedMessageBreakdown,
     apiUsage,
+  }
+}
+
+export function getDsxuAnalyzeContextRuntimeProfile() {
+  return {
+    runtime: 'DSXU Context Visualization Analyzer',
+    defaultBehavior: 'context visualization measures prompt/tools/MCP/agents/skills/messages against the runtime model context window',
+    providerTarget: 'DSXU Prompt/Context Discipline',
+    activationEvidence: [
+      'runtime model is resolved before context window lookup',
+      'system prompt, built-in tools, MCP tools, agents, slash commands, skills, memory, and messages are counted separately',
+      'DeepSeek 1M models render wider grids and 1M max tokens through getContextWindowForModel',
+    ],
   }
 }

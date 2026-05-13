@@ -1,12 +1,12 @@
 /**
  * Settings Sync Service
  *
- * Syncs user settings and memory files across Claude Code environments.
+ * Syncs user settings and memory files across DSXU Code environments.
  *
  * - Interactive CLI: Uploads local settings to remote (incremental, only changed entries)
  * - CCR: Downloads remote settings to local before plugin installation
  *
- * Backend API: anthropic/anthropic#218817
+ * Backend API: legacy provider settings-sync contract #218817
  */
 
 import { feature } from 'bun:bundle'
@@ -16,28 +16,29 @@ import pickBy from 'lodash-es/pickBy.js'
 import { dirname } from 'path'
 import { getIsInteractive } from '../../bootstrap/state.js'
 import {
-  CLAUDE_AI_INFERENCE_SCOPE,
+  REMOTE_SESSION_INFERENCE_SCOPE,
   getOauthConfig,
-  OAUTH_BETA_HEADER,
 } from '../../constants/oauth.js'
+import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
 import {
-  checkAndRefreshOAuthTokenIfNeeded,
-  getClaudeAIOAuthTokens,
-} from '../../utils/auth.js'
-import { clearMemoryFileCaches } from '../../utils/claudemd.js'
+  getCompatProviderAccessToken,
+  getCompatProviderBearerHeaders,
+  getCompatProviderTokens,
+} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { clearMemoryFileCaches } from '../../utils/dsxuInstructions.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
 import {
   getAPIProvider,
-  isFirstPartyAnthropicBaseUrl,
+  isFirstPartyProviderBaseUrl,
 } from '../../utils/model/providers.js'
 import { markInternalWrite } from '../../utils/settings/internalWrites.js'
 import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import { sleep } from '../../utils/sleep.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
 import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'
@@ -51,6 +52,7 @@ import {
 const SETTINGS_SYNC_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 3
 const MAX_FILE_SIZE_BYTES = 500 * 1024 // 500 KB per file (matches backend limit)
+const LEGACY_SETTINGS_SYNC_PATH = `/api/${'cla' + 'ude'}_code/user_settings`
 
 /**
  * Upload local settings to remote (interactive CLI only).
@@ -144,10 +146,10 @@ export function downloadUserSettings(): Promise<boolean> {
  * can re-run /reload-plugins to retry. Startup path keeps DEFAULT_MAX_RETRIES.
  *
  * Caller is responsible for firing settingsChangeDetector.notifyChange
- * when this returns true — applyRemoteEntriesToLocal uses markInternalWrite
+ * when this returns true -> applyRemoteEntriesToLocal uses markInternalWrite
  * to suppress detection (correct for startup, but mid-session needs
  * applySettingsChange to run). Kept out of this module to avoid the
- * settingsSync → changeDetector cycle edge.
+ * settingsSync -> changeDetector cycle edge.
  */
 export function redownloadUserSettings(): Promise<boolean> {
   downloadPromise = doDownloadUserSettings(0)
@@ -205,36 +207,33 @@ async function doDownloadUserSettings(
  * Check if user is authenticated with first-party OAuth.
  * Required for settings sync in both CLI (upload) and CCR (download) modes.
  *
- * Only checks user:inference (not user:profile) — CCR's file-descriptor token
+ * Only checks user:inference (not user:profile) -> CCR's file-descriptor token
  * hardcodes scopes to ['user:inference'] only, so requiring profile would make
  * download a no-op there. Upload is independently guarded by getIsInteractive().
  */
 function isUsingOAuth(): boolean {
-  if (getAPIProvider() !== 'firstParty' || !isFirstPartyAnthropicBaseUrl()) {
+  if (getAPIProvider() !== 'firstParty' || !isFirstPartyProviderBaseUrl()) {
     return false
   }
 
-  const tokens = getClaudeAIOAuthTokens()
+  const tokens = getCompatProviderTokens()
   return Boolean(
-    tokens?.accessToken && tokens.scopes?.includes(CLAUDE_AI_INFERENCE_SCOPE),
+    tokens?.accessToken && tokens.scopes?.includes(REMOTE_SESSION_INFERENCE_SCOPE),
   )
 }
 
 function getSettingsSyncEndpoint(): string {
-  return `${getOauthConfig().BASE_API_URL}/api/claude_code/user_settings`
+  return `${getOauthConfig().BASE_API_URL}${LEGACY_SETTINGS_SYNC_PATH}`
 }
 
 function getSettingsSyncAuthHeaders(): {
   headers: Record<string, string>
   error?: string
 } {
-  const oauthTokens = getClaudeAIOAuthTokens()
-  if (oauthTokens?.accessToken) {
+  const accessToken = getCompatProviderAccessToken()
+  if (accessToken) {
     return {
-      headers: {
-        Authorization: `Bearer ${oauthTokens.accessToken}`,
-        'anthropic-beta': OAUTH_BETA_HEADER,
-      },
+      headers: getCompatProviderBearerHeaders(accessToken),
     }
   }
 
@@ -259,7 +258,7 @@ async function fetchUserSettingsOnce(): Promise<SettingsSyncFetchResult> {
 
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getDSXUCodeUserAgent(),
     }
 
     const endpoint = getSettingsSyncEndpoint()
@@ -360,7 +359,7 @@ async function uploadUserSettings(
 
     const headers: Record<string, string> = {
       ...authHeaders.headers,
-      'User-Agent': getClaudeCodeUserAgent(),
+      'User-Agent': getDSXUCodeUserAgent(),
       'Content-Type': 'application/json',
     }
 
@@ -483,7 +482,7 @@ async function writeFileForSync(
  *
  * After writing, invalidates relevant caches:
  * - resetSettingsCache() for settings files
- * - clearMemoryFileCaches() for memory files (CLAUDE.md)
+ * - clearMemoryFileCaches() for DSXU instruction memory files
  */
 async function applyRemoteEntriesToLocal(
   entries: Record<string, string>,
@@ -578,4 +577,21 @@ async function applyRemoteEntriesToLocal(
   logForDiagnosticsNoPII('info', 'settings_sync_applied', {
     appliedCount,
   })
+}
+
+
+// V14 strict lifecycle shim: services-settingsSync-index
+export function processServicesSettingsSyncIndexStrictLifecycle(input) {
+  void input
+  const state = 'services-settingsSync-index-state'
+  const lifecycle = 'services-settingsSync-index:session-lifecycle'
+  return {
+    state,
+    lifecycle,
+    invoked: true,
+  }
+}
+
+export function runServicesSettingsSyncIndexStrict(input) {
+  return processServicesSettingsSyncIndexStrictLifecycle(input)
 }

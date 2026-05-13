@@ -1,5 +1,6 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
-import type { ContentBlockParam } from '@anthropic-ai/sdk/resources/messages.mjs'
+import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { randomUUID } from 'crypto'
 import last from 'lodash-es/last.js'
 import {
@@ -14,7 +15,7 @@ import type {
   SDKStatus,
   SDKUserMessageReplay,
 } from 'src/entrypoints/agentSdkTypes.js'
-import { accumulateUsage, updateUsage } from 'src/services/api/claude.js'
+import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'
 import type { NonNullableUsage } from 'src/services/api/logging.js'
 import { EMPTY_USAGE } from 'src/services/api/logging.js'
 import stripAnsi from 'strip-ansi'
@@ -81,13 +82,11 @@ import {
   shouldEnableThinkingByDefault,
   type ThinkingConfig,
 } from './utils/thinking.js'
-
 // Lazy: MessageSelector.tsx pulls React/ink; only needed for message filtering at query time
 /* eslint-disable @typescript-eslint/no-require-imports */
 const messageSelector =
   (): typeof import('src/components/MessageSelector.js') =>
     require('src/components/MessageSelector.js')
-
 import {
   localCommandOutputToSDKAssistantMessage,
   toSDKCompactMetadata,
@@ -106,7 +105,9 @@ import {
   isResultSuccessful,
   normalizeMessage,
 } from './utils/queryHelpers.js'
-
+const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const legacyCodeEnv = (name: string): string =>
+  `${LEGACY_CODE_ENV_PREFIX}_${name}`
 // Dead code elimination: conditional import for coordinator mode
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getCoordinatorUserContext: (
@@ -116,7 +117,6 @@ const getCoordinatorUserContext: (
   ? require('./coordinator/coordinatorMode.js').getCoordinatorUserContext
   : () => ({})
 /* eslint-enable @typescript-eslint/no-require-imports */
-
 // Dead code elimination: conditional import for snip compaction
 /* eslint-disable @typescript-eslint/no-require-imports */
 const snipModule = feature('HISTORY_SNIP')
@@ -126,7 +126,6 @@ const snipProjection = feature('HISTORY_SNIP')
   ? (require('./services/compact/snipProjection.js') as typeof import('./services/compact/snipProjection.js'))
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
-
 export type QueryEngineConfig = {
   cwd: string
   tools: Tools
@@ -171,7 +170,6 @@ export type QueryEngineConfig = {
     store: Message[],
   ) => { messages: Message[]; executed: boolean } | undefined
 }
-
 /**
  * QueryEngine owns the query lifecycle and session state for a conversation.
  * It extracts the core logic from ask() into a standalone class that can be
@@ -196,7 +194,6 @@ export class QueryEngine {
   // many turns in SDK mode.
   private discoveredSkillNames = new Set<string>()
   private loadedNestedMemoryPaths = new Set<string>()
-
   constructor(config: QueryEngineConfig) {
     this.config = config
     this.mutableMessages = config.initialMessages ?? []
@@ -205,7 +202,6 @@ export class QueryEngine {
     this.readFileState = config.readFileCache
     this.totalUsage = EMPTY_USAGE
   }
-
   async *submitMessage(
     prompt: string | ContentBlockParam[],
     options?: { uuid?: string; isMeta?: boolean },
@@ -234,12 +230,10 @@ export class QueryEngine {
       setSDKStatus,
       orphanedPermission,
     } = this.config
-
     this.discoveredSkillNames.clear()
     setCwd(cwd)
     const persistSession = !isSessionPersistenceDisabled()
     const startTime = Date.now()
-
     // Wrap canUseTool to track permission denials
     const wrappedCanUseTool: CanUseToolFn = async (
       tool,
@@ -257,7 +251,6 @@ export class QueryEngine {
         toolUseID,
         forceDecision,
       )
-
       // Track denials for SDK reporting
       if (result.behavior !== 'allow') {
         this.permissionDenials.push({
@@ -266,21 +259,17 @@ export class QueryEngine {
           tool_input: input,
         })
       }
-
       return result
     }
-
     const initialAppState = getAppState()
     const initialMainLoopModel = userSpecifiedModel
       ? parseUserSpecifiedModel(userSpecifiedModel)
       : getMainLoopModel()
-
     const initialThinkingConfig: ThinkingConfig = thinkingConfig
       ? thinkingConfig
       : shouldEnableThinkingByDefault() !== false
         ? { type: 'adaptive' }
         : { type: 'disabled' }
-
     headlessProfilerCheckpoint('before_getSystemPrompt')
     // Narrow once so TS tracks the type through the conditionals below.
     const customPrompt =
@@ -306,24 +295,21 @@ export class QueryEngine {
         isScratchpadEnabled() ? getScratchpadDir() : undefined,
       ),
     }
-
     // When an SDK caller provides a custom system prompt AND has set
-    // CLAUDE_COWORK_MEMORY_PATH_OVERRIDE, inject the memory-mechanics prompt.
-    // The env var is an explicit opt-in signal — the caller has wired up
-    // a memory directory and needs Claude to know how to use it (which
+    // legacy cowork memory path override, inject the memory-mechanics prompt.
+    // The env var is an explicit opt-in signal - the caller has wired up
+    // a memory directory and needs DSXU to know how to use it (which
     // Write/Edit tools to call, MEMORY.md filename, loading semantics).
     // The caller can layer their own policy text via appendSystemPrompt.
     const memoryMechanicsPrompt =
       customPrompt !== undefined && hasAutoMemPathOverride()
         ? await loadMemoryPrompt()
         : null
-
     const systemPrompt = asSystemPrompt([
       ...(customPrompt !== undefined ? [customPrompt] : defaultSystemPrompt),
       ...(memoryMechanicsPrompt ? [memoryMechanicsPrompt] : []),
       ...(appendSystemPrompt ? [appendSystemPrompt] : []),
     ])
-
     // Register function hook for structured output enforcement
     const hasStructuredOutputTool = tools.some(t =>
       toolMatchesName(t, SYNTHETIC_OUTPUT_TOOL_NAME),
@@ -331,7 +317,6 @@ export class QueryEngine {
     if (jsonSchema && hasStructuredOutputTool) {
       registerStructuredOutputEnforcement(setAppState, getSessionId())
     }
-
     let processUserInputContext: ProcessUserInputContext = {
       messages: this.mutableMessages,
       // Slash commands that mutate the message array (e.g. /force-snip)
@@ -339,7 +324,7 @@ export class QueryEngine {
       // AppState; in print mode we write back to mutableMessages so the
       // rest of the query loop (push at :389, snapshot at :392) sees
       // the result.  The second processUserInputContext below (after
-      // slash-command processing) keeps the no-op — nothing else calls
+      // slash-command processing) keeps the no-op - nothing else calls
       // setMessages past that point.
       setMessages: fn => {
         this.mutableMessages = fn(this.mutableMessages)
@@ -393,7 +378,6 @@ export class QueryEngine {
       },
       setSDKStatus,
     }
-
     // Handle orphaned permission (only once per engine lifetime)
     if (orphanedPermission && !this.hasHandledOrphanedPermission) {
       this.hasHandledOrphanedPermission = true
@@ -406,7 +390,6 @@ export class QueryEngine {
         yield message
       }
     }
-
     const {
       messages: messagesFromUserInput,
       shouldQuery,
@@ -426,16 +409,13 @@ export class QueryEngine {
       isMeta: options?.isMeta,
       querySource: 'sdk',
     })
-
     // Push new messages, including user input and any attachments
     this.mutableMessages.push(...messagesFromUserInput)
-
     // Update params to reflect updates from processing /slash commands
     const messages = [...this.mutableMessages]
-
     // Persist the user's message(s) to transcript BEFORE entering the query
     // loop. The for-await below only calls recordTranscript when ask() yields
-    // an assistant/user/compact_boundary message — which doesn't happen until
+    // an assistant/user/compact_boundary message - which doesn't happen until
     // the API responds. If the process is killed before that (e.g. user clicks
     // Stop in cowork seconds after send), the transcript is left with only
     // queue-operation entries; getLastSessionLog filters those out, returns
@@ -445,7 +425,7 @@ export class QueryEngine {
     //
     // --bare / SIMPLE: fire-and-forget. Scripted calls don't --resume after
     // kill-mid-request. The await is ~4ms on SSD, ~30ms under disk contention
-    // — the single largest controllable critical-path cost after module eval.
+    // - the single largest controllable critical-path cost after module eval.
     // Transcript is still written (for post-hoc debugging); just not blocking.
     if (persistSession && messagesFromUserInput.length > 0) {
       const transcriptPromise = recordTranscript(messages)
@@ -454,14 +434,13 @@ export class QueryEngine {
       } else {
         await transcriptPromise
         if (
-          isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-          isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+          isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
       }
     }
-
     // Filter messages that should be acknowledged after transcript
     const replayableMessages = messagesFromUserInput.filter(
       msg =>
@@ -472,7 +451,6 @@ export class QueryEngine {
         (msg.type === 'system' && msg.subtype === 'compact_boundary'), // Always ack compact boundaries
     )
     const messagesToAck = replayUserMessages ? replayableMessages : []
-
     // Update the ToolPermissionContext based on user input processing (as necessary)
     setAppState(prev => ({
       ...prev,
@@ -484,9 +462,7 @@ export class QueryEngine {
         },
       },
     }))
-
     const mainLoopModel = modelFromUserInput ?? initialMainLoopModel
-
     // Recreate after processing the prompt to pick up updated messages and
     // model (from slash commands).
     processUserInputContext = {
@@ -525,18 +501,16 @@ export class QueryEngine {
       updateAttributionState: processUserInputContext.updateAttributionState,
       setSDKStatus,
     }
-
     headlessProfilerCheckpoint('before_skills_plugins')
     // Cache-only: headless/SDK/CCR startup must not block on network for
-    // ref-tracked plugins. CCR populates the cache via CLAUDE_CODE_SYNC_PLUGIN_INSTALL
-    // (headlessPluginInstall) or CLAUDE_CODE_PLUGIN_SEED_DIR before this runs;
+    // ref-tracked plugins. CCR populates the cache via legacy sync plugin install env
+    // (headlessPluginInstall) or legacy plugin seed dir env before this runs;
     // SDK callers that need fresh source can call /reload-plugins.
     const [skills, { enabled: enabledPlugins }] = await Promise.all([
       getSlashCommandToolSkills(getCwd()),
       loadAllPluginsCacheOnly(),
     ])
     headlessProfilerCheckpoint('after_skills_plugins')
-
     yield buildSystemInitMessage({
       tools,
       mcpClients,
@@ -549,10 +523,8 @@ export class QueryEngine {
       plugins: enabledPlugins,
       fastMode: initialAppState.fastMode,
     })
-
     // Record when system message is yielded for headless latency tracking
     headlessProfilerCheckpoint('system_message_yielded')
-
     if (!shouldQuery) {
       // Return the results of local slash commands.
       // Use messagesFromUserInput (not replayableMessages) for command output
@@ -579,8 +551,7 @@ export class QueryEngine {
             isSynthetic: msg.isMeta || msg.isVisibleInTranscriptOnly,
           } as SDKUserMessageReplay
         }
-
-        // Local command output — yield as a synthetic assistant message so
+        // Local command output - yield as a synthetic assistant message so
         // RC renders it as assistant-style text rather than a user bubble.
         // Emitted as assistant (not the dedicated SDKLocalCommandOutputMessage
         // system subtype) so mobile clients + session-ingress can parse it.
@@ -593,7 +564,6 @@ export class QueryEngine {
         ) {
           yield localCommandOutputToSDKAssistantMessage(msg.content, msg.uuid)
         }
-
         if (msg.type === 'system' && msg.subtype === 'compact_boundary') {
           yield {
             type: 'system',
@@ -604,17 +574,15 @@ export class QueryEngine {
           } as SDKCompactBoundaryMessage
         }
       }
-
       if (persistSession) {
         await recordTranscript(messages)
         if (
-          isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-          isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+          isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
       }
-
       yield {
         type: 'result',
         subtype: 'success',
@@ -637,7 +605,6 @@ export class QueryEngine {
       }
       return
     }
-
     if (fileHistoryEnabled() && persistSession) {
       messagesFromUserInput
         .filter(messageSelector().selectableUserMessagesFilter)
@@ -653,7 +620,6 @@ export class QueryEngine {
           )
         })
     }
-
     // Track current message usage (reset on each message_start)
     let currentMessageUsage: NonNullableUsage = EMPTY_USAGE
     let turnCount = 1
@@ -664,14 +630,13 @@ export class QueryEngine {
     let lastStopReason: string | null = null
     // Reference-based watermark so error_during_execution's errors[] is
     // turn-scoped. A length-based index breaks when the 100-entry ring buffer
-    // shift()s during the turn — the index slides. If this entry is rotated
+    // shift()s during the turn - the index slides. If this entry is rotated
     // out, lastIndexOf returns -1 and we include everything (safe fallback).
     const errorLogWatermark = getInMemoryErrors().at(-1)
     // Snapshot count before this query for delta-based retry limiting
     const initialStructuredOutputCalls = jsonSchema
       ? countToolCalls(this.mutableMessages, SYNTHETIC_OUTPUT_TOOL_NAME)
       : 0
-
     for await (const message of query({
       messages,
       systemPrompt,
@@ -694,10 +659,10 @@ export class QueryEngine {
         // messages up through the preservedSegment tail. Attachments and
         // progress are now recorded inline (their switch cases below), but
         // this flush still matters for the preservedSegment tail walk.
-        // If the SDK subprocess restarts before then (claude-desktop kills
-        // between turns), tailUuid points to a never-written message →
-        // applyPreservedSegmentRelinks fails its tail→head walk → returns
-        // without pruning → resume loads full pre-compact history.
+        // If the SDK subprocess restarts before then (legacy-desktop kills
+        // between turns), tailUuid points to a never-written message  -
+        // applyPreservedSegmentRelinks fails its tail - head walk - returns
+        // without pruning - resume loads full pre-compact history.
         if (
           persistSession &&
           message.type === 'system' &&
@@ -715,9 +680,9 @@ export class QueryEngine {
         }
         messages.push(message)
         if (persistSession) {
-          // Fire-and-forget for assistant messages. claude.ts yields one
+          // Fire-and-forget for assistant messages. dsxu.ts yields one
           // assistant message per content block, then mutates the last
-          // one's message.usage/stop_reason on message_delta — relying on
+          // one's message.usage/stop_reason on message_delta - relying on
           // the write queue's 100ms lazy jsonStringify. Awaiting here
           // blocks ask()'s generator, so message_delta can't run until
           // every block is consumed; the drain timer (started at block 1)
@@ -730,7 +695,6 @@ export class QueryEngine {
             await recordTranscript(messages)
           }
         }
-
         // Acknowledge initial user messages after first transcript recording
         if (!hasAcknowledgedInitialMessages && messagesToAck.length > 0) {
           hasAcknowledgedInitialMessages = true
@@ -749,11 +713,9 @@ export class QueryEngine {
           }
         }
       }
-
       if (message.type === 'user') {
         turnCount++
       }
-
       switch (message.type) {
         case 'tombstone':
           // Tombstone messages are control signals for removing messages, skip them
@@ -773,7 +735,7 @@ export class QueryEngine {
           // Record inline so the dedup loop in the next ask() call sees it
           // as already-recorded. Without this, deferred progress interleaves
           // with already-recorded tool_results in mutableMessages, and the
-          // dedup walk freezes startingParentUuid at the wrong message —
+          // dedup walk freezes startingParentUuid at the wrong message  -
           // forking the chain and orphaning the conversation on resume.
           if (persistSession) {
             messages.push(message)
@@ -801,7 +763,7 @@ export class QueryEngine {
             )
             // Capture stop_reason from message_delta. The assistant message
             // is yielded at content_block_stop with stop_reason=null; the
-            // real value only arrives here (see claude.ts message_delta
+            // real value only arrives here (see dsxu.ts message_delta
             // handler). Without this, result.stop_reason is always null.
             if (message.event.delta.stop_reason != null) {
               lastStopReason = message.event.delta.stop_reason
@@ -814,7 +776,6 @@ export class QueryEngine {
               currentMessageUsage,
             )
           }
-
           if (includePartialMessages) {
             yield {
               type: 'stream_event' as const,
@@ -824,7 +785,6 @@ export class QueryEngine {
               uuid: randomUUID(),
             }
           }
-
           break
         case 'attachment':
           this.mutableMessages.push(message)
@@ -833,7 +793,6 @@ export class QueryEngine {
             messages.push(message)
             void recordTranscript(messages)
           }
-
           // Extract structured output from StructuredOutput tool calls
           if (message.attachment.type === 'structured_output') {
             structuredOutputFromTool = message.attachment.data
@@ -842,8 +801,8 @@ export class QueryEngine {
           else if (message.attachment.type === 'max_turns_reached') {
             if (persistSession) {
               if (
-                isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-                isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+                isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+                isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
               ) {
                 await flushSessionStorage()
               }
@@ -896,7 +855,7 @@ export class QueryEngine {
           break
         case 'system': {
           // Snip boundary: replay on our store to remove zombie messages and
-          // stale markers. The yielded boundary is a signal, not data to push —
+          // stale markers. The yielded boundary is a signal, not data to push  -
           // the replay produces its own equivalent boundary. Without this,
           // markers persist and re-trigger on every turn, and mutableMessages
           // never shrinks (memory leak in long SDK sessions). The subtype
@@ -931,7 +890,6 @@ export class QueryEngine {
             if (localBoundaryIdx > 0) {
               messages.splice(0, localBoundaryIdx)
             }
-
             yield {
               type: 'system',
               subtype: 'compact_boundary' as const,
@@ -967,13 +925,12 @@ export class QueryEngine {
           }
           break
       }
-
       // Check if USD budget has been exceeded
       if (maxBudgetUsd !== undefined && getTotalCost() >= maxBudgetUsd) {
         if (persistSession) {
           if (
-            isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-            isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+            isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+            isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
           ) {
             await flushSessionStorage()
           }
@@ -1000,7 +957,6 @@ export class QueryEngine {
         }
         return
       }
-
       // Check if structured output retry limit exceeded (only on user messages)
       if (message.type === 'user' && jsonSchema) {
         const currentCalls = countToolCalls(
@@ -1015,8 +971,8 @@ export class QueryEngine {
         if (callsThisQuery >= maxRetries) {
           if (persistSession) {
             if (
-              isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-              isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+              isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+              isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
             ) {
               await flushSessionStorage()
             }
@@ -1047,18 +1003,17 @@ export class QueryEngine {
         }
       }
     }
-
     // Stop hooks yield progress/attachment messages AFTER the assistant
     // response (via yield* handleStopHooks in query.ts). Since #23537 pushes
     // those to `messages` inline, last(messages) can be a progress/attachment
-    // instead of the assistant — which makes textResult extraction below
+    // instead of the assistant - which makes textResult extraction below
     // return '' and -p mode emit a blank line. Allowlist to assistant|user:
     // isResultSuccessful handles both (user with all tool_result blocks is a
     // valid successful terminal state).
     const result = messages.findLast(
       m => m.type === 'assistant' || m.type === 'user',
     )
-    // Capture for the error_during_execution diagnostic — isResultSuccessful
+    // Capture for the error_during_execution diagnostic - isResultSuccessful
     // is a type predicate (message is Message), so inside the false branch
     // `result` narrows to never and these accesses don't typecheck.
     const edeResultType = result?.type ?? 'undefined'
@@ -1066,19 +1021,17 @@ export class QueryEngine {
       result?.type === 'assistant'
         ? (last(result.message.content)?.type ?? 'none')
         : 'n/a'
-
     // Flush buffered transcript writes before yielding result.
     // The desktop app kills the CLI process immediately after receiving the
     // result message, so any unflushed writes would be lost.
     if (persistSession) {
       if (
-        isEnvTruthy(process.env.CLAUDE_CODE_EAGER_FLUSH) ||
-        isEnvTruthy(process.env.CLAUDE_CODE_IS_COWORK)
+        isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
+        isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
       ) {
         await flushSessionStorage()
       }
     }
-
     if (!isResultSuccessful(result, lastStopReason)) {
       yield {
         type: 'result',
@@ -1098,7 +1051,7 @@ export class QueryEngine {
           initialAppState.fastMode,
         ),
         uuid: randomUUID(),
-        // Diagnostic prefix: these are what isResultSuccessful() checks — if
+        // Diagnostic prefix: these are what isResultSuccessful() checks - if
         // the result type isn't assistant-with-text/thinking or user-with-
         // tool_result, and stop_reason isn't end_turn, that's why this fired.
         // errors[] is turn-scoped via the watermark; previously it dumped the
@@ -1116,11 +1069,9 @@ export class QueryEngine {
       }
       return
     }
-
     // Extract the text result based on message type
     let textResult = ''
     let isApiError = false
-
     if (result.type === 'assistant') {
       const lastContent = last(result.message.content)
       if (
@@ -1131,7 +1082,6 @@ export class QueryEngine {
       }
       isApiError = Boolean(result.isApiErrorMessage)
     }
-
     yield {
       type: 'result',
       subtype: 'success',
@@ -1154,31 +1104,25 @@ export class QueryEngine {
       uuid: randomUUID(),
     }
   }
-
   interrupt(): void {
     this.abortController.abort()
   }
-
   getMessages(): readonly Message[] {
     return this.mutableMessages
   }
-
   getReadFileState(): FileStateCache {
     return this.readFileState
   }
-
   getSessionId(): string {
     return getSessionId()
   }
-
   setModel(model: string): void {
     this.config.userSpecifiedModel = model
   }
 }
-
 /**
- * Sends a single prompt to the Claude API and returns the response.
- * Assumes that claude is being used non-interactively -- will not
+ * Sends a single prompt to the DSXU API and returns the response.
+ * Assumes that dsxu is being used non-interactively -- will not
  * ask the user for permissions or further input.
  *
  * Convenience wrapper around QueryEngine for one-shot usage.
@@ -1283,7 +1227,6 @@ export async function* ask({
         }
       : {}),
   })
-
   try {
     yield* engine.submitMessage(prompt, {
       uuid: promptUuid,

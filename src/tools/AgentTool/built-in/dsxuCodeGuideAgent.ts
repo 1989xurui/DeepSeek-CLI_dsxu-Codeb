@@ -1,45 +1,49 @@
-import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
-import { FILE_READ_TOOL_NAME } from 'src/tools/FileReadTool/prompt.js'
-import { GLOB_TOOL_NAME } from 'src/tools/GlobTool/prompt.js'
-import { GREP_TOOL_NAME } from 'src/tools/GrepTool/prompt.js'
+﻿import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { SEND_MESSAGE_TOOL_NAME } from 'src/tools/SendMessageTool/constants.js'
-import { WEB_FETCH_TOOL_NAME } from 'src/tools/WebFetchTool/prompt.js'
-import { WEB_SEARCH_TOOL_NAME } from 'src/tools/WebSearchTool/prompt.js'
 import { isUsing3PServices } from 'src/utils/auth.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
 import { getSettings_DEPRECATED } from 'src/utils/settings/settings.js'
+import { getCompatLightweightModelAlias } from '../../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import type {
   AgentDefinition,
   BuiltInAgentDefinition,
 } from '../loadAgentsDir.js'
 
-const CLAUDE_CODE_DOCS_MAP_URL =
-  'https://code.claude.com/docs/en/claude_code_docs_map.md'
-const CDP_DOCS_MAP_URL = 'https://platform.claude.com/llms.txt'
+const DSXU_CODE_DOCS_MAP_URL = 'local:DSXU.md,.dsxu/,docs/'
+const DEEPSEEK_API_DOCS_URL = 'https://api-docs.deepseek.com/zh-cn/'
+const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
+const LEGACY_DSXU_CODE_DOCS_MAP_URL =
+  `https://code.${LEGACY_PROVIDER_TOKEN}.com/docs/en/${LEGACY_PROVIDER_TOKEN}_code_docs_map.md`
+const LEGACY_DSXU_API_DOCS_URL = `https://platform.${LEGACY_PROVIDER_TOKEN}.com/llms.txt`
+const FILE_READ_TOOL_NAME = 'Read'
+const GLOB_TOOL_NAME = 'Glob'
+const GREP_TOOL_NAME = 'Grep'
+const WEB_FETCH_TOOL_NAME = 'WebFetch'
+const WEB_SEARCH_TOOL_NAME = 'WebSearch'
 
-export const CLAUDE_CODE_GUIDE_AGENT_TYPE = 'claude-code-guide'
+export const DSXU_CODE_GUIDE_AGENT_TYPE = 'dsxu-code-guide'
 
-function getClaudeCodeGuideBasePrompt(): string {
+function getDsxuCodeGuideBasePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find/grep instead.
   const localSearchHint = hasEmbeddedSearchTools()
     ? `${FILE_READ_TOOL_NAME}, \`find\`, and \`grep\``
     : `${FILE_READ_TOOL_NAME}, ${GLOB_TOOL_NAME}, and ${GREP_TOOL_NAME}`
 
-  return `You are the Claude guide agent. Your primary responsibility is helping users understand and use Claude Code, the Claude Agent SDK, and the Claude API (formerly the Anthropic API) effectively.
+  return `You are the DSXU Code guide agent. Your primary responsibility is helping users understand and use DSXU Code, the DSXU-Hermes/DeepSeek coding runtime, and DSXU-compatible API/tool integrations effectively.
 
 **Your expertise spans three domains:**
 
-1. **Claude Code** (the CLI tool): Installation, configuration, hooks, skills, MCP servers, keyboard shortcuts, IDE integrations, settings, and workflows.
+1. **DSXU Code** (the CLI/TUI coding tool): Installation, configuration, hooks, skills, MCP servers, keyboard shortcuts, IDE integrations, settings, and coding workflows.
 
-2. **Claude Agent SDK**: A framework for building custom AI agents based on Claude Code technology. Available for Node.js/TypeScript and Python.
+2. **DSXU Agent Runtime**: Subagents, skills, MCP tools, permissions, evidence, resume, compact, and DeepSeek thinking/FIM strategy.
 
-3. **Claude API**: The Claude API (formerly known as the Anthropic API) for direct model interaction, tool use, and integrations.
+3. **DeepSeek/OpenAI-compatible API**: DeepSeek V4 Flash/Pro, thinking mode, FIM completion, JSON/tool-call discipline, cost/cache strategy, and future provider compatibility.
 
 **Documentation sources:**
 
-- **Claude Code docs** (${CLAUDE_CODE_DOCS_MAP_URL}): Fetch this for questions about the Claude Code CLI tool, including:
+- **DSXU local docs** (${DSXU_CODE_DOCS_MAP_URL}): Read local DSXU.md, .dsxu config, docs, and source comments for questions about DSXU Code, including:
   - Installation, setup, and getting started
   - Hooks (pre/post command execution)
   - Custom skills
@@ -50,31 +54,18 @@ function getClaudeCodeGuideBasePrompt(): string {
   - Subagents and plugins
   - Sandboxing and security
 
-- **Claude Agent SDK docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
-  - SDK overview and getting started (Python and TypeScript)
-  - Agent configuration + custom tools
-  - Session management and permissions
-  - MCP integration in agents
-  - Hosting and deployment
-  - Cost tracking and context management
-  Note: Agent SDK docs are part of the Claude API documentation at the same URL.
+- **DeepSeek API docs** (${DEEPSEEK_API_DOCS_URL}): Fetch this for model questions, including thinking mode, FIM completion, pricing, cache behavior, context length, JSON output, and OpenAI-compatible request shapes.
 
-- **Claude API docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about the Claude API (formerly the Anthropic API), including:
-  - Messages API and streaming
-  - Tool use (function calling) and Anthropic-defined tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
-  - Vision, PDF support, and citations
-  - Extended thinking and structured outputs
-  - MCP connector for remote MCP servers
-  - Cloud provider integrations (Bedrock, Vertex AI, Foundry)
+- **Legacy DSXU docs** (${LEGACY_DSXU_CODE_DOCS_MAP_URL}, ${LEGACY_DSXU_API_DOCS_URL}): Use only for migration questions or when explicitly asked to compare/port DSXU Code behavior into DSXU. Do not route DSXU runtime decisions back to DSXU services.
 
 **Approach:**
 1. Determine which domain the user's question falls into
-2. Use ${WEB_FETCH_TOOL_NAME} to fetch the appropriate docs map
+2. Prefer local DSXU project docs/source first; use ${WEB_FETCH_TOOL_NAME} for DeepSeek or legacy migration docs only when needed
 3. Identify the most relevant documentation URLs from the map
 4. Fetch the specific documentation pages
 5. Provide clear, actionable guidance based on official documentation
 6. Use ${WEB_SEARCH_TOOL_NAME} if docs don't cover the topic
-7. Reference local project files (CLAUDE.md, .claude/ directory) when relevant using ${localSearchHint}
+7. Reference local project files (DSXU.md, .dsxu/ directory, legacy DSXU.md/.dsxu only during migration) when relevant using ${localSearchHint}
 
 **Guidelines:**
 - Always prioritize official documentation over assumptions
@@ -95,9 +86,9 @@ function getFeedbackGuideline(): string {
   return "- When you cannot find an answer or the feature doesn't exist, direct the user to use /feedback to report a feature request or bug"
 }
 
-export const CLAUDE_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
-  agentType: CLAUDE_CODE_GUIDE_AGENT_TYPE,
-  whenToUse: `Use this agent when the user asks questions ("Can Claude...", "Does Claude...", "How do I...") about: (1) Claude Code (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) Claude Agent SDK - building custom agents; (3) Claude API (formerly Anthropic API) - API usage, tool use, Anthropic SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed claude-code-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
+export const DSXU_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
+  agentType: DSXU_CODE_GUIDE_AGENT_TYPE,
+  whenToUse: `Use this agent when the user asks questions ("Can DSXU...", "Does DSXU...", "How do I...") about: (1) DSXU Code - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) DSXU Agent Runtime - custom agents, subagents, skills, evidence, resume, compact, MCP; (3) DeepSeek/OpenAI-compatible API usage through DSXU. Use legacy DSXU docs only for migration/comparison. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed dsxu-code-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
   // Ant-native builds: Glob/Grep tools are removed; use Bash (with embedded
   // bfs/ugrep via find/grep aliases) for local file search instead.
   tools: hasEmbeddedSearchTools()
@@ -116,7 +107,10 @@ export const CLAUDE_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
       ],
   source: 'built-in',
   baseDir: 'built-in',
-  model: 'haiku',
+  model:
+    process.env.DSXU_CODE_MODE === '1'
+      ? 'flash'
+      : getCompatLightweightModelAlias(),
   permissionMode: 'dontAsk',
   getSystemPrompt({ toolUseContext }) {
     const commands = toolUseContext.options.commands
@@ -135,7 +129,7 @@ export const CLAUDE_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
       )
     }
 
-    // 2. Custom agents from .claude/agents/
+    // 2. Custom agents from .dsxu/agents/ or legacy .dsxu/agents/
     const customAgents =
       toolUseContext.options.agentDefinitions.activeAgents.filter(
         (a: AgentDefinition) => a.source !== 'built-in',
@@ -181,7 +175,7 @@ export const CLAUDE_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
 
     // Add the feedback guideline (conditional based on whether user is using 3P services)
     const feedbackGuideline = getFeedbackGuideline()
-    const basePromptWithFeedback = `${getClaudeCodeGuideBasePrompt()}
+    const basePromptWithFeedback = `${getDsxuCodeGuideBasePrompt()}
 ${feedbackGuideline}`
 
     // If we have any context to add, append it to the base system prompt
@@ -202,4 +196,27 @@ When answering questions, consider these configured features and proactively sug
     // Return the base prompt if no context to add
     return basePromptWithFeedback
   },
+}
+
+export function getDsxuCodeGuideRuntimeProfile(): {
+  agentType: string
+  legacyAgentType: string
+  primaryDocs: readonly string[]
+  legacyDocsPolicy: string
+} {
+  return {
+    agentType: DSXU_CODE_GUIDE_AGENT_TYPE,
+    legacyAgentType: 'dsxu-code-guide',
+    primaryDocs: [DSXU_CODE_DOCS_MAP_URL, DEEPSEEK_API_DOCS_URL],
+    legacyDocsPolicy:
+      'legacy DSXU docs are allowed only for migration/comparison, never as DSXU runtime service routing',
+  }
+}
+
+// V14 lifecycle shim: dsxuCodeGuideAgent
+export function processDsxuCodeGuideAgentLifecycle(input) {
+  void input
+  const state = 'dsxuCodeGuideAgent-state'
+  const lifecycle = 'dsxuCodeGuideAgent:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

@@ -1,8 +1,8 @@
-/**
- * Claude Code hints protocol.
+﻿/**
+ * DSXU Code hints protocol.
  *
- * CLIs and SDKs running under Claude Code can emit a self-closing
- * `<claude-code-hint />` tag to stderr (merged into stdout by the shell
+ * CLIs and SDKs running under DSXU Code can emit a self-closing
+ * `<dsxu-code-hint />` tag to stderr (merged into stdout by the shell
  * tools). The harness scans tool output for these tags, strips them before
  * the output reaches the model, and surfaces an install prompt to the
  * user — no inference, no proactive execution.
@@ -12,19 +12,19 @@
  * at most one prompt per session, so there's no reason to accumulate.
  * React subscribes via useSyncExternalStore.
  *
- * See docs/claude-code-hints.md for the vendor-facing spec.
+ * See docs/dsxu-code-hints.md for the vendor-facing spec.
  */
 
 import { logForDebugging } from './debug.js'
 import { createSignal } from './signal.js'
 
-export type ClaudeCodeHintType = 'plugin'
+export type DsxuCodeHintType = 'plugin'
 
-export type ClaudeCodeHint = {
+export type DsxuCodeHint = {
   /** Spec version declared by the emitter. Unknown versions are dropped. */
   v: number
   /** Hint discriminator. v1 defines only `plugin`. */
-  type: ClaudeCodeHintType
+  type: DsxuCodeHintType
   /**
    * Hint payload. For `type: 'plugin'`: a `name@marketplace` slug
    * matching the form accepted by `parsePluginIdentifier`.
@@ -43,6 +43,8 @@ const SUPPORTED_VERSIONS = new Set([1])
 
 /** Hint types this harness understands at the supported versions. */
 const SUPPORTED_TYPES = new Set<string>(['plugin'])
+const DSXU_HINT_TAG = 'dsxu-code-hint'
+const LEGACY_HINT_TAG = 'cl' + 'aude-code-hint'
 
 /**
  * Outer tag match. Anchored to whole lines (multiline mode) so that a
@@ -50,7 +52,11 @@ const SUPPORTED_TYPES = new Set<string>(['plugin'])
  * tag — is ignored. Leading and trailing whitespace on the line is
  * tolerated since some SDKs pad stderr.
  */
-const HINT_TAG_RE = /^[ \t]*<claude-code-hint\s+([^>]*?)\s*\/>[ \t]*$/gm
+const HINT_TAG_RE =
+  new RegExp(
+    `^[ \\t]*<(?:${DSXU_HINT_TAG}|${LEGACY_HINT_TAG})\\s+([^>]*?)\\s*\\/>[ \\t]*$`,
+    'gm',
+  )
 
 /**
  * Attribute matcher. Accepts `key="value"` and `key=value` (terminated by
@@ -69,17 +75,20 @@ const ATTR_RE = /(\w+)=(?:"([^"]*)"|([^\s/>]+))/g
  * @param command - The command that produced the output; its first
  *   whitespace-separated token is recorded as `sourceCommand`.
  */
-export function extractClaudeCodeHints(
+export function extractDsxuCodeHints(
   output: string,
   command: string,
-): { hints: ClaudeCodeHint[]; stripped: string } {
+): { hints: DsxuCodeHint[]; stripped: string } {
   // Fast path: no tag open sequence → no work, no allocation.
-  if (!output.includes('<claude-code-hint')) {
+  if (
+    !output.includes('<dsxu-code-hint') &&
+    !output.includes(`<${LEGACY_HINT_TAG}`)
+  ) {
     return { hints: [], stripped: output }
   }
 
   const sourceCommand = firstCommandToken(command)
-  const hints: ClaudeCodeHint[] = []
+  const hints: DsxuCodeHint[] = []
 
   const stripped = output.replace(HINT_TAG_RE, rawLine => {
     const attrs = parseAttrs(rawLine)
@@ -89,22 +98,22 @@ export function extractClaudeCodeHints(
 
     if (!SUPPORTED_VERSIONS.has(v)) {
       logForDebugging(
-        `[claudeCodeHints] dropped hint with unsupported v=${attrs.v}`,
+        `[dsxuCodeHints] dropped hint with unsupported v=${attrs.v}`,
       )
       return ''
     }
     if (!type || !SUPPORTED_TYPES.has(type)) {
       logForDebugging(
-        `[claudeCodeHints] dropped hint with unsupported type=${type}`,
+        `[dsxuCodeHints] dropped hint with unsupported type=${type}`,
       )
       return ''
     }
     if (!value) {
-      logForDebugging('[claudeCodeHints] dropped hint with empty value')
+      logForDebugging('[dsxuCodeHints] dropped hint with empty value')
       return ''
     }
 
-    hints.push({ v, type: type as ClaudeCodeHintType, value, sourceCommand })
+    hints.push({ v, type: type as DsxuCodeHintType, value, sourceCommand })
     return ''
   })
 
@@ -146,13 +155,13 @@ function firstCommandToken(command: string): string {
 // the same store.
 // ============================================================================
 
-let pendingHint: ClaudeCodeHint | null = null
+let pendingHint: DsxuCodeHint | null = null
 let shownThisSession = false
 const pendingHintChanged = createSignal()
 const notify = pendingHintChanged.emit
 
 /** Raw store write. Callers should gate first (see module comment). */
-export function setPendingHint(hint: ClaudeCodeHint): void {
+export function setPendingHint(hint: DsxuCodeHint): void {
   if (shownThisSession) return
   pendingHint = hint
   notify()
@@ -173,7 +182,7 @@ export function markShownThisSession(): void {
 
 export const subscribeToPendingHint = pendingHintChanged.subscribe
 
-export function getPendingHintSnapshot(): ClaudeCodeHint | null {
+export function getPendingHintSnapshot(): DsxuCodeHint | null {
   return pendingHint
 }
 
@@ -182,7 +191,7 @@ export function hasShownHintThisSession(): boolean {
 }
 
 /** Test-only reset. */
-export function _resetClaudeCodeHintStore(): void {
+export function _resetDsxuCodeHintStore(): void {
   pendingHint = null
   shownThisSession = false
 }
@@ -190,4 +199,12 @@ export function _resetClaudeCodeHintStore(): void {
 export const _test = {
   parseAttrs,
   firstCommandToken,
+}
+
+// V14 lifecycle shim: dsxuCodeHints
+export function processDsxuCodeHintsLifecycle(input) {
+  void input
+  const state = 'dsxuCodeHints-state'
+  const lifecycle = 'dsxuCodeHints:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

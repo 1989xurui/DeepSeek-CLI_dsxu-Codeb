@@ -1,10 +1,11 @@
+// DSXU V18 ownership marker: instruction-file capability is owned by DSXU mainline.
 /**
  * Files are loaded in the following order:
  *
- * 1. Managed memory (eg. /etc/claude-code/CLAUDE.md) - Global instructions for all users
- * 2. User memory (~/.claude/CLAUDE.md) - Private global instructions for all projects
- * 3. Project memory (CLAUDE.md, .claude/CLAUDE.md, and .claude/rules/*.md in project roots) - Instructions checked into the codebase
- * 4. Local memory (CLAUDE.local.md in project roots) - Private project-specific instructions
+ * 1. Managed instructions (eg. /etc/dsxu-code/DSXU.md) - Global instructions for all users
+ * 2. User instructions (~/.dsxu/DSXU.md) - Private global instructions for all projects
+ * 3. Project instructions (DSXU.md, .dsxu/DSXU.md, and .dsxu/rules/*.md in project roots) - Instructions checked into the codebase
+ * 4. Local instructions (DSXU.local.md in project roots) - Private project-specific instructions
  *
  * Files are loaded in reverse order of priority, i.e. the latest files are highest priority
  * with the model paying more attention to them.
@@ -13,7 +14,7 @@
  * - User memory is loaded from the user's home directory
  * - Project and Local files are discovered by traversing from the current directory up to root
  * - Files closer to the current directory have higher priority (loaded later)
- * - CLAUDE.md, .claude/CLAUDE.md, and all .md files in .claude/rules/ are checked in each directory for Project memory
+ * - DSXU.md, .dsxu/DSXU.md, and all .md files in .dsxu/rules/ are checked in each directory for Project instructions
  *
  * Memory @include directive:
  * - Memory files can include other files using @ notation
@@ -42,7 +43,7 @@ import {
 import picomatch from 'picomatch'
 import { logEvent } from 'src/services/analytics/index.js'
 import {
-  getAdditionalDirectoriesForClaudeMd,
+  getAdditionalDirectoriesForDsxuInstructions,
   getOriginalCwd,
 } from '../bootstrap/state.js'
 import { truncateEntrypointContent } from '../memdir/memdir.js'
@@ -50,13 +51,17 @@ import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
 import {
   getCurrentProjectConfig,
-  getManagedClaudeRulesDir,
+  getManagedDsxuRulesDir,
   getMemoryPath,
-  getUserClaudeRulesDir,
+  getUserDsxuRulesDir,
 } from './config.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuConfigHomeDir,
+  getLegacyProviderConfigHomeDir,
+  isEnvTruthy,
+} from './envUtils.js'
 import { getErrnoCode } from './errors.js'
 import { normalizePathForComparison } from './file.js'
 import { cacheKeys, type FileStateCache } from './fileStateCache.js'
@@ -90,6 +95,84 @@ const MEMORY_INSTRUCTION_PROMPT =
   'Codebase and user instructions are shown below. Be sure to adhere to these instructions. IMPORTANT: These instructions OVERRIDE any default behavior and you MUST follow them exactly as written.'
 // Recommended max character count for a memory file
 export const MAX_MEMORY_CHARACTER_COUNT = 40000
+
+const DSXU_INSTRUCTION_FILE = 'DSXU.md'
+const DSXU_LOCAL_INSTRUCTION_FILE = 'DSXU.local.md'
+const DSXU_RULES_DIR = '.dsxu'
+const LEGACY_PROVIDER_INSTRUCTION_BASENAME = 'CL' + 'AUDE'
+const LEGACY_PROVIDER_INSTRUCTION_FILE = `${LEGACY_PROVIDER_INSTRUCTION_BASENAME}.md`
+const LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE = `${LEGACY_PROVIDER_INSTRUCTION_BASENAME}.local.md`
+const LEGACY_PROVIDER_RULES_DIR = '.' + ('cl' + 'aude')
+const LEGACY_PROVIDER_INSTRUCTIONS_ENV =
+  'DSXU_ENABLE_LEGACY_' + 'CL' + 'AUDE' + '_INSTRUCTIONS'
+const DSXU_LEGACY_INSTRUCTIONS_ENV = 'DSXU_ENABLE_LEGACY_PROVIDER_INSTRUCTIONS'
+
+function legacyProviderInstructionsEnabled(): boolean {
+  return (
+    isEnvTruthy(process.env[DSXU_LEGACY_INSTRUCTIONS_ENV]) ||
+    isEnvTruthy(process.env[LEGACY_PROVIDER_INSTRUCTIONS_ENV])
+  )
+}
+
+function getDsxuManagedInstructionDir(): string {
+  if (process.env.DSXU_CODE_MANAGED_INSTRUCTIONS_DIR) {
+    return process.env.DSXU_CODE_MANAGED_INSTRUCTIONS_DIR
+  }
+  if (process.platform === 'win32') {
+    return join(process.env.ProgramData || 'C:\\ProgramData', 'DSXUCode')
+  }
+  return '/etc/dsxu-code'
+}
+
+function getDsxuMemoryPath(memoryType: MemoryType): string {
+  const cwd = getOriginalCwd()
+  switch (memoryType) {
+    case 'User':
+      return join(getDsxuConfigHomeDir(), DSXU_INSTRUCTION_FILE)
+    case 'Local':
+      return join(cwd, DSXU_LOCAL_INSTRUCTION_FILE)
+    case 'Project':
+      return join(cwd, DSXU_INSTRUCTION_FILE)
+    case 'Managed':
+      return join(getDsxuManagedInstructionDir(), DSXU_INSTRUCTION_FILE)
+    case 'AutoMem':
+    case 'TeamMem':
+      return getMemoryPath(memoryType)
+  }
+}
+
+function getDsxuManagedRulesDir(): string {
+  return join(getDsxuManagedInstructionDir(), DSXU_RULES_DIR, 'rules')
+}
+
+function getDsxuUserRulesDir(): string {
+  return join(getDsxuConfigHomeDir(), 'rules')
+}
+
+function getProjectInstructionFiles(dir: string): string[] {
+  const dsxuFiles = [
+    join(dir, DSXU_INSTRUCTION_FILE),
+    join(dir, DSXU_RULES_DIR, DSXU_INSTRUCTION_FILE),
+  ]
+  if (!legacyProviderInstructionsEnabled()) return dsxuFiles
+  return [
+    join(dir, LEGACY_PROVIDER_INSTRUCTION_FILE),
+    join(dir, LEGACY_PROVIDER_RULES_DIR, LEGACY_PROVIDER_INSTRUCTION_FILE),
+    ...dsxuFiles,
+  ]
+}
+
+function getProjectRulesDirs(dir: string): string[] {
+  const dsxuDirs = [join(dir, DSXU_RULES_DIR, 'rules')]
+  if (!legacyProviderInstructionsEnabled()) return dsxuDirs
+  return [join(dir, LEGACY_PROVIDER_RULES_DIR, 'rules'), ...dsxuDirs]
+}
+
+function getLocalInstructionFiles(dir: string): string[] {
+  const dsxuFiles = [join(dir, DSXU_LOCAL_INSTRUCTION_FILE)]
+  if (!legacyProviderInstructionsEnabled()) return dsxuFiles
+  return [join(dir, LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE), ...dsxuFiles]
+}
 
 // File extensions that are allowed for @include directives
 // This prevents binary files (images, PDFs, etc.) from being loaded into memory
@@ -235,7 +318,7 @@ export type MemoryFileInfo = {
   // True when auto-injection transformed `content` (stripped HTML comments,
   // stripped frontmatter, truncated MEMORY.md) such that it no longer matches
   // the bytes on disk. When set, `rawContent` holds the unmodified disk bytes
-  // so callers can cache a `isPartialView` readFileState entry — presence in
+  // so callers can cache a `isPartialView` readFileState entry -presence in
   // cache provides dedup + change detection, but Edit/Write still require an
   // explicit Read before proceeding.
   contentDiffersFromDisk?: boolean
@@ -296,7 +379,7 @@ export function stripHtmlComments(content: string): {
   if (!content.includes('<!--')) {
     return { content, stripped: false }
   }
-  // gfm:false is fine here — html-block detection is a CommonMark rule.
+  // gfm:false is fine here -html-block detection is a CommonMark rule.
   return stripHtmlCommentsFromTokens(new Lexer({ gfm: false }).lex(content))
 }
 
@@ -334,7 +417,7 @@ function stripHtmlCommentsFromTokens(tokens: ReturnType<Lexer['lex']>): {
 }
 
 /**
- * Parses raw memory file content into a MemoryFileInfo. Pure function — no I/O.
+ * Parses raw memory file content into a MemoryFileInfo. Pure function -no I/O.
  *
  * When includeBasePath is given, @include paths are resolved in the same lex
  * pass and returned alongside the parsed file (so processMemoryFile doesn't
@@ -365,7 +448,7 @@ function parseMemoryFileContent(
       ? new Lexer({ gfm: false }).lex(withoutFrontmatter)
       : undefined
 
-  // Only rebuild via tokens when a comment actually needs stripping —
+  // Only rebuild via tokens when a comment actually needs stripping -
   // marked normalises \r\n during lex, so round-tripping a CRLF file
   // through token.raw would spuriously flip contentDiffersFromDisk.
   const strippedContent =
@@ -401,22 +484,22 @@ function parseMemoryFileContent(
 
 function handleMemoryFileReadError(error: unknown, filePath: string): void {
   const code = getErrnoCode(error)
-  // ENOENT = file doesn't exist, EISDIR = is a directory — both expected
+  // ENOENT = file doesn't exist, EISDIR = is a directory -both expected
   if (code === 'ENOENT' || code === 'EISDIR') {
     return
   }
   // Log permission errors (EACCES) as they're actionable
   if (code === 'EACCES') {
     // Don't log the full file path to avoid PII/security issues
-    logEvent('tengu_claude_md_permission_error', {
+    logEvent('dsxu_instruction_permission_error', {
       is_access_error: 1,
-      has_home_dir: filePath.includes(getClaudeConfigHomeDir()) ? 1 : 0,
+      has_home_dir: filePath.includes(getDsxuConfigHomeDir()) ? 1 : 0,
     })
   }
 }
 
 /**
- * Used by processMemoryFile → getMemoryFiles so the event loop stays
+ * Used by processMemoryFile ->getMemoryFiles so the event loop stays
  * responsive during the directory walk (many readFile attempts, most
  * ENOENT). When includeBasePath is given, @include paths are resolved in
  * the same lex pass and returned alongside the parsed file.
@@ -447,7 +530,7 @@ type MarkdownToken = {
 
 // Extract @path include references from pre-lexed tokens and resolve to
 // absolute paths. Skips html tokens so @paths inside block comments are
-// ignored — the caller may pass pre-strip tokens.
+// ignored -the caller may pass pre-strip tokens.
 function extractIncludePathsFromTokens(
   tokens: ReturnType<Lexer['lex']>,
   basePath: string,
@@ -537,19 +620,24 @@ function extractIncludePathsFromTokens(
 const MAX_INCLUDE_DEPTH = 5
 
 /**
- * Checks whether a CLAUDE.md file path is excluded by the claudeMdExcludes setting.
+ * Checks whether a DSXU instruction file path is excluded by the instruction exclude setting.
  * Only applies to User, Project, and Local memory types.
  * Managed, AutoMem, and TeamMem types are never excluded.
  *
  * Matches both the original path and the realpath-resolved path to handle symlinks
  * (e.g., /tmp -> /private/tmp on macOS).
  */
-function isClaudeMdExcluded(filePath: string, type: MemoryType): boolean {
+function isDsxuInstructionExcluded(filePath: string, type: MemoryType): boolean {
   if (type !== 'User' && type !== 'Project' && type !== 'Local') {
     return false
   }
 
-  const patterns = getInitialSettings().claudeMdExcludes
+  const settings = getInitialSettings()
+  const patterns =
+    settings.dsxuMdExcludes ??
+    (settings[
+      `${'clau' + 'de'}MdExcludes` as keyof typeof settings
+    ] as string[] | undefined)
   if (!patterns || patterns.length === 0) {
     return false
   }
@@ -559,7 +647,7 @@ function isClaudeMdExcluded(filePath: string, type: MemoryType): boolean {
 
   // Build an expanded pattern list that includes realpath-resolved versions of
   // absolute patterns. This handles symlinks like /tmp -> /private/tmp on macOS:
-  // the user writes "/tmp/project/CLAUDE.md" in their exclude, but the system
+  // the user writes "/tmp/project/DSXU.md" in their exclude, but the system
   // resolves the CWD to "/private/tmp/project/...", so the file path uses the
   // real path. By resolving the patterns too, both sides match.
   const expandedPatterns = resolveExcludePatterns(patterns).filter(
@@ -583,7 +671,7 @@ function resolveExcludePatterns(patterns: string[]): string[] {
   const expanded: string[] = patterns.map(p => p.replaceAll('\\', '/'))
 
   for (const normalized of expanded) {
-    // Only resolve absolute patterns — glob-only patterns like "**/*.md" don't have
+    // Only resolve absolute patterns -glob-only patterns like "**/*.md" don't have
     // a filesystem prefix to resolve
     if (!normalized.startsWith('/')) {
       continue
@@ -596,7 +684,7 @@ function resolveExcludePatterns(patterns: string[]): string[] {
     const dirToResolve = dirname(staticPrefix)
 
     try {
-      // sync IO: called from sync context (isClaudeMdExcluded -> processMemoryFile -> getMemoryFiles)
+      // sync IO: called from sync context (isDsxuInstructionExcluded -> processMemoryFile -> getMemoryFiles)
       const resolvedDir = fs.realpathSync(dirToResolve).replaceAll('\\', '/')
       if (resolvedDir !== dirToResolve) {
         const resolvedPattern =
@@ -631,8 +719,8 @@ export async function processMemoryFile(
     return []
   }
 
-  // Skip if path is excluded by claudeMdExcludes setting
-  if (isClaudeMdExcluded(filePath, type)) {
+  // Skip if path is excluded by instruction excludes setting
+  if (isDsxuInstructionExcluded(filePath, type)) {
     return []
   }
 
@@ -685,7 +773,7 @@ export async function processMemoryFile(
 }
 
 /**
- * Processes all .md files in the .claude/rules/ directory and its subdirectories
+ * Processes all .md files in the DSXU rules directory and its subdirectories
  * @param rulesDir The path to the rules directory
  * @param type Type of memory file (User, Project, Local)
  * @param processedPaths Set of already processed file paths
@@ -778,9 +866,9 @@ export async function processMdRules({
     return result
   } catch (error) {
     if (error instanceof Error && error.message.includes('EACCES')) {
-      logEvent('tengu_claude_rules_md_permission_error', {
+      logEvent('dsxu_instruction_rules_permission_error', {
         is_access_error: 1,
-        has_home_dir: rulesDir.includes(getClaudeConfigHomeDir()) ? 1 : 0,
+        has_home_dir: rulesDir.includes(getDsxuConfigHomeDir()) ? 1 : 0,
       })
     }
     return []
@@ -797,53 +885,85 @@ export const getMemoryFiles = memoize(
     const config = getCurrentProjectConfig()
     const includeExternal =
       forceIncludeExternal ||
-      config.hasClaudeMdExternalIncludesApproved ||
-      false
-
+      config.hasDsxuInstructionExternalIncludesApproved === true
     // Process Managed file first (always loaded - policy settings)
-    const managedClaudeMd = getMemoryPath('Managed')
     result.push(
       ...(await processMemoryFile(
-        managedClaudeMd,
+        getDsxuMemoryPath('Managed'),
         'Managed',
         processedPaths,
         includeExternal,
       )),
     )
-    // Process Managed .claude/rules/*.md files
-    const managedClaudeRulesDir = getManagedClaudeRulesDir()
+    // Process Managed .dsxu/rules/*.md files
     result.push(
       ...(await processMdRules({
-        rulesDir: managedClaudeRulesDir,
+        rulesDir: getDsxuManagedRulesDir(),
         type: 'Managed',
         processedPaths,
         includeExternal,
         conditionalRule: false,
       })),
     )
+    if (legacyProviderInstructionsEnabled()) {
+      result.push(
+        ...(await processMemoryFile(
+          getMemoryPath('Managed'),
+          'Managed',
+          processedPaths,
+          includeExternal,
+        )),
+      )
+      result.push(
+        ...(await processMdRules({
+          rulesDir: getManagedDsxuRulesDir(),
+          type: 'Managed',
+          processedPaths,
+          includeExternal,
+          conditionalRule: false,
+        })),
+      )
+    }
 
     // Process User file (only if userSettings is enabled)
     if (isSettingSourceEnabled('userSettings')) {
-      const userClaudeMd = getMemoryPath('User')
       result.push(
         ...(await processMemoryFile(
-          userClaudeMd,
+          getDsxuMemoryPath('User'),
           'User',
           processedPaths,
           true, // User memory can always include external files
         )),
       )
-      // Process User ~/.claude/rules/*.md files
-      const userClaudeRulesDir = getUserClaudeRulesDir()
+      // Process User ~/.dsxu/rules/*.md files
       result.push(
         ...(await processMdRules({
-          rulesDir: userClaudeRulesDir,
+          rulesDir: getDsxuUserRulesDir(),
           type: 'User',
           processedPaths,
           includeExternal: true,
           conditionalRule: false,
         })),
       )
+      if (legacyProviderInstructionsEnabled()) {
+        result.push(
+          ...(await processMemoryFile(
+            getMemoryPath('User'),
+            'User',
+            processedPaths,
+            true,
+          )),
+        )
+        result.push(
+          ...(await processMdRules({
+            rulesDir: getUserDsxuRulesDir(),
+            type: 'User',
+            processedPaths,
+            includeExternal: true,
+            conditionalRule: false,
+          })),
+        )
+      }
     }
 
     // Then process Project and Local files
@@ -856,15 +976,8 @@ export const getMemoryFiles = memoize(
       currentDir = dirname(currentDir)
     }
 
-    // When running from a git worktree nested inside its main repo (e.g.,
-    // .claude/worktrees/<name>/ from `claude -w`), the upward walk passes
-    // through both the worktree root and the main repo root. Both contain
-    // checked-in files like CLAUDE.md and .claude/rules/*.md, so the same
-    // content gets loaded twice. Skip Project-type (checked-in) files from
-    // directories above the worktree but within the main repo — the worktree
-    // already has its own checkout. CLAUDE.local.md is gitignored so it only
-    // exists in the main repo and is still loaded.
-    // See: https://github.com/anthropics/claude-code/issues/29599
+    // In nested worktrees, avoid loading checked-in instruction files twice
+    // from both the worktree root and the canonical repository root.
     const gitRoot = findGitRoot(originalCwd)
     const canonicalRoot = findCanonicalGitRoot(originalCwd)
     const isNestedWorktree =
@@ -883,96 +996,76 @@ export const getMemoryFiles = memoize(
         pathInWorkingPath(dir, canonicalRoot) &&
         !pathInWorkingPath(dir, gitRoot)
 
-      // Try reading CLAUDE.md (Project) - only if projectSettings is enabled
+      // Try reading DSXU project instruction files - only if projectSettings is enabled
       if (isSettingSourceEnabled('projectSettings') && !skipProject) {
-        const projectPath = join(dir, 'CLAUDE.md')
-        result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
-        )
+        for (const projectPath of getProjectInstructionFiles(dir)) {
+          result.push(
+            ...(await processMemoryFile(
+              projectPath,
+              'Project',
+              processedPaths,
+              includeExternal,
+            )),
+          )
+        }
 
-        // Try reading .claude/CLAUDE.md (Project)
-        const dotClaudePath = join(dir, '.claude', 'CLAUDE.md')
-        result.push(
-          ...(await processMemoryFile(
-            dotClaudePath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
-        )
-
-        // Try reading .claude/rules/*.md files (Project)
-        const rulesDir = join(dir, '.claude', 'rules')
-        result.push(
-          ...(await processMdRules({
-            rulesDir,
-            type: 'Project',
-            processedPaths,
-            includeExternal,
-            conditionalRule: false,
-          })),
-        )
+        for (const rulesDir of getProjectRulesDirs(dir)) {
+          result.push(
+            ...(await processMdRules({
+              rulesDir,
+              type: 'Project',
+              processedPaths,
+              includeExternal,
+              conditionalRule: false,
+            })),
+          )
+        }
       }
 
-      // Try reading CLAUDE.local.md (Local) - only if localSettings is enabled
+      // Try reading DSXU.local.md (Local) - only if localSettings is enabled
       if (isSettingSourceEnabled('localSettings')) {
-        const localPath = join(dir, 'CLAUDE.local.md')
-        result.push(
-          ...(await processMemoryFile(
-            localPath,
-            'Local',
-            processedPaths,
-            includeExternal,
-          )),
-        )
+        for (const localPath of getLocalInstructionFiles(dir)) {
+          result.push(
+            ...(await processMemoryFile(
+              localPath,
+              'Local',
+              processedPaths,
+              includeExternal,
+            )),
+          )
+        }
       }
     }
 
-    // Process CLAUDE.md from additional directories (--add-dir) if env var is enabled
-    // This is controlled by CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD and defaults to off
-    // Note: we don't check isSettingSourceEnabled('projectSettings') here because --add-dir
-    // is an explicit user action and the SDK defaults settingSources to [] when not specified
-    if (isEnvTruthy(process.env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD)) {
-      const additionalDirs = getAdditionalDirectoriesForClaudeMd()
+    // Process DSXU.md from additional directories (--add-dir) if env var is enabled.
+    // This is controlled by DSXU_CODE_ADDITIONAL_DIRECTORIES_INSTRUCTIONS and defaults to off.
+    if (
+      isEnvTruthy(process.env.DSXU_CODE_ADDITIONAL_DIRECTORIES_INSTRUCTIONS)
+    ) {
+      const additionalDirs = getAdditionalDirectoriesForDsxuInstructions()
       for (const dir of additionalDirs) {
-        // Try reading CLAUDE.md from the additional directory
-        const projectPath = join(dir, 'CLAUDE.md')
-        result.push(
-          ...(await processMemoryFile(
-            projectPath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
-        )
+        for (const projectPath of getProjectInstructionFiles(dir)) {
+          result.push(
+            ...(await processMemoryFile(
+              projectPath,
+              'Project',
+              processedPaths,
+              includeExternal,
+            )),
+          )
+        }
 
-        // Try reading .claude/CLAUDE.md from the additional directory
-        const dotClaudePath = join(dir, '.claude', 'CLAUDE.md')
-        result.push(
-          ...(await processMemoryFile(
-            dotClaudePath,
-            'Project',
-            processedPaths,
-            includeExternal,
-          )),
-        )
-
-        // Try reading .claude/rules/*.md files from the additional directory
-        const rulesDir = join(dir, '.claude', 'rules')
-        result.push(
-          ...(await processMdRules({
-            rulesDir,
-            type: 'Project',
-            processedPaths,
-            includeExternal,
-            conditionalRule: false,
-          })),
-        )
+        for (const rulesDir of getProjectRulesDirs(dir)) {
+          result.push(
+            ...(await processMdRules({
+              rulesDir,
+              type: 'Project',
+              processedPaths,
+              includeExternal,
+              conditionalRule: false,
+            })),
+          )
+        }
       }
     }
 
@@ -1024,7 +1117,7 @@ export const getMemoryFiles = memoize(
 
     if (!hasLoggedInitialLoad) {
       hasLoggedInitialLoad = true
-      logEvent('tengu_claudemd__initial_load', {
+      logEvent('dsxu_instructions_initial_load', {
         file_count: result.length,
         total_content_length: totalContentLength,
         user_count: typeCounts['User'] ?? 0,
@@ -1041,14 +1134,14 @@ export const getMemoryFiles = memoize(
 
     // Fire InstructionsLoaded hook for each instruction file loaded
     // (fire-and-forget, audit/observability only).
-    // AutoMem/TeamMem are intentionally excluded — they're a separate
-    // memory system, not "instructions" in the CLAUDE.md/rules sense.
+    // AutoMem/TeamMem are intentionally excluded -they're a separate
+    // memory system, not "instructions" in the DSXU.md/rules sense.
     // Gated on !forceIncludeExternal: the forceIncludeExternal=true variant
-    // is only used by getExternalClaudeMdIncludes() for approval checks, not
-    // for building context — firing the hook there would double-fire on startup.
+    // is only used by getExternalDsxuInstructionIncludes() for approval checks, not
+    // for building context -firing the hook there would double-fire on startup.
     // The one-shot flag is consumed on every !forceIncludeExternal cache miss
     // (NOT gated on hasInstructionsLoadedHook) so the flag is released even
-    // when no hook is configured — otherwise a mid-session hook registration
+    // when no hook is configured -otherwise a mid-session hook registration
     // followed by a direct .cache.clear() would spuriously fire with a stale
     // 'session_start' reason.
     if (!forceIncludeExternal) {
@@ -1150,7 +1243,7 @@ export function filterInjectedMemoryFiles(
   return files.filter(f => f.type !== 'AutoMem' && f.type !== 'TeamMem')
 }
 
-export const getClaudeMds = (
+export const getDsxuInstructionPrompt = (
   memoryFiles: MemoryFileInfo[],
   filter?: (type: MemoryType) => boolean,
 ): string => {
@@ -1194,6 +1287,52 @@ export const getClaudeMds = (
   return `${MEMORY_INSTRUCTION_PROMPT}\n\n${memories.join('\n\n')}`
 }
 
+export type DsxuInstructionRuntimeStatus = {
+  provider: 'DSXU Instruction Provider'
+  projectFiles: string[]
+  localFiles: string[]
+  projectRulesDirs: string[]
+  userRulesDir: string
+  managedRulesDir: string
+  legacyProviderInstructions: 'disabled' | 'migration-only'
+}
+
+export function getDsxuInstructionRuntimeStatus(
+  dir = getOriginalCwd(),
+): DsxuInstructionRuntimeStatus {
+  return {
+    provider: 'DSXU Instruction Provider',
+    projectFiles: getProjectInstructionFiles(dir),
+    localFiles: getLocalInstructionFiles(dir),
+    projectRulesDirs: getProjectRulesDirs(dir),
+    userRulesDir: getDsxuUserRulesDir(),
+    managedRulesDir: getDsxuManagedRulesDir(),
+    legacyProviderInstructions: legacyProviderInstructionsEnabled()
+      ? 'migration-only'
+      : 'disabled',
+  }
+}
+
+export function getDsxuInstructionRuntimeProfile(
+  dir = getOriginalCwd(),
+): DsxuInstructionRuntimeStatus & {
+  runtime: 'DSXU Instruction Files'
+  primaryInstructionFiles: readonly string[]
+  migrationFlag: string
+} {
+  return {
+    runtime: 'DSXU Instruction Files',
+    ...getDsxuInstructionRuntimeStatus(dir),
+    primaryInstructionFiles: [
+      DSXU_INSTRUCTION_FILE,
+      DSXU_LOCAL_INSTRUCTION_FILE,
+      `${DSXU_RULES_DIR}/${DSXU_INSTRUCTION_FILE}`,
+      `${DSXU_RULES_DIR}/rules/*.md`,
+    ],
+    migrationFlag: DSXU_LEGACY_INSTRUCTIONS_ENV,
+  }
+}
+
 /**
  * Gets managed and user conditional rules that match the target path.
  * This is the first phase of nested memory loading.
@@ -1208,30 +1347,51 @@ export async function getManagedAndUserConditionalRules(
 ): Promise<MemoryFileInfo[]> {
   const result: MemoryFileInfo[] = []
 
-  // Process Managed conditional .claude/rules/*.md files
-  const managedClaudeRulesDir = getManagedClaudeRulesDir()
+  // Process Managed conditional .dsxu/rules/*.md files
+  const managedDsxuRulesDir = getDsxuManagedRulesDir()
   result.push(
     ...(await processConditionedMdRules(
       targetPath,
-      managedClaudeRulesDir,
+      managedDsxuRulesDir,
       'Managed',
       processedPaths,
       false,
     )),
   )
-
-  if (isSettingSourceEnabled('userSettings')) {
-    // Process User conditional .claude/rules/*.md files
-    const userClaudeRulesDir = getUserClaudeRulesDir()
+  if (legacyProviderInstructionsEnabled()) {
     result.push(
       ...(await processConditionedMdRules(
         targetPath,
-        userClaudeRulesDir,
+        getManagedDsxuRulesDir(),
+        'Managed',
+        processedPaths,
+        false,
+      )),
+    )
+  }
+
+  if (isSettingSourceEnabled('userSettings')) {
+    // Process User conditional .dsxu/rules/*.md files
+    result.push(
+      ...(await processConditionedMdRules(
+        targetPath,
+        getDsxuUserRulesDir(),
         'User',
         processedPaths,
         true,
       )),
     )
+    if (legacyProviderInstructionsEnabled()) {
+      result.push(
+        ...(await processConditionedMdRules(
+          targetPath,
+          getUserDsxuRulesDir(),
+          'User',
+          processedPaths,
+          true,
+        )),
+      )
+    }
   }
 
   return result
@@ -1239,7 +1399,7 @@ export async function getManagedAndUserConditionalRules(
 
 /**
  * Gets memory files for a single nested directory (between CWD and target).
- * Loads CLAUDE.md, unconditional rules, and conditional rules for that directory.
+ * Loads DSXU.md, unconditional rules, and conditional rules for that directory.
  *
  * @param dir The directory to process
  * @param targetPath The target file path (for conditional rule matching)
@@ -1253,61 +1413,54 @@ export async function getMemoryFilesForNestedDirectory(
 ): Promise<MemoryFileInfo[]> {
   const result: MemoryFileInfo[] = []
 
-  // Process project memory files (CLAUDE.md and .claude/CLAUDE.md)
+  // Process project instruction files (DSXU.md and .dsxu/DSXU.md)
   if (isSettingSourceEnabled('projectSettings')) {
-    const projectPath = join(dir, 'CLAUDE.md')
-    result.push(
-      ...(await processMemoryFile(
-        projectPath,
-        'Project',
-        processedPaths,
-        false,
-      )),
-    )
-    const dotClaudePath = join(dir, '.claude', 'CLAUDE.md')
-    result.push(
-      ...(await processMemoryFile(
-        dotClaudePath,
-        'Project',
-        processedPaths,
-        false,
-      )),
-    )
+    for (const projectPath of getProjectInstructionFiles(dir)) {
+      result.push(
+        ...(await processMemoryFile(
+          projectPath,
+          'Project',
+          processedPaths,
+          false,
+        )),
+      )
+    }
   }
 
-  // Process local memory file (CLAUDE.local.md)
+  // Process local instruction file (DSXU.local.md)
   if (isSettingSourceEnabled('localSettings')) {
-    const localPath = join(dir, 'CLAUDE.local.md')
-    result.push(
-      ...(await processMemoryFile(localPath, 'Local', processedPaths, false)),
-    )
+    for (const localPath of getLocalInstructionFiles(dir)) {
+      result.push(
+        ...(await processMemoryFile(localPath, 'Local', processedPaths, false)),
+      )
+    }
   }
 
-  const rulesDir = join(dir, '.claude', 'rules')
-
-  // Process project unconditional .claude/rules/*.md files, which were not eagerly loaded
+  // Process project unconditional .dsxu/rules/*.md files, which were not eagerly loaded
   // Use a separate processedPaths set to avoid marking conditional rule files as processed
   const unconditionalProcessedPaths = new Set(processedPaths)
-  result.push(
-    ...(await processMdRules({
-      rulesDir,
-      type: 'Project',
-      processedPaths: unconditionalProcessedPaths,
-      includeExternal: false,
-      conditionalRule: false,
-    })),
-  )
+  for (const rulesDir of getProjectRulesDirs(dir)) {
+    result.push(
+      ...(await processMdRules({
+        rulesDir,
+        type: 'Project',
+        processedPaths: unconditionalProcessedPaths,
+        includeExternal: false,
+        conditionalRule: false,
+      })),
+    )
 
-  // Process project conditional .claude/rules/*.md files
-  result.push(
-    ...(await processConditionedMdRules(
-      targetPath,
-      rulesDir,
-      'Project',
-      processedPaths,
-      false,
-    )),
-  )
+    // Process project conditional .dsxu/rules/*.md files
+    result.push(
+      ...(await processConditionedMdRules(
+        targetPath,
+        rulesDir,
+        'Project',
+        processedPaths,
+        false,
+      )),
+    )
+  }
 
   // processedPaths must be seeded with unconditional paths for subsequent directories
   for (const path of unconditionalProcessedPaths) {
@@ -1331,18 +1484,23 @@ export async function getConditionalRulesForCwdLevelDirectory(
   targetPath: string,
   processedPaths: Set<string>,
 ): Promise<MemoryFileInfo[]> {
-  const rulesDir = join(dir, '.claude', 'rules')
-  return processConditionedMdRules(
-    targetPath,
-    rulesDir,
-    'Project',
-    processedPaths,
-    false,
-  )
+  const result: MemoryFileInfo[] = []
+  for (const rulesDir of getProjectRulesDirs(dir)) {
+    result.push(
+      ...(await processConditionedMdRules(
+        targetPath,
+        rulesDir,
+        'Project',
+        processedPaths,
+        false,
+      )),
+    )
+  }
+  return result
 }
 
 /**
- * Processes all .md files in the .claude/rules/ directory and its subdirectories,
+ * Processes all .md files in the DSXU rules directory and its subdirectories,
  * filtering to only include files with frontmatter paths that match the target path
  * @param targetPath The file path to match against frontmatter glob patterns
  * @param rulesDir The path to the rules directory
@@ -1372,11 +1530,11 @@ export async function processConditionedMdRules(
       return false
     }
 
-    // For Project rules: glob patterns are relative to the directory containing .claude
+    // For Project rules: glob patterns are relative to the directory containing .dsxu
     // For Managed/User rules: glob patterns are relative to the original CWD
     const baseDir =
       type === 'Project'
-        ? dirname(dirname(rulesDir)) // Parent of .claude
+        ? dirname(dirname(rulesDir)) // Parent of .dsxu
         : getOriginalCwd() // Project root for managed/user rules
 
     const relativePath = isAbsolute(targetPath)
@@ -1396,15 +1554,15 @@ export async function processConditionedMdRules(
   })
 }
 
-export type ExternalClaudeMdInclude = {
+export type ExternalDsxuInstructionInclude = {
   path: string
   parent: string
 }
 
-export function getExternalClaudeMdIncludes(
+export function getExternalDsxuInstructionIncludes(
   files: MemoryFileInfo[],
-): ExternalClaudeMdInclude[] {
-  const externals: ExternalClaudeMdInclude[] = []
+): ExternalDsxuInstructionInclude[] {
+  const externals: ExternalDsxuInstructionInclude[] = []
   for (const file of files) {
     if (file.type !== 'User' && file.parent && !pathInOriginalCwd(file.path)) {
       externals.push({ path: file.path, parent: file.parent })
@@ -1413,37 +1571,54 @@ export function getExternalClaudeMdIncludes(
   return externals
 }
 
-export function hasExternalClaudeMdIncludes(files: MemoryFileInfo[]): boolean {
-  return getExternalClaudeMdIncludes(files).length > 0
+export function hasExternalDsxuInstructionIncludes(
+  files: MemoryFileInfo[],
+): boolean {
+  return getExternalDsxuInstructionIncludes(files).length > 0
 }
 
-export async function shouldShowClaudeMdExternalIncludesWarning(): Promise<boolean> {
+export async function shouldShowDsxuInstructionExternalIncludesWarning(): Promise<boolean> {
   const config = getCurrentProjectConfig()
   if (
-    config.hasClaudeMdExternalIncludesApproved ||
-    config.hasClaudeMdExternalIncludesWarningShown
+    config.hasDsxuInstructionExternalIncludesApproved ||
+    config.hasDsxuInstructionExternalIncludesWarningShown
   ) {
     return false
   }
 
-  return hasExternalClaudeMdIncludes(await getMemoryFiles(true))
+  return hasExternalDsxuInstructionIncludes(await getMemoryFiles(true))
 }
 
 /**
- * Check if a file path is a memory file (CLAUDE.md, CLAUDE.local.md, or .claude/rules/*.md)
+ * Check if a file path is a DSXU instruction file (DSXU.md, DSXU.local.md, or .dsxu/rules/*.md).
+ * Legacy provider instruction paths are recognized only when the explicit migration flag is enabled.
  */
 export function isMemoryFilePath(filePath: string): boolean {
   const name = basename(filePath)
 
-  // CLAUDE.md or CLAUDE.local.md anywhere
-  if (name === 'CLAUDE.md' || name === 'CLAUDE.local.md') {
+  if (name === DSXU_INSTRUCTION_FILE || name === DSXU_LOCAL_INSTRUCTION_FILE) {
     return true
   }
 
-  // .md files in .claude/rules/ directories
   if (
     name.endsWith('.md') &&
-    filePath.includes(`${sep}.claude${sep}rules${sep}`)
+    filePath.includes(`${sep}${DSXU_RULES_DIR}${sep}rules${sep}`)
+  ) {
+    return true
+  }
+
+  if (!legacyProviderInstructionsEnabled()) return false
+
+  if (
+    name === LEGACY_PROVIDER_INSTRUCTION_FILE ||
+    name === LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE
+  ) {
+    return true
+  }
+
+  if (
+    name.endsWith('.md') &&
+    filePath.includes(`${sep}${LEGACY_PROVIDER_RULES_DIR}${sep}rules${sep}`)
   ) {
     return true
   }

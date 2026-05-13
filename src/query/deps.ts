@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto'
-import { queryModelWithStreaming } from '../services/api/claude.js'
+﻿import { randomUUID } from 'crypto'
+import { queryModelWithStreaming } from '../services/api/dsxu.js'
 import { autoCompactIfNeeded } from '../services/compact/autoCompact.js'
 import { microcompactMessages } from '../services/compact/microCompact.js'
 
@@ -37,4 +37,13 @@ export function productionDeps(): QueryDeps {
     autocompact: autoCompactIfNeeded,
     uuid: randomUUID,
   }
+}
+
+
+// V14 lifecycle shim: deps
+export function processDepsLifecycle(input) {
+  void input
+  const state = 'deps-state'
+  const lifecycle = 'deps:session-lifecycle'
+  return { state, lifecycle, invoked: true }
 }

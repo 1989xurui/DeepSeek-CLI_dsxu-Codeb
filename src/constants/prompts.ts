@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { type as osType, version as osVersion, release as osRelease } from 'os'
 import { env } from '../utils/env.js'
@@ -7,10 +8,7 @@ import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { getCurrentWorktreeSession } from '../utils/worktree.js'
 import { getSessionStartDate } from './common.js'
 import { getInitialSettings } from '../utils/settings/settings.js'
-import {
-  AGENT_TOOL_NAME,
-  VERIFICATION_AGENT_TYPE,
-} from '../tools/AgentTool/constants.js'
+import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js'
 import { FILE_WRITE_TOOL_NAME } from '../tools/FileWriteTool/prompt.js'
 import { FILE_READ_TOOL_NAME } from '../tools/FileReadTool/prompt.js'
 import { FILE_EDIT_TOOL_NAME } from '../tools/FileEditTool/constants.js'
@@ -19,6 +17,7 @@ import { TASK_CREATE_TOOL_NAME } from '../tools/TaskCreateTool/constants.js'
 import type { Tools } from '../Tool.js'
 import type { Command } from '../types/command.js'
 import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js'
+import { POWERSHELL_TOOL_NAME } from '../tools/PowerShellTool/toolName.js'
 import {
   getCanonicalName,
   getMarketingNameForModel,
@@ -40,13 +39,16 @@ import {
 } from 'src/tools/AgentTool/built-in/exploreAgent.js'
 import { areExplorePlanAgentsEnabled } from 'src/tools/AgentTool/builtInAgents.js'
 import {
+  getDsxuVerificationLoopGuidance,
+  isDsxuVerificationAgentEnabled,
+} from '../tools/AgentTool/built-in/verificationAgent.js'
+import {
   isScratchpadEnabled,
   getScratchpadDir,
 } from '../utils/permissions/filesystem.js'
-import { isEnvTruthy } from '../utils/envUtils.js'
+import { isDsxuRuntimeMode, isEnvTruthy } from '../utils/envUtils.js'
 import { isReplModeEnabled } from '../tools/REPLTool/constants.js'
 import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
 import { shouldUseGlobalCacheScope } from '../utils/betas.js'
 import { isForkSubagentEnabled } from '../tools/AgentTool/forkSubagent.js'
 import {
@@ -91,7 +93,7 @@ const DISCOVER_SKILLS_TOOL_NAME: string | null = feature(
     ).DISCOVER_SKILLS_TOOL_NAME
   : null
 // Capture the module (not .isSkillSearchEnabled directly) so spyOn() in tests
-// patches what we actually call — a captured function ref would point past the spy.
+// patches what we actually call; a captured function ref would point past the spy.
 const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
   ? (require('../services/skillSearch/featureCheck.js') as typeof import('../services/skillSearch/featureCheck.js'))
   : null
@@ -99,8 +101,8 @@ const skillSearchFeatureCheck = feature('EXPERIMENTAL_SKILL_SEARCH')
 import type { OutputStyleConfig } from './outputStyles.js'
 import { CYBER_RISK_INSTRUCTION } from './cyberRiskInstruction.js'
 
-export const CLAUDE_CODE_DOCS_MAP_URL =
-  'https://code.claude.com/docs/en/claude_code_docs_map.md'
+export const DSXU_CODE_DOCS_MAP_URL =
+  'https://docs.dsxu.local/code/dsxu_code_docs_map.md'
 
 /**
  * Boundary marker separating static (cross-org cacheable) content from dynamic content.
@@ -109,19 +111,27 @@ export const CLAUDE_CODE_DOCS_MAP_URL =
  *
  * WARNING: Do not remove or reorder this marker without updating cache logic in:
  * - src/utils/api.ts (splitSysPromptPrefix)
- * - src/services/api/claude.ts (buildSystemPromptBlocks)
+ * - src/services/api/deepseek-adapter.ts (buildSystemPromptBlocks)
  */
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY =
   '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
+export function shouldEmitSystemPromptDynamicBoundary(): boolean {
+  return shouldUseGlobalCacheScope() || isDsxuRuntimeMode()
+}
+
 // @[MODEL LAUNCH]: Update the latest frontier model.
-const FRONTIER_MODEL_NAME = 'Claude Opus 4.6'
+const DSXU_FRONTIER_MODEL_NAME = 'DeepSeek V4 Pro'
 
 // @[MODEL LAUNCH]: Update the model family IDs below to the latest in each tier.
-const CLAUDE_4_5_OR_4_6_MODEL_IDS = {
-  opus: 'claude-opus-4-6',
-  sonnet: 'claude-sonnet-4-6',
-  haiku: 'claude-haiku-4-5-20251001',
+const DEEPSEEK_V4_MODEL_IDS = {
+  pro: 'deepseek-v4-pro',
+  flash: 'deepseek-v4-flash',
+  fim: 'deepseek-v4-flash-fim',
+}
+
+function isAntOrDsxuCode(): boolean {
+  return process.env.USER_TYPE === 'ant' || isEnvTruthy(process.env.DSXU_CODE_MODE)
 }
 
 function getHooksSection(): string {
@@ -196,13 +206,89 @@ function getSimpleSystemSection(): string {
   return ['# System', ...prependBullets(items)].join(`\n`)
 }
 
+function getDsxuCodePromptProfileSection(): string | null {
+  if (!isEnvTruthy(process.env.DSXU_CODE_MODE)) return null
+
+  const items = [
+    `You are DSXU Code, a local coding agent optimized for DeepSeek V4 Flash/Pro. Do not identify as any upstream coding product, model provider, or generic chat assistant.`,
+    `Use a deterministic coding workflow: understand the request, inspect relevant files, make the smallest correct patch, verify with tests or focused commands, then report exact evidence.`,
+    `Weak-model discipline is mandatory: avoid guessing, ask only when blocked by missing information, prefer tool evidence over memory, and keep changes scoped to the user's task.`,
+    `Tool calls are part of the delivery contract. Read before editing, edit with precise diffs, run verification after writes, and preserve evidence for recovery.`,
+    `For complex work, split into planner, locator, coder, tester, reviewer, and recovery roles, but keep one main execution thread unless a subagent is explicitly useful.`,
+    `When a check fails, classify the failure, patch or adjust one hypothesis at a time, and retry. Do not hide failed commands or claim unverified success.`,
+    `Optimize DeepSeek cost: keep stable prompt/profile content cache-friendly, pack only relevant repository context, and escalate to stronger reasoning only for planning, review, or recovery.`,
+  ]
+
+  return [`# DSXU Code Prompt Profile`, ...prependBullets(items)].join('\n')
+}
+
+const DSXU_DEEPSEEK_TOOL_USE_FEW_SHOT_GUIDANCE = `# DSXU DeepSeek Tool-Use Contract
+
+DeepSeek V4 follows shorter rules better when runtime states carry the details. Treat DSXU tool-state cursor messages as authoritative, especially \`edit_applied\`, \`edit_already_applied\`, \`verification_passed\`, \`verification_blocked_unsafe_batch\`, and \`mutation_budget_high\`.
+
+- Use only tools that are available in the current turn. Prefer dedicated tools when present and sufficient: Read for exact files, Edit/Write for file changes, the available content-search tool for content search, the available filename-search tool for filename search, LSP for code navigation, MCP for connected resources, Workflow for policy-bound routes, Agent for scoped workers/verifiers. If a named tool is not in the current available tools list, it is not an option even when the user names it as forbidden; do not invent it or switch to a shell bypass. When exact paths are already provided or shell discovery is forbidden, use those exact paths or report PARTIAL. When no dedicated discovery tool is available and the task cannot proceed from exact paths, use only a visible, read-only, permission-safe DSXU shell command if the task allows terminal discovery; otherwise report PARTIAL.
+- Do not bypass dedicated tools with shell listing, shell reads, shell redirects, sed/awk rewrites, or heredoc writes when those dedicated tools are available and sufficient. Shell remains appropriate for native build/test commands, environment probes, and explicitly terminal-owned tasks.
+- After a successful Edit/Write, verify with the smallest relevant command; do not repeat the same edit or keep searching after a verified PASS.
+- Agent workers need explicit ownership, discovery/edit budgets, inherited permissions, and verifier evidence before parent final.
+- MCP/tool summaries must never carry credentials or secrets. Summaries are navigation hints, not PASS evidence.
+- Compact, resume, and memory are hints. Re-read source truth before editing or claiming PASS.
+- Final answers must say verified PASS, verified FAIL, PARTIAL, or not-run honestly.`
+
+export function getDsxuDeepSeekToolUseFewShotGuidance(): string {
+  return DSXU_DEEPSEEK_TOOL_USE_FEW_SHOT_GUIDANCE
+}
+
+const DSXU_PROMPT_GOVERNANCE_CONTRACT = `# DSXU Prompt Governance Contract
+
+These rules are part of the default DSXU Code mainline. They are not optional style advice.
+
+## Complex task decompose gate
+- Before implementation, complex tasks must be decomposed. A task is complex when it likely changes more than one file, adds or changes tests, involves Agent/MCP/Workflow/permissions/compact/resume, or starts from an open goal such as "fix this failure", "add a feature and tests", or "review and fix".
+- Interactive CLI: use PlanMode when the user asks for a plan, the runtime is already in PlanMode, or the change is high-risk/destructive. For normal coding tasks, make a concise visible checkpoint plan and continue instead of waiting indefinitely for approval.
+- Non-interactive, benchmark, or automation mode: make an internal decompose plan before writing code and keep the plan shape visible in logs or benchmark evidence. Do not stop for approval unless a real permission, destructive-action, or missing-information blocker exists.
+- The decompose plan must cover: Goal, Assumptions, Scope fence, Read-only discovery budget, Task decomposition, Checkpoint plan, Verification plan, Rollback trigger, and Acceptance.
+
+## Context window and hygiene visibility
+- The runtime may inject a Context Window & Hygiene block with route-aware usage buckets, contextWindowClass, estimatedTurnsRemaining, contextRisk, contextHygieneAction, recommendedAction, and sourceTruthReread.
+- Context pressure warnings are not hard small-window blockers. Use them to protect cache health, source truth, and dynamic-tail stability.
+- At medium pressure, checkpoint the current step and avoid broad volatile discovery or long logs in the dynamic tail.
+- At high pressure, update the task snapshot first; compact only when route, context-window, cache, or recovery risk requires it.
+- After compact/resume, memory and summaries are hints. Re-read source truth before editing or claiming PASS.
+
+## Checkpoint and rollback
+- A successful verification is a logical checkpoint.
+- After every 2-3 source Edits, verify or checkpoint before continuing.
+- If two consecutive repair attempts fail, consider rewind to the latest logical checkpoint instead of extending a long forward-fix chain.
+- Forward fix only when the error is local, the cause is clear, and one small Edit should repair it.
+- Rollback when the change chain is long, the failure source is unclear, the same module repeats failures, or context is near compact risk.
+- Use DSXU file history / rewind capability for rollback. Do not create git commits or stash entries unless the user asks.
+
+## Edit pre-apply review
+- Before a large or risky Edit, review the intended diff internally before calling Edit.
+- Large/risky means old_string or new_string is over 8 lines, or the edit touches public APIs, tests, permissions, tool calls, query loop, Agent, MCP, or Workflow.
+- Confirm old_string has no Read line-number prefixes, new_string does not introduce unread symbols, the edit is inside the scope fence, and the verification command proves the change.
+
+## Active workflow preference recall
+- Relevant memory/preferences are active checks at task start and before test/architecture decisions.
+- Example: if memory says "do not mock the database" and the task involves tests or database behavior, include that preference in PlanMode Assumptions and check that the test strategy follows it.
+- Memory constrains strategy but never replaces current user instructions, source reads, or command evidence.
+
+## Task-state snapshot persistence
+- For long or complex tasks, maintain a task-state snapshot: goal, scope, filesRead, filesChanged, lastPassingCommand, failedCommands, permissionDenials, activeAgents, pendingTasks, workflowPreferencesApplied, nextAction, and verificationStatus.
+- Update it after plan approval, verification PASS, before compact, after Agent notification, and before PARTIAL/FAIL recovery exit.
+- On resume, use the snapshot for navigation only. Re-read the source files before editing or claiming PASS.`
+
+export function getDsxuPromptGovernanceContract(): string {
+  return DSXU_PROMPT_GOVERNANCE_CONTRACT
+}
+
 function getSimpleDoingTasksSection(): string {
   const codeStyleSubitems = [
     `Don't add features, refactor code, or make "improvements" beyond what was asked. A bug fix doesn't need surrounding code cleaned up. A simple feature doesn't need extra configurability. Don't add docstrings, comments, or type annotations to code you didn't change. Only add comments where the logic isn't self-evident.`,
     `Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees. Only validate at system boundaries (user input, external APIs). Don't use feature flags or backwards-compatibility shims when you can just change the code.`,
     `Don't create helpers, utilities, or abstractions for one-time operations. Don't design for hypothetical future requirements. The right amount of complexity is what the task actually requires—no speculative abstractions, but no half-finished implementations either. Three similar lines of code is better than a premature abstraction.`,
     // @[MODEL LAUNCH]: Update comment writing for Capybara — remove or soften once the model stops over-commenting by default
-    ...(process.env.USER_TYPE === 'ant'
+    ...(isAntOrDsxuCode()
       ? [
           `Default to writing no comments. Only add one when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. If removing the comment wouldn't confuse a future reader, don't write it.`,
           `Don't explain WHAT the code does, since well-named identifiers already do that. Don't reference the current task, fix, or callers ("used by X", "added for the Y flow", "handles the case from issue #123"), since those belong in the PR description and rot as the codebase evolves.`,
@@ -214,7 +300,7 @@ function getSimpleDoingTasksSection(): string {
   ]
 
   const userHelpSubitems = [
-    `/help: Get help with using Claude Code`,
+    `/help: Get help with using DSXU Code`,
     `To give feedback, users should ${MACRO.ISSUES_EXPLAINER}`,
   ]
 
@@ -222,7 +308,7 @@ function getSimpleDoingTasksSection(): string {
     `The user will primarily request you to perform software engineering tasks. These may include solving bugs, adding new functionality, refactoring code, explaining code, and more. When given an unclear or generic instruction, consider it in the context of these software engineering tasks and the current working directory. For example, if the user asks you to change "methodName" to snake case, do not reply with just "method_name", instead find the method in the code and modify the code.`,
     `You are highly capable and often allow users to complete ambitious tasks that would otherwise be too complex or take too long. You should defer to user judgement about whether a task is too large to attempt.`,
     // @[MODEL LAUNCH]: capy v8 assertiveness counterweight (PR #24302) — un-gate once validated on external via A/B
-    ...(process.env.USER_TYPE === 'ant'
+    ...(isAntOrDsxuCode()
       ? [
           `If you notice the user's request is based on a misconception, or spot a bug adjacent to what they asked about, say so. You're a collaborator, not just an executor—users benefit from your judgment, not just your compliance.`,
         ]
@@ -235,14 +321,14 @@ function getSimpleDoingTasksSection(): string {
     ...codeStyleSubitems,
     `Avoid backwards-compatibility hacks like renaming unused _vars, re-exporting types, adding // removed comments for removed code, etc. If you are certain that something is unused, you can delete it completely.`,
     // @[MODEL LAUNCH]: False-claims mitigation for Capybara v8 (29-30% FC rate vs v4's 16.7%)
-    ...(process.env.USER_TYPE === 'ant'
+    ...(isAntOrDsxuCode()
       ? [
           `Report outcomes faithfully: if tests fail, say so with the relevant output; if you did not run a verification step, say that rather than implying it succeeded. Never claim "all tests pass" when output shows failures, never suppress or simplify failing checks (tests, lints, type errors) to manufacture a green result, and never characterize incomplete or broken work as done. Equally, when a check did pass or a task is complete, state it plainly — do not hedge confirmed results with unnecessary disclaimers, downgrade finished work to "partial," or re-verify things you already checked. The goal is an accurate report, not a defensive one.`,
         ]
       : []),
-    ...(process.env.USER_TYPE === 'ant'
+    ...(isAntOrDsxuCode()
       ? [
-          `If the user reports a bug, slowness, or unexpected behavior with Claude Code itself (as opposed to asking you to fix their own code), recommend the appropriate slash command: /issue for model-related problems (odd outputs, wrong tool choices, hallucinations, refusals), or /share to upload the full session transcript for product bugs, crashes, slowness, or general issues. Only recommend these when the user is describing a problem with Claude Code. After /share produces a ccshare link, if you have a Slack MCP tool available, offer to post the link to #claude-code-feedback (channel ID C07VBSHV7EV) for the user.`,
+          `If the user reports a bug, slowness, or unexpected behavior with DSXU Code itself (as opposed to asking you to fix their own code), recommend the appropriate slash command: /issue for model-related problems (odd outputs, wrong tool choices, hallucinations, refusals), or /share to upload the full session transcript for product bugs, crashes, slowness, or general issues. Only recommend these when the user is describing a problem with DSXU Code.`,
         ]
       : []),
     `If the user asks for help or wants to give feedback inform them of the following:`,
@@ -255,7 +341,7 @@ function getSimpleDoingTasksSection(): string {
 function getActionsSection(): string {
   return `# Executing actions with care
 
-Carefully consider the reversibility and blast radius of actions. Generally you can freely take local, reversible actions like editing files or running tests. But for actions that are hard to reverse, affect shared systems beyond your local environment, or could otherwise be risky or destructive, check with the user before proceeding. The cost of pausing to confirm is low, while the cost of an unwanted action (lost work, unintended messages sent, deleted branches) can be very high. For actions like these, consider the context, the action, and user instructions, and by default transparently communicate the action and ask for confirmation before proceeding. This default can be changed by user instructions - if explicitly asked to operate more autonomously, then you may proceed without confirmation, but still attend to the risks and consequences when taking actions. A user approving an action (like a git push) once does NOT mean that they approve it in all contexts, so unless actions are authorized in advance in durable instructions like CLAUDE.md files, always confirm first. Authorization stands for the scope specified, not beyond. Match the scope of your actions to what was actually requested.
+Carefully consider the reversibility and blast radius of actions. Generally you can freely take local, reversible actions like editing files or running tests. But for actions that are hard to reverse, affect shared systems beyond your local environment, or could otherwise be risky or destructive, check with the user before proceeding. The cost of pausing to confirm is low, while the cost of an unwanted action (lost work, unintended messages sent, deleted branches) can be very high. For actions like these, consider the context, the action, and user instructions, and by default transparently communicate the action and ask for confirmation before proceeding. This default can be changed by user instructions - if explicitly asked to operate more autonomously, then you may proceed without confirmation, but still attend to the risks and consequences when taking actions. A user approving an action (like a git push) once does NOT mean that they approve it in all contexts, so unless actions are authorized in advance in durable instructions like DSXU.md files, always confirm first. Authorization stands for the scope specified, not beyond. Match the scope of your actions to what was actually requested.
 
 Examples of the kind of risky actions that warrant user confirmation:
 - Destructive operations: deleting files/branches, dropping database tables, killing processes, rm -rf, overwriting uncommitted changes
@@ -288,21 +374,41 @@ function getUsingYourToolsSection(enabledTools: Set<string>): string {
   // dedicated Glob/Grep tools, so skip guidance pointing at them.
   const embedded = hasEmbeddedSearchTools()
 
+  const shellToolNames = [BASH_TOOL_NAME, POWERSHELL_TOOL_NAME].filter(name =>
+    enabledTools.has(name),
+  )
+  const shellToolText = shellToolNames.join(' or ')
+  const availableToolsText =
+    Array.from(enabledTools).sort().join(', ') || 'none'
   const providedToolSubitems = [
-    `To read files use ${FILE_READ_TOOL_NAME} instead of cat, head, tail, or sed`,
-    `To edit files use ${FILE_EDIT_TOOL_NAME} instead of sed or awk`,
-    `To create files use ${FILE_WRITE_TOOL_NAME} instead of cat with heredoc or echo redirection`,
-    ...(embedded
-      ? []
-      : [
-          `To search for files use ${GLOB_TOOL_NAME} instead of find or ls`,
-          `To search the content of files, use ${GREP_TOOL_NAME} instead of grep or rg`,
-        ]),
-    `Reserve using the ${BASH_TOOL_NAME} exclusively for system commands and terminal operations that require shell execution. If you are unsure and there is a relevant dedicated tool, default to using the dedicated tool and only fallback on using the ${BASH_TOOL_NAME} tool for these if it is absolutely necessary.`,
-  ]
+    enabledTools.has(FILE_READ_TOOL_NAME)
+      ? `To read exact files use ${FILE_READ_TOOL_NAME} instead of cat, head, tail, Get-Content, or sed`
+      : null,
+    enabledTools.has(FILE_EDIT_TOOL_NAME)
+      ? `To edit files use ${FILE_EDIT_TOOL_NAME} instead of sed or awk`
+      : null,
+    enabledTools.has(FILE_WRITE_TOOL_NAME)
+      ? `To create files use ${FILE_WRITE_TOOL_NAME} instead of cat with heredoc or echo redirection`
+      : null,
+    !embedded && enabledTools.has(GLOB_TOOL_NAME)
+      ? `To search for files use ${GLOB_TOOL_NAME} instead of find, ls, dir, or Get-ChildItem`
+      : null,
+    !embedded && enabledTools.has(GREP_TOOL_NAME)
+      ? `To search the content of files, use ${GREP_TOOL_NAME} instead of grep, rg, Select-String, or sls`
+      : null,
+    shellToolNames.length > 0
+      ? `Reserve using ${shellToolText} exclusively for system commands and terminal operations that require shell execution. If you are unsure and there is a relevant available dedicated tool, default to using the dedicated tool and only fallback on ${shellToolText} if it is absolutely necessary.`
+      : null,
+    `Closed tool set: never call, mention as a planned call, or simulate a tool that is not in the current available tools list. If file discovery/search tools are unavailable, use exact paths from the task prompt or report PARTIAL instead of using shell discovery. Do not output unavailable tool XML/function-call markup as a probe.`,
+    `When the task gives exact file paths, your first file action must be ${enabledTools.has(FILE_READ_TOOL_NAME) ? FILE_READ_TOOL_NAME : 'the available read tool'} on those paths; do not do file discovery first, even if Glob/Grep would normally be useful.`,
+  ].filter(item => item !== null)
 
   const items = [
-    `Do NOT use the ${BASH_TOOL_NAME} to run commands when a relevant dedicated tool is provided. Using dedicated tools allows the user to better understand and review your work. This is CRITICAL to assisting the user:`,
+    `First-tool check: before every tool call, compare the tool name against this exact list: ${availableToolsText}. If the task gives exact file paths or says "Do not inspect directories", your first file action must be ${enabledTools.has(FILE_READ_TOOL_NAME) ? FILE_READ_TOOL_NAME : 'the available read tool'} on those exact paths. Do not call ${GLOB_TOOL_NAME}, ${GREP_TOOL_NAME}, shell listing, or any unavailable discovery tool just because its name appears in the prompt as forbidden.`,
+    `Available tools in this turn: ${availableToolsText}. This is a closed set; names outside this list are unavailable and must not be called. For policy-bound coding tasks, even one unavailable tool call fails the task even if you recover later.`,
+    shellToolNames.length > 0
+      ? `Do NOT use ${shellToolText} to run commands when a relevant available dedicated tool is provided. Using dedicated tools allows the user to better understand and review your work. This is CRITICAL to assisting the user:`
+      : `Use only the tools available in this turn. Follow these dedicated-tool rules:`,
     providedToolSubitems,
     taskToolName
       ? `Break down and manage your work with the ${taskToolName} tool. These tools are helpful for planning your work and helping the user track your progress. Mark each task as completed as soon as you are done with the task. Do not batch up multiple tasks before marking them as completed.`
@@ -346,7 +452,7 @@ function getDiscoverSkillsGuidance(): string | null {
  * here is a runtime bit that would otherwise multiply the Blake2b prefix
  * hash variants (2^N). See PR #24490, #24171 for the same bug class.
  *
- * outputStyleConfig intentionally NOT moved here — identity framing lives
+ * outputStyleConfig intentionally NOT moved here - identity framing lives
  * in the static intro pending eval.
  */
 function getSessionSpecificGuidanceSection(
@@ -367,8 +473,8 @@ function getSessionSpecificGuidanceSection(
       : null,
     getIsNonInteractiveSession()
       ? null
-      : `If you need the user to run a shell command themselves (e.g., an interactive login like \`gcloud auth login\`), suggest they type \`! <command>\` in the prompt — the \`!\` prefix runs the command in this session so its output lands directly in the conversation.`,
-    // isForkSubagentEnabled() reads getIsNonInteractiveSession() — must be
+      : `If you need the user to run a shell command themselves (e.g., an interactive login like \`gcloud auth login\`), suggest they type \`! <command>\` in the prompt - the \`!\` prefix runs the command in this session so its output lands directly in the conversation.`,
+    // isForkSubagentEnabled() reads getIsNonInteractiveSession() - must be
     // post-boundary or it fragments the static prefix on session type.
     hasAgentTool ? getAgentToolSection() : null,
     ...(hasAgentTool &&
@@ -387,11 +493,8 @@ function getSessionSpecificGuidanceSection(
     enabledTools.has(DISCOVER_SKILLS_TOOL_NAME)
       ? getDiscoverSkillsGuidance()
       : null,
-    hasAgentTool &&
-    feature('VERIFICATION_AGENT') &&
-    // 3P default: false — verification agent is ant-only A/B
-    getFeatureValue_CACHED_MAY_BE_STALE('tengu_hive_evidence', false)
-      ? `The contract: when non-trivial implementation happens on your turn, independent adversarial verification must happen before you report completion \u2014 regardless of who did the implementing (you directly, a fork you spawned, or a subagent). You are the one reporting to the user; you own the gate. Non-trivial means: 3+ file edits, backend/API changes, or infrastructure changes. Spawn the ${AGENT_TOOL_NAME} tool with subagent_type="${VERIFICATION_AGENT_TYPE}". Your own checks, caveats, and a fork's self-checks do NOT substitute \u2014 only the verifier assigns a verdict; you cannot self-assign PARTIAL. Pass the original user request, all files changed (by anyone), the approach, and the plan file path if applicable. Flag concerns if you have them but do NOT share test results or claim things work. On FAIL: fix, resume the verifier with its findings plus your fix, repeat until PASS. On PASS: spot-check it \u2014 re-run 2-3 commands from its report, confirm every PASS has a Command run block with output that matches your re-run. If any PASS lacks a command block or diverges, resume the verifier with the specifics. On PARTIAL (from the verifier): report what passed and what could not be verified.`
+    hasAgentTool && isDsxuVerificationAgentEnabled()
+      ? getDsxuVerificationLoopGuidance()
       : null,
   ].filter(item => item !== null)
 
@@ -401,7 +504,7 @@ function getSessionSpecificGuidanceSection(
 
 // @[MODEL LAUNCH]: Remove this section when we launch numbat.
 function getOutputEfficiencySection(): string {
-  if (process.env.USER_TYPE === 'ant') {
+  if (isAntOrDsxuCode()) {
     return `# Communicating with the user
 When sending user-facing text, you're writing for a person, not logging to a console. Assume users can't see most tool calls or thinking - only your text output. Before your first tool call, briefly state what you're about to do. While working, give short updates at key moments: when you find something load-bearing (a bug, a root cause), when changing direction, when you've made progress without an update.
 
@@ -430,11 +533,11 @@ If you can say it in one sentence, don't use three. Prefer short, direct sentenc
 function getSimpleToneAndStyleSection(): string {
   const items = [
     `Only use emojis if the user explicitly requests it. Avoid using emojis in all communication unless asked.`,
-    process.env.USER_TYPE === 'ant'
+    isAntOrDsxuCode()
       ? null
       : `Your responses should be short and concise.`,
     `When referencing specific functions or pieces of code include the pattern file_path:line_number to allow the user to easily navigate to the source code location.`,
-    `When referencing GitHub issues or pull requests, use the owner/repo#123 format (e.g. anthropics/claude-code#100) so they render as clickable links.`,
+    `When referencing GitHub issues or pull requests, use the owner/repo#123 format (e.g. dsxu/dsxu-code#100) so they render as clickable links.`,
     `Do not use a colon before tool calls. Your tool calls may not be shown directly in the output, so text like "Let me read the file:" followed by a read tool call should just be "Let me read the file." with a period.`,
   ].filter(item => item !== null)
 
@@ -447,9 +550,9 @@ export async function getSystemPrompt(
   additionalWorkingDirectories?: string[],
   mcpClients?: MCPServerConnection[],
 ): Promise<string[]> {
-  if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
+  if (isEnvTruthy(process.env.DSXU_CODE_SIMPLE)) {
     return [
-      `You are Claude Code, Anthropic's official CLI for Claude.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
+      `You are DSXU Code, a local coding agent optimized for DeepSeek V4 Flash/Pro.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
     ]
   }
 
@@ -526,7 +629,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     ),
     // Numeric length anchors — research shows ~1.2% output token reduction vs
     // qualitative "be concise". Ant-only to measure quality impact first.
-    ...(process.env.USER_TYPE === 'ant'
+    ...(isAntOrDsxuCode()
       ? [
           systemPromptSection(
             'numeric_length_anchors',
@@ -561,6 +664,9 @@ ${CYBER_RISK_INSTRUCTION}`,
     // --- Static content (cacheable) ---
     getSimpleIntroSection(outputStyleConfig),
     getSimpleSystemSection(),
+    getDsxuCodePromptProfileSection(),
+    getDsxuDeepSeekToolUseFewShotGuidance(),
+    getDsxuPromptGovernanceContract(),
     outputStyleConfig === null ||
     outputStyleConfig.keepCodingInstructions === true
       ? getSimpleDoingTasksSection()
@@ -570,7 +676,9 @@ ${CYBER_RISK_INSTRUCTION}`,
     getSimpleToneAndStyleSection(),
     getOutputEfficiencySection(),
     // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===
-    ...(shouldUseGlobalCacheScope() ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY] : []),
+    ...(shouldEmitSystemPromptDynamicBoundary()
+      ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY]
+      : []),
     // --- Dynamic content (registry-managed) ---
     ...resolvedDynamicSections,
   ].filter(s => s !== null)
@@ -693,13 +801,13 @@ export async function computeSimpleEnvInfo(
     knowledgeCutoffMessage,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `The most recent Claude model family is Claude 4.5/4.6. Model IDs — Opus 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.opus}', Sonnet 4.6: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.sonnet}', Haiku 4.5: '${CLAUDE_4_5_OR_4_6_MODEL_IDS.haiku}'. When building AI applications, default to the latest and most capable Claude models.`,
+      : `DSXU Code is optimized for DeepSeek V4. Model IDs: Pro='${DEEPSEEK_V4_MODEL_IDS.pro}', Flash='${DEEPSEEK_V4_MODEL_IDS.flash}', FIM='${DEEPSEEK_V4_MODEL_IDS.fim}'. Use Flash thinking for normal coding, Pro max thinking for architecture/review/recovery, and FIM only for non-thinking completion.`,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `Claude Code is available as a CLI in the terminal, desktop app (Mac/Windows), web app (claude.ai/code), and IDE extensions (VS Code, JetBrains).`,
+      : `DSXU Code is available as a local CLI/TUI coding agent. It runs through the DSXU/DeepSeek control plane and does not require upstream login.`,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `Fast mode for Claude Code uses the same ${FRONTIER_MODEL_NAME} model with faster output. It does NOT switch to a different model. It can be toggled with /fast.`,
+      : `Fast mode for DSXU Code uses DeepSeek Flash for cheaper, faster coding turns. Critical planning, review, and recovery should use DeepSeek Pro reasoning.`,
   ].filter(item => item !== null)
 
   return [
@@ -712,19 +820,8 @@ export async function computeSimpleEnvInfo(
 // @[MODEL LAUNCH]: Add a knowledge cutoff date for the new model.
 function getKnowledgeCutoff(modelId: string): string | null {
   const canonical = getCanonicalName(modelId)
-  if (canonical.includes('claude-sonnet-4-6')) {
-    return 'August 2025'
-  } else if (canonical.includes('claude-opus-4-6')) {
-    return 'May 2025'
-  } else if (canonical.includes('claude-opus-4-5')) {
-    return 'May 2025'
-  } else if (canonical.includes('claude-haiku-4')) {
-    return 'February 2025'
-  } else if (
-    canonical.includes('claude-opus-4') ||
-    canonical.includes('claude-sonnet-4')
-  ) {
-    return 'January 2025'
+  if (canonical.includes('deepseek-v4')) {
+    return '2026'
   }
   return null
 }
@@ -755,7 +852,7 @@ export function getUnameSR(): string {
   return `${osType()} ${osRelease()}`
 }
 
-export const DEFAULT_AGENT_PROMPT = `You are an agent for Claude Code, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
+export const DEFAULT_AGENT_PROMPT = `You are an agent for DSXU Code, a local DeepSeek-optimized coding CLI. Given the user's message, use the available tools to complete the task with evidence. Complete the task fully; don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done, what was verified, and any key findings.`
 
 export async function enhanceSystemPromptWithEnvDetails(
   existingSystemPrompt: string[],
@@ -792,7 +889,7 @@ export async function enhanceSystemPromptWithEnvDetails(
 
 /**
  * Returns instructions for using the scratchpad directory if enabled.
- * The scratchpad is a per-session directory where Claude can write temporary files.
+ * The scratchpad is a per-session directory where DSXU Code can write temporary files.
  */
 export function getScratchpadInstructions(): string | null {
   if (!isScratchpadEnabled()) {

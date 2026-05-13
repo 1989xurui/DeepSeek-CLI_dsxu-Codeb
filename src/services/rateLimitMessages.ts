@@ -1,3 +1,4 @@
+// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Centralized rate limit message generation
  * Single source of truth for all rate limit-related messages
@@ -8,9 +9,9 @@ import {
   getSubscriptionType,
   isOverageProvisioningAllowed,
 } from '../utils/auth.js'
-import { hasClaudeAiBillingAccess } from '../utils/billing.js'
+import { hasLegacyCloudBillingAccess } from '../utils/billing.js'
 import { formatResetTime } from '../utils/format.js'
-import type { ClaudeAILimits } from './claudeAiLimits.js'
+import type { DsxuLimits } from './dsxuLimits.js'
 
 const FEEDBACK_CHANNEL_ANT = '#briarpatch-cc'
 
@@ -43,7 +44,7 @@ export type RateLimitMessage = {
  * Returns null if no message should be shown
  */
 export function getRateLimitMessage(
-  limits: ClaudeAILimits,
+  limits: DsxuLimits,
   model: string,
 ): RateLimitMessage | null {
   // Check overage scenarios first (when subscription is rejected but overage is available)
@@ -88,7 +89,7 @@ export function getRateLimitMessage(
     if (
       isTeamOrEnterprise &&
       hasExtraUsageEnabled &&
-      !hasClaudeAiBillingAccess()
+      !hasLegacyCloudBillingAccess()
     ) {
       return null
     }
@@ -108,7 +109,7 @@ export function getRateLimitMessage(
  * Returns the message string or null if no error message should be shown
  */
 export function getRateLimitErrorMessage(
-  limits: ClaudeAILimits,
+  limits: DsxuLimits,
   model: string,
 ): string | null {
   const message = getRateLimitMessage(limits, model)
@@ -126,7 +127,7 @@ export function getRateLimitErrorMessage(
  * Returns the warning message string or null if no warning should be shown
  */
 export function getRateLimitWarning(
-  limits: ClaudeAILimits,
+  limits: DsxuLimits,
   model: string,
 ): string | null {
   const message = getRateLimitMessage(limits, model)
@@ -140,13 +141,13 @@ export function getRateLimitWarning(
   return null
 }
 
-function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
+function getLimitReachedText(limits: DsxuLimits, model: string): string {
   const resetsAt = limits.resetsAt
   const resetTime = resetsAt ? formatResetTime(resetsAt, true) : undefined
   const overageResetTime = limits.overageResetsAt
     ? formatResetTime(limits.overageResetsAt, true)
     : undefined
-  const resetMessage = resetTime ? ` · resets ${resetTime}` : ''
+  const resetMessage = resetTime ? ` - resets ${resetTime}` : ''
 
   // if BOTH subscription (checked before this method) and overage are exhausted
   if (limits.overageStatus === 'rejected') {
@@ -155,14 +156,14 @@ function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
     if (resetsAt && limits.overageResetsAt) {
       // Both timestamps present - use the earlier one
       if (resetsAt < limits.overageResetsAt) {
-        overageResetMessage = ` · resets ${resetTime}`
+        overageResetMessage = ` - resets ${resetTime}`
       } else {
-        overageResetMessage = ` · resets ${overageResetTime}`
+        overageResetMessage = ` - resets ${overageResetTime}`
       }
     } else if (resetTime) {
-      overageResetMessage = ` · resets ${resetTime}`
+      overageResetMessage = ` - resets ${resetTime}`
     } else if (overageResetTime) {
-      overageResetMessage = ` · resets ${overageResetTime}`
+      overageResetMessage = ` - resets ${overageResetTime}`
     }
 
     if (limits.overageDisabledReason === 'out_of_credits') {
@@ -176,13 +177,15 @@ function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
     const subscriptionType = getSubscriptionType()
     const isProOrEnterprise =
       subscriptionType === 'pro' || subscriptionType === 'enterprise'
-    // For pro and enterprise, Sonnet limit is the same as weekly
-    const limit = isProOrEnterprise ? 'weekly limit' : 'Sonnet limit'
+    // For pro and enterprise, the standard-model limit is the same as weekly.
+    const limit = isProOrEnterprise
+      ? 'weekly limit'
+      : 'standard model limit'
     return formatLimitReachedText(limit, resetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day_opus') {
-    return formatLimitReachedText('Opus limit', resetMessage, model)
+    return formatLimitReachedText('high-capacity model limit', resetMessage, model)
   }
 
   if (limits.rateLimitType === 'seven_day') {
@@ -196,7 +199,7 @@ function getLimitReachedText(limits: ClaudeAILimits, model: string): string {
   return formatLimitReachedText('usage limit', resetMessage, model)
 }
 
-function getEarlyWarningText(limits: ClaudeAILimits): string | null {
+function getEarlyWarningText(limits: DsxuLimits): string | null {
   let limitName: string | null = null
   switch (limits.rateLimitType) {
     case 'seven_day':
@@ -206,10 +209,10 @@ function getEarlyWarningText(limits: ClaudeAILimits): string | null {
       limitName = 'session limit'
       break
     case 'seven_day_opus':
-      limitName = 'Opus limit'
+      limitName = 'high-capacity model limit'
       break
     case 'seven_day_sonnet':
-      limitName = 'Sonnet limit'
+      limitName = 'standard model limit'
       break
     case 'overage':
       limitName = 'extra usage'
@@ -230,13 +233,13 @@ function getEarlyWarningText(limits: ClaudeAILimits): string | null {
   const upsell = getWarningUpsellText(limits.rateLimitType)
 
   if (used && resetTime) {
-    const base = `You've used ${used}% of your ${limitName} · resets ${resetTime}`
-    return upsell ? `${base} · ${upsell}` : base
+    const base = `You've used ${used}% of your ${limitName} - resets ${resetTime}`
+    return upsell ? `${base} - ${upsell}` : base
   }
 
   if (used) {
     const base = `You've used ${used}% of your ${limitName}`
-    return upsell ? `${base} · ${upsell}` : base
+    return upsell ? `${base} - ${upsell}` : base
   }
 
   if (limits.rateLimitType === 'overage') {
@@ -245,12 +248,12 @@ function getEarlyWarningText(limits: ClaudeAILimits): string | null {
   }
 
   if (resetTime) {
-    const base = `Approaching ${limitName} · resets ${resetTime}`
-    return upsell ? `${base} · ${upsell}` : base
+    const base = `Approaching ${limitName} - resets ${resetTime}`
+    return upsell ? `${base} - ${upsell}` : base
   }
 
   const base = `Approaching ${limitName}`
-  return upsell ? `${base} · ${upsell}` : base
+  return upsell ? `${base} - ${upsell}` : base
 }
 
 /**
@@ -259,7 +262,7 @@ function getEarlyWarningText(limits: ClaudeAILimits): string | null {
  * Only used for warnings because actual rate limit hits will see an interactive menu of options.
  */
 function getWarningUpsellText(
-  rateLimitType: ClaudeAILimits['rateLimitType'],
+  rateLimitType: DsxuLimits['rateLimitType'],
 ): string | null {
   const subscriptionType = getSubscriptionType()
   const hasExtraUsageEnabled =
@@ -279,7 +282,7 @@ function getWarningUpsellText(
 
     // Pro/Max users: prompt to upgrade
     if (subscriptionType === 'pro' || subscriptionType === 'max') {
-      return '/upgrade to keep using Claude Code'
+      return '/upgrade to keep using DSXU Code'
     }
   }
 
@@ -300,7 +303,7 @@ function getWarningUpsellText(
  * Get notification text for overage mode transitions
  * Used for transient notifications when entering overage mode
  */
-export function getUsingOverageText(limits: ClaudeAILimits): string {
+export function getUsingOverageText(limits: DsxuLimits): string {
   const resetTime = limits.resetsAt
     ? formatResetTime(limits.resetsAt, true)
     : ''
@@ -311,13 +314,13 @@ export function getUsingOverageText(limits: ClaudeAILimits): string {
   } else if (limits.rateLimitType === 'seven_day') {
     limitName = 'weekly limit'
   } else if (limits.rateLimitType === 'seven_day_opus') {
-    limitName = 'Opus limit'
+    limitName = 'high-capacity model limit'
   } else if (limits.rateLimitType === 'seven_day_sonnet') {
     const subscriptionType = getSubscriptionType()
     const isProOrEnterprise =
       subscriptionType === 'pro' || subscriptionType === 'enterprise'
-    // For pro and enterprise, Sonnet limit is the same as weekly
-    limitName = isProOrEnterprise ? 'weekly limit' : 'Sonnet limit'
+    // For pro and enterprise, the standard-model limit is the same as weekly.
+    limitName = isProOrEnterprise ? 'weekly limit' : 'standard model limit'
   }
 
   if (!limitName) {
@@ -325,7 +328,7 @@ export function getUsingOverageText(limits: ClaudeAILimits): string {
   }
 
   const resetMessage = resetTime
-    ? ` · Your ${limitName} resets ${resetTime}`
+    ? ` - Your ${limitName} resets ${resetTime}`
     : ''
   return `You're now using extra usage${resetMessage}`
 }
