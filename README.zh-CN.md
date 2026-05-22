@@ -2,9 +2,28 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-DSXU Code 是一个 DeepSeek-first 的 AI 编程 CLI/TUI，面向真实工程工作，而不是只包一层聊天接口。它在原始模型调用外面增加工程运行时：源码事实读取、工具执行、权限门控、失败恢复、可见工作状态、Agent/Skill 边界、成本与缓存跟踪，以及有证据约束的发布检查。
+DSXU 当前定位为开源：在 DeepSeek V4 Flash / Flash-MAX / Pro 混合模型基础上，通过强编排、工具、权限、上下文、恢复、Agent、成本和证据系统，低成本实现 AI 编程与复杂任务执行工具，拥有 Agent 长任务执行与高级程序员体验。
 
-DSXU 当前定位为开源 release-candidate 产品。公开定位是：**基于 DeepSeek 的工程运行时，已通过内部 reality/evidence 门控**。它不会被发布成“公开 90% / 95 分能力已证明”的榜单声明，也不会声明超过外部模型或外部产品。本文所有公开说法只限于下面列出的证据。
+DSXU Code 面向真实工程工作，而不是只包一层聊天接口。它在原始模型调用外面增加工程运行时：源码事实读取、工具执行、权限门控、失败恢复、可见工作状态、Agent/Skill 边界、成本与缓存跟踪，以及有证据约束的发布检查。公开定位是：**DeepSeek-first engineering runtime with internal reality/evidence gates passed**。它不会被发布成“公开 90% / 95 分能力已证明”的榜单声明，也不会声明超过外部模型或外部产品。本文所有公开说法只限于下面列出的证据。
+
+## DSXU 功能总览
+
+| 能力域 | DSXU 做了什么 | 主要作用 | 当前公开边界 |
+|---|---|---|---|
+| DeepSeek 混合模型路由 | 默认 DeepSeek V4 Flash；复杂、审查、高风险任务才准入 Flash-MAX / Pro；记录 admission reason | 控制成本，同时保留复杂任务升级通道 | 不声明模型本身超过外部模型 |
+| 强编排 / Query Loop | Task Classifier、PlanGraph、work-state projection、route latch、final gate | 把“读代码、计划、执行、验证、恢复、报告”串成一条工程主链 | 不新增第二套 runtime |
+| 工具系统 | Read / Edit / Write / Bash / Search / evidence tools 等进入统一 Tool Gate | 让模型使用工具时有目的、权限、结果、证据 | 不允许工具绕过 DSXU Tool Gate |
+| 权限系统 | Permission Gate、危险命令识别、文件写入/外部执行/高风险动作审计 | 防止静默修改、越权执行和误删 | 用户授权和证据记录优先 |
+| 上下文系统 | Source capsule、bounded read、tool-result artifact、prompt/cache 分层 | 降低大文件反复读取和工具结果灌入上下文的问题 | cache 是优化指标，不是公开胜出指标 |
+| 恢复系统 | Failure taxonomy、repair loop、replan、retry、rollback/checkpoint、stall recovery | 命令失败、测试失败、长任务卡住时能定位、修复、重跑 | 失败不会被隐藏成 PASS |
+| Agent 长任务 | Agent evidence envelope、worker handoff、parent/worker 边界、long-task ledger | 支持长任务拆分、并行分析、证据回传和恢复 | Agent 不成为第二套主编排 |
+| Skills 技能系统 | Skill registry、能力优先级、冲突规则、二级技能包边界 | 把可复用技能接入 DSXU 主链，提高专业任务能力 | Skills 不能覆盖主链权限和路由 |
+| MCP / 外部生态 | MCP client、registry、adapter boundary、doctor 检查 | 支持外部工具接入，同时保持 DSXU-owned 边界 | 不声明内置第三方产品或独立 MCP runtime |
+| 成本系统 | CostRouter、CostReporter、route/cost/cache trajectory、Pro admission ledger | 让用户看到模型选择、成本、缓存、升级原因 | GitHub 只展示真实记录数据 |
+| 证据系统 | Evidence dashboard、release claim binder、blocked-claim corpus、raw evidence manifest | 让功能、测试、成本、失败和发布声明可复核 | 没有 paired raw evidence 时阻断外部比较 claim |
+| TUI 信任界面 | 目标、计划、工具、权限、成本、恢复、后台任务、最终报告投影 | 让用户看到 AI 像高级程序员一样工作，而不是黑箱输出 | UI 只显示真实 runtime 状态 |
+| 编程能力 | Source truth、patch planner、edit lifecycle、static analysis、focused test、final patch report | 支持 bugfix、feature、重构、测试修复、报告生成 | 测试只证明，不替代功能判断 |
+| 测试与发布 | 六阶段测试、senior coding window、fresh install smoke、clean export、secret scan | 发布前证明功能、体验、恢复、性能、评测和 release gate | 当前是 release-candidate，不是公开 95 分 claim |
 
 ## 为什么需要 DSXU
 
