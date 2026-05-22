@@ -1,5 +1,7 @@
 # DSXU Code
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 DSXU Code is a DeepSeek-first AI coding CLI/TUI for real engineering work. It adds an engineering runtime around raw model calls: source-truth code reading, tool execution, permission gates, recovery loops, visible work-state, agent and skill boundaries, cost/cache tracking, and evidence-backed release checks.
 
 DSXU is being prepared as an open-source release-candidate product. The public positioning is: **DeepSeek-first engineering runtime with internal reality/evidence gates passed**. It is not published as a public 90% or 95-point benchmark claim, and it does not claim external model or product superiority. Public claims in this README are limited to the evidence listed below.
