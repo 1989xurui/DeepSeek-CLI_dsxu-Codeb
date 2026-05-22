@@ -32,6 +32,37 @@ globalScope.MACRO ??= {
 }
 
 const args = process.argv.slice(2)
+
+function isWindowsInteractiveConsoleUnsafe(): boolean {
+  if (process.platform !== 'win32') return false
+  if (process.env.DSXU_ALLOW_CONHOST === '1') return false
+  if (process.env.WT_SESSION) return false
+  if (process.env.TERM_PROGRAM?.toLowerCase() === 'vscode') return false
+  if (process.env.VSCODE_PID) return false
+  if (args.length > 0) return false
+  return true
+}
+
+if (isWindowsInteractiveConsoleUnsafe()) {
+  process.stderr.write([
+    '[DSXU] Windows Terminal was not detected.',
+    '[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input.',
+    "[DSXU] Classic cmd/PowerShell can turn Chinese input into '?' before DSXU receives it.",
+    '',
+    '[DSXU] Fix from this checkout:',
+    '  powershell -NoProfile -ExecutionPolicy Bypass -File .\\install.ps1',
+    '',
+    '[DSXU] Or install Windows Terminal manually:',
+    '  winget install --id Microsoft.WindowsTerminal -e',
+    '',
+    '[DSXU] English/ASCII emergency mode only:',
+    '  set DSXU_ALLOW_CONHOST=1',
+    '  bun run dsxu-code',
+    '',
+  ].join('\n'))
+  process.exit(2)
+}
+
 const printIndex = args.findIndex(arg => arg === '-p' || arg === '--print')
 const printPrompt = printIndex >= 0 ? args[printIndex + 1] : undefined
 const outputFormatIndex = args.findIndex(arg => arg === '--output-format')

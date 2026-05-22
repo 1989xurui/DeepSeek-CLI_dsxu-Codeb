@@ -140,6 +140,7 @@ async function staticChecks(): Promise<StaticCheck[]> {
   const wslCmd = await readText('Start-DSXU-Code-WSL.cmd')
   const wslLaunch = await readText('bin/dsxu-code-wsl-launch')
   const winStart = await readText('scripts/start-dsxu-windows.ps1')
+  const productEntrypoint = await readText('src/entrypoints/dsxu-code.tsx')
   const rootInstall = await readText('install.ps1')
   const rootShellInstall = await readText('install.sh')
   const winInstall = await readText('scripts/install-windows.ps1')
@@ -186,9 +187,11 @@ async function staticChecks(): Promise<StaticCheck[]> {
       startCmd.includes('Windows Terminal was not detected') &&
       startCmd.includes('DSXU_ALLOW_CONHOST') &&
       startCmd.includes('Classic cmd/PowerShell can turn Chinese input into question marks') &&
-      winStart.includes('DSXU_ASCII_TUI')
-      ? pass('windows-classic-console-interactive-block', 'Windows launchers block interactive classic-console sessions unless explicitly allowed, preventing Chinese input from becoming question marks')
-      : fail('windows-classic-console-interactive-block', 'Windows launchers do not protect classic console users from Unicode/CJK input loss'),
+      winStart.includes('DSXU_ASCII_TUI') &&
+      productEntrypoint.includes('isWindowsInteractiveConsoleUnsafe') &&
+      productEntrypoint.includes('Classic cmd/PowerShell can turn Chinese input')
+      ? pass('windows-classic-console-interactive-block', 'Windows launchers and product entrypoint block interactive classic-console sessions unless explicitly allowed')
+      : fail('windows-classic-console-interactive-block', 'Windows launchers or product entrypoint do not protect classic console users from Unicode/CJK input loss'),
   )
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
