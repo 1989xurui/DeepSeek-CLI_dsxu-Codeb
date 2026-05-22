@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Non-React scheduler core for .dsxu/scheduled_tasks.json.
 // Shared by REPL (via useScheduledTasks) and SDK/-p mode (print.ts).
 //
@@ -98,12 +97,12 @@ type CronSchedulerOptions = {
   lockIdentity?: string
   /**
    * Returns the cron jitter config to use for this tick. Called once per
-   * check() cycle. REPL callers pass a GrowthBook-backed implementation
+   * check() cycle. REPL callers pass a feature flag provider-backed implementation
    * (see cronJitterConfig.ts) for live tuning ...ops can widen the jitter
    * window mid-session during a :00 load spike without restarting clients.
    * Agent SDK daemon callers omit this and get DEFAULT_CRON_JITTER_CONFIG,
    * which is safe since daemons restart on config change anyway, and the
-   * growthbook.ts  -> config.ts  -> commands.ts  -> REPL chain stays out of
+   * featureFlags.ts  -> config.ts  -> commands.ts  -> REPL chain stays out of
    * sdk.mjs.
    */
   getJitterConfig?: () => CronJitterConfig
@@ -227,7 +226,7 @@ export function createCronScheduler(
     // tasks excluded ...they die with the process, no point persisting.
     const firedFileRecurring: string[] = []
     // Read once per tick. REPL callers pass getJitterConfig backed by
-    // GrowthBook so a config push takes effect without restart. Daemon and
+    // feature flag provider so a config push takes effect without restart. Daemon and
     // SDK callers omit it and get DEFAULT_CRON_JITTER_CONFIG (safe ...jitter
     // is an ops lever for REPL fleet load-shedding, not a daemon concern).
     const jitterCfg = getJitterConfig?.() ?? DEFAULT_CRON_JITTER_CONFIG

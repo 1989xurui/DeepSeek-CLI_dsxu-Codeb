@@ -1,27 +1,26 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// GrowthBook-backed cron jitter configuration.
+// feature flag provider-backed cron jitter configuration.
 //
 // Separated from cronScheduler.ts so the scheduler can be bundled in the
-// Agent SDK public build without pulling in analytics/growthbook.ts and
+// Agent SDK public build without pulling in analytics/featureFlags.ts and
 // its large transitive dependency set (settings/hooks/config cycle).
 //
 // Usage:
 //   REPL (useScheduledTasks.ts): pass `getJitterConfig: getCronJitterConfig`
 //   Daemon/SDK: omit getJitterConfig  -> DEFAULT_CRON_JITTER_CONFIG applies.
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/featureFlags.js'
 import {
   type CronJitterConfig,
   DEFAULT_CRON_JITTER_CONFIG,
 } from './cronTasks.js'
 import { lazySchema } from './lazySchema.js'
-// How often to re-fetch tengu_kairos_cron_config from GrowthBook. Short because
+// How often to re-fetch tengu_kairos_cron_config from feature flag provider. Short because
 // this is an incident lever ...when we push a config change to shed :00 load,
 // we want the fleet to converge within a minute, not on the next process
 // restart. The underlying call is a synchronous cache read; the refresh just
 // clears the memoized entry so the next read triggers a background fetch.
 const JITTER_CONFIG_REFRESH_MS = 60 * 1000
-// Upper bounds here are defense-in-depth against fat-fingered GrowthBook
+// Upper bounds here are defense-in-depth against fat-fingered feature flag provider
 // pushes. Like pollConfig.ts, Zod rejects the whole object on any violation
 // rather than partially trusting it ...a config with one bad field falls back
 // to DEFAULT_CRON_JITTER_CONFIG entirely. oneShotFloorMs shares oneShotMaxMs's
@@ -50,13 +49,13 @@ const cronJitterConfigSchema = lazySchema(() =>
     .refine(c => c.oneShotFloorMs <= c.oneShotMaxMs),
 )
 /**
- * Read `tengu_kairos_cron_config` from GrowthBook, validate, fall back to
+ * Read `tengu_kairos_cron_config` from feature flag provider, validate, fall back to
  * defaults on absent/malformed/out-of-bounds config. Called from check()
  * every tick via the `getJitterConfig` callback ...cheap (synchronous cache
  * hit). Refresh window: JITTER_CONFIG_REFRESH_MS.
  *
  * Exported so ops runbooks can point at a single function when documenting
- * the lever, and so tests can spy on it without mocking GrowthBook itself.
+ * the lever, and so tests can spy on it without mocking feature flag provider itself.
  *
  * Pass this as `getJitterConfig` when calling createCronScheduler in REPL
  * contexts. Daemon/SDK callers omit getJitterConfig and get defaults.

@@ -1,5 +1,5 @@
 export const BRIEF_TOOL_NAME = 'SendUserMessage'
-export const LEGACY_BRIEF_TOOL_NAME = 'Brief'
+export const BRIEF_TOOL_ALIAS_NAME = 'Brief'
 
 export const DESCRIPTION = 'Send a message to the user'
 
@@ -28,20 +28,3 @@ If you can answer right away, send the answer. If you need to go look — run a 
 For longer work: ack → work → result. Between those, send a checkpoint when something useful happened — a decision you made, a surprise you hit, a phase boundary. Skip the filler ("running tests...") — a checkpoint earns its place by carrying information.
 
 Keep messages tight — the decision, the file:line, the PR number. Second person always ("your config"), never third.`
-
-
-// V14 strict lifecycle shim: tools-BriefTool-prompt
-export function processToolsBriefToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-BriefTool-prompt-state'
-  const lifecycle = 'tools-BriefTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsBriefToolPromptStrict(input) {
-  return processToolsBriefToolPromptStrictLifecycle(input)
-}

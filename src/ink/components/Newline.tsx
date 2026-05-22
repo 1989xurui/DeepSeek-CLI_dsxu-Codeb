@@ -36,11 +36,3 @@ export default function Newline(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: newline
-export function processNewlineLifecycle(input) {
-  void input
-  const state = 'newline-state'
-  const lifecycle = 'newline:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

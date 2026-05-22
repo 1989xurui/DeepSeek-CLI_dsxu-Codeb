@@ -42,11 +42,3 @@ export function MemoryUpdateNotification(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: memoryupdatenotification
-export function processMemoryupdatenotificationLifecycle(input) {
-  void input
-  const state = 'memoryupdatenotification-state'
-  const lifecycle = 'memoryupdatenotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

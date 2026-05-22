@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * SDK Control Schemas - Zod schemas for the control protocol.
  *
@@ -506,7 +505,7 @@ export const SDKControlGetSettingsResponseSchema = lazySchema(() =>
       applied: z
         .object({
           model: z.string(),
-          // String levels only ...numeric effort is ant-only and the
+          // String levels only ...numeric effort is dsxu internal and the
           // Zod→proto generator can't emit enum∪number unions.
           effort: z.enum(['low', 'medium', 'high', 'max']).nullable(),
         })

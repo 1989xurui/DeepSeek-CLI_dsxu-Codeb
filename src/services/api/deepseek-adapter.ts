@@ -54,7 +54,7 @@ function appendDeepSeekRouteTrace(event: string, payload: Record<string, unknown
  * DeepSeek transport adapter for DSXU Code.
  *
  * Responsibilities:
- * - Normalize DeepSeek/OpenAI-style responses into DSXU message blocks.
+ * - Normalize DeepSeek chat-completions-style responses into DSXU message blocks.
  * - Recover tool-use blocks from XML and free-form fallback text.
  * - Normalize usage and cost accounting fields for the mainline runtime.
  */

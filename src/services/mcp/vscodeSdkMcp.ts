@@ -1,11 +1,10 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { logForDebugging } from 'src/utils/debug.js'
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../analytics/growthbook.js'
+} from '../analytics/featureFlags.js'
 import { logEvent } from '../analytics/index.js'
 import type { ConnectedMCPServer, MCPServerConnection } from './types.js'
 
@@ -32,7 +31,7 @@ export const LogEventNotificationSchema = lazySchema(() =>
 
 // Store the VSCode MCP client reference for sending notifications
 let vscodeMcpClient: ConnectedMCPServer | null = null
-const LEGACY_VSCODE_SDK_CLIENT_NAME = 'clau' + 'de-vscode'
+const PROVIDER_MIGRATION_VSCODE_SDK_CLIENT_NAME = 'clau' + 'de-vscode'
 
 /**
  * Sends a file_updated notification to the VSCode MCP server. This is used to
@@ -65,7 +64,7 @@ export function notifyVscodeFileUpdated(
  */
 export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
   const client = sdkClients.find(
-    client => client.name === LEGACY_VSCODE_SDK_CLIENT_NAME,
+    client => client.name === PROVIDER_MIGRATION_VSCODE_SDK_CLIENT_NAME,
   )
 
   if (client && client.type === 'connected') {
@@ -96,7 +95,7 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
         'tengu_quiet_fern',
         false,
       ),
-      // In-band OAuth via the legacy authenticate subtype (vs. extension-native PKCE).
+      // In-band OAuth via the provider migration authenticate subtype (vs. extension-native PKCE).
       tengu_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_vscode_cc_auth',
         false,

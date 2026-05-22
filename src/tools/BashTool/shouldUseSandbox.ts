@@ -1,4 +1,4 @@
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'
 import { splitCommand_DEPRECATED } from '../../utils/bash/commands.js'
 import { SandboxManager } from '../../utils/sandbox/sandbox-adapter.js'
 import { getSettings_DEPRECATED } from '../../utils/settings/settings.js'
@@ -150,13 +150,4 @@ export function shouldUseSandbox(input: Partial<SandboxInput>): boolean {
   }
 
   return true
-}
-
-
-// V14 lifecycle shim: shouldusesandbox
-export function processShouldusesandboxLifecycle(input) {
-  void input
-  const state = 'shouldusesandbox-state'
-  const lifecycle = 'shouldusesandbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

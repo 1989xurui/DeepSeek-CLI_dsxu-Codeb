@@ -5,9 +5,9 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v4'
 import {
-  LEGACY_CLOUD_CONFIG_SCOPE,
-  LEGACY_CLOUD_MCP_TRANSPORT,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_CONFIG_SCOPE,
+  PROVIDER_MIGRATION_MCP_TRANSPORT,
+} from '../../constants/providerMigrationProtocol.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // Configuration schemas and types
@@ -18,7 +18,7 @@ export const ConfigScopeSchema = lazySchema(() =>
     'project',
     'dynamic',
     'enterprise',
-    LEGACY_CLOUD_CONFIG_SCOPE,
+    PROVIDER_MIGRATION_CONFIG_SCOPE,
     'managed',
   ]),
 )
@@ -31,7 +31,7 @@ export type Transport = z.infer<ReturnType<typeof TransportSchema>>
 
 export const McpStdioServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal('stdio').optional(), // Optional for backwards compatibility
+    type: z.literal('stdio').optional(), // Optional for older MCP config files.
     command: z.string().min(1, 'Command cannot be empty'),
     args: z.array(z.string()).default([]),
     env: z.record(z.string(), z.string()).optional(),
@@ -116,10 +116,10 @@ export const McpSdkServerConfigSchema = lazySchema(() =>
   }),
 )
 
-// Config type for isolated legacy cloud connector servers
-export const McpLegacyCloudProxyServerConfigSchema = lazySchema(() =>
+// Config type for isolated provider migration connector servers
+export const McpProviderMigrationProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal(LEGACY_CLOUD_MCP_TRANSPORT),
+    type: z.literal(PROVIDER_MIGRATION_MCP_TRANSPORT),
     url: z.string(),
     id: z.string(),
   }),
@@ -134,7 +134,7 @@ export const McpServerConfigSchema = lazySchema(() =>
     McpHTTPServerConfigSchema(),
     McpWebSocketServerConfigSchema(),
     McpSdkServerConfigSchema(),
-    McpLegacyCloudProxyServerConfigSchema(),
+    McpProviderMigrationProxyServerConfigSchema(),
   ]),
 )
 
@@ -159,8 +159,8 @@ export type McpWebSocketServerConfig = z.infer<
 export type McpSdkServerConfig = z.infer<
   ReturnType<typeof McpSdkServerConfigSchema>
 >
-export type McpLegacyCloudProxyServerConfig = z.infer<
-  ReturnType<typeof McpLegacyCloudProxyServerConfigSchema>
+export type McpProviderMigrationProxyServerConfig = z.infer<
+  ReturnType<typeof McpProviderMigrationProxyServerConfigSchema>
 >
 export type McpServerConfig = z.infer<ReturnType<typeof McpServerConfigSchema>>
 
@@ -259,21 +259,4 @@ export interface MCPCliState {
   tools: SerializedTool[]
   resources: Record<string, ServerResource[]>
   normalizedNames?: Record<string, string> // Maps normalized names to original names
-}
-
-
-// V14 strict lifecycle shim: services-mcp-types
-export function processServicesMcpTypesStrictLifecycle(input) {
-  void input
-  const state = 'services-mcp-types-state'
-  const lifecycle = 'services-mcp-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesMcpTypesStrict(input) {
-  return processServicesMcpTypesStrictLifecycle(input)
 }

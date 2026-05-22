@@ -33,10 +33,10 @@ export type V18ReleaseProvenanceGate = {
   safeguards: readonly string[]
 }
 
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_VENDOR = ['anth', 'ropic'].join('')
-const LEGACY_VENDOR_SCOPE = `@${LEGACY_VENDOR}-ai/`
-const ORIGINAL_REFERENCE_PREFIX = `\u539f\u4ee3\u7801${LEGACY_PRODUCT}/`
+const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')
+const SOURCE_REFERENCE_VENDOR = ['anth', 'ropic'].join('')
+const SOURCE_REFERENCE_VENDOR_SCOPE = `@${SOURCE_REFERENCE_VENDOR}-ai/`
+const ORIGINAL_REFERENCE_PREFIX = `\u539f\u4ee3\u7801${SOURCE_REFERENCE_PRODUCT}/`
 const LEGACY_PROXY_DIR = ['upstream', 'proxy'].join('')
 
 const EXCLUDED_PREFIXES = [
@@ -57,10 +57,10 @@ const PACKAGE_FILES = new Set(['package.json', 'package-lock.json', 'bun.lock'])
 
 const SOURCE_REFERENCE_PATTERNS = [
   new RegExp(ORIGINAL_REFERENCE_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
-  new RegExp(`${LEGACY_PRODUCT}\\s+source`, 'i'),
-  new RegExp(`${LEGACY_PRODUCT}\\s+reference`, 'i'),
-  new RegExp(`original\\s+${LEGACY_PRODUCT}`, 'i'),
-  new RegExp(`from\\s+${LEGACY_PRODUCT}`, 'i'),
+  new RegExp(`${SOURCE_REFERENCE_PRODUCT}\\s+source`, 'i'),
+  new RegExp(`${SOURCE_REFERENCE_PRODUCT}\\s+reference`, 'i'),
+  new RegExp(`original\\s+${SOURCE_REFERENCE_PRODUCT}`, 'i'),
+  new RegExp(`from\\s+${SOURCE_REFERENCE_PRODUCT}`, 'i'),
 ] as const
 
 function normalizePath(path: string): string {
@@ -105,20 +105,20 @@ export function buildV18ReleaseProvenanceGate(input: {
         surface: 'path',
         path,
         match: legacyPath,
-        reason: 'release package still contains a legacy runtime shell directory instead of DSXU Control Plane code',
+        reason: 'release package still contains an old runtime shell directory instead of DSXU Control Plane code',
       })
     }
 
     if (!file.content) continue
     const lines = file.content.split(/\r?\n/)
     lines.forEach((line, index) => {
-      if (PACKAGE_FILES.has(path) && line.includes(LEGACY_VENDOR_SCOPE)) {
+      if (PACKAGE_FILES.has(path) && line.includes(SOURCE_REFERENCE_VENDOR_SCOPE)) {
         issues.push({
           severity: 'blocker',
           surface: 'dependency',
           path,
           line: index + 1,
-          match: LEGACY_VENDOR_SCOPE,
+          match: SOURCE_REFERENCE_VENDOR_SCOPE,
           reason: 'release dependency graph still references a proprietary/vendor-scoped package',
         })
         return

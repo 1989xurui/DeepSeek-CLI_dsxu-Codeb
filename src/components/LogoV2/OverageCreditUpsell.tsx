@@ -5,6 +5,7 @@ import { Text } from '../../ink.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { formatGrantAmount, getCachedOverageCreditGrant, refreshOverageCreditGrantCache } from '../../services/api/overageCreditGrant.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js';
 import { truncate } from '../../utils/format.js';
 import type { FeedConfig } from './Feed.js';
 const MAX_IMPRESSIONS = 3;
@@ -25,6 +26,7 @@ const MAX_IMPRESSIONS = 3;
  *   (welcome feed, tips).
  */
 export function isEligibleForOverageCreditGrant(): boolean {
+  if (isDsxuRuntimeMode()) return false;
   const info = getCachedOverageCreditGrant();
   if (!info || !info.available || info.granted) return false;
   return formatGrantAmount(info) !== null;
@@ -42,6 +44,7 @@ export function shouldShowOverageCreditUpsell(): boolean {
  * unconditionally on mount — it no-ops if cache is fresh.
  */
 export function maybeRefreshOverageCreditCache(): void {
+  if (isDsxuRuntimeMode()) return;
   if (getCachedOverageCreditGrant() !== null) return;
   void refreshOverageCreditGrantCache();
 }
@@ -151,6 +154,16 @@ export function OverageCreditUpsell(t0) {
  * Char budgets: title ≤19, subtitle ≤48.
  */
 export function createOverageCreditFeed(): FeedConfig {
+  if (isDsxuRuntimeMode()) {
+    return {
+      title: '',
+      lines: [],
+      customContent: {
+        content: null,
+        width: 0
+      }
+    };
+  }
   const info = getCachedOverageCreditGrant();
   const amount = info ? formatGrantAmount(info) : null;
   const title = amount ? getFeedTitle(amount) : 'extra usage credit';
@@ -162,12 +175,4 @@ export function createOverageCreditFeed(): FeedConfig {
       width: Math.max(title.length, FEED_SUBTITLE.length)
     }
   };
-}
-
-// V14 lifecycle shim: overagecreditupsell
-export function processOveragecreditupsellLifecycle(input) {
-  void input
-  const state = 'overagecreditupsell-state'
-  const lifecycle = 'overagecreditupsell:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

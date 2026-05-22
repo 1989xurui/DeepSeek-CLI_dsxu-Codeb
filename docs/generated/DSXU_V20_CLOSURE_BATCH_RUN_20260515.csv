@@ -1,0 +1,209 @@
+"id","command","status","exitCode","stdoutTail","stderrTail"
+"p12-target-collection","bun run scripts/dsxu-p12-target-reference-collection-pack.ts","PASS","0","{
+  ""status"": ""READY_FOR_REAL_TARGET_REFERENCE_COLLECTION_NOT_EVIDENCE"",
+  ""workOrderCount"": 14,
+  ""targetManifestBacklogSlotCount"": 0,
+  ""pairedRawLogCount"": 0,
+  ""didFabricateTargetLogs"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_COLLECTION_WORK_ORDERS_20260515.csv""
+}",""
+"p12-target-discovery","bun run scripts/dsxu-p12-target-manifest-discovery.ts","PASS","0","{
+  ""status"": ""READY_TARGET_REFERENCE_MANIFEST_DISCOVERED"",
+  ""candidateCount"": 1,
+  ""readyCandidateCount"": 1,
+  ""canonicalTargetReferenceManifestPath"": ""D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json"",
+  ""canonicalAcceptedLogCount"": 14,
+  ""didFabricateTargetLogs"": false,
+  ""didRunComparison"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.csv""
+}",""
+"p12-target-intake","bun run scripts/dsxu-p12-target-manifest-intake.ts --targetReferenceManifestPath D:\DSXU-code\.dsxu\trace\p12-target-reference-codex-runner-v1\target-reference-manifest.json","PASS","0","{
+  ""status"": ""READY_FOR_RAW_READINESS_IMPORT"",
+  ""acceptedLogCount"": 14,
+  ""rejectedLogCount"": 0,
+  ""rawLogExistsCount"": 14,
+  ""artifactExistsCount"": 56,
+  ""didFabricateTargetLogs"": false,
+  ""didRunComparison"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.csv""
+}",""
+"p12-raw-readiness-current","bun run scripts/dsxu-p12-raw-readiness.ts --targetReferenceManifestPath D:\DSXU-code\.dsxu\trace\p12-target-reference-codex-runner-v1\target-reference-manifest.json","PASS","0","{
+  ""schemaVersion"": ""dsxu.p12.raw-readiness-cli.v1"",
+  ""status"": ""PASS"",
+  ""p12Status"": ""PASS"",
+  ""deferredEvalStatus"": ""PASS"",
+  ""p12PairedRawLogCount"": 14,
+  ""p12MinimumPairedRawLogsForPass"": 14,
+  ""p12ReplayFamilyGapCount"": 0,
+  ""p12RequiredAdditionalSameTaskPairCount"": 0,
+  ""deferredEvalWaitingRawLiveCount"": 0,
+  ""mustNotClaimComparisonWin"": false,
+  ""nextAction"": ""ready-for-delta-review"",
+  ""evidencePath"": ""D:\\DSXU-code\\.dsxu\\trace\\raw-evidence-readiness-register-v1\\raw-evidence-readiness-register.evidence.json"",
+  ""tracePath"": ""D:\\DSXU-code\\.dsxu\\trace\\raw-evidence-readiness-register-v1\\raw-evidence-readiness-register.trace.json"",
+  ""blockers"": []
+}",""
+"owner-git-preflight","bun run scripts/dsxu-owner-git-mutation-preflight.ts","PASS","0","tion report""
+    },
+    {
+      ""gate"": ""acl-residue"",
+      ""count"": 4,
+      ""status"": ""PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME"",
+      ""canMutateNow"": false,
+      ""requiredAction"": ""ACL residues are signed non-product runtime and excluded from release/export""
+    },
+    {
+      ""gate"": ""p12-target-reference-raw"",
+      ""count"": 14,
+      ""status"": ""READY_FOR_DELTA_REVIEW"",
+      ""canMutateNow"": false,
+      ""requiredAction"": ""import real targetReferenceManifestPath; do not use templates, generic logs, target-only logs, or DSXU-side logs""
+    },
+    {
+      ""gate"": ""final-six-stage-tests-and-clean-export"",
+      ""count"": 1,
+      ""status"": ""PASS_READY_FOR_RELEASE_CLOSURE"",
+      ""canMutateNow"": false,
+      ""requiredAction"": ""run release closure tests and clean-export preflight; create export only as explicit release action""
+    }
+  ],
+  ""blockers"": [],
+  ""nextAction"": ""run final preflight, release closure tests, and clean-export preflight; create export only as explicit release action"",
+  ""rule"": ""Preflight is evidence-only. It does not stage, commit, delete, reset, clean, force ACL residue deletion, fabricate target logs, run final tests, or create export artifacts.""
+}",""
+"owner-git-product-stage-plan","bun run scripts/dsxu-owner-git-product-stage-plan.ts","PASS","0","{
+  ""status"": ""STAGED_BY_OWNER_GIT_EXECUTION"",
+  ""totalProductPaths"": 1746,
+  ""stageReadyPaths"": 1746,
+  ""packetCount"": 11,
+  ""didMutateGit"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.csv""
+}",""
+"owner-git-deletion-stage-plan","bun run scripts/dsxu-owner-git-stage-plan.ts","PASS","0","{
+  ""status"": ""STAGED_BY_OWNER_GIT_EXECUTION"",
+  ""totalDeletionPaths"": 147,
+  ""stageReadyPaths"": 147,
+  ""packetCount"": 6,
+  ""didMutateGit"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.csv""
+}",""
+"owner-git-mutation-command-plan","bun run scripts/dsxu-owner-git-mutation-command-plan.ts","PASS","0","{
+  ""status"": ""STAGED_BY_OWNER_GIT_EXECUTION"",
+  ""productPathCount"": 1746,
+  ""deletionPathCount"": 147,
+  ""commandCount"": 57,
+  ""didMutateGit"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.csv""
+}",""
+"owner-git-authorization-board","bun run scripts/dsxu-v20-owner-git-authorization-board.ts","PASS","0","{
+  ""status"": ""AUTHORIZED_AND_STAGED_PENDING_REMAINING_GATES"",
+  ""ownerPacketCount"": 17,
+  ""productPathCount"": 1746,
+  ""deletionPathCount"": 147,
+  ""totalPlannedPaths"": 1893,
+  ""gitStatusShort"": {
+    ""total"": 2005,
+    ""modified"": 1650,
+    ""deleted"": 116,
+    ""untracked"": 0
+  },
+  ""commandCount"": 57,
+  ""commandPathCount"": 1893,
+  ""canEnterAuthorizationExecution"": false,
+  ""didMutateGit"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.csv""
+}",""
+"post-authorization-verification","bun run scripts/dsxu-v20-post-authorization-verification-plan.ts","PASS","0","{
+  ""status"": ""POST_STAGE_VERIFIED_REMAINING_GATES_BLOCKED"",
+  ""steps"": 7,
+  ""mutationCommandCount"": 57,
+  ""didMutateGit"": true,
+  ""didRunVerification"": true,
+  ""didCreateExport"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.csv""
+}",""
+"acl-preflight","bun run scripts/dsxu-acl-residue-preflight.ts","PASS","0","{
+  ""status"": ""PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME"",
+  ""residueCount"": 4,
+  ""existingResidues"": 4,
+  ""writableResidues"": 4,
+  ""deletableResidues"": 0,
+  ""externallySignedResidues"": 4,
+  ""activeProductReferenceRows"": 0,
+  ""didMutateFilesystem"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.csv""
+}",""
+"acl-closure-plan","bun run scripts/dsxu-acl-residue-closure-plan.ts","PASS","0","{
+  ""status"": ""PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME"",
+  ""residueCount"": 4,
+  ""readyRows"": 0,
+  ""permissionDeniedRows"": 0,
+  ""signedExternalRows"": 4,
+  ""didMutateFilesystem"": false,
+  ""didStageGit"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.csv""
+}",""
+"commercial-ip-preflight","bun run scripts/dsxu-commercial-ip-release-preflight.ts","PASS","0","{
+  ""status"": ""ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING"",
+  ""activeReviewRequiredRows"": 0,
+  ""publicReleaseThirdPartyRows"": 0,
+  ""didRewriteSource"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.csv""
+}",""
+"six-stage-plan","bun run scripts/dsxu-v20-six-stage-test-plan.ts","PASS","0","{
+  ""status"": ""READY_FOR_RELEASE_CLOSURE_TESTS"",
+  ""stages"": 6,
+  ""p12PairedRawLogCount"": 14,
+  ""p12MinimumPairedRawLogsForPass"": 14,
+  ""p12ReplayFamilyGapCount"": 0,
+  ""deletionStagePlanReady"": true,
+  ""aclResidues"": 0,
+  ""didRunFinalTests"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.csv""
+}",""
+"final-preflight","bun run scripts/dsxu-v20-final-preflight.ts","PASS","0","{
+  ""status"": ""PASS"",
+  ""gitStatusShort"": {
+    ""total"": 2005,
+    ""modified"": 1650,
+    ""deleted"": 116,
+    ""untracked"": 0
+  },
+  ""gates"": 7,
+  ""canRunFinalSixStageTests"": true,
+  ""canCreateCleanExport"": true,
+  ""didRunFinalTests"": false,
+  ""didCreateExport"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_FINAL_PREFLIGHT_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_FINAL_PREFLIGHT_20260515.csv""
+}",""
+"clean-export-preflight","bun run scripts/dsxu-clean-export-preflight.ts","PASS","0","{
+  ""status"": ""PASS_READY_TO_CREATE_CLEAN_EXPORT"",
+  ""canCreateCleanExport"": true,
+  ""didCreateExport"": false,
+  ""blockers"": 0,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.csv""
+}",""
+"blocker-action-board","bun run scripts/dsxu-v20-blocker-action-board.ts","PASS","0","{
+  ""status"": ""PASS_RELEASE_PREFLIGHT_READY_CLEAN_EXPORT_READY"",
+  ""actionCount"": 7,
+  ""didMutateGit"": false,
+  ""didMutateFilesystem"": false,
+  ""didRunFinalTests"": false,
+  ""didCreateExport"": false,
+  ""outputJson"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json"",
+  ""outputCsv"": ""D:\\DSXU-code\\docs\\generated\\DSXU_V20_BLOCKER_ACTION_BOARD_20260515.csv""
+}",""

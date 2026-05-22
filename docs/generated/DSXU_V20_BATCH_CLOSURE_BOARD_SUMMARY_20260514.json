@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "dsxu.v20.batch-closure-board.v1",
+  "generatedAt": "2026-05-14T15:51:06.897Z",
+  "sourceInputs": [
+    "DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_SUMMARY_20260514.json",
+    "DSXU_V20_OGR12_SHARED_UTILITY_IMPORT_USE_REVIEW_SUMMARY_20260514.json",
+    "DSXU_V20_OGR12_REPLACE_DELETE_MUTATION_REVIEW_SUMMARY_20260514.json",
+    "DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_SUMMARY_20260514.json",
+    "DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_SUMMARY_20260514.json",
+    "DSXU_V20_DELETION_MUTATION_REVIEW_20260514.csv"
+  ],
+  "currentGitStatusShortCount": 1835,
+  "rows": [
+    {
+      "gate": "release-surface-source",
+      "count": 2,
+      "status": "CLOSED_SOURCE_BLOCKERS",
+      "nextAction": "keep V18/V19/V20 source-truth docs release-excluded/rewrite; no active public source debt"
+    },
+    {
+      "gate": "runtime-redline-high-risk-packets",
+      "count": 919,
+      "status": "REDLINE_CLEAR_PENDING_OWNER_GIT",
+      "nextAction": "owner/Git signoff can focus on absorb/delete/release-exclude instead of hidden runtime"
+    },
+    {
+      "gate": "ogr12-mainline-keep",
+      "count": 248,
+      "status": "KEEP_PENDING_OWNER_GIT",
+      "nextAction": "sign off imported utilities as mainline helpers only"
+    },
+    {
+      "gate": "ogr12-delete-state",
+      "count": 1,
+      "status": "DELETE_STATE_PENDING_GIT_MUTATION",
+      "nextAction": "single duplicate desktop deep-link helper already removed from source; stage removal only after Git review"
+    },
+    {
+      "gate": "ogr12-replace-delete-still-present",
+      "count": 0,
+      "status": "NONE_REMAINING_AFTER_RESOLVER_FIX",
+      "nextAction": "no present no-import shared utility remains after .js-to-.ts import resolution"
+    },
+    {
+      "gate": "deletion-mutation-ready",
+      "count": 147,
+      "status": "READY_PENDING_GIT_MUTATION",
+      "nextAction": "stage removal only after explicit Git mutation review; do not restore old runtime"
+    },
+    {
+      "gate": "acl-residue",
+      "count": 4,
+      "status": "EXTERNAL_PERMISSION_BLOCKED",
+      "nextAction": "delete when ownership/ACL permits; do not preserve tombstones as product paths"
+    },
+    {
+      "gate": "final-tests-clean-export",
+      "count": 1,
+      "status": "BLOCKED_UNTIL_OWNER_GIT_MUTATION_REAL_GAP",
+      "nextAction": "six-stage tests and clean export remain last"
+    }
+  ],
+  "signoffBaseline": {
+    "generatedAt": "2026-05-14T22:19:10",
+    "ownerPacketCount": 17,
+    "statusTotal": 1824,
+    "ownerAcceptedOrRemappedPaths": 1678,
+    "deletionMutationReadyPaths": 146,
+    "ogr13Remapped": 91,
+    "signoffStateSummary": [
+      {
+        "signoffState": "CONDITIONAL_OWNER_ACCEPTED_IMPORT_REQUIRED",
+        "packets": 1,
+        "paths": 249
+      },
+      {
+        "signoffState": "DELETE_READY_PENDING_GIT_MUTATION_REVIEW",
+        "packets": 5,
+        "paths": 146
+      },
+      {
+        "signoffState": "OWNER_ACCEPTED_PENDING_GIT_REVIEW",
+        "packets": 9,
+        "paths": 1314
+      },
+      {
+        "signoffState": "OWNER_ACCEPTED_RELEASE_EVIDENCE_PENDING_GIT_REVIEW",
+        "packets": 1,
+        "paths": 24
+      },
+      {
+        "signoffState": "REMAPPED_TO_NAMED_OWNER_PACKET",
+        "packets": 1,
+        "paths": 91
+      }
+    ],
+    "deletionPacketSummary": [
+      {
+        "ownerPacket": "V20-OGR-02-delete-old-evidence-review-runtime",
+        "count": 45
+      },
+      {
+        "ownerPacket": "V20-OGR-02-delete-old-provider-legacy-harness",
+        "count": 71
+      },
+      {
+        "ownerPacket": "V20-OGR-02-delete-state-owner-review",
+        "count": 27
+      },
+      {
+        "ownerPacket": "V20-OGR-03-delete-engine-builtin-tools-runtime",
+        "count": 2
+      },
+      {
+        "ownerPacket": "V20-OGR-04-delete-engine-mcp-client-runtime",
+        "count": 1
+      }
+    ],
+    "nextAction": "perform explicit Git mutation review for 146 ready deletion paths; then ACL residues and real-gap productization; tests remain last"
+  },
+  "releaseSurfaceRows": [
+    {
+      "gate": "public-surface-clean",
+      "statusBefore": "BLOCKED_EVIDENCED",
+      "statusAfter": "DONE_EVIDENCED",
+      "blockersAfter": 0,
+      "reviewAfter": 0,
+      "publicSurfaceReviewAfter": 0,
+      "activeSrcAfter": 0,
+      "providerMigrationAfter": 421,
+      "docsAfter": 157,
+      "testsAfter": 15,
+      "decision": "provider-migration source paths remapped to provider_migration owner; V20 source-truth docs are release-excluded/rewrite source truth; no active public-source blocker remains"
+    },
+    {
+      "gate": "proprietary-code-risk",
+      "statusBefore": "BLOCKED_EVIDENCED",
+      "statusAfter": "DONE_EVIDENCED",
+      "blockersAfter": 0,
+      "reviewAfter": 0,
+      "publicSurfaceReviewAfter": 0,
+      "activeSrcAfter": 0,
+      "providerMigrationAfter": 437,
+      "docsAfter": 163,
+      "testsAfter": 46,
+      "decision": "Grove provider wire path centralized; DSXU mainline OAuth callers route through provider control wrapper; provider migration names stay hidden behind named owner"
+    }
+  ],
+  "ogr12Mutation": {
+    "schemaVersion": "dsxu.v20.ogr12.replace-delete-mutation-review.v1",
+    "generatedAt": "2026-05-14T15:50:28.089Z",
+    "total": 1,
+    "byPacket": {
+      "OGR12-delete-duplicate-desktop-deeplink-helper": 1
+    },
+    "byFamily": {
+      "utils-no-import": 1
+    },
+    "byStatus": {
+      "D": 1
+    },
+    "resolverFix": "based on corrected .js specifier to .ts/.tsx import resolution and current git status",
+    "rule": "No-import OGR-12 helpers cannot remain in shared utilities. They are delete/move candidates unless owner/Git review proves hidden use and maps them to a named owner."
+  },
+  "aclRows": [
+    {
+      "path": "src/dsxu/engine/retrieval/integration-example.ts",
+      "present": "yes",
+      "decision": "ACL_RESIDUE_DELETE_WHEN_PERMISSION_ALLOWS",
+      "owner": "external filesystem ownership/ACL"
+    },
+    {
+      "path": "src/dsxu/integration/harness/recovery-runtime-v3-harness.ts",
+      "present": "yes",
+      "decision": "ACL_RESIDUE_DELETE_WHEN_PERMISSION_ALLOWS",
+      "owner": "external filesystem ownership/ACL"
+    },
+    {
+      "path": "src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts",
+      "present": "yes",
+      "decision": "ACL_RESIDUE_DELETE_WHEN_PERMISSION_ALLOWS",
+      "owner": "external filesystem ownership/ACL"
+    },
+    {
+      "path": "src/dsxu/engine/adapters/bridge-adapter.ts",
+      "present": "yes",
+      "decision": "ACL_RESIDUE_DELETE_WHEN_PERMISSION_ALLOWS",
+      "owner": "external filesystem ownership/ACL"
+    }
+  ],
+  "nextBatchOrder": [
+    "owner/Git signoff for runtime-clear packets",
+    "stage deletion mutation only when allowed: 146 previous + 1 OGR12 duplicate desktop helper",
+    "ACL residue external permission closure",
+    "real-gap productization",
+    "six-stage tests and final clean export"
+  ]
+}

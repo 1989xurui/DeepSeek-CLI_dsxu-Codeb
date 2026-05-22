@@ -31,16 +31,16 @@ export function embeddedSearchToolsBinaryPath(): string {
 export function getDsxuEmbeddedToolsRuntimeProfile(): {
   runtime: 'DSXU Embedded Search Tools'
   primaryEntrypointEnv: string
-  legacyEntrypointEnv: string
+  providerMigrationEntrypointEnv: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Embedded Search Tools',
     primaryEntrypointEnv: 'DSXU_CODE_ENTRYPOINT',
-    legacyEntrypointEnv: 'DSXU_CODE_ENTRYPOINT',
+    providerMigrationEntrypointEnv: 'DSXU_CODE_ENTRYPOINT',
     activationEvidence: [
       'EMBEDDED_SEARCH_TOOLS enables bundled bfs/ugrep style search',
-      'DSXU_CODE_ENTRYPOINT has priority over legacy DSXU entrypoint env',
+      'DSXU_CODE_ENTRYPOINT has priority over provider-migration DSXU entrypoint env',
       'SDK/local-agent entrypoints keep dedicated Glob/Grep registry behavior',
     ],
   }

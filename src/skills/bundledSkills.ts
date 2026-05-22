@@ -243,12 +243,3 @@ function prependBaseDir(
   }
   return [{ type: 'text', text: prefix }, ...blocks]
 }
-
-
-// V14 lifecycle shim: bundledskills
-export function processBundledskillsLifecycle(input) {
-  void input
-  const state = 'bundledskills-state'
-  const lifecycle = 'bundledskills:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

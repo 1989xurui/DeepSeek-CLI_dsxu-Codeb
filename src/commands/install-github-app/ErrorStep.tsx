@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js';
 import { Box, Text } from '../../ink.js';
@@ -81,12 +81,4 @@ export function ErrorStep(t0) {
 }
 function _temp(instruction, index) {
   return <Box key={index} marginLeft={2}><Text dimColor={true}>- </Text><Text>{instruction}</Text></Box>;
-}
-
-// V14 lifecycle shim: errorstep
-export function processErrorstepLifecycle(input) {
-  void input
-  const state = 'errorstep-state'
-  const lifecycle = 'errorstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

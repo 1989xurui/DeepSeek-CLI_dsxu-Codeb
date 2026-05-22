@@ -191,11 +191,3 @@ export function SessionPreview(t0) {
   }
   return t18;
 }
-
-// V14 lifecycle shim: sessionpreview
-export function processSessionpreviewLifecycle(input) {
-  void input
-  const state = 'sessionpreview-state'
-  const lifecycle = 'sessionpreview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

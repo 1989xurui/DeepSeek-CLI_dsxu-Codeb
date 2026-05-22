@@ -248,11 +248,3 @@ function _temp2(turn, i) {
 function _temp(t) {
   return t.text !== "";
 }
-
-// V14 lifecycle shim: dreamdetaildialog
-export function processDreamdetaildialogLifecycle(input) {
-  void input
-  const state = 'dreamdetaildialog-state'
-  const lifecycle = 'dreamdetaildialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

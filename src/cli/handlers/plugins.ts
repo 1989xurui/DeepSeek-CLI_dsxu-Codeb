@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Plugin and marketplace subcommand handlers ...extracted from main.tsx for lazy loading.
  * These are dynamically imported only when `dsxu-code plugin *` or `dsxu-code plugin marketplace *` runs.

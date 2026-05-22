@@ -8,11 +8,3 @@ export const call: LocalJSXCommandCall = async (onDone, {
 }) => {
   return <HelpV2 commands={commands} onClose={onDone} />;
 };
-
-// V14 lifecycle shim: help
-export function processHelpLifecycle(input) {
-  void input
-  const state = 'help-state'
-  const lifecycle = 'help:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

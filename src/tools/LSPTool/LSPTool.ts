@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { open } from 'fs/promises'
 import * as path from 'path'
 import { pathToFileURL } from 'url'
@@ -130,6 +129,22 @@ export const LSPTool = buildTool({
   name: LSP_TOOL_NAME,
   searchHint: 'code intelligence (definitions, references, symbols, hover)',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU LSP Tool Adapter',
+    sideEffects: [
+      'lsp-request',
+      'filesystem-stat-validation',
+      'language-server-read',
+    ],
+    permission: 'read-only code intelligence through LSP adapter',
+    evidence: [
+      'inputSchema.operation/filePath',
+      'LSP connection gate',
+      'file validation',
+      'definition/reference/symbol output',
+    ],
+    uiProjection: 'code intelligence result summary',
+  },
   isLsp: true,
   async description() {
     return DESCRIPTION

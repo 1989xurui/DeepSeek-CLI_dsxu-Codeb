@@ -109,11 +109,3 @@ function _temp2(hook, index) {
 function _temp() {
   return <Text>Esc to go back</Text>;
 }
-
-// V14 lifecycle shim: selecthookmode
-export function processSelecthookmodeLifecycle(input) {
-  void input
-  const state = 'selecthookmode-state'
-  const lifecycle = 'selecthookmode:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

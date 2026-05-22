@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getKairosActive, setUserMsgOptIn } from '../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -128,12 +128,3 @@ const brief = {
 } satisfies Command
 
 export default brief
-
-
-// V14 lifecycle shim: brief
-export function processBriefLifecycle(input) {
-  void input
-  const state = 'brief-state'
-  const lifecycle = 'brief:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

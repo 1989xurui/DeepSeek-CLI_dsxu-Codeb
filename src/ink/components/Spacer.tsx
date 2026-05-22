@@ -17,11 +17,3 @@ export default function Spacer() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: spacer
-export function processSpacerLifecycle(input) {
-  void input
-  const state = 'spacer-state'
-  const lifecycle = 'spacer:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

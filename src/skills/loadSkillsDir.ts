@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { realpath } from 'fs/promises'
 import ignore from 'ignore'
 import memoize from 'lodash-es/memoize.js'
@@ -32,7 +31,7 @@ import {
 } from '../utils/effort.js'
 import {
   getDsxuConfigHomeDir,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
   isDsxuRuntimeMode,
   isBareMode,
   isEnvTruthy,
@@ -81,7 +80,7 @@ export type LoadedFrom =
 /**
  * Returns the active config directory path for a given source. DSXU runtime
  * resolves user/project/managed skill locations under DSXU paths; legacy
- * Legacy provider paths are retained only outside DSXU mode or explicit migration.
+ * Provider-migration paths are retained only outside DSXU mode or explicit migration.
  */
 export function getSkillsPath(
   source: SettingSource | 'plugin',
@@ -98,7 +97,7 @@ export function getSkillsPath(
       return join(
         isDsxuRuntimeMode()
           ? getDsxuConfigHomeDir()
-          : getLegacyProviderConfigHomeDir(),
+          : getProviderMigrationHomeDir(),
         dir,
       )
     case 'projectSettings':
@@ -119,7 +118,7 @@ export function getDsxuSkillsLoaderRuntimeProfile(): {
     runtime: 'DSXU Skills Loader',
     activeConfigHome: isDsxuRuntimeMode()
       ? getDsxuConfigHomeDir()
-      : getLegacyProviderConfigHomeDir(),
+      : getProviderMigrationHomeDir(),
     loadedFrom: [
       'commands_DEPRECATED',
       'skills',
@@ -141,11 +140,11 @@ function uniqDirs(dirs: string[]): string[] {
 }
 function getSkillConfigDirs(dir: 'skills' | 'commands'): string[] {
   if (!isDsxuRuntimeMode()) {
-    return [join(getLegacyProviderConfigHomeDir(), dir)]
+    return [join(getProviderMigrationHomeDir(), dir)]
   }
   return uniqDirs([
     join(getDsxuConfigHomeDir(), dir),
-    join(getLegacyProviderConfigHomeDir(), dir),
+    join(getProviderMigrationHomeDir(), dir),
   ])
 }
 function getManagedSkillConfigDirs(dir: 'skills' | 'commands'): string[] {
@@ -818,7 +817,7 @@ export function clearSkillCaches() {
   conditionalSkills.clear()
   activatedConditionalSkillNames.clear()
 }
-// Backwards-compatible aliases for tests
+// Historical aliases for tests.
 export { getSkillDirCommands as getCommandDirCommands }
 export { clearSkillCaches as clearCommandCaches }
 export { transformSkillFiles }
@@ -841,7 +840,7 @@ const skillsLoaded = createSignal()
 export function onDynamicSkillsLoaded(callback: () => void): () => void {
   // Wrap at subscribe time so a throwing listener is logged and skipped
   // rather than aborting skillsLoaded.emit() and breaking skill loading.
-  // Same callSafe pattern as growthbook.ts ...createSignal.emit() has no
+  // Same callSafe pattern as featureFlags.ts ...createSignal.emit() has no
   // per-listener try/catch.
   return skillsLoaded.subscribe(() => {
     try {

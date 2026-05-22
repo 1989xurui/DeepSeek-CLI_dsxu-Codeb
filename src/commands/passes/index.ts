@@ -23,39 +23,22 @@ export default {
     const { eligible, hasCache } = checkCachedPassesEligibility()
     return !eligible || !hasCache
   },
+  isEnabled: () => !isDsxuRuntimeMode(),
   load: () => import('./passes.js'),
 } satisfies Command
 
 export function getDsxuPassesCommandRuntimeProfile(): {
   command: '/passes'
-  runtime: 'DSXU Legacy Referral Isolation'
+  runtime: 'DSXU Provider-Migration Referral Isolation'
   activationEvidence: readonly string[]
 } {
   return {
     command: '/passes',
-    runtime: 'DSXU Legacy Referral Isolation',
+    runtime: 'DSXU Provider-Migration Referral Isolation',
     activationEvidence: [
       'DSXU_CODE_MODE hides DSXU Code referral passes from the default command surface',
       'description points DSXU users to local provider credit settings',
-      'legacy referral eligibility is not checked in DSXU runtime',
+      'provider-migration source referral eligibility is not checked in DSXU runtime',
     ],
   }
-}
-
-
-// V14 command lifecycle shim: passes
-export function processPassesCommandLifecycle(input) {
-  void input
-  const state = 'passes-command-state'
-  const lifecycle = 'passes:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'passes',
-  }
-}
-
-export function runPassesCommand(input) {
-  return processPassesCommandLifecycle(input)
 }

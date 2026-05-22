@@ -183,11 +183,3 @@ function _temp(current) {
     ideHintShownCount: (current.ideHintShownCount ?? 0) + 1
   };
 }
-
-// V14 lifecycle shim: useidestatusindicator
-export function processUseidestatusindicatorLifecycle(input) {
-  void input
-  const state = 'useidestatusindicator-state'
-  const lifecycle = 'useidestatusindicator:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

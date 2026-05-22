@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "dsxu.v20.p12-target-manifest-contract-board.v1",
+  "generatedAt": "2026-05-15T01:54:41.223Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "CONTRACT_READY_TARGET_MANIFEST_STILL_REQUIRED",
+  "workOrderCount": 14,
+  "requiredMinimumPairedRawLogsForPass": 14,
+  "currentAcceptedTargetLogs": 0,
+  "didFabricateTargetLogs": false,
+  "didImportTargetManifest": false,
+  "rows": [
+    {
+      "field": "schemaVersion",
+      "required": true,
+      "rejectionRule": "must equal dsxu.phase12-raw-log-manifest.v1"
+    },
+    {
+      "field": "side",
+      "required": true,
+      "rejectionRule": "must equal target-reference"
+    },
+    {
+      "field": "source.collectedAt",
+      "required": true,
+      "rejectionRule": "must be filled after real target run"
+    },
+    {
+      "field": "source.acquisitionMethod",
+      "required": true,
+      "rejectionRule": "must be manual-import or runner-export"
+    },
+    {
+      "field": "source.immutableRawDir",
+      "required": true,
+      "rejectionRule": "must point to immutable target-reference run output"
+    },
+    {
+      "field": "logs[].comparisonId",
+      "required": true,
+      "rejectionRule": "must match the collection work order comparisonId"
+    },
+    {
+      "field": "logs[].taskId",
+      "required": true,
+      "rejectionRule": "must match the collection work order taskId"
+    },
+    {
+      "field": "logs[].taskPrompt",
+      "required": true,
+      "rejectionRule": "must be the exact same-task prompt"
+    },
+    {
+      "field": "logs[].rawLogPath",
+      "required": true,
+      "rejectionRule": "must point to real raw transcript output"
+    },
+    {
+      "field": "logs[].artifactPaths",
+      "required": true,
+      "rejectionRule": "must include tool trace, final report, artifacts, metrics, and risks"
+    },
+    {
+      "field": "logs[].evidence",
+      "required": true,
+      "rejectionRule": "baseline/context/execution/recovery/verification/cost/final must be true"
+    },
+    {
+      "field": "logs[].integrity",
+      "required": true,
+      "rejectionRule": "rawTranscript/toolTrace/finalReport must be true"
+    },
+    {
+      "field": "logs[].metrics",
+      "required": true,
+      "rejectionRule": "elapsed/intervention/tool/evidence/cost/no-evidence metrics must be present"
+    },
+    {
+      "field": "logs[].risks",
+      "required": true,
+      "rejectionRule": "must list real target risks; empty is allowed only when supported by raw output"
+    }
+  ],
+  "blockers": [
+    "targetReferenceManifestPath is still missing",
+    "target-reference manifest template and work orders do not count as raw evidence"
+  ],
+  "nextAction": "collect real target-reference outputs for all work orders, fill manifest, then run p12:target-intake and p12:raw-readiness",
+  "rule": "This contract board is not raw evidence and not a P12 PASS. It only freezes the target-reference manifest acceptance contract."
+}

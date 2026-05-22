@@ -3,7 +3,7 @@ import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { useSyncExternalStore } from 'react';
 import { Box, Text } from '../ink.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js';
 import { calculateTokenWarningState, getEffectiveContextWindowSize, isAutoCompactEnabled } from '../services/compact/autoCompact.js';
 import { useCompactWarningSuppression } from '../services/compact/compactWarningHook.js';
 import { getUpgradeMessage } from '../utils/model/contextWindowUpgradeCheck.js';
@@ -175,12 +175,4 @@ export function TokenWarning(t0) {
     t4 = $[12];
   }
   return t4;
-}
-
-// V14 lifecycle shim: tokenwarning
-export function processTokenwarningLifecycle(input) {
-  void input
-  const state = 'tokenwarning-state'
-  const lifecycle = 'tokenwarning:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

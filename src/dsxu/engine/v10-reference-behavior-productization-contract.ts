@@ -135,7 +135,7 @@ const realMcpHarness: DSXUV10Item = {
   ],
   dsxuLanding: [
     'src/services/mcp',
-    'src/dsxu/engine/mcp-client.ts',
+    'src/services/mcp/client.ts',
     'src/dsxu/engine/engine-tool-adapter.ts',
     'src/dsxu/engine/provider-contract.ts',
   ],
@@ -198,7 +198,7 @@ const providerReplacement: DSXUV10Item = {
   ],
   dsxuLanding: [
     'src/dsxu/engine/provider-contract.ts',
-    'src/dsxu/engine/provider-backend/local-provider-backend.ts',
+    'src/services/bridge/dsxuLocalProviderBackend.ts',
     'src/dsxu/engine/provider-alias.ts',
     'src/main.tsx',
     'src/entrypoints/cli.tsx',
@@ -280,10 +280,10 @@ export function getDsxuV10Contract(): DSXUV10Contract {
     target:
       'Productize the remaining reference high-value behaviors in DSXU single-mainline form so DeepSeek-class weak models gain stronger recovery, limits, tools, permissions, memory, Agent orchestration, MCP safety, and prompt control.',
     sourceBoundary: {
-      referenceRoot: 'D:/DSXU-code/reference-input',
+      referenceRoot: 'D:/\u6e90\u4ee3\u7801claude/src',
       writable: false,
       normalizedPathRule:
-        'The reference root is D:/DSXU-code/reference-input itself; do not assume a src subfolder.',
+        'The reference root is D:/\u6e90\u4ee3\u7801claude/src itself; do not assume a src subfolder under it.',
     },
     rules: [
       'Absorb behavior semantics, not reference provider shells.',

@@ -86,11 +86,3 @@ export function FileWriteToolDiff(t0) {
 function _temp(i) {
   return <NoSelect fromLeftEdge={true} key={`ellipsis-${i}`}><Text dimColor={true}>...</Text></NoSelect>;
 }
-
-// V14 lifecycle shim: filewritetooldiff
-export function processFilewritetooldiffLifecycle(input) {
-  void input
-  const state = 'filewritetooldiff-state'
-  const lifecycle = 'filewritetooldiff:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

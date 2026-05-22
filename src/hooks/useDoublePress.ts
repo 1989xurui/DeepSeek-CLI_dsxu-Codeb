@@ -60,12 +60,3 @@ export function useDoublePress(
     lastPressRef.current = now
   }, [setPending, onDoublePress, onFirstPress, clearTimeoutSafe])
 }
-
-
-// V14 lifecycle shim: usedoublepress
-export function processUsedoublepressLifecycle(input) {
-  void input
-  const state = 'usedoublepress-state'
-  const lifecycle = 'usedoublepress:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { satisfies } from 'src/utils/semver.js'
 import { isRunningWithBun } from '../utils/bundledMode.js'
@@ -302,7 +301,7 @@ export const DEFAULT_BINDINGS: KeybindingBlock[] = [
       // Note: diff:back is handled by left arrow in detail mode
     },
   },
-  // Model picker effort cycling (ant-only)
+  // Model picker effort cycling (dsxu internal)
   {
     context: 'ModelPicker',
     bindings: {

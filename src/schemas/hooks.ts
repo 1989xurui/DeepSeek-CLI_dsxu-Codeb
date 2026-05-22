@@ -220,20 +220,3 @@ export type AgentHook = Extract<HookCommand, { type: 'agent' }>
 export type HttpHook = Extract<HookCommand, { type: 'http' }>
 export type HookMatcher = z.infer<ReturnType<typeof HookMatcherSchema>>
 export type HooksSettings = Partial<Record<HookEvent, HookMatcher[]>>
-
-
-// V14 strict lifecycle shim: schemas-hooks
-export function processSchemasHooksStrictLifecycle(input) {
-  void input
-  const state = 'schemas-hooks-state'
-  const lifecycle = 'schemas-hooks:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runSchemasHooksStrict(input) {
-  return processSchemasHooksStrictLifecycle(input)
-}

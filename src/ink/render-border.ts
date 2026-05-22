@@ -229,12 +229,3 @@ const renderBorder = (
 }
 
 export default renderBorder
-
-
-// V14 lifecycle shim: render-border
-export function processRenderBorderLifecycle(input) {
-  void input
-  const state = 'render-border-state'
-  const lifecycle = 'render-border:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

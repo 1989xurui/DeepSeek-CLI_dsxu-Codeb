@@ -3,8 +3,8 @@ import type { Command } from '../commands.js'
 import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
-// Legal wants the explicit surface name plus a docs link visible before the
-// user triggers, so the description carries "DSXU Code on the web" + URL.
+// Legal wants an explicit remote workflow name plus a docs link visible before
+// the user triggers the provider-migration remote review path.
 const CCR_TERMS_URL = 'https://docs.dsxu.local/dsxu-code-workflow'
 
 const LOCAL_REVIEW_PROMPT = (args: string) => `
@@ -51,7 +51,7 @@ const ultrareview: Command = {
   name: 'ultrareview',
   description: isDsxuRuntimeMode()
     ? '~10-30 min - Finds and verifies bugs in your branch. Runs through DSXU review workflow.'
-    : `~10–20 min · Finds and verifies bugs in your branch. Runs in DSXU Code on the web. See ${CCR_TERMS_URL}`,
+    : `~10–20 min · Finds and verifies bugs in your branch. Runs through provider-migration remote review workflow. See ${CCR_TERMS_URL}`,
   isEnabled: () => isUltrareviewEnabled(),
   load: () => import('./review/ultrareviewCommand.js'),
 }
@@ -64,7 +64,7 @@ export function getDsxuReviewCommandRuntimeProfile(): {
   localCommand: string
   remoteCommand: string
   activationEvidence: readonly string[]
-  legacyPolicy: string
+  providerMigrationPolicy: string
 } {
   return {
     runtime: 'DSXU Review Commands',
@@ -72,19 +72,10 @@ export function getDsxuReviewCommandRuntimeProfile(): {
     remoteCommand: '/ultrareview is reworded to DSXU review workflow in DSXU mode',
     activationEvidence: [
       'local review command remains prompt-based and does not require cloud login',
-      'DSXU runtime mode avoids DSXU Code on the web product copy',
+      'DSXU runtime mode avoids old web product copy',
       'ultrareview is still separately gated by isUltrareviewEnabled',
     ],
-    legacyPolicy:
-      'DSXU Code on the web terms URL remains only for non-DSXU legacy path',
+    providerMigrationPolicy:
+      'remote workflow terms URL remains only for non-DSXU provider-migration path',
   }
-}
-
-
-// V14 lifecycle shim: review
-export function processReviewLifecycle(input) {
-  void input
-  const state = 'review-state'
-  const lifecycle = 'review:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

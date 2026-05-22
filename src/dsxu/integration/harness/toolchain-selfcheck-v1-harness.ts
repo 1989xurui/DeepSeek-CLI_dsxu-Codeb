@@ -124,7 +124,7 @@ async function runWsl(
 
 export function buildToolchainPackagingGuidance(): string[] {
   return [
-    'Ship DSXU-owned native tools under src/utils/vendor or the packaged app resource directory, never from Codex app temp/resource paths.',
+    'Ship DSXU-owned native tools under src/utils/vendor or the packaged app resource directory, never from another app temp/resource paths.',
     'Resolve tools through DSXU launchers and runtime selfcheck before falling back to PATH.',
     'For WSL, prefer the Linux vendored binary and fail visibly if it is missing; Windows rg.exe interop is developer-only escape hatch.',
     'Keep binaries in stable product directories, avoid writing executable tools to temp/system folders, and document AV allowlisting by product path and hash.',
@@ -161,7 +161,7 @@ export function buildToolchainInventory(repoRoot = process.cwd()): ToolchainInve
       windowsPath: windowsRg,
       evidenceCheckIds: ['windows-vendored-rg', 'windows-vendored-rg-sha256'],
       releasePackagingRule:
-        'ship stable DSXU rg.exe bytes with published SHA-256; never resolve from Codex app resource paths by default',
+        'ship stable DSXU rg.exe bytes with published SHA-256; never resolve from another app resource paths by default',
     },
     {
       id: 'ripgrep-wsl',
@@ -261,7 +261,7 @@ export function buildToolchainInventory(repoRoot = process.cwd()): ToolchainInve
 export function buildForbiddenRuntimeSourceInventory(): ToolchainForbiddenRuntimeSource[] {
   return [
     {
-      pattern: 'Codex app resource path',
+      pattern: 'external app resource path',
       status: 'not-found',
       scope: 'src/utils/vendorToolPaths.ts, src/utils/ripgrep.ts, launchers',
     },

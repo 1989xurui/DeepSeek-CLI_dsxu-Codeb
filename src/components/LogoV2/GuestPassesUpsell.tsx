@@ -62,7 +62,7 @@ export function GuestPassesUpsell() {
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
     const reward = getCachedReferrerReward();
-    t0 = <Text dimColor={true}><Text color="brand">[✻]</Text> <Text color="brand">[✻]</Text>{" "}<Text color="brand">[✻]</Text> ·{" "}{reward ? `Share DSXU Code and earn ${formatCreditAmount(reward)} of extra usage · /passes` : "DSXU provider passes at /passes"}</Text>;
+    t0 = <Text dimColor={true}><Text color="brand">[✻]</Text> <Text color="brand">[✻]</Text>{" "}<Text color="brand">[✻]</Text> ·{" "}{reward ? `Share a DSXU provider workspace and earn ${formatCreditAmount(reward)} of extra usage · /passes` : "DSXU provider passes at /passes"}</Text>;
     $[0] = t0;
   } else {
     t0 = $[0];
@@ -70,22 +70,14 @@ export function GuestPassesUpsell() {
   return t0;
 }
 
-// V14 lifecycle shim: guestpassesupsell
-export function processGuestpassesupsellLifecycle(input) {
-  void input
-  const state = 'guestpassesupsell-state'
-  const lifecycle = 'guestpassesupsell:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuGuestPassesUpsellRuntimeProfile() {
   return {
     runtime: 'DSXU Guest Pass Shell Boundary',
-    defaultBehavior: 'Legacy guest-pass upsell is disabled in DSXU runtime so the coding CLI does not prompt provider subscription flows',
+    defaultBehavior: 'Provider-migration guest-pass upsell is disabled in DSXU runtime so the coding CLI does not prompt provider subscription flows',
     providerTarget: 'DSXU Identity/Billing Provider',
     activationEvidence: [
       'shouldShowGuestPassesUpsell returns false in DSXU mode',
-      'visible copy no longer says Share DSXU Code',
+      'visible copy names DSXU provider workspace',
       'business-shell semantics are preserved only as provider/billing contract input',
     ],
   }

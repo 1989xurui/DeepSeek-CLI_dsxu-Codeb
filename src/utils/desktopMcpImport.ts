@@ -1,4 +1,4 @@
-﻿import { readdir, readFile, stat } from 'fs/promises'
+import { readdir, readFile, stat } from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
 import {
@@ -11,7 +11,30 @@ import { logError } from './log.js'
 import { getPlatform, SUPPORTED_PLATFORMS } from './platform.js'
 
 const DSXU_DESKTOP_MCP_CONFIG = 'dsxu_desktop_mcp_config.json'
-const LEGACY_DESKTOP_MCP_CONFIG = 'dsxu_desktop_config.json'
+const PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG = 'dsxu_desktop_config.json'
+
+export function getDsxuDesktopMcpImportRuntimeProfile(): {
+  runtime: 'DSXU Desktop MCP Import'
+  owner: 'DSXU MCP Config Intake Boundary'
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Desktop MCP Import',
+    owner: 'DSXU MCP Config Intake Boundary',
+    activationEvidence: [
+      'desktop import reads DSXU desktop MCP config first',
+      'provider-migration desktop MCP config is accepted only as migration intake',
+      'McpStdioServerConfigSchema validates imported server records',
+      'unsupported platforms fail closed with an explicit error',
+    ],
+    releaseRiskControls: [
+      'desktop MCP import is config intake, not MCP connection ownership',
+      'imported servers must still pass MCP config merge, Tool Gate, and permission checks',
+      'invalid desktop config records are skipped instead of silently activated',
+    ],
+  }
+}
 
 export async function getDesktopMcpConfigPath(): Promise<string> {
   const platform = getPlatform()
@@ -42,7 +65,7 @@ export async function getDesktopMcpConfigPath(): Promise<string> {
   }
 
   throw new Error(
-    'Could not find a DSXU desktop MCP config file. Create DSXU/dsxu_desktop_mcp_config.json or import a legacy desktop MCP config.',
+    'Could not find a DSXU desktop MCP config file. Create DSXU/dsxu_desktop_mcp_config.json or import a provider-migration desktop MCP config.',
   )
 }
 
@@ -57,7 +80,7 @@ async function getWindowsDesktopMcpConfigCandidates(): Promise<string[]> {
     candidates.push(
       `/mnt/c${wslPath}/AppData/Roaming/DSXU/${DSXU_DESKTOP_MCP_CONFIG}`,
       // Migration-only fallback: import existing desktop MCP servers into DSXU.
-      `/mnt/c${wslPath}/AppData/Roaming/DSXU/${LEGACY_DESKTOP_MCP_CONFIG}`,
+      `/mnt/c${wslPath}/AppData/Roaming/DSXU/${PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG}`,
     )
   }
 
@@ -88,7 +111,7 @@ async function getWindowsDesktopMcpConfigCandidates(): Promise<string[]> {
           'AppData',
           'Roaming',
           'DSXU',
-          LEGACY_DESKTOP_MCP_CONFIG,
+          PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG,
         ),
       )
     }
@@ -139,12 +162,4 @@ export async function readDesktopMcpServers(): Promise<
     logError(error)
     return {}
   }
-}
-
-// V14 lifecycle shim: desktop-mcp-import
-export function processDesktopMcpImportLifecycle(input) {
-  void input
-  const state = 'desktop-mcp-import-state'
-  const lifecycle = 'desktop-mcp-import:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

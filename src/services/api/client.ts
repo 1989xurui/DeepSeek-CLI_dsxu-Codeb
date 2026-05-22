@@ -1,5 +1,5 @@
 import ProviderClient, {
-  LEGACY_PROVIDER_SDK_PACKAGES,
+  PROVIDER_MIGRATION_SDK_PACKAGES,
   type ClientOptions,
   type ProviderClientInstance,
 } from 'src/types/providerClientSdk.js'
@@ -8,12 +8,12 @@ import type { GoogleAuth } from 'google-auth-library'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getApiKeyFromApiKeyHelper,
-  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   getProviderApiKey,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
   refreshAndGetAwsCredentials,
   refreshGcpCredentialsIfNeeded,
 } from 'src/utils/auth.js'
+import { getProviderControlTokens } from 'src/services/auth/dsxuProviderControlAuth.js'
 import { getUserAgent } from 'src/utils/http.js'
 import { getSmallFastModel } from 'src/utils/model/model.js'
 import {
@@ -34,18 +34,19 @@ import {
   getVertexRegionForModel,
   isDsxuCodeEnvTruthy,
   isEnvTruthy,
+  isProviderMigrationServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { DeepSeekAdapter } from './deepseek-adapter.js'
-const LEGACY_AGENT_SDK_CLIENT_APP_ENV = `CL${'AUDE'}_AGENT_SDK_CLIENT_APP`
-const LEGACY_SESSION_ID_HEADER = `X-${'Cl' + 'aude'}-Code-Session-Id`
-const LEGACY_REMOTE_CONTAINER_HEADER = `x-${'cl' + 'aude'}-remote-container-id`
-const LEGACY_REMOTE_SESSION_HEADER = `x-${'cl' + 'aude'}-remote-session-id`
-const LEGACY_CUSTOM_HEADERS_ENV = 'ANTH' + 'ROPIC_CUSTOM_HEADERS'
-const LEGACY_AUTH_TOKEN_ENV = 'ANTH' + 'ROPIC_AUTH_TOKEN'
-const LEGACY_SMALL_FAST_MODEL_AWS_REGION_ENV =
+const PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV = `CL${'AUDE'}_AGENT_SDK_CLIENT_APP`
+const PROVIDER_MIGRATION_SESSION_ID_HEADER = `X-${'Cl' + 'aude'}-Code-Session-Id`
+const PROVIDER_MIGRATION_REMOTE_CONTAINER_HEADER = `x-${'cl' + 'aude'}-remote-container-id`
+const PROVIDER_MIGRATION_REMOTE_SESSION_HEADER = `x-${'cl' + 'aude'}-remote-session-id`
+const PROVIDER_MIGRATION_CUSTOM_HEADERS_ENV = 'ANTH' + 'ROPIC_CUSTOM_HEADERS'
+const PROVIDER_MIGRATION_AUTH_TOKEN_ENV = 'ANTH' + 'ROPIC_AUTH_TOKEN'
+const PROVIDER_MIGRATION_SMALL_FAST_MODEL_AWS_REGION_ENV =
   'ANTH' + 'ROPIC_SMALL_FAST_MODEL_AWS_REGION'
-const LEGACY_FOUNDRY_API_KEY_ENV = 'ANTH' + 'ROPIC_FOUNDRY_API_KEY'
-const LEGACY_VERTEX_PROJECT_ID_ENV = 'ANTH' + 'ROPIC_VERTEX_PROJECT_ID'
+const PROVIDER_MIGRATION_FOUNDRY_API_KEY_ENV = 'ANTH' + 'ROPIC_FOUNDRY_API_KEY'
+const PROVIDER_MIGRATION_VERTEX_PROJECT_ID_ENV = 'ANTH' + 'ROPIC_VERTEX_PROJECT_ID'
 /**
  * Environment variables for different client types:
  *
@@ -55,26 +56,26 @@ const LEGACY_VERTEX_PROJECT_ID_ENV = 'ANTH' + 'ROPIC_VERTEX_PROJECT_ID'
  * AWS Bedrock:
  * - AWS credentials configured via aws-sdk defaults
  * - AWS_REGION or AWS_DEFAULT_REGION: Sets the AWS region for all models (default: us-east-1)
- * - Legacy provider small-fast-model AWS region env: Optional override for the small fast DSXU route
+ * - Provider migration small-fast-model AWS region env: Optional override for the small fast DSXU route
  *
  * Foundry (Azure):
- * - Legacy provider Foundry resource env: Your Azure resource name (e.g., 'my-resource')
+ * - Provider migration Foundry resource env: Your Azure resource name (e.g., 'my-resource')
  *   For the full endpoint: https://{resource}.services.ai.azure.com/provider/v1/messages
- * - Legacy provider Foundry base URL env: Optional. Alternative to resource - provide full base URL directly
+ * - Provider migration Foundry base URL env: Optional. Alternative to resource - provide full base URL directly
  *   (e.g., 'https://my-resource.services.ai.azure.com')
  *
  * Authentication (one of the following):
- * - Legacy provider Foundry API key env: Your Microsoft Foundry API key (if using API key auth)
+ * - Provider migration Foundry API key env: Your Microsoft Foundry API key (if using API key auth)
  * - Azure AD authentication: If no API key is provided, uses DefaultAzureCredential
  *   which supports multiple auth methods (environment variables, managed identity,
  *   Azure CLI, etc.). See: https://docs.microsoft.com/en-us/javascript/api/@azure/identity
  *
  * Vertex AI:
  * - Model-specific region variables (highest priority):
- *   - Model-specific Vertex region env vars for legacy provider model IDs
+ *   - Model-specific Vertex region env vars for provider migration model IDs
  * - CLOUD_ML_REGION: Optional. The default GCP region to use for all models
  *   If specific model region not specified above
- * - Legacy provider Vertex project ID env: Required. Your GCP project ID
+ * - Provider migration Vertex project ID env: Required. Your GCP project ID
  * - Standard GCP credentials configured via google-auth-library
  *
  * Priority for determining region:
@@ -97,6 +98,10 @@ function createStderrLogger(): ClientOptions['logger'] {
       console.error('[Provider SDK DEBUG]', msg, ...args),
   }
 }
+function shouldUseDsxuDeepSeekClient(): boolean {
+  return isDSXUCodeMode() || !isProviderMigrationServiceShellAllowed()
+}
+
 export async function getProviderClient({
   apiKey,
   maxRetries,
@@ -110,7 +115,7 @@ export async function getProviderClient({
   fetchOverride?: ClientOptions['fetch']
   source?: string
 }): Promise<ProviderClientInstance> {
-  if (isDSXUCodeMode()) {
+  if (shouldUseDsxuDeepSeekClient()) {
     const messages = {
       create: (params: unknown, options?: unknown) =>
         DeepSeekAdapter.transformRequest(params, options),
@@ -120,27 +125,29 @@ export async function getProviderClient({
       messages,
     } as unknown as ProviderClientInstance
   }
+  // Provider SDK branches below are migration-only. DSXU mainline must use
+  // DeepSeekAdapter unless DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 is set.
   const containerId = getDsxuCodeEnv('CONTAINER_ID')
   const remoteSessionId = getDsxuCodeEnv('REMOTE_SESSION_ID')
   const clientApp =
     process.env.DSXU_AGENT_SDK_CLIENT_APP ??
-    process.env[LEGACY_AGENT_SDK_CLIENT_APP_ENV]
+    process.env[PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV]
   const customHeaders = getCustomHeaders()
   const defaultHeaders: { [key: string]: string } = {
     'x-app': 'cli',
     'User-Agent': getUserAgent(),
-    [LEGACY_SESSION_ID_HEADER]: getSessionId(),
+    [PROVIDER_MIGRATION_SESSION_ID_HEADER]: getSessionId(),
     ...customHeaders,
-    ...(containerId ? { [LEGACY_REMOTE_CONTAINER_HEADER]: containerId } : {}),
+    ...(containerId ? { [PROVIDER_MIGRATION_REMOTE_CONTAINER_HEADER]: containerId } : {}),
     ...(remoteSessionId
-      ? { [LEGACY_REMOTE_SESSION_HEADER]: remoteSessionId }
+      ? { [PROVIDER_MIGRATION_REMOTE_SESSION_HEADER]: remoteSessionId }
       : {}),
     // SDK consumers can identify their app/library for backend analytics
     ...(clientApp ? { 'x-client-app': clientApp } : {}),
   }
   // Log API client configuration for HFI debugging
   logForDebugging(
-    `[API:request] Creating client, custom provider headers present: ${!!process.env[LEGACY_CUSTOM_HEADERS_ENV]}, has Authorization header: ${!!customHeaders['Authorization']}`,
+    `[API:request] Creating client, custom provider headers present: ${!!process.env[PROVIDER_MIGRATION_CUSTOM_HEADERS_ENV]}, has Authorization header: ${!!customHeaders['Authorization']}`,
   )
   // Add additional protection header if enabled via env var.
   const additionalProtectionEnabled = isDsxuCodeEnvTruthy(
@@ -152,7 +159,7 @@ export async function getProviderClient({
   logForDebugging('[API:auth] OAuth token check starting')
   await checkAndRefreshOAuthTokenIfNeeded()
   logForDebugging('[API:auth] OAuth token check complete')
-  if (!isLegacyCloudSubscriber()) {
+  if (!isProviderSubscriptionAccount()) {
     await configureApiKeyHeaders(defaultHeaders, getIsNonInteractiveSession())
   }
   const resolvedFetch = buildFetch(fetchOverride, source)
@@ -169,12 +176,12 @@ export async function getProviderClient({
     }),
   }
   if (isDsxuCodeEnvTruthy('USE_BEDROCK')) {
-    const ProviderBedrock = (await import(LEGACY_PROVIDER_SDK_PACKAGES.bedrock))[`${'Anth' + 'ropic'}Bedrock`]
+    const ProviderBedrock = (await import(PROVIDER_MIGRATION_SDK_PACKAGES.bedrock))[`${'Anth' + 'ropic'}Bedrock`]
     // Use region override for small fast model if specified
     const awsRegion =
       model === getSmallFastModel() &&
-      process.env[LEGACY_SMALL_FAST_MODEL_AWS_REGION_ENV]
-        ? process.env[LEGACY_SMALL_FAST_MODEL_AWS_REGION_ENV]
+      process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_AWS_REGION_ENV]
+        ? process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_AWS_REGION_ENV]
         : getAWSRegion()
     const bedrockArgs: Record<string, unknown> = {
       ...ARGS,
@@ -205,11 +212,11 @@ export async function getProviderClient({
     return new ProviderBedrock(bedrockArgs) as unknown as ProviderClientInstance
   }
   if (isDsxuCodeEnvTruthy('USE_FOUNDRY')) {
-    const ProviderFoundry = (await import(LEGACY_PROVIDER_SDK_PACKAGES.foundry))[`${'Anth' + 'ropic'}Foundry`]
+    const ProviderFoundry = (await import(PROVIDER_MIGRATION_SDK_PACKAGES.foundry))[`${'Anth' + 'ropic'}Foundry`]
     // Determine Azure AD token provider based on configuration
-    // SDK reads the legacy provider Foundry API-key env by default
+    // SDK reads the provider migration Foundry API-key env by default
     let azureADTokenProvider: (() => Promise<string>) | undefined
-    if (!process.env[LEGACY_FOUNDRY_API_KEY_ENV]) {
+    if (!process.env[PROVIDER_MIGRATION_FOUNDRY_API_KEY_ENV]) {
       if (isDsxuCodeEnvTruthy('SKIP_FOUNDRY_AUTH')) {
         // Mock token provider for testing/proxy scenarios (similar to Vertex mock GoogleAuth)
         azureADTokenProvider = () => Promise.resolve('')
@@ -240,7 +247,7 @@ export async function getProviderClient({
       await refreshGcpCredentialsIfNeeded()
     }
     const [providerVertexModule, { GoogleAuth }] = await Promise.all([
-      import(LEGACY_PROVIDER_SDK_PACKAGES.vertex),
+      import(PROVIDER_MIGRATION_SDK_PACKAGES.vertex),
       import('google-auth-library'),
     ])
     const ProviderVertex = providerVertexModule[`${'Anth' + 'ropic'}Vertex`]
@@ -283,7 +290,7 @@ export async function getProviderClient({
         } as unknown as GoogleAuth)
       : new GoogleAuth({
           scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-          // Only use the legacy provider Vertex project ID as last resort fallback
+          // Only use the provider migration Vertex project ID as last resort fallback
           // This prevents the 12-second metadata server timeout when:
           // - No project env vars are set AND
           // - No credential keyfile is specified AND
@@ -294,7 +301,7 @@ export async function getProviderClient({
           ...(hasProjectEnvVar || hasKeyFile
             ? {}
             : {
-                projectId: process.env[LEGACY_VERTEX_PROJECT_ID_ENV],
+                projectId: process.env[PROVIDER_MIGRATION_VERTEX_PROJECT_ID_ENV],
               }),
         })
     const vertexArgs: Record<string, unknown> = {
@@ -308,9 +315,9 @@ export async function getProviderClient({
   }
   // Determine authentication method based on available tokens
   const clientConfig: ClientOptions = {
-    apiKey: isLegacyCloudSubscriber() ? null : apiKey || getProviderApiKey(),
-    authToken: isLegacyCloudSubscriber()
-      ? getDsxuControlOAuthTokens()?.accessToken
+    apiKey: isProviderSubscriptionAccount() ? null : apiKey || getProviderApiKey(),
+    authToken: isProviderSubscriptionAccount()
+      ? getProviderControlTokens()?.accessToken
       : undefined,
     // Set baseURL from OAuth config when using staging OAuth
     ...(process.env.USER_TYPE === 'ant' &&
@@ -327,7 +334,7 @@ async function configureApiKeyHeaders(
   isNonInteractiveSession: boolean,
 ): Promise<void> {
   const token =
-    process.env[LEGACY_AUTH_TOKEN_ENV] ||
+    process.env[PROVIDER_MIGRATION_AUTH_TOKEN_ENV] ||
     (await getApiKeyFromApiKeyHelper(isNonInteractiveSession))
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
@@ -335,7 +342,7 @@ async function configureApiKeyHeaders(
 }
 function getCustomHeaders(): Record<string, string> {
   const customHeaders: Record<string, string> = {}
-  const customHeadersEnv = process.env[LEGACY_CUSTOM_HEADERS_ENV]
+  const customHeadersEnv = process.env[PROVIDER_MIGRATION_CUSTOM_HEADERS_ENV]
   if (!customHeadersEnv) return customHeaders
   // Split by newlines to support multiple headers
   const headerStrings = customHeadersEnv.split(/\n|\r\n/)

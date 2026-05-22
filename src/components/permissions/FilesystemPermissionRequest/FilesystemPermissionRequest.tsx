@@ -112,11 +112,3 @@ export function FilesystemPermissionRequest(t0) {
 function _temp(input) {
   return input as ToolInput;
 }
-
-// V14 lifecycle shim: filesystempermissionrequest
-export function processFilesystempermissionrequestLifecycle(input) {
-  void input
-  const state = 'filesystempermissionrequest-state'
-  const lifecycle = 'filesystempermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

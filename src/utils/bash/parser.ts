@@ -58,7 +58,7 @@ export async function parseCommand(
 ): Promise<ParsedCommandData | null> {
   if (!command || command.length > MAX_COMMAND_LENGTH) return null
 
-  // Gate: ant-only until pentest. External builds fall back to legacy
+  // Gate: dsxu internal until pentest. External builds fall back to fallback
   // regex/shell-quote path. Guarding the whole body inside the positive
   // branch lets Bun DCE the NAPI import AND keeps telemetry honest — we
   // only fire tengu_tree_sitter_load when a load was genuinely attempted.
@@ -88,7 +88,7 @@ export async function parseCommand(
  * (timeout / node budget / Rust panic). Distinct from `null` (module not
  * loaded). Adversarial input can trigger abort under MAX_COMMAND_LENGTH:
  * `(( a[0][0]... ))` with ~2800 subscripts hits PARSE_TIMEOUT_MICROS.
- * Callers MUST treat this as fail-closed (too-complex), NOT route to legacy.
+ * Callers MUST treat this as fail-closed (too-complex), NOT route to fallback.
  */
 export const PARSE_ABORTED = Symbol('parse-aborted')
 
@@ -114,7 +114,7 @@ export async function parseCommandRaw(
       const result = mod.parse(command)
       // SECURITY: Module loaded; null here = timeout/node-budget abort in
       // bashParser.ts (PARSE_TIMEOUT_MS=50, MAX_NODES=50_000).
-      // Previously collapsed into `return null` → parse-unavailable → legacy
+      // Previously collapsed into `return null` → parse-unavailable → fallback
       // path, which lacks EVAL_LIKE_BUILTINS — `trap`, `enable`, `hash` leaked.
       if (result === null) {
         logEvent('tengu_tree_sitter_parse_abort', {

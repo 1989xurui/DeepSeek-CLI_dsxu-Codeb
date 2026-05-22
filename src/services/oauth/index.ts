@@ -11,8 +11,6 @@ import type {
   SubscriptionType,
 } from './types.js'
 
-const LEGACY_PROVIDER_LOGIN_OPTION = `loginWith${'Cl' + 'aude'}Ai`
-
 /**
  * OAuth service that handles the OAuth 2.0 authorization code flow with PKCE.
  *
@@ -62,9 +60,7 @@ export class OAuthService {
       codeChallenge,
       state,
       port: this.port,
-      loginWithProviderCloud:
-        options?.loginWithProviderCloud ??
-        (options?.[LEGACY_PROVIDER_LOGIN_OPTION] as boolean | undefined),
+      loginWithProviderCloud: options?.loginWithProviderCloud,
       inferenceOnly: options?.inferenceOnly,
       orgUUID: options?.orgUUID,
       loginHint: options?.loginHint,

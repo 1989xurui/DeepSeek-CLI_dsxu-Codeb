@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import { mkdir, readdir, readFile } from 'fs/promises'
 import { join } from 'path'

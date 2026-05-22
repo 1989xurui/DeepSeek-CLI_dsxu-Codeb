@@ -6,7 +6,7 @@ import { Text } from 'src/ink.js';
 import { getRateLimitWarning, getUsingOverageText } from 'src/services/dsxuLimits.js';
 import { useDsxuLimits } from 'src/services/dsxuLimitsHook.js';
 import { getSubscriptionType } from 'src/utils/auth.js';
-import { hasLegacyCloudBillingAccess } from 'src/utils/billing.js';
+import { hasProviderSubscriptionBillingAccess } from 'src/services/auth/dsxuBillingAccess.js';
 import { getIsRemoteMode } from '../../bootstrap/state.js';
 export function useRateLimitWarningNotification(model) {
   const $ = _c(17);
@@ -44,7 +44,7 @@ export function useRateLimitWarningNotification(model) {
   const subscriptionType = t2;
   let t3;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = hasLegacyCloudBillingAccess();
+    t3 = hasProviderSubscriptionBillingAccess();
     $[6] = t3;
   } else {
     t3 = $[6];
@@ -110,12 +110,4 @@ export function useRateLimitWarningNotification(model) {
     t7 = $[16];
   }
   useEffect(t6, t7);
-}
-
-// V14 lifecycle shim: useratelimitwarningnotification
-export function processUseratelimitwarningnotificationLifecycle(input) {
-  void input
-  const state = 'useratelimitwarningnotification-state'
-  const lifecycle = 'useratelimitwarningnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

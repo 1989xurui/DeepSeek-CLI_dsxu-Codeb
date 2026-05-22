@@ -26,6 +26,13 @@ export type { MCPProgress } from '../../types/tools.js'
 
 export const MCPTool = buildTool({
   isMcp: true,
+  runtimeMetadata: {
+    owner: 'DSXU MCP Tool Adapter',
+    sideEffects: ['external-mcp-tool-call'],
+    permission: 'MCPTool checkPermissions requires explicit permission for MCP execution',
+    evidence: ['server name', 'tool name', 'MCP progress', 'MCP result metadata'],
+    uiProjection: 'MCP tool-use/result UI',
+  },
   // Overridden in mcpClient.ts with the real MCP tool name + args
   isOpenWorld() {
     return false
@@ -75,12 +82,3 @@ export const MCPTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: mcptool
-export function processMcptoolLifecycle(input) {
-  void input
-  const state = 'mcptool-state'
-  const lifecycle = 'mcptool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

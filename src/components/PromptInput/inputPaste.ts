@@ -88,12 +88,3 @@ export function maybeTruncateInput(
     },
   }
 }
-
-
-// V14 lifecycle shim: inputpaste
-export function processInputpasteLifecycle(input) {
-  void input
-  const state = 'inputpaste-state'
-  const lifecycle = 'inputpaste:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

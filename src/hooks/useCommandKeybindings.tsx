@@ -105,11 +105,3 @@ export function CommandKeybindingHandlers(t0) {
   useKeybindings(handlers, t4);
   return null;
 }
-
-// V14 lifecycle shim: usecommandkeybindings
-export function processUsecommandkeybindingsLifecycle(input) {
-  void input
-  const state = 'usecommandkeybindings-state'
-  const lifecycle = 'usecommandkeybindings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -79,20 +79,3 @@ export function getDsxuFileReadPromptRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 strict lifecycle shim: tools-FileReadTool-prompt
-export function processToolsFileReadToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-FileReadTool-prompt-state'
-  const lifecycle = 'tools-FileReadTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsFileReadToolPromptStrict(input) {
-  return processToolsFileReadToolPromptStrictLifecycle(input)
-}

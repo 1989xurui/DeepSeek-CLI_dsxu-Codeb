@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import {
   getDsxuV7Item,
@@ -9,7 +9,20 @@ import {
 const root = process.cwd()
 
 function read(path: string): string {
+  if (path.includes('DSXU-Code-V7-')) {
+    return readOpsDocContaining('V7-10 Release Gate', 'v7-release-gate')
+  }
   return readFileSync(join(root, path), 'utf8')
+}
+
+function readOpsDocContaining(...markers: string[]): string {
+  const opsRoot = join(root, '.dsxu', 'ops')
+  for (const name of readdirSync(opsRoot)) {
+    if (!name.endsWith('.md')) continue
+    const content = readFileSync(join(opsRoot, name), 'utf8')
+    if (markers.every(marker => content.includes(marker))) return content
+  }
+  throw new Error(`missing ops doc with markers: ${markers.join(', ')}`)
 }
 
 describe('DSXU V7 productization contract', () => {
@@ -109,12 +122,12 @@ describe('DSXU V7 productization contract', () => {
     expect(provider).toContain('filterMcpCredentials')
     expect(tests).toContain('executes real ReadMcpResource class')
     expect(permission?.requiredEvidence.join('\n')).toContain('hard deny dominates')
-    expect(tests).toContain('covers the DSXU shell permission matrix')
+    expect(tests).toContain('Bash and PowerShell permission matrix through the DSXU shell permission matrix')
     expect(tests).toContain('acceptEdits')
     expect(prompt?.requiredEvidence.join('\n')).toContain('DSXU DeepSeek Tool-Use Contract')
     expect(systemPrompt).toContain('DSXU DeepSeek Tool-Use Contract')
     expect(planPrompt).toContain('Scope fence')
-    expect(planPrompt).toContain('4. Acceptance')
+    expect(planPrompt).toContain('8. Acceptance')
   })
 
   test('release gate records benchmark count, V7 live gate, CLI smoke, and archive completion truth', () => {

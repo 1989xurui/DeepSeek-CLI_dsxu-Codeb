@@ -56,12 +56,3 @@ export function recordShownTip(tip: Tip): void {
     cooldownSessions: tip.cooldownSessions,
   })
 }
-
-
-// V14 lifecycle shim: tipscheduler
-export function processTipschedulerLifecycle(input) {
-  void input
-  const state = 'tipscheduler-state'
-  const lifecycle = 'tipscheduler:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

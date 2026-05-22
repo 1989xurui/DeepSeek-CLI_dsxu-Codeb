@@ -253,20 +253,3 @@ export function getDsxuBashUtilsRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 strict lifecycle shim: tools-BashTool-utils
-export function processToolsBashToolUtilsStrictLifecycle(input) {
-  void input
-  const state = 'tools-BashTool-utils-state'
-  const lifecycle = 'tools-BashTool-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsBashToolUtilsStrict(input) {
-  return processToolsBashToolUtilsStrictLifecycle(input)
-}

@@ -114,7 +114,7 @@ export function HelpV2(t0) {
     if (false && antOnlyCommands.length > 0) {
       let t7;
       if ($[26] !== antOnlyCommands || $[27] !== close || $[28] !== columns || $[29] !== maxHeight) {
-        t7 = <Tab key="ant-only" title="[ant-only]"><Commands commands={antOnlyCommands} maxHeight={maxHeight} columns={columns} title="Browse ant-only commands:" onCancel={close} /></Tab>;
+        t7 = <Tab key="dsxu internal" title="[dsxu internal]"><Commands commands={antOnlyCommands} maxHeight={maxHeight} columns={columns} title="Browse dsxu internal commands:" onCancel={close} /></Tab>;
         $[26] = antOnlyCommands;
         $[27] = close;
         $[28] = columns;
@@ -180,12 +180,4 @@ export function HelpV2(t0) {
     t10 = $[43];
   }
   return t10;
-}
-
-// V14 lifecycle shim: helpv2
-export function processHelpv2Lifecycle(input) {
-  void input
-  const state = 'helpv2-state'
-  const lifecycle = 'helpv2:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

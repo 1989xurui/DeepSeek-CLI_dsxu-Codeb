@@ -53,12 +53,3 @@ export function getDsxuGeneralPurposeAgentRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 lifecycle shim: generalpurposeagent
-export function processGeneralpurposeagentLifecycle(input) {
-  void input
-  const state = 'generalpurposeagent-state'
-  const lifecycle = 'generalpurposeagent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

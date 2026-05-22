@@ -23,11 +23,3 @@ export function useMoreRight(_args: {
     render: () => null
   };
 }
-
-// V14 lifecycle shim: usemoreright
-export function processUsemorerightLifecycle(input) {
-  void input
-  const state = 'usemoreright-state'
-  const lifecycle = 'usemoreright:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

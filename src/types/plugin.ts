@@ -361,12 +361,3 @@ export function getPluginErrorMessage(error: PluginError): string {
       return `Plugin "${error.plugin}" not cached at ${error.installPath} — run /plugins to refresh`
   }
 }
-
-
-// V14 lifecycle shim: plugin
-export function processPluginLifecycle(input) {
-  void input
-  const state = 'plugin-state'
-  const lifecycle = 'plugin:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

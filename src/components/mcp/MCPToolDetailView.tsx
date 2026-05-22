@@ -209,11 +209,3 @@ export function MCPToolDetailView(t0) {
 function _temp(exitState) {
   return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />;
 }
-
-// V14 lifecycle shim: mcptooldetailview
-export function processMcptooldetailviewLifecycle(input) {
-  void input
-  const state = 'mcptooldetailview-state'
-  const lifecycle = 'mcptooldetailview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -5,7 +5,7 @@ import type {
 import { getAPIProvider } from 'src/utils/model/providers.js'
 import type { PermissionResult } from 'src/utils/permissions/PermissionResult.js'
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { queryModelWithStreaming } from '../../services/api/dsxu.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -21,7 +21,7 @@ import {
   renderToolUseMessage,
   renderToolUseProgressMessage,
 } from './UI.js'
-import { isCompatWebSearchCapableModel } from '../../dsxu/legacy/model/legacyProviderWebSearchModel.js'
+import { isProviderMigrationWebSearchCapableModel } from '../../utils/model/providerMigration/providerMigrationWebSearchModel.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -154,6 +154,22 @@ export const WebSearchTool = buildTool({
   name: WEB_SEARCH_TOOL_NAME,
   searchHint: 'search the web for current information',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Network Search Tool',
+    sideEffects: [
+      'external-web-search',
+      'network-read',
+      'model-mediated-search-result-processing',
+    ],
+    permission: 'passthrough permission before web search',
+    evidence: [
+      'inputSchema.query',
+      'allowed/blocked domain input',
+      'search result output',
+      'durationSeconds output',
+    ],
+    uiProjection: 'web search progress and result summary',
+  },
   shouldDefer: true,
   async description(input) {
     return `DSXU wants to search the web for: ${input.query}`
@@ -177,7 +193,7 @@ export const WebSearchTool = buildTool({
 
     // Enable for Vertex AI with supported web-search-capable models.
     if (provider === 'vertex') {
-      return isCompatWebSearchCapableModel(model)
+      return isProviderMigrationWebSearchCapableModel(model)
     }
 
     // Foundry only ships models that already support Web Search

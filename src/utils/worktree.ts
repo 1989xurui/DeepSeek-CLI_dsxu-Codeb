@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import chalk from 'chalk'
 import { spawnSync } from 'child_process'
@@ -203,14 +202,14 @@ const GIT_NO_PROMPT_ENV = {
   GIT_ASKPASS: '',
 }
 
-const LEGACY_RUNTIME_DIR = '.' + ('cl' + 'aude')
-const LEGACY_INTERNAL_REPO = 'cl' + 'aude-cli-internal'
-const LEGACY_TMUX_ENV_PREFIX = `CL${'AUDE'}_CODE_TMUX_`
+const PROVIDER_MIGRATION_RUNTIME_DIR = '.' + ('cl' + 'aude')
+const PROVIDER_MIGRATION_INTERNAL_REPO = 'cl' + 'aude-cli-internal'
+const PROVIDER_MIGRATION_TMUX_ENV_PREFIX = `CL${'AUDE'}_CODE_TMUX_`
 
 function worktreesDir(repoRoot: string): string {
   return join(
     repoRoot,
-    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_RUNTIME_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_RUNTIME_DIR,
     'worktrees',
   )
 }
@@ -1030,17 +1029,17 @@ export async function removeAgentWorktree(
  * Slug patterns for throwaway worktrees created by AgentTool (`agent-a<7hex>`,
  * from earlyAgentId.slice(0,8)), WorkflowTool (`wf_<runId>-<idx>` where runId
  * is randomUUID().slice(0,12) = 8 hex + `-` + 3 hex), and the old control shell
- * (`legacy-control-<safeFilenameId>`). These leak when the parent process is killed
+ * (`bridge-<safeFilenameId>`). These leak when the parent process is killed
  * (Ctrl+C, ESC, crash) before their in-process cleanup runs. Exact-shape
  * patterns avoid sweeping user-named EnterWorktree slugs like `wf-myfeature`.
  */
 const EPHEMERAL_WORKTREE_PATTERNS = [
   /^agent-a[0-9a-f]{7}$/,
   /^wf_[0-9a-f]{8}-[0-9a-f]{3}-\d+$/,
-  // Legacy wf-<idx> slugs from before workflowRunId disambiguation -kept so
+  // Historical wf-<idx> slugs from before workflowRunId disambiguation -kept so
   // the 30-day sweep still cleans up worktrees leaked by older builds.
   /^wf-\d+$/,
-  // Real old-control slugs are `bridge-${safeFilenameId(sessionId)}` in legacy builds.
+  // Real old-control slugs are `bridge-${safeFilenameId(sessionId)}` in provider-migration source builds.
   /^bridge-[A-Za-z0-9_]+(-[A-Za-z0-9_]+)*$/,
   // Template job worktrees: job-<templateName>-<8hex>. Prefix distinguishes
   // from user-named EnterWorktree slugs that happen to end in 8 hex.
@@ -1366,9 +1365,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     DSXU_CODE_TMUX_SESSION: tmuxSessionName,
     DSXU_CODE_TMUX_PREFIX: tmuxPrefix,
     DSXU_CODE_TMUX_PREFIX_CONFLICTS: prefixConflicts ? '1' : '',
-    [`${LEGACY_TMUX_ENV_PREFIX}SESSION`]: tmuxSessionName,
-    [`${LEGACY_TMUX_ENV_PREFIX}PREFIX`]: tmuxPrefix,
-    [`${LEGACY_TMUX_ENV_PREFIX}PREFIX_CONFLICTS`]: prefixConflicts ? '1' : '',
+    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}SESSION`]: tmuxSessionName,
+    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}PREFIX`]: tmuxPrefix,
+    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}PREFIX_CONFLICTS`]: prefixConflicts ? '1' : '',
   }
 
   // Check if session already exists
@@ -1403,8 +1402,8 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
 
   // For internal development builds, set up dev panes (watch + start).
   const isAnt = process.env.USER_TYPE === 'ant'
-  const isInternalCliRepo = repoName === LEGACY_INTERNAL_REPO
-  const shouldSetupDevPanes = isAnt && isInternalCliRepo && !sessionExists
+  const isProviderMigrationInternalRepo = repoName === PROVIDER_MIGRATION_INTERNAL_REPO
+  const shouldSetupDevPanes = isAnt && isProviderMigrationInternalRepo && !sessionExists
 
   if (shouldSetupDevPanes) {
     // Create detached session with DSXU in first pane.

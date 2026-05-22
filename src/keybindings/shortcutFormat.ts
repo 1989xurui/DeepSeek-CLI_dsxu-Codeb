@@ -61,12 +61,3 @@ export function getShortcutDisplay(
   }
   return resolved
 }
-
-
-// V14 lifecycle shim: shortcutformat
-export function processShortcutformatLifecycle(input) {
-  void input
-  const state = 'shortcutformat-state'
-  const lifecycle = 'shortcutformat:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

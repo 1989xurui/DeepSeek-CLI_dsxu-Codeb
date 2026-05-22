@@ -11,21 +11,3 @@ const command: Command = {
 }
 
 export default command
-
-
-// V14 command lifecycle shim: chrome
-export function processChromeCommandLifecycle(input) {
-  void input
-  const state = 'chrome-command-state'
-  const lifecycle = 'chrome:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'chrome',
-  }
-}
-
-export function runChromeCommand(input) {
-  return processChromeCommandLifecycle(input)
-}

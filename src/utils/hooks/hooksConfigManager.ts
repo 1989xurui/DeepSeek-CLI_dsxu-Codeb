@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import type { HookEvent } from 'src/entrypoints/agentSdkTypes.js'
 import { getRegisteredHooks } from '../../bootstrap/state.js'
@@ -351,7 +350,7 @@ export function groupHooksByEventAndMatcher(
               event: hookEvent,
               config: {
                 type: 'command',
-                command: '[ANT-ONLY] Built-in Hook',
+                command: '[DSXU internal] Built-in Hook',
               },
               matcher: matcher.matcher,
               source: 'builtinHook',

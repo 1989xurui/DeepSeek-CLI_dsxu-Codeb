@@ -156,12 +156,3 @@ export function useSessionBackgrounding({
     handleBackgroundSession,
   }
 }
-
-
-// V14 lifecycle shim: usesessionbackgrounding
-export function processUsesessionbackgroundingLifecycle(input) {
-  void input
-  const state = 'usesessionbackgrounding-state'
-  const lifecycle = 'usesessionbackgrounding:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

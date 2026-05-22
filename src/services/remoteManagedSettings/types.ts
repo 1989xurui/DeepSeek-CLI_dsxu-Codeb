@@ -29,20 +29,3 @@ export type RemoteManagedSettingsFetchResult = {
   error?: string
   skipRetry?: boolean // If true, don't retry on failure (e.g., auth errors)
 }
-
-
-// V14 strict lifecycle shim: services-remoteManagedSettings-types
-export function processServicesRemoteManagedSettingsTypesStrictLifecycle(input) {
-  void input
-  const state = 'services-remoteManagedSettings-types-state'
-  const lifecycle = 'services-remoteManagedSettings-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesRemoteManagedSettingsTypesStrict(input) {
-  return processServicesRemoteManagedSettingsTypesStrictLifecycle(input)
-}

@@ -92,12 +92,3 @@ export function formatMemoryManifest(memories: MemoryHeader[]): string {
     })
     .join('\n')
 }
-
-
-// V14 lifecycle shim: memoryscan
-export function processMemoryscanLifecycle(input) {
-  void input
-  const state = 'memoryscan-state'
-  const lifecycle = 'memoryscan:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

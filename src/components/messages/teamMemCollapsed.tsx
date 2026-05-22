@@ -137,11 +137,3 @@ export function TeamMemCountParts(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: teammemcollapsed
-export function processTeammemcollapsedLifecycle(input) {
-  void input
-  const state = 'teammemcollapsed-state'
-  const lifecycle = 'teammemcollapsed:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -96,13 +96,8 @@ export function shouldAutoRunIssue(reason: AutoRunIssueReason): boolean {
 
 /**
  * Returns the appropriate command to auto-run based on the reason
- * ANT-ONLY: legacy good-feedback command only exists in internal builds
  */
-export function getAutoRunCommand(reason: AutoRunIssueReason): string {
-  // Only internal builds have the legacy good-feedback command
-  if ("external" === 'ant' && reason === 'feedback_survey_good') {
-    return '/good-dsxu';
-  }
+export function getAutoRunCommand(_reason: AutoRunIssueReason): string {
   return '/issue';
 }
 

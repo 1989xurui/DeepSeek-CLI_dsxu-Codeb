@@ -46,11 +46,3 @@ export function handleReconnectError(error: unknown, serverName: string): string
   const errorMessage = error instanceof Error ? error.message : String(error);
   return `Error reconnecting to ${serverName}: ${errorMessage}`;
 }
-
-// V14 lifecycle shim: reconnecthelpers
-export function processReconnecthelpersLifecycle(input) {
-  void input
-  const state = 'reconnecthelpers-state'
-  const lifecycle = 'reconnecthelpers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

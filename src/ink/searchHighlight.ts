@@ -91,12 +91,3 @@ export function applySearchHighlight(
 
   return applied
 }
-
-
-// V14 lifecycle shim: searchhighlight
-export function processSearchhighlightLifecycle(input) {
-  void input
-  const state = 'searchhighlight-state'
-  const lifecycle = 'searchhighlight:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

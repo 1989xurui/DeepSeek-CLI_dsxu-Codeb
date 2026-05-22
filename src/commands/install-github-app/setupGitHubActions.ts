@@ -86,7 +86,7 @@ async function createWorkflowFile(
         ...context,
       })
       throw new Error(
-        `Failed to create workflow file ${workflowPath}: A DSXU/legacy workflow file already exists in this repository. Please remove it first or update it manually.`,
+        `Failed to create workflow file ${workflowPath}: A DSXU/provider-migration source workflow file already exists in this repository. Please remove it first or update it manually.`,
       )
     }
 
@@ -101,7 +101,7 @@ async function createWorkflowFile(
       '\n\nNeed help? Common issues:\n' +
       '- Permission denied -> Run: gh auth refresh -h github.com -s repo,workflow\n' +
       '- Not authorized -> Ensure you have admin access to the repository\n' +
-      '- For manual setup -> Visit: DSXU GitHub workflow template or legacy dsxu-code-action migration docs'
+      '- For manual setup -> Visit: DSXU GitHub workflow template or provider-migration source action docs'
 
     throw new Error(
       `Failed to create workflow file ${workflowPath}: ${createFileResult.stderr}${helpText}`,
@@ -274,7 +274,7 @@ export async function setupGitHubActions(
           '\n\nNeed help? Common issues:\n' +
           '- Permission denied -> Run: gh auth refresh -h github.com -s repo\n' +
           '- Not authorized -> Ensure you have admin access to the repository\n' +
-          '- For manual setup -> Visit: DSXU GitHub workflow template or legacy dsxu-code-action migration docs'
+          '- For manual setup -> Visit: DSXU GitHub workflow template or provider-migration source action docs'
 
         throw new Error(
           `Failed to set API key secret: ${setSecretResult.stderr || 'Unknown error'}${helpText}`,
@@ -336,7 +336,7 @@ export function getDsxuSetupGitHubActionsRuntimeProfile(): {
     branchPrefix: 'add-dsxu-github-actions-',
     secretPriority: [
       'DSXU_CODE_OAUTH_TOKEN',
-      'legacy OAuth token alias (isolated)',
+      'provider OAuth token alias (isolated)',
       'custom API key secret',
     ],
     workflowMessages: [
@@ -346,17 +346,8 @@ export function getDsxuSetupGitHubActionsRuntimeProfile(): {
     activationEvidence: [
       'workflow setup branch uses DSXU prefix',
       'workflow creation messages are DSXU-branded',
-      'DSXU OAuth secret is preferred; legacy OAuth aliases are isolated',
+      'DSXU OAuth secret is preferred; provider OAuth aliases are isolated',
       'analytics fields use selected_dsxu_workflow and selected_dsxu_review_workflow',
     ],
   }
-}
-
-
-// V14 lifecycle shim: setupgithubactions
-export function processSetupgithubactionsLifecycle(input) {
-  void input
-  const state = 'setupgithubactions-state'
-  const lifecycle = 'setupgithubactions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

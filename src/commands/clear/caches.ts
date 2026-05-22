@@ -1,8 +1,8 @@
 ﻿/**
- * Backward-compatible /clear cache entrypoint.
+ * DSXU /clear cache command projection.
  *
  * The implementation lives in DSXU's session cache control module so
- * resume/continue flows no longer depend on this legacy command file.
+ * resume/continue flows use the mainline command owner instead of a local lifecycle shim.
  */
 export {
   clearDSXUSessionCaches,

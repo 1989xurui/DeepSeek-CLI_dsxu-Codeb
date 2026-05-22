@@ -214,11 +214,3 @@ export function PermissionRequest(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: permissionrequest
-export function processPermissionrequestLifecycle(input) {
-  void input
-  const state = 'permissionrequest-state'
-  const lifecycle = 'permissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

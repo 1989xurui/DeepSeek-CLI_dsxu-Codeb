@@ -20,12 +20,3 @@ export const EMPTY_USAGE: Readonly<NonNullableUsage> = {
   iterations: [],
   speed: 'standard',
 }
-
-
-// V14 lifecycle shim: emptyusage
-export function processEmptyusageLifecycle(input) {
-  void input
-  const state = 'emptyusage-state'
-  const lifecycle = 'emptyusage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

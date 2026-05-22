@@ -162,8 +162,22 @@ export const TaskOutputTool: Tool<InputSchema, TaskOutputToolOutput> = buildTool
   name: TASK_OUTPUT_TOOL_NAME,
   searchHint: 'read output/logs from a background task',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Task Lifecycle',
+    sideEffects: [
+      'task-output-read',
+      'background-task-poll',
+    ],
+    permission: 'read-only task output; prefer Read on output file path',
+    evidence: [
+      'inputSchema.task_id',
+      'task output file path',
+      'status/output output',
+    ],
+    uiProjection: 'background task output/status summary',
+  },
   shouldDefer: true,
-  // Backwards-compatible aliases for renamed tools
+  // Historical aliases for renamed tools.
   aliases: ['AgentOutputTool', 'BashOutputTool'],
   userFacingName() {
     return 'Task Output';
@@ -607,11 +621,3 @@ function TaskOutputResultDisplay(t0) {
   return t5;
 }
 export default TaskOutputTool;
-
-// V14 lifecycle shim: taskoutputtool
-export function processTaskoutputtoolLifecycle(input) {
-  void input
-  const state = 'taskoutputtool-state'
-  const lifecycle = 'taskoutputtool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

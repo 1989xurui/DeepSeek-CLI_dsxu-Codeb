@@ -38,6 +38,21 @@ export const CronListTool = buildTool({
   name: CRON_LIST_TOOL_NAME,
   searchHint: 'list active cron jobs',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Scheduled Task Lifecycle',
+    sideEffects: [
+      'cron-task-read',
+      'teammate-scope-filtering',
+    ],
+    permission: 'read-only scheduled task listing',
+    evidence: [
+      'empty inputSchema',
+      'listAllCronTasks',
+      'teammate context filter',
+      'jobs output',
+    ],
+    uiProjection: 'scheduled task list and human schedule summary',
+  },
   shouldDefer: true,
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -95,12 +110,3 @@ export const CronListTool = buildTool({
   renderToolUseMessage: renderListToolUseMessage,
   renderToolResultMessage: renderListResultMessage,
 } satisfies ToolDef<InputSchema, ListOutput>)
-
-
-// V14 lifecycle shim: cronlisttool
-export function processCronlisttoolLifecycle(input) {
-  void input
-  const state = 'cronlisttool-state'
-  const lifecycle = 'cronlisttool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

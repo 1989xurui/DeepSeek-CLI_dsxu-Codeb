@@ -321,12 +321,3 @@ export function addToTotalSessionCost(
   }
   return totalCost
 }
-
-
-// V14 lifecycle shim: cost-tracker
-export function processCostTrackerLifecycle(input) {
-  void input
-  const state = 'cost-tracker-state'
-  const lifecycle = 'cost-tracker:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

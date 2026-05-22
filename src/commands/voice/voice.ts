@@ -18,13 +18,13 @@ export const call: LocalCommandCall = async () => {
   if (!isVoiceModeEnabled()) {
     // Differentiate: OAuth-less users get an auth hint, everyone else
     // gets nothing (command shouldn't be reachable when the kill-switch is on).
-    const isLegacyCloudAuthEnabled =
+    const isProviderMigrationAuthEnabled =
       authUtils['is' + 'Anth' + 'ropicAuthEnabled']
-    if (!isLegacyCloudAuthEnabled()) {
+    if (!isProviderMigrationAuthEnabled()) {
       return {
         type: 'text' as const,
         value:
-          'Voice mode is legacy-isolated in DSXU. Configure a DSXU voice provider before enabling it.',
+          'Voice mode is provider-migration-isolated in DSXU. Configure a DSXU voice provider before enabling it.',
       }
     }
     return {
@@ -149,21 +149,4 @@ export const call: LocalCommandCall = async () => {
     type: 'text' as const,
     value: `Voice mode enabled. Hold ${key} to record.${langNote}`,
   }
-}
-
-
-// V14 strict lifecycle shim: commands-voice-voice
-export function processCommandsVoiceVoiceStrictLifecycle(input) {
-  void input
-  const state = 'commands-voice-voice-state'
-  const lifecycle = 'commands-voice-voice:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsVoiceVoiceStrict(input) {
-  return processCommandsVoiceVoiceStrictLifecycle(input)
 }

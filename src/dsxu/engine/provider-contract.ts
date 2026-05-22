@@ -45,7 +45,10 @@ export type DSXUMCPCredentialFilter = (
   context?: { serverName?: string; toolName?: string },
 ) => unknown
 
-export type DSXULegacyBridgeOptIn = {
+export const DSXU_PROVIDER_MIGRATION_BRIDGE_FLAG =
+  'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
+
+export type DSXUProviderMigrationBridgeOptIn = {
   enabled: boolean
   flagName: string
   reason: string
@@ -53,7 +56,7 @@ export type DSXULegacyBridgeOptIn = {
 
 export type DSXUProviderContract = {
   identity: DSXUProviderIdentity
-  legacyBridge: DSXULegacyBridgeOptIn
+  providerMigrationBridge: DSXUProviderMigrationBridgeOptIn
   createRemoteSession(request: DSXURemoteSessionRequest): Promise<DSXURemoteSessionHandle>
   emitEvent(event: DSXUProviderEvent): void
   synchronizeTask?(event: Extract<DSXUProviderEvent, { type: 'task_synchronized' }>): void
@@ -76,10 +79,10 @@ export function createLocalDSXUProviderContract(
       mode: 'local',
       ...(overrides.identity ?? {}),
     },
-    legacyBridge: {
+    providerMigrationBridge: {
       enabled: false,
-      flagName: 'DSXU_ENABLE_LEGACY_BRIDGE',
-      reason: 'Legacy bridge/remote/OAuth shells are opt-in only and outside the default DSXU mainline.',
+      flagName: DSXU_PROVIDER_MIGRATION_BRIDGE_FLAG,
+      reason: 'Provider-migration bridge/remote/OAuth shells are opt-in only and outside the default DSXU mainline.',
     },
     createRemoteSession:
       overrides.createRemoteSession ??
@@ -116,7 +119,7 @@ export function getDsxuProviderShellReplacementContract(): {
   sourceSemantics: readonly string[]
   dsxuOwnedLandingPoints: readonly string[]
   defaultPathRules: readonly string[]
-  legacyOptInRules: readonly string[]
+  providerMigrationOptInRules: readonly string[]
   archivalRequirements: readonly string[]
 } {
   return {
@@ -140,18 +143,19 @@ export function getDsxuProviderShellReplacementContract(): {
       'remote provider shells are blocked until a DSXU-owned remote session backend is configured',
       'MCP credentials are filtered by filterMcpCredentials before tool results can re-enter the model',
       'permission callbacks are explicit and deny-by-default',
-      'task_synchronized events are provider events, not a legacy bridge runtime',
+      'task_synchronized events are provider events, not a provider-migration bridge runtime',
     ],
-    legacyOptInRules: [
-      'legacyBridge.enabled is false by default',
-      'legacy bridge targets require DSXU_ENABLE_LEGACY_BRIDGE',
+    providerMigrationOptInRules: [
+      'providerMigrationBridge.enabled is false by default',
+      'bridge targets require DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE',
+      'provider-migration source bridge aliases are accepted only as migration aliases',
       'bridge, remote-control, OAuth, and remote-managed settings remain outside default DSXU_CODE_MODE',
     ],
     archivalRequirements: [
       'provider-shell-default-unreachable live benchmark is green',
       'real-mcp-resource-redaction live benchmark is green',
       'default CLI path test proves bridge/remote aliases are rejected',
-      'all compatibility aliases either map to DSXU provider contract or require explicit legacy flags',
+      'all provider-migration aliases either map to DSXU provider contract or require explicit provider-migration flags',
     ],
   }
 }

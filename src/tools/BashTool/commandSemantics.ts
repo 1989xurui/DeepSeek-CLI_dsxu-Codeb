@@ -138,12 +138,3 @@ export function interpretCommandResult(
     message: result.message,
   }
 }
-
-
-// V14 lifecycle shim: commandsemantics
-export function processCommandsemanticsLifecycle(input) {
-  void input
-  const state = 'commandsemantics-state'
-  const lifecycle = 'commandsemantics:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -46,11 +46,3 @@ export function WorkerBadge(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: workerbadge
-export function processWorkerbadgeLifecycle(input) {
-  void input
-  const state = 'workerbadge-state'
-  const lifecycle = 'workerbadge:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

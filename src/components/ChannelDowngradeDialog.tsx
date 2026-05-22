@@ -99,11 +99,3 @@ export function ChannelDowngradeDialog(t0) {
   }
   return t9;
 }
-
-// V14 lifecycle shim: channeldowngradedialog
-export function processChanneldowngradedialogLifecycle(input) {
-  void input
-  const state = 'channeldowngradedialog-state'
-  const lifecycle = 'channeldowngradedialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

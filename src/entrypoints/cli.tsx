@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 
 import { isDsxuCodeEnvTruthy } from '../utils/envUtils.js'
@@ -9,8 +8,8 @@ process.env.COREPACK_ENABLE_AUTO_PIN = '0';
 
 const isDSXUCodeMode = process.env.DSXU_CODE_MODE === '1';
 const productName = isDSXUCodeMode ? 'DSXU Code' : 'DSXU Code';
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
-const LEGACY_BROWSER_MCP_FLAG = '--' + 'cla' + 'ude-in-chrome-mcp'
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
+const PROVIDER_MIGRATION_BROWSER_MCP_FLAG = '--' + 'cla' + 'ude-in-chrome-mcp'
 
 // Set max heap size for child processes in CCR environments (containers have 16GB)
 // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
@@ -29,19 +28,19 @@ if (isDsxuCodeEnvTruthy('REMOTE')) {
 if (feature('ABLATION_BASELINE') && isDsxuCodeEnvTruthy('ABLATION_BASELINE')) {
   for (const k of [
     'DSXU_CODE_SIMPLE',
-    `${LEGACY_CODE_ENV_PREFIX}_SIMPLE`,
+    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_SIMPLE`,
     'DSXU_CODE_DISABLE_THINKING',
-    `${LEGACY_CODE_ENV_PREFIX}_DISABLE_THINKING`,
+    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_THINKING`,
     'DSXU_CODE_DISABLE_INTERLEAVED_THINKING',
     'DISABLE_INTERLEAVED_THINKING',
     'DSXU_CODE_DISABLE_COMPACT',
-    `${LEGACY_CODE_ENV_PREFIX}_DISABLE_COMPACT`,
+    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_COMPACT`,
     'DSXU_CODE_DISABLE_AUTO_COMPACT',
     'DISABLE_AUTO_COMPACT',
     'DSXU_CODE_DISABLE_AUTO_MEMORY',
-    `${LEGACY_CODE_ENV_PREFIX}_DISABLE_AUTO_MEMORY`,
+    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_AUTO_MEMORY`,
     'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
-    `${LEGACY_CODE_ENV_PREFIX}_DISABLE_BACKGROUND_TASKS`,
+    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_BACKGROUND_TASKS`,
   ]) {
     // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
     process.env[k] ??= '1';
@@ -72,7 +71,7 @@ async function main(): Promise<void> {
 
   // Fast-path for --dump-system-prompt: output the rendered system prompt and exit.
   // Used by prompt sensitivity evals to extract the system prompt at a specific commit.
-  // Ant-only: eliminated from external builds via feature flag.
+  // DSXU internal: eliminated from external builds via feature flag.
   if (feature('DUMP_SYSTEM_PROMPT') && args[0] === '--dump-system-prompt') {
     profileCheckpoint('cli_dump_system_prompt_path');
     const {
@@ -100,18 +99,11 @@ async function main(): Promise<void> {
     await runDsxuBrowserProviderMcpServer();
     return;
   }
-  if (isDSXUCodeMode && process.argv[2] === LEGACY_BROWSER_MCP_FLAG) {
-    console.error('DSXU Code does not expose the legacy browser MCP path. Use DSXU MCP/browser providers instead.');
+  if (process.argv[2] === PROVIDER_MIGRATION_BROWSER_MCP_FLAG) {
+    console.error('DSXU Code does not expose the provider-migration browser MCP path. Use --dsxu-browser-mcp or DSXU MCP/browser providers instead.');
     process.exit(1);
   }
-  if (process.argv[2] === LEGACY_BROWSER_MCP_FLAG) {
-    profileCheckpoint('cli_DSXU_BROWSER_PROVIDER_mcp_path');
-    const {
-      runDsxuBrowserProviderMcpServer
-    } = await import('../utils/dsxuBrowserProvider/mcpServer.js');
-    await runDsxuBrowserProviderMcpServer();
-    return;
-  } else if (process.argv[2] === '--chrome-native-host') {
+  if (process.argv[2] === '--chrome-native-host') {
     profileCheckpoint('cli_chrome_native_host_path');
     const {
       runChromeNativeHost
@@ -144,10 +136,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for legacy remote-control aliases:
+  // Fast-path for provider-migration remote-control aliases:
   // map old shell aliases to the DSXU provider contract in default mode.
   // feature() must stay inline for build-time dead code elimination;
-  // isBridgeEnabled() checks the runtime GrowthBook gate.
+  // isBridgeEnabled() checks the runtime feature flag provider gate.
   if (args[0] === 'remote-control' || args[0] === 'rc' || args[0] === 'remote' || args[0] === 'sync' || args[0] === 'bridge') {
     const {
       handleDsxuProviderAliasCommand
@@ -284,7 +276,7 @@ async function main(): Promise<void> {
   // option building (not just inside the action handler).
   if (args.includes('--bare')) {
     process.env.DSXU_CODE_SIMPLE = '1';
-    process.env[`${LEGACY_CODE_ENV_PREFIX}_SIMPLE`] = '1';
+    process.env[`${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_SIMPLE`] = '1';
   }
 
   // No special flags detected, load and run the full CLI

@@ -38,7 +38,7 @@ interface ExtendedMemoryFileInfo extends MemoryFileInfo {
 let lastSelectedPath: string | undefined;
 const OPEN_FOLDER_PREFIX = '__open_folder__';
 const DSXU_INSTRUCTION_FILE = 'DSXU.md';
-const LEGACY_INSTRUCTION_FILE = `CL${'AUDE'}.md`;
+const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE = `CL${'AUDE'}.md`;
 type Props = {
   onSelect: (path: string) => void;
   onCancel: () => void;
@@ -50,7 +50,7 @@ export function MemoryFileSelector(t0) {
     onCancel
   } = t0;
   const existingMemoryFiles = use(getMemoryFiles());
-  const instructionFileName = isDsxuRuntimeMode() ? DSXU_INSTRUCTION_FILE : LEGACY_INSTRUCTION_FILE;
+  const instructionFileName = isDsxuRuntimeMode() ? DSXU_INSTRUCTION_FILE : PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE;
   const userMemoryPath = join(getRuntimeConfigHomeDir(), instructionFileName);
   const projectMemoryPath = join(getOriginalCwd(), instructionFileName);
   const hasUserMemory = existingMemoryFiles.some(f => f.path === userMemoryPath);
@@ -90,7 +90,7 @@ export function MemoryFileSelector(t0) {
     let description;
     const isGit = projectIsInGitRepo(getOriginalCwd());
     if (file.type === "User" && !file.isNested) {
-      description = `Saved in ~/${isDsxuRuntimeMode() ? '.dsxu' : '.legacy-code'}/${instructionFileName}`;
+      description = `Saved in ${getDisplayPath(userMemoryPath)}`;
     } else {
       if (file.type === "Project" && !file.isNested && file.path === projectMemoryPath) {
         description = `${isGit ? "Checked in at" : "Saved in"} ./${instructionFileName}`;
@@ -437,12 +437,4 @@ function _temp2(f_2) {
 }
 function _temp(f_1) {
   return f_1.type !== "AutoMem" && f_1.type !== "TeamMem";
-}
-
-// V14 lifecycle shim: memoryfileselector
-export function processMemoryfileselectorLifecycle(input) {
-  void input
-  const state = 'memoryfileselector-state'
-  const lifecycle = 'memoryfileselector:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

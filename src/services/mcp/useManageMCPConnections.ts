@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { basename } from 'path'
 import { useCallback, useEffect, useRef } from 'react'
@@ -43,7 +42,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import {
-  dedupLegacyCloudMcpServers,
+  dedupProviderMigrationMcpServers,
   doesEnterpriseMcpConfigExist,
   filterMcpServersByPolicy,
   getDsxuCodeMcpConfigs,
@@ -70,7 +69,7 @@ import {
   ChannelPermissionNotificationSchema,
   findChannelEntry,
   gateChannelServer,
-  LEGACY_CHANNEL_PERMISSION_METHOD,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
   wrapChannelMessage,
 } from './channelNotification.js'
 import {
@@ -79,19 +78,20 @@ import {
   isChannelPermissionRelayEnabled,
 } from './channelPermissions.js'
 import {
-  clearLegacyCloudMcpConfigsCache,
-  fetchLegacyCloudMcpConfigsIfEligible,
-} from './legacyRemoteMcpProvider.js'
+  clearProviderMigrationMcpConfigsCache,
+  fetchProviderMigrationMcpConfigsIfEligible,
+} from './providerConnectorMigration.js'
 import {
-  getLegacyCloudMcpDisabledReason,
+  getProviderMigrationMcpDisabledReason,
   isDsxuMcpDefaultMode,
-  isLegacyCloudMcpEnabled,
+  isProviderMigrationMcpEnabled,
 } from './dsxuProvider.js'
 import {
-  LEGACY_CLOUD_CHANNEL_CAPABILITY,
-  LEGACY_CLOUD_CHANNEL_METHOD,
-  LEGACY_CLOUD_CONFIG_SCOPE,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
+  PROVIDER_MIGRATION_CHANNEL_METHOD,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY,
+  PROVIDER_MIGRATION_CONFIG_SCOPE,
+} from '../../constants/providerMigrationProtocol.js'
 import { registerElicitationHandler } from './elicitationHandler.js'
 import { getMcpPrefix } from './mcpStringUtils.js'
 import { commandBelongsToServer, excludeStalePluginClients } from './utils.js'
@@ -104,7 +104,7 @@ const MAX_BACKOFF_MS = 30000
 export function getDsxuMcpConnectionRuntimeProfile(): {
   runtime: 'DSXU MCP Connection Manager'
   defaultProviderMode: boolean
-  legacyCloudEnabled: boolean
+  providerMigrationEnabled: boolean
   reconnectPolicy: {
     maxAttempts: number
     initialBackoffMs: number
@@ -115,7 +115,7 @@ export function getDsxuMcpConnectionRuntimeProfile(): {
   return {
     runtime: 'DSXU MCP Connection Manager',
     defaultProviderMode: isDsxuMcpDefaultMode(),
-    legacyCloudEnabled: isLegacyCloudMcpEnabled(),
+    providerMigrationEnabled: isProviderMigrationMcpEnabled(),
     reconnectPolicy: {
       maxAttempts: MAX_RECONNECT_ATTEMPTS,
       initialBackoffMs: INITIAL_BACKOFF_MS,
@@ -123,7 +123,7 @@ export function getDsxuMcpConnectionRuntimeProfile(): {
     },
     activationEvidence: [
       'loads DSXU/user/project/plugin MCP configs through getDsxuCodeMcpConfigs',
-      'blocks legacy cloud connectors unless explicit migration flag is enabled',
+      'blocks provider migration connectors unless explicit migration flag is enabled',
       'refreshes tools/prompts/resources into AppState for Tool/Skill/MCP activation',
     ],
   }
@@ -218,7 +218,7 @@ export function useManageMCPConnections(
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       const callbacks = channelPermCallbacksRef.current
       if (!callbacks) return
-      // GrowthBook runtime gate - separate from channels so channels can
+      // feature flag provider runtime gate - separate from channels so channels can
       // ship without this. Checked at mount; mid-session flips need restart.
       // If off, callbacks never go into AppState - interactiveHandler sees
       // undefined - never sends - intercept has nothing pending - "yes tbxkq"
@@ -505,7 +505,7 @@ export function useManageMCPConnections(
             }
           }
 
-          // Channel push: legacy cloud channel - enqueue().
+          // Channel push: provider migration channel - enqueue().
           // Gate decides whether to register the handler; connection stays
           // up either way (allowedMcpServers controls that).
           if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
@@ -570,13 +570,13 @@ export function useManageMCPConnections(
                 )
                 // Permission-reply handler - separate event, separate
                 // capability. Only registers if the server declares
-                // the legacy permission capability (same opt-in check as the send
+                // the provider migration permission capability (same opt-in check as the send
                 // path in interactiveHandler.ts). Server parses the user's
                 // reply and emits {request_id, behavior}; no regex on our
                 // side, text in the general channel can't accidentally match.
                 if (
                   client.capabilities?.experimental?.[
-                    LEGACY_CLOUD_CHANNEL_CAPABILITY + '/permission'
+                    PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY
                   ] !== undefined
                 ) {
                   client.client.setNotificationHandler(
@@ -591,7 +591,7 @@ export function useManageMCPConnections(
                         ) ?? false
                       logMCPDebug(
                         client.name,
-                        `legacy cloud channel permission: ${request_id} - ${behavior} (${resolved ? 'matched pending' : 'no pending entry - stale or unknown ID'})`,
+                        `provider migration channel permission: ${request_id} - ${behavior} (${resolved ? 'matched pending' : 'no pending entry - stale or unknown ID'})`,
                       )
                     },
                   )
@@ -604,10 +604,10 @@ export function useManageMCPConnections(
                 // the gate says skip but the earlier handler keeps enqueuing.
                 // Map.delete - safe when never registered.
                 client.client.removeNotificationHandler(
-                  LEGACY_CLOUD_CHANNEL_METHOD,
+                  PROVIDER_MIGRATION_CHANNEL_METHOD,
                 )
                 client.client.removeNotificationHandler(
-                  LEGACY_CHANNEL_PERMISSION_METHOD,
+                  PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
                 )
                 client.client.removeNotificationHandler(
                   CHANNEL_PERMISSION_METHOD,
@@ -640,7 +640,7 @@ export function useManageMCPConnections(
                       : gate.kind === 'auth'
                         ? isDsxuMcpDefaultMode()
                           ? 'Channels require DSXU MCP Provider authorization'
-                          : 'Channels require legacy cloud authentication - run /login'
+                          : 'Channels require provider migration authentication - run /login'
                         : gate.kind === 'policy'
                           ? 'Channels are not enabled for your org - have an administrator set channelsEnabled: true in managed settings'
                           : gate.reason
@@ -809,7 +809,7 @@ export function useManageMCPConnections(
   // Re-runs on session change (/clear) and on /reload-plugins (pluginReconnectKey).
   // On plugin reload, also disconnects stale plugin MCP servers (scope 'dynamic')
   // that no longer appear in configs - prevents ghost tools from disabled plugins.
-  // Skip legacy cloud dedup here to avoid blocking on the network fetch; the connect
+  // Skip provider migration dedup here to avoid blocking on the network fetch; the connect
   // useEffect below runs immediately after and dedups before connecting.
   const sessionId = getSessionId()
   useEffect(() => {
@@ -897,39 +897,39 @@ export function useManageMCPConnections(
   ])
 
   // Load MCP configs and connect to servers.
-  // DSXU default mode only loads DSXU/user/project/plugin configs. Legacy
+  // DSXU default mode only loads DSXU/user/project/plugin configs. Provider-migration
   // cloud connectors are migration-only and must be explicitly enabled.
   useEffect(() => {
     let cancelled = false
 
     async function loadAndConnectMcpConfigs() {
-      let legacyCloudPromise: Promise<Record<string, ScopedMcpServerConfig>>
-      const allowLegacyCloud =
+      let providerMigrationPromise: Promise<Record<string, ScopedMcpServerConfig>>
+      const allowProviderMigration =
         !isStrictMcpConfig &&
         !doesEnterpriseMcpConfigExist() &&
-        (!isDsxuMcpDefaultMode() || isLegacyCloudMcpEnabled())
-      if (allowLegacyCloud) {
-        clearLegacyCloudMcpConfigsCache()
-        legacyCloudPromise = fetchLegacyCloudMcpConfigsIfEligible()
+        (!isDsxuMcpDefaultMode() || isProviderMigrationMcpEnabled())
+      if (allowProviderMigration) {
+        clearProviderMigrationMcpConfigsCache()
+        providerMigrationPromise = fetchProviderMigrationMcpConfigsIfEligible()
       } else {
-        legacyCloudPromise = Promise.resolve({})
-        if (isDsxuMcpDefaultMode() && !isLegacyCloudMcpEnabled()) {
+        providerMigrationPromise = Promise.resolve({})
+        if (isDsxuMcpDefaultMode() && !isProviderMigrationMcpEnabled()) {
           logMCPDebug(
             'useManageMCPConnections',
-            getLegacyCloudMcpDisabledReason(),
+            getProviderMigrationMcpDisabledReason(),
           )
         }
       }
 
       // Phase 1: Load DSXU Code configs. Plugin MCP servers that duplicate a
-      // --mcp-config entry or an explicitly enabled legacy connector are
+      // --mcp-config entry or an explicitly enabled provider migration connector are
       // suppressed here so they don't connect twice.
       const { servers: dsxuCodeConfigs, errors: mcpErrors } =
         isStrictMcpConfig
           ? { servers: {}, errors: [] }
           : await getDsxuCodeMcpConfigs(
               dynamicMcpConfig,
-              legacyCloudPromise,
+              providerMigrationPromise,
             )
       if (cancelled) return
 
@@ -953,32 +953,32 @@ export function useManageMCPConnections(
         )
       })
 
-      // Phase 2: Optional legacy cloud migration connectors.
-      let legacyCloudConfigs: Record<string, ScopedMcpServerConfig> = {}
-      if (allowLegacyCloud) {
-        legacyCloudConfigs = filterMcpServersByPolicy(
-          await legacyCloudPromise,
+      // Phase 2: Optional provider migration connectors.
+      let providerMigrationConfigs: Record<string, ScopedMcpServerConfig> = {}
+      if (allowProviderMigration) {
+        providerMigrationConfigs = filterMcpServersByPolicy(
+          await providerMigrationPromise,
         ).allowed
         if (cancelled) return
 
-        // Suppress legacy connectors that duplicate an enabled manual server.
-        // Keys never collide (`slack` vs `legacy cloud Slack`) so the merge below
+        // Suppress provider migration connectors that duplicate an enabled manual server.
+        // Keys never collide (`slack` vs `provider migration Slack`) so the merge below
         // won't catch this - need content-based dedup by URL signature.
-        if (Object.keys(legacyCloudConfigs).length > 0) {
-          const { servers: dedupedLegacyCloud } = dedupLegacyCloudMcpServers(
-            legacyCloudConfigs,
+        if (Object.keys(providerMigrationConfigs).length > 0) {
+          const { servers: dedupedProviderMigration } = dedupProviderMigrationMcpServers(
+            providerMigrationConfigs,
             configs,
           )
-          legacyCloudConfigs = dedupedLegacyCloud
+          providerMigrationConfigs = dedupedProviderMigration
         }
 
-        if (Object.keys(legacyCloudConfigs).length > 0) {
+        if (Object.keys(providerMigrationConfigs).length > 0) {
           // Add migration servers as pending immediately so they show up in UI
           setAppState(prevState => {
             const existingServerNames = new Set(
               prevState.mcp.clients.map(c => c.name),
             )
-            const newClients = Object.entries(legacyCloudConfigs)
+            const newClients = Object.entries(providerMigrationConfigs)
               .filter(([name]) => !existingServerNames.has(name))
               .map(([name, config]) => ({
                 name,
@@ -998,34 +998,34 @@ export function useManageMCPConnections(
           })
 
           // Now start connecting (only enabled servers)
-          const enabledLegacyCloudConfigs = Object.fromEntries(
-            Object.entries(legacyCloudConfigs).filter(
+          const enabledProviderMigrationConfigs = Object.fromEntries(
+            Object.entries(providerMigrationConfigs).filter(
               ([name]) => !isMcpServerDisabled(name),
             ),
           )
           getMcpToolsCommandsAndResources(
             onConnectionAttempt,
-            enabledLegacyCloudConfigs,
+            enabledProviderMigrationConfigs,
           ).catch(error => {
             logMCPError(
               'useManageMcpConnections',
-              `Failed to get legacy cloud MCP resources: ${errorMessage(error)}`,
+              `Failed to get provider migration MCP resources: ${errorMessage(error)}`,
             )
           })
         }
       }
 
       // Log server counts after both phases complete
-      const allConfigs = { ...configs, ...legacyCloudConfigs }
+      const allConfigs = { ...configs, ...providerMigrationConfigs }
       const counts = {
         enterprise: 0,
         global: 0,
         project: 0,
         user: 0,
         plugin: 0,
-        legacyCloud: 0,
+        providerMigration: 0,
       }
-      // Ant-only: collect stdio command basenames to correlate with RSS/FPS
+      // DSXU internal: collect stdio command basenames to correlate with RSS/FPS
       // metrics. Stdio servers like rust-analyzer can be heavy and we want to
       // know which ones correlate with poor session performance.
       const stdioCommands: string[] = []
@@ -1035,8 +1035,8 @@ export function useManageMCPConnections(
         else if (serverConfig.scope === 'project') counts.project++
         else if (serverConfig.scope === 'local') counts.user++
         else if (serverConfig.scope === 'dynamic') counts.plugin++
-        else if (serverConfig.scope === LEGACY_CLOUD_CONFIG_SCOPE)
-          counts.legacyCloud++
+        else if (serverConfig.scope === PROVIDER_MIGRATION_CONFIG_SCOPE)
+          counts.providerMigration++
 
         if (
           process.env.USER_TYPE === 'ant' &&

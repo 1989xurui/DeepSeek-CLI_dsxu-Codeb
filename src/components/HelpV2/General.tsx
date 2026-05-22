@@ -20,11 +20,3 @@ export function General() {
   }
   return t1;
 }
-
-// V14 lifecycle shim: general
-export function processGeneralLifecycle(input) {
-  void input
-  const state = 'general-state'
-  const lifecycle = 'general:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

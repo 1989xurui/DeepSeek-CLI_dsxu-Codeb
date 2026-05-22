@@ -212,11 +212,3 @@ export async function call(onDone: LocalJSXCommandOnDone, _context: unknown, arg
   }
   return <ToggleTagAndClose tagName={args} onDone={onDone} />;
 }
-
-// V14 lifecycle shim: tag
-export function processTagLifecycle(input) {
-  void input
-  const state = 'tag-state'
-  const lifecycle = 'tag:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

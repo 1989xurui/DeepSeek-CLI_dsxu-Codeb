@@ -203,12 +203,3 @@ export class InputEvent extends Event {
     this.input = input
   }
 }
-
-
-// V14 lifecycle shim: input-event
-export function processInputEventLifecycle(input) {
-  void input
-  const state = 'input-event-state'
-  const lifecycle = 'input-event:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -33,11 +33,3 @@ export function ShimmerChar(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: shimmerchar
-export function processShimmercharLifecycle(input) {
-  void input
-  const state = 'shimmerchar-state'
-  const lifecycle = 'shimmerchar:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

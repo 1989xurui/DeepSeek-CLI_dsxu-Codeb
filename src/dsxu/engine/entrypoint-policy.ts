@@ -13,11 +13,11 @@ export interface DSXUEntrypointPolicyReport {
   defaultScript: string
   singleApiScript: string
   defaultEntrypoint: string
-  legacyEntrypoints: string[]
+  providerMigrationEntrypoints: string[]
   defaultUsesDSXU: boolean
   exposesDSXUBin: boolean
   noDSXULoginRequired: boolean
-  legacyRequiresExplicitFlag: boolean
+  providerMigrationRequiresExplicitFlag: boolean
   retiredDSXUDefaultPath: boolean
   violations: string[]
 }
@@ -27,7 +27,8 @@ export function evaluateDSXUEntrypointPolicy(input: DSXUEntrypointPolicyInput): 
   const bin = typeof input.packageJson.bin === 'string' ? { dsxu: input.packageJson.bin } : input.packageJson.bin ?? {}
   const start = scripts.start ?? ''
   const launcherText = Object.values(input.launchers ?? {}).join('\n')
-  const legacyText = `${scripts['start:legacy-cli'] ?? ''}\n${launcherText}`
+  const providerMigrationEntrypointText =
+    `${scripts['start:provider-migration-cli'] ?? ''}\n${launcherText}`
   const violations: string[] = []
 
   const defaultUsesDSXU =
@@ -40,15 +41,15 @@ export function evaluateDSXUEntrypointPolicy(input: DSXUEntrypointPolicyInput): 
     !start.includes('PROVIDER_') &&
     !launcherText.includes('PROVIDER_BASE_URL') &&
     !launcherText.includes('PROVIDER_API_KEY')
-  const legacyRequiresExplicitFlag =
-    !scripts['start:legacy-cli'] ||
-    legacyText.includes('DSXU_USE_LEGACY_CLI')
+  const providerMigrationRequiresExplicitFlag =
+    !scripts['start:provider-migration-cli'] ||
+    providerMigrationEntrypointText.includes('DSXU_USE_PROVIDER_MIGRATION_CLI')
   const retiredDSXUDefaultPath = defaultUsesDSXU && noDSXULoginRequired
 
   if (!defaultUsesDSXU) violations.push('package start does not use the DSXU Code direct entrypoint')
   if (!exposesDSXUBin) violations.push('package bin does not expose dsxu as the product command')
   if (!noDSXULoginRequired) violations.push('default launcher still configures provider/DSXU login path')
-  if (!legacyRequiresExplicitFlag) violations.push('legacy CLI path must be removed or require an explicit legacy flag')
+  if (!providerMigrationRequiresExplicitFlag) violations.push('provider migration CLI path must be removed or require an explicit provider-migration flag')
 
   return {
     defaultProductName: input.packageJson.name ?? '',
@@ -56,7 +57,7 @@ export function evaluateDSXUEntrypointPolicy(input: DSXUEntrypointPolicyInput): 
     defaultScript: start,
     singleApiScript: '',
     defaultEntrypoint: 'src/entrypoints/dsxu-code.tsx',
-    legacyEntrypoints: [
+    providerMigrationEntrypoints: [
       'archived control shell directory',
       'archived session shell directory',
       'archived proxy shell directory',
@@ -64,7 +65,7 @@ export function evaluateDSXUEntrypointPolicy(input: DSXUEntrypointPolicyInput): 
     defaultUsesDSXU,
     exposesDSXUBin,
     noDSXULoginRequired,
-    legacyRequiresExplicitFlag,
+    providerMigrationRequiresExplicitFlag,
     retiredDSXUDefaultPath,
     violations,
   }

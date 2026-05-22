@@ -7,8 +7,8 @@ import { getDefaultBranch } from '../utils/git.js'
 import { executeShellCommandsInPrompt } from '../utils/promptShellExecution.js'
 import { getUndercoverInstructions, isUndercover } from '../utils/undercover.js'
 
-const LEGACY_SLACK_TOOL_ALIAS = `mcp__${'cl' + 'aude'}_ai_Slack__slack_send_message`
-const LEGACY_PROVIDER_REVIEWER = `${'anth' + 'ropics'}/${'cl' + 'aude'}-code`
+const PROVIDER_MIGRATION_SLACK_TOOL_ALIAS = `mcp__${'cl' + 'aude'}_ai_Slack__slack_send_message`
+const PROVIDER_MIGRATION_REVIEWER = `${'anth' + 'ropics'}/${'cl' + 'aude'}-code`
 
 const ALLOWED_TOOLS = [
   'Bash(git checkout --branch:*)',
@@ -23,7 +23,7 @@ const ALLOWED_TOOLS = [
   'Bash(gh pr merge:*)',
   'ToolSearch',
   'mcp__slack__send_message',
-  LEGACY_SLACK_TOOL_ALIAS,
+  PROVIDER_MIGRATION_SLACK_TOOL_ALIAS,
 ]
 
 export function getDsxuCommitPushPrRuntimeProfile(): {
@@ -31,7 +31,7 @@ export function getDsxuCommitPushPrRuntimeProfile(): {
   runtime: 'DSXU Git Delivery Workflow'
   allowedToolCount: number
   activationEvidence: readonly string[]
-  legacyMigrationNotes: readonly string[]
+  providerMigrationNotes: readonly string[]
 } {
   return {
     command: '/commit-push-pr',
@@ -42,8 +42,8 @@ export function getDsxuCommitPushPrRuntimeProfile(): {
       'git checkout/add/status/push/commit and gh pr commands remain explicit allowlisted tools',
       'ToolSearch is used for optional provider discovery instead of hardcoding provider calls',
     ],
-    legacyMigrationNotes: [
-      'legacy provider Slack MCP tool name remains a compatibility alias',
+    providerMigrationNotes: [
+      'provider migration Slack MCP tool name remains a migration alias',
       'Slack posting is opt-in and user-confirmed, so it cannot bypass DSXU tool gate',
     ],
   }
@@ -61,8 +61,8 @@ function getPromptContent(
   const username = process.env.USER || ''
 
   let prefix = ''
-  let reviewerArg = ` and \`--reviewer ${LEGACY_PROVIDER_REVIEWER}\``
-  let addReviewerArg = ` (and add \`--add-reviewer ${LEGACY_PROVIDER_REVIEWER}\`)`
+  let reviewerArg = ` and \`--reviewer ${PROVIDER_MIGRATION_REVIEWER}\``
+  let addReviewerArg = ` (and add \`--add-reviewer ${PROVIDER_MIGRATION_REVIEWER}\`)`
   let changelogSection = `
 
 ## Changelog
@@ -71,7 +71,7 @@ function getPromptContent(
 <!-- CHANGELOG:END -->`
   let slackStep = `
 
-5. After creating/updating the PR, check if the user's DSXU instruction file or legacy instruction file mentions posting to Slack channels. If it does, use ToolSearch to search for "slack send message" tools. If ToolSearch finds a Slack tool, ask the user if they'd like you to post the PR URL to the relevant Slack channel. Only post if the user confirms. If ToolSearch returns no results or errors, skip this step silently—do not mention the failure, do not attempt workarounds, and do not try alternative approaches.`
+5. After creating/updating the PR, check if the user's DSXU instruction file or provider-migration source instruction file mentions posting to Slack channels. If it does, use ToolSearch to search for "slack send message" tools. If ToolSearch finds a Slack tool, ask the user if they'd like you to post the PR URL to the relevant Slack channel. Only post if the user confirms. If ToolSearch returns no results or errors, skip this step silently—do not mention the failure, do not attempt workarounds, and do not try alternative approaches.`
   if (process.env.USER_TYPE === 'ant' && isUndercover()) {
     prefix = getUndercoverInstructions() + '\n'
     reviewerArg = ''

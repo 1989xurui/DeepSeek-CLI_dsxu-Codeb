@@ -38,12 +38,3 @@ export function getDsxuMcpNormalizationRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 lifecycle shim: normalization
-export function processNormalizationLifecycle(input) {
-  void input
-  const state = 'normalization-state'
-  const lifecycle = 'normalization:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { useMemo } from 'react'
 import type { Tools, ToolPermissionContext } from '../Tool.js'
 import { assembleToolPool } from '../tools.js'
@@ -41,13 +41,4 @@ export function useMergedTools(
     replBridgeEnabled,
     replBridgeOutboundOnly,
   ])
-}
-
-
-// V14 lifecycle shim: usemergedtools
-export function processUsemergedtoolsLifecycle(input) {
-  void input
-  const state = 'usemergedtools-state'
-  const lifecycle = 'usemergedtools:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

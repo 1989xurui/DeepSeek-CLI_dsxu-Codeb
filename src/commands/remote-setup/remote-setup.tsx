@@ -184,11 +184,3 @@ function Web({
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {
   return <Web onDone={onDone} />;
 }
-
-// V14 lifecycle shim: remote-setup
-export function processRemoteSetupLifecycle(input) {
-  void input
-  const state = 'remote-setup-state'
-  const lifecycle = 'remote-setup:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

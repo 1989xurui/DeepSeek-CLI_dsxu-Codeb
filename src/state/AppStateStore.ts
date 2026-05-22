@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Notification } from 'src/context/notifications.js'
 import type { TodoList } from 'src/utils/todo/types.js'
-import type { BridgePermissionCallbacks } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+import type { BridgePermissionCallbacks } from '../services/bridge/dsxuRemoteBridgeFacade.js'
 import type { Command } from '../commands.js'
 import type { ChannelPermissionCallbacks } from '../services/mcp/channelPermissions.js'
 import type { ElicitationRequestEvent } from '../services/mcp/elicitationHandler.js'
@@ -105,7 +104,7 @@ export type AppState = DeepImmutable<{
   spinnerTip?: string
   // Agent name from --agent CLI flag or settings (for logo display)
   agent: string | undefined
-  // Assistant mode fully enabled (settings + GrowthBook gate + trust).
+  // Assistant mode fully enabled (settings + feature flag provider gate + trust).
   // Single source of truth - computed once in main.tsx before option
   // mutation, consumers read this instead of re-calling isAssistantMode().
   kairosEnabled: boolean

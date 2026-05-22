@@ -9,7 +9,7 @@ type UsePaginationOptions = {
 }
 
 type UsePaginationResult<T> = {
-  // For backwards compatibility with page-based terminology
+  // Preserve the existing page-based terminology for callers.
   currentPage: number
   totalPages: number
   startIndex: number
@@ -142,7 +142,7 @@ export function usePagination<T>({
     [],
   )
 
-  // Calculate page-like values for backwards compatibility
+  // Calculate page-like values for the existing caller contract.
   const totalPages = Math.max(1, Math.ceil(totalItems / maxVisible))
   const currentPage = Math.floor(scrollOffset / maxVisible)
 
@@ -168,13 +168,4 @@ export function usePagination<T>({
       canScrollDown: scrollOffset + maxVisible < totalItems,
     },
   }
-}
-
-
-// V14 lifecycle shim: usepagination
-export function processUsepaginationLifecycle(input) {
-  void input
-  const state = 'usepagination-state'
-  const lifecycle = 'usepagination:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

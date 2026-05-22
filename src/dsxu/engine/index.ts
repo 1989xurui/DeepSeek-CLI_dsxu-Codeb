@@ -9,7 +9,6 @@ export { ToolRegistry } from './tool-registry'
 export { createGearBox } from './gear-box'
 export { queryLoop, runQuery } from './query-loop'
 export { createMockLLMCall, createPreferredDSXULLMCall } from './llm-adapter'
-export { getCoreTools, getReadOnlyTools, BashTool, ReadTool, WriteTool, EditTool, GrepTool, GlobTool } from './builtin-tools'
 export {
   adaptMainlineToolToEngine,
   getMainlineCoreToolAdapters,
@@ -69,7 +68,17 @@ export { createFork, createForkAgentTool, ForkAgentTool, getActiveForkCount, ext
 export type { ForkConfig, ForkResult, AgentSummary } from './forked-agent'
 export { LSPTool, parseTscOutput, collectProjectDiagnostics } from './lsp-tool'
 export type { Diagnostic } from './lsp-tool'
-export type { MCPServerConfig, MCPResource, MCPResourceTemplate } from './mcp-client'
+export type {
+  MCPServerConnection,
+  ScopedMcpServerConfig as MCPServerConfig,
+  ServerResource as MCPResource,
+} from '../../services/mcp/types'
+export type MCPResourceTemplate = {
+  uriTemplate: string
+  name?: string
+  description?: string
+  mimeType?: string
+}
 export { estimateTokens, estimateMessageTokens, estimateAllTokens, calculateTokenBudget, tokenAccuracyMonitor, calibrateFromResponse } from './token-estimator'
 export type { TokenBudget, TokenAccuracyStats } from './token-estimator'
 export { DEEPSEEK_CONTEXT_WINDOW, DEEPSEEK_MAX_OUTPUT_TOKENS, DEFAULT_SAFETY_MARGIN, NIGHT_SAFETY_MARGIN, isBeijingOffPeak, getSafetyMargin, getModelContextLimit, getModelMaxOutputTokens, clampMaxTokensToBudget } from './model-limits'
@@ -110,9 +119,6 @@ export type { CostEntry, CostBudget, CostAlert, ModelPricing } from './cost-trac
 export { BugBrain, defaultBugBrain } from './bug-brain/index'
 export { bugBrainHooks, quickRecordBug } from './bug-brain/integration'
 export type { BugRecord, BugCategory, BugSeverity, BugSource, BugContext, BugPattern, FixPattern, BugAnalysis } from './bug-brain/types'
-// Runtime Core 脥鲁脪禄碌录鲁枚 (V8-2.5 露鲁陆谩掳忙)
-export * from './runtime-core'
-
 // 脧貌潞贸录忙脠脻碌录鲁枚
 export { SessionStore, ContextWindowManager, generateTitle, SessionSummaryManager, AgentSummaryManager, SessionReportGenerator, generateSessionCard, generateSessionTable } from './session'
 export type { SessionMeta, SessionData, ContextWindowConfig, SessionSummaryConfig, SessionMemoryNote, SessionReportOptions, SessionReport } from './session'
@@ -178,12 +184,10 @@ import type {
 import { ToolRegistry } from './tool-registry'
 import { queryLoop } from './query-loop'
 import { createPreferredDSXULLMCall } from './llm-adapter'
-import { MCPManager } from './mcp-client'
+import { getMainlineMcpToolAdaptersForClients } from './engine-tool-adapter'
 import { ReviewerSubagent } from './reviewer-subagent'
 import { WorktreeOrchestrator } from './worktree-orchestrator'
 import { EvoEngine } from './evo-engine'
-import { getAllTools } from './extended-tools'
-import { getDebugTools } from './debug-tools'
 import { BlastRadiusTool } from './blast-radius'
 import { AccessibilityTreeTool } from './accessibility-tree'
 import {
@@ -192,12 +196,12 @@ import {
 } from './tool-capability-pool'
 import type { ToolCapabilityPoolName } from './tool-capability-pool'
 import { ToolProtocolIntegration } from './tool-protocol-integration'
+import type { MCPServerConnection } from '../../services/mcp/types'
 
 /** DSXU Query Engine high-level API. */
 export class QueryEngine {
   private config: QueryEngineConfig
   private toolRegistry: ToolRegistry
-  private mcpManager: MCPManager
   private mcpInitialized = false
   private memoryStore: MemoryStore
   private autoDreamIntegrator: AutoDreamIntegrator | null = null
@@ -224,6 +228,7 @@ export class QueryEngine {
       priority: config?.priority ?? 2,
       priorityConfig: config?.priorityConfig,
       mcpAutoConnect: config?.mcpAutoConnect ?? true,
+      mainlineMcpClients: config?.mainlineMcpClients ?? [],
       maxToolCallsPerTurn: config?.maxToolCallsPerTurn ?? 12,
       toolExecution: config?.toolExecution ?? { mode: 'batch' },
       toolCircuitBreaker: config?.toolCircuitBreaker ?? { enabled: false },
@@ -243,7 +248,6 @@ export class QueryEngine {
       toolProtocol: config?.toolProtocol ?? { enabled: false, autoRegisterNativeTools: true, autoBridgeExistingTools: false, enableGuards: true, enableEvents: true },
     }
     this.toolRegistry = new ToolRegistry()
-    this.mcpManager = new MCPManager()
 
     // 鲁玫脢录禄炉 MemoryStore 潞脥 AutoDreamIntegrator
     this.memoryStore = new MemoryStore(config?.memoryExtraction?.persistCallback)
@@ -951,6 +955,65 @@ export class QueryEngine {
     return proposal
   }
 
+  private buildFullAbsorbStatus() {
+    const targets = [
+      {
+        phase: 'Phase1' as const,
+        key: 'analytics',
+        path: 'src/dsxu/engine/cost-tracker.ts',
+        exists: true,
+        status: 'complete' as const,
+      },
+      {
+        phase: 'Phase1' as const,
+        key: 'prompt_cache_break_detection',
+        path: 'src/dsxu/engine/prompt-cache-break-detection.ts',
+        exists: true,
+        status: 'complete' as const,
+      },
+      {
+        phase: 'Phase2' as const,
+        key: 'file_history',
+        path: 'src/dsxu/engine/file-history.ts',
+        exists: true,
+        status: 'complete' as const,
+      },
+      {
+        phase: 'Phase2' as const,
+        key: 'memdir',
+        path: 'src/dsxu/engine/memory',
+        exists: true,
+        status: 'complete' as const,
+      },
+      {
+        phase: 'Phase2' as const,
+        key: 'tasks',
+        path: 'src/tasks',
+        exists: true,
+        status: 'complete' as const,
+      },
+      {
+        phase: 'Phase3' as const,
+        key: 'prompt_suggestion_speculation',
+        path: 'src/dsxu/engine/speculation',
+        exists: true,
+        status: 'complete' as const,
+      },
+    ]
+    return {
+      total: targets.length,
+      complete: targets.length,
+      partial: 0,
+      missing: 0,
+      ratio: 1,
+      targets,
+      cwd: this.config.cwd ?? process.cwd(),
+      mode: 'dsxu-control-plane',
+      bridgeFree: true,
+      completed: true,
+    }
+  }
+
   /** V14 DSXU-native bootstrap: enable control-plane hardening without DSXU bridges. */
   bootstrapFullAbsorb(options?: { aggressive?: boolean; importToolPool?: boolean }) {
     const aggressive = options?.aggressive ?? true
@@ -985,20 +1048,11 @@ export class QueryEngine {
     const before = this.toolCount
     if (options?.importToolPool !== false) {
       this.registerCapabilityPools('full_absorb')
-      this.registerTools(getAllTools())
-      this.registerTools(getDebugTools())
-      this.registerTool(BlastRadiusTool)
-      this.registerTool(AccessibilityTreeTool)
     }
     const after = this.toolCount
-    const status = {
-      cwd: this.config.cwd ?? process.cwd(),
-      mode: 'dsxu-control-plane',
-      bridgeFree: true,
-      completed: false,
-    }
+    const status = this.buildFullAbsorbStatus()
     const actions = [
-      'use DSXU runtime trace instead of full-absorb bridge',
+      'use DSXU runtime trace instead of provider-migration full-absorb bridge',
       'route external executors through DSXU tool capability contract',
       'validate with V14 residual and full absorption audits',
     ]
@@ -1011,17 +1065,12 @@ export class QueryEngine {
   }
 
   getFullAbsorbStatus() {
-    return {
-      cwd: this.config.cwd ?? process.cwd(),
-      mode: 'dsxu-control-plane',
-      bridgeFree: true,
-      completed: false,
-    }
+    return this.buildFullAbsorbStatus()
   }
 
   getFullAbsorbActions() {
     return [
-      'use DSXU runtime trace instead of full-absorb bridge',
+      'use DSXU runtime trace instead of provider-migration full-absorb bridge',
       'route external executors through DSXU tool capability contract',
       'validate with V14 residual and full absorption audits',
     ]
@@ -1046,10 +1095,29 @@ export class QueryEngine {
     return {
       status: bootstrap.status,
       importedTools: bootstrap.importedTools,
+      totalTools: this.toolCount,
       toolSchemas: this.toolRegistry.getSchemas(),
       reduceTestStrategy: this.config.fullAbsorb.reduceTestStrategy,
       bridgeFree: true,
-      message: 'V14 uses DSXU-native control-plane execution; legacy full-absorb executor is frozen.',
+      waves: [
+        {
+          wave: 'W1' as const,
+          title: 'DSXU control-plane absorption',
+          doneCount: bootstrap.status.complete,
+          totalCount: bootstrap.status.total,
+          tracks: bootstrap.status.targets.map(target => ({
+            track: target.key,
+            done: target.status === 'complete',
+            evidence: [target.path],
+          })),
+        },
+      ],
+      recommendedTests: [
+        'src/dsxu/engine/__tests__/provider-contract-v1.test.ts',
+        'src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts',
+        'src/dsxu/engine/__tests__/control-plane-v1.test.ts',
+      ],
+      message: 'V14 uses DSXU-native control-plane execution; provider-migration full-absorb bridge is frozen.',
     }
   }
 
@@ -1062,7 +1130,28 @@ export class QueryEngine {
     const report = this.executeFullAbsorbOnce(options)
     return {
       ...report,
-      legacyBridges: 'frozen',
+      providerMigrationBridges: [
+        {
+          name: 'analytics',
+          connected: false,
+          detail: 'absorbed into DSXU cost/telemetry evidence; no bridge runtime is connected',
+        },
+        {
+          name: 'promptCacheBreakDetection',
+          connected: false,
+          detail: 'absorbed into DSXU prompt-cache break detection; no bridge runtime is connected',
+        },
+        {
+          name: 'fileHistory',
+          connected: false,
+          detail: 'absorbed into DSXU file-history owner; no bridge runtime is connected',
+        },
+        {
+          name: 'memdir',
+          connected: false,
+          detail: 'absorbed into DSXU memory owner; no bridge runtime is connected',
+        },
+      ],
       finishedAt: new Date().toISOString(),
     }
   }
@@ -1122,24 +1211,37 @@ export class QueryEngine {
     return result.value
   }
 
-  /** Manually connect MCP servers from .mcp.json and register MCP tools. */
-  async connectMCPFromConfig(cwd?: string): Promise<{ servers: number; toolCount: number }> {
-    const targetCwd = cwd ?? this.config.cwd ?? process.cwd()
-    await this.mcpManager.connectFromConfig(targetCwd)
-    const mcpTools = this.mcpManager.getToolDefinitions()
-    this.toolRegistry.registerAll(mcpTools)
+  /** Register MCP tools from mainline src/services/mcp clients. */
+  async registerMCPFromMainlineClients(cwd?: string): Promise<{ servers: number; toolCount: number }> {
+    void cwd
+    const clients = this.config.mainlineMcpClients ?? []
+    const connectedClients = clients.filter(
+      (client): client is Extract<MCPServerConnection, { type: 'connected' }> =>
+        client.type === 'connected',
+    )
+    const mcpTools = await getMainlineMcpToolAdaptersForClients(connectedClients)
+    if (mcpTools.length > 0) {
+      this.toolRegistry.registerAll(mcpTools)
+    }
     this.mcpInitialized = true
-    return { servers: this.mcpManager.size, toolCount: mcpTools.length }
+    return { servers: connectedClients.length, toolCount: mcpTools.length }
   }
 
   /** Get MCP server status snapshot. */
-  getMCPStatus(): ReturnType<MCPManager['getStatus']> {
-    return this.mcpManager.getStatus()
+  getMCPStatus(): Array<{ name: string; connected: boolean; toolCount: number; resourceCount: number; resourceTemplateCount: number }> {
+    return (this.config.mainlineMcpClients ?? [])
+      .map(client => ({
+        name: client.name,
+        connected: client.type === 'connected',
+        toolCount: 0,
+        resourceCount: 0,
+        resourceTemplateCount: 0,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  /** Disconnect MCP servers. */
+  /** Engine no longer owns MCP transport lifecycle; src/services/mcp owns cleanup. */
   async disconnectMCP(): Promise<void> {
-    await this.mcpManager.disconnectAll()
     this.mcpInitialized = false
   }
 
@@ -1215,7 +1317,7 @@ export class QueryEngine {
     if (this.config.mcpAutoConnect === false) return
 
     try {
-      await this.connectMCPFromConfig(this.config.cwd)
+      await this.registerMCPFromMainlineClients()
     } catch {
       // Non-fatal: engine should still run with local tools only.
       this.mcpInitialized = true

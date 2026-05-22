@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { ASYNC_AGENT_ALLOWED_TOOLS } from '../constants/tools.js'
-import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -17,11 +16,11 @@ import { TEAM_CREATE_TOOL_NAME } from '../tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '../tools/TeamDeleteTool/constants.js'
 import { isDsxuCodeEnvTruthy } from '../utils/envUtils.js'
 
-const LEGACY_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
 
 function clearDsxuCodeEnv(name: string): void {
   delete process.env[`DSXU_CODE_${name}`]
-  delete process.env[`${LEGACY_CODE_ENV_PREFIX}_${name}`]
+  delete process.env[`${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`]
 }
 
 // Checks the same gate as isScratchpadEnabled() in

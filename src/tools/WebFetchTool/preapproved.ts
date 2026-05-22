@@ -11,19 +11,19 @@
 // See test/utils/sandbox/webfetch-preapproved-separation.test.ts for verification
 // that sandbox network restrictions require explicit user permission rules.
 
-const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
-const LEGACY_ORG_TOKEN = 'anth' + 'ropics'
-const legacyHost = (value: string): string =>
+const PROVIDER_MIGRATION_SOURCE_PRODUCT_TOKEN = 'cl' + 'aude'
+const PROVIDER_MIGRATION_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
+const providerMigrationSourceHost = (value: string): string =>
   value
-    .replaceAll('{legacyProvider}', LEGACY_PROVIDER_TOKEN)
-    .replaceAll('{legacyOrg}', LEGACY_ORG_TOKEN)
+    .replaceAll('{providerMigrationSource}', PROVIDER_MIGRATION_SOURCE_PRODUCT_TOKEN)
+    .replaceAll('{sourceOrg}', PROVIDER_MIGRATION_SOURCE_ORG_TOKEN)
 
 export const PREAPPROVED_HOSTS = new Set([
-  // Legacy provider documentation and repositories
-  legacyHost('platform.{legacyProvider}.com'),
-  legacyHost('code.{legacyProvider}.com'),
+  // Provider migration source documentation and repositories
+  providerMigrationSourceHost('platform.{providerMigrationSource}.com'),
+  providerMigrationSourceHost('code.{providerMigrationSource}.com'),
   'modelcontextprotocol.io',
-  legacyHost('github.com/{legacyOrg}'),
+  providerMigrationSourceHost('github.com/{sourceOrg}'),
   'agentskills.io',
 
   // Top Programming Languages
@@ -170,13 +170,4 @@ export function isPreapprovedHost(hostname: string, pathname: string): boolean {
     }
   }
   return false
-}
-
-
-// V14 lifecycle shim: preapproved
-export function processPreapprovedLifecycle(input) {
-  void input
-  const state = 'preapproved-state'
-  const lifecycle = 'preapproved:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

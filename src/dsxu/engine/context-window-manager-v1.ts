@@ -5,16 +5,16 @@ import {
   isDeepSeekV4ModelLike,
 } from '../../utils/model/deepseekV4Control'
 import {
-  getCompatContextWindowOverride,
-  getCompatMaxOutputTokensOverride,
-} from '../legacy/model/legacyProviderContextWindowManager'
+  getProviderMigrationContextWindowOverride,
+  getProviderMigrationMaxOutputTokensOverride,
+} from '../../utils/model/providerMigration/providerMigrationContextWindowManager'
 
 export const MODEL_CONTEXT_WINDOW_DEFAULT = DEEPSEEK_V4_CONTEXT_WINDOW;
 
 export function getContextWindowForModel(model: string): number {
   const m = model.toLowerCase();
   if (isDeepSeekV4ModelLike(m)) return DEEPSEEK_V4_CONTEXT_WINDOW;
-  const compatWindow = getCompatContextWindowOverride(m)
+  const compatWindow = getProviderMigrationContextWindowOverride(m)
   if (compatWindow) return compatWindow;
   return MODEL_CONTEXT_WINDOW_DEFAULT;
 }
@@ -27,7 +27,7 @@ export function getModelMaxOutputTokens(model: string): { default: number; upper
       upperLimit: DEEPSEEK_V4_MAX_CHAT_OUTPUT_TOKENS,
     };
   }
-  const compatTokens = getCompatMaxOutputTokensOverride(m)
+  const compatTokens = getProviderMigrationMaxOutputTokensOverride(m)
   if (compatTokens) return compatTokens;
   return { default: 32_000, upperLimit: 64_000 };
 }

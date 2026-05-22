@@ -100,11 +100,3 @@ export function UserToolErrorMessage(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: usertoolerrormessage
-export function processUsertoolerrormessageLifecycle(input) {
-  void input
-  const state = 'usertoolerrormessage-state'
-  const lifecycle = 'usertoolerrormessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

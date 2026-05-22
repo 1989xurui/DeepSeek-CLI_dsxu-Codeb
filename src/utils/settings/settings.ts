@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import mergeWith from 'lodash-es/mergeWith.js'
 import { dirname, join, resolve } from 'path'
@@ -743,7 +742,7 @@ export function getInitialSettings(): SettingsJson {
   return settings || {}
 }
 /**
- * @deprecated Use getInitialSettings() instead. This alias exists for backwards compatibility.
+ * @deprecated Use getInitialSettings() instead. This alias exists for settings migration.
  */
 export const getSettings_DEPRECATED = getInitialSettings
 export type SettingsWithSources = {

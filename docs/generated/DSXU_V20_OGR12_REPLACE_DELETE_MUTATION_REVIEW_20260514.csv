@@ -1,0 +1,2 @@
+path,statusCode,family,mutationPacket,directImportCount,mutationDecision,restorePolicy,requiredAction
+"src/utils/desktopDeepLink.ts","D","utils-no-import","OGR12-delete-duplicate-desktop-deeplink-helper","0","keep-deleted-and-stage-removal-after-explicit-git-review","do-not-keep-as-shared-utility-without-import-use-evidence","owner-git-review-then-delete-or-move-to-named-owner-if-hidden-use-is-proven"

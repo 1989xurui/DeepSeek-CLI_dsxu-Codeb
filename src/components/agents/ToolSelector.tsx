@@ -58,7 +58,7 @@ function getToolBuckets(): ToolBuckets {
     },
     EXECUTION: {
       name: 'Execution tools',
-      toolNames: new Set([BashTool.name, "external" === 'ant' ? TungstenTool.name : undefined].filter(n => n !== undefined))
+      toolNames: new Set([BashTool.name, false ? TungstenTool.name : undefined].filter(n => n !== undefined))
     },
     MCP: {
       name: 'MCP tools',
@@ -558,12 +558,4 @@ function _temp2(t_0) {
 }
 function _temp(t) {
   return t.name;
-}
-
-// V14 lifecycle shim: toolselector
-export function processToolselectorLifecycle(input) {
-  void input
-  const state = 'toolselector-state'
-  const lifecycle = 'toolselector:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

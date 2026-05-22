@@ -1,5 +1,5 @@
 import { getMainLoopModel } from './model/model.js'
-import { isCompatPdfUnsupportedModel } from '../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
+import { isProviderMigrationPdfUnsupportedModel } from './model/providerMigration/providerMigrationModelCompat.js'
 
 // Document extensions that are handled specially
 export const DOCUMENT_EXTENSIONS = new Set(['pdf'])
@@ -52,11 +52,11 @@ export function parsePDFPageRange(
 
 /**
  * Check if PDF reading is supported with the current model.
- * PDF document blocks work on modern DSXU/provider routes. One legacy
+ * PDF document blocks work on modern DSXU/provider routes. One provider-migration source
  * family predates PDF support; users on it fall back to page extraction.
  */
 export function isPDFSupported(): boolean {
-  return !isCompatPdfUnsupportedModel(getMainLoopModel())
+  return !isProviderMigrationPdfUnsupportedModel(getMainLoopModel())
 }
 
 /**

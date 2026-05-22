@@ -25,12 +25,3 @@ const getMaxWidth = (yogaNode: LayoutNode): number => {
 }
 
 export default getMaxWidth
-
-
-// V14 lifecycle shim: get-max-width
-export function processGetMaxWidthLifecycle(input) {
-  void input
-  const state = 'get-max-width-state'
-  const lifecycle = 'get-max-width:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

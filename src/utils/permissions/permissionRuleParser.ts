@@ -4,7 +4,7 @@ import { TASK_OUTPUT_TOOL_NAME } from '../../tools/TaskOutputTool/constants.js'
 import { TASK_STOP_TOOL_NAME } from '../../tools/TaskStopTool/prompt.js'
 import type { PermissionRuleValue } from './PermissionRule.js'
 
-// Dead code elimination: ant-only tool names are conditionally required so
+// Dead code elimination: dsxu internal tool names are conditionally required so
 // their strings don't leak into external builds. Static imports always bundle.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
@@ -15,10 +15,10 @@ const BRIEF_TOOL_NAME: string | null =
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Maps legacy tool names to their current canonical names.
-// When a tool is renamed, add old → new here so permission rules,
+// Maps provider-migration tool aliases to their current canonical names.
+// When a tool is renamed, add old -> new here so permission rules,
 // hooks, and persisted wire names resolve to the canonical name.
-const LEGACY_TOOL_NAME_ALIASES: Record<string, string> = {
+const PROVIDER_MIGRATION_TOOL_NAME_ALIASES: Record<string, string> = {
   Task: AGENT_TOOL_NAME,
   KillShell: TASK_STOP_TOOL_NAME,
   AgentOutputTool: TASK_OUTPUT_TOOL_NAME,
@@ -28,14 +28,16 @@ const LEGACY_TOOL_NAME_ALIASES: Record<string, string> = {
     : {}),
 }
 
-export function normalizeLegacyToolName(name: string): string {
-  return LEGACY_TOOL_NAME_ALIASES[name] ?? name
+export function normalizeProviderMigrationToolName(name: string): string {
+  return PROVIDER_MIGRATION_TOOL_NAME_ALIASES[name] ?? name
 }
 
-export function getLegacyToolNames(canonicalName: string): string[] {
+export function getProviderMigrationToolNames(canonicalName: string): string[] {
   const result: string[] = []
-  for (const [legacy, canonical] of Object.entries(LEGACY_TOOL_NAME_ALIASES)) {
-    if (canonical === canonicalName) result.push(legacy)
+  for (const [providerMigrationAlias, canonical] of Object.entries(
+    PROVIDER_MIGRATION_TOOL_NAME_ALIASES,
+  )) {
+    if (canonical === canonicalName) result.push(providerMigrationAlias)
   }
   return result
 }
@@ -97,20 +99,20 @@ export function permissionRuleValueFromString(
   const openParenIndex = findFirstUnescapedChar(ruleString, '(')
   if (openParenIndex === -1) {
     // No parenthesis found - this is just a tool name
-    return { toolName: normalizeLegacyToolName(ruleString) }
+    return { toolName: normalizeProviderMigrationToolName(ruleString) }
   }
 
   // Find the last unescaped closing parenthesis
   const closeParenIndex = findLastUnescapedChar(ruleString, ')')
   if (closeParenIndex === -1 || closeParenIndex <= openParenIndex) {
     // No matching closing paren or malformed - treat as tool name
-    return { toolName: normalizeLegacyToolName(ruleString) }
+    return { toolName: normalizeProviderMigrationToolName(ruleString) }
   }
 
   // Ensure the closing paren is at the end
   if (closeParenIndex !== ruleString.length - 1) {
     // Content after closing paren - treat as tool name
-    return { toolName: normalizeLegacyToolName(ruleString) }
+    return { toolName: normalizeProviderMigrationToolName(ruleString) }
   }
 
   const toolName = ruleString.substring(0, openParenIndex)
@@ -118,18 +120,18 @@ export function permissionRuleValueFromString(
 
   // Missing toolName (e.g., "(foo)") is malformed - treat whole string as tool name
   if (!toolName) {
-    return { toolName: normalizeLegacyToolName(ruleString) }
+    return { toolName: normalizeProviderMigrationToolName(ruleString) }
   }
 
   // Empty content (e.g., "Bash()") or standalone wildcard (e.g., "Bash(*)")
   // should be treated as just the tool name (tool-wide rule)
   if (rawContent === '' || rawContent === '*') {
-    return { toolName: normalizeLegacyToolName(toolName) }
+    return { toolName: normalizeProviderMigrationToolName(toolName) }
   }
 
   // Unescape the content
   const ruleContent = unescapeRuleContent(rawContent)
-  return { toolName: normalizeLegacyToolName(toolName), ruleContent }
+  return { toolName: normalizeProviderMigrationToolName(toolName), ruleContent }
 }
 
 /**

@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "dsxu.v24.execution-batch.v1",
+  "generatedAt": "2026-05-15T05:27:32.610Z",
+  "repoRoot": "D:\\DSXU-code",
+  "executedGates": [
+    "V24_BASELINE_AUDIT",
+    "V24_RUNTIME_STUB_REDLINE",
+    "V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE",
+    "V24_C2_FEATURE_ACCEPTANCE_MATRIX",
+    "V24_DEEPSEEK_RUNTIME_CONTRACT",
+    "V24_WORK_STATE_TIMELINE_ACCEPTANCE"
+  ],
+  "didDeleteFiles": false,
+  "didCleanWorkspace": false,
+  "didRunFinalTests": false,
+  "didCreateExport": false,
+  "status": "PASS_EVIDENCE_GENERATED_OPEN_BEHAVIOR_GATES",
+  "baseline": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_BASELINE_AUDIT_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_BASELINE_AUDIT_20260515.csv",
+    "gitStatusShort": {
+      "total": 2024,
+      "staged": 2024,
+      "unstaged": 12,
+      "untracked": 0,
+      "modified": 1780,
+      "deleted": 420,
+      "renamed": 326
+    },
+    "sourceCounts": {
+      "publishSurfaceFiles": 2891,
+      "dsxuSourceFiles": 2650,
+      "claudeSourceFiles": 1902
+    }
+  },
+  "redline": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_RUNTIME_STUB_REDLINE_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_RUNTIME_STUB_REDLINE_20260515.csv",
+    "summary": {
+      "totalRows": 7462,
+      "bySeverity": [
+        {
+          "key": "OWNER_REVIEW",
+          "count": 5896
+        },
+        {
+          "key": "INFO_REVIEW",
+          "count": 1396
+        },
+        {
+          "key": "BLOCKER_REVIEW",
+          "count": 115
+        },
+        {
+          "key": "RELEASE_COPY_REVIEW",
+          "count": 55
+        }
+      ],
+      "byCategory": [
+        {
+          "key": "runtime_duplication_pressure",
+          "count": 5974
+        },
+        {
+          "key": "stub_or_incomplete",
+          "count": 1331
+        },
+        {
+          "key": "third_party_brand_surface",
+          "count": 157
+        }
+      ],
+      "byDisposition": [
+        {
+          "key": "runtime_duplication_pressure_review",
+          "count": 3947
+        },
+        {
+          "key": "test_or_evidence_context_not_product_runtime",
+          "count": 1300
+        },
+        {
+          "key": "stub_or_deferred_owner_review",
+          "count": 538
+        },
+        {
+          "key": "provider_migration_owner_review",
+          "count": 537
+        },
+        {
+          "key": "placeholder_ui_or_schema_review",
+          "count": 465
+        },
+        {
+          "key": "compat_adapter_owner_review",
+          "count": 262
+        },
+        {
+          "key": "entry_facade_owner_review",
+          "count": 143
+        },
+        {
+          "key": "explicit_incomplete_marker_requires_owner_action",
+          "count": 115
+        },
+        {
+          "key": "todo_word_collision_not_incomplete_claim",
+          "count": 96
+        },
+        {
+          "key": "source_brand_surface_requires_release_copy_review",
+          "count": 35
+        },
+        {
+          "key": "compatibility_or_public_copy_review",
+          "count": 20
+        },
+        {
+          "key": "incomplete_token_owner_review",
+          "count": 4
+        }
+      ],
+      "byOwner": [
+        {
+          "key": "test-evidence-harness",
+          "count": 1164
+        },
+        {
+          "key": "dsxu-engine-mainline",
+          "count": 870
+        },
+        {
+          "key": "ui-tui-work-state",
+          "count": 833
+        },
+        {
+          "key": "model-router-cost",
+          "count": 790
+        },
+        {
+          "key": "tool-lifecycle",
+          "count": 758
+        },
+        {
+          "key": "cli-command-transport",
+          "count": 717
+        },
+        {
+          "key": "mcp-skill-registry",
+          "count": 538
+        },
+        {
+          "key": "config-settings",
+          "count": 461
+        },
+        {
+          "key": "context-recovery",
+          "count": 267
+        },
+        {
+          "key": "evidence-telemetry",
+          "count": 174
+        },
+        {
+          "key": "ide-api-bridge",
+          "count": 163
+        },
+        {
+          "key": "evidence-automation",
+          "count": 136
+        },
+        {
+          "key": "agent-task-lifecycle",
+          "count": 108
+        },
+        {
+          "key": "permission-gate",
+          "count": 91
+        },
+        {
+          "key": "api-contract-types",
+          "count": 85
+        },
+        {
+          "key": "coding-workflow",
+          "count": 85
+        },
+        {
+          "key": "release-doctor",
+          "count": 75
+        },
+        {
+          "key": "query-loop",
+          "count": 63
+        },
+        {
+          "key": "external-tool-provider",
+          "count": 40
+        },
+        {
+          "key": "hook-lifecycle",
+          "count": 36
+        },
+        {
+          "key": "public-challenge-eval",
+          "count": 8
+        }
+      ],
+      "status": "OPEN_REDLINE_REVIEW_REQUIRED",
+      "nextAction": "triage BLOCKER_REVIEW rows first; prove test-only/release-excluded or assign to named owner before V24 95 claim",
+      "rule": "This redline does not delete or rewrite source. Rows are review input, not automatic failure."
+    }
+  },
+  "c2ExperienceDensity": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.csv",
+    "secondaryLoopCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_SECONDARY_LOOP_REBASELINE_20260515.csv",
+    "sourceCounts": {
+      "claude": 1902,
+      "dsxu": 2650
+    },
+    "categorySignalSummary": {
+      "claudeCategoryHits": 12786,
+      "dsxuCategoryHits": 18211,
+      "claudeMultiSignal4": 1576,
+      "dsxuMultiSignal4": 2191,
+      "claudeMultiSignal6": 1228,
+      "dsxuMultiSignal6": 1740
+    },
+    "primaryLoopRows": 15,
+    "secondaryLoopRows": 36
+  },
+  "c2AcceptanceMatrix": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.csv",
+    "rowCount": 51,
+    "status": "OPEN_BEHAVIOR_EVIDENCE_REQUIRED"
+  },
+  "deepseekRuntimeContract": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_DEEPSEEK_RUNTIME_CONTRACT_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_DEEPSEEK_RUNTIME_CONTRACT_20260515.csv",
+    "rowCount": 6,
+    "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED"
+  },
+  "workStateTimelineAcceptance": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_WORK_STATE_TIMELINE_ACCEPTANCE_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_WORK_STATE_TIMELINE_ACCEPTANCE_20260515.csv",
+    "rowCount": 6,
+    "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED"
+  },
+  "redlineOwnerPacketTriage": {
+    "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_REDLINE_OWNER_PACKET_TRIAGE_20260515.json",
+    "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_REDLINE_OWNER_PACKET_TRIAGE_20260515.csv",
+    "rowCount": 21
+  },
+  "nextAction": "triage runtime/stub redline owner packets and attach real behavior evidence to C2, DeepSeek, and work-state matrices before final tests or public claims.",
+  "rule": "This is a V24 execution batch, not a PASS claim for 95 score."
+}

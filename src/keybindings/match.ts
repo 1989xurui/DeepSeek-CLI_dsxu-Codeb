@@ -118,12 +118,3 @@ export function matchesBinding(
   if (!keystroke) return false
   return matchesKeystroke(input, key, keystroke)
 }
-
-
-// V14 lifecycle shim: match
-export function processMatchLifecycle(input) {
-  void input
-  const state = 'match-state'
-  const lifecycle = 'match:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,0 +1,251 @@
+{
+  "schemaVersion": "dsxu.v20.owner-git-review.v11",
+  "generatedAt": "2026-05-15T10:22:00+08:00",
+  "total": 1893,
+  "statusSummary": [
+    {
+      "statusCode": "??",
+      "count": 98
+    },
+    {
+      "statusCode": "D",
+      "count": 147
+    },
+    {
+      "statusCode": "M",
+      "count": 1648
+    }
+  ],
+  "packetSummary": [
+    {
+      "ownerPacket": "V20-OGR-01-docs-generated-plan",
+      "count": 52,
+      "modified": 2,
+      "deleted": 0,
+      "untracked": 50
+    },
+    {
+      "ownerPacket": "V20-OGR-02-delete-old-evidence-review-runtime",
+      "count": 45,
+      "modified": 0,
+      "deleted": 45,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-02-delete-old-provider-legacy-harness",
+      "count": 71,
+      "modified": 0,
+      "deleted": 71,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-02-delete-state-owner-review",
+      "count": 27,
+      "modified": 0,
+      "deleted": 27,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-03-delete-engine-builtin-tools-runtime",
+      "count": 2,
+      "modified": 0,
+      "deleted": 2,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-03-tool-permission-lifecycle",
+      "count": 192,
+      "modified": 188,
+      "deleted": 0,
+      "untracked": 4
+    },
+    {
+      "ownerPacket": "V20-OGR-04-delete-engine-mcp-client-runtime",
+      "count": 1,
+      "modified": 0,
+      "deleted": 1,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-04-mcp-skill-plugin-registry",
+      "count": 141,
+      "modified": 138,
+      "deleted": 0,
+      "untracked": 3
+    },
+    {
+      "ownerPacket": "V20-OGR-05-agent-task-lifecycle",
+      "count": 202,
+      "modified": 202,
+      "deleted": 0,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-05-external-integration-adapter-boundary",
+      "count": 32,
+      "modified": 30,
+      "deleted": 0,
+      "untracked": 2
+    },
+    {
+      "ownerPacket": "V20-OGR-06-ui-tui-visible-state",
+      "count": 476,
+      "modified": 475,
+      "deleted": 0,
+      "untracked": 1
+    },
+    {
+      "ownerPacket": "V20-OGR-07-provider-migration-model-cost",
+      "count": 107,
+      "modified": 97,
+      "deleted": 0,
+      "untracked": 10
+    },
+    {
+      "ownerPacket": "V20-OGR-08-cli-command-transport",
+      "count": 181,
+      "modified": 180,
+      "deleted": 0,
+      "untracked": 1
+    },
+    {
+      "ownerPacket": "V20-OGR-09-dsxu-engine-mainline",
+      "count": 89,
+      "modified": 64,
+      "deleted": 0,
+      "untracked": 25
+    },
+    {
+      "ownerPacket": "V20-OGR-10-entry-query-tool-composition",
+      "count": 20,
+      "modified": 20,
+      "deleted": 0,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-12-delete-duplicate-desktop-deeplink-helper",
+      "count": 1,
+      "modified": 0,
+      "deleted": 1,
+      "untracked": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-12-shared-platform-utilities",
+      "count": 254,
+      "modified": 252,
+      "deleted": 0,
+      "untracked": 2
+    }
+  ],
+  "reviewStateSummary": [
+    {
+      "reviewState": "delete-ready-pending-git-mutation-review",
+      "count": 147
+    },
+    {
+      "reviewState": "high-risk-owner-review-required",
+      "count": 665
+    },
+    {
+      "reviewState": "owner-review-required",
+      "count": 779
+    },
+    {
+      "reviewState": "owner-review-required-release-evidence",
+      "count": 48
+    },
+    {
+      "reviewState": "remapped-to-named-owner-pending-owner-git-signoff",
+      "count": 254
+    }
+  ],
+  "sourceSummary": [
+    {
+      "source": "current-classifier",
+      "count": 25
+    },
+    {
+      "source": "current-refresh-20260515",
+      "count": 20
+    },
+    {
+      "source": "deletion-mutation-review",
+      "count": 147
+    },
+    {
+      "source": "ogr13-remap",
+      "count": 89
+    },
+    {
+      "source": "ogr13-remap;owner-remap-20260515",
+      "count": 2
+    },
+    {
+      "source": "owner-git-mutation-preflight-20260515",
+      "count": 1
+    },
+    {
+      "source": "p12-raw-readiness-cli-20260515",
+      "count": 3
+    },
+    {
+      "source": "p12-target-discovery-20260515",
+      "count": 1
+    },
+    {
+      "source": "previous-register",
+      "count": 1530
+    },
+    {
+      "source": "previous-register;owner-remap-20260515",
+      "count": 56
+    },
+    {
+      "source": "real-gap-acceptance-20260515",
+      "count": 3
+    },
+    {
+      "source": "v20-blocker-action-plan",
+      "count": 5
+    },
+    {
+      "source": "v20-closure-batch-control",
+      "count": 4
+    },
+    {
+      "source": "v20-final-closure-preflight",
+      "count": 4
+    },
+    {
+      "source": "v20-stage-test-closure-plan",
+      "count": 3
+    }
+  ],
+  "currentRefreshRows": 20,
+  "ownerRemapRows": 58,
+  "realGapAcceptanceRows": 3,
+  "p12RawReadinessCliRows": 3,
+  "ownerGitMutationPreflightRows": 1,
+  "otherSourceBucketRows": 0,
+  "deletionReadyRows": 147,
+  "remapRule": "Do not leave named Agent/swarm, hooks, LSP/coding intelligence, external deep link, terminal transport, voice UI, real-gap acceptance, P12 raw-readiness CLI, P12 target manifest intake, owner/Git mutation preflight, product/deletion stage planning, ACL preflight, final preflight, clean export preflight, or six-stage test planning paths in generic shared utilities when a mainline owner exists.",
+  "rule": "Current owner/Git register refresh for V20 closure paths. It folds real-gap acceptance, P12 target collection/discovery/intake/contract/readiness, owner/Git preflight, product/deletion stage planning, Git mutation command planning, authorization board, ACL preflight/closure planning, commercial/IP preflight, final preflight, clean export preflight, blocker action board, post-authorization verification plan, closure batch runner, and six-stage test planning into named OGR owners and does not stage, commit, reset, clean, delete ACL residues, run final tests, or export.",
+  "nextAction": "P12 raw-readiness is PASS with real discovered target manifest; Owner/Git authorization, ACL closure, final tests, and clean export remain gated.",
+  "ownerGitStagePlanRows": 1,
+  "aclResiduePreflightRows": 1,
+  "sixStageTestPlanRows": 1,
+  "p12TargetManifestIntakeRows": 1,
+  "ownerGitProductStagePlanRows": 1,
+  "finalPreflightRows": 1,
+  "cleanExportPreflightRows": 1,
+  "p12TargetCollectionPackRows": 1,
+  "ownerGitMutationCommandPlanRows": 1,
+  "aclResidueClosurePlanRows": 1,
+  "commercialIpReleasePreflightRows": 1,
+  "blockerActionBoardRows": 1,
+  "p12TargetManifestContractBoardRows": 1,
+  "closureBatchRunnerRows": 1,
+  "postAuthorizationVerificationPlanRows": 1,
+  "ownerGitAuthorizationBoardRows": 1,
+  "p12TargetManifestDiscoveryRows": 1
+}

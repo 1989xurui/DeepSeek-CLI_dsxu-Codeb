@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Approved channel plugins allowlist. --channels plugin:name@marketplace
  * entries only register if {marketplace, plugin} is on this list. server:
  * entries always fail (schema is plugin-only). The
  * --dangerously-load-development-channels flag bypasses for both kinds.
- * Lives in GrowthBook so it can be updated without a release.
+ * Lives in feature flag provider so it can be updated without a release.
  *
  * Plugin-level granularity: if a plugin is approved, all its channel
  * servers are. Per-server gating was overengineering ...a plugin that
@@ -19,7 +18,7 @@
 import { z } from 'zod/v4'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { parsePluginIdentifier } from '../../utils/plugins/pluginIdentifier.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 
 export type ChannelAllowlistEntry = {
   marketplace: string
@@ -46,7 +45,7 @@ export function getChannelAllowlist(): ChannelAllowlistEntry[] {
 
 /**
  * Overall channels on/off. Checked before any per-server gating ... * when false, --channels is a no-op and no handlers register.
- * Default false; GrowthBook 5-min refresh.
+ * Default false; feature flag provider 5-min refresh.
  */
 export function isChannelsEnabled(): boolean {
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_harbor', false)

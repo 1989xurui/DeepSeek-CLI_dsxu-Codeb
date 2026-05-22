@@ -77,24 +77,8 @@ export async function call(onDone: LocalJSXCommandOnDone, _context: unknown, arg
   }
 
   // Redirect base /mcp command to /plugins installed tab for ant users
-  if ("external" === 'ant') {
+  if (false) {
     return <PluginSettings onComplete={onDone} args="manage" showMcpRedirectMessage />;
   }
   return <MCPSettings onComplete={onDone} />;
-}
-
-// V14 strict lifecycle shim: commands-mcp-mcp
-export function processCommandsMcpMcpStrictLifecycle(input) {
-  void input
-  const state = 'commands-mcp-mcp-state'
-  const lifecycle = 'commands-mcp-mcp:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsMcpMcpStrict(input) {
-  return processCommandsMcpMcpStrictLifecycle(input)
 }

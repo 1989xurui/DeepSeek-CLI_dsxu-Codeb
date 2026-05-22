@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { randomUUID } from 'crypto'
-import { getCompatProviderAccessToken } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlAccessToken } from '../../services/auth/dsxuProviderControlAuth.js'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import z from 'zod/v4'
@@ -17,9 +17,9 @@ const TELEPORT_RETRY_DELAYS = [2000, 4000, 8000, 16000] // 4 retries with expone
 const MAX_TELEPORT_RETRIES = TELEPORT_RETRY_DELAYS.length
 
 export const CCR_BYOC_BETA = 'ccr-byoc-2025-07-29'
-const LEGACY_PROVIDER_TOKEN = 'anth' + 'ropic'
-const LEGACY_BETA_HEADER = `${LEGACY_PROVIDER_TOKEN}-beta`
-const LEGACY_VERSION_HEADER = `${LEGACY_PROVIDER_TOKEN}-version`
+const PROVIDER_MIGRATION_SOURCE_TOKEN = 'anth' + 'ropic'
+const PROVIDER_MIGRATION_BETA_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-beta`
+const PROVIDER_MIGRATION_VERSION_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-version`
 
 /**
  * Checks if an axios error is a transient network error that should be retried
@@ -185,7 +185,7 @@ export async function prepareApiRequest(): Promise<{
   accessToken: string
   orgUUID: string
 }> {
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (accessToken === undefined) {
     throw new Error(
       'DSXU Code web sessions require authentication with a DSXU provider account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
@@ -214,7 +214,7 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<
   try {
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
+      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -280,7 +280,7 @@ export function getOAuthHeaders(accessToken: string): Record<string, string> {
   return {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
-    [LEGACY_VERSION_HEADER]: '2023-06-01',
+    [PROVIDER_MIGRATION_VERSION_HEADER]: '2023-06-01',
   }
 }
 
@@ -297,7 +297,7 @@ export async function fetchSession(
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
   const headers = {
     ...getOAuthHeaders(accessToken),
-    [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
+    [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
     'x-organization-uuid': orgUUID,
   }
 
@@ -357,7 +357,7 @@ export type RemoteMessageContent =
  * Sends a user message event to an existing remote session via the Sessions API
  * @param sessionId The session ID to send the event to
  * @param messageContent The user message content (string or content blocks)
- * @param opts.uuid Optional UUID for the event — callers that added a local
+ * @param opts.uuid Optional UUID for the event; callers that added a local
  *   UserMessage first should pass its UUID so echo filtering can dedup
  * @returns Promise<boolean> True if successful, false otherwise
  */
@@ -372,7 +372,7 @@ export async function sendEventToRemoteSession(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
+      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -435,7 +435,7 @@ export async function updateSessionTitle(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [LEGACY_BETA_HEADER]: CCR_BYOC_BETA,
+      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Magic Docs automatically maintains markdown documentation files marked with special headers.
  * When a file with "# MAGIC DOC: [title]" is read, it runs periodically in the background
@@ -11,7 +10,7 @@ import type { Tool, ToolUseContext } from '../../Tool.js'
 import type { BuiltInAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
-import { getCompatDefaultTierModelId } from '../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
+import { getProviderMigrationDefaultTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import {
   FileReadTool,
   type Output as FileReadToolOutput,
@@ -106,7 +105,7 @@ function getMagicDocsAgent(): BuiltInAgentDefinition {
     model:
       process.env.DSXU_CODE_MODE === '1'
         ? 'flash'
-        : getCompatDefaultTierModelId(),
+        : getProviderMigrationDefaultTierModelId(),
     source: 'built-in',
     baseDir: 'built-in',
     getSystemPrompt: () => '', // Will use override systemPrompt

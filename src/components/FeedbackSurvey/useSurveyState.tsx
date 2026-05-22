@@ -97,11 +97,3 @@ export function useSurveyState({
     handleTranscriptSelect
   };
 }
-
-// V14 lifecycle shim: usesurveystate
-export function processUsesurveystateLifecycle(input) {
-  void input
-  const state = 'usesurveystate-state'
-  const lifecycle = 'usesurveystate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

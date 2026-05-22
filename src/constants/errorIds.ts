@@ -13,12 +13,3 @@
  */
 
 export const E_TOOL_USE_SUMMARY_GENERATION_FAILED = 344
-
-
-// V14 lifecycle shim: errorids
-export function processErroridsLifecycle(input) {
-  void input
-  const state = 'errorids-state'
-  const lifecycle = 'errorids:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
-import { readFileSync } from 'fs'
+﻿import { describe, expect, test } from 'bun:test'
+import { readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import {
   getDsxuV8Item,
@@ -9,7 +9,20 @@ import {
 const root = process.cwd()
 
 function read(path: string): string {
+  if (path.includes('DSXU-Code-V8-')) {
+    return readOpsDocContaining('V8-1', 'V8-8')
+  }
   return readFileSync(join(root, path), 'utf8')
+}
+
+function readOpsDocContaining(...markers: string[]): string {
+  const opsRoot = join(root, '.dsxu', 'ops')
+  for (const name of readdirSync(opsRoot)) {
+    if (!name.endsWith('.md')) continue
+    const content = readFileSync(join(opsRoot, name), 'utf8')
+    if (markers.every(marker => content.includes(marker))) return content
+  }
+  throw new Error(`missing ops doc with markers: ${markers.join(', ')}`)
 }
 
 describe('DSXU V8 product build contract', () => {
@@ -34,7 +47,7 @@ describe('DSXU V8 product build contract', () => {
     ])
   })
 
-  test('keeps provider backend replacement green after compatibility aliases are remapped', () => {
+  test('keeps provider backend replacement green after provider-migration aliases are remapped', () => {
     const provider = getDsxuV8Item('V8-1')
     const cli = read('src/entrypoints/cli.tsx')
     const init = read('src/entrypoints/init.ts')
@@ -42,7 +55,7 @@ describe('DSXU V8 product build contract', () => {
     const sendMessage = read('src/tools/SendMessageTool/SendMessageTool.ts')
 
     expect(provider?.state).toBe('evidence_green')
-    expect(provider?.buildTasks.join('\n')).toContain('--remote, remote-control, and bridge:')
+    expect(provider?.buildTasks.join('\n')).toContain('--remote, remote-control, and legacy target selectors')
     expect(cli).not.toContain("await import('../bridge/bridgeMain.js')")
     expect(init).not.toContain("../upstreamproxy/upstreamproxy.js")
     expect(main).not.toContain("await import('./remote/DsxuRemoteSessionCoordinator.js')")

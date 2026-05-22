@@ -267,11 +267,3 @@ export function AssistantTextMessage(t0) {
       }
   }
 }
-
-// V14 lifecycle shim: assistanttextmessage
-export function processAssistanttextmessageLifecycle(input) {
-  void input
-  const state = 'assistanttextmessage-state'
-  const lifecycle = 'assistanttextmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

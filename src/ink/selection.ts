@@ -915,12 +915,3 @@ export function applySelectionOverlay(
     }
   }
 }
-
-
-// V14 lifecycle shim: selection
-export function processSelectionLifecycle(input) {
-  void input
-  const state = 'selection-state'
-  const lifecycle = 'selection:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

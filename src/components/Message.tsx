@@ -624,11 +624,3 @@ export function areMessagePropsEqual(prev: Props, next: Props): boolean {
   return false;
 }
 export const Message = React.memo(MessageImpl, areMessagePropsEqual);
-
-// V14 lifecycle shim: message
-export function processMessageLifecycle(input) {
-  void input
-  const state = 'message-state'
-  const lifecycle = 'message:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

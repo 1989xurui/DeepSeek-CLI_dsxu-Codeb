@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "dsxu.v20.external-visible-state-owner-review.v1",
+  "generatedAt": "2026-05-15T00:20:00+08:00",
+  "scope": [
+    "V20-GAP-04 External Agent Host / AionUi-like contract",
+    "V20-GAP-05 External Chat Client / Cherry-like Agent API",
+    "V20-GAP-06 Warp-like terminal host contract",
+    "V20-GAP-07 browser-use-like browser tool provider contract",
+    "V20-GAP-08 Bridge / Remote / IDE / CI clean-room facade",
+    "V20-GAP-09 UI/TUI work-state and operator dashboard",
+    "V20-GAP-10 Cost / evidence / recovery visible state"
+  ],
+  "rows": [
+    {
+      "gapId": "V20-GAP-04",
+      "capability": "External Agent Host / AionUi-like contract",
+      "owner": "CLI / Query Loop / Bridge / UI",
+      "evidence": [
+        "src/entrypoints/agentSdkTypes.ts#getDsxuAgentSdkRuntimeProfile",
+        "src/services/bridge/dsxuRemoteBridgeFacade.ts#getDsxuRemoteBridgeFacadeRuntimeProfile",
+        "src/services/bridge/dsxuRemoteSessionCoordinator.ts#getDsxuRemoteSessionCoordinatorRuntimeProfile",
+        "src/cli/remoteIO.ts#getDsxuRemoteIORuntimeProfile"
+      ],
+      "decision": "OWNER_COVERED_NEEDS_EXTERNAL_HOST_ACCEPTANCE",
+      "releaseRisk": "External host must remain facade only; task execution must enter DSXU Query Loop, Tool Gate, Context and Evidence.",
+      "nextAcceptance": "Run one external-host style task through existing SDK/bridge/remote IO surfaces and capture permission, message, final evidence."
+    },
+    {
+      "gapId": "V20-GAP-05",
+      "capability": "External Chat Client / Cherry-like Agent API",
+      "owner": "Query Loop API + Model Router boundary",
+      "evidence": [
+        "src/entrypoints/agentSdkTypes.ts#getDsxuAgentSdkRuntimeProfile",
+        "src/services/api/sessionIngress.ts",
+        "src/services/api/dsxu.ts",
+        "src/services/api/dsxu-model.ts"
+      ],
+      "decision": "PARTIAL_API_CONTRACT_NEEDS_ACCEPTANCE",
+      "releaseRisk": "Chat clients can be API callers only; they must not receive a second tool runner or provider runtime.",
+      "nextAcceptance": "Define and run one local-agent API smoke that proves tool calls and model selection stay in DSXU owners."
+    },
+    {
+      "gapId": "V20-GAP-06",
+      "capability": "Warp-like terminal host contract",
+      "owner": "CLI / Terminal Host / Tool Lifecycle",
+      "evidence": [
+        "src/ink/terminal.ts",
+        "src/cli/remoteIO.ts#getDsxuRemoteIORuntimeProfile",
+        "src/commands/terminalSetup/terminalSetup.tsx",
+        "src/entrypoints/dsxu-code.tsx"
+      ],
+      "decision": "OWNER_COVERED_NEEDS_TERMINAL_ACCEPTANCE",
+      "releaseRisk": "Terminal host is transport/UI only; command execution remains under Tool Gate and permission evidence.",
+      "nextAcceptance": "Run terminal-host scenario with failure recovery and permission-visible command trace."
+    },
+    {
+      "gapId": "V20-GAP-07",
+      "capability": "browser-use-like browser tool provider contract",
+      "owner": "Tool Lifecycle + Permission + Evidence",
+      "evidence": [
+        "src/utils/dsxuBrowserProvider/mcpServer.ts#createChromeContext",
+        "src/utils/dsxuBrowserProvider/mcpServer.ts#runDsxuBrowserProviderMcpServer",
+        "src/utils/computerUse/mcpServer.ts#runComputerUseMcpServer",
+        "src/skills/bundled/DsxuBrowserProvider.ts"
+      ],
+      "decision": "OWNER_COVERED_NEEDS_REAL_BROWSER_ACCEPTANCE",
+      "releaseRisk": "Browser provider is a controlled tool provider, not an imported browser-use runtime.",
+      "nextAcceptance": "Run one browser operation with manifest, permission decision, tool trace, screenshot/DOM/console and final report."
+    },
+    {
+      "gapId": "V20-GAP-08",
+      "capability": "Bridge / Remote / IDE / CI clean-room facade",
+      "owner": "Bridge / Remote / CI + Permission Bridge",
+      "evidence": [
+        "src/services/bridge/dsxuRemoteBridgeFacade.ts#getDsxuRemoteBridgeFacadeRuntimeProfile",
+        "src/services/bridge/dsxuRemoteSessionCoordinator.ts#getDsxuRemoteSessionCoordinatorRuntimeProfile",
+        "src/services/bridge/remotePermissionProjection.ts",
+        "src/services/bridge/dsxuSdkMessageProjection.ts",
+        "src/state/AppStateStore.ts#getDsxuAppStateRuntimeProfile"
+      ],
+      "decision": "OWNER_COVERED_NEEDS_BRIDGE_ACCEPTANCE",
+      "releaseRisk": "Bridge must not directly execute tools or own query runtime; permission responses remain DSXU control-plane projections.",
+      "nextAcceptance": "Run bridge lifecycle acceptance covering SDK message, permission request/response, reconnect/failure state and final evidence."
+    },
+    {
+      "gapId": "V20-GAP-09",
+      "capability": "UI/TUI work-state and operator dashboard",
+      "owner": "UI / TUI visible-state projection",
+      "evidence": [
+        "src/state/AppStateStore.ts#getDsxuAppStateRuntimeProfile",
+        "src/components/permissions/*",
+        "src/components/mcp/*",
+        "src/components/agents/*",
+        "src/components/PromptInput/PromptInputFooter.tsx"
+      ],
+      "decision": "PARTIAL_VISIBLE_STATE_NEEDS_OPERATOR_ACCEPTANCE",
+      "releaseRisk": "UI/TUI may project work-state but must not hide a runner or make blocked work look done.",
+      "nextAcceptance": "Run operator-state acceptance across progress, permission, MCP, agent, cost, recovery and evidence links."
+    },
+    {
+      "gapId": "V20-GAP-10",
+      "capability": "Cost / evidence / recovery visible state",
+      "owner": "Model Router + Evidence + Recovery",
+      "evidence": [
+        "src/cost-tracker.ts#formatTotalCost",
+        "src/dsxu/engine/final-report-usage-evidence.ts#buildDSXUModelCostEvidenceFromUsage",
+        "src/dsxu/engine/runtime-evidence-collector-v1.ts",
+        "src/dsxu/engine/recovery/recovery-integration-v3.ts"
+      ],
+      "decision": "OWNER_COVERED_NEEDS_E2E_ACCEPTANCE",
+      "releaseRisk": "Cost/recovery evidence cannot stay test-only; it must appear in real final reports and visible state.",
+      "nextAcceptance": "Run real coding recovery task proving route reason, cost, cache, recovery and final evidence are all visible."
+    }
+  ],
+  "decisionSummary": {
+    "OWNER_COVERED_NEEDS_EXTERNAL_HOST_ACCEPTANCE": 1,
+    "PARTIAL_API_CONTRACT_NEEDS_ACCEPTANCE": 1,
+    "OWNER_COVERED_NEEDS_TERMINAL_ACCEPTANCE": 1,
+    "OWNER_COVERED_NEEDS_REAL_BROWSER_ACCEPTANCE": 1,
+    "OWNER_COVERED_NEEDS_BRIDGE_ACCEPTANCE": 1,
+    "PARTIAL_VISIBLE_STATE_NEEDS_OPERATOR_ACCEPTANCE": 1,
+    "OWNER_COVERED_NEEDS_E2E_ACCEPTANCE": 1
+  },
+  "focusedVerification": {
+    "command": "bun test src/dsxu/engine/__tests__/bridge-gate.test.ts src/dsxu/engine/__tests__/remote-lifecycle-v1.test.ts src/dsxu/engine/__tests__/browser-dev-server-proof-v1.test.ts src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts",
+    "result": "PASS",
+    "tests": 8,
+    "failures": 0,
+    "expects": 68,
+    "scope": "Bridge/Remote lifecycle, browser proof, final-report cost evidence owner smoke only"
+  },
+  "rule": "All reviewed gaps have named owner coverage. None are final PASS until real acceptance evidence exists. Do not add external-host, chat-client, terminal, browser, bridge, UI, cost or recovery as a second runtime."
+}

@@ -1,136 +1,35 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { existsSync, readdirSync, readFileSync } from 'fs'
+import { join, relative } from 'path'
 
-const {
-  BridgeAdapter,
-  BridgeToolErrorType,
-  BridgeToolEventType,
-} = await import('../adapters/bridge-adapter')
+function listSourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const fullPath = join(dir, entry.name)
+    if (entry.isDirectory()) return listSourceFiles(fullPath)
+    return /\.(?:ts|tsx|js)$/.test(entry.name) ? [fullPath] : []
+  })
+}
 
-const createDefaultGateConfig =
-  BridgeAdapter.createDefaultGateConfig.bind(BridgeAdapter)
-const createVerificationGateCheck =
-  BridgeAdapter.createVerificationGateCheck.bind(BridgeAdapter)
+describe('Retired bridge adapter owner', () => {
+  const root = process.cwd()
+  const retiredAdapter = join(root, 'src/dsxu/engine/adapters/bridge-adapter.ts')
 
-describe('BridgeGate', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  it('allows deletion or only an ACL tombstone for the retired bridge adapter runtime', () => {
+    if (!existsSync(retiredAdapter)) return
+    const tombstone = readFileSync(retiredAdapter, 'utf8')
+    expect(tombstone).toContain('Retired adapter tombstone')
+    expect(tombstone).toContain('external-tool-adapter.ts')
+    expect(tombstone).not.toContain('class BridgeAdapter')
+    expect(tombstone).not.toContain('BridgeToolErrorType')
   })
 
-  describe('error and event types', () => {
-    it('defines stable error types', () => {
-      expect(BridgeToolErrorType.PERMISSION_DENIED).toBe('PERMISSION_DENIED')
-      expect(BridgeToolErrorType.VALIDATION_FAILED).toBe('VALIDATION_FAILED')
-      expect(BridgeToolErrorType.EXECUTION_FAILED).toBe('EXECUTION_FAILED')
-      expect(BridgeToolErrorType.TIMEOUT).toBe('TIMEOUT')
-      expect(BridgeToolErrorType.UNKNOWN).toBe('UNKNOWN')
-    })
+  it('keeps product code on DSXU external-tool adapter owners', () => {
+    const offenders = listSourceFiles(join(root, 'src'))
+      .filter(file => !relative(root, file).includes(`${'__tests__'}`))
+      .filter(file => !relative(root, file).includes('_deleted_files'))
+      .filter(file => readFileSync(file, 'utf8').includes('bridge-adapter'))
+      .map(file => relative(root, file))
 
-    it('defines stable event types', () => {
-      expect(BridgeToolEventType.TOOL_STARTED).toBe('bridge_tool_started')
-      expect(BridgeToolEventType.TOOL_COMPLETED).toBe('bridge_tool_completed')
-      expect(BridgeToolEventType.TOOL_FAILED).toBe('bridge_tool_failed')
-      expect(BridgeToolEventType.GATE_CHECK).toBe('bridge_gate_check')
-    })
-  })
-
-  describe('gate config', () => {
-    it('creates default gate config', () => {
-      const config = createDefaultGateConfig()
-
-      expect(config.enabled).toBe(true)
-      expect(config.gatedTools).toEqual(
-        expect.arrayContaining([
-          'FileEdit',
-          'Bash',
-          'FileWrite',
-          'PowerShell',
-          'REPL',
-        ]),
-      )
-      expect(config.gateCheck).toBeDefined()
-    })
-
-    it('supports custom verification callbacks', async () => {
-      const verificationCallback = vi.fn().mockResolvedValue(true)
-      const config = createDefaultGateConfig(verificationCallback)
-
-      const result = await config.gateCheck?.('Bash', { command: 'ls' }, {})
-
-      expect(result?.allowed).toBe(true)
-      expect(verificationCallback).toHaveBeenCalledWith('Bash', {
-        command: 'ls',
-      })
-    })
-  })
-
-  describe('security gate checks', () => {
-    it('rejects dangerous shell commands', async () => {
-      const gateCheck = createVerificationGateCheck()
-      const dangerousCommands = [
-        'rm -rf /',
-        'rm -rf /*',
-        'sudo rm -rf',
-        'dd if=/dev/zero of=/dev/sda',
-        'chmod 777 /etc/passwd',
-      ]
-
-      for (const command of dangerousCommands) {
-        const result = await gateCheck('Bash', { command }, {})
-        expect(result.allowed).toBe(false)
-        expect(result.errorType).toBe(BridgeToolErrorType.PERMISSION_DENIED)
-        expect(result.reason).toBeTruthy()
-      }
-    })
-
-    it('allows safe shell commands', async () => {
-      const gateCheck = createVerificationGateCheck()
-
-      for (const command of ['ls -la', 'pwd', 'echo "hello"', 'git status']) {
-        const result = await gateCheck('Bash', { command }, {})
-        expect(result.allowed).toBe(true)
-      }
-    })
-
-    it('rejects sensitive file edits', async () => {
-      const gateCheck = createVerificationGateCheck()
-      const sensitiveFiles = [
-        '/etc/passwd',
-        '/etc/shadow',
-        '.env.production',
-        '.git/config',
-        '/bin/bash',
-      ]
-
-      for (const filePath of sensitiveFiles) {
-        const result = await gateCheck('FileEdit', { file_path: filePath }, {})
-        expect(result.allowed).toBe(false)
-        expect(result.errorType).toBe(BridgeToolErrorType.PERMISSION_DENIED)
-        expect(result.reason).toBeTruthy()
-      }
-    })
-
-    it('allows ordinary file edits', async () => {
-      const gateCheck = createVerificationGateCheck()
-
-      for (const filePath of ['src/index.ts', 'package.json', 'README.md']) {
-        const result = await gateCheck('FileEdit', { file_path: filePath }, {})
-        expect(result.allowed).toBe(true)
-      }
-    })
-
-    it('handles callback denial and exceptions', async () => {
-      const denied = createVerificationGateCheck(vi.fn().mockResolvedValue(false))
-      const deniedResult = await denied('Bash', { command: 'test' }, {})
-      expect(deniedResult.allowed).toBe(false)
-      expect(deniedResult.errorType).toBe(BridgeToolErrorType.VALIDATION_FAILED)
-
-      const thrown = createVerificationGateCheck(
-        vi.fn().mockRejectedValue(new Error('callback failed')),
-      )
-      const thrownResult = await thrown('Bash', { command: 'test' }, {})
-      expect(thrownResult.allowed).toBe(false)
-      expect(thrownResult.errorType).toBe(BridgeToolErrorType.VALIDATION_FAILED)
-      expect(thrownResult.reason).toBeTruthy()
-    })
+    expect(offenders).toEqual([])
   })
 })

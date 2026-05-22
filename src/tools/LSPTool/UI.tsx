@@ -225,19 +225,3 @@ export function renderToolResultMessage(output: Output, _progressMessages: unkno
       <Text>{output.result}</Text>
     </MessageResponse>;
 }
-
-// V14 strict lifecycle shim: tools-LSPTool-UI
-export function processToolsLSPToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-LSPTool-UI-state'
-  const lifecycle = 'tools-LSPTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsLSPToolUIStrict(input) {
-  return processToolsLSPToolUIStrictLifecycle(input)
-}

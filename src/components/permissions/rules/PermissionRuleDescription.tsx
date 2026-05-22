@@ -73,11 +73,3 @@ export function PermissionRuleDescription(t0) {
       }
   }
 }
-
-// V14 lifecycle shim: permissionruledescription
-export function processPermissionruledescriptionLifecycle(input) {
-  void input
-  const state = 'permissionruledescription-state'
-  const lifecycle = 'permissionruledescription:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

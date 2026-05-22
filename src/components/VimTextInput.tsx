@@ -137,11 +137,3 @@ export default function VimTextInput(props) {
 function _temp(text) {
   return text;
 }
-
-// V14 lifecycle shim: vimtextinput
-export function processVimtextinputLifecycle(input) {
-  void input
-  const state = 'vimtextinput-state'
-  const lifecycle = 'vimtextinput:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

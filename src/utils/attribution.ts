@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { stat } from 'fs/promises'
 import { getClientType } from '../bootstrap/state.js'
@@ -255,7 +254,7 @@ async function getTranscriptStats(): Promise<{
 /**
  * Get enhanced PR attribution text with DSXU contribution stats.
  *
- * Format: "Generated with DSXU Code (93% 3-shotted by a legacy model alias)"
+ * Format: "Generated with DSXU Code (93% 3-shotted by a provider-migration model alias)"
  *
  * Rules:
  * - Shows DSXU contribution percentage from commit attribution

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { logAntError } from '../../utils/debug.js'
@@ -14,9 +13,11 @@ import type {
   ScopedMcpServerConfig,
 } from './types.js'
 
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const LEGACY_MCP_SERVER_NAME_ENV = `${LEGACY_CODE_ENV_PREFIX}_MCP_SERVER_NAME`
-const LEGACY_MCP_SERVER_URL_ENV = `${LEGACY_CODE_ENV_PREFIX}_MCP_SERVER_URL`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV =
+  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MCP_SERVER_NAME`
+const PROVIDER_MIGRATION_MCP_SERVER_URL_ENV =
+  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MCP_SERVER_URL`
 
 /**
  * Check if the MCP server config comes from project settings (projectSettings or localSettings)
@@ -72,8 +73,8 @@ export async function getMcpHeadersFromHelper(
         ...process.env,
         DSXU_CODE_MCP_SERVER_NAME: serverName,
         DSXU_CODE_MCP_SERVER_URL: config.url,
-        [LEGACY_MCP_SERVER_NAME_ENV]: serverName,
-        [LEGACY_MCP_SERVER_URL_ENV]: config.url,
+        [PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV]: serverName,
+        [PROVIDER_MIGRATION_MCP_SERVER_URL_ENV]: config.url,
       },
     })
     if (execResult.code !== 0 || !execResult.stdout) {
@@ -156,8 +157,8 @@ export function getDsxuMcpHeadersHelperRuntimeProfile(): {
     envContext: [
       'DSXU_CODE_MCP_SERVER_NAME',
       'DSXU_CODE_MCP_SERVER_URL',
-      `${LEGACY_MCP_SERVER_NAME_ENV} (legacy migration alias)`,
-      `${LEGACY_MCP_SERVER_URL_ENV} (legacy migration alias)`,
+      `${PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV} (provider migration alias)`,
+      `${PROVIDER_MIGRATION_MCP_SERVER_URL_ENV} (provider migration alias)`,
     ],
     trustPolicy: [
       'project/local MCP headersHelper requires workspace trust in interactive sessions',

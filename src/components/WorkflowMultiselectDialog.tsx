@@ -125,11 +125,3 @@ function _temp(workflow) {
     value: workflow.value
   };
 }
-
-// V14 lifecycle shim: workflowmultiselectdialog
-export function processWorkflowmultiselectdialogLifecycle(input) {
-  void input
-  const state = 'workflowmultiselectdialog-state'
-  const lifecycle = 'workflowmultiselectdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

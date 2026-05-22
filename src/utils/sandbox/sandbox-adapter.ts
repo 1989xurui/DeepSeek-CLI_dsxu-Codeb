@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Adapter layer that wraps DSXU native sandbox runtime with DSXU CLI-specific integrations.
  * This file provides the bridge between the DSXU native sandbox runtime boundary and DSXU CLI's
@@ -60,7 +59,7 @@ import type { PermissionRuleValue } from '../permissions/PermissionRule.js'
 import { ripgrepCommand } from '../ripgrep.js'
 
 const DSXU_WORKSPACE_CONFIG_DIR = '.dsxu'
-const LEGACY_WORKSPACE_CONFIG_DIR = '.' + 'cl' + 'aude'
+const PROVIDER_MIGRATION_WORKSPACE_CONFIG_DIR = '.' + 'cl' + 'aude'
 
 // Local copies to avoid circular dependency
 // (permissions.ts imports SandboxManager, bashPermissions.ts imports permissions.ts)
@@ -129,7 +128,7 @@ export function resolvePathPatternForSandbox(
  * - `/path` ->-> absolute path (as written, NOT settings-relative)
  * - `~/path` ->-> expanded to home directory
  * - `./path` or `path` ->-> relative to settings file directory
- * - `//path` ->-> absolute (legacy permission-rule syntax, accepted for compat)
+ * - `//path` ->-> absolute (historical permission-rule syntax, accepted for compat)
  *
  * Fix for #30067: resolvePathPatternForSandbox treats `/Users/foo/.cargo` as
  * settings-relative (permission-rule convention). Users reasonably expect
@@ -143,7 +142,7 @@ export function resolveSandboxFilesystemPath(
   pattern: string,
   source: SettingSource,
 ): string {
-  // Legacy permission-rule escape: //path ->-> /path. Kept for compat with
+  // Historical permission-rule escape: //path ->-> /path. Kept for compat with
   // users who worked around #30067 by writing //Users/foo/.cargo in config.
   if (pattern.startsWith('//')) return pattern.slice(1)
   return expandPath(pattern, getSettingsRootPathForSource(source))
@@ -248,22 +247,22 @@ export function convertToSandboxRuntimeConfig(
     denyWrite.push(
       resolve(cwd, DSXU_WORKSPACE_CONFIG_DIR, 'settings.local.json'),
     )
-    denyWrite.push(resolve(cwd, LEGACY_WORKSPACE_CONFIG_DIR, 'settings.json'))
+    denyWrite.push(resolve(cwd, PROVIDER_MIGRATION_WORKSPACE_CONFIG_DIR, 'settings.json'))
     denyWrite.push(
-      resolve(cwd, LEGACY_WORKSPACE_CONFIG_DIR, 'settings.local.json'),
+      resolve(cwd, PROVIDER_MIGRATION_WORKSPACE_CONFIG_DIR, 'settings.local.json'),
     )
   }
 
-  // Block writes to DSXU and legacy provider skill dirs in both original and current working directories.
+  // Block writes to DSXU and provider-migration skill dirs in both original and current working directories.
   // The DSXU native sandbox runtime getDangerousDirectories() protects commands and
   // agents but not skills. Skills have the same privilege level
   // (auto-discovered, auto-loaded, full DSXU capabilities) so they need the
   // same OS-level sandbox protection.
   denyWrite.push(resolve(originalCwd, DSXU_WORKSPACE_CONFIG_DIR, 'skills'))
-  denyWrite.push(resolve(originalCwd, LEGACY_WORKSPACE_CONFIG_DIR, 'skills'))
+  denyWrite.push(resolve(originalCwd, PROVIDER_MIGRATION_WORKSPACE_CONFIG_DIR, 'skills'))
   if (cwd !== originalCwd) {
     denyWrite.push(resolve(cwd, DSXU_WORKSPACE_CONFIG_DIR, 'skills'))
-    denyWrite.push(resolve(cwd, LEGACY_WORKSPACE_CONFIG_DIR, 'skills'))
+    denyWrite.push(resolve(cwd, PROVIDER_MIGRATION_WORKSPACE_CONFIG_DIR, 'skills'))
   }
 
   // SECURITY: Git's is_git_directory() treats cwd as a bare repo if it has

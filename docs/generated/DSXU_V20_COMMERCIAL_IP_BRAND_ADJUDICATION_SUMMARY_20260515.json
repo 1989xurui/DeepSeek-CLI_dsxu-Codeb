@@ -1,0 +1,61 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.commercial-ip-brand-adjudication.v1",
+    "generatedAt":  "2026-05-15T07:05:46+08:00",
+    "scannedSourceRows":  98,
+    "activeReviewRequiredRows":  0,
+    "productCopyNeutralizedThisRound":  15,
+    "inlineSourceMapsRemoved":  6,
+    "byDisposition":  [
+                          {
+                              "disposition":  "KEEP_INTERNAL_IDENTIFIER_PRODUCT_COPY_NEUTRALIZED",
+                              "rows":  3
+                          },
+                          {
+                              "disposition":  "KEEP_GENERIC_GIT_OPERATION",
+                              "rows":  4
+                          },
+                          {
+                              "disposition":  "ALLOW_RELEASE_EXCLUDED_TEST_EVIDENCE",
+                              "rows":  60
+                          },
+                          {
+                              "disposition":  "KEEP_INTERNAL_ENV_OR_PROTOCOL_IDENTIFIER",
+                              "rows":  28
+                          },
+                          {
+                              "disposition":  "KEEP_SECURITY_DETECTOR",
+                              "rows":  1
+                          },
+                          {
+                              "disposition":  "KEEP_SAFETY_GUARD",
+                              "rows":  2
+                          }
+                      ],
+    "byOwnerClass":  [
+                         {
+                             "ownerClass":  "terminal-platform-technical-identifier",
+                             "rows":  3
+                         },
+                         {
+                             "ownerClass":  "git-primitive-false-positive",
+                             "rows":  4
+                         },
+                         {
+                             "ownerClass":  "test-evidence-provider-or-brand-fixture",
+                             "rows":  60
+                         },
+                         {
+                             "ownerClass":  "explicit-provider-fallback-technical-identifier",
+                             "rows":  28
+                         },
+                         {
+                             "ownerClass":  "security-detector-provider-name",
+                             "rows":  1
+                         },
+                         {
+                             "ownerClass":  "safety-policy-or-mcp-tool-name",
+                             "rows":  2
+                         }
+                     ],
+    "rule":  "Remaining source terms are classified as tests, explicit internal provider fallback identifiers, terminal platform identifiers, git primitives, safety controls, or security detectors. Public product copy must stay DSXU/provider-neutral."
+}

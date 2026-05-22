@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import type { TaskStateBase } from '../../Task.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
@@ -14,7 +13,7 @@ const inputSchema = lazySchema(() =>
       .string()
       .optional()
       .describe('The ID of the background task to stop'),
-    // shell_id is accepted for backward compatibility with the deprecated KillShell tool
+    // shell_id is accepted as a deprecated KillShell migration alias.
     shell_id: z.string().optional().describe('Deprecated: use task_id instead'),
   }),
 )
@@ -40,8 +39,14 @@ export type Output = z.infer<OutputSchema>
 export const TaskStopTool = buildTool({
   name: TASK_STOP_TOOL_NAME,
   searchHint: 'kill a running background task',
-  // KillShell is the deprecated name - kept as alias for backward compatibility
-  // with existing transcripts and SDK users
+  runtimeMetadata: {
+    owner: 'DSXU Task Lifecycle',
+    sideEffects: ['task-stop', 'background-process-interrupt'],
+    permission: 'tool-specific permission hook for task stop request',
+    evidence: ['task id', 'task type', 'stop message'],
+    uiProjection: 'task status and tool result transcript',
+  },
+  // KillShell is the deprecated name, kept as a transcript and SDK migration alias.
   aliases: ['KillShell'],
   maxResultSizeChars: 100_000,
   userFacingName: () => (process.env.USER_TYPE === 'ant' ? '' : 'Stop Task'),
@@ -57,6 +62,12 @@ export const TaskStopTool = buildTool({
   },
   toAutoClassifierInput(input) {
     return input.task_id ?? input.shell_id ?? ''
+  },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `TaskStop wants to stop task '${input.task_id ?? input.shell_id ?? ''}'.`,
+    }
   },
   async validateInput({ task_id, shell_id }, { getAppState }) {
     // Support both task_id and shell_id (deprecated KillShell compat)

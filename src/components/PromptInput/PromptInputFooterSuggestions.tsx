@@ -290,11 +290,3 @@ function _temp(item) {
   return stringWidth(item.displayText);
 }
 export default memo(PromptInputFooterSuggestions);
-
-// V14 lifecycle shim: promptinputfootersuggestions
-export function processPromptinputfootersuggestionsLifecycle(input) {
-  void input
-  const state = 'promptinputfootersuggestions-state'
-  const lifecycle = 'promptinputfootersuggestions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

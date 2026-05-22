@@ -156,14 +156,6 @@ export type SandboxIgnoreViolations = NonNullable<
 >
 
 
-// V14 lifecycle shim: sandboxtypes
-export function processSandboxtypesLifecycle(input) {
-  void input
-  const state = 'sandboxtypes-state'
-  const lifecycle = 'sandboxtypes:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuSandboxTypesRuntimeProfile() {
   return {
     runtime: 'DSXU Sandbox Settings Contract',

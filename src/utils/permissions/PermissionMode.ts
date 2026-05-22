@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import z from 'zod/v4'
 import { PAUSE_ICON } from '../../constants/figures.js'
@@ -11,7 +10,7 @@ import {
 } from '../../types/permissions.js'
 import { lazySchema } from '../lazySchema.js'
 
-// Re-export for backwards compatibility
+// Re-export for provider-migration import continuity
 export {
   EXTERNAL_PERMISSION_MODES,
   PERMISSION_MODES,
@@ -93,7 +92,7 @@ const PERMISSION_MODE_CONFIG: Partial<
 
 /**
  * Type guard to check if a PermissionMode is an ExternalPermissionMode.
- * auto is ant-only and excluded from external modes.
+ * auto is dsxu internal and excluded from external modes.
  */
 export function isExternalPermissionMode(
   mode: PermissionMode,

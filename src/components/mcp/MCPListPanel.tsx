@@ -2,7 +2,7 @@ import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React, { useCallback, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
-import { isLegacyCloudMcpTransport } from '../../constants/legacyProviderProtocol.js';
+import { isProviderMigrationMcpTransport } from '../../constants/providerMigrationProtocol.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import type { ConfigScope } from '../../services/mcp/types.js';
@@ -128,7 +128,7 @@ export function MCPListPanel(t0) {
   } else {
     t4 = $[5];
   }
-  const legacyCloudServers = t4;
+  const providerMigrationServers = t4;
   let t5;
   if ($[6] !== serversByScope) {
     t5 = (serversByScope.get("dynamic") ?? []).sort(_temp4);
@@ -147,7 +147,7 @@ export function MCPListPanel(t0) {
   }
   const dynamicHeading = t6;
   let items;
-  if ($[9] !== agentServers || $[10] !== legacyCloudServers || $[11] !== dynamicServers || $[12] !== serversByScope) {
+  if ($[9] !== agentServers || $[10] !== providerMigrationServers || $[11] !== dynamicServers || $[12] !== serversByScope) {
     items = [];
     for (const scope of SCOPE_ORDER) {
       const scopeServers = serversByScope.get(scope) ?? [];
@@ -158,7 +158,7 @@ export function MCPListPanel(t0) {
         });
       }
     }
-    for (const server_0 of legacyCloudServers) {
+    for (const server_0 of providerMigrationServers) {
       items.push({
         type: "server",
         server: server_0
@@ -177,7 +177,7 @@ export function MCPListPanel(t0) {
       });
     }
     $[9] = agentServers;
-    $[10] = legacyCloudServers;
+    $[10] = providerMigrationServers;
     $[11] = dynamicServers;
     $[12] = serversByScope;
     $[13] = items;
@@ -396,9 +396,9 @@ export function MCPListPanel(t0) {
     t22 = $[50];
   }
   let t23;
-  if ($[51] !== legacyCloudServers || $[52] !== renderServerItem) {
-    t23 = legacyCloudServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Legacy connector migration</Text></Box>{legacyCloudServers.map(server_5 => renderServerItem(server_5))}</Box>;
-    $[51] = legacyCloudServers;
+  if ($[51] !== providerMigrationServers || $[52] !== renderServerItem) {
+    t23 = providerMigrationServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Provider connector migration</Text></Box>{providerMigrationServers.map(server_5 => renderServerItem(server_5))}</Box>;
+    $[51] = providerMigrationServers;
     $[52] = renderServerItem;
     $[53] = t23;
   } else {
@@ -497,16 +497,8 @@ function _temp3(a, b) {
   return a.name.localeCompare(b.name);
 }
 function _temp2(s_0) {
-  return isLegacyCloudMcpTransport(s_0.client.config.type);
+  return isProviderMigrationMcpTransport(s_0.client.config.type);
 }
 function _temp(s) {
-  return !isLegacyCloudMcpTransport(s.client.config.type);
-}
-
-// V14 lifecycle shim: mcplistpanel
-export function processMcplistpanelLifecycle(input) {
-  void input
-  const state = 'mcplistpanel-state'
-  const lifecycle = 'mcplistpanel:session-lifecycle'
-  return { state, lifecycle, invoked: true }
+  return !isProviderMigrationMcpTransport(s.client.config.type);
 }

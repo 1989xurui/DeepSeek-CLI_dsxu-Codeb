@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { HrTime } from '@opentelemetry/api'
 import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import type {
@@ -21,9 +20,9 @@ import {
 } from '../../types/analyticsTelemetry.js'
 import {
   hasProfileScope,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from '../../utils/auth.js'
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import { checkHasTrustDialogAccepted } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { getRuntimeConfigHomeDir } from '../../utils/envUtils.js'
@@ -46,8 +45,8 @@ const FILE_PREFIX = '1p_failed_events.'
 
 const PROVIDER_API_ORIGIN = `https://api.${'anth' + 'ropic'}.com`
 const PROVIDER_API_STAGING_ORIGIN = `https://api-staging.${'anth' + 'ropic'}.com`
-const LEGACY_PROVIDER_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
-const LEGACY_INSTRUMENTATION_SCOPE =
+const PROVIDER_MIGRATION_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
+const PROVIDER_MIGRATION_INSTRUMENTATION_SCOPE =
   `com.${'anth' + 'ropic'}.${'cl' + 'aude'}_code.events`
 
 // Storage directory for failed events - evaluated at runtime to respect DSXU_CONFIG_DIR in tests
@@ -121,11 +120,11 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       schedule?: (fn: () => Promise<void>, delayMs: number) => () => void
     } = {},
   ) {
-    // Default: prod, except when the legacy provider base URL is explicitly staging.
+    // Default: prod, except when the provider migration base URL is explicitly staging.
     // Overridable via tengu_1p_event_batch_config.baseUrl.
     const baseUrl =
       options.baseUrl ||
-      (process.env[LEGACY_PROVIDER_BASE_URL_ENV] === PROVIDER_API_STAGING_ORIGIN
+      (process.env[PROVIDER_MIGRATION_BASE_URL_ENV] === PROVIDER_API_STAGING_ORIGIN
         ? PROVIDER_API_STAGING_ORIGIN
         : PROVIDER_API_ORIGIN)
 
@@ -323,7 +322,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       // Filter for event logs only (by scope name)
       const eventLogs = logs.filter(
         log =>
-          log.instrumentationScope?.name === LEGACY_INSTRUMENTATION_SCOPE,
+          log.instrumentationScope?.name === PROVIDER_MIGRATION_INSTRUMENTATION_SCOPE,
       )
 
       if (eventLogs.length === 0) {
@@ -565,8 +564,8 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
     // Skip auth when the OAuth token is expired or lacks user:profile
     // scope (service key sessions). Falls through to unauthenticated send.
     let shouldSkipAuth = this.skipAuth || !hasTrust
-    if (!shouldSkipAuth && isLegacyCloudSubscriber()) {
-      const tokens = getCompatProviderTokens()
+    if (!shouldSkipAuth && isProviderSubscriptionAccount()) {
+      const tokens = getProviderControlTokens()
       if (!hasProfileScope()) {
         shouldSkipAuth = true
       } else if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {

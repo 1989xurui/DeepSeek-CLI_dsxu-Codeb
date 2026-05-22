@@ -4,16 +4,16 @@ import {
   runV18OpenSourcePackageGateHarness,
 } from '../v18-open-source-package-gate'
 
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_REFERENCE_ROOT = `\u539f\u4ee3\u7801${LEGACY_PRODUCT}`
+const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')
+const SOURCE_REFERENCE_ROOT = `\u539f\u4ee3\u7801${SOURCE_REFERENCE_PRODUCT}`
 
 describe('V18 open-source package gate V1', () => {
   test('blocks old, scratch, and external reference paths from tracked release files', () => {
     const gate = buildV18OpenSourcePackageGate({
       trackedFiles: [
-        'src/dsxu/engine/runtime-core.ts',
+        'src/dsxu/engine/query-loop.ts',
         'tmp/v8-live-fixtures/example.ts',
-        `${LEGACY_REFERENCE_ROOT}/package.json`,
+        `${SOURCE_REFERENCE_ROOT}/package.json`,
         'src/bridge/bridgeMain.ts',
         'deepseek-proxy.ts',
       ],
@@ -36,7 +36,7 @@ describe('V18 open-source package gate V1', () => {
   test('allows DSXU mainline source, focused tests, docs, and package metadata', () => {
     const gate = buildV18OpenSourcePackageGate({
       trackedFiles: [
-        'src/dsxu/engine/runtime-core.ts',
+        'src/dsxu/engine/query-loop.ts',
         'src/dsxu/engine/__tests__/release-test-gate-v1.test.ts',
         'docs/DSXU_V18_FINAL_EXECUTION_PLAN_20260506.md',
         'package.json',
@@ -53,7 +53,7 @@ describe('V18 open-source package gate V1', () => {
   test('keeps canonical V18/V19 planning docs as rewrite-or-exclude source truth', () => {
     const gate = buildV18OpenSourcePackageGate({
       trackedFiles: [
-        'src/dsxu/engine/runtime-core.ts',
+        'src/dsxu/engine/query-loop.ts',
         'docs/DSXU_V19_EXECUTION_PLAN_ZH_20260509.md',
       ],
       nowIso: '2026-05-09T00:00:00.000Z',
@@ -76,12 +76,12 @@ describe('V18 open-source package gate V1', () => {
   test('separates tracked pending deletions from present release blockers', () => {
     const gate = buildV18OpenSourcePackageGate({
       trackedFiles: [
-        'src/dsxu/engine/runtime-core.ts',
+        'src/dsxu/engine/query-loop.ts',
         'src/bridge/bridgeMain.ts',
         'deepseek-proxy.ts',
       ],
       presentFiles: [
-        'src/dsxu/engine/runtime-core.ts',
+        'src/dsxu/engine/query-loop.ts',
       ],
       nowIso: '2026-05-07T00:00:00.000Z',
     })

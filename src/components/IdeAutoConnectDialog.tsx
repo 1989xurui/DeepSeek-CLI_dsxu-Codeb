@@ -151,11 +151,3 @@ export function shouldShowDisableAutoConnectDialog(): boolean {
   const config = getGlobalConfig();
   return !isSupportedTerminal() && config.autoConnectIde === true;
 }
-
-// V14 lifecycle shim: ideautoconnectdialog
-export function processIdeautoconnectdialogLifecycle(input) {
-  void input
-  const state = 'ideautoconnectdialog-state'
-  const lifecycle = 'ideautoconnectdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

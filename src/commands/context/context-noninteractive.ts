@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { microcompactMessages } from '../../services/compact/microCompact.js'
 import type { AppState } from '../../state/AppStateStore.js'
@@ -204,7 +203,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
     output += `\n`
   }
 
-  // System tools (ant-only)
+  // System tools (dsxu internal)
   if (
     systemTools &&
     systemTools.length > 0 &&
@@ -237,7 +236,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
     output += `\n`
   }
 
-  // System prompt sections (ant-only)
+  // System prompt sections (dsxu internal)
   if (
     systemPromptSections &&
     systemPromptSections.length > 0 &&
@@ -311,7 +310,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
     output += `\n`
   }
 
-  // Message breakdown (ant-only)
+  // Message breakdown (dsxu internal)
   if (messageBreakdown && shouldShowInternalContextBreakdown()) {
     output += `### Message Breakdown\n\n`
     output += `| Category | Tokens |\n`

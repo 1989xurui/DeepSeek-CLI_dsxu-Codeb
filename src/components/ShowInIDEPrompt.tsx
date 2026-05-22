@@ -167,11 +167,3 @@ export function ShowInIDEPrompt(t0) {
   }
   return t13;
 }
-
-// V14 lifecycle shim: showinideprompt
-export function processShowinidepromptLifecycle(input) {
-  void input
-  const state = 'showinideprompt-state'
-  const lifecycle = 'showinideprompt:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

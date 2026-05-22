@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "dsxu.v20.owner-packet-signoff-execution.v8",
+  "generatedAt": "2026-05-15T10:22:00+08:00",
+  "ownerPacketCount": 17,
+  "statusTotal": 1893,
+  "ownerAcceptedOrConditionalPaths": 1746,
+  "deletionMutationReadyPaths": 147,
+  "realGapAcceptanceRows": 3,
+  "p12RawReadinessCliRows": 3,
+  "ownerGitMutationPreflightRows": 1,
+  "ownerGitStagePlanRows": 1,
+  "aclResiduePreflightRows": 1,
+  "sixStageTestPlanRows": 1,
+  "p12TargetManifestIntakeRows": 1,
+  "ownerGitProductStagePlanRows": 1,
+  "finalPreflightRows": 1,
+  "cleanExportPreflightRows": 1,
+  "p12TargetCollectionPackRows": 1,
+  "ownerGitMutationCommandPlanRows": 1,
+  "aclResidueClosurePlanRows": 1,
+  "commercialIpReleasePreflightRows": 1,
+  "blockerActionBoardRows": 1,
+  "p12TargetManifestContractBoardRows": 1,
+  "closureBatchRunnerRows": 1,
+  "postAuthorizationVerificationPlanRows": 1,
+  "ogr13HoldingBucketRows": 0,
+  "signoffStateSummary": [
+    {
+      "signoffState": "CONDITIONAL_OWNER_ACCEPTED_IMPORT_REQUIRED",
+      "packets": 1,
+      "paths": 254
+    },
+    {
+      "signoffState": "DELETE_REVIEW_ACCEPTED_PENDING_GIT_STAGE",
+      "packets": 6,
+      "paths": 147
+    },
+    {
+      "signoffState": "OWNER_ACCEPTED_PENDING_GIT_REVIEW",
+      "packets": 9,
+      "paths": 1440
+    },
+    {
+      "signoffState": "OWNER_ACCEPTED_RELEASE_EVIDENCE_PENDING_GIT_REVIEW",
+      "packets": 1,
+      "paths": 52
+    }
+  ],
+  "deletionPacketSummary": [
+    {
+      "ownerPacket": "V20-OGR-02-delete-old-evidence-review-runtime",
+      "paths": 45
+    },
+    {
+      "ownerPacket": "V20-OGR-02-delete-old-provider-legacy-harness",
+      "paths": 71
+    },
+    {
+      "ownerPacket": "V20-OGR-02-delete-state-owner-review",
+      "paths": 27
+    },
+    {
+      "ownerPacket": "V20-OGR-03-delete-engine-builtin-tools-runtime",
+      "paths": 2
+    },
+    {
+      "ownerPacket": "V20-OGR-04-delete-engine-mcp-client-runtime",
+      "paths": 1
+    },
+    {
+      "ownerPacket": "V20-OGR-12-delete-duplicate-desktop-deeplink-helper",
+      "paths": 1
+    }
+  ],
+  "nextAction": "P12 target manifest is discovered/imported and raw-readiness is PASS; execute explicit Owner/Git packets or close ACL residues next. Final tests and clean export remain last.",
+  "rule": "This execution accepts owner disposition, real-gap acceptance owner mapping, P12 raw-readiness CLI wiring, P12 target collection/intake, owner/Git mutation preflight, product/deletion stage planning, Git mutation command planning, ACL residue preflight/closure planning, commercial/IP release preflight, final preflight planning, clean export preflight, blocker action board, and six-stage test planning only. It does not stage, commit, delete, reset, clean, force ACL residue deletion, run final tests, or create export artifacts.",
+  "ownerGitAuthorizationBoardRows": 1,
+  "p12TargetManifestDiscoveryRows": 1
+}

@@ -54,11 +54,3 @@ export function RawAnsi(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: rawansi
-export function processRawansiLifecycle(input) {
-  void input
-  const state = 'rawansi-state'
-  const lifecycle = 'rawansi:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

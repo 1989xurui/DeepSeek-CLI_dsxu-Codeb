@@ -259,11 +259,3 @@ export function getDsxuBrowserProviderMCPToolOverrides(toolName: string): {
 function isMCPToolResult(output: string | MCPToolResult): output is MCPToolResult {
   return typeof output === 'object' && output !== null;
 }
-
-// V14 lifecycle shim: toolrendering
-export function processToolrenderingLifecycle(input) {
-  void input
-  const state = 'toolrendering-state'
-  const lifecycle = 'toolrendering:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

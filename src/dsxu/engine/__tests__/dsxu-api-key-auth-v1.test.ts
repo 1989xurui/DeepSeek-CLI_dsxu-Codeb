@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import {
   getProviderApiKeyWithSource,
   isProviderAuthEnabled,
-} from '../../legacy/auth/legacyProviderAuth'
+} from '../../../services/auth/dsxuProviderAuth'
 
 const SAVED_ENV = {
   DSXU_CODE_MODE: process.env.DSXU_CODE_MODE,

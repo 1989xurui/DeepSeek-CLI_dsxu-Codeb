@@ -43,8 +43,8 @@ const scorecard: readonly GoalOptimizationArea[] = [
   },
   {
     id: 'tool-discipline',
-    goal: 'Reduce weak-model tool misuse, the Aider-style edit/tool axis.',
-    externalReference: ['Aider Polyglot', 'multi-language edit benchmarks'],
+    goal: 'Reduce weak-model tool misuse on external edit/tool benchmark axes.',
+    externalReference: ['polyglot edit benchmarks', 'multi-language edit benchmarks'],
     dsxuCapabilityBucket: 'Read/Edit/Write/Grep/Glob/Bash/PowerShell discipline',
     weight: 15,
     benchmarkCases: [

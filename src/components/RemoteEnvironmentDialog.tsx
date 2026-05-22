@@ -349,11 +349,3 @@ export function getDsxuRemoteEnvironmentDialogProfile() {
     ],
   }
 }
-
-// V14 lifecycle shim: remoteenvironmentdialog
-export function processRemoteenvironmentdialogLifecycle(input) {
-  void input
-  const state = 'remoteenvironmentdialog-state'
-  const lifecycle = 'remoteenvironmentdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

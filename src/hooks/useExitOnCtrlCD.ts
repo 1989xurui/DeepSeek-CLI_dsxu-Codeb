@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useMemo, useState } from 'react'
 import useApp from '../ink/hooks/use-app.js'
 import type { KeybindingContextName } from '../keybindings/types.js'

@@ -25,20 +25,3 @@ export type AgentValidationResult = {
   warnings: string[]
   errors: string[]
 }
-
-
-// V14 strict lifecycle shim: components-agents-types
-export function processComponentsAgentsTypesStrictLifecycle(input) {
-  void input
-  const state = 'components-agents-types-state'
-  const lifecycle = 'components-agents-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsAgentsTypesStrict(input) {
-  return processComponentsAgentsTypesStrictLifecycle(input)
-}

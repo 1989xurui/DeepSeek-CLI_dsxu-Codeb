@@ -134,11 +134,3 @@ export function UserChannelMessage(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: userchannelmessage
-export function processUserchannelmessageLifecycle(input) {
-  void input
-  const state = 'userchannelmessage-state'
-  const lifecycle = 'userchannelmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -8,12 +8,12 @@ import {
   DSXU_DEEPSEEK_PRO_MODEL,
   renderDSXUModelName,
 } from '../../utils/model/dsxuModel.js'
-import { getLegacyModelCompatEvidence } from '../../utils/model/legacyModelCompat.js'
+import { getProviderMigrationModelAliasEvidence } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import { getAgentModelOptions } from '../../utils/model/agent.js'
 import { getModelOptions } from '../../utils/model/modelOptions.js'
 
 export type V18ModelPublicSurfaceStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'
-export type V18ModelPublicSurfaceKind = 'public' | 'compat' | 'provenance'
+export type V18ModelPublicSurfaceKind = 'public' | 'migration' | 'provenance'
 
 export type V18ModelPublicSurfaceItem = {
   kind: V18ModelPublicSurfaceKind
@@ -31,8 +31,8 @@ export type V18ModelPublicSurfaceIssue = {
 
 export type V18ModelPublicSurfaceProvenance = {
   surface: string
-  provenance: 'dsxu-owned' | 'compat-migration-only' | 'test-fixture' | 'historical-doc'
-  releasePolicy: 'ship' | 'compat-hidden' | 'test-only' | 'exclude'
+  provenance: 'dsxu-owned' | 'provider-migration-only' | 'test-fixture' | 'historical-doc'
+  releasePolicy: 'ship' | 'migration-hidden' | 'test-only' | 'exclude'
 }
 
 export type V18ModelPublicSurfaceGate = {
@@ -49,18 +49,18 @@ export type V18ModelPublicSurfaceGate = {
   safeguards: readonly string[]
 }
 
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_VENDOR = ['anth', 'ropic'].join('')
-const LEGACY_MODEL_FAMILY_WORDS = ['o' + 'pus', 'son' + 'net', 'hai' + 'ku'] as const
-const LEGACY_MODEL_FAMILY_PATTERN = LEGACY_MODEL_FAMILY_WORDS.join('|')
+const PROVIDER_MIGRATION_SOURCE_PRODUCT = ['cl', 'aude'].join('')
+const PROVIDER_MIGRATION_SOURCE_VENDOR = ['anth', 'ropic'].join('')
+const PROVIDER_MIGRATION_SOURCE_MODEL_FAMILY_WORDS = ['o' + 'pus', 'son' + 'net', 'hai' + 'ku'] as const
+const PROVIDER_MIGRATION_SOURCE_MODEL_FAMILY_PATTERN = PROVIDER_MIGRATION_SOURCE_MODEL_FAMILY_WORDS.join('|')
 
 const PUBLIC_SURFACE_FORBIDDEN_PATTERNS = [
-  new RegExp(`\\b(${LEGACY_MODEL_FAMILY_PATTERN})\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_PRODUCT}\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_VENDOR}\\b`, 'i'),
+  new RegExp(`\\b(${PROVIDER_MIGRATION_SOURCE_MODEL_FAMILY_PATTERN})\\b`, 'i'),
+  new RegExp(`\\b${PROVIDER_MIGRATION_SOURCE_PRODUCT}\\b`, 'i'),
+  new RegExp(`\\b${PROVIDER_MIGRATION_SOURCE_VENDOR}\\b`, 'i'),
 ] as const
 
-function firstLegacyMatch(value: string): string | undefined {
+function firstProviderMigrationSourceMatch(value: string): string | undefined {
   for (const pattern of PUBLIC_SURFACE_FORBIDDEN_PATTERNS) {
     const match = value.match(pattern)
     if (match?.[0]) return match[0]
@@ -136,19 +136,19 @@ export function collectDsxuModelPublicSurfaceItems(): V18ModelPublicSurfaceItem[
       surface: `final model evidence ${index + 1}`,
       value,
     }))
-    const [highTier, balancedTier, lightTier] = LEGACY_MODEL_FAMILY_WORDS
-    const compatEvidence = [
+    const [highTier, balancedTier, lightTier] = PROVIDER_MIGRATION_SOURCE_MODEL_FAMILY_WORDS
+    const migrationEvidence = [
       lightTier,
       balancedTier,
       highTier,
       highTier + 'plan',
       highTier + '[1m]',
     ]
-      .map(alias => getLegacyModelCompatEvidence(alias))
+      .map(alias => getProviderMigrationModelAliasEvidence(alias))
       .filter((value): value is string => Boolean(value))
       .map(value => ({
-        kind: 'compat' as const,
-        surface: 'hidden legacy model compat evidence',
+        kind: 'migration' as const,
+        surface: 'hidden provider migration model alias evidence',
         value,
       }))
 
@@ -158,7 +158,7 @@ export function collectDsxuModelPublicSurfaceItems(): V18ModelPublicSurfaceItem[
       ...aliases,
       ...renderEvidence,
       ...routeEvidence,
-      ...compatEvidence,
+      ...migrationEvidence,
     ]
   })
 }
@@ -170,7 +170,7 @@ export function buildV18ModelPublicSurfaceGate(input: {
 }): V18ModelPublicSurfaceGate {
   const issues: V18ModelPublicSurfaceIssue[] = []
   for (const item of input.items) {
-    const match = firstLegacyMatch(item.value)
+    const match = firstProviderMigrationSourceMatch(item.value)
     if (!match) continue
     issues.push({
       severity: item.kind === 'public' ? 'blocker' : 'review',
@@ -179,8 +179,8 @@ export function buildV18ModelPublicSurfaceGate(input: {
       value: item.value,
       reason:
         item.kind === 'public'
-          ? 'DSXU public model surface must not expose legacy provider model family or vendor naming'
-          : 'legacy model family is allowed only in hidden compatibility evidence',
+          ? 'DSXU public model surface must not expose provider-migration source model family or vendor naming'
+          : 'provider-migration source model family is allowed only in hidden provider-migration evidence',
     })
   }
 
@@ -205,9 +205,9 @@ export function buildV18ModelPublicSurfaceGate(input: {
         releasePolicy: 'ship',
       },
       {
-        surface: 'legacy model family aliases',
-        provenance: 'compat-migration-only',
-        releasePolicy: 'compat-hidden',
+        surface: 'provider-migration source model family aliases',
+        provenance: 'provider-migration-only',
+        releasePolicy: 'migration-hidden',
       },
       {
         surface: 'historical reference source and local runtime state',
@@ -217,7 +217,7 @@ export function buildV18ModelPublicSurfaceGate(input: {
     ],
     safeguards: [
       'gate checks runtime public model options, agent model options, aliases, and final model evidence under DSXU_CODE_MODE=1',
-      'legacy model family names are permitted only in hidden compatibility evidence, never in public UI/schema/evidence',
+      'provider-migration source model family names are permitted only in hidden provider-migration evidence, never in public UI/schema/evidence',
       'this gate does not mutate files, settings, environment, or git state',
     ],
   }

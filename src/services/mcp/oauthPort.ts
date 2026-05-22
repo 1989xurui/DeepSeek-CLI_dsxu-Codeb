@@ -76,12 +76,3 @@ export async function findAvailablePort(): Promise<number> {
     throw new Error(`No available ports for OAuth redirect`)
   }
 }
-
-
-// V14 lifecycle shim: oauthport
-export function processOauthportLifecycle(input) {
-  void input
-  const state = 'oauthport-state'
-  const lifecycle = 'oauthport:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

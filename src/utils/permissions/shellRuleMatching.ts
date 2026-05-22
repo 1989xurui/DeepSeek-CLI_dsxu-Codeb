@@ -37,8 +37,8 @@ export type ShellPermissionRule =
     }
 
 /**
- * Extract prefix from legacy :* syntax (e.g., "npm:*" -> "npm")
- * This is maintained for backwards compatibility.
+ * Extract prefix from historical :* syntax (e.g., "npm:*" -> "npm")
+ * This remains for historical rule syntax continuity.
  */
 export function permissionRuleExtractPrefix(
   permissionRule: string,
@@ -48,11 +48,11 @@ export function permissionRuleExtractPrefix(
 }
 
 /**
- * Check if a pattern contains unescaped wildcards (not legacy :* syntax).
+ * Check if a pattern contains unescaped wildcards (not historical :* syntax).
  * Returns true if the pattern contains * that are not escaped with \ or part of :* at the end.
  */
 export function hasWildcards(pattern: string): boolean {
-  // If it ends with :*, it's legacy prefix syntax, not wildcard
+  // If it ends with :*, it's historical prefix syntax, not wildcard
   if (pattern.endsWith(':*')) {
     return false
   }
@@ -159,7 +159,7 @@ export function matchWildcardPattern(
 export function parsePermissionRule(
   permissionRule: string,
 ): ShellPermissionRule {
-  // Check for legacy :* prefix syntax first (backwards compatibility)
+  // Check for historical :* prefix syntax first (historical syntax continuity)
   const prefix = permissionRuleExtractPrefix(permissionRule)
   if (prefix !== null) {
     return {

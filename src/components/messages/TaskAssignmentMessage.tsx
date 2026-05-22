@@ -73,11 +73,3 @@ export function getTaskAssignmentSummary(content: string): string | null {
   }
   return null;
 }
-
-// V14 lifecycle shim: taskassignmentmessage
-export function processTaskassignmentmessageLifecycle(input) {
-  void input
-  const state = 'taskassignmentmessage-state'
-  const lifecycle = 'taskassignmentmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

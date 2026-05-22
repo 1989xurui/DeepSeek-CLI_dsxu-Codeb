@@ -35,23 +35,36 @@ const baseConfig: APIServiceConfig = {
   openaiKey: 'sk-test-oai',
   openaiUrl: 'https://api.openai.com/v1',
   ollamaUrl: 'http://localhost:11434',
+  allowProviderFallbacks: true,
 }
 
 describe('APIService', () => {
   const originalOpenAIKey = process.env.OPENAI_API_KEY
   const originalDeepSeekKey = process.env.DEEPSEEK_API_KEY
+  const originalOllamaUrl = process.env.DSXU_OLLAMA_URL
+  const originalAllowProviderFallbacks = process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS
+  const originalAllowOpenAIFallback = process.env.DSXU_ALLOW_OPENAI_FALLBACK
+  const originalAllowOllamaFallback = process.env.DSXU_ALLOW_OLLAMA_FALLBACK
 
   beforeEach(() => {
     mockFetch.mockReset()
     ;(globalThis as any).fetch = mockFetch
     process.env.OPENAI_API_KEY = ''
     process.env.DEEPSEEK_API_KEY = ''
+    process.env.DSXU_OLLAMA_URL = ''
+    process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS = ''
+    process.env.DSXU_ALLOW_OPENAI_FALLBACK = ''
+    process.env.DSXU_ALLOW_OLLAMA_FALLBACK = ''
   })
 
   afterEach(() => {
     ;(globalThis as any).fetch = originalFetch
     process.env.OPENAI_API_KEY = originalOpenAIKey
     process.env.DEEPSEEK_API_KEY = originalDeepSeekKey
+    process.env.DSXU_OLLAMA_URL = originalOllamaUrl
+    process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS = originalAllowProviderFallbacks
+    process.env.DSXU_ALLOW_OPENAI_FALLBACK = originalAllowOpenAIFallback
+    process.env.DSXU_ALLOW_OLLAMA_FALLBACK = originalAllowOllamaFallback
   })
 
   describe('constructor', () => {
@@ -67,11 +80,32 @@ describe('APIService', () => {
       expect(status.every(s => s.breakerState === 'closed')).toBe(true)
     })
 
+    it('should default to the DeepSeek owner without implicit fallback runtimes', () => {
+      const api = new APIService({
+        deepseekKey: 'sk-test-ds',
+        openaiKey: 'sk-test-oai',
+        ollamaUrl: 'http://localhost:11434',
+      })
+      const status = api.getStatus()
+
+      expect(status).toHaveLength(1)
+      expect(status[0].name).toBe('deepseek')
+    })
+
     it('should skip backends without API keys', () => {
       const api = new APIService({ ollamaUrl: 'http://localhost:11434' })
       const status = api.getStatus()
 
-      // Only ollama (always added)
+      expect(status).toHaveLength(0)
+    })
+
+    it('should add local Ollama only through an explicit fallback owner flag', () => {
+      const api = new APIService({
+        ollamaUrl: 'http://localhost:11434',
+        allowOllamaFallback: true,
+      })
+      const status = api.getStatus()
+
       expect(status).toHaveLength(1)
       expect(status[0].name).toBe('ollama')
     })

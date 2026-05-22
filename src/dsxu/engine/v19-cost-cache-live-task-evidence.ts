@@ -137,7 +137,7 @@ export type V19LiveProviderCacheEvidenceSummary = {
   evidencePath: string
   sourceEvidencePath: string
   routeTracePath: string
-  sourceProviderStatus: V19LiveProviderCachePrefixSmokeResult['status']
+  providerMigrationSourceStatus: V19LiveProviderCachePrefixSmokeResult['status']
   liveProviderUsage: true
   non22LiveTask: true
   broad22Run: false
@@ -576,7 +576,7 @@ export function summarizeV19LiveProviderCacheEvidence(input: {
     evidencePath: input.evidencePath ?? source.evidencePath,
     sourceEvidencePath: source.evidencePath,
     routeTracePath: source.routeTracePath,
-    sourceProviderStatus: source.status,
+    providerMigrationSourceStatus: source.status,
     liveProviderUsage: true,
     non22LiveTask: true,
     broad22Run: false,

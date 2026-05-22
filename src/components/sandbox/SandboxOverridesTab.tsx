@@ -190,11 +190,3 @@ function OverridesSelect(t0) {
   }
   return t14;
 }
-
-// V14 lifecycle shim: sandboxoverridestab
-export function processSandboxoverridestabLifecycle(input) {
-  void input
-  const state = 'sandboxoverridestab-state'
-  const lifecycle = 'sandboxoverridestab:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

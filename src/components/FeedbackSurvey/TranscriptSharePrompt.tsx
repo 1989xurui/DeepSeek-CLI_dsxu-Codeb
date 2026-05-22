@@ -85,11 +85,3 @@ export function TranscriptSharePrompt(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: transcriptshareprompt
-export function processTranscriptsharepromptLifecycle(input) {
-  void input
-  const state = 'transcriptshareprompt-state'
-  const lifecycle = 'transcriptshareprompt:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -119,11 +119,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   onDone(output);
   return null;
 }
-
-// V14 lifecycle shim: plan
-export function processPlanLifecycle(input) {
-  void input
-  const state = 'plan-state'
-  const lifecycle = 'plan:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

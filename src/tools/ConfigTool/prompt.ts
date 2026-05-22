@@ -1,7 +1,7 @@
  import { feature } from 'bun:bundle'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 import { getModelOptions } from '../../utils/model/modelOptions.js'
-import { isVoiceGrowthBookEnabled } from '../../voice/voiceModeEnabled.js'
+import { isVoiceFeatureFlagEnabled } from '../../voice/voiceModeEnabled.js'
 import {
   getOptionsForSetting,
   SUPPORTED_SETTINGS,
@@ -25,12 +25,12 @@ export function generatePrompt(): string {
   for (const [key, config] of Object.entries(SUPPORTED_SETTINGS)) {
     // Skip model - it gets its own section with dynamic options
     if (key === 'model') continue
-    // Voice settings are registered at build-time but gated by GrowthBook
+    // Voice settings are registered at build-time but gated by feature flag provider
     // at runtime. Hide from model prompt when the kill-switch is on.
     if (
       feature('VOICE_MODE') &&
       key === 'voiceEnabled' &&
-      !isVoiceGrowthBookEnabled()
+      !isVoiceFeatureFlagEnabled()
     )
       continue
 
@@ -77,7 +77,7 @@ ${modelSection}
 - When to use: inspect or change configuration only when the user asks, when a setting directly blocks the task, or when a safe configuration change is explicitly beneficial.
 - When not to use: do not change model, permissions, telemetry, tools, or project settings as a workaround for failed implementation or without user intent.
 - Recovery after failure: if a setting is unavailable or invalid, report the exact setting and valid options instead of guessing another key.
-- Weak-model anti-pattern: do not silently widen permissions, switch models, enable remote/legacy features, or mutate project settings to make a benchmark pass.
+- Weak-model anti-pattern: do not silently widen permissions, switch models, enable remote/provider-migration features, or mutate project settings to make a benchmark pass.
 - Verification / evidence: after a change, cite the setting name, scope, value, and the read-back or command evidence confirming it.
 
 ## Examples
@@ -123,21 +123,4 @@ export function getDsxuConfigPromptRuntimeProfile(): {
       'model options are dynamically generated from DSXU model registry',
     ],
   }
-}
-
-
-// V14 strict lifecycle shim: tools-ConfigTool-prompt
-export function processToolsConfigToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-ConfigTool-prompt-state'
-  const lifecycle = 'tools-ConfigTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsConfigToolPromptStrict(input) {
-  return processToolsConfigToolPromptStrictLifecycle(input)
 }

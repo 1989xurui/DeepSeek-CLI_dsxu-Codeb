@@ -252,11 +252,3 @@ function _temp2(a, b) {
 function _temp(cmd) {
   return cmd.type === "prompt" && (cmd.loadedFrom === "skills" || cmd.loadedFrom === "commands_DEPRECATED" || cmd.loadedFrom === "plugin" || cmd.loadedFrom === "mcp");
 }
-
-// V14 lifecycle shim: skillsmenu
-export function processSkillsmenuLifecycle(input) {
-  void input
-  const state = 'skillsmenu-state'
-  const lifecycle = 'skillsmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

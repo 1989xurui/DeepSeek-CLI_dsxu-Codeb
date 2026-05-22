@@ -797,11 +797,3 @@ function _temp2(s_0) {
 function _temp(s) {
   return s.agentDefinitions;
 }
-
-// V14 lifecycle shim: agentsmenu
-export function processAgentsmenuLifecycle(input) {
-  void input
-  const state = 'agentsmenu-state'
-  const lifecycle = 'agentsmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

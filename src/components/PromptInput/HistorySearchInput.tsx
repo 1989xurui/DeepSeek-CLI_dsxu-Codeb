@@ -48,11 +48,3 @@ function HistorySearchInput(t0) {
 }
 function _temp() {}
 export default HistorySearchInput;
-
-// V14 lifecycle shim: historysearchinput
-export function processHistorysearchinputLifecycle(input) {
-  void input
-  const state = 'historysearchinput-state'
-  const lifecycle = 'historysearchinput:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

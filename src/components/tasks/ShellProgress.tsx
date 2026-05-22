@@ -84,11 +84,3 @@ export function ShellProgress(t0) {
       }
   }
 }
-
-// V14 lifecycle shim: shellprogress
-export function processShellprogressLifecycle(input) {
-  void input
-  const state = 'shellprogress-state'
-  const lifecycle = 'shellprogress:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

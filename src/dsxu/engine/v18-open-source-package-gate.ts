@@ -5,8 +5,8 @@ import { join } from 'path'
 import { promisify } from 'util'
 
 const execFileAsync = promisify(execFile)
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_REFERENCE_ROOT = `\\u539f\\u4ee3\\u7801${LEGACY_PRODUCT}`
+const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')
+const SOURCE_REFERENCE_ROOT = `\\u539f\\u4ee3\\u7801${SOURCE_REFERENCE_PRODUCT}`
 const LEGACY_PROXY_DIR = ['upstream', 'proxy'].join('')
 
 export type V18OpenSourcePackageGateStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'
@@ -116,7 +116,7 @@ export const V18_FORBIDDEN_OPEN_SOURCE_PACKAGE_RULES: readonly V18PackageForbidd
   },
   {
     id: 'external-reference-source',
-    pattern: new RegExp(`^${LEGACY_REFERENCE_ROOT}(/|$)`),
+    pattern: new RegExp(`^${SOURCE_REFERENCE_ROOT}(/|$)`),
     reason: 'external reference source is audit input, not DSXU distributable source',
   },
   {
@@ -126,13 +126,13 @@ export const V18_FORBIDDEN_OPEN_SOURCE_PACKAGE_RULES: readonly V18PackageForbidd
   },
   {
     id: 'legacy-private-state',
-    pattern: new RegExp(`^(\\.${LEGACY_PRODUCT}|\\.dsevo|dsevo|evals)(/|$)`),
+    pattern: new RegExp(`^(\\.${SOURCE_REFERENCE_PRODUCT}|\\.dsevo|dsevo|evals)(/|$)`),
     reason: 'historical private state, golden fixtures, and old eval side paths are excluded from the release package',
   },
   {
     id: 'old-root-shims',
     pattern: new RegExp(
-      `^(start-${LEGACY_PRODUCT}\\.(cmd|ps1)|crash-handler\\.js|deepseek-proxy\\.(js|ts)|test-(context-budget|cost-ledger|infra-tasks)\\.(js|cjs))$`,
+      `^(start-${SOURCE_REFERENCE_PRODUCT}\\.(cmd|ps1)|crash-handler\\.js|deepseek-proxy\\.(js|ts)|test-(context-budget|cost-ledger|infra-tasks)\\.(js|cjs))$`,
     ),
     reason: 'old root shims and one-off scripts are quarantined outside the release surface',
   },

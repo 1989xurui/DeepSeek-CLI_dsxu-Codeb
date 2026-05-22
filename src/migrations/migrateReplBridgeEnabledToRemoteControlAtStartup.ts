@@ -20,12 +20,3 @@ export function migrateReplBridgeEnabledToRemoteControlAtStartup(): void {
     return next
   })
 }
-
-
-// V14 lifecycle shim: migratereplbridgeenabledtoremotecontrolatstartup
-export function processMigratereplbridgeenabledtoremotecontrolatstartupLifecycle(input) {
-  void input
-  const state = 'migratereplbridgeenabledtoremotecontrolatstartup-state'
-  const lifecycle = 'migratereplbridgeenabledtoremotecontrolatstartup:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

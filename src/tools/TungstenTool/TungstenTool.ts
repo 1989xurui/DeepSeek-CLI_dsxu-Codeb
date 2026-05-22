@@ -1,12 +1,30 @@
 import { z } from 'zod/v4'
 
 const inputSchema = z.object({}).passthrough()
+const outputSchema = z.object({
+  success: z.boolean(),
+  error: z.string(),
+})
 
 export const TungstenTool = {
   name: 'tungsten',
+  runtimeMetadata: {
+    owner: 'DSXU Disabled Recovery Stub',
+    sideEffects: [
+      'none-disabled-tool',
+    ],
+    permission: 'deny always; unavailable in local recovery build',
+    evidence: [
+      'isEnabled false',
+      'deny permission decision',
+      'unavailable call result',
+    ],
+    uiProjection: 'disabled tool error only',
+  },
   aliases: [],
   maxResultSizeChars: 0,
   inputSchema,
+  outputSchema,
   async description() {
     return 'Unavailable in this local recovery build.'
   },

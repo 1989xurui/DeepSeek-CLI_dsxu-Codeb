@@ -123,33 +123,23 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-public-surface-clean-gate-v1.test.ts',
-    reason: 'blocks legacy/proprietary legacy naming from release paths and runtime content while tracking model-family naming as explicit review debt',
-    required: true,
-  },
-  {
-    path: 'src/dsxu/engine/__tests__/v18-release-provenance-gate-v1.test.ts',
-    reason: 'blocks proprietary/vendor-scoped dependency and legacy runtime shell provenance before release packaging',
-    required: true,
-  },
-  {
-    path: 'src/dsxu/engine/__tests__/v18-proprietary-code-risk-gate-v1.test.ts',
-    reason: 'keeps vendor API/env/dependency, old runtime imports, model-family naming, and control-protocol debt separated into release blockers versus review items',
-    required: true,
-  },
-  {
     path: 'src/dsxu/engine/__tests__/dsxu-model-public-surface-v1.test.ts',
     reason: 'proves DSXU public model UI, aliases, Agent options, and final route evidence expose only DSXU/DeepSeek model names',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/legacy-model-compat-isolation-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/provider-migration-model-alias-isolation-v1.test.ts',
     reason: 'keeps old model-family aliases hidden inside a DSXU compatibility parser instead of public UI/schema/evidence',
     required: true,
   },
   {
     path: 'src/dsxu/engine/__tests__/release-surface-v1.test.ts',
     reason: 'ties DSXU-owned public model surface evidence to the release risk gate before release packaging',
+    required: true,
+  },
+  {
+    path: 'src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts',
+    reason: 'keeps source-truth evidence, public release docs, and provider-migration review debt separated before packaging',
     required: true,
   },
   {
@@ -210,11 +200,6 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
   {
     path: 'src/dsxu/engine/__tests__/auto-mode-visible-copy-v1.test.ts',
     reason: 'keeps Auto Mode system reminders free of mojibake before they enter model-visible context',
-    required: true,
-  },
-  {
-    path: 'src/dsxu/engine/__tests__/source-encoding-boundary-v1.test.ts',
-    reason: 'keeps critical mainline source strict UTF-8 and makes invalid source bytes visible in health audits',
     required: true,
   },
   {
@@ -285,11 +270,6 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
   {
     path: 'src/dsxu/engine/__tests__/blast-radius.test.ts',
     reason: 'proves RegressionGuard impact analysis can find dependents and related tests for focused verification',
-    required: true,
-  },
-  {
-    path: 'src/dsxu/engine/__tests__/tool-mainline-v1-clean.test.ts',
-    reason: 'covers mainline tool execution without side control paths',
     required: true,
   },
   {
@@ -413,11 +393,6 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/session-memory-mainline-v1.test.ts',
-    reason: 'covers session memory mainline behavior',
-    required: true,
-  },
-  {
     path: 'src/dsxu/engine/__tests__/experience-store-replay-v1.test.ts',
     reason: 'proves ExperienceStore records, recalls, deletes, explains, smooth-resumes, and reduces repeated exploration with source-truth refresh',
     required: true,
@@ -430,11 +405,6 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
   {
     path: 'src/dsxu/engine/__tests__/experience-store-smooth-resume-pack-v1.test.ts',
     reason: 'aggregates bugfix, feature native test, failed verification recovery, and compact resume into one ExperienceStore pack with measurable waste reduction and benchmark-answer leak blocking',
-    required: true,
-  },
-  {
-    path: 'src/dsxu/engine/__tests__/experience-store-query-context-v1.test.ts',
-    reason: 'keeps ExperienceStore injection bounded, read-only, and routed through the single query context bundle',
     required: true,
   },
   {
@@ -490,28 +460,12 @@ export const DSXU_QUARANTINE_RULES: readonly QuarantineRule[] = [
     reason: 'old CompactPipeline API contract drift; not counted until rewritten against current compact mainline',
   },
   {
-    pattern: /skills-mainline-v1-clean\.test\.ts$/,
-    reason: 'imports removed prompt-stack-v1 side-path; not counted until rebuilt against current skill runtime',
-  },
-  {
-    pattern: /skills-prompt-stack-v1-clean\.test\.ts$/,
-    reason: 'imports removed prompt-stack-v1 side-path; not counted until rebuilt against the current bundled skill registry and prompt context bundle',
-  },
-  {
-    pattern: /c02-prompt-stack-mainline-clean\.test\.ts$/,
-    reason: 'imports removed prompt-stack-v1 side-path; not counted until rewritten against the current system-prompt/query-context mainline',
-  },
-  {
     pattern: /prompt-processing-v1-clean\.test\.ts$/,
     reason: 'imports removed prompt-processing-v1 and prompt-stack-v1 side-paths; not counted until rewritten against current REPL/query prompt handling',
   },
   {
     pattern: /context-analysis-v1-clean\.test\.ts$/,
     reason: 'imports removed context-analysis-v1 and prompt-stack-v1 side-paths; not counted until rewritten against current query-context-builder and context-window manager',
-  },
-  {
-    pattern: /c03-querycontext-classifiers-mainline-clean\.test\.ts$/,
-    reason: 'imports removed context-analysis-v1 side-path; query-context release coverage now lives in query-context-mainline and ExperienceStore runtime-boundary tests',
   },
   {
     pattern: /c16-shell-full-audit-clean\.test\.ts$/,

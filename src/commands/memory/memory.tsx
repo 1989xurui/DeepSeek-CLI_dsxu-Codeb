@@ -88,11 +88,3 @@ export const call: LocalJSXCommandCall = async onDone => {
   await getMemoryFiles();
   return <MemoryCommand onDone={onDone} />;
 };
-
-// V14 lifecycle shim: memory
-export function processMemoryLifecycle(input) {
-  void input
-  const state = 'memory-state'
-  const lifecycle = 'memory:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

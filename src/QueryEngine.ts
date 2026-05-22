@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { randomUUID } from 'crypto'
@@ -93,7 +92,7 @@ import {
 } from './utils/messages/mappers.js'
 import {
   buildSystemInitMessage,
-  sdkCompatToolName,
+  sdkSourceWireToolName,
 } from './utils/messages/systemInit.js'
 import {
   getScratchpadDir,
@@ -105,9 +104,9 @@ import {
   isResultSuccessful,
   normalizeMessage,
 } from './utils/queryHelpers.js'
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const legacyCodeEnv = (name: string): string =>
-  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const providerMigrationCodeEnv = (name: string): string =>
+  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
 // Dead code elimination: conditional import for coordinator mode
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getCoordinatorUserContext: (
@@ -254,7 +253,7 @@ export class QueryEngine {
       // Track denials for SDK reporting
       if (result.behavior !== 'allow') {
         this.permissionDenials.push({
-          tool_name: sdkCompatToolName(tool.name),
+          tool_name: sdkSourceWireToolName(tool.name),
           tool_use_id: toolUseID,
           tool_input: input,
         })
@@ -296,7 +295,7 @@ export class QueryEngine {
       ),
     }
     // When an SDK caller provides a custom system prompt AND has set
-    // legacy cowork memory path override, inject the memory-mechanics prompt.
+        // provider-migration cowork memory path override; inject the memory-mechanics prompt.
     // The env var is an explicit opt-in signal - the caller has wired up
     // a memory directory and needs DSXU to know how to use it (which
     // Write/Edit tools to call, MEMORY.md filename, loading semantics).
@@ -434,8 +433,8 @@ export class QueryEngine {
       } else {
         await transcriptPromise
         if (
-          isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-          isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+          isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
@@ -503,8 +502,8 @@ export class QueryEngine {
     }
     headlessProfilerCheckpoint('before_skills_plugins')
     // Cache-only: headless/SDK/CCR startup must not block on network for
-    // ref-tracked plugins. CCR populates the cache via legacy sync plugin install env
-    // (headlessPluginInstall) or legacy plugin seed dir env before this runs;
+    // ref-tracked plugins. CCR populates the cache via provider-migration sync plugin install env
+    // (headlessPluginInstall) or provider-migration plugin seed dir env before this runs;
     // SDK callers that need fresh source can call /reload-plugins.
     const [skills, { enabled: enabledPlugins }] = await Promise.all([
       getSlashCommandToolSkills(getCwd()),
@@ -577,8 +576,8 @@ export class QueryEngine {
       if (persistSession) {
         await recordTranscript(messages)
         if (
-          isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-          isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+          isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
@@ -659,7 +658,7 @@ export class QueryEngine {
         // messages up through the preservedSegment tail. Attachments and
         // progress are now recorded inline (their switch cases below), but
         // this flush still matters for the preservedSegment tail walk.
-        // If the SDK subprocess restarts before then (legacy-desktop kills
+        // If the SDK subprocess restarts before then (provider-migration desktop kills
         // between turns), tailUuid points to a never-written message  -
         // applyPreservedSegmentRelinks fails its tail - head walk - returns
         // without pruning - resume loads full pre-compact history.
@@ -801,8 +800,8 @@ export class QueryEngine {
           else if (message.attachment.type === 'max_turns_reached') {
             if (persistSession) {
               if (
-                isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-                isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+                isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+                isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
               ) {
                 await flushSessionStorage()
               }
@@ -929,8 +928,8 @@ export class QueryEngine {
       if (maxBudgetUsd !== undefined && getTotalCost() >= maxBudgetUsd) {
         if (persistSession) {
           if (
-            isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-            isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+            isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+            isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
           ) {
             await flushSessionStorage()
           }
@@ -971,8 +970,8 @@ export class QueryEngine {
         if (callsThisQuery >= maxRetries) {
           if (persistSession) {
             if (
-              isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-              isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+              isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+              isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
             ) {
               await flushSessionStorage()
             }
@@ -1026,8 +1025,8 @@ export class QueryEngine {
     // result message, so any unflushed writes would be lost.
     if (persistSession) {
       if (
-        isEnvTruthy(process.env[legacyCodeEnv('EAGER_FLUSH')]) ||
-        isEnvTruthy(process.env[legacyCodeEnv('IS_COWORK')])
+        isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
+        isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
       ) {
         await flushSessionStorage()
       }

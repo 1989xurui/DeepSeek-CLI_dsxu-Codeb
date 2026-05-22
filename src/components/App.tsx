@@ -53,19 +53,3 @@ export function App(t0) {
   }
   return t3;
 }
-
-// V14 strict lifecycle shim: components-App
-export function processComponentsAppStrictLifecycle(input) {
-  void input
-  const state = 'components-App-state'
-  const lifecycle = 'components-App:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsAppStrict(input) {
-  return processComponentsAppStrictLifecycle(input)
-}

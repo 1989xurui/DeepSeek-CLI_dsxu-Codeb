@@ -14,13 +14,13 @@ import {
   traceDsxuToolLifecycleGateDecision,
 } from './toolLifecycle.js'
 
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const LEGACY_TOOL_CONCURRENCY_ENV = `${LEGACY_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const PROVIDER_MIGRATION_TOOL_CONCURRENCY_ENV = `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`
 
 function getMaxToolUseConcurrency(): number {
   return (
     parseInt(process.env.DSXU_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) ||
-    parseInt(process.env[LEGACY_TOOL_CONCURRENCY_ENV] || '', 10) ||
+    parseInt(process.env[PROVIDER_MIGRATION_TOOL_CONCURRENCY_ENV] || '', 10) ||
     10
   )
 }
@@ -28,7 +28,7 @@ function getMaxToolUseConcurrency(): number {
 export function getDsxuToolOrchestrationRuntimeProfile(): {
   runtime: 'DSXU Tool Orchestration'
   concurrencyEnv: string
-  legacyConcurrencyEnv: string
+  providerMigrationConcurrencyEnv: string
   currentConcurrency: number
   executionDiscipline: string
   activationEvidence?: readonly string[]
@@ -36,7 +36,7 @@ export function getDsxuToolOrchestrationRuntimeProfile(): {
   return {
     runtime: 'DSXU Tool Orchestration',
     concurrencyEnv: 'DSXU_CODE_MAX_TOOL_USE_CONCURRENCY',
-    legacyConcurrencyEnv: `${LEGACY_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`,
+    providerMigrationConcurrencyEnv: `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`,
     currentConcurrency: getMaxToolUseConcurrency(),
     executionDiscipline:
       'read-only/concurrency-safe tool batches run concurrently; mutating or unsafe calls run serially with context updates preserved',
@@ -264,13 +264,4 @@ function markToolUseAsComplete(
     next.delete(toolUseID)
     return next
   })
-}
-
-
-// V14 lifecycle shim: toolorchestration
-export function processToolorchestrationLifecycle(input) {
-  void input
-  const state = 'toolorchestration-state'
-  const lifecycle = 'toolorchestration:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

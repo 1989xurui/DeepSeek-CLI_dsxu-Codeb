@@ -6,7 +6,7 @@
  * - Interactive CLI: Uploads local settings to remote (incremental, only changed entries)
  * - CCR: Downloads remote settings to local before plugin installation
  *
- * Backend API: legacy provider settings-sync contract #218817
+ * Backend API: provider-migration source settings-sync contract #218817
  */
 
 import { feature } from 'bun:bundle'
@@ -21,15 +21,19 @@ import {
 } from '../../constants/oauth.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-  getCompatProviderTokens,
-} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+  getProviderControlTokens,
+} from '../auth/dsxuProviderControlAuth.js'
 import { clearMemoryFileCaches } from '../../utils/dsxuInstructions.js'
 import { getMemoryPath } from '../../utils/config.js'
 import { logForDiagnosticsNoPII } from '../../utils/diagLogs.js'
 import { classifyAxiosError } from '../../utils/errors.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import {
   getAPIProvider,
   isFirstPartyProviderBaseUrl,
@@ -39,7 +43,7 @@ import { getSettingsFilePathForSource } from '../../utils/settings/settings.js'
 import { resetSettingsCache } from '../../utils/settings/settingsCache.js'
 import { sleep } from '../../utils/sleep.js'
 import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 import { logEvent } from '../analytics/index.js'
 import { getRetryDelay } from '../api/withRetry.js'
 import {
@@ -52,7 +56,11 @@ import {
 const SETTINGS_SYNC_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 3
 const MAX_FILE_SIZE_BYTES = 500 * 1024 // 500 KB per file (matches backend limit)
-const LEGACY_SETTINGS_SYNC_PATH = `/api/${'cla' + 'ude'}_code/user_settings`
+const PROVIDER_MIGRATION_SETTINGS_SYNC_PATH = `/api/${'cla' + 'ude'}_code/user_settings`
+
+function isProviderMigrationSettingsSyncAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
 
 /**
  * Upload local settings to remote (interactive CLI only).
@@ -63,6 +71,7 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
   try {
     if (
       !feature('UPLOAD_USER_SETTINGS') ||
+      !isProviderMigrationSettingsSyncAllowed() ||
       !getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_enable_settings_sync_push',
         false,
@@ -163,6 +172,7 @@ async function doDownloadUserSettings(
     try {
       if (
         !getFeatureValue_CACHED_MAY_BE_STALE('tengu_strap_foyer', false) ||
+        !isProviderMigrationSettingsSyncAllowed() ||
         !isUsingOAuth()
       ) {
         logForDiagnosticsNoPII('info', 'settings_sync_download_skipped')
@@ -212,28 +222,32 @@ async function doDownloadUserSettings(
  * download a no-op there. Upload is independently guarded by getIsInteractive().
  */
 function isUsingOAuth(): boolean {
+  if (!isProviderMigrationSettingsSyncAllowed()) {
+    return false
+  }
+
   if (getAPIProvider() !== 'firstParty' || !isFirstPartyProviderBaseUrl()) {
     return false
   }
 
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
   return Boolean(
     tokens?.accessToken && tokens.scopes?.includes(REMOTE_SESSION_INFERENCE_SCOPE),
   )
 }
 
 function getSettingsSyncEndpoint(): string {
-  return `${getOauthConfig().BASE_API_URL}${LEGACY_SETTINGS_SYNC_PATH}`
+  return `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_SETTINGS_SYNC_PATH}`
 }
 
 function getSettingsSyncAuthHeaders(): {
   headers: Record<string, string>
   error?: string
 } {
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (accessToken) {
     return {
-      headers: getCompatProviderBearerHeaders(accessToken),
+      headers: getProviderControlBearerHeaders(accessToken),
     }
   }
 
@@ -577,21 +591,4 @@ async function applyRemoteEntriesToLocal(
   logForDiagnosticsNoPII('info', 'settings_sync_applied', {
     appliedCount,
   })
-}
-
-
-// V14 strict lifecycle shim: services-settingsSync-index
-export function processServicesSettingsSyncIndexStrictLifecycle(input) {
-  void input
-  const state = 'services-settingsSync-index-state'
-  const lifecycle = 'services-settingsSync-index:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesSettingsSyncIndexStrict(input) {
-  return processServicesSettingsSyncIndexStrictLifecycle(input)
 }

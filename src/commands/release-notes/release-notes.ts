@@ -48,12 +48,3 @@ export async function call(): Promise<LocalCommandResult> {
     value: `See the full changelog at: ${CHANGELOG_URL}`,
   }
 }
-
-
-// V14 lifecycle shim: release-notes
-export function processReleaseNotesLifecycle(input) {
-  void input
-  const state = 'release-notes-state'
-  const lifecycle = 'release-notes:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

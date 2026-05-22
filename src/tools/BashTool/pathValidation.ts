@@ -1274,7 +1274,7 @@ export function stripWrappersFromArgv(argv: string[]): string[] {
       a = a.slice(i + 1)
     } else if (a[0] === 'nice') {
       // SECURITY (PR #21503 round 3): mirror checkSemantics -handle bare
-      // `nice cmd` and legacy `nice -N cmd`, not just `nice -n N cmd`.
+      // `nice cmd` and historical `nice -N cmd`, not just `nice -n N cmd`.
       // Previously only `-n N` was stripped: `nice rm /outside` ->      // baseCmd='nice' ->passthrough ->/outside never path-validated.
       if (a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2]))
         a = a.slice(a[3] === '--' ? 4 : 3)

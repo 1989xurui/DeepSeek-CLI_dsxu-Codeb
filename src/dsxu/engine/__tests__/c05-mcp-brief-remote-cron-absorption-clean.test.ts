@@ -3,8 +3,9 @@ import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createToolMainlineExecutor } from '../tool-mainline-runtime-v1';
+import type { MCPServerConnection, ScopedMcpServerConfig } from '../../../services/mcp/types';
 
-function createMockMcpWorkspace(): string {
+function createMockMcpWorkspace(): { dir: string; config: ScopedMcpServerConfig } {
   const dir = mkdtempSync(join(tmpdir(), 'dsxu-mcp-'));
   const serverScript = join(dir, 'mock-mcp-server.js');
   const script = `
@@ -22,7 +23,14 @@ function handle(msg) {
   const method = msg.method;
   const params = msg.params || {};
 
-  if (method === 'initialize') return send(id, { protocolVersion: '2024-11-05' });
+  if (method === 'notifications/initialized') return;
+  if (method === 'initialize') {
+    return send(id, {
+      protocolVersion: '2024-11-05',
+      capabilities: { tools: {}, resources: {} },
+      serverInfo: { name: 'demo', version: '1.0.0' },
+    });
+  }
   if (method === 'tools/list') {
     return send(id, {
       tools: [
@@ -99,18 +107,67 @@ process.stdin.on('data', (chunk) => {
 `;
   writeFileSync(serverScript, script, 'utf8');
 
+  const serverConfig: ScopedMcpServerConfig = {
+    type: 'stdio',
+    command: 'node',
+    args: [serverScript],
+    scope: 'project',
+  };
+
   const mcpConfig = {
     mcpServers: {
-      demo: {
-        transport: 'stdio',
-        command: 'node',
-        args: [serverScript],
-        enabled: true,
-      },
+      demo: serverConfig,
     },
   };
   writeFileSync(join(dir, '.mcp.json'), JSON.stringify(mcpConfig, null, 2), 'utf8');
-  return dir;
+  return { dir, config: serverConfig };
+}
+
+async function createMainlineMcpClient(_config: ScopedMcpServerConfig): Promise<MCPServerConnection> {
+  const store = new Map([['resource://demo', 'initial-content']]);
+  return {
+    type: 'connected',
+    name: 'demo',
+    capabilities: { tools: {}, resources: {} },
+    config: { type: 'sdk', name: 'demo', scope: 'project' },
+    cleanup: async () => {},
+    client: {
+      request: async (request: { method: string; params?: Record<string, any> }) => {
+        if (request.method === 'tools/list') {
+          return {
+            tools: [
+              {
+                name: 'write_resource',
+                description: 'write resource by uri',
+                inputSchema: {
+                  type: 'object',
+                  properties: { uri: { type: 'string' }, content: { type: 'string' } },
+                  required: ['uri', 'content'],
+                },
+              },
+            ],
+          };
+        }
+        if (request.method === 'resources/list') {
+          return { resources: [...store.keys()].map(uri => ({ uri, name: uri })) };
+        }
+        if (request.method === 'resources/read') {
+          const uri = String(request.params?.uri || '');
+          return { contents: [{ uri, text: store.get(uri) || '' }] };
+        }
+        return {};
+      },
+      callTool: async (request: { name: string; arguments?: Record<string, any> }) => {
+        if (request.name === 'write_resource') {
+          const uri = String(request.arguments?.uri || '');
+          const content = String(request.arguments?.content || '');
+          store.set(uri, content);
+          return { content: [{ type: 'text', text: 'ok' }], isError: false };
+        }
+        return { content: [{ type: 'text', text: 'tool not found' }], isError: true };
+      },
+    } as any,
+  };
 }
 
 describe('C05 MCP Brief RemoteTrigger Cron absorption clean', () => {
@@ -188,15 +245,18 @@ describe('C05 MCP Brief RemoteTrigger Cron absorption clean', () => {
     expect(payload.jobs.length).toBe(0);
   });
 
-  test('MCP resource read/write goes through direct server connection', async () => {
+  test('MCP resources and writes go through mainline MCP clients', async () => {
     const workspace = createMockMcpWorkspace();
-    const context = { ...baseContext, cwd: workspace, sessionId: 'mcp-direct-session' };
+    const client = await createMainlineMcpClient(workspace.config);
+    const clients = [client];
+    const context = { ...baseContext, cwd: workspace.dir, sessionId: 'mcp-mainline-session' };
     const executor = createToolMainlineExecutor();
 
     const listResources = await executor.execute({
       toolId: 'ListMcpResourcesTool',
       input: { server: 'demo' },
       context,
+      mainlineMcpClients: clients,
     });
     expect(listResources.allowed).toBeTrue();
     expect(listResources.result?.content).toContain('resource://demo');
@@ -205,14 +265,16 @@ describe('C05 MCP Brief RemoteTrigger Cron absorption clean', () => {
       toolId: 'ReadMcpResourceTool',
       input: { server: 'demo', uri: 'resource://demo' },
       context,
+      mainlineMcpClients: clients,
     });
     expect(readBefore.allowed).toBeTrue();
     expect(readBefore.result?.content).toContain('initial-content');
 
     const write = await executor.execute({
-      toolId: 'WriteMcpResourceTool',
-      input: { server: 'demo', mode: 'write', uri: 'resource://demo', content: 'updated-content' },
+      toolId: 'mcp__demo__write_resource',
+      input: { uri: 'resource://demo', content: 'updated-content' },
       context,
+      mainlineMcpClients: clients,
     });
     expect(write.allowed).toBeTrue();
     expect(write.result?.isError).toBeFalse();
@@ -221,8 +283,13 @@ describe('C05 MCP Brief RemoteTrigger Cron absorption clean', () => {
       toolId: 'ReadMcpResourceTool',
       input: { server: 'demo', uri: 'resource://demo' },
       context,
+      mainlineMcpClients: clients,
     });
     expect(readAfter.allowed).toBeTrue();
     expect(readAfter.result?.content).toContain('updated-content');
+
+    if (client.type === 'connected') {
+      await client.cleanup();
+    }
   });
 });

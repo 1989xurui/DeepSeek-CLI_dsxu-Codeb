@@ -1,5 +1,9 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
 
 export type AdminRequestType = 'limit_increase' | 'seat_upgrade'
@@ -49,6 +53,7 @@ export type AdminRequest = {
 export async function createAdminRequest(
   params: AdminRequestCreateParams,
 ): Promise<AdminRequest> {
+  assertProviderMigrationAccountApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -72,6 +77,7 @@ export async function getMyAdminRequests(
   requestType: AdminRequestType,
   statuses: AdminRequestStatus[],
 ): Promise<AdminRequest[] | null> {
+  assertProviderMigrationAccountApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -96,12 +102,21 @@ type AdminRequestEligibilityResponse = {
   is_allowed: boolean
 }
 
+function assertProviderMigrationAccountApiAllowed(): void {
+  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+    throw new Error(
+      'Provider-migration admin request API is disabled on the DSXU default local mainline.',
+    )
+  }
+}
+
 /**
  * Check if a specific admin request type is allowed for this org.
  */
 export async function checkAdminRequestEligibility(
   requestType: AdminRequestType,
 ): Promise<AdminRequestEligibilityResponse | null> {
+  assertProviderMigrationAccountApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -116,13 +131,4 @@ export async function checkAdminRequestEligibility(
   })
 
   return response.data
-}
-
-
-// V14 lifecycle shim: adminrequests
-export function processAdminrequestsLifecycle(input) {
-  void input
-  const state = 'adminrequests-state'
-  const lifecycle = 'adminrequests:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

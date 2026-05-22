@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execa } from 'execa'
 import { logForDebugging } from '../debug.js'
 import { getDsxuCodeEnv } from '../envUtils.js'

@@ -474,10 +474,3 @@ export async function performCrossAppAccess(
   logMCPDebug(serverName, `XAA: access_token obtained`)
   return { ...tokens, authorizationServerUrl: asMeta.issuer }
 }
-// V14 lifecycle shim: xaa
-export function processXaaLifecycle(input) {
-  void input
-  const state = 'xaa-state'
-  const lifecycle = 'xaa:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

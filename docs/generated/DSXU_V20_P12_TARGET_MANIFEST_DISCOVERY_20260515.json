@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "dsxu.v20.p12-target-manifest-discovery.v1",
+  "generatedAt": "2026-05-15T03:39:19.839Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "READY_TARGET_REFERENCE_MANIFEST_DISCOVERED",
+  "searchRoots": [
+    "D:\\DSXU-code\\.dsxu\\trace",
+    "D:\\DSXU-code\\docs\\generated"
+  ],
+  "candidateCount": 1,
+  "readyCandidateCount": 1,
+  "canonicalTargetReferenceManifestPath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+  "canonicalAcceptedLogCount": 14,
+  "didFabricateTargetLogs": false,
+  "didRunComparison": false,
+  "candidates": [
+    {
+      "path": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "status": "READY",
+      "side": "target-reference",
+      "acceptedLogCount": 14,
+      "rejectedLogCount": 0,
+      "readyLogCount": 14,
+      "rawLogExistsCount": 14,
+      "artifactCount": 56,
+      "artifactExistsCount": 56,
+      "redlineCount": 0,
+      "reason": "valid target-reference manifest with >=14 ready logs and all local raw/artifact evidence present"
+    }
+  ],
+  "nextAction": "run p12:target-intake and p12:raw-readiness with canonicalTargetReferenceManifestPath",
+  "rule": "Discovery only validates existing local evidence. It does not create, repair, fabricate, or import target-reference logs."
+}

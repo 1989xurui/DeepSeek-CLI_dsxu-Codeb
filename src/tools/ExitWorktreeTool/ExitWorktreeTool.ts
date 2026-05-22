@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import {
   getOriginalCwd,
@@ -150,6 +149,23 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
   name: EXIT_WORKTREE_TOOL_NAME,
   searchHint: 'exit a worktree session and return to the original directory',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Worktree Lifecycle',
+    sideEffects: [
+      'git-worktree-remove-when-requested',
+      'process-cwd-restore',
+      'session-worktree-state-clear',
+      'system-prompt-cache-clear',
+    ],
+    permission: 'allow keep; passthrough permission before removing worktree',
+    evidence: [
+      'inputSchema.action',
+      'session worktree guard',
+      'message output',
+      'isDestructive remove flag',
+    ],
+    uiProjection: 'worktree exit result and cleanup state',
+  },
   async description() {
     return 'Exits a worktree session created by EnterWorktree and restores the original working directory'
   },
@@ -171,6 +187,15 @@ export const ExitWorktreeTool: Tool<InputSchema, Output> = buildTool({
   },
   toAutoClassifierInput(input) {
     return input.action
+  },
+  async checkPermissions(input) {
+    if (input.action === 'keep') {
+      return { behavior: 'allow', updatedInput: input }
+    }
+    return {
+      behavior: 'passthrough',
+      message: 'ExitWorktree wants to remove the current worktree. This must pass DSXU permission before cleanup.',
+    }
   },
   async validateInput(input) {
     // Scope guard: getCurrentWorktreeSession() is null unless EnterWorktree

@@ -167,11 +167,3 @@ export function usePreviewTheme() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: themeprovider
-export function processThemeproviderLifecycle(input) {
-  void input
-  const state = 'themeprovider-state'
-  const lifecycle = 'themeprovider:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

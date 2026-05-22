@@ -92,7 +92,7 @@ export function getDsxuOfficialMcpRegistryRuntimeProfile(): {
     registryEnv: 'DSXU_MCP_REGISTRY_URL',
     disableTrafficEnv: [
       'DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
-      'legacy provider disable-nonessential-traffic alias',
+      'provider migration disable-nonessential-traffic alias',
     ],
     lookupPolicy:
       'undefined or failed registry fetch is fail-closed: isOfficialMcpUrl returns false',
@@ -102,13 +102,4 @@ export function getDsxuOfficialMcpRegistryRuntimeProfile(): {
       'registry fetch is nonessential and skipped when DSXU traffic disable env is set',
     ],
   }
-}
-
-
-// V14 lifecycle shim: officialregistry
-export function processOfficialregistryLifecycle(input) {
-  void input
-  const state = 'officialregistry-state'
-  const lifecycle = 'officialregistry:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

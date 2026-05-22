@@ -38,20 +38,3 @@ export function getToolUseIDFromParentMessage(
     ? toolUseBlock.id
     : undefined
 }
-
-
-// V14 strict lifecycle shim: tools-utils
-export function processToolsUtilsStrictLifecycle(input) {
-  void input
-  const state = 'tools-utils-state'
-  const lifecycle = 'tools-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsUtilsStrict(input) {
-  return processToolsUtilsStrictLifecycle(input)
-}

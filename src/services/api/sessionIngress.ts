@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios, { type AxiosError } from 'axios'
 import type { UUID } from 'crypto'
 import { getOauthConfig } from '../../constants/oauth.js'

@@ -1,4 +1,4 @@
-import { getDynamicConfig_CACHED_MAY_BE_STALE } from './growthbook.js'
+import { getDynamicConfig_CACHED_MAY_BE_STALE } from './featureFlags.js'
 
 // Mangled name: per-sink analytics killswitch
 const SINK_KILLSWITCH_CONFIG_NAME = 'tengu_frond_boric'
@@ -6,13 +6,13 @@ const SINK_KILLSWITCH_CONFIG_NAME = 'tengu_frond_boric'
 export type SinkName = 'datadog' | 'firstParty'
 
 /**
- * GrowthBook JSON config that disables individual analytics sinks.
+ * feature flag provider JSON config that disables individual analytics sinks.
  * Shape: { datadog?: boolean, firstParty?: boolean }
  * A value of true for a key stops all dispatch to that sink.
  * Default {} (nothing killed). Fail-open: missing/malformed config = sink stays on.
  *
  * NOTE: Must NOT be called from inside is1PEventLoggingEnabled() -
- * growthbook.ts:isGrowthBookEnabled() calls that, so a lookup here would recurse.
+ * featureFlags.ts:isGrowthBookEnabled() calls that, so a lookup here would recurse.
  * Call at per-event dispatch sites instead.
  */
 export function isSinkKilled(sink: SinkName): boolean {
@@ -22,13 +22,4 @@ export function isSinkKilled(sink: SinkName): boolean {
   // getFeatureValue_CACHED_MAY_BE_STALE guards on `!== undefined`, so a
   // cached JSON null leaks through instead of falling back to {}.
   return config?.[sink] === true
-}
-
-
-// V14 lifecycle shim: sinkkillswitch
-export function processSinkkillswitchLifecycle(input) {
-  void input
-  const state = 'sinkkillswitch-state'
-  const lifecycle = 'sinkkillswitch:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

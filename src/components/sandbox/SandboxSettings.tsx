@@ -293,11 +293,3 @@ function SandboxModeTab(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: sandboxsettings
-export function processSandboxsettingsLifecycle(input) {
-  void input
-  const state = 'sandboxsettings-state'
-  const lifecycle = 'sandboxsettings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

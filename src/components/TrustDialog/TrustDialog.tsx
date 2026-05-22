@@ -287,11 +287,3 @@ function _temp2(command) {
 function _temp(tool) {
   return tool === BASH_TOOL_NAME || tool.startsWith(BASH_TOOL_NAME + "(");
 }
-
-// V14 lifecycle shim: trustdialog
-export function processTrustdialogLifecycle(input) {
-  void input
-  const state = 'trustdialog-state'
-  const lifecycle = 'trustdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

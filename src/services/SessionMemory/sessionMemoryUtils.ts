@@ -205,12 +205,3 @@ export function resetSessionMemoryState(): void {
   lastSummarizedMessageId = undefined
   extractionStartedAt = undefined
 }
-
-
-// V14 lifecycle shim: sessionmemoryutils
-export function processSessionmemoryutilsLifecycle(input) {
-  void input
-  const state = 'sessionmemoryutils-state'
-  const lifecycle = 'sessionmemoryutils:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -94,11 +94,3 @@ export function CreateAgentWizard(t0) {
   return t7;
 }
 function _temp() {}
-
-// V14 lifecycle shim: createagentwizard
-export function processCreateagentwizardLifecycle(input) {
-  void input
-  const state = 'createagentwizard-state'
-  const lifecycle = 'createagentwizard:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

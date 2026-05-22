@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * The `.call()` override ...thin adapter between `ToolUseContext` and
  * `bindSessionContext`. Spread into the MCP tool object in `client.ts`
@@ -13,7 +12,7 @@
  *
  * External callers reach this via the lazy require thunk in `client.ts`, gated
  * on `feature('CHICAGO_MCP')`. Runtime enablement is controlled by the
- * GrowthBook gate `tengu_malort_pedway` (see gates.ts).
+ * feature flag provider gate `tengu_malort_pedway` (see gates.ts).
  */
 import { bindSessionContext, type ComputerUseSessionContext, type CuCallToolResult, type CuPermissionRequest, type CuPermissionResponse, DEFAULT_GRANT_FLAGS, type ScreenshotDims } from '@ant/computer-use-mcp';
 import * as React from 'react';

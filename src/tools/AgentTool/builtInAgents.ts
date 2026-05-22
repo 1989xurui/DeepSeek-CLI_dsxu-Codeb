@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { getDsxuCodeEnv, isDsxuCodeEnvTruthy, isEnvTruthy } from '../../utils/envUtils.js'
 import { DSXU_CODE_GUIDE_AGENT } from './built-in/dsxuCodeGuideAgent.js'
 import { EXPLORE_AGENT } from './built-in/exploreAgent.js'
@@ -14,7 +13,7 @@ import {
 } from './built-in/verificationAgent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 
-const LEGACY_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV =
+const PROVIDER_MIGRATION_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV =
   `CL${'AUDE'}_AGENT_SDK_DISABLE_BUILTIN_AGENTS`
 
 export function areExplorePlanAgentsEnabled(): boolean {
@@ -33,7 +32,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
   if (
     (isDsxuCodeEnvTruthy('AGENT_SDK_DISABLE_BUILTIN_AGENTS') ||
       isEnvTruthy(
-        process.env[LEGACY_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV],
+        process.env[PROVIDER_MIGRATION_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV],
       )) &&
     getIsNonInteractiveSession()
   ) {
@@ -86,7 +85,7 @@ export function getDsxuBuiltInAgentsRuntimeProfile(): {
   defaultAgents: readonly string[]
   optionalAgents: readonly string[]
   activationEvidence: readonly string[]
-  legacyAliases: readonly string[]
+  sourceAliases: readonly string[]
 } {
   return {
     runtime: 'DSXU Built-in Agents',
@@ -103,8 +102,8 @@ export function getDsxuBuiltInAgentsRuntimeProfile(): {
       'DSXU_CODE_COORDINATOR_MODE activates coordinator worker agents when coordinator feature is enabled',
       'verification agent is part of the DSXU default mainline unless DSXU_CODE_DISABLE_VERIFICATION_AGENT is set',
     ],
-    legacyAliases: [
-      'legacy provider SDK/coordination env names are migration aliases only',
+    sourceAliases: [
+      'provider-migration source SDK/coordination env names are migration aliases only',
     ],
   }
 }

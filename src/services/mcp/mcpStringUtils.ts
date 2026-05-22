@@ -104,12 +104,3 @@ export function extractMcpToolDisplayName(userFacingName: string): string {
   // If no dash found, return the string without (MCP)
   return withoutSuffix
 }
-
-
-// V14 lifecycle shim: mcpstringutils
-export function processMcpstringutilsLifecycle(input) {
-  void input
-  const state = 'mcpstringutils-state'
-  const lifecycle = 'mcpstringutils:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

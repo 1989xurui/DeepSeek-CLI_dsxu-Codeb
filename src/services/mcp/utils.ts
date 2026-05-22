@@ -5,7 +5,7 @@ import type { Command } from '../../commands.js'
 import type { AgentMcpServerInfo } from '../../components/mcp/types.js'
 import type { Tool } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { LEGACY_CLOUD_CONFIG_SCOPE } from '../../constants/legacyProviderProtocol.js'
+import { PROVIDER_MIGRATION_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getGlobalDsxuFile } from '../../utils/env.js'
 import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
@@ -30,9 +30,9 @@ import {
   type ServerResource,
 } from './types.js'
 
-const LEGACY_CLOUD_CONFIG_LABEL = 'Legacy cloud MCP config'
-const LEGACY_CLOUD_CONFIG_PATH_LABEL = 'Legacy cloud MCP'
-const LEGACY_CLOUD_NORMALIZED_SERVER_PREFIX = ('cl' + 'aude') + '_ai_'
+const PROVIDER_MIGRATION_CONFIG_LABEL = 'Provider migration MCP config'
+const PROVIDER_MIGRATION_CONFIG_PATH_LABEL = 'Provider migration MCP'
+const PROVIDER_MIGRATION_NORMALIZED_SERVER_PREFIX = ('cl' + 'aude') + '_ai_'
 
 /**
  * Filters tools by MCP server name
@@ -277,8 +277,8 @@ export function describeMcpConfigFilePath(scope: ConfigScope): string {
       return 'Dynamically configured'
     case 'enterprise':
       return getEnterpriseMcpFilePath()
-    case LEGACY_CLOUD_CONFIG_SCOPE:
-      return LEGACY_CLOUD_CONFIG_PATH_LABEL
+    case PROVIDER_MIGRATION_CONFIG_SCOPE:
+      return PROVIDER_MIGRATION_CONFIG_PATH_LABEL
     default:
       return scope
   }
@@ -296,8 +296,8 @@ export function getScopeLabel(scope: ConfigScope): string {
       return 'Dynamic config (from command line)'
     case 'enterprise':
       return 'Enterprise config (managed by your organization)'
-    case LEGACY_CLOUD_CONFIG_SCOPE:
-      return LEGACY_CLOUD_CONFIG_LABEL
+    case PROVIDER_MIGRATION_CONFIG_SCOPE:
+      return PROVIDER_MIGRATION_CONFIG_LABEL
     default:
       return scope
   }
@@ -431,13 +431,13 @@ export function getMcpServerScopeFromToolName(
   // Look up server config
   const serverConfig = getMcpConfigByName(mcpInfo.serverName)
 
-  // Fallback: legacy cloud servers have normalized names starting with the provider prefix
+  // Fallback: provider migration servers have normalized names starting with the provider prefix
   // but aren't in getMcpConfigByName (they're fetched async separately)
   if (
     !serverConfig &&
-    mcpInfo.serverName.startsWith(LEGACY_CLOUD_NORMALIZED_SERVER_PREFIX)
+    mcpInfo.serverName.startsWith(PROVIDER_MIGRATION_NORMALIZED_SERVER_PREFIX)
   ) {
-    return LEGACY_CLOUD_CONFIG_SCOPE
+    return PROVIDER_MIGRATION_CONFIG_SCOPE
   }
 
   return serverConfig?.scope ?? null
@@ -553,7 +553,7 @@ export function extractAgentMcpServers(
         needsAuth: false,
       })
     }
-  // Skip unsupported transport types (sdk, legacy cloud proxy, sse-ide, ws-ide)
+  // Skip unsupported transport types (sdk, provider migration proxy, sse-ide, ws-ide)
     // These are internal types not meant for agent MCP server display
   }
 
@@ -606,21 +606,4 @@ export function getDsxuMcpUtilsRuntimeProfile(): {
       'getLoggingSafeMcpBaseUrl strips query strings before telemetry logging',
     ],
   }
-}
-
-
-// V14 strict lifecycle shim: services-mcp-utils
-export function processServicesMcpUtilsStrictLifecycle(input) {
-  void input
-  const state = 'services-mcp-utils-state'
-  const lifecycle = 'services-mcp-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesMcpUtilsStrict(input) {
-  return processServicesMcpUtilsStrictLifecycle(input)
 }

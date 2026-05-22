@@ -47,11 +47,3 @@ export function AnimatedAsterisk({
       <Text color={toRGBColor(hueToRgb(hue))}>{char}</Text>
     </Box>;
 }
-
-// V14 lifecycle shim: animatedasterisk
-export function processAnimatedasteriskLifecycle(input) {
-  void input
-  const state = 'animatedasterisk-state'
-  const lifecycle = 'animatedasterisk:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -79,19 +79,3 @@ export function Commands(t0) {
 function _temp(a, b) {
   return a.name.localeCompare(b.name);
 }
-
-// V14 strict lifecycle shim: components-HelpV2-Commands
-export function processComponentsHelpV2CommandsStrictLifecycle(input) {
-  void input
-  const state = 'components-HelpV2-Commands-state'
-  const lifecycle = 'components-HelpV2-Commands:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsHelpV2CommandsStrict(input) {
-  return processComponentsHelpV2CommandsStrictLifecycle(input)
-}

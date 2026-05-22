@@ -29,7 +29,7 @@ describe('FullAbsorb', () => {
     expect(report.recommendedTests.length).toBeGreaterThan(0)
   })
 
-  it('should include high-value legacy bridge targets in scan results', () => {
+  it('should include high-value provider-migration absorption targets in scan results', () => {
     const status = scanFullAbsorbStatus(process.cwd())
     const keys = new Set(status.targets.map(t => t.key))
 

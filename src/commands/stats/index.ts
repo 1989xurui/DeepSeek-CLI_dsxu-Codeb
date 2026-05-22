@@ -29,21 +29,3 @@ export function getDsxuStatsCommandRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 command lifecycle shim: stats
-export function processStatsCommandLifecycle(input) {
-  void input
-  const state = 'stats-command-state'
-  const lifecycle = 'stats:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'stats',
-  }
-}
-
-export function runStatsCommand(input) {
-  return processStatsCommandLifecycle(input)
-}

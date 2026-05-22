@@ -12,21 +12,3 @@ const branch = {
 } satisfies Command
 
 export default branch
-
-
-// V14 command lifecycle shim: branch
-export function processBranchCommandLifecycle(input) {
-  void input
-  const state = 'branch-command-state'
-  const lifecycle = 'branch:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'branch',
-  }
-}
-
-export function runBranchCommand(input) {
-  return processBranchCommandLifecycle(input)
-}

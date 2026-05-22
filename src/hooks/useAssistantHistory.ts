@@ -14,8 +14,8 @@ import {
   type HistoryPage,
 } from '../assistant/sessionHistory.js'
 import type { ScrollBoxHandle } from '../ink/components/ScrollBox.js'
-import type { RemoteSessionConfig } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
-import { convertSDKMessage } from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
+import type { RemoteSessionConfig } from '../services/bridge/dsxuRemoteSessionCoordinator.js'
+import { convertSDKMessage } from '../services/bridge/dsxuSdkMessageProjection.js'
 import type { Message, SystemInformationalMessage } from '../types/message.js'
 import { logForDebugging } from '../utils/debug.js'
 

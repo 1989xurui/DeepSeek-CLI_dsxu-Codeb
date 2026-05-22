@@ -21,11 +21,3 @@ export function WizardNavigationFooter({
       </Text>
     </Box>;
 }
-
-// V14 lifecycle shim: wizardnavigationfooter
-export function processWizardnavigationfooterLifecycle(input) {
-  void input
-  const state = 'wizardnavigationfooter-state'
-  const lifecycle = 'wizardnavigationfooter:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -76,7 +76,7 @@ function makeIssue(input: {
     suggestion: generateTscSuggestion(input.rule, input.message),
   };
 
-  // Backward-compatible fields expected by some legacy tests.
+  // Historical test aliases kept as non-enumerable fields during parser migration.
   Object.defineProperty(issue, 'tool', { value: 'tsc', enumerable: false });
   Object.defineProperty(issue, 'col', { value: input.column, enumerable: false });
   Object.defineProperty(issue, 'ruleId', { value: input.rule, enumerable: false });

@@ -154,7 +154,7 @@ const items: readonly NextStageProductizationItem[] = [
     referenceBehavior: ['services/mcp', 'tools/MCPTool', 'tools/ReadMcpResourceTool'],
     dsxuLanding: [
       'src/services/mcp',
-      'src/dsxu/engine/mcp-client.ts',
+      'src/services/mcp/client.ts',
       'src/dsxu/engine/engine-tool-adapter.ts',
     ],
     productRequirement: [
@@ -238,7 +238,7 @@ const items: readonly NextStageProductizationItem[] = [
       '.dsxu/ops/MAINLINE_LEDGER.md',
     ],
     productRequirement: [
-      'default CLI/TUI does not reference old provider shell',
+      'default CLI/TUI does not reference provider-migration shell',
       'old control/session/auth/proxy shells are not model/tool/startup default paths',
       'legacy aliases require explicit legacy flags',
       'five smoke classes remain green after cleanup',
@@ -254,7 +254,7 @@ const items: readonly NextStageProductizationItem[] = [
   {
     id: '9 Public Cross-Model Evaluation',
     objective:
-      'Turn DSXU local scores into a rigorous public comparison with raw logs across reference coding workflow, GPT/Codex, Gemini, Aider, and Cline.',
+      'Turn DSXU local scores into a rigorous public comparison with raw logs across external coding-model runners under identical constraints.',
     referenceBehavior: ['query.ts', 'tools/*/prompt.ts', 'services/compact', 'services/mcp'],
     dsxuLanding: [
       '.dsxu/eval/model-comparison-template.json',

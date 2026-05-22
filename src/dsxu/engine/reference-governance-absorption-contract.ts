@@ -91,7 +91,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
       'AutoDream duplicate writes are blocked by lock/throttle evidence',
     ],
     evidence: [
-      'bun test src/dsxu/engine/__tests__/v8-memory-resume-v1.test.ts src/dsxu/engine/__tests__/session-memory-mainline-v1.test.ts src/dsxu/engine/__tests__/compact-session-integration.test.ts',
+      'bun test src/dsxu/engine/__tests__/v8-memory-resume-v1.test.ts src/dsxu/engine/__tests__/memory-session-integration.test.ts src/dsxu/engine/__tests__/compact-session-integration.test.ts',
       'benchmark gate: reference-governance-live-core',
     ],
     state: 'evidence_green',
@@ -226,7 +226,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
     referenceBehavior: ['services/mcp', 'tools/MCPTool', 'tools/ReadMcpResourceTool'],
     dsxuLanding: [
       'src/services/mcp',
-      'src/dsxu/engine/mcp-client.ts',
+      'src/services/mcp/client.ts',
       'src/dsxu/engine/engine-tool-adapter.ts',
       'src/dsxu/engine/provider-contract.ts',
     ],
@@ -291,7 +291,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
       'resume after compact keeps changed files, failures, and pending work',
     ],
     evidence: [
-      'bun test src/dsxu/engine/__tests__/file-history.test.ts src/dsxu/engine/__tests__/session-memory-mainline-v1.test.ts',
+      'bun test src/dsxu/engine/__tests__/file-history.test.ts src/dsxu/engine/__tests__/memory-session-integration.test.ts',
       'benchmark gate: reference-governance-live-core',
     ],
     state: 'evidence_green',
@@ -345,7 +345,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
       'skill evidence final PASS relationship is tested',
     ],
     evidence: [
-      'bun test src/dsxu/engine/__tests__/skills-selection-v1-clean.test.ts src/dsxu/engine/__tests__/skills-executor.test.ts src/dsxu/engine/__tests__/skills-failure-path.test.ts',
+      'bun test src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts src/dsxu/engine/__tests__/skills-executor.test.ts src/dsxu/engine/__tests__/skills-failure-path.test.ts',
       'benchmark gate: reference-governance-live-core',
     ],
     state: 'evidence_green',
@@ -354,7 +354,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
     id: 'P3 Public Cross-Model Evaluation',
     priority: 'P3',
     objective:
-      'Convert local DSXU benchmark evidence into a fair external comparison against reference coding workflow, GPT, Gemini, Aider, and Cline.',
+      'Convert local DSXU benchmark evidence into a fair external comparison against external coding-model runners under identical constraints.',
     referenceBehavior: ['query.ts', 'tools/*/prompt.ts', 'services/compact', 'services/mcp'],
     dsxuLanding: [
       '.dsxu/eval/model-comparison-template.json',
@@ -429,12 +429,12 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
     id: 'P6-3 Legacy Wording Classification',
     priority: 'P6',
     objective:
-      'Classify remaining old control/session/auth/remote-managed wording so default paths do not imply the old provider shell is still active.',
+      'Classify remaining provider-migration source control/session/auth/remote-managed wording so default paths do not imply the provider-migration shell is still active.',
     referenceBehavior: ['old control shell', 'old session shell', 'old proxy shell', 'services/auth-compat', 'services/remoteManagedSettings'],
     dsxuLanding: [
       'src/dsxu/engine/provider-contract.ts',
       'src/dsxu/engine/provider-alias.ts',
-      'src/dsxu/engine/provider-backend',
+      'src/services/bridge',
       '.dsxu/ops/MAINLINE_LEDGER.md',
     ],
     absorptionRules: [

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { logEvent } from 'src/services/analytics/index.js'
 import { extractHeredocs } from '../../utils/bash/heredoc.js'
 import { ParsedCommand } from '../../utils/bash/ParsedCommand.js'
@@ -26,7 +25,7 @@ const COMMAND_SUBSTITUTION_PATTERNS = [
   },
   { pattern: /\$\(/, message: '$() command substitution' },
   { pattern: /\$\{/, message: '${} parameter substitution' },
-  { pattern: /\$\[/, message: '$[] legacy arithmetic expansion' },
+  { pattern: /\$\[/, message: '$[] historical arithmetic expansion' },
   { pattern: /~\[/, message: 'Zsh-style parameter expansion' },
   { pattern: /\(e:/, message: 'Zsh-style glob qualifiers' },
   { pattern: /\(\+/, message: 'Zsh glob qualifier with command execution' },
@@ -2048,7 +2047,7 @@ function validateZshDangerousCommands(
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHAR_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/
 /**
- * @deprecated Legacy regex/shell-quote path. Only used when tree-sitter is
+ * @deprecated Fallback regex/shell-quote path. Only used when tree-sitter is
  * unavailable. The primary gate is parseForSecurity (ast.ts).
  */
 export function bashCommandIsSafe_DEPRECATED(
@@ -2199,7 +2198,7 @@ export function bashCommandIsSafe_DEPRECATED(
   }
 }
 /**
- * @deprecated Legacy regex/shell-quote path. Only used when tree-sitter is
+ * @deprecated Fallback regex/shell-quote path. Only used when tree-sitter is
  * unavailable. The primary gate is parseForSecurity (ast.ts).
  *
  * Async version of bashCommandIsSafe that uses tree-sitter when available

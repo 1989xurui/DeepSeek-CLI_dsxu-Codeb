@@ -164,11 +164,3 @@ export function MCPReconnect(t0) {
   }
   return null;
 }
-
-// V14 lifecycle shim: mcpreconnect
-export function processMcpreconnectLifecycle(input) {
-  void input
-  const state = 'mcpreconnect-state'
-  const lifecycle = 'mcpreconnect:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

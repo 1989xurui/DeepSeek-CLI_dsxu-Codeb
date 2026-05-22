@@ -35,10 +35,10 @@ import {
 } from './schemas.js'
 
 const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
-const LEGACY_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
 const PLUGIN_MANIFEST_DIRS = [
   DSXU_PLUGIN_MANIFEST_DIR,
-  LEGACY_PLUGIN_MANIFEST_DIR,
+  PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR,
 ] as const
 
 // Type alias for V2 plugins map
@@ -87,7 +87,7 @@ export function getInstalledPluginsFilePath(): string {
 }
 
 /**
- * Get the path to the legacy installed_plugins_v2.json file.
+ * Get the path to the provider-migration installed_plugins_v2.json file.
  * Used only during migration to consolidate into single file.
  */
 export function getInstalledPluginsV2FilePath(): string {
@@ -115,7 +115,7 @@ export function clearInstalledPluginsCache(): void {
  * This consolidates the V1/V2 dual-file system into a single file:
  * 1. If installed_plugins_v2.json exists: copy to installed_plugins.json (version=2), delete V2 file
  * 2. If only installed_plugins.json exists with version=1: convert to version=2 in-place
- * 3. Clean up legacy non-versioned cache directories
+ * 3. Clean up previous flat-cache directories
  *
  * This migration runs once per session at startup.
  */
@@ -135,9 +135,9 @@ export function migrateToSinglePluginFile(): void {
       logForDebugging(
         `Renamed installed_plugins_v2.json to installed_plugins.json`,
       )
-      // Clean up legacy cache directories
+      // Clean up previous flat-cache directories.
       const v2Data = loadInstalledPluginsV2()
-      cleanupLegacyCache(v2Data)
+      cleanupFlatCache(v2Data)
       migrationCompleted = true
       return
     } catch (e) {
@@ -171,8 +171,8 @@ export function migrateToSinglePluginFile(): void {
         `Converted installed_plugins.json from V1 to V2 format (${Object.keys(v1Data.plugins).length} plugins)`,
       )
 
-      // Clean up legacy cache directories
-      cleanupLegacyCache(v2Data)
+      // Clean up previous flat-cache directories.
+      cleanupFlatCache(v2Data)
     }
     // If version=2, already in correct format, no action needed
 
@@ -189,14 +189,14 @@ export function migrateToSinglePluginFile(): void {
 }
 
 /**
- * Clean up legacy non-versioned cache directories.
+ * Clean up previous non-versioned cache directories.
  *
- * Legacy cache structure: ~/.dsxu/plugins/cache/{plugin-name}/
+ * Flat cache structure: ~/.dsxu/plugins/cache/{plugin-name}/
  * Versioned cache structure: ~/.dsxu/plugins/cache/{marketplace}/{plugin}/{version}/
  *
- * This function removes legacy directories that are not referenced by any installation.
+ * This function removes flat-cache directories that are not referenced by any installation.
  */
-function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
+function cleanupFlatCache(v2Data: InstalledPluginsFileV2): void {
   const fs = getFsImplementation()
   const cachePath = getPluginCachePath()
   try {
@@ -220,7 +220,7 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
       const entryPath = join(cachePath, entry)
 
       // Check if this is a versioned cache (marketplace dir with plugin/version subdirs)
-      // or a legacy cache (flat plugin directory)
+      // or a flat cache (flat plugin directory).
       const subEntries = fs.readdirSync(entryPath)
       const hasVersionedStructure = subEntries.some(subDirent => {
         if (!subDirent.isDirectory()) return false
@@ -235,17 +235,17 @@ function cleanupLegacyCache(v2Data: InstalledPluginsFileV2): void {
         continue
       }
 
-      // This is a legacy flat cache directory
+      // This is a flat cache directory.
       // Check if it's referenced by any installation
       if (!referencedPaths.has(entryPath)) {
         // Not referenced - safe to delete
         fs.rmSync(entryPath, { recursive: true, force: true })
-        logForDebugging(`Cleaned up legacy cache directory: ${entry}`)
+        logForDebugging(`Cleaned up flat cache directory: ${entry}`)
       }
     }
   } catch (error) {
     const errorMsg = errorMessage(error)
-    logForDebugging(`Failed to clean up legacy cache: ${errorMsg}`, {
+    logForDebugging(`Failed to clean up flat cache: ${errorMsg}`, {
       level: 'warn',
     })
   }
@@ -719,7 +719,7 @@ export function resetInMemoryState(): void {
  * @returns Promise that resolves when initialization is complete
  */
 export async function initializeVersionedPlugins(): Promise<void> {
-  // Step 1: Migrate to single file format (consolidates V1/V2 files, cleans up legacy cache)
+  // Step 1: Migrate to single file format (consolidates V1/V2 files, cleans up flat cache)
   migrateToSinglePluginFile()
 
   // Step 2: Sync enabledPlugins from settings.json to installed_plugins.json
@@ -875,7 +875,7 @@ export function isPluginGloballyInstalled(pluginId: string): boolean {
  *
  * @param pluginId - Plugin ID in "plugin@marketplace" format
  * @param metadata - Installation metadata
- * @param scope - Installation scope (defaults to 'user' for backward compatibility)
+ * @param scope - Installation scope (defaults to 'user' for provider-migration continuity)
  * @param projectPath - Project path (for project/local scopes)
  */
 export function addInstalledPlugin(

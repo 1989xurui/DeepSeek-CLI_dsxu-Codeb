@@ -68,7 +68,7 @@ REMEMBER: Only update if there is substantial new information. The Magic Doc hea
 /**
  * Load custom Magic Docs prompt from file if it exists
  * Custom prompts can be placed at ~/.dsxu/magic-docs/prompt.md in DSXU mode,
- * or the active runtime config directory for explicit legacy compatibility.
+ * or the active runtime config directory for explicit provider-migration compatibility.
  * Use {{variableName}} syntax for variable substitution (e.g., {{docContents}}, {{docPath}}, {{docTitle}})
  */
 async function loadMagicDocsPrompt(): Promise<string> {
@@ -156,21 +156,4 @@ export function getDsxuMagicDocsPromptRuntimeProfile(): {
       'substituteVariables is single-pass to avoid user-content double expansion',
     ],
   }
-}
-
-
-// V14 strict lifecycle shim: services-MagicDocs-prompts
-export function processServicesMagicDocsPromptsStrictLifecycle(input) {
-  void input
-  const state = 'services-MagicDocs-prompts-state'
-  const lifecycle = 'services-MagicDocs-prompts:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesMagicDocsPromptsStrict(input) {
-  return processServicesMagicDocsPromptsStrictLifecycle(input)
 }

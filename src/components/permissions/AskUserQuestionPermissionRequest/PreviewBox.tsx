@@ -226,11 +226,3 @@ function PreviewBoxBody(t0) {
 function _temp(line) {
   return stringWidth(line);
 }
-
-// V14 lifecycle shim: previewbox
-export function processPreviewboxLifecycle(input) {
-  void input
-  const state = 'previewbox-state'
-  const lifecycle = 'previewbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

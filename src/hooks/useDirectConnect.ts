@@ -1,15 +1,14 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
-import type { RemotePermissionResponse } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
+import type { RemotePermissionResponse } from '../services/bridge/dsxuRemoteSessionCoordinator.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
-} from '../dsxu/engine/provider-backend/dsxu-remote-permission-bridge.js'
+} from '../services/bridge/remotePermissionProjection.js'
 import {
   convertSDKMessage,
   isSessionEndMessage,
-} from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
+} from '../services/bridge/dsxuSdkMessageProjection.js'
 import {
   type DirectConnectConfig,
   DirectConnectSessionManager,

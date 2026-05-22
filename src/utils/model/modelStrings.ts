@@ -163,12 +163,3 @@ export async function ensureModelStringsInitialized(): Promise<void> {
   // For Bedrock, wait for the profile fetch
   await updateBedrockModelStrings()
 }
-
-
-// V14 lifecycle shim: modelstrings
-export function processModelstringsLifecycle(input) {
-  void input
-  const state = 'modelstrings-state'
-  const lifecycle = 'modelstrings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

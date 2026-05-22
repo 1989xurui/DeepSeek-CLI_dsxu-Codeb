@@ -65,11 +65,3 @@ export function NoSelect(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: noselect
-export function processNoselectLifecycle(input) {
-  void input
-  const state = 'noselect-state'
-  const lifecycle = 'noselect:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

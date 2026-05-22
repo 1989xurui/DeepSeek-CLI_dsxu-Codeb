@@ -28,19 +28,3 @@ export function renderToolResultMessage(content: SendMessageToolOutput | string,
       <Text dimColor>{result.message}</Text>
     </MessageResponse>;
 }
-
-// V14 strict lifecycle shim: tools-SendMessageTool-UI
-export function processToolsSendMessageToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-SendMessageTool-UI-state'
-  const lifecycle = 'tools-SendMessageTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsSendMessageToolUIStrict(input) {
-  return processToolsSendMessageToolUIStrictLifecycle(input)
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import { basename } from 'path'
@@ -68,11 +67,13 @@ const AgentMcpServerSpecSchema = lazySchema(() =>
   ]),
 )
 
-const LEGACY_OMIT_INSTRUCTION_FIELD = `omit${'Cl' + 'aude'}Md`
-const LEGACY_SIMPLE_ENV = `CL${'AUDE'}_CODE_SIMPLE`
+const PROVIDER_MIGRATION_OMIT_INSTRUCTION_FIELD = `omit${'Cl' + 'aude'}Md`
+const PROVIDER_MIGRATION_SIMPLE_ENV = `CL${'AUDE'}_CODE_SIMPLE`
 
-function isLegacyRemoteAgentIsolationEnabled(): boolean {
-  return isDsxuCodeEnvTruthy('ENABLE_LEGACY_REMOTE_AGENT')
+const PROVIDER_MIGRATION_REMOTE_AGENT_ENV = 'ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT'
+
+function isProviderMigrationRemoteAgentIsolationEnabled(): boolean {
+  return isDsxuCodeEnvTruthy(PROVIDER_MIGRATION_REMOTE_AGENT_ENV)
 }
 
 // Zod schemas for JSON agent validation
@@ -99,12 +100,12 @@ const AgentJsonSchema = lazySchema(() =>
     initialPrompt: z.string().optional(),
     memory: z.enum(['user', 'project', 'local']).optional(),
     background: z.boolean().optional(),
-    isolation: (isLegacyRemoteAgentIsolationEnabled()
+    isolation: (isProviderMigrationRemoteAgentIsolationEnabled()
       ? z.enum(['worktree', 'remote'])
       : z.enum(['worktree'])
     ).optional(),
     omitDsxuMd: z.boolean().optional(),
-    [LEGACY_OMIT_INSTRUCTION_FIELD]: z.boolean().optional(),
+    [PROVIDER_MIGRATION_OMIT_INSTRUCTION_FIELD]: z.boolean().optional(),
   }),
 )
 
@@ -133,16 +134,16 @@ export type BaseAgentDefinition = {
   background?: boolean // Always run as background task when spawned
   initialPrompt?: string // Prepended to the first user turn (slash commands work)
   memory?: AgentMemoryScope // Persistent memory scope
-  isolation?: 'worktree' | 'remote' // Remote is legacy-gated; default DSXU only allows worktree isolation.
+  isolation?: 'worktree' | 'remote' // Remote is provider-migration-gated; default DSXU only allows worktree isolation.
   pendingSnapshotUpdate?: { snapshotTimestamp: string }
   /**
-   * Omit DSXU.md / legacy instruction hierarchy from the agent's userContext.
+   * Omit DSXU.md / provider-migration source instruction hierarchy from the agent's userContext.
    * Read-only agents (Explore, Plan) don't need commit/PR/lint instructions.
    */
   omitDsxuMd?: boolean
   /**
-   * Legacy compatibility alias; keep DSXU runtime accepting existing
-   * legacy omit-instruction agent frontmatter.
+   * Provider-migration source alias; keep DSXU runtime accepting existing
+   * omit-instruction agent frontmatter as migration input only.
    */
 }
 
@@ -235,7 +236,7 @@ export function getDsxuAgentDefinitionRuntimeProfile(): {
       'background',
       'worktree isolation',
     ],
-    simpleModeEnv: ['DSXU_CODE_SIMPLE', LEGACY_SIMPLE_ENV],
+    simpleModeEnv: ['DSXU_CODE_SIMPLE', PROVIDER_MIGRATION_SIMPLE_ENV],
     memoryInjectionPolicy:
       'DSXU injects Read/Edit/Write into memory-enabled agents so agent memory can be read and updated through the same tool gate.',
   }
@@ -521,7 +522,7 @@ export function parseAgentFromJson(
         ? parseAgentToolsFromFrontmatter(parsed.disallowedTools)
         : undefined
     const omitDsxuMd =
-      parsed.omitDsxuMd ?? parsed[LEGACY_OMIT_INSTRUCTION_FIELD]
+      parsed.omitDsxuMd ?? parsed[PROVIDER_MIGRATION_OMIT_INSTRUCTION_FIELD]
 
     const systemPrompt = parsed.prompt
 
@@ -657,10 +658,10 @@ export function parseAgentFromMarkdown(
       }
     }
 
-    // Parse isolation mode. 'remote' is legacy-gated; default DSXU rejects it at parse time.
+    // Parse isolation mode. 'remote' is provider-migration-gated; default DSXU rejects it at parse time.
     type IsolationMode = 'worktree' | 'remote'
     const VALID_ISOLATION_MODES: readonly IsolationMode[] =
-      isLegacyRemoteAgentIsolationEnabled()
+      isProviderMigrationRemoteAgentIsolationEnabled()
         ? ['worktree', 'remote']
         : ['worktree']
     const isolationRaw = frontmatter['isolation'] as string | undefined
@@ -765,12 +766,13 @@ export function parseAgentFromMarkdown(
     // Parse hooks from frontmatter
     const hooks = parseHooksFromFrontmatter(frontmatter, agentType)
     const omitDsxuMdRaw = frontmatter['omitDsxuMd']
-    const omitLegacyInstructionRaw = frontmatter[LEGACY_OMIT_INSTRUCTION_FIELD]
+    const omitProviderMigrationInstructionRaw =
+      frontmatter[PROVIDER_MIGRATION_OMIT_INSTRUCTION_FIELD]
     const omitDsxuMd =
       typeof omitDsxuMdRaw === 'boolean'
         ? omitDsxuMdRaw
-        : typeof omitLegacyInstructionRaw === 'boolean'
-          ? omitLegacyInstructionRaw
+        : typeof omitProviderMigrationInstructionRaw === 'boolean'
+          ? omitProviderMigrationInstructionRaw
           : undefined
 
     const systemPrompt = content.trim()

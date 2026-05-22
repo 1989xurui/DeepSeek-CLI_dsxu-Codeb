@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { BROWSER_TOOLS } from '../../types/browserProviderMcp.js'
 import { BASE_CHROME_PROMPT } from '../../utils/dsxuBrowserProvider/prompt.js'
 import { shouldAutoEnableDsxuBrowserProvider } from '../../utils/dsxuBrowserProvider/setup.js'

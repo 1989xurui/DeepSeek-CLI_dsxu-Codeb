@@ -241,11 +241,3 @@ export function ListItem(t0) {
   }
   return t13;
 }
-
-// V14 lifecycle shim: listitem
-export function processListitemLifecycle(input) {
-  void input
-  const state = 'listitem-state'
-  const lifecycle = 'listitem:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

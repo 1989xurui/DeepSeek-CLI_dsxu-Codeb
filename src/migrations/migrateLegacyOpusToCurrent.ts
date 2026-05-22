@@ -3,7 +3,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import { saveGlobalConfig } from '../utils/config.js'
-import { isLegacyModelRemapEnabled } from '../utils/model/model.js'
+import { isProviderMigrationModelRemapEnabled } from '../utils/model/model.js'
 import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import {
@@ -41,7 +41,7 @@ export function migrateLegacyOpusToCurrent(): void {
     return
   }
 
-  if (!isLegacyModelRemapEnabled()) {
+  if (!isProviderMigrationModelRemapEnabled()) {
     return
   }
 
@@ -61,14 +61,6 @@ export function migrateLegacyOpusToCurrent(): void {
   })
 }
 
-
-// V14 lifecycle shim: migratelegacyopustocurrent
-export function processMigratelegacyopustocurrentLifecycle(input) {
-  void input
-  const state = 'migratelegacyopustocurrent-state'
-  const lifecycle = 'migratelegacyopustocurrent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
 
 export function getDsxuLegacyOpusMigrationRuntimeProfile() {
   return {

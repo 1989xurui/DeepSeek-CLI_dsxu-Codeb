@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -91,7 +90,7 @@ export type TeamFile = {
 }
 
 export type Input = z.infer<ReturnType<typeof inputSchema>>
-// Export SpawnTeamOutput as Output for backward compatibility
+// Export SpawnTeamOutput as Output for historical tool output typing.
 export type Output = SpawnTeamOutput
 
 /**

@@ -74,11 +74,3 @@ export function Byline(t0) {
 function _temp(child, index) {
   return <React.Fragment key={isValidElement(child) ? child.key ?? index : index}>{index > 0 && <Text dimColor={true}> · </Text>}{child}</React.Fragment>;
 }
-
-// V14 lifecycle shim: byline
-export function processBylineLifecycle(input) {
-  void input
-  const state = 'byline-state'
-  const lifecycle = 'byline:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

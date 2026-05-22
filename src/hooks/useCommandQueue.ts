@@ -13,12 +13,3 @@ import {
 export function useCommandQueue(): readonly QueuedCommand[] {
   return useSyncExternalStore(subscribeToCommandQueue, getCommandQueueSnapshot)
 }
-
-
-// V14 lifecycle shim: usecommandqueue
-export function processUsecommandqueueLifecycle(input) {
-  void input
-  const state = 'usecommandqueue-state'
-  const lifecycle = 'usecommandqueue:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

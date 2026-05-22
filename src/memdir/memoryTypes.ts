@@ -293,11 +293,3 @@ export function getDsxuMemoryTypesRuntimeProfile(): {
     ],
   }
 }
-
-// V14 lifecycle shim: memorytypes
-export function processMemorytypesLifecycle(input) {
-  void input
-  const state = 'memorytypes-state'
-  const lifecycle = 'memorytypes:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

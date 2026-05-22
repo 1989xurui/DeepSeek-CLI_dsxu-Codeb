@@ -1,4 +1,4 @@
-// DSXU V18 ownership marker: MCP runtime is DSXU-owned; legacy provider service shells are explicit migration paths only.
+// MCP runtime is DSXU-owned; provider migration service shells are explicit migration paths only.
 import { feature } from 'bun:bundle'
 import type {
   Base64ImageSource,
@@ -44,12 +44,12 @@ import pMap from 'p-map'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import {
-  LEGACY_CLOUD_MCP_TRANSPORT,
-  LEGACY_PROVIDER_META_ALWAYS_LOAD,
-  LEGACY_PROVIDER_META_SEARCH_HINT,
-  isLegacyCloudMcpTransport,
-  legacyCloudMcpEvent,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  PROVIDER_MIGRATION_META_ALWAYS_LOAD,
+  PROVIDER_MIGRATION_META_SEARCH_HINT,
+  isProviderMigrationMcpTransport,
+  providerMigrationMcpEvent,
+} from '../../constants/providerMigrationProtocol.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { PRODUCT_URL } from '../../constants/product.js'
 import type { AppState } from '../../state/AppState.js'
@@ -66,9 +66,9 @@ import { createAbortController } from '../../utils/abortController.js'
 import { count } from '../../utils/array.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   handleOAuth401Error,
 } from '../../utils/auth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import { registerCleanup } from '../../utils/cleanupRegistry.js'
 import { detectCodeIndexingFromMcpServerName } from '../../utils/codeIndexing.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -139,11 +139,11 @@ import {
   hasMcpDiscoveryButNoToken,
   wrapFetchWithStepUpDetection,
 } from './auth.js'
-import { markLegacyCloudMcpConnected } from './legacyRemoteMcpProvider.js'
+import { markProviderMigrationMcpConnected } from './providerConnectorMigration.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import {
-  getLegacyCloudMcpDisabledReason,
-  isLegacyCloudMcpEnabled,
+  getProviderMigrationMcpDisabledReason,
+  isProviderMigrationMcpEnabled,
 } from './dsxuProvider.js'
 import { getMcpServerHeaders } from './headersHelper.js'
 import { SdkControlClientTransport } from './SdkControlTransport.js'
@@ -249,7 +249,7 @@ const DsxuBrowserProviderToolRendering =
     require('../../utils/dsxuBrowserProvider/toolRendering.js')
 // Lazy: wrapper.tsx - hostAdapter.ts - executor.ts pulls both native modules
 // (@ant/computer-use-input + @ant/computer-use-swift). Runtime-gated by
-// GrowthBook tengu_malort_pedway (see gates.ts).
+// feature flag provider tengu_malort_pedway (see gates.ts).
 const computerUseWrapper = feature('CHICAGO_MCP')
   ? (): typeof import('../../utils/computerUse/wrapper.js') =>
       require('../../utils/computerUse/wrapper.js')
@@ -269,9 +269,10 @@ import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 const MCP_AUTH_CACHE_TTL_MS = 15 * 60 * 1000 // 15 min
 const DSXU_IDE_AUTHORIZATION_HEADER =
   'X-' + 'Cl' + 'aude-Code-Ide-Authorization'
-const LEGACY_SHELL_PREFIX_ENV = 'CL' + 'AUDE_CODE_SHELL_PREFIX'
-const LEGACY_SDK_MCP_NO_PREFIX_ENV = 'CL' + 'AUDE_AGENT_SDK_MCP_NO_PREFIX'
-const LEGACY_TOOL_USE_ID_META = 'clau' + 'decode/toolUseId'
+const PROVIDER_MIGRATION_SHELL_PREFIX_ENV = 'CL' + 'AUDE_CODE_SHELL_PREFIX'
+const PROVIDER_MIGRATION_SDK_MCP_NO_PREFIX_ENV =
+  'CL' + 'AUDE_AGENT_SDK_MCP_NO_PREFIX'
+const PROVIDER_MIGRATION_TOOL_USE_ID_META = 'clau' + 'decode/toolUseId'
 type McpAuthCacheData = Record<string, { timestamp: number }>
 
 function getMcpAuthCachePath(): string {
@@ -356,7 +357,7 @@ function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
 function handleRemoteAuthFailure(
   name: string,
   serverRef: ScopedMcpServerConfig,
-  transportType: 'sse' | 'http' | typeof LEGACY_CLOUD_MCP_TRANSPORT,
+  transportType: 'sse' | 'http' | typeof PROVIDER_MIGRATION_MCP_TRANSPORT,
 ): MCPServerConnection {
   logEvent('tengu_mcp_server_needs_auth', {
     transportType:
@@ -366,7 +367,7 @@ function handleRemoteAuthFailure(
   const label: Record<typeof transportType, string> = {
     sse: 'SSE',
     http: 'HTTP',
-    [LEGACY_CLOUD_MCP_TRANSPORT]: 'legacy cloud connector',
+    [PROVIDER_MIGRATION_MCP_TRANSPORT]: 'provider migration connector',
   }
   logMCPDebug(
     name,
@@ -377,21 +378,21 @@ function handleRemoteAuthFailure(
 }
 
 /**
- * Fetch wrapper for isolated legacy cloud connector connections. Attaches the OAuth bearer
+ * Fetch wrapper for isolated provider migration connector connections. Attaches the OAuth bearer
  * token and retries once on 401 via handleOAuth401Error (force-refresh).
  *
  * The provider API path has this retry (withRetry.ts, grove.ts) to handle
  * memoize-cache staleness and clock drift. Without the same here, a single
- * stale token mass-401s every legacy connector and sticks them all in the
+ * stale token mass-401s every provider migration connector and sticks them all in the
  * 15-min needs-auth cache.
  */
-export function createLegacyCloudProxyFetch(innerFetch: FetchLike): FetchLike {
+export function createProviderMigrationProxyFetch(innerFetch: FetchLike): FetchLike {
   return async (url, init) => {
     const doRequest = async () => {
       await checkAndRefreshOAuthTokenIfNeeded()
-      const currentTokens = getDsxuControlOAuthTokens()
+      const currentTokens = getProviderControlTokens()
       if (!currentTokens) {
-        throw new Error('No legacy cloud OAuth token available')
+        throw new Error('No provider migration OAuth token available')
       }
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       const headers = new Headers(init?.headers)
@@ -416,13 +417,13 @@ export function createLegacyCloudProxyFetch(innerFetch: FetchLike): FetchLike {
     // downstream service genuinely needs auth (the common case: 30+ servers
     // with "MCP server requires authentication but no OAuth token configured").
     const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
-    logEvent(legacyCloudMcpEvent('proxy_401'), {
+    logEvent(providerMigrationMcpEvent('proxy_401'), {
       tokenChanged:
         tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     if (!tokenChanged) {
       // ELOCKED contention: another connector may have won the lockfile and refreshed - check if token changed underneath us
-      const now = getDsxuControlOAuthTokens()?.accessToken
+      const now = getProviderControlTokens()?.accessToken
       if (!now || now === sentToken) {
         return response
       }
@@ -881,28 +882,28 @@ export const connectToServer = memoize(
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
-      } else if (isLegacyCloudMcpTransport(serverRef.type)) {
-        if (!isLegacyCloudMcpEnabled()) {
-          throw new Error(getLegacyCloudMcpDisabledReason())
+      } else if (isProviderMigrationMcpTransport(serverRef.type)) {
+        if (!isProviderMigrationMcpEnabled()) {
+          throw new Error(getProviderMigrationMcpDisabledReason())
         }
 
         logMCPDebug(
           name,
-          `Initializing legacy cloud connector transport for server ${serverRef.id}`,
+          `Initializing provider migration connector transport for server ${serverRef.id}`,
         )
 
-        const tokens = getDsxuControlOAuthTokens()
+        const tokens = getProviderControlTokens()
         if (!tokens) {
-          throw new Error('No legacy cloud OAuth token found')
+          throw new Error('No provider migration OAuth token found')
         }
 
         const oauthConfig = getOauthConfig()
         const proxyUrl = `${oauthConfig.MCP_PROXY_URL}${oauthConfig.MCP_PROXY_PATH.replace('{server_id}', serverRef.id)}`
 
-        logMCPDebug(name, `Using legacy cloud connector proxy at ${proxyUrl}`)
+        logMCPDebug(name, `Using provider migration connector proxy at ${proxyUrl}`)
 
         // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-        const fetchWithAuth = createLegacyCloudProxyFetch(globalThis.fetch)
+        const fetchWithAuth = createProviderMigrationProxyFetch(globalThis.fetch)
 
         const proxyOptions = getProxyFetchOptions()
         const transportOptions: StreamableHTTPClientTransportOptions = {
@@ -921,7 +922,7 @@ export const connectToServer = memoize(
           new URL(proxyUrl),
           transportOptions,
         )
-        logMCPDebug(name, `legacy cloud connector transport created successfully`)
+        logMCPDebug(name, `provider migration connector transport created successfully`)
       } else if (
         (serverRef.type === 'stdio' || !serverRef.type) &&
         isDsxuBrowserProviderMCPServer(name)
@@ -963,8 +964,8 @@ export const connectToServer = memoize(
         logMCPDebug(name, `In-process Computer Use MCP server started`)
       } else if (serverRef.type === 'stdio' || !serverRef.type) {
         const finalCommand =
-          process.env[LEGACY_SHELL_PREFIX_ENV] || serverRef.command
-        const finalArgs = process.env[LEGACY_SHELL_PREFIX_ENV]
+          process.env[PROVIDER_MIGRATION_SHELL_PREFIX_ENV] || serverRef.command
+        const finalArgs = process.env[PROVIDER_MIGRATION_SHELL_PREFIX_ENV]
           ? [[serverRef.command, ...serverRef.args].join(' ')]
           : serverRef.args
         transport = new StdioClientTransport({
@@ -1142,19 +1143,19 @@ export const connectToServer = memoize(
             return handleRemoteAuthFailure(name, serverRef, 'http')
           }
         } else if (
-          isLegacyCloudMcpTransport(serverRef.type) &&
+          isProviderMigrationMcpTransport(serverRef.type) &&
           error instanceof Error
         ) {
           logMCPDebug(
             name,
-            `legacy cloud connector connection failed after ${elapsed}ms: ${error.message}`,
+            `provider migration connector connection failed after ${elapsed}ms: ${error.message}`,
           )
           logMCPError(name, error)
 
           // StreamableHTTPError has a `code` property with the HTTP status
           const errorCode = (error as Error & { code?: number }).code
           if (errorCode === 401) {
-            return handleRemoteAuthFailure(name, serverRef, LEGACY_CLOUD_MCP_TRANSPORT)
+            return handleRemoteAuthFailure(name, serverRef, PROVIDER_MIGRATION_MCP_TRANSPORT)
           }
         } else if (
           serverRef.type === 'sse-ide' ||
@@ -1242,7 +1243,7 @@ export const connectToServer = memoize(
       const originalOnclose = client.onclose
 
       // The SDK's transport calls onerror on connection failures but doesn't call onclose,
-      // which CC uses to trigger reconnection. We bridge this gap by tracking consecutive
+      // which CC uses to trigger reconnection. We close this gap by tracking consecutive
       // terminal errors and manually closing after MAX_ERRORS_BEFORE_RECONNECT failures.
       let consecutiveConnectionErrors = 0
       const MAX_ERRORS_BEFORE_RECONNECT = 3
@@ -1334,7 +1335,7 @@ export const connectToServer = memoize(
         // and close the transport so pending tool calls reject and the next
         // call reconnects with a fresh session ID.
         if (
-          (transportType === 'http' || isLegacyCloudMcpTransport(transportType)) &&
+          (transportType === 'http' || isProviderMigrationMcpTransport(transportType)) &&
           isMcpSessionExpiredError(error)
         ) {
           logMCPDebug(
@@ -1353,7 +1354,7 @@ export const connectToServer = memoize(
         if (
           transportType === 'sse' ||
           transportType === 'http' ||
-          isLegacyCloudMcpTransport(transportType)
+          isProviderMigrationMcpTransport(transportType)
         ) {
           // The SDK's StreamableHTTP transport fires this after exhausting its
           // own SSE reconnect attempts (default maxRetries: 2) - but it never
@@ -1780,7 +1781,7 @@ export const fetchToolsForClient = memoizeWithLRU(
       // Check if we should skip the mcp__ prefix for SDK MCP servers
       const skipPrefix =
         client.config.type === 'sdk' &&
-        isEnvTruthy(process.env[LEGACY_SDK_MCP_NO_PREFIX_ENV])
+        isEnvTruthy(process.env[PROVIDER_MIGRATION_SDK_MCP_NO_PREFIX_ENV])
 
       // Convert MCP tools to our Tool format
       return toolsToProcess
@@ -1797,12 +1798,12 @@ export const fetchToolsForClient = memoizeWithLRU(
             // a newline here would inject orphan lines into the deferred-tool
             // list (formatDeferredToolLine joins on '\n').
             searchHint:
-              typeof tool._meta?.[LEGACY_PROVIDER_META_SEARCH_HINT] === 'string'
-                ? tool._meta[LEGACY_PROVIDER_META_SEARCH_HINT]
+              typeof tool._meta?.[PROVIDER_MIGRATION_META_SEARCH_HINT] === 'string'
+                ? tool._meta[PROVIDER_MIGRATION_META_SEARCH_HINT]
                     .replace(/\s+/g, ' ')
                     .trim() || undefined
                 : undefined,
-            alwaysLoad: tool._meta?.[LEGACY_PROVIDER_META_ALWAYS_LOAD] === true,
+            alwaysLoad: tool._meta?.[PROVIDER_MIGRATION_META_ALWAYS_LOAD] === true,
             async description() {
               return tool.description ?? ''
             },
@@ -1859,7 +1860,7 @@ export const fetchToolsForClient = memoizeWithLRU(
             ) {
               const toolUseId = extractToolUseId(parentMessage)
               const meta = toolUseId
-                ? { [LEGACY_TOOL_USE_ID_META]: toolUseId }
+                ? { [PROVIDER_MIGRATION_TOOL_USE_ID_META]: toolUseId }
                 : {}
 
               // Emit progress when tool starts
@@ -2182,8 +2183,8 @@ export async function reconnectMcpServerImpl(
       }
     }
 
-    if (isLegacyCloudMcpTransport(config.type)) {
-      markLegacyCloudMcpConnected(name)
+    if (isProviderMigrationMcpTransport(config.type)) {
+      markProviderMigrationMcpConnected(name)
     }
 
     const supportsResources = !!client.capabilities?.resources
@@ -2325,7 +2326,7 @@ export async function getMcpToolsCommandsAndResources(
       // Each probe is a network round-trip for connect-401 plus OAuth
       // discovery, and print mode awaits the whole batch (main.tsx:3503).
       if (
-        (isLegacyCloudMcpTransport(config.type) ||
+        (isProviderMigrationMcpTransport(config.type) ||
           config.type === 'http' ||
           config.type === 'sse') &&
         ((await isMcpAuthCached(name)) ||
@@ -2355,8 +2356,8 @@ export async function getMcpToolsCommandsAndResources(
         return
       }
 
-      if (isLegacyCloudMcpTransport(config.type)) {
-        markLegacyCloudMcpConnected(name)
+      if (isProviderMigrationMcpTransport(config.type)) {
+        markProviderMigrationMcpConnected(name)
       }
 
       const supportsResources = !!client.capabilities?.resources
@@ -3157,7 +3158,7 @@ async function callMCPTool({
           errorDetails = firstContent.text
         }
       } else if ('error' in result) {
-        // Fallback for legacy error format
+        // Fallback for provider-migration error format
         errorDetails = String(result.error)
       }
       logMCPError(name, errorDetails)
@@ -3239,7 +3240,7 @@ async function callMCPTool({
         'code' in e &&
         (e as Error & { code?: number }).code === -32000 &&
         e.message.includes('Connection closed') &&
-        (config.type === 'http' || isLegacyCloudMcpTransport(config.type))
+        (config.type === 'http' || isProviderMigrationMcpTransport(config.type))
       if (isSessionExpired || isConnectionClosedOnHttp) {
         logMCPDebug(
           name,

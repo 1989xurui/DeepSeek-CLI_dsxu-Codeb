@@ -51,20 +51,3 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
       : `Created ${keybindingsPath} with template. Opened in your editor.`,
   }
 }
-
-
-// V14 strict lifecycle shim: commands-keybindings-keybindings
-export function processCommandsKeybindingsKeybindingsStrictLifecycle(input) {
-  void input
-  const state = 'commands-keybindings-keybindings-state'
-  const lifecycle = 'commands-keybindings-keybindings:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsKeybindingsKeybindingsStrict(input) {
-  return processCommandsKeybindingsKeybindingsStrictLifecycle(input)
-}

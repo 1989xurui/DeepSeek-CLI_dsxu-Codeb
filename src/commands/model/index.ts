@@ -32,21 +32,3 @@ export function getDsxuModelCommandRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 command lifecycle shim: model
-export function processModelCommandLifecycle(input) {
-  void input
-  const state = 'model-command-state'
-  const lifecycle = 'model:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'model',
-  }
-}
-
-export function runModelCommand(input) {
-  return processModelCommandLifecycle(input)
-}

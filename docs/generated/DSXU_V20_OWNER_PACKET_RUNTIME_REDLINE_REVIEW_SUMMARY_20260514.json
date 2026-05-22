@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "dsxu.v20.owner-packet-runtime-redline-review.v1",
+  "generatedAt": "2026-05-14T15:24:40.219Z",
+  "packets": {
+    "V20-OGR-05-agent-task-lifecycle": {
+      "total": 170,
+      "present": 170,
+      "redlinePaths": 0,
+      "clearPaths": 170
+    },
+    "V20-OGR-05-external-integration-adapter-boundary": {
+      "total": 27,
+      "present": 27,
+      "redlinePaths": 0,
+      "clearPaths": 27
+    },
+    "V20-OGR-06-ui-tui-visible-state": {
+      "total": 437,
+      "present": 437,
+      "redlinePaths": 0,
+      "clearPaths": 437
+    },
+    "V20-OGR-07-provider-migration-model-cost": {
+      "total": 101,
+      "present": 101,
+      "redlinePaths": 0,
+      "clearPaths": 101
+    },
+    "V20-OGR-08-cli-command-transport": {
+      "total": 178,
+      "present": 178,
+      "redlinePaths": 0,
+      "clearPaths": 178
+    },
+    "V20-OGR-10-entry-query-tool-composition": {
+      "total": 6,
+      "present": 6,
+      "redlinePaths": 0,
+      "clearPaths": 6
+    }
+  },
+  "totalRows": 919,
+  "redlineRows": 0,
+  "rule": "Owner packets may remain pending Git signoff only when runtime redlines are clear or explicitly reviewed; UI/TUI/external/CLI packets cannot own second query/tool/MCP/provider/agent runtimes.",
+  "scanNote": "Comments are stripped before matching so explanatory anti-regression comments do not become runtime redlines."
+}

@@ -89,11 +89,3 @@ export function NotebookEditToolUseRejectedMessage(t0) {
   }
   return t8;
 }
-
-// V14 lifecycle shim: notebookedittooluserejectedmessage
-export function processNotebookedittooluserejectedmessageLifecycle(input) {
-  void input
-  const state = 'notebookedittooluserejectedmessage-state'
-  const lifecycle = 'notebookedittooluserejectedmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

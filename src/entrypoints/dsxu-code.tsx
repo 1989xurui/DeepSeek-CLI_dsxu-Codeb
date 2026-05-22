@@ -1,6 +1,6 @@
-// DSXU Code formal entrypoint.
-// This delegates to the full Ink CLI/TUI. Legacy provider shells stay outside
-// the default path and require explicit compatibility flags elsewhere.
+﻿// DSXU Code formal entrypoint.
+// This delegates to the full Ink CLI/TUI. Provider-migration shells stay outside
+// the default path and require explicit provider-migration flags elsewhere.
 
 process.env.DSXU_CODE_MODE = '1'
 process.env.DSXU_PRODUCT_NAME ??= 'DSXU Code'

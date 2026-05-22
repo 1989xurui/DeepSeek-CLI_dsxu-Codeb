@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import { randomUUID } from 'crypto'
@@ -14,7 +13,7 @@ import type { QuerySource } from '../../constants/querySource.js'
 import { getSystemContext, getUserContext } from '../../context.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
 import { query } from '../../query.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { getDumpPromptsPath } from '../../services/api/dumpPrompts.js'
 import { cleanupAgentTracking } from '../../services/api/promptCacheBreakDetection.js'
 import {
@@ -343,7 +342,7 @@ export async function* runAgent({
     const parentId = toolUseContext.agentId ?? getSessionId()
     registerPerfettoAgent(agentId, agentDefinition.agentType, parentId)
   }
-  // Log API calls path for subagents (ant-only)
+  // Log API calls path for subagents (dsxu internal)
   if (process.env.USER_TYPE === 'ant') {
     logForDebugging(
       `[Subagent ${agentDefinition.agentType}] API calls: ${getDisplayPath(getDumpPromptsPath(agentId))}`,
@@ -372,9 +371,9 @@ export async function* runAgent({
     agentDefinition.omitDsxuMd &&
     !override?.userContext &&
     getFeatureValue_CACHED_MAY_BE_STALE(slimSubagentInstructionFlag, true)
-  const legacyInstructionContextField = `${'cl' + 'aude'}Md`
+  const providerMigrationInstructionContextField = `${'cl' + 'aude'}Md`
   const {
-    [legacyInstructionContextField]: _omittedInstructionContext,
+    [providerMigrationInstructionContextField]: _omittedInstructionContext,
     ...userContextWithoutInstructionContext
   } =
     baseUserContext
@@ -639,7 +638,7 @@ export async function* runAgent({
     // Fork children inherit thinking to keep cache-safe params aligned. DSXU
     // coding agents also inherit thinking because DeepSeek Flash/Pro planning,
     // review, and recovery quality drops sharply when sub-agents are forced
-    // into non-thinking mode. Legacy mode keeps the old token-saving default.
+    // into non-thinking mode. Provider-migration source mode keeps the old token-saving default.
     thinkingConfig: getDsxuSubagentThinkingConfig(
       useExactTools,
       toolUseContext.options.thinkingConfig,

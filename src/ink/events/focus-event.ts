@@ -19,12 +19,3 @@ export class FocusEvent extends TerminalEvent {
     this.relatedTarget = relatedTarget
   }
 }
-
-
-// V14 lifecycle shim: focus-event
-export function processFocusEventLifecycle(input) {
-  void input
-  const state = 'focus-event-state'
-  const lifecycle = 'focus-event:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

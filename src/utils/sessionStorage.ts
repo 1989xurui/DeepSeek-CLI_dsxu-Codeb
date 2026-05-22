@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import type { Dirent } from 'fs'
@@ -33,7 +32,7 @@ import {
 } from '../bootstrap/state.js'
 import { builtInCommandNames } from '../commands.js'
 import { COMMAND_NAME_TAG, TICK_TAG } from '../constants/xml.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import * as sessionIngress from '../services/api/sessionIngress.js'
 import { REPL_TOOL_NAME } from '../tools/REPLTool/constants.js'
 import {
@@ -74,7 +73,7 @@ import {
   getDsxuConfigHomeDir,
   getDsxuCodeEnv,
   isDsxuCodeEnvTruthy,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
   isDsxuRuntimeMode,
   isEnvTruthy,
 } from './envUtils.js'
@@ -163,7 +162,7 @@ export function isChainParticipant(m: Pick<Message, 'type'>): boolean {
   return m.type !== 'progress'
 }
 
-type LegacyProgressEntry = {
+type HistoricalProgressEntry = {
   type: 'progress'
   uuid: UUID
   parentUuid: UUID | null
@@ -174,7 +173,7 @@ type LegacyProgressEntry = {
  * in the Entry type union anymore but still exist on disk with uuid and
  * parentUuid fields. loadTranscriptFile bridges the chain across them.
  */
-function isLegacyProgressEntry(entry: unknown): entry is LegacyProgressEntry {
+function isHistoricalProgressEntry(entry: unknown): entry is HistoricalProgressEntry {
   return (
     typeof entry === 'object' &&
     entry !== null &&
@@ -189,7 +188,7 @@ function isLegacyProgressEntry(entry: unknown): entry is LegacyProgressEntry {
  * High-frequency tool progress ticks (1/sec for Sleep, per-chunk for Bash).
  * These are UI-only: not sent to the API, not rendered after the tool
  * completes. Used by REPL.tsx to replace-in-place instead of appending, and
- * by loadTranscriptFile to skip legacy entries from old transcripts.
+ * by loadTranscriptFile to skip historical entries from old transcripts.
  */
 const EPHEMERAL_PROGRESS_TYPES = new Set([
   'bash_progress',
@@ -207,7 +206,7 @@ export function getProjectsDir(): string {
   return join(
     isDsxuRuntimeMode()
       ? getDsxuConfigHomeDir()
-      : getLegacyProviderConfigHomeDir(),
+      : getProviderMigrationHomeDir(),
     'projects',
   )
 }
@@ -441,7 +440,7 @@ export function isCustomTitleEnabled(): boolean {
 }
 
 // Memoized: called 12+ times per turn via hooks.ts createBaseHookInput
-// (PostToolUse path, 5脳/turn) + various save* functions. Input is a cwd
+// (PostToolUse path, 5x/turn) + various save* functions. Input is a cwd
 // string; homedir/env/regex are all session-invariant so the result is
 // stable for a given input. Worktree switches just change the key -no
 // cache clear needed.
@@ -964,7 +963,7 @@ class Project {
 
   /**
    * True when test env / cleanupPeriodDays=0 / --no-session-persistence /
-   * DSXU/legacy skip-prompt-history env should suppress all transcript writes.
+   * DSXU/provider-migration skip-prompt-history env should suppress all transcript writes.
    * Shared guard for appendEntry and materializeSessionFile so both skip
    * consistently. The env var is set by tmuxSocket.ts so Tungsten-spawned
    * test sessions don't pollute the user's --resume list.
@@ -1991,7 +1990,7 @@ function applyPreservedSegmentRelinks(
 function applySnipRemovals(messages: Map<UUID, TranscriptMessage>): void {
   // Structural check -snipMetadata only exists on the boundary subtype.
   // Avoids the subtype literal which is in excluded-strings.txt
-  // (HISTORY_SNIP is ant-only; the literal must not leak into external builds).
+  // (HISTORY_SNIP is dsxu internal; the literal must not leak into external builds).
   type WithSnipMeta = { snipMetadata?: { removedUuids?: UUID[] } }
   const toDelete = new Set<UUID>()
   for (const entry of messages.values()) {
@@ -2116,7 +2115,7 @@ export function buildConversationChain(
  * Two loss modes observed in production (both fixed here):
  *   1. Sibling assistant orphaned: walk goes prev→asstA→TR_A→next, drops asstB
  *      (same message.id, chained off asstA) and TR_B.
- *   2. Progress-fork (legacy, pre-#23537): each tool_use asst had a progress
+ *   2. Progress-fork (historical, pre-#23537): each tool_use asst had a progress
  *      child (continued the write chain) AND a TR child. Walk followed
  *      progress; TRs were dropped. No longer written (progress removed from
  *      transcript persistence), but old transcripts still have this shape.
@@ -3275,7 +3274,7 @@ async function scanPreBoundaryMetadata(
  * none are at depth 1 (shouldn't happen for well-formed JSONL -depth-1 is
  * where the top-level object's fields live).
  *
- * Only called when 鈮? suffix matches exist (agent_progress with a nested
+ * Only called when suffix matches exist (agent_progress with a nested
  * Message, or mcpMeta with a coincidentally-suffixed object). Cost is
  * O(max(candidates) - lineStart) -one forward byte pass, stopping at the
  * first depth-1 hit.
@@ -3573,7 +3572,7 @@ export async function loadTranscriptFile(
     // preservedSegment (those messages keep their pre-compact parentUuid on
     // disk -- applyPreservedSegmentRelinks splices them in-memory AFTER
     // parse, so a pre-parse chain walk would drop them as orphans), and when
-    // DSXU/legacy precompact-skip kill switch is set (that means
+    // DSXU/provider-migration precompact-skip kill switch is set (that means
     // "load everything, skip nothing"; this is another skip-before-parse
     // optimization and the scan it depends on for hasPreservedSegment did
     // not run).
@@ -3621,7 +3620,7 @@ export async function loadTranscriptFile(
 
     const entries = parseJSONL<Entry>(buf)
 
-    // Bridge map for legacy progress entries: progress_uuid ->progress_parent_uuid.
+    // Bridge map for historical progress entries: progress_uuid ->progress_parent_uuid.
     // PR #24099 removed progress from isTranscriptMessage, so old transcripts with
     // progress in the parentUuid chain would truncate at buildConversationChain
     // when messages.get(progressUuid) returns undefined. Since transcripts are
@@ -3631,9 +3630,9 @@ export async function loadTranscriptFile(
     const progressBridge = new Map<UUID, UUID | null>()
 
     for (const entry of entries) {
-      // Legacy progress check runs before the Entry-typed else-if chain -      // progress is not in the Entry union, so checking it after TypeScript
+      // Historical progress check runs before the Entry-typed else-if chain -      // progress is not in the Entry union, so checking it after TypeScript
       // has narrowed `entry` intersects to `never`.
-      if (isLegacyProgressEntry(entry)) {
+      if (isHistoricalProgressEntry(entry)) {
         // Chain-resolve through consecutive progress entries so a later
         // message pointing at the tail of a progress run bridges to the
         // nearest non-progress ancestor in one lookup.

@@ -4,7 +4,7 @@
  * React components / SDK output. The SDK 'auth_status' message shape is
  * provider-agnostic, so a single manager serves all providers.
  *
- * Legacy name: originally AWS-only; now used by all cloud auth refresh flows.
+ * Historical AWS name; the runtime owner is now cloud-provider auth refresh.
  */
 
 import { createSignal } from './signal.js'

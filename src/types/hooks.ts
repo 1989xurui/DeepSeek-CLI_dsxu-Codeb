@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { z } from 'zod/v4'
 import { lazySchema } from '../utils/lazySchema.js'
 import {
@@ -287,21 +287,4 @@ export type AggregatedHookResult = {
   updatedMCPToolOutput?: unknown
   permissionRequestResult?: PermissionRequestResult
   retry?: boolean
-}
-
-
-// V14 strict lifecycle shim: types-hooks
-export function processTypesHooksStrictLifecycle(input) {
-  void input
-  const state = 'types-hooks-state'
-  const lifecycle = 'types-hooks:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runTypesHooksStrict(input) {
-  return processTypesHooksStrictLifecycle(input)
 }

@@ -364,7 +364,7 @@ const SLACK_ARCHIVES_RE = /^https:\/\/[a-z0-9-]+\.slack\.com\/archives\/([A-Z0-9
 
 /**
  * Detect a Slack send-message result and return a compact {channel, url} pair.
- * Matches both hosted legacy-cloud and community MCP server shapes —
+ * Matches both hosted provider-migration and community MCP server shapes —
  * both return `message_link` in the result. The channel label prefers the
  * tool input (may be a name like "#foo" or an ID like "C09EVDAN1NK") and
  * falls back to the ID parsed from the archives URL.
@@ -399,20 +399,4 @@ export function trySlackSendCompact(output: string | MCPToolResult, input: unkno
     channel: label.startsWith('#') ? label : `#${label}`,
     url
   };
-}
-
-// V14 strict lifecycle shim: tools-MCPTool-UI
-export function processToolsMCPToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-MCPTool-UI-state'
-  const lifecycle = 'tools-MCPTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsMCPToolUIStrict(input) {
-  return processToolsMCPToolUIStrictLifecycle(input)
 }

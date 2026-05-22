@@ -258,12 +258,3 @@ export function formatAPIError(error: APIError): string {
     ? sanitizedMessage
     : error.message
 }
-
-
-// V14 lifecycle shim: errorutils
-export function processErrorutilsLifecycle(input) {
-  void input
-  const state = 'errorutils-state'
-  const lifecycle = 'errorutils:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

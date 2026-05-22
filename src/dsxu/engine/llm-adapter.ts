@@ -1,17 +1,17 @@
 /**
  * DSXU engine LLM adapter for DeepSeek-compatible model calls.
  *
- * Default mode is direct DeepSeek/OpenAI-compatible transport. Proxy and gateway
- * paths are retained only as explicit compatibility options.
+ * Default mode is direct DeepSeek chat-completions-compatible transport. Proxy and gateway
+ * paths are retained only as explicit provider migration options.
  */
 import type { Message, ToolSchema, LLMCallFn, LLMCallOptions, LLMResponse } from './types'
-import { getModelConfig, isCompatibilityModel } from './model-config'
+import { getModelConfig, isProviderMigrationMappedModel } from './model-config'
 import { APIService, type APIServiceConfig } from './api-service'
 import { createLiteLLMDSXULLMCall } from './model-gateway-client'
 
-const LEGACY_PROVIDER_VERSION_HEADER = `${'anth' + 'ropic'}-version`
+const PROVIDER_MIGRATION_VERSION_HEADER = `${'anth' + 'ropic'}-version`
 
-/** Call through an explicit compatibility proxy. */
+/** Call through an explicit provider migration proxy. */
 export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): LLMCallFn {
   return async (messages, tools, options) => {
 
@@ -26,8 +26,8 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
     }
 
 
-    if (isCompatibilityModel(options.model)) {
-      console.warn(`[LLMAdapter] Using compatibility model mapping: ${options.model} -> ${modelConfig.name}`)
+    if (isProviderMigrationMappedModel(options.model)) {
+      console.warn(`[LLMAdapter] Using provider migration model mapping: ${options.model} -> ${modelConfig.name}`)
     }
 
 
@@ -52,7 +52,7 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': 'dsxu-engine',
-        [LEGACY_PROVIDER_VERSION_HEADER]: '2023-06-01',
+        [PROVIDER_MIGRATION_VERSION_HEADER]: '2023-06-01',
       },
       body: JSON.stringify(body),
       signal: options.abortSignal,
@@ -68,7 +68,7 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
   }
 }
 
-/** Call DeepSeek directly through its OpenAI-compatible API. */
+/** Call DeepSeek directly through its chat-completions-compatible API. */
 export function createDirectLLMCall(
   apiKey: string,
   baseUrl: string = 'https://api.deepseek.com/v1',
@@ -77,16 +77,16 @@ export function createDirectLLMCall(
 
     const modelConfig = getModelConfig(options.model)
 
-    const oaiMessages = convertToOpenAIMessages(messages)
+    const chatCompletionMessages = convertToChatCompletionsMessages(messages)
     const body: any = {
       model: modelConfig.name,
-      messages: oaiMessages,
+      messages: chatCompletionMessages,
       max_tokens: options.maxTokens ?? modelConfig.maxOutputTokens,
     }
 
 
-    if (isCompatibilityModel(options.model)) {
-      console.warn(`[LLMAdapter] Direct call with compatibility model: ${options.model} -> ${modelConfig.name}`)
+    if (isProviderMigrationMappedModel(options.model)) {
+      console.warn(`[LLMAdapter] Direct call with provider migration model: ${options.model} -> ${modelConfig.name}`)
     }
 
     if (tools.length > 0) {
@@ -120,7 +120,7 @@ export function createDirectLLMCall(
     }
 
     const data = await resp.json() as any
-    return parseOpenAIResponse(data)
+    return parseChatCompletionsResponse(data)
   }
 }
 
@@ -177,40 +177,47 @@ export function createPreferredDSXULLMCall(options?: {
     return createDirectLLMCall(deepseekKey, deepseekUrl)
   }
 
-  const hasProviderBackend =
-    Boolean(options?.api?.openaiKey || process.env.OPENAI_API_KEY) ||
-    Boolean(options?.api?.deepseekKey || process.env.DEEPSEEK_API_KEY) ||
-    Boolean(options?.api?.ollamaUrl || process.env.DSXU_OLLAMA_URL)
-
-  if (hasProviderBackend) {
-    return createAPIServiceAdapterLLMCall(new APIService(options?.api))
+  const apiService = new APIService(options?.api)
+  if (apiService.getStatus().length > 0) {
+    return createAPIServiceAdapterLLMCall(apiService)
   }
 
-  if (options?.allowProxyFallback ?? true) {
-    console.warn('[LLMAdapter] Direct provider configuration was not found; falling back to the explicit compatibility proxy path.')
+  if (
+    options?.allowProxyFallback === true ||
+    process.env.DSXU_ALLOW_PROVIDER_MIGRATION_PROXY_FALLBACK === '1'
+  ) {
+    console.warn('[LLMAdapter] Direct provider configuration was not found; falling back to the explicit provider migration proxy path.')
     return createProxyLLMCall(options?.proxyUrl)
   }
 
-  throw new Error('DSXU direct model provider is not configured. Provide DEEPSEEK_API_KEY, OPENAI_API_KEY, or DSXU_OLLAMA_URL.')
+  return createUnconfiguredLLMCall()
+}
+
+function createUnconfiguredLLMCall(): LLMCallFn {
+  return async () => {
+    throw new Error(
+      'DSXU direct model provider is not configured. Provide DEEPSEEK_API_KEY or explicitly enable a provider fallback owner gate.',
+    )
+  }
 }
 
 function createAPIServiceAdapterLLMCall(apiService: APIService): LLMCallFn {
   return async (messages, tools, options) => {
-    const oaiMessages = convertToOpenAIMessages(messages)
+    const chatCompletionMessages = convertToChatCompletionsMessages(messages)
     const oaiTools = tools.map(t => ({
       type: 'function',
       function: { name: t.name, description: t.description, parameters: t.inputSchema },
     }))
 
     const { response } = await apiService.callWithFallback(
-      oaiMessages,
+      chatCompletionMessages,
       oaiTools,
       options.model,
       options.maxTokens ?? getModelConfig(options.model).maxOutputTokens,
       options.abortSignal,
     )
 
-    return parseOpenAIResponse(response)
+    return parseChatCompletionsResponse(response)
   }
 }
 
@@ -289,7 +296,7 @@ function convertToproviderMessages(messages: Message[]): any[] {
     })
 }
 
-function convertToOpenAIMessages(messages: Message[]): any[] {
+function convertToChatCompletionsMessages(messages: Message[]): any[] {
   const result: any[] = []
 
   for (const m of messages) {
@@ -356,7 +363,7 @@ function parseproviderResponse(data: any): LLMResponse {
   }
 }
 
-function parseOpenAIResponse(data: any): LLMResponse {
+function parseChatCompletionsResponse(data: any): LLMResponse {
   const choice = data.choices?.[0]
   const msg = choice?.message ?? {}
 

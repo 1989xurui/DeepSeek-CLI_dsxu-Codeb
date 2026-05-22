@@ -88,12 +88,3 @@ export async function logPermissionContextForAnts(
       (await getContainerId()) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
 }
-
-
-// V14 lifecycle shim: internallogging
-export function processInternalloggingLifecycle(input) {
-  void input
-  const state = 'internallogging-state'
-  const lifecycle = 'internallogging:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

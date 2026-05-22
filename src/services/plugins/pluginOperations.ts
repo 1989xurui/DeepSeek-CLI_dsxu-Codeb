@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Core plugin operations (install, uninstall, enable, disable, update)
  *
@@ -476,7 +475,7 @@ export async function uninstallPluginOp(
   // Separate from the `&& installPath` guard above ...deletePluginOptions only
   // needs pluginId, not installPath. Last scope removed  -> wipe stored options
   // and secrets. Before this, uninstalling left orphaned entries in
-  // settings.pluginConfigs (including the legacy ungated mcpServers sub-key
+  // settings.pluginConfigs (including the pre-versioned ungated mcpServers sub-key
   // from the MCPB Configure flow) and keychain pluginSecrets forever. No
   // feature gate: deletePluginOptions no-ops when nothing is stored, and
   // pluginConfigs.mcpServers is written ungated so its cleanup must run
@@ -896,7 +895,7 @@ async function performPluginUpdate({
     // Try to load manifest from plugin directory (for version info)
     let pluginManifest: PluginManifest | undefined
     const dsxuManifestPath = join(sourcePath, '.dsxu-plugin', 'plugin.json')
-    const legacyManifestPath = join(
+    const providerMigrationManifestPath = join(
       sourcePath,
       `.${'cl' + 'aude'}-plugin`,
       'plugin.json',
@@ -904,7 +903,7 @@ async function performPluginUpdate({
     const manifestPath = (await fs
       .stat(dsxuManifestPath)
       .then(() => dsxuManifestPath)
-      .catch(() => legacyManifestPath))
+      .catch(() => providerMigrationManifestPath))
     try {
       pluginManifest = await loadPluginManifest(
         manifestPath,

@@ -1,4 +1,4 @@
-// Stub for external builds - classifier permissions feature is ANT-ONLY
+// Stub for external builds - classifier permissions feature is DSXU-INTERNAL
 
 export const PROMPT_PREFIX = 'prompt:'
 

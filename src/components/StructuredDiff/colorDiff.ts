@@ -35,12 +35,3 @@ export function getSyntaxTheme(themeName: string): SyntaxTheme | null {
     ? nativeGetSyntaxTheme(themeName)
     : null
 }
-
-
-// V14 lifecycle shim: colordiff
-export function processColordiffLifecycle(input) {
-  void input
-  const state = 'colordiff-state'
-  const lifecycle = 'colordiff:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

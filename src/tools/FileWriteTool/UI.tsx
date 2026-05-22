@@ -402,19 +402,3 @@ export function renderToolResultMessage({
       }
   }
 }
-
-// V14 strict lifecycle shim: tools-FileWriteTool-UI
-export function processToolsFileWriteToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-FileWriteTool-UI-state'
-  const lifecycle = 'tools-FileWriteTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsFileWriteToolUIStrict(input) {
-  return processToolsFileWriteToolUIStrictLifecycle(input)
-}

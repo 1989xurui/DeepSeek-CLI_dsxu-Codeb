@@ -326,12 +326,3 @@ export function registerLSPNotificationHandlers(
     diagnosticFailures,
   }
 }
-
-
-// V14 lifecycle shim: passivefeedback
-export function processPassivefeedbackLifecycle(input) {
-  void input
-  const state = 'passivefeedback-state'
-  const lifecycle = 'passivefeedback:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

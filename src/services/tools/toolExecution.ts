@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type {
   ContentBlockParam,
@@ -326,7 +325,7 @@ export function getDsxuToolExecutionRuntimeProfile(): {
       'sse-ide',
       'ws-ide',
       'dsxu-provider',
-      'legacy-dsxuai-proxy',
+      'provider-migration-dsxuai-proxy',
     ],
     resultDiscipline:
       'tool outputs are normalized into tool_result blocks with optional context modifiers and MCP metadata',
@@ -436,14 +435,13 @@ export async function* runToolUse(
   const toolName = toolUse.name
   // First try to find in the available tools (what the model sees)
   let tool = findToolByName(toolUseContext.options.tools, toolName)
-  // If not found, check if it's a deprecated tool being called by alias
+  // If not found, check if a historical tool alias maps to a current owner.
   // (e.g., old transcripts calling "KillShell" which is now an alias for "TaskStop")
-  // Only fall back for tools where the name matches an alias, not the primary name
+  // Only resolve when the requested name matches an alias, not the primary name.
   if (!tool) {
-    const fallbackTool = findToolByName(getAllBaseTools(), toolName)
-    // Only use fallback if the tool was found via alias (deprecated name)
-    if (fallbackTool && fallbackTool.aliases?.includes(toolName)) {
-      tool = fallbackTool
+    const aliasTargetTool = findToolByName(getAllBaseTools(), toolName)
+    if (aliasTargetTool && aliasTargetTool.aliases?.includes(toolName)) {
+      tool = aliasTargetTool
     }
   }
   const messageId = assistantMessage.message.id
@@ -894,7 +892,7 @@ async function checkPermissionsAndCallTool(
       }
     processedInput = rest as typeof processedInput
   }
-  // Backfill legacy/derived fields on a shallow clone so hooks/canUseTool see
+  // Backfill source-wire/derived fields on a shallow clone so hooks/canUseTool see
   // them without affecting tool.call(). SendMessageTool adds fields; file
   // tools overwrite file_path with expandPath ...that mutation must not reach
   // call() because tool results embed the input path verbatim (e.g. "File

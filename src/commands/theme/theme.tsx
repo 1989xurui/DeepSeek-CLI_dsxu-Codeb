@@ -54,19 +54,3 @@ function ThemePickerCommand(t0) {
 export const call: LocalJSXCommandCall = async (onDone, _context) => {
   return <ThemePickerCommand onDone={onDone} />;
 };
-
-// V14 strict lifecycle shim: commands-theme-theme
-export function processCommandsThemeThemeStrictLifecycle(input) {
-  void input
-  const state = 'commands-theme-theme-state'
-  const lifecycle = 'commands-theme-theme:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsThemeThemeStrict(input) {
-  return processCommandsThemeThemeStrictLifecycle(input)
-}

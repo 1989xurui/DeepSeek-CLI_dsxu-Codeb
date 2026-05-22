@@ -19,12 +19,3 @@ export function useMailboxBridge({ isLoading, onSubmitMessage }: Props): void {
     if (msg) onSubmitMessage(msg.content)
   }, [isLoading, revision, mailbox, onSubmitMessage])
 }
-
-
-// V14 lifecycle shim: usemailboxbridge
-export function processUsemailboxbridgeLifecycle(input) {
-  void input
-  const state = 'usemailboxbridge-state'
-  const lifecycle = 'usemailboxbridge:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -94,12 +94,3 @@ export function useTerminalViewport(): [
 
   return [setElement, entryRef.current]
 }
-
-
-// V14 lifecycle shim: use-terminal-viewport
-export function processUseTerminalViewportLifecycle(input) {
-  void input
-  const state = 'use-terminal-viewport-state'
-  const lifecycle = 'use-terminal-viewport:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -210,11 +210,3 @@ function _temp2(prev_1) {
 function _temp(prev_0) {
   return prev_0 + 1;
 }
-
-// V14 lifecycle shim: wizardprovider
-export function processWizardproviderLifecycle(input) {
-  void input
-  const state = 'wizardprovider-state'
-  const lifecycle = 'wizardprovider:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

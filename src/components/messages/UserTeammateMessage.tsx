@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { TextBlockParam } from 'src/types/providerSdk.js'
 import figures from 'figures'
 import * as React from 'react'

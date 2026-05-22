@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Marketplace manager for DSXU Code plugins
  *
@@ -24,7 +23,7 @@ import { writeFile } from 'fs/promises'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'path'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logForDebugging } from '../debug.js'
 import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import {
@@ -89,7 +88,7 @@ import {
 } from './schemas.js'
 
 const DSXU_PLUGIN_PACKAGE_DIR = '.dsxu-plugin'
-const LEGACY_PLUGIN_PACKAGE_DIR = `.${'clau' + 'de'}-plugin`
+const PROVIDER_MIGRATION_PLUGIN_PACKAGE_DIR = `.${'clau' + 'de'}-plugin`
 const PLUGIN_MARKETPLACE_FILENAME = 'marketplace.json'
 
 function pluginMarketplacePath(root: string, packageDir: string): string {
@@ -110,7 +109,7 @@ async function resolveMarketplaceManifestPath(
   } catch (error) {
     if (!isENOENT(error)) throw error
   }
-  return pluginMarketplacePath(root, LEGACY_PLUGIN_PACKAGE_DIR)
+  return pluginMarketplacePath(root, PROVIDER_MIGRATION_PLUGIN_PACKAGE_DIR)
 }
 
 /**
@@ -1651,7 +1650,7 @@ async function loadAndCacheMarketplace(
         // File sources point to a plugin package marketplace manifest, so the
         // marketplace root is two directories up (parent of the package dir).
         // Resolve to absolute so error messages show the actual path checked
-        // (legacy known_marketplaces.json entries may have relative paths)
+        // (previous known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
         marketplacePath = absPath
         temporaryCachePath = dirname(dirname(absPath))
@@ -1661,9 +1660,9 @@ async function loadAndCacheMarketplace(
 
       case 'directory': {
         // For directories, prefer .dsxu-plugin/marketplace.json and fall back
-        // to the legacy plugin package layout.
+        // to the provider-migration plugin package layout.
         // Resolve to absolute so error messages show the actual path checked
-        // (legacy known_marketplaces.json entries may have relative paths)
+        // (previous known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
         marketplacePath = await resolveMarketplaceManifestPath(absPath)
         temporaryCachePath = absPath
@@ -2085,7 +2084,7 @@ async function readCachedMarketplace(
   installLocation: string,
 ): Promise<PluginMarketplace> {
   // For git-sourced directories, the manifest lives under the DSXU plugin
-  // package directory, with legacy package layout as a compatibility fallback.
+  // package directory, with provider-migration package layout as a migration fallback.
   // For url/file/directory sources it is the installLocation itself.
   // Try the nested path first; fall back to installLocation when it is a plain file
   // (ENOTDIR) or the nested file is simply missing (ENOENT).
@@ -2157,7 +2156,7 @@ export const getMarketplace = memoize(
       )
     }
 
-    // Legacy entries (pre-#19708) may have relative paths in global config.
+    // Historical entries (pre-#19708) may have relative paths in global config.
     // These are meaningless outside the project that wrote them - resolving
     // against process.cwd() produces the wrong path. Give actionable guidance
     // instead of a misleading ENOENT.
@@ -2468,7 +2467,7 @@ export async function refreshMarketplace(
       }
       // GCS failed - fall through to git ONLY if the kill-switch allows.
       // Default true (backend write perms are pending as of inc-5046); flip
-      // to false via GrowthBook once the backend is confirmed live so new
+      // to false via feature flag provider once the backend is confirmed live so new
       // clients NEVER hit GitHub for the official marketplace.
       if (
         !getFeatureValue_CACHED_MAY_BE_STALE(
@@ -2559,11 +2558,11 @@ export async function refreshMarketplace(
           source.source === 'github'
             ? source.repo
             : redactUrlCredentials(source.url)
-        const legacyMarketplaceName = `${'clau' + 'de'}-code-plugins`
-        const legacyOfficialMarketplaceName = `${'clau' + 'de'}-plugins-official`
+        const deprecatedMarketplaceName = `${'clau' + 'de'}-code-plugins`
+        const providerMigrationOfficialMarketplaceName = `${'clau' + 'de'}-plugins-official`
         const reason =
-          name === legacyMarketplaceName
-            ? `We've deprecated "${legacyMarketplaceName}" in favor of "${legacyOfficialMarketplaceName}".`
+          name === deprecatedMarketplaceName
+            ? `We've deprecated "${deprecatedMarketplaceName}" in favor of "${providerMigrationOfficialMarketplaceName}".`
             : `This marketplace may have been deprecated or moved to a new location.`
         throw new Error(
           `The marketplace.json file is no longer present in this repository.\n\n` +

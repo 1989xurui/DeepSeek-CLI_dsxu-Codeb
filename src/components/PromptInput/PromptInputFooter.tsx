@@ -1,7 +1,7 @@
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { memo, type ReactNode, useMemo, useRef } from 'react';
-import { isBridgeEnabled, getBridgeStatus } from '../../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { isBridgeEnabled, getBridgeStatus } from '../../services/bridge/dsxuRemoteBridgeFacade.js';
 import { useSetPromptOverlay } from '../../context/promptOverlayContext.js';
 import type { VerificationStatus } from '../../hooks/useApiKeyVerification.js';
 import type { IDESelection } from '../../hooks/useIdeSelection.js';
@@ -142,11 +142,11 @@ function PromptInputFooter({
         </Box>
         <Box flexShrink={1} gap={1}>
           {isFullscreen ? null : <Notifications apiKeyStatus={apiKeyStatus} autoUpdaterResult={autoUpdaterResult} debug={debug} isAutoUpdating={isAutoUpdating} verbose={verbose} messages={messages} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} ideSelection={ideSelection} mcpClients={mcpClients} isInputWrapped={isInputWrapped} isNarrow={isNarrow} />}
-          {"external" === 'ant' && isUndercover() && <Text dimColor>undercover</Text>}
+          {false && isUndercover() && <Text dimColor>undercover</Text>}
           <BridgeStatusIndicator bridgeSelected={bridgeSelected} />
         </Box>
       </Box>
-      {"external" === 'ant' && <CoordinatorTaskPanel />}
+      {false && <CoordinatorTaskPanel />}
     </>;
 }
 export default memo(PromptInputFooter);
@@ -186,12 +186,4 @@ function BridgeStatusIndicator({
       {status.label}
       {bridgeSelected && <Text dimColor> · Enter to view</Text>}
     </Text>;
-}
-
-// V14 lifecycle shim: promptinputfooter
-export function processPromptinputfooterLifecycle(input) {
-  void input
-  const state = 'promptinputfooter-state'
-  const lifecycle = 'promptinputfooter:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

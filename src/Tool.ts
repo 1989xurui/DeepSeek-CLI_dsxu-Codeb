@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   ToolResultBlockParam,
   ToolUseBlockParam,
@@ -60,7 +59,7 @@ import type { FileStateCache } from './utils/fileStateCache.js'
 import type { DenialTrackingState } from './utils/permissions/denialTracking.js'
 import type { SystemPrompt } from './utils/systemPromptType.js'
 import type { ContentReplacementState } from './utils/toolResultStorage.js'
-// Re-export progress types for backwards compatibility
+// Re-export progress types for API stability during DSXU migration.
 export type {
   AgentToolProgress,
   BashProgress,
@@ -110,7 +109,7 @@ export type SetToolJSXFn = (
 ) => void
 // Import tool permission types from centralized location to break import cycles
 import type { ToolPermissionRulesBySource } from './types/permissions.js'
-// Re-export for backwards compatibility
+// Re-export for API stability during DSXU migration.
 export type { ToolPermissionRulesBySource }
 // Apply DeepImmutable to the imported type
 export type ToolPermissionContext = DeepImmutable<{
@@ -218,7 +217,7 @@ export type ToolUseContext = {
   /** Only wired in interactive (REPL) contexts; SDK/QueryEngine don't set this. */
   setHasInterruptibleToolInProgress?: (v: boolean) => void
   setResponseLength: (f: (prev: number) => number) => void
-  /** Ant-only: push a new API metrics entry for OTPS tracking.
+  /** DSXU internal: push a new API metrics entry for OTPS tracking.
    *  Called by subagent streaming when a new API request starts. */
   pushApiMetricsEntry?: (ttftMs: number) => void
   setStreamMode?: (mode: SpinnerMode) => void
@@ -288,7 +287,7 @@ export type ToolUseContext = {
   /**
    * Parent's rendered system prompt bytes, frozen at turn start.
    * Used by fork subagents to share the parent's prompt cache ...re-calling
-   * getSystemPrompt() at fork-spawn time can diverge (GrowthBook cold→warm)
+   * getSystemPrompt() at fork-spawn time can diverge (feature flag provider cold→warm)
    * and bust the cache. See forkSubagent.ts.
    */
   renderedSystemPrompt?: SystemPrompt
@@ -350,7 +349,18 @@ export type Tool<
   P extends ToolProgressData = ToolProgressData,
 > = {
   /**
-   * Optional aliases for backwards compatibility when a tool is renamed.
+   * V20 runtime metadata for owner/evidence review. This extends the existing
+   * Tool owner contract; it is not a second registry.
+   */
+  runtimeMetadata?: {
+    owner: string
+    sideEffects: readonly string[]
+    permission: string
+    evidence: readonly string[]
+    uiProjection: string
+  }
+  /**
+   * Optional migration aliases when a tool is renamed.
    * The tool can be looked up by any of these names in addition to its primary name.
    */
   aliases?: string[]
@@ -380,8 +390,8 @@ export type Tool<
   // Type for MCP tools that can specify their input schema directly in JSON Schema format
   // rather than converting from Zod schema
   readonly inputJSONSchema?: ToolInputJSONSchema
-  // Optional because TungstenTool doesn't define this. TODO: Make it required.
-  // When we do that, we can also go through and make this a bit more type-safe.
+  // Optional for dynamic MCP / pseudo-tools that may provide JSON schema only.
+  // Most product tools should define this so V20 owner evidence can inspect output.
   outputSchema?: z.ZodType<unknown>
   inputsEquivalent?(a: z.infer<Input>, b: z.infer<Input>): boolean
   isConcurrencySafe(input: z.infer<Input>): boolean
@@ -760,11 +770,99 @@ export function buildTool<D extends AnyToolDef>(def: D): BuiltTool<D> {
     ...def,
   } as BuiltTool<D>
 }
+
+export type ToolDefinitionV20Summary = {
+  name: string
+  aliases: readonly string[]
+  owner: string
+  sideEffects: readonly string[]
+  permission: string
+  evidence: readonly string[]
+  uiProjection: string
+  isMcp: boolean
+  isLsp: boolean
+  shouldDefer: boolean
+  alwaysLoad: boolean
+  maxResultSizeChars: number
+  inputValid: boolean | null
+  isEnabled: boolean | null
+  isConcurrencySafe: boolean | null
+  isReadOnly: boolean | null
+  isDestructive: boolean | null
+  permissionOwner: string
+}
+
+function safeToolBoolean(fn: () => boolean): boolean | null {
+  try {
+    return fn()
+  } catch {
+    return null
+  }
+}
+
+export function summarizeToolDefinitionV20(
+  tool: Tool,
+  input?: unknown,
+): ToolDefinitionV20Summary {
+  const parsed = input === undefined ? null : tool.inputSchema.safeParse(input)
+  const parsedInput = parsed?.success ? parsed.data : undefined
+  const metadata = tool.runtimeMetadata
+  const fallbackOwner = tool.isMcp
+    ? 'DSXU MCP Tool Adapter'
+    : tool.isLsp
+      ? 'DSXU LSP Tool Adapter'
+      : 'DSXU Tool Lifecycle'
+
+  return {
+    name: tool.name,
+    aliases: tool.aliases ?? [],
+    owner: metadata?.owner ?? fallbackOwner,
+    sideEffects: metadata?.sideEffects ?? [],
+    permission:
+      metadata?.permission ??
+      'general Tool Gate / Permission Gate semantics from Tool.checkPermissions',
+    evidence: metadata?.evidence ?? [
+      'inputSchema',
+      'validateInput',
+      'checkPermissions',
+      'call',
+      'mapToolResultToToolResultBlockParam',
+    ],
+    uiProjection:
+      metadata?.uiProjection ??
+      'userFacingName, renderToolUseMessage, renderToolResultMessage',
+    isMcp: tool.isMcp === true,
+    isLsp: tool.isLsp === true,
+    shouldDefer: tool.shouldDefer === true,
+    alwaysLoad: tool.alwaysLoad === true,
+    maxResultSizeChars: tool.maxResultSizeChars,
+    inputValid: input === undefined ? null : parsed?.success === true,
+    isEnabled: safeToolBoolean(() => tool.isEnabled()),
+    isConcurrencySafe:
+      parsedInput === undefined
+        ? null
+        : safeToolBoolean(() => tool.isConcurrencySafe(parsedInput)),
+    isReadOnly:
+      parsedInput === undefined
+        ? null
+        : safeToolBoolean(() => tool.isReadOnly(parsedInput)),
+    isDestructive:
+      parsedInput === undefined
+        ? null
+        : safeToolBoolean(() => tool.isDestructive?.(parsedInput) ?? false),
+    permissionOwner:
+      tool.checkPermissions === TOOL_DEFAULTS.checkPermissions
+        ? 'general Tool Gate default'
+        : 'tool-specific permission hook',
+  }
+}
+
 export function getDsxuToolRuntimeContractSummary(): {
   runtime: 'DSXU Tool Contract'
   requiredPhases: readonly string[]
   evidenceFields: readonly string[]
   legacyProtocolCompatibility: string
+  toolDefinitionV20: readonly string[]
   activationEvidence?: readonly string[]
 } {
   return {
@@ -789,6 +887,14 @@ export function getDsxuToolRuntimeContractSummary(): {
     ],
     legacyProtocolCompatibility:
       'Provider SDK message/tool block types remain as wire-shape compatibility only; DSXU owns the runtime semantics',
+    toolDefinitionV20: [
+      'runtimeMetadata.owner',
+      'runtimeMetadata.sideEffects',
+      'runtimeMetadata.permission',
+      'runtimeMetadata.evidence',
+      'runtimeMetadata.uiProjection',
+      'summarizeToolDefinitionV20(tool, input)',
+    ],
     activationEvidence: [
       'buildTool fills fail-closed defaults for concurrency/read-only/destructive semantics',
       'ToolUseContext carries DSXU model strategy, MCP clients, agent definitions, abort controller, file state, and task app state',

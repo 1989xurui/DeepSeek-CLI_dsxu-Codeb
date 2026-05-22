@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 import type { UUID } from 'crypto';
 import figures from 'figures';
@@ -50,7 +49,7 @@ import { cacheImagePath, storeImage } from '../../../utils/imageStore.js';
 type ResponseValue = 'yes-bypass-permissions' | 'yes-accept-edits' | 'yes-accept-edits-keep-context' | 'yes-default-keep-context' | 'yes-resume-auto-mode' | 'yes-auto-clear-context' | 'ultraplan' | 'no';
 /**
  * Build permission updates for plan approval, including prompt-based rules if provided.
- * Prompt-based rules are only added when classifier permissions are enabled (Ant-only).
+ * Prompt-based rules are only added when classifier permissions are enabled (DSXU internal).
  */
 export function buildPermissionUpdates(mode: PermissionMode, allowedPrompts?: AllowedPrompt[]): PermissionUpdate[] {
   const updates: PermissionUpdate[] = [{
@@ -58,7 +57,7 @@ export function buildPermissionUpdates(mode: PermissionMode, allowedPrompts?: Al
     mode: toExternalPermissionMode(mode),
     destination: 'session'
   }];
-  // Add prompt-based permission rules if provided (Ant-only feature)
+  // Add prompt-based permission rules if provided (DSXU internal feature)
   if (isClassifierPermissionsEnabled() && allowedPrompts && allowedPrompts.length > 0) {
     updates.push({
       type: 'addRules',
@@ -188,12 +187,12 @@ export function ExitPlanModePermissionRequest({
   const isV2 = toolUseConfirm.tool.name === EXIT_PLAN_MODE_V2_TOOL_NAME;
   const inputPlan = isV2 ? undefined : toolUseConfirm.input.plan as string | undefined;
   const planFilePath = isV2 ? getPlanFilePath() : undefined;
-  // Extract allowed prompts requested by the plan (Ant-only feature)
+  // Extract allowed prompts requested by the plan (DSXU internal feature)
   const allowedPrompts = toolUseConfirm.input.allowedPrompts as AllowedPrompt[] | undefined;
   // Get the raw plan to check if it's empty
   const rawPlan = inputPlan ?? getPlan();
   const isEmpty = !rawPlan || rawPlan.trim() === '';
-  // Capture the variant once on mount. GrowthBook reads from a disk cache
+  // Capture the variant once on mount. feature flag provider reads from a disk cache
   // so the value is stable across a single planning session. undefined =
   // control arm. The variant is a fixed 3-value enum of short literals,
   // not user input.
@@ -347,7 +346,7 @@ export function ExitPlanModePermissionRequest({
       });
       // Set initial message - REPL will handle context clear and fresh query
       // Add verification instruction if the feature is enabled
-      // Dead code elimination: legacy verify-plan env is false in external builds, so === 'true' check allows Bun to eliminate the string
+      // Dead code elimination: provider-migration verify-plan env is false in external builds, so === 'true' check allows Bun to eliminate the string
       const verificationInstruction = undefined === 'true' ? `\n\nIMPORTANT: When you have finished implementing the plan, you MUST call the "VerifyPlanExecution" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to trigger background verification.` : '';
       // Capture the transcript path before context is cleared (session ID will be regenerated)
       const transcriptPath = getTranscriptPath();
@@ -704,7 +703,7 @@ export function buildPlanApprovalOptions({
   });
   if (showUltraplan) {
     options.push({
-      label: 'No, refine with Ultraplan on DSXU Code on the web',
+      label: 'No, refine with DSXU Ultraplan workflow',
       value: 'ultraplan'
     });
   }

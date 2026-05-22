@@ -12,6 +12,19 @@ type InputSchema = ReturnType<typeof inputSchema>;
 export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
   name: NAME,
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Test-Only Permission Fixture',
+    sideEffects: [
+      'permission-dialog-test',
+    ],
+    permission: 'always ask; enabled only in test environment',
+    evidence: [
+      'empty inputSchema',
+      'ask permission decision',
+      'test-only environment gate',
+    ],
+    uiProjection: 'test permission prompt fixture',
+  },
   async description() {
     return 'Test tool that always asks for permission';
   },
@@ -71,11 +84,3 @@ export const TestingPermissionTool: Tool<InputSchema, string> = buildTool({
     };
   }
 } satisfies ToolDef<InputSchema, string>);
-
-// V14 lifecycle shim: testingpermissiontool
-export function processTestingpermissiontoolLifecycle(input) {
-  void input
-  const state = 'testingpermissiontool-state'
-  const lifecycle = 'testingpermissiontool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

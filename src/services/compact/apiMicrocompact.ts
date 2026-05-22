@@ -125,7 +125,7 @@ export function getAPIContextManagement(options?: {
     })
   }
 
-  // Tool clearing strategies are ant-only
+  // Tool clearing strategies are dsxu internal
   if (process.env.USER_TYPE !== 'ant') {
     return strategies.length > 0 ? { edits: strategies } : undefined
   }
@@ -179,13 +179,4 @@ export function getAPIContextManagement(options?: {
   }
 
   return strategies.length > 0 ? { edits: strategies } : undefined
-}
-
-
-// V14 lifecycle shim: apimicrocompact
-export function processApimicrocompactLifecycle(input) {
-  void input
-  const state = 'apimicrocompact-state'
-  const lifecycle = 'apimicrocompact:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

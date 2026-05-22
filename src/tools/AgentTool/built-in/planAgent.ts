@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: DSXU-derived capability is absorbed into DSXU mainline; no upstream DSXU runtime dependency.
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'

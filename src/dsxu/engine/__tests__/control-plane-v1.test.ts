@@ -13,8 +13,8 @@ import { runControlPlaneReplayHarness } from '../../integration/harness/control-
 import {
   createRemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../provider-backend/dsxu-remote-session-manager'
-import { createDsxuLocalProviderBackend } from '../provider-backend/local-provider-backend'
+} from '../../../services/bridge/dsxuRemoteSessionCoordinator'
+import { createDsxuLocalProviderBackend } from '../../../services/bridge/dsxuLocalProviderBackend'
 
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (value: unknown) =>
@@ -75,7 +75,7 @@ function collectLegacyControlImports(root: string): string[] {
 }
 
 describe('DSXU Control Plane V1', () => {
-  test('keeps legacy bridge, remote, and upstreamproxy directories absent', () => {
+  test('keeps provider-migration bridge, remote, and upstreamproxy directories absent', () => {
     const root = process.cwd()
 
     expect(existsSync(join(root, 'src/bridge'))).toBe(false)
@@ -167,7 +167,7 @@ describe('DSXU Control Plane V1', () => {
     const unsupported = handleDsxuUnknownInboundControlMessage(
       registry,
       'cp-raw-adapter-1',
-      { type: 'legacy_bridge_reconnect', request_id: 'legacy' },
+      { type: 'provider_migration_bridge_reconnect', request_id: 'provider-migration' },
     )
     const supported = handleDsxuUnknownInboundControlMessage(
       registry,
@@ -269,19 +269,19 @@ describe('DSXU Control Plane V1', () => {
     )
   })
 
-  test('provider compat facade does not own daemon, registry, spawn, or tool-loop state', () => {
+  test('provider-migration facade does not own daemon, registry, spawn, or tool-loop state', () => {
     const root = process.cwd()
-    const compat = readFileSync(
-      join(root, 'src/dsxu/engine/provider-backend/dsxu-provider-compat.ts'),
+    const providerMigrationFacade = readFileSync(
+      join(root, 'src/services/bridge/dsxuRemoteBridgeFacade.ts'),
       'utf8',
     )
 
-    expect(compat).not.toMatch(/\bBun\.serve\b|\bcreateServer\b|\bnew\s+WebSocket\b/)
-    expect(compat).not.toMatch(/\bspawn\s*\(|\bexecFile\s*\(|\bchild_process\b/)
-    expect(compat).not.toContain('createDsxuControlSessionRegistry(')
-    expect(compat).not.toContain('DsxuRemoteSessionCoordinator')
-    expect(compat).not.toContain('tool loop')
-    expect(compat).not.toMatch(/^(?:export\s+)?(?:let|var)\s+/m)
+    expect(providerMigrationFacade).not.toMatch(/\bBun\.serve\b|\bcreateServer\b|\bnew\s+WebSocket\b/)
+    expect(providerMigrationFacade).not.toMatch(/\bspawn\s*\(|\bexecFile\s*\(|\bchild_process\b/)
+    expect(providerMigrationFacade).not.toContain('createDsxuControlSessionRegistry(')
+    expect(providerMigrationFacade).not.toContain('DsxuRemoteSessionCoordinator')
+    expect(providerMigrationFacade).not.toContain('tool loop')
+    expect(providerMigrationFacade).not.toMatch(/^(?:export\s+)?(?:let|var)\s+/m)
   })
 
   test('replays SDK control session, visible permission, response, and close lifecycle', async () => {

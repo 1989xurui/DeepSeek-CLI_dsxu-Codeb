@@ -1,4 +1,4 @@
-export type DSXUV7State =
+﻿export type DSXUV7State =
   | 'green'
   | 'green_with_guard'
   | 'blocked_by_compatibility'
@@ -224,7 +224,7 @@ const promptBehaviorEvaluation: DSXUV7Item = {
 const finalResidualArchive: DSXUV7Item = {
   id: 'V7-9 Final Residual Archive',
   goal:
-    'Move only files proven unused by default DSXU and not required by compatibility aliases.',
+    'Move only files proven unused by default DSXU and not required by provider-migration aliases.',
   referenceBehavior:
     'reference provider shells should remain reference/legacy only, not DSXU default product code.',
   dsxuLanding: [
@@ -279,7 +279,7 @@ export function getDsxuV7ProductizationContract(): DSXUV7ProductizationContract 
       'One DSXU default CLI mainline only.',
       'The original reference source remains read-only reference material.',
       'Behavior must land in DSXU-owned code, tests, prompts, contracts, or benchmarks.',
-      'Archive only after compatibility imports and dynamic legacy paths are removed or remapped.',
+      'Archive only after provider-migration imports and dynamic legacy paths are removed or remapped.',
       'A live benchmark may be scoped, but product release requires mutation/live tasks over time.',
     ],
     items: [

@@ -23,7 +23,7 @@ import {
   getDsxuCodeEnv,
   isDsxuRuntimeMode,
   isEnvTruthy,
-  isLegacyProviderServiceShellAllowed,
+  isProviderMigrationServiceShellAllowed,
 } from '../utils/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog is dynamically imported in the error path to avoid loading React at init
@@ -53,12 +53,12 @@ import { setShellIfWindows } from '../utils/windowsPaths.js'
 // Track if telemetry has been initialized to prevent double initialization
 let telemetryInitialized = false
 
-function shouldLoadLegacyProviderServiceShell(): boolean {
-  return !isDsxuRuntimeMode() || isLegacyProviderServiceShellAllowed()
+function shouldLoadProviderMigrationServiceShell(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
 }
 
-async function populateLegacyOAuthAccountInfoIfAllowed(): Promise<void> {
-  if (!shouldLoadLegacyProviderServiceShell()) return
+async function populateProviderMigrationOAuthAccountInfoIfAllowed(): Promise<void> {
+  if (!shouldLoadProviderMigrationServiceShell()) return
   try {
     const { populateOAuthAccountInfoIfNeeded } = await import(
       '../services/oauth/client.js'
@@ -66,14 +66,14 @@ async function populateLegacyOAuthAccountInfoIfAllowed(): Promise<void> {
     await populateOAuthAccountInfoIfNeeded()
   } catch (error) {
     logForDebugging(
-      `[init] legacy OAuth account-info populate skipped: ${errorMessage(error)}`,
+      `[init] provider OAuth account-info populate skipped: ${errorMessage(error)}`,
       { level: 'warn' },
     )
   }
 }
 
 async function initializeRemoteManagedSettingsIfAllowed(): Promise<void> {
-  if (!shouldLoadLegacyProviderServiceShell()) return
+  if (!shouldLoadProviderMigrationServiceShell()) return
   const {
     initializeRemoteManagedSettingsLoadingPromise,
     isEligibleForRemoteManagedSettings,
@@ -117,26 +117,26 @@ export const init = memoize(async (): Promise<void> => {
     profileCheckpoint('init_after_graceful_shutdown')
 
     // Initialize 1P event logging (no security concerns, but deferred to avoid
-    // loading OpenTelemetry sdk-logs at startup). growthbook.js is already in
+    // loading OpenTelemetry sdk-logs at startup). featureFlags.js is already in
     // the module cache by this point (firstPartyEventLogger imports it), so the
     // second dynamic import adds no load cost.
     void Promise.all([
       import('../services/analytics/firstPartyEventLogger.js'),
-      import('../services/analytics/growthbook.js'),
+      import('../services/analytics/featureFlags.js'),
     ]).then(([fp, gb]) => {
       fp.initialize1PEventLogging()
       // Rebuild the logger provider if tengu_1p_event_batch_config changes
       // mid-session. Change detection (isEqual) is inside the handler so
       // unchanged refreshes are no-ops.
-      gb.onGrowthBookRefresh(() => {
+      gb.onFeatureFlagsRefresh(() => {
         void fp.reinitialize1PEventLoggingIfConfigChanged()
       })
     })
     profileCheckpoint('init_after_1p_event_logging')
 
-    // DSXU default local-coding mainline must not activate the legacy
-    // provider OAuth shell. Keep the migration path behind an explicit flag.
-    void populateLegacyOAuthAccountInfoIfAllowed()
+    // DSXU default local-coding mainline must not activate the provider-migration
+    // OAuth shell. Keep the migration path behind an explicit flag.
+    void populateProviderMigrationOAuthAccountInfoIfAllowed()
     profileCheckpoint('init_after_oauth_populate')
 
     // Initialize JetBrains IDE detection asynchronously (populates cache for later sync access)
@@ -177,7 +177,7 @@ export const init = memoize(async (): Promise<void> => {
     logForDebugging('[init] configureGlobalAgents complete')
     profileCheckpoint('init_network_configured')
 
-    // Preconnect to the configured provider API — overlap TCP+TLS handshake
+    // Preconnect to the configured provider API; overlap TCP+TLS handshake
     // (~100-200ms) with the ~100ms of action-handler work before the API
     // request. After CA certs + proxy agents are configured so the warmed
     // connection uses the right transport. Fire-and-forget; skipped for
@@ -185,18 +185,18 @@ export const init = memoize(async (): Promise<void> => {
     // reuse the global pool.
     preconnectProviderApi()
 
-    // Legacy provider upstream proxy. DSXU no longer starts this old shell,
+    // Provider migration upstream proxy. DSXU no longer starts this source shell,
     // even with the migration flag; remote/provider work must route through
     // the DSXU provider contract instead.
     if (isEnvTruthy(getDsxuCodeEnv('REMOTE'))) {
-      if (!shouldLoadLegacyProviderServiceShell()) {
+      if (!shouldLoadProviderMigrationServiceShell()) {
         logForDebugging(
-          '[init] DSXU_CODE_REMOTE ignored on the default DSXU local mainline; set DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL=1 only for isolated legacy provider migration work.',
+          '[init] DSXU_CODE_REMOTE ignored on the default DSXU local mainline; set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated provider migration work.',
           { level: 'warn' },
         )
       } else {
         logForDebugging(
-          '[init] legacy upstream proxy shell is archived; DSXU provider contract owns remote/session routing.',
+          '[init] provider migration upstream proxy shell is archived; DSXU provider contract owns remote/session routing.',
           { level: 'warn' },
         )
       }
@@ -265,7 +265,7 @@ export const init = memoize(async (): Promise<void> => {
  * This should only be called once, after the trust dialog has been accepted.
  */
 export function initializeTelemetryAfterTrust(): void {
-  if (!shouldLoadLegacyProviderServiceShell()) {
+  if (!shouldLoadProviderMigrationServiceShell()) {
     void doInitializeTelemetry().catch(error => {
       logForDebugging(
         `[3P telemetry] Telemetry init failed: ${errorMessage(error)}`,

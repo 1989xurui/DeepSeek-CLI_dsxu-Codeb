@@ -55,11 +55,3 @@ export function IdeStatusIndicator(t0) {
     return t2;
   }
 }
-
-// V14 lifecycle shim: idestatusindicator
-export function processIdestatusindicatorLifecycle(input) {
-  void input
-  const state = 'idestatusindicator-state'
-  const lifecycle = 'idestatusindicator:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

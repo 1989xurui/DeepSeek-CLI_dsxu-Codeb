@@ -101,11 +101,3 @@ export function UserToolSuccessMessage({
       </SentryErrorBoundary>
     </Box>;
 }
-
-// V14 lifecycle shim: usertoolsuccessmessage
-export function processUsertoolsuccessmessageLifecycle(input) {
-  void input
-  const state = 'usertoolsuccessmessage-state'
-  const lifecycle = 'usertoolsuccessmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

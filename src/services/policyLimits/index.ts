@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (provider cloud): Only Team and Enterprise/C4E subscribers are eligible
+ * - OAuth users (provider migration cloud): Only Team and Enterprise/C4E subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without restrictions
  * - API returns empty restrictions for users without policy limits
  */
@@ -22,10 +22,10 @@ import {
   getOauthConfig,
 } from '../../constants/oauth.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-  getCompatProviderTokens,
-} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+  getProviderControlTokens,
+} from '../auth/dsxuProviderControlAuth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getProviderApiKeyWithSource,
@@ -63,8 +63,8 @@ const CACHE_FILENAME = 'policy-limits.json'
 const FETCH_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
-const LEGACY_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
-const POLICY_LIMITS_PATH = `/api/${LEGACY_CODE_API_SEGMENT}/policy_limits`
+const PROVIDER_MIGRATION_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const POLICY_LIMITS_PATH = `/api/${PROVIDER_MIGRATION_CODE_API_SEGMENT}/policy_limits`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
@@ -205,7 +205,7 @@ export function isPolicyLimitsEligible(): boolean {
   }
 
   // For OAuth users, check if they have provider-cloud tokens
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
   if (!tokens?.accessToken) {
     return false
   }
@@ -262,10 +262,10 @@ function getAuthHeaders(): {
   }
 
   // Fall back to OAuth tokens (for provider-cloud users)
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (accessToken) {
     return {
-      headers: getCompatProviderBearerHeaders(accessToken),
+      headers: getProviderControlBearerHeaders(accessToken),
     }
   }
 

@@ -317,12 +317,3 @@ function tokenize(
 
   return { tokens, state: result }
 }
-
-
-// V14 lifecycle shim: tokenize
-export function processTokenizeLifecycle(input) {
-  void input
-  const state = 'tokenize-state'
-  const lifecycle = 'tokenize:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -71,11 +71,3 @@ export function ShellTimeDisplay(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: shelltimedisplay
-export function processShelltimedisplayLifecycle(input) {
-  void input
-  const state = 'shelltimedisplay-state'
-  const lifecycle = 'shelltimedisplay:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

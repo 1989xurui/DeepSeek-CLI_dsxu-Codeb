@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Plugin-hint recommendations.
  *
  * Companion to lspRecommendation.ts: where LSP recommendations are triggered
@@ -10,7 +10,7 @@
  * marketplace filtering is hardcoded for v1.
  */
 
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_PII_TAGGED,
@@ -161,13 +161,4 @@ export function disableHintRecommendations(): void {
       dsxuCodeHints: { ...current.dsxuCodeHints, disabled: true },
     }
   })
-}
-
-
-// V14 lifecycle shim: hintrecommendation
-export function processHintrecommendationLifecycle(input) {
-  void input
-  const state = 'hintrecommendation-state'
-  const lifecycle = 'hintrecommendation:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

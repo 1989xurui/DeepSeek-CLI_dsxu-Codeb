@@ -159,11 +159,3 @@ function getCooldownMessage(reason: CooldownReason, resetIn: string): string {
       return `Fast limit reached and temporarily disabled · resets in ${resetIn}`;
   }
 }
-
-// V14 lifecycle shim: usefastmodenotification
-export function processUsefastmodenotificationLifecycle(input) {
-  void input
-  const state = 'usefastmodenotification-state'
-  const lifecycle = 'usefastmodenotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

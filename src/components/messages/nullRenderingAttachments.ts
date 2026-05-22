@@ -68,12 +68,3 @@ export function isNullRenderingAttachment(
     NULL_RENDERING_ATTACHMENT_TYPES.has(msg.attachment.type)
   )
 }
-
-
-// V14 lifecycle shim: nullrenderingattachments
-export function processNullrenderingattachmentsLifecycle(input) {
-  void input
-  const state = 'nullrenderingattachments-state'
-  const lifecycle = 'nullrenderingattachments:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

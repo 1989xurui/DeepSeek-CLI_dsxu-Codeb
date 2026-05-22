@@ -134,11 +134,3 @@ function _temp2(current) {
 function _temp() {
   logEvent("dsxu_instruction_includes_dialog_shown", {});
 }
-
-// V14 lifecycle shim: DsxuInstructionExternalIncludesDialog
-export function processDsxuInstructionExternalIncludesDialogLifecycle(input) {
-  void input
-  const state = 'DsxuInstructionExternalIncludesDialog-state'
-  const lifecycle = 'DsxuInstructionExternalIncludesDialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

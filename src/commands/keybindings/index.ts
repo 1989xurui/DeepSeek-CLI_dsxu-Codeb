@@ -11,21 +11,3 @@ const keybindings = {
 } satisfies Command
 
 export default keybindings
-
-
-// V14 command lifecycle shim: keybindings
-export function processKeybindingsCommandLifecycle(input) {
-  void input
-  const state = 'keybindings-command-state'
-  const lifecycle = 'keybindings:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'keybindings',
-  }
-}
-
-export function runKeybindingsCommand(input) {
-  return processKeybindingsCommandLifecycle(input)
-}

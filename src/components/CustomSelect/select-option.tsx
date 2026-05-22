@@ -65,11 +65,3 @@ export function SelectOption(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: select-option
-export function processSelectOptionLifecycle(input) {
-  void input
-  const state = 'select-option-state'
-  const lifecycle = 'select-option:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

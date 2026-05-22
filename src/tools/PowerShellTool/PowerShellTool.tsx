@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 import type { ToolResultBlockParam } from 'src/types/providerSdk.js';
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises';
@@ -284,6 +283,13 @@ function getCommandTypeForLogging(command: string): AnalyticsMetadata_I_VERIFIED
 export const PowerShellTool = buildTool({
   name: POWERSHELL_TOOL_NAME,
   searchHint: 'execute Windows PowerShell commands',
+  runtimeMetadata: {
+    owner: 'DSXU PowerShell Tool / Permission Engine',
+    sideEffects: ['powershell-process-execution', 'filesystem-and-network-by-command'],
+    permission: 'PowerShell permission classifier and Tool Gate checkPermissions',
+    evidence: ['command', 'cwd', 'exit code', 'stdout/stderr', 'permission decision'],
+    uiProjection: 'PowerShell progress, output, and task state',
+  },
   maxResultSizeChars: 30_000,
   strict: true,
   async description({

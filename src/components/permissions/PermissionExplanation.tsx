@@ -269,11 +269,3 @@ export function PermissionExplainerContent(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: permissionexplanation
-export function processPermissionexplanationLifecycle(input) {
-  void input
-  const state = 'permissionexplanation-state'
-  const lifecycle = 'permissionexplanation:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

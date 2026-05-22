@@ -37,20 +37,3 @@ export function getAllTasks(): Task[] {
 export function getTaskByType(type: TaskType): Task | undefined {
   return getAllTasks().find(t => t.type === type)
 }
-
-
-// V14 strict lifecycle shim: tasks
-export function processTasksStrictLifecycle(input) {
-  void input
-  const state = 'tasks-state'
-  const lifecycle = 'tasks:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runTasksStrict(input) {
-  return processTasksStrictLifecycle(input)
-}

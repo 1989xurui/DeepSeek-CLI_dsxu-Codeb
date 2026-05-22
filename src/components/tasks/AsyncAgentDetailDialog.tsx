@@ -226,11 +226,3 @@ export function AsyncAgentDetailDialog(t0) {
   }
   return t20;
 }
-
-// V14 lifecycle shim: asyncagentdetaildialog
-export function processAsyncagentdetaildialogLifecycle(input) {
-  void input
-  const state = 'asyncagentdetaildialog-state'
-  const lifecycle = 'asyncagentdetaildialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

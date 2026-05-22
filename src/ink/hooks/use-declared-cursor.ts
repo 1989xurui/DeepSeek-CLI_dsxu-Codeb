@@ -71,12 +71,3 @@ export function useDeclaredCursor({
 
   return setNode
 }
-
-
-// V14 lifecycle shim: use-declared-cursor
-export function processUseDeclaredCursorLifecycle(input) {
-  void input
-  const state = 'use-declared-cursor-state'
-  const lifecycle = 'use-declared-cursor:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

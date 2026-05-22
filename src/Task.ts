@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomBytes } from 'crypto'
 import type { AppState } from './state/AppState.js'
 import type { AgentId } from './types/ids.js'
@@ -68,7 +67,7 @@ export type Task = {
 }
 // Task ID prefixes
 const TASK_ID_PREFIXES: Record<string, string> = {
-  local_bash: 'b', // Keep as 'b' for backward compatibility
+  local_bash: 'b', // Historical task IDs use this prefix.
   local_agent: 'a',
   remote_agent: 'r',
   in_process_teammate: 't',

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Session Tracing for DSXU Code using OpenTelemetry (BETA)
  *
@@ -13,7 +12,7 @@
 import { feature } from 'bun:bundle'
 import { context as otelContext, type Span, trace } from '@opentelemetry/api'
 import { AsyncLocalStorage } from 'async_hooks'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import type { AssistantMessage, UserMessage } from '../../types/message.js'
 import { getDsxuCodeEnv, isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
 import { getTelemetryAttributes } from '../telemetryAttributes.js'
@@ -112,7 +111,7 @@ function ensureCleanupInterval(): void {
 }
 /**
  * Check if enhanced telemetry is enabled.
- * Priority: env var override > ant build > GrowthBook gate
+ * Priority: env var override > ant build > feature flag provider gate
  */
 export function isEnhancedTelemetryEnabled(): boolean {
   if (feature('ENHANCED_TELEMETRY_BETA')) {
@@ -307,7 +306,7 @@ export function startLLMRequestSpan(
  *   to ensure responses are attached to the correct request. Without it, responses may be
  *   incorrectly attached to whichever span happens to be "last" in the activeSpans map.
  *
- *   If not provided, falls back to finding the most recent llm_request span (legacy behavior).
+ *   If not provided, falls back to finding the most recent llm_request span (previous behavior).
  */
 export function endLLMRequestSpan(
   span?: Span,
@@ -341,7 +340,7 @@ export function endLLMRequestSpan(
     const spanId = getSpanId(span)
     llmSpanContext = activeSpans.get(spanId)?.deref()
   } else {
-    // Legacy fallback: find the most recent llm_request span
+    // Historical fallback: find the most recent llm_request span
     // WARNING: This can cause mismatched responses when multiple requests are in flight
     llmSpanContext = Array.from(activeSpans.values())
       .findLast(r => {

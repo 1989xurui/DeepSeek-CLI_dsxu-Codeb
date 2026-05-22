@@ -146,11 +146,3 @@ export function Divider(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: divider
-export function processDividerLifecycle(input) {
-  void input
-  const state = 'divider-state'
-  const lifecycle = 'divider:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

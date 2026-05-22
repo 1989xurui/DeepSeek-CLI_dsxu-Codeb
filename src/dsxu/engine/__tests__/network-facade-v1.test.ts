@@ -104,7 +104,7 @@ describe('DSXU Network Facade V1', () => {
     expect(applied.env.NO_PROXY).toBe('localhost,127.0.0.1')
   })
 
-  test('does not restore legacy bridge, remote, or upstreamproxy directories', () => {
+  test('does not restore provider-migration bridge, remote, or upstreamproxy directories', () => {
     const root = process.cwd()
 
     expect(existsSync(join(root, 'src/bridge'))).toBe(false)

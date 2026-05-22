@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { Box, Text } from '../../ink.js';
 import { Select } from '../CustomSelect/select.js';
 import { PermissionDialog } from '../permissions/PermissionDialog.js';
@@ -74,12 +74,4 @@ export function PluginHintMenu({
         </Box>
       </Box>
     </PermissionDialog>;
-}
-
-// V14 lifecycle shim: pluginhintmenu
-export function processPluginhintmenuLifecycle(input) {
-  void input
-  const state = 'pluginhintmenu-state'
-  const lifecycle = 'pluginhintmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,17 +1,20 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
-import { getCompatProviderAccessToken } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlAccessToken } from '../../services/auth/dsxuProviderControlAuth.js'
 import { toError } from '../errors.js'
 import { logError } from '../log.js'
 import { getOAuthHeaders } from './api.js'
 
-const LEGACY_PROVIDER_TOKEN = 'anth' + 'ropic'
-const LEGACY_CLOUD_KIND = `${LEGACY_PROVIDER_TOKEN}_cloud` as const
-const LEGACY_ENVIRONMENT_TYPE = LEGACY_PROVIDER_TOKEN
-const LEGACY_BETA_HEADER = `${LEGACY_PROVIDER_TOKEN}-beta`
+const PROVIDER_MIGRATION_SOURCE_TOKEN = 'anth' + 'ropic'
+const PROVIDER_MIGRATION_CLOUD_KIND = `${PROVIDER_MIGRATION_SOURCE_TOKEN}_cloud` as const
+const PROVIDER_MIGRATION_ENVIRONMENT_TYPE = PROVIDER_MIGRATION_SOURCE_TOKEN
+const PROVIDER_MIGRATION_BETA_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-beta`
 
-export type EnvironmentKind = typeof LEGACY_CLOUD_KIND | 'byoc' | 'bridge'
+export type EnvironmentKind =
+  | typeof PROVIDER_MIGRATION_CLOUD_KIND
+  | 'byoc'
+  | 'bridge'
 export type EnvironmentState = 'active'
 
 export type EnvironmentResource = {
@@ -35,7 +38,7 @@ export type EnvironmentListResponse = {
  * @throws Error if the API request fails or no access token is available
  */
 export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (!accessToken) {
     throw new Error(
       'DSXU Code web sessions require authentication with a DSXU provider account. API key authentication is not sufficient. Please run /login to authenticate, or check your authentication status with /status.',
@@ -75,13 +78,13 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
 }
 
 /**
- * Creates a default provider-cloud environment for users who have none.
+ * Creates a default provider-migration cloud environment for users who have none.
  * Uses the public environment_providers route (same auth as fetchEnvironments).
  */
 export async function createDefaultCloudEnvironment(
   name: string,
 ): Promise<EnvironmentResource> {
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (!accessToken) {
     throw new Error('No access token available')
   }
@@ -95,10 +98,10 @@ export async function createDefaultCloudEnvironment(
     url,
     {
       name,
-      kind: LEGACY_CLOUD_KIND,
+      kind: PROVIDER_MIGRATION_CLOUD_KIND,
       description: '',
       config: {
-        environment_type: LEGACY_ENVIRONMENT_TYPE,
+        environment_type: PROVIDER_MIGRATION_ENVIRONMENT_TYPE,
         cwd: '/home/user',
         init_script: null,
         environment: {},
@@ -115,7 +118,7 @@ export async function createDefaultCloudEnvironment(
     {
       headers: {
         ...getOAuthHeaders(accessToken),
-        [LEGACY_BETA_HEADER]: 'ccr-byoc-2025-07-29',
+        [PROVIDER_MIGRATION_BETA_HEADER]: 'ccr-byoc-2025-07-29',
         'x-organization-uuid': orgUUID,
       },
       timeout: 15000,

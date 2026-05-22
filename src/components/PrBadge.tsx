@@ -94,11 +94,3 @@ function getPrStatusColor(state?: PrReviewState): 'success' | 'error' | 'warning
       return undefined;
   }
 }
-
-// V14 lifecycle shim: prbadge
-export function processPrbadgeLifecycle(input) {
-  void input
-  const state = 'prbadge-state'
-  const lifecycle = 'prbadge:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

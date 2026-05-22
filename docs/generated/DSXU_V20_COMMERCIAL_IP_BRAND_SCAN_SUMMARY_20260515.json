@@ -1,0 +1,80 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.commercial-ip-brand-scan.v1",
+    "generatedAt":  "2026-05-15T00:38:11+08:00",
+    "scannedFiles":  2699,
+    "totalRows":  374,
+    "byReleaseRisk":  [
+                          {
+                              "releaseRisk":  "allowed-provider-reference-review",
+                              "files":  238,
+                              "hits":  272
+                          },
+                          {
+                              "releaseRisk":  "internal-ok-review",
+                              "files":  38,
+                              "hits":  76
+                          },
+                          {
+                              "releaseRisk":  "product-source-legal-review-required",
+                              "files":  5,
+                              "hits":  7
+                          },
+                          {
+                              "releaseRisk":  "product-source-review-required",
+                              "files":  47,
+                              "hits":  56
+                          }
+                      ],
+    "bySurface":  [
+                      {
+                          "surface":  "docs-other",
+                          "rows":  3,
+                          "files":  1,
+                          "hits":  6
+                      },
+                      {
+                          "surface":  "internal-evidence-doc",
+                          "rows":  65,
+                          "files":  18,
+                          "hits":  83
+                      },
+                      {
+                          "surface":  "product-source",
+                          "rows":  302,
+                          "files":  268,
+                          "hits":  302
+                      },
+                      {
+                          "surface":  "public-release-doc",
+                          "rows":  4,
+                          "files":  4,
+                          "hits":  20
+                      }
+                  ],
+    "byClassification":  [
+                             {
+                                 "classification":  "configured-provider-brand-review",
+                                 "rows":  238,
+                                 "hits":  272
+                             },
+                             {
+                                 "classification":  "generic-brand-word-review",
+                                 "rows":  24,
+                                 "hits":  27
+                             },
+                             {
+                                 "classification":  "legal-term-review",
+                                 "rows":  10,
+                                 "hits":  10
+                             },
+                             {
+                                 "classification":  "third-party-brand-review",
+                                 "rows":  102,
+                                 "hits":  102
+                             }
+                         ],
+    "reviewRequiredRows":  63,
+    "publicReleaseThirdPartyRows":  0,
+    "rule":  "Third-party brand/product/patent terms may be used for internal evidence review only. Public product surface must use DSXU-owned naming, provider-neutral wording, or configured-provider references that have release approval. This scan is source hygiene evidence, not legal advice or patent clearance.",
+    "nextAction":  "commercial/IP/brand release review remains before final tests and clean export; public release docs should have zero third-party brand rows except approved configured-provider references"
+}

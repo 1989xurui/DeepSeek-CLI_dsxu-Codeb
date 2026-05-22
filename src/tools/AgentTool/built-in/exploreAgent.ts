@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: DSXU-derived capability is absorbed into DSXU mainline; no upstream DSXU runtime dependency.
 import { BASH_TOOL_NAME } from 'src/tools/BashTool/toolName.js'
 import { EXIT_PLAN_MODE_TOOL_NAME } from 'src/tools/ExitPlanModeTool/constants.js'
 import { FILE_EDIT_TOOL_NAME } from 'src/tools/FileEditTool/constants.js'
@@ -77,7 +76,7 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   source: 'built-in',
   baseDir: 'built-in',
   // Explore inherits the DSXU parent model strategy. Speed/cost belongs in the
-  // DSXU model policy, not in legacy provider-tier aliases.
+  // DSXU model policy, not in provider-migration source-tier aliases.
   model: 'inherit',
   // Explore is a fast read-only search agent - it doesn't need commit/PR/lint
   // rules from DSXU.md. The main agent has full context and interprets results.

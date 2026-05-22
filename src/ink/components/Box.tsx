@@ -210,12 +210,3 @@ function Box(t0) {
   return t4;
 }
 export default Box;
-
-
-// V14 lifecycle shim: box
-export function processBoxLifecycle(input) {
-  void input
-  const state = 'box-state'
-  const lifecycle = 'box:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

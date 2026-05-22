@@ -125,12 +125,3 @@ function normalizeStep(step: string): string {
   modifiers.sort()
   return [...modifiers, mainKey].join('+')
 }
-
-
-// V14 lifecycle shim: reservedshortcuts
-export function processReservedshortcutsLifecycle(input) {
-  void input
-  const state = 'reservedshortcuts-state'
-  const lifecycle = 'reservedshortcuts:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

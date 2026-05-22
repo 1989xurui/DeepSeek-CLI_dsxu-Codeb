@@ -80,11 +80,3 @@ export async function call(onDone: (result?: string) => void, _context: unknown,
   // Should never reach here since we handle all cases above
   return null;
 }
-
-// V14 lifecycle shim: sandbox-toggle
-export function processSandboxToggleLifecycle(input) {
-  void input
-  const state = 'sandbox-toggle-state'
-  const lifecycle = 'sandbox-toggle:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

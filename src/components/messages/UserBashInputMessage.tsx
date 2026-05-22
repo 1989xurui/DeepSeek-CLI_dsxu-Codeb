@@ -55,11 +55,3 @@ export function UserBashInputMessage(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: userbashinputmessage
-export function processUserbashinputmessageLifecycle(input) {
-  void input
-  const state = 'userbashinputmessage-state'
-  const lifecycle = 'userbashinputmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

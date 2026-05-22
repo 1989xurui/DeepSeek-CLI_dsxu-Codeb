@@ -12,12 +12,3 @@ export function useTimeout(delay: number, resetTrigger?: number): boolean {
 
   return isElapsed
 }
-
-
-// V14 lifecycle shim: usetimeout
-export function processUsetimeoutLifecycle(input) {
-  void input
-  const state = 'usetimeout-state'
-  const lifecycle = 'usetimeout:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

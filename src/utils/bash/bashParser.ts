@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Pure-TypeScript bash parser producing tree-sitter-bash-compatible ASTs.
  *
@@ -1476,7 +1475,7 @@ function parseSubscriptIndexInline(P: ParseState): TsNode | null {
   // tree-sitter (${words[++counter]}  -> unary_expression(word)).
   return parseArithExpr(P, ']', 'word')
 }
-/** Legacy byte-range subscript index parser ...kept for callers that pre-scan. */
+/** Historical byte-range subscript index parser ...kept for callers that pre-scan. */
 function parseSubscriptIndex(
   P: ParseState,
   startB: number,
@@ -2359,7 +2358,7 @@ function parseDollarLike(P: ParseState): TsNode | null {
     ])
   }
   if (c1 === '[') {
-    // $[ arithmetic ] ...legacy bash syntax, same as $((...))
+    // $[ arithmetic ] ...historical bash syntax, same as $((...))
     advance(P.L)
     advance(P.L)
     const open = mk(P, '$[', dStart, P.L.b, [])

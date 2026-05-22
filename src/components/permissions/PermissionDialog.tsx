@@ -69,11 +69,3 @@ export function PermissionDialog(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: permissiondialog
-export function processPermissiondialogLifecycle(input) {
-  void input
-  const state = 'permissiondialog-state'
-  const lifecycle = 'permissiondialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { DOMElement } from './dom.js'
 import { FocusEvent } from './events/focus-event.js'
 

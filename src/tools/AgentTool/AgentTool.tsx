@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { sep } from 'path';
 import { feature } from 'bun:bundle';
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { clearInvokedSkillsForAgent, getSdkAgentProgressSummariesEnabled } from 
 import { enhanceSystemPromptWithEnvDetails, getSystemPrompt } from '../../constants/prompts.js';
 import { isCoordinatorMode } from '../../coordinator/coordinatorMode.js';
 import { startAgentSummarization } from '../../services/AgentSummary/agentSummary.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
 import { clearDumpState } from '../../services/api/dumpPrompts.js';
 import { completeAgentTask as completeAsyncAgent, createActivityDescriptionResolver, createAgentTaskRuntimeMetadata, createProgressTracker, enqueueAgentNotification, failAgentTask as failAsyncAgent, getProgressUpdate, getTokenCountFromTracker, isLocalAgentTask, killAsyncAgent, registerAgentForeground, registerAsyncAgent, renderAgentRuntimeEvidence, unregisterAgentForeground, updateAgentProgress as updateAsyncAgentProgress, updateProgressFromMessage } from '../../tasks/LocalAgentTask/LocalAgentTask.js';
@@ -49,7 +48,7 @@ import { spawnTeammate } from '../shared/spawnMultiAgent.js';
 import { setAgentColor } from './agentColorManager.js';
 import { agentToolResultSchema, classifyHandoffIfNeeded, emitTaskProgress, extractPartialResult, finalizeAgentTool, getLastToolUseName, renderAgentEvidencePacket, runAsyncAgentLifecycle } from './agentToolUtils.js';
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js';
-import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME, ONE_SHOT_BUILTIN_AGENT_TYPES } from './constants.js';
+import { AGENT_TOOL_NAME, ONE_SHOT_BUILTIN_AGENT_TYPES, SOURCE_AGENT_TOOL_ALIAS_NAME } from './constants.js';
 import { buildForkedMessages, buildWorktreeNotice, FORK_AGENT, isForkSubagentEnabled, isInForkChild } from './forkSubagent.js';
 import type { AgentDefinition } from './loadAgentsDir.js';
 import { filterAgentsByMcpRequirements, hasRequiredMcpServers, isBuiltInAgent } from './loadAgentsDir.js';
@@ -69,12 +68,14 @@ const isBackgroundTasksDisabled =
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- Intentional: schema must be defined at module load
 isDsxuCodeEnvTruthy('DISABLE_BACKGROUND_TASKS');
 
-function isLegacyRemoteAgentIsolationEnabled(): boolean {
-  return isDsxuCodeEnvTruthy('ENABLE_LEGACY_REMOTE_AGENT');
+const PROVIDER_MIGRATION_REMOTE_AGENT_ENV = 'ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT';
+
+function isProviderMigrationRemoteAgentIsolationEnabled(): boolean {
+  return isDsxuCodeEnvTruthy(PROVIDER_MIGRATION_REMOTE_AGENT_ENV);
 }
 
 // Auto-background agent tasks after this many ms (0 = disabled)
-// Enabled by env var OR GrowthBook gate (checked lazily since GB may not be ready at module load)
+// Enabled by env var OR feature flag provider gate (checked lazily since GB may not be ready at module load)
 function getAutoBackgroundMs(): number {
   if (
     isDsxuCodeEnvTruthy('AUTO_BACKGROUND_TASKS') ||
@@ -183,7 +184,7 @@ const fullInputSchema = lazySchema(() => {
     mode: permissionModeSchema().optional().describe('Permission mode for spawned teammate (e.g., "plan" to require plan approval).')
   });
   return baseInputSchema().merge(multiAgentInputSchema).extend({
-    isolation: (isLegacyRemoteAgentIsolationEnabled() ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe(isLegacyRemoteAgentIsolationEnabled() ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the legacy remote agent backend and is opt-in only.' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
+    isolation: (isProviderMigrationRemoteAgentIsolationEnabled() ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe(isProviderMigrationRemoteAgentIsolationEnabled() ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the provider-migration remote agent backend and is opt-in only.' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
     cwd: z.string().optional().describe('Absolute path to run the agent in. Overrides the working directory for all filesystem and shell operations within this agent. Mutually exclusive with isolation: "worktree".')
   });
 });
@@ -199,7 +200,7 @@ export const inputSchema = lazySchema(() => {
     cwd: true
   });
 
-  // GrowthBook-in-lazySchema is acceptable here (unlike subagent_type, which
+  // feature flag provider-in-lazySchema is acceptable here (unlike subagent_type, which
   // was removed in 906da6c723): the divergence window is one-session-per-
   // gate-flip via _CACHED_MAY_BE_STALE disk read, and worst case is either
   // "schema shows a no-op param" (gate flips on mid-session: param ignored
@@ -342,8 +343,25 @@ export const AgentTool = buildTool({
   },
   name: AGENT_TOOL_NAME,
   searchHint: 'delegate work to a subagent',
-  aliases: [LEGACY_AGENT_TOOL_NAME],
+  aliases: [SOURCE_AGENT_TOOL_ALIAS_NAME],
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Agent Orchestrator',
+    sideEffects: [
+      'agent-task-create',
+      'background-agent-execution',
+      'agent-worktree-create-or-cleanup',
+      'agent-progress-events',
+    ],
+    permission: 'agent permission filtering plus inherited Tool Gate context',
+    evidence: [
+      'inputSchema.agent prompt',
+      'agent runtime metadata',
+      'progress tracker',
+      'output file / result evidence',
+    ],
+    uiProjection: 'agent progress, grouped agent tool use, task evidence packet',
+  },
   async description() {
     return 'Launch a new agent';
   },
@@ -547,8 +565,8 @@ export const AgentTool = buildTool({
     // Resolve effective isolation mode (explicit param overrides agent def)
     const effectiveIsolation = isolation ?? selectedAgent.isolation;
 
-    if (effectiveIsolation === 'remote' && !isLegacyRemoteAgentIsolationEnabled()) {
-      throw new Error('Remote agent isolation is disabled in the DSXU default mainline. Use isolation: "worktree", or enable DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT only for explicit legacy migration work.');
+    if (effectiveIsolation === 'remote' && !isProviderMigrationRemoteAgentIsolationEnabled()) {
+      throw new Error('Remote agent isolation is disabled in the DSXU default mainline. Use isolation: "worktree", or enable DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT only for explicit provider migration work.');
     }
 
     const inferredCwd = !cwd && effectiveIsolation !== 'worktree'
@@ -556,7 +574,7 @@ export const AgentTool = buildTool({
       : undefined;
     const effectiveCwd = cwd ?? inferredCwd;
 
-    // Remote isolation: legacy provider backend, gated behind explicit DSXU opt-in.
+    // Remote isolation: provider-migration remote-session backend, gated behind explicit DSXU opt-in.
     if (effectiveIsolation === 'remote') {
       const {
         checkRemoteAgentEligibility,
@@ -631,7 +649,7 @@ export const AgentTool = buildTool({
         forkParentSystemPrompt = toolUseContext.renderedSystemPrompt;
       } else {
         // Fallback: recompute. May diverge from parent's cached bytes if
-        // GrowthBook state changed between parent turn-start and fork spawn.
+        // feature flag provider state changed between parent turn-start and fork spawn.
         const mainThreadAgentDefinition = appState.agent ? appState.agentDefinitions.activeAgents.find(a => a.agentType === appState.agent) : undefined;
         const additionalWorkingDirectories = Array.from(appState.toolPermissionContext.additionalWorkingDirectories.keys());
         const defaultSystemPrompt = await getSystemPrompt(toolUseContext.options.tools, toolUseContext.options.mainLoopModel, additionalWorkingDirectories, toolUseContext.options.mcpClients);
@@ -656,7 +674,7 @@ export const AgentTool = buildTool({
         // Log agent memory loaded event for subagents
         if (selectedAgent.memory) {
           logEvent('tengu_agent_memory_loaded', {
-            ...("external" === 'ant' && {
+            ...(false && {
               agent_type: selectedAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             }),
             scope: selectedAgent.memory as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -1448,8 +1466,8 @@ export const AgentTool = buildTool({
 
     // Only route through auto mode classifier when in auto mode
     // In all other modes, auto-approve sub-agent generation
-    // Note: "external" === 'ant' guard enables dead code elimination for external builds
-    if ("external" === 'ant' && appState.toolPermissionContext.mode === 'auto') {
+    // Note: false guard enables dead code elimination for external builds
+    if (false && appState.toolPermissionContext.mode === 'auto') {
       return {
         behavior: 'passthrough',
         message: 'Agent tool requires permission to spawn sub-agents.'
@@ -1485,7 +1503,7 @@ The agent is now running and will receive instructions via mailbox.`
         type: 'tool_result',
         content: [{
           type: 'text',
-          text: `Legacy remote agent launched.\ntaskId: ${r.taskId}\nsession_url: ${r.sessionUrl}\noutput_file: ${r.outputFile}\nThe agent is running remotely through the explicit DSXU legacy gate. You will be notified automatically when it completes.\nBriefly tell the user what you launched and end your response. Never fabricate or predict the remote agent result.`
+          text: `Provider-migration remote agent launched.\ntaskId: ${r.taskId}\nsession_url: ${r.sessionUrl}\noutput_file: ${r.outputFile}\nThe agent is running remotely through the explicit DSXU provider-migration gate. You will be notified automatically when it completes.\nBriefly tell the user what you launched and end your response. Never fabricate or predict the remote agent result.`
         }]
       };
     }

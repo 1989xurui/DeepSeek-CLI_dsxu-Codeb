@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execFile as execFileCb } from 'child_process'
 import { promisify } from 'util'
 const execFileAsync = promisify(execFileCb)

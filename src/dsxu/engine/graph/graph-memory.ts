@@ -18,7 +18,6 @@ import type {
 
 import type { RepoBrain, RepoAnalysisResult } from '../repo-brain'
 import type { LSPTool } from '../lsp-tool'
-import type { MCPManager } from '../mcp-client'
 import type { MemorySystem } from '../memory/memory-system'
 import type { Session } from '../session'
 
@@ -29,7 +28,6 @@ export class GraphMemoryImpl {
   private graph: GraphMemory
   private repoBrain?: RepoBrain
   private lspTool?: LSPTool
-  private mcpManager?: MCPManager
   private memorySystem?: MemorySystem
 
   constructor(
@@ -73,12 +71,10 @@ export class GraphMemoryImpl {
   setDependencies(
     repoBrain?: RepoBrain,
     lspTool?: LSPTool,
-    mcpManager?: MCPManager,
     memorySystem?: MemorySystem
   ): void {
     this.repoBrain = repoBrain
     this.lspTool = lspTool
-    this.mcpManager = mcpManager
     this.memorySystem = memorySystem
   }
 

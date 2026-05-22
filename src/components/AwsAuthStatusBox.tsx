@@ -79,11 +79,3 @@ function _temp(line, index) {
   const after = line.slice(start + url.length);
   return <Text key={index} dimColor={true}>{before}<Link url={url}>{url}</Link>{after}</Text>;
 }
-
-// V14 lifecycle shim: awsauthstatusbox
-export function processAwsauthstatusboxLifecycle(input) {
-  void input
-  const state = 'awsauthstatusbox-state'
-  const lifecycle = 'awsauthstatusbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

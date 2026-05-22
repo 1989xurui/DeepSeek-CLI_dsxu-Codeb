@@ -33,6 +33,21 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
   name: TEAM_DELETE_TOOL_NAME,
   searchHint: 'disband a swarm team and clean up',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Agent Team Lifecycle',
+    sideEffects: [
+      'team-directory-cleanup',
+      'leader-team-state-clear',
+      'teammate-color-clear',
+    ],
+    permission: 'passthrough permission before team cleanup',
+    evidence: [
+      'active member guard',
+      'success/message output',
+      'team cleanup analytics',
+    ],
+    uiProjection: 'team cleanup result and active-member blocker',
+  },
   shouldDefer: true,
 
   userFacingName() {
@@ -53,6 +68,13 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
 
   async prompt() {
     return getPrompt()
+  },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: 'TeamDelete wants to disband the active swarm team and clean up team state.',
+      updatedInput: input,
+    }
   },
 
   mapToolResultToToolResultBlockParam(data, toolUseID) {
@@ -137,12 +159,3 @@ export const TeamDeleteTool: Tool<InputSchema, Output> = buildTool({
   renderToolUseMessage,
   renderToolResultMessage,
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: teamdeletetool
-export function processTeamdeletetoolLifecycle(input) {
-  void input
-  const state = 'teamdeletetool-state'
-  const lifecycle = 'teamdeletetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

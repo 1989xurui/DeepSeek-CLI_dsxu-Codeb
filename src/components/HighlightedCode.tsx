@@ -187,11 +187,3 @@ function CodeLine(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: highlightedcode
-export function processHighlightedcodeLifecycle(input) {
-  void input
-  const state = 'highlightedcode-state'
-  const lifecycle = 'highlightedcode:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

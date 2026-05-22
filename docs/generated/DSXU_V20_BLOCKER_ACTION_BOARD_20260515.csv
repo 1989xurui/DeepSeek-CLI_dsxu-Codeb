@@ -1,0 +1,8 @@
+"order","blocker","status","count","requiredInputOrAuthorization"
+"1","P12 target-reference raw input","PASS_READY_FOR_DELTA_REVIEW","14","review P12 delta findings before any comparison win claim"
+"2","Owner/Git product stage","STAGED_BY_OWNER_GIT_EXECUTION","1746","product packets staged; keep post-stage verification evidence"
+"3","Owner/Git deletion stage","STAGED_BY_OWNER_GIT_EXECUTION","147","deletion packets staged; do not restore old duplicate runtime"
+"4","ACL residue closure","PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME","4","external permission/ownership closure or explicit owner/Git mutation handling"
+"5","Commercial/IP release notice","ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING","0","final notice/license/package metadata review; not legal advice"
+"6","Final six-stage tests","PASS_READY_FOR_FINAL_SIX_STAGE_TESTS","6","run final six-stage tests under final preflight PASS"
+"7","Clean export","PASS_READY_TO_CREATE_CLEAN_EXPORT","1","create export only after final preflight PASS"

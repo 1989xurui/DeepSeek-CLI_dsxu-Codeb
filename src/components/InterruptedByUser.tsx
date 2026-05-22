@@ -5,18 +5,10 @@ export function InterruptedByUser() {
   const $ = _c(1);
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = <><Text dimColor={true}>Interrupted </Text>{false ? <Text dimColor={true}>· [ANT-ONLY] /issue to report a model issue</Text> : <Text dimColor={true}>· What should DSXU do instead?</Text>}</>;
+    t0 = <><Text dimColor={true}>Interrupted </Text>{false ? <Text dimColor={true}>· [DSXU internal] /issue to report a model issue</Text> : <Text dimColor={true}>· What should DSXU do instead?</Text>}</>;
     $[0] = t0;
   } else {
     t0 = $[0];
   }
   return t0;
-}
-
-// V14 lifecycle shim: interruptedbyuser
-export function processInterruptedbyuserLifecycle(input) {
-  void input
-  const state = 'interruptedbyuser-state'
-  const lifecycle = 'interruptedbyuser:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

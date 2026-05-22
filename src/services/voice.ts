@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Voice service: audio recording for push-to-talk voice input.
 //
 // Recording uses native audio capture (cpal) on macOS, Linux, and Windows

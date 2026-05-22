@@ -40,12 +40,3 @@ export function effortLevelToSymbol(level: EffortLevel): string {
       return EFFORT_HIGH
   }
 }
-
-
-// V14 lifecycle shim: effortindicator
-export function processEffortindicatorLifecycle(input) {
-  void input
-  const state = 'effortindicator-state'
-  const lifecycle = 'effortindicator:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

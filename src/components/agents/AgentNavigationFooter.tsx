@@ -23,11 +23,3 @@ export function AgentNavigationFooter(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: agentnavigationfooter
-export function processAgentnavigationfooterLifecycle(input) {
-  void input
-  const state = 'agentnavigationfooter-state'
-  const lifecycle = 'agentnavigationfooter:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

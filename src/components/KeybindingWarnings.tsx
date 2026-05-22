@@ -52,11 +52,3 @@ function _temp2(w_0) {
 function _temp(w) {
   return w.severity === "error";
 }
-
-// V14 lifecycle shim: keybindingwarnings
-export function processKeybindingwarningsLifecycle(input) {
-  void input
-  const state = 'keybindingwarnings-state'
-  const lifecycle = 'keybindingwarnings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -65,11 +65,3 @@ function VoiceModeNoticeInner() {
 function _temp() {
   return isVoiceModeEnabled() && getInitialSettings().voiceEnabled !== true && (getGlobalConfig().voiceNoticeSeenCount ?? 0) < MAX_SHOW_COUNT && !shouldShowDsxuLongContextNotice();
 }
-
-// V14 lifecycle shim: voicemodenotice
-export function processVoicemodenoticeLifecycle(input) {
-  void input
-  const state = 'voicemodenotice-state'
-  const lifecycle = 'voicemodenotice:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

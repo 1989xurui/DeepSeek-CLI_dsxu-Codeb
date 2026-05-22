@@ -160,11 +160,3 @@ export function SandboxPermissionRequest(t0) {
   }
   return t13;
 }
-
-// V14 lifecycle shim: sandboxpermissionrequest
-export function processSandboxpermissionrequestLifecycle(input) {
-  void input
-  const state = 'sandboxpermissionrequest-state'
-  const lifecycle = 'sandboxpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

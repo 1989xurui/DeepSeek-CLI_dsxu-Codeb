@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "dsxu.v20.post-authorization-verification-plan.v1",
+  "generatedAt": "2026-05-15T03:39:43.102Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "POST_STAGE_VERIFIED_REMAINING_GATES_BLOCKED",
+  "mutationCommandCount": 57,
+  "blockerActionCount": 7,
+  "stageExecutionStatus": "STAGED_OWNER_GIT_PACKETS",
+  "stagedCommandCount": 58,
+  "failedCommandCount": 0,
+  "productPathCount": 1746,
+  "deletionPathCount": 147,
+  "totalPlannedPathCount": 1893,
+  "gitStatus": {
+    "total": 2005,
+    "staged": 2005,
+    "unstaged": 32,
+    "untracked": 0,
+    "codes": {
+      "A ": 176,
+      "M ": 1650,
+      "AM": 32,
+      "D ": 116,
+      "R ": 31
+    }
+  },
+  "cachedDiff": {
+    "total": 2005,
+    "added": 208,
+    "modified": 1650,
+    "deleted": 116,
+    "renamed": 31,
+    "other": 0
+  },
+  "p12RawReadinessStatus": "PASS",
+  "p12PairedRawLogCount": 14,
+  "p12ReplayFamilyGapCount": 0,
+  "aclResidueCount": 4,
+  "didMutateGit": true,
+  "didStageGit": true,
+  "didCommit": false,
+  "didReset": false,
+  "didClean": false,
+  "didRunVerification": true,
+  "didCreateExport": false,
+  "registerMode": "post-stage-index; pre-stage owner register is superseded for staged status expansion",
+  "postStageInvariant": {
+    "stagedSuccessfully": true,
+    "p12Ready": true,
+    "noUntrackedPaths": true,
+    "hasCachedDiff": true,
+    "noFailedStageCommands": true,
+    "hasOnlyExpectedUnstagedGeneratedRefresh": false
+  },
+  "steps": [
+    {
+      "order": 1,
+      "phase": "after-git-mutation",
+      "command": "bun run owner-git:preflight",
+      "purpose": "confirm register/status alignment after authorized staging or mutation",
+      "requiresPriorAuthorization": true
+    },
+    {
+      "order": 2,
+      "phase": "after-git-mutation",
+      "command": "bun run owner-git:product-stage-plan && bun run owner-git:stage-plan",
+      "purpose": "confirm no product/deletion packet drift remains",
+      "requiresPriorAuthorization": true
+    },
+    {
+      "order": 3,
+      "phase": "after-p12-manifest",
+      "command": "bun run p12:target-intake --targetReferenceManifestPath <real-target-reference-manifest>",
+      "purpose": "validate real target-reference manifest before raw readiness",
+      "requiresPriorAuthorization": false
+    },
+    {
+      "order": 4,
+      "phase": "after-p12-manifest",
+      "command": "bun run p12:raw-readiness --targetReferenceManifestPath <real-target-reference-manifest>",
+      "purpose": "recompute paired raw evidence readiness",
+      "requiresPriorAuthorization": false
+    },
+    {
+      "order": 5,
+      "phase": "final-test-entry",
+      "command": "bun run v20:final-preflight",
+      "purpose": "confirm final six-stage tests can start",
+      "requiresPriorAuthorization": true
+    },
+    {
+      "order": 6,
+      "phase": "final-test-entry",
+      "command": "execute commands from docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json in order",
+      "purpose": "run function, experience, recovery, performance, eval, and release closure tests",
+      "requiresPriorAuthorization": true
+    },
+    {
+      "order": 7,
+      "phase": "release-entry",
+      "command": "bun run clean-export:preflight",
+      "purpose": "confirm clean export is allowed after final preflight PASS",
+      "requiresPriorAuthorization": true
+    }
+  ],
+  "nextAction": "close ACL residues, rerun final preflight, then enter six-stage tests before clean export",
+  "rule": "This post-authorization verification reads staged Git index evidence. It does not commit, reset, clean, run final tests, or export."
+}

@@ -140,11 +140,3 @@ function _temp2(e) {
 function _temp() {
   return isEnvTruthy("true");
 }
-
-// V14 lifecycle shim: uselspinitializationnotification
-export function processUselspinitializationnotificationLifecycle(input) {
-  void input
-  const state = 'uselspinitializationnotification-state'
-  const lifecycle = 'uselspinitializationnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

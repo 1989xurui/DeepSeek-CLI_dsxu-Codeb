@@ -81,11 +81,3 @@ export function ColorStep() {
   }
   return t4;
 }
-
-// V14 lifecycle shim: colorstep
-export function processColorstepLifecycle(input) {
-  void input
-  const state = 'colorstep-state'
-  const lifecycle = 'colorstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

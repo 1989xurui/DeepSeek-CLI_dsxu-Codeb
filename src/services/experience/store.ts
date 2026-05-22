@@ -181,12 +181,3 @@ function cosine(a: number[], b: number[]): number {
   const d = Math.sqrt(na) * Math.sqrt(nb);
   return d === 0 ? 0 : dot / d;
 }
-
-
-// V14 lifecycle shim: store
-export function processStoreLifecycle(input) {
-  void input
-  const state = 'store-state'
-  const lifecycle = 'store:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

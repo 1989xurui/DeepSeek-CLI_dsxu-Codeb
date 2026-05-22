@@ -8,7 +8,7 @@ import {
 
 const root = process.cwd()
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
-const localReferenceRoot = join(root, `\u539f\u4ee3\u7801${['cl', 'aude'].join('')}`)
+const localReferenceRoot = join('D:\\', `\u6e90\u4ee3\u7801${['cl', 'aude'].join('')}`, 'src')
 
 describe('DSXU V10 reference behavior productization contract', () => {
   test('defines the eight V10 workstreams as behavior absorption, not shell copying', () => {
@@ -62,18 +62,18 @@ describe('DSXU V10 reference behavior productization contract', () => {
     expect(cli).toContain('handleDsxuProviderAliasCommand')
     expect(cli).not.toContain("await import('../bridge/bridgeMain.js')")
     expect(cli).toContain("args[0] === 'bridge'")
-    expect(main).toContain("./dsxu/engine/provider-backend/dsxu-remote-session-manager.js")
+    expect(main).toContain("./services/bridge/dsxuRemoteSessionCoordinator.js")
     expect(main).not.toContain("await import('./remote/DsxuRemoteSessionCoordinator.js')")
     expect(main).not.toContain("./bridge/bridgeEnabled.js")
     expect(main).not.toContain("./bridge/trustedDevice.js")
-    expect(useRemoteSession).toContain('../dsxu/engine/provider-backend/dsxu-remote-session-manager.js')
+    expect(useRemoteSession).toContain('../services/bridge/dsxuRemoteSessionCoordinator.js')
     expect(useRemoteSession).not.toContain('../remote/DsxuRemoteSessionCoordinator.js')
     expect(print).not.toContain("src/bridge/")
     expect(useReplBridge).not.toContain("../bridge/")
     expect(existsSync(join(root, 'src/bridge'))).toBe(false)
     expect(existsSync(join(root, 'src/remote'))).toBe(false)
     expect(existsSync(join(root, 'src/upstreamproxy'))).toBe(false)
-    expect(init).toContain('legacy upstream proxy shell is archived')
+    expect(init).toContain('provider migration upstream proxy shell is archived')
     expect(init).not.toContain('../upstreamproxy/upstreamproxy.js')
   })
 

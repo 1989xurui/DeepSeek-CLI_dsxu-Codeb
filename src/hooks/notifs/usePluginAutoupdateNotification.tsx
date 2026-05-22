@@ -80,11 +80,3 @@ function _temp(id) {
   const atIndex = id.indexOf("@");
   return atIndex > 0 ? id.substring(0, atIndex) : id;
 }
-
-// V14 lifecycle shim: usepluginautoupdatenotification
-export function processUsepluginautoupdatenotificationLifecycle(input) {
-  void input
-  const state = 'usepluginautoupdatenotification-state'
-  const lifecycle = 'usepluginautoupdatenotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

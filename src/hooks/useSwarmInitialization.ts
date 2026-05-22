@@ -79,12 +79,3 @@ export function useSwarmInitialization(
     }
   }, [setAppState, initialMessages, enabled])
 }
-
-
-// V14 lifecycle shim: useswarminitialization
-export function processUseswarminitializationLifecycle(input) {
-  void input
-  const state = 'useswarminitialization-state'
-  const lifecycle = 'useswarminitialization:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

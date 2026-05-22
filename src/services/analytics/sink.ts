@@ -10,7 +10,7 @@
 
 import { trackDatadogEvent } from './datadog.js'
 import { logEventTo1P, shouldSampleEvent } from './firstPartyEventLogger.js'
-import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from './growthbook.js'
+import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from './featureFlags.js'
 import { attachAnalyticsSink, stripProtoFields } from './index.js'
 import { isSinkKilled } from './sinkKillswitch.js'
 
@@ -111,13 +111,4 @@ export function initializeAnalyticsSink(): void {
     logEvent: logEventImpl,
     logEventAsync: logEventAsyncImpl,
   })
-}
-
-
-// V14 lifecycle shim: sink
-export function processSinkLifecycle(input) {
-  void input
-  const state = 'sink-state'
-  const lifecycle = 'sink:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -12,11 +12,11 @@ import {
 } from '../../constants/oauth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   hasProfileScope,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
   saveApiKey,
 } from '../../utils/auth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import type { AccountInfo } from '../../utils/config.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
@@ -200,7 +200,7 @@ export async function refreshOAuthToken(
     // the re-login path writes cached ?? wiped ?? null = cached; and if secure
     // storage was already empty we fall through to the fetch.
     const config = getGlobalConfig()
-    const existing = getDsxuControlOAuthTokens()
+    const existing = getProviderControlTokens()
     const haveProfileAlready =
       config.oauthAccount?.billingType !== undefined &&
       config.oauthAccount?.accountCreatedAt !== undefined &&
@@ -434,7 +434,7 @@ export async function getOrganizationUUID(): Promise<string | null> {
   }
 
   // Fall back to fetching from profile (requires user:profile scope)
-  const accessToken = getDsxuControlOAuthTokens()?.accessToken
+  const accessToken = getProviderControlTokens()?.accessToken
   if (accessToken === undefined || !hasProfileScope()) {
     return null
   }
@@ -482,13 +482,13 @@ export async function populateOAuthAccountInfoIfNeeded(): Promise<boolean> {
       config.oauthAccount.billingType !== undefined &&
       config.oauthAccount.accountCreatedAt !== undefined &&
       config.oauthAccount.subscriptionCreatedAt !== undefined) ||
-    !isLegacyCloudSubscriber() ||
+    !isProviderSubscriptionAccount() ||
     !hasProfileScope()
   ) {
     return false
   }
 
-  const tokens = getDsxuControlOAuthTokens()
+  const tokens = getProviderControlTokens()
   if (tokens?.accessToken) {
     const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
     if (profile) {
@@ -569,19 +569,19 @@ export function storeOAuthAccountInfo({
 
 export function getDsxuOAuthClientRuntimeProfile() {
   return {
-    runtime: 'DSXU Legacy OAuth Client Boundary',
+    runtime: 'DSXU Provider OAuth Client Boundary',
     defaultBehavior:
       'Provider OAuth helpers are not called by DSXU default login path',
     providerTarget: 'DSXU Identity Provider',
     migrationBoundary: [
-      'buildAuthUrl/exchangeCodeForTokens remain legacy-only helpers',
+      'buildAuthUrl/exchangeCodeForTokens remain provider-migration-only helpers',
       'ConsoleOAuthFlow and login command isolate this client in DSXU_CODE_MODE',
       'future DSXU identity should implement provider credentials without first-party OAuth',
     ],
     activationEvidence: [
       'OAuth client has explicit DSXU boundary profile',
       'default login path returns local provider guidance before OAuthService construction',
-      'remote bridge initialization is gated by DSXU legacy bridge opt-in',
+      'remote bridge initialization is gated by DSXU provider-migration bridge opt-in',
     ],
   }
 }

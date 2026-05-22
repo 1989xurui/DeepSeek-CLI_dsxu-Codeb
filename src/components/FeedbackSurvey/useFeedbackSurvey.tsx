@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDynamicConfig } from 'src/hooks/useDynamicConfig.js';
 import { isFeedbackSurveyDisabled } from 'src/services/analytics/config.js';
@@ -28,7 +27,7 @@ type FeedbackSurveyConfig = {
 type TranscriptAskConfig = {
   probability: number;
 };
-const LEGACY_FORCE_DISPLAY_SURVEY_ENV = 'CL' + 'AUDE_FORCE_DISPLAY_SURVEY';
+const PROVIDER_MIGRATION_FORCE_DISPLAY_SURVEY_ENV = 'CL' + 'AUDE_FORCE_DISPLAY_SURVEY';
 const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: 600000,
   minTimeBetweenFeedbackMs: 3600000,
@@ -139,7 +138,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
       return false;
     }
 
-    // Probability gate from GrowthBook config (separate per rating)
+    // Probability gate from feature flag provider config (separate per rating)
     const probability = selected_0 === 'bad' ? badTranscriptAskConfig.probability : goodTranscriptAskConfig.probability;
     return Math.random() <= probability;
   }, [badTranscriptAskConfig.probability, goodTranscriptAskConfig.probability]);
@@ -222,7 +221,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     }
 
     // Force display for testing
-    if ((isDsxuCodeEnvTruthy('FORCE_DISPLAY_SURVEY') || isEnvTruthy(process.env[LEGACY_FORCE_DISPLAY_SURVEY_ENV])) && !feedbackSurvey.timeLastShown) {
+    if ((isDsxuCodeEnvTruthy('FORCE_DISPLAY_SURVEY') || isEnvTruthy(process.env[PROVIDER_MIGRATION_FORCE_DISPLAY_SURVEY_ENV])) && !feedbackSurvey.timeLastShown) {
       return true;
     }
     if (!isModelAllowed) {

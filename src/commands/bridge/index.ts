@@ -15,17 +15,3 @@ const bridge = {
 } satisfies Command
 
 export default bridge
-
-export function processBridgeCommandLifecycle(input: unknown) {
-  void input
-  return {
-    state: 'provider-alias-blocked',
-    lifecycle: 'provider-alias:block-result',
-    invoked: false,
-    commandId: 'remote-control',
-  }
-}
-
-export function runBridgeCommand(input: unknown) {
-  return processBridgeCommandLifecycle(input)
-}

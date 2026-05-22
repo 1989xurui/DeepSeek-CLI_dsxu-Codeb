@@ -337,11 +337,3 @@ export function useTabHeaderFocus() {
   }
   return t1;
 }
-
-// V14 lifecycle shim: tabs
-export function processTabsLifecycle(input) {
-  void input
-  const state = 'tabs-state'
-  const lifecycle = 'tabs:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

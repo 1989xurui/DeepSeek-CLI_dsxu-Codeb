@@ -125,11 +125,3 @@ function _temp2(m) {
 function _temp(s) {
   return s.plugins.installationStatus;
 }
-
-// V14 lifecycle shim: useplugininstallationstatus
-export function processUseplugininstallationstatusLifecycle(input) {
-  void input
-  const state = 'useplugininstallationstatus-state'
-  const lifecycle = 'useplugininstallationstatus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

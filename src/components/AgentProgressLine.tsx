@@ -133,11 +133,3 @@ export function AgentProgressLine(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: agentprogressline
-export function processAgentprogresslineLifecycle(input) {
-  void input
-  const state = 'agentprogressline-state'
-  const lifecycle = 'agentprogressline:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

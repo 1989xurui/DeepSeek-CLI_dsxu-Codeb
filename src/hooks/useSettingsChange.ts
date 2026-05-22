@@ -23,12 +23,3 @@ export function useSettingsChange(
     [handleChange],
   )
 }
-
-
-// V14 lifecycle shim: usesettingschange
-export function processUsesettingschangeLifecycle(input) {
-  void input
-  const state = 'usesettingschange-state'
-  const lifecycle = 'usesettingschange:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

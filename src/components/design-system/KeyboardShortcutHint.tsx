@@ -78,11 +78,3 @@ export function KeyboardShortcutHint(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: keyboardshortcuthint
-export function processKeyboardshortcuthintLifecycle(input) {
-  void input
-  const state = 'keyboardshortcuthint-state'
-  const lifecycle = 'keyboardshortcuthint:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

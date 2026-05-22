@@ -6,7 +6,7 @@ import {
 import { invalidateOverageCreditGrantCache } from '../../services/api/overageCreditGrant.js'
 import { type ExtraUsage, fetchUtilization } from '../../services/api/usage.js'
 import { getSubscriptionType } from '../../utils/auth.js'
-import { hasDSXUAiBillingAccess } from '../../utils/billing.js'
+import { hasProviderSubscriptionBillingAccess } from '../../services/auth/dsxuBillingAccess.js'
 import { openBrowser } from '../../utils/browser.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
@@ -36,7 +36,7 @@ export async function runExtraUsage(): Promise<ExtraUsageResult> {
   const subscriptionType = getSubscriptionType()
   const isTeamOrEnterprise =
     subscriptionType === 'team' || subscriptionType === 'enterprise'
-  const hasBillingAccess = hasDSXUAiBillingAccess()
+  const hasBillingAccess = hasProviderSubscriptionBillingAccess()
 
   if (!hasBillingAccess && isTeamOrEnterprise) {
     // Mirror apps/dsxu-ai useHasUnlimitedOverage(): if overage is enabled
@@ -130,28 +130,19 @@ export function getDsxuExtraUsageRuntimeProfile(): {
   command: '/extra-usage'
   runtime: 'DSXU Provider Usage Guard'
   activationEvidence: readonly string[]
-  legacyIsolation: readonly string[]
+  providerMigrationIsolation: readonly string[]
 } {
   return {
     command: '/extra-usage',
     runtime: 'DSXU Provider Usage Guard',
     activationEvidence: [
-      'DSXU_CODE_MODE returns local provider-usage guidance before legacy cloud billing checks',
+      'DSXU_CODE_MODE returns local provider-usage guidance before provider billing checks',
       'DSXU users are directed to /cost and DSXU model settings',
-      'no legacy cloud usage URL is opened in DSXU runtime',
+      'no provider usage URL is opened in DSXU runtime',
     ],
-    legacyIsolation: [
-      'legacy cloud admin/settings usage URLs are legacy-only',
+    providerMigrationIsolation: [
+      'provider admin/settings usage URLs are runtime-gated outside DSXU mode',
       'provider admin request APIs are bypassed in DSXU runtime',
     ],
   }
-}
-
-
-// V14 lifecycle shim: extra-usage-core
-export function processExtraUsageCoreLifecycle(input) {
-  void input
-  const state = 'extra-usage-core-state'
-  const lifecycle = 'extra-usage-core:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

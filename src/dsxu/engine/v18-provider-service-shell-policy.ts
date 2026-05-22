@@ -1,10 +1,10 @@
-export const V18_LEGACY_PROVIDER_SERVICE_SHELL_FINAL_RULING = {
+export const V18_PROVIDER_MIGRATION_SERVICE_SHELL_FINAL_RULING = {
   directUse: 'forbidden',
   semanticRebuild: 'required',
-  legacyIsolation: 'temporarily_allowed',
+  providerMigrationIsolation: 'temporarily_allowed',
 } as const
 
-export type V18LegacyProviderServiceShellProvider =
+export type V18ProviderMigrationServiceShellProvider =
   | 'DSXU Remote Session Provider'
   | 'DSXU Identity Provider'
   | 'DSXU MCP/Connector Provider'
@@ -13,21 +13,21 @@ export type V18LegacyProviderServiceShellProvider =
   | 'DSXU Trace/Evidence Provider'
   | 'DSXU Provider Backlog'
 
-export type V18LegacyProviderServiceShellDecision = {
+export type V18ProviderMigrationServiceShellDecision = {
   directUseAllowed: false
   defaultMainlineStatus: 'blocked_from_default_mainline'
   requiredAction: 'rebuild_as_dsxu_provider_before_activation'
   safeReuseMode: 'semantic_extract_or_rebuild_only'
 }
 
-export const V18_LEGACY_PROVIDER_SERVICE_SHELL_DECISION: V18LegacyProviderServiceShellDecision = {
+export const V18_PROVIDER_MIGRATION_SERVICE_SHELL_DECISION: V18ProviderMigrationServiceShellDecision = {
   directUseAllowed: false,
   defaultMainlineStatus: 'blocked_from_default_mainline',
   requiredAction: 'rebuild_as_dsxu_provider_before_activation',
   safeReuseMode: 'semantic_extract_or_rebuild_only',
 }
 
-const LEGACY_PROVIDER_SERVICE_SHELL_PATTERNS = [
+const PROVIDER_MIGRATION_SERVICE_SHELL_PATTERNS = [
   /(^|\/)bridge\//,
   /(^|\/)remote\//,
   /(^|\/)cli\/remoteIO\.ts$/,
@@ -43,33 +43,30 @@ const LEGACY_PROVIDER_SERVICE_SHELL_PATTERNS = [
   /(^|\/)utils\/background\/remote\//,
   /(^|\/)utils\/swarm\/leaderPermissionBridge\.ts$/,
 ]
-const LEGACY_PROVIDER_SERVICE_SHELL_FLAG =
-  'DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL'
-const LEGACY_CLOUD_SERVICE_SHELL_FLAG =
-  `DSXU_ALLOW_LEGACY_${'CLA' + 'UDE'}_SERVICE_SHELL`
+const PROVIDER_MIGRATION_SERVICE_SHELL_FLAG =
+  'DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL'
 
-export function isLegacyProviderServiceShellPath(filePath: string): boolean {
+export function isProviderMigrationServiceShellPath(filePath: string): boolean {
   const normalized = filePath.replace(/\\/g, '/').replace(/^src\//, '')
-  return LEGACY_PROVIDER_SERVICE_SHELL_PATTERNS.some(pattern => pattern.test(normalized))
-}
-
-export function isLegacyProviderServiceShellAllowed(): boolean {
-  return (
-    process.env[LEGACY_PROVIDER_SERVICE_SHELL_FLAG] === '1' ||
-    process.env[LEGACY_CLOUD_SERVICE_SHELL_FLAG] === '1'
+  return PROVIDER_MIGRATION_SERVICE_SHELL_PATTERNS.some(pattern =>
+    pattern.test(normalized),
   )
 }
 
-export function assertLegacyProviderServiceShellNotInDefaultMainline(
+export function isProviderMigrationServiceShellAllowed(): boolean {
+  return process.env[PROVIDER_MIGRATION_SERVICE_SHELL_FLAG] === '1'
+}
+
+export function assertProviderMigrationServiceShellNotInDefaultMainline(
   filePath: string,
 ): void {
   if (
-    isLegacyProviderServiceShellPath(filePath) &&
-    !isLegacyProviderServiceShellAllowed()
+    isProviderMigrationServiceShellPath(filePath) &&
+    !isProviderMigrationServiceShellAllowed()
   ) {
     throw new Error(
-      `DSXU default mainline cannot directly activate legacy provider service shell: ${filePath}. ` +
-        'Rebuild the capability as a DSXU Provider or enable the explicit legacy migration flag only for isolated migration work.',
+      `DSXU default mainline cannot directly activate provider migration service shell: ${filePath}. ` +
+        'Rebuild the capability as a DSXU Provider or enable the explicit provider migration flag only for isolated migration work.',
     )
   }
 }

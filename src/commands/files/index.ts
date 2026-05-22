@@ -10,21 +10,3 @@ const files = {
 } satisfies Command
 
 export default files
-
-
-// V14 command lifecycle shim: files
-export function processFilesCommandLifecycle(input) {
-  void input
-  const state = 'files-command-state'
-  const lifecycle = 'files:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'files',
-  }
-}
-
-export function runFilesCommand(input) {
-  return processFilesCommandLifecycle(input)
-}

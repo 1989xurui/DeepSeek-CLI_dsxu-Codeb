@@ -43,11 +43,3 @@ function _temp2(w, i_0) {
 function _temp(e, i) {
   return <Text key={i} color="error">└ {e}</Text>;
 }
-
-// V14 lifecycle shim: sandboxdoctorsection
-export function processSandboxdoctorsectionLifecycle(input) {
-  void input
-  const state = 'sandboxdoctorsection-state'
-  const lifecycle = 'sandboxdoctorsection:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -15,11 +15,3 @@ export function CompactBoundaryMessage() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: compactboundarymessage
-export function processCompactboundarymessageLifecycle(input) {
-  void input
-  const state = 'compactboundarymessage-state'
-  const lifecycle = 'compactboundarymessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

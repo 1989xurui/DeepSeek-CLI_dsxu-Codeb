@@ -240,11 +240,3 @@ export function RemoteSessionProgress(t0) {
 function _temp(_) {
   return _.status === "completed";
 }
-
-// V14 lifecycle shim: remotesessionprogress
-export function processRemotesessionprogressLifecycle(input) {
-  void input
-  const state = 'remotesessionprogress-state'
-  const lifecycle = 'remotesessionprogress:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -25,7 +25,7 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
 }: {
   verbose: boolean;
 }): React.ReactNode {
-  if ("external" === 'ant') {
+  if (false) {
     return null;
   }
   const rawCommand = output.command ?? '';
@@ -37,20 +37,4 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
         {suffix}
       </Text>
     </MessageResponse>;
-}
-
-// V14 strict lifecycle shim: tools-TaskStopTool-UI
-export function processToolsTaskStopToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-TaskStopTool-UI-state'
-  const lifecycle = 'tools-TaskStopTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsTaskStopToolUIStrict(input) {
-  return processToolsTaskStopToolUIStrictLifecycle(input)
 }

@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { clearTrustedDeviceTokenCache } from '../../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { clearTrustedDeviceTokenCache } from '../../services/bridge/dsxuRemoteBridgeFacade.js';
 import { Text } from '../../ink.js';
-import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js';
+import { refreshFeatureFlagsAfterAuthChange } from '../../services/analytics/featureFlags.js';
 import { getGroveNoticeConfig, getGroveSettings } from '../../services/api/grove.js';
 import { clearPolicyLimitsCache } from '../../services/policyLimits/index.js';
 // flushTelemetry is loaded lazily to avoid pulling in ~1.1MB of OpenTelemetry at startup
 import { clearRemoteManagedSettingsCache } from '../../services/remoteManagedSettings/index.js';
-import { clearCompatProviderTokenCache } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js';
+import { clearProviderControlTokenCache } from '../../services/auth/dsxuProviderControlAuth.js';
 import { removeApiKey } from '../../utils/auth.js';
 import { clearBetasCaches } from '../../utils/betas.js';
 import { saveGlobalConfig } from '../../utils/config.js';
@@ -35,7 +35,6 @@ export async function performLogout({
     if (clearOnboarding) {
       updated.hasCompletedOnboarding = false;
       updated.subscriptionNoticeCount = 0;
-      updated.hasAvailableSubscription = false;
       if (updated.customApiKeyResponses?.approved) {
         updated.customApiKeyResponses = {
           ...updated.customApiKeyResponses,
@@ -51,14 +50,14 @@ export async function performLogout({
 // clearing anything memoized that must be invalidated when user/session/auth changes
 export async function clearAuthRelatedCaches(): Promise<void> {
   // Clear the DSXU provider token cache
-  clearCompatProviderTokenCache();
+  clearProviderControlTokenCache();
   clearTrustedDeviceTokenCache();
   clearBetasCaches();
   clearToolSchemaCache();
 
-  // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
+  // Clear user data cache BEFORE feature flag provider refresh so it picks up fresh credentials
   resetUserCache();
-  refreshGrowthBookAfterAuthChange();
+  refreshFeatureFlagsAfterAuthChange();
 
   // Clear Grove config cache
   getGroveNoticeConfig.cache?.clear?.();
@@ -79,12 +78,4 @@ export async function call(): Promise<React.ReactNode> {
     gracefulShutdownSync(0, 'logout');
   }, 200);
   return message;
-}
-
-// V14 lifecycle shim: logout
-export function processLogoutLifecycle(input) {
-  void input
-  const state = 'logout-state'
-  const lifecycle = 'logout:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

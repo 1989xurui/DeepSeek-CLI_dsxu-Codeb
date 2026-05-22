@@ -317,12 +317,3 @@ export const ENABLE_MODIFY_OTHER_KEYS = csi('>4;2m')
  * Disable xterm modifyOtherKeys (reset to default).
  */
 export const DISABLE_MODIFY_OTHER_KEYS = csi('>4m')
-
-
-// V14 lifecycle shim: csi
-export function processCsiLifecycle(input) {
-  void input
-  const state = 'csi-state'
-  const lifecycle = 'csi:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

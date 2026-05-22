@@ -1,11 +1,10 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Deep Link Origin Banner
  *
  * Builds the warning text shown when a session was opened by an external
  * dsxu-cli:// deep link. Linux xdg-open and browsers with "always allow"
  * set dispatch the link with no OS-level confirmation, so the application
- * provides its own provenance signal ...mirroring the legacy cloud security
+ * provides its own provenance signal ...mirroring the provider migration security
  * interstitial for external-source prefills.
  *
  * The user must press Enter to submit; this banner primes them to read the

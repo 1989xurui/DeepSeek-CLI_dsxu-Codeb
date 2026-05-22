@@ -182,12 +182,3 @@ export async function performBackgroundPluginInstallations(
     logError(error)
   }
 }
-
-
-// V14 lifecycle shim: plugininstallationmanager
-export function processPlugininstallationmanagerLifecycle(input) {
-  void input
-  const state = 'plugininstallationmanager-state'
-  const lifecycle = 'plugininstallationmanager:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

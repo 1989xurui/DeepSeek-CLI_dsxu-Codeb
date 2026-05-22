@@ -57,19 +57,3 @@ export function renderListResultMessage(output: ListOutput): React.ReactNode {
 }
 
 // --- Shared -----------------------------------------------------------------
-
-// V14 strict lifecycle shim: tools-ScheduleCronTool-UI
-export function processToolsScheduleCronToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-ScheduleCronTool-UI-state'
-  const lifecycle = 'tools-ScheduleCronTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsScheduleCronToolUIStrict(input) {
-  return processToolsScheduleCronToolUIStrictLifecycle(input)
-}

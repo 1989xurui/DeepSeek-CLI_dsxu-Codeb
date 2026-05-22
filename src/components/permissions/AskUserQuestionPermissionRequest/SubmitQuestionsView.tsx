@@ -141,11 +141,3 @@ export function SubmitQuestionsView(t0) {
   }
   return t12;
 }
-
-// V14 lifecycle shim: submitquestionsview
-export function processSubmitquestionsviewLifecycle(input) {
-  void input
-  const state = 'submitquestionsview-state'
-  const lifecycle = 'submitquestionsview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

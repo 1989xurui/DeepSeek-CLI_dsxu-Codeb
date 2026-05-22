@@ -68,12 +68,3 @@ export function migrateSonnet45ToSonnet46(): void {
     has_1m: has1m,
   })
 }
-
-
-// V14 lifecycle shim: migratesonnet45tosonnet46
-export function processMigratesonnet45tosonnet46Lifecycle(input) {
-  void input
-  const state = 'migratesonnet45tosonnet46-state'
-  const lifecycle = 'migratesonnet45tosonnet46:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

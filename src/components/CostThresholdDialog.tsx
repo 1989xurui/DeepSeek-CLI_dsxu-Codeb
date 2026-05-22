@@ -47,11 +47,3 @@ export function CostThresholdDialog(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: costthresholddialog
-export function processCostthresholddialogLifecycle(input) {
-  void input
-  const state = 'costthresholddialog-state'
-  const lifecycle = 'costthresholddialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

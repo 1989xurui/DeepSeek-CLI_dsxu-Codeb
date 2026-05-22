@@ -2,14 +2,14 @@ import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import * as React from 'react';
 import { resetCostState } from '../../bootstrap/state.js';
-import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { clearTrustedDeviceToken, enrollTrustedDevice } from '../../services/bridge/dsxuRemoteBridgeFacade.js';
 import type { LocalJSXCommandContext } from '../../commands.js';
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
 import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
 import { Text } from '../../ink.js';
-import { refreshGrowthBookAfterAuthChange } from '../../services/analytics/growthbook.js';
+import { refreshFeatureFlagsAfterAuthChange } from '../../services/analytics/featureFlags.js';
 import { refreshPolicyLimits } from '../../services/policyLimits/index.js';
 import { refreshRemoteManagedSettings } from '../../services/remoteManagedSettings/index.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
@@ -22,7 +22,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     context.onChangeAPIKey();
     context.setMessages(stripSignatureBlocks);
     resetCostState();
-    onDone('DSXU Code uses local provider credentials. Configure DeepSeek or other model providers in DSXU settings; legacy OAuth login is isolated from DSXU runtime.');
+    onDone('DSXU Code uses local provider credentials. Configure DeepSeek or other model providers in DSXU settings; provider OAuth login is isolated from DSXU runtime.');
     return null;
   }
   return <Login onDone={async success => {
@@ -37,10 +37,10 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
       void refreshRemoteManagedSettings();
       // Refresh policy limits after login (non-blocking)
       void refreshPolicyLimits();
-      // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
+      // Clear user data cache BEFORE feature flag provider refresh so it picks up fresh credentials
       resetUserCache();
-      // Refresh GrowthBook after login to get updated feature flags (e.g., for legacy cloud MCPs)
-      refreshGrowthBookAfterAuthChange();
+      // Refresh feature flag provider after login to get updated feature flags (e.g., for provider migration MCPs)
+      refreshFeatureFlagsAfterAuthChange();
       // Clear any stale trusted device token from a previous account before
       // re-enrolling -prevents sending the old token on bridge calls while
       // the async enrollTrustedDevice() is in-flight.
@@ -113,18 +113,11 @@ export function getDsxuLoginUiRuntimeProfile() {
   return {
     runtime: 'DSXU Login Command',
     defaultMode: 'local-provider-credentials',
-    isolatedLegacyShell: 'ConsoleOAuthFlow / legacy OAuth',
+    isolatedProviderMigrationBoundary: 'ConsoleOAuthFlow / provider OAuth',
     activationEvidence: [
       'DSXU_CODE_MODE short-circuits OAuth UI',
       'signature-bearing messages are stripped when provider credentials change',
-      'cost state resets without invoking legacy remote login',
+      'cost state resets without invoking provider migration remote login',
     ],
   }
-}
-// V14 lifecycle shim: login
-export function processLoginLifecycle(input) {
-  void input
-  const state = 'login-state'
-  const lifecycle = 'login:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

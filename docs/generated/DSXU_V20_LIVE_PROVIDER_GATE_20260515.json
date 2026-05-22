@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "dsxu.v20.live-provider-gate.v1",
+  "generatedAt": "2026-05-15T03:07:48.063Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "READY_FOR_SCOPED_LIVE_REPLAY",
+  "didCallProvider": false,
+  "didFabricateLiveResult": false,
+  "currentProcess": {
+    "ok": true,
+    "status": "READY",
+    "evidencePath": "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-provider-gate.json",
+    "generatedAt": "2026-05-15T03:07:44.464Z",
+    "executionTarget": "current-process",
+    "probe": {
+      "DSXU_API_KEY": false,
+      "DEEPSEEK_API_KEY": true,
+      "DSXU_DEEPSEEK_API_KEY": false,
+      "LITELLM_BASE_URL": false,
+      "DSXU_MODEL_PROVIDER": false,
+      "DSXU_MODEL_GATEWAY": false
+    },
+    "blockedItems": [],
+    "nextStep": "Run scoped live replay with Flash-first entry and Pro only for planning/recovery/failed verification."
+  },
+  "wsl": {
+    "ok": true,
+    "status": "READY",
+    "evidencePath": "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-provider-gate-wsl.json",
+    "generatedAt": "2026-05-15T03:07:48.060Z",
+    "executionTarget": "wsl",
+    "probe": {
+      "DSXU_API_KEY": false,
+      "DEEPSEEK_API_KEY": true,
+      "DSXU_DEEPSEEK_API_KEY": false,
+      "LITELLM_BASE_URL": false,
+      "DSXU_MODEL_PROVIDER": false,
+      "DSXU_MODEL_GATEWAY": false
+    },
+    "targetProbe": {
+      "distro": "Ubuntu",
+      "envReadOk": true
+    },
+    "blockedItems": [],
+    "nextStep": "Run scoped WSL live replay with Flash-first entry and Pro only for planning/recovery/failed verification."
+  },
+  "benchmarkGate": {
+    "status": "ready",
+    "evidenceMode": "config_probe_only",
+    "releaseEvidence": false,
+    "provider": "deepseek",
+    "requiredEnv": [
+      "DSXU_API_KEY",
+      "DEEPSEEK_API_KEY",
+      "DSXU_DEEPSEEK_API_KEY",
+      "LITELLM_BASE_URL",
+      "DSXU_MODEL_GATEWAY"
+    ],
+    "scenarios": [
+      "bugfix",
+      "feature",
+      "review",
+      "repo_understanding",
+      "recovery"
+    ]
+  },
+  "nextAction": "run scoped live replay; keep Flash-first and Pro only for planning/recovery/failed verification",
+  "rule": "This gate checks provider readiness and writes evidence only. It does not call a model or mark live performance DONE."
+}

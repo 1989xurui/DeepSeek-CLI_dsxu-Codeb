@@ -3,13 +3,13 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { UP_ARROW } from '../../constants/figures.js';
 import { Box, Text } from '../../ink.js';
-import { COMPAT_1M_MERGE_NOTICE_COUNT_KEY } from '../../dsxu/legacy/config/legacyProviderConfig.js';
-import { isDsxuLongContextDefaultEnabled } from '../../dsxu/legacy/model/legacyProviderModel.js';
+import { PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY } from '../../utils/configProviderMigration.js';
+import { isDsxuLongContextDefaultEnabled } from '../../utils/model/providerMigration/providerMigrationModel.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { AnimatedAsterisk } from './AnimatedAsterisk.js';
 const MAX_SHOW_COUNT = 6;
 export function shouldShowDsxuLongContextNotice(): boolean {
-  return isDsxuLongContextDefaultEnabled() && (getGlobalConfig()[COMPAT_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) < MAX_SHOW_COUNT;
+  return isDsxuLongContextDefaultEnabled() && (getGlobalConfig()[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) < MAX_SHOW_COUNT;
 }
 export function DsxuLongContextNotice() {
   const $ = _c(4);
@@ -21,14 +21,14 @@ export function DsxuLongContextNotice() {
       if (!show) {
         return;
       }
-      const newCount = (getGlobalConfig()[COMPAT_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) + 1;
+      const newCount = (getGlobalConfig()[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) + 1;
       saveGlobalConfig(prev => {
-        if ((prev[COMPAT_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) >= newCount) {
+        if ((prev[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) >= newCount) {
           return prev;
         }
         return {
           ...prev,
-          [COMPAT_1M_MERGE_NOTICE_COUNT_KEY]: newCount
+          [PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY]: newCount
         };
       });
     };
@@ -52,12 +52,4 @@ export function DsxuLongContextNotice() {
     t2 = $[3];
   }
   return t2;
-}
-
-// V18 lifecycle shim: dsxulongcontextnotice
-export function processDsxulongcontextnoticeLifecycle(input) {
-  void input
-  const state = 'dsxulongcontextnotice-state'
-  const lifecycle = 'dsxulongcontextnotice:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

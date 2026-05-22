@@ -162,7 +162,7 @@ export function ApiKeyStep(t0) {
   }
   let t12;
   if ($[31] !== onCreateOAuthToken || $[32] !== selectedOption || $[33] !== theme) {
-    t12 = onCreateOAuthToken && <Box marginBottom={1}><Text>{selectedOption === "oauth" ? color("success", theme)("> ") : "  "}Use a DSXU provider token or legacy migration token</Text></Box>;
+    t12 = onCreateOAuthToken && <Box marginBottom={1}><Text>{selectedOption === "oauth" ? color("success", theme)("> ") : "  "}Use a DSXU provider token or provider migration token</Text></Box>;
     $[31] = onCreateOAuthToken;
     $[32] = selectedOption;
     $[33] = theme;
@@ -227,12 +227,4 @@ export function ApiKeyStep(t0) {
     t18 = $[54];
   }
   return t18;
-}
-
-// V14 lifecycle shim: apikeystep
-export function processApikeystepLifecycle(input) {
-  void input
-  const state = 'apikeystep-state'
-  const lifecycle = 'apikeystep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

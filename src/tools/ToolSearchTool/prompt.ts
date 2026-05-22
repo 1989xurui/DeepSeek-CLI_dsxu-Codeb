@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { isReplBridgeActive } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import type { Tool } from '../../Tool.js'
 import { AGENT_TOOL_NAME } from '../AgentTool/constants.js'
 
@@ -37,8 +37,7 @@ DSXU weak-model discipline:
 - Weak-model anti-pattern: do not fetch many unrelated tools, do not treat a tool name as callable before schema is returned, and do not use ToolSearch as a planning substitute.
 - Verification / evidence: cite the selected tool schema name returned by ToolSearch before using it, and do not claim a deferred tool ran until its actual tool result exists.`
 
-// Matches isDeferredToolsDeltaEnabled in toolSearch.ts (not imported —
-// toolSearch.ts imports from this file). When enabled: tools announced
+// Matches isDeferredToolsDeltaEnabled in toolSearch.ts (not imported -// toolSearch.ts imports from this file). When enabled: tools announced
 // via system-reminder attachments. When disabled: prepended
 // <available-deferred-tools> block (pre-gate behavior).
 function getToolLocationHint(): string {
@@ -50,14 +49,14 @@ function getToolLocationHint(): string {
     : 'Deferred tools appear by name in <available-deferred-tools> messages.'
 }
 
-const PROMPT_TAIL = ` Until fetched, only the name is known — there is no parameter schema, so the tool cannot be invoked. This tool takes a query, matches it against the deferred tool list, and returns the matched tools' complete JSONSchema definitions inside a <functions> block. Once a tool's schema appears in that result, it is callable exactly like any tool defined at the top of the prompt.
+const PROMPT_TAIL = ` Until fetched, only the name is known -there is no parameter schema, so the tool cannot be invoked. This tool takes a query, matches it against the deferred tool list, and returns the matched tools' complete JSONSchema definitions inside a <functions> block. Once a tool's schema appears in that result, it is callable exactly like any tool defined at the top of the prompt.
 
-Result format: each matched tool appears as one <function>{"description": "...", "name": "...", "parameters": {...}}</function> line inside the <functions> block — the same encoding as the tool list at the top of this prompt.
+Result format: each matched tool appears as one <function>{"description": "...", "name": "...", "parameters": {...}}</function> line inside the <functions> block -the same encoding as the tool list at the top of this prompt.
 
 Query forms:
-- "select:Read,Edit,Grep" — fetch these exact tools by name
-- "notebook jupyter" — keyword search, up to max_results best matches
-- "+slack send" — require "slack" in the name, rank by remaining terms`
+- "select:Read,Edit,Grep" -fetch these exact tools by name
+- "notebook jupyter" -keyword search, up to max_results best matches
+- "+slack send" -require "slack" in the name, rank by remaining terms`
 
 /**
  * Check if a tool should be deferred (requires ToolSearch to load).
@@ -66,21 +65,21 @@ Query forms:
  * - It has shouldDefer: true
  *
  * A tool is NEVER deferred if it has alwaysLoad: true (MCP tools set this via
- * _meta legacy always-load flag). This check runs first, before any other rule.
+ * _meta provider-migration always-load flag). This check runs first, before any other rule.
  */
 export function isDeferredTool(tool: Tool): boolean {
-  // Explicit opt-out via legacy always-load metadata — tool appears in the
+  // Explicit opt-out via provider-migration always-load metadata: tool appears in the
   // initial prompt with full schema. Checked first so MCP tools can opt out.
   if (tool.alwaysLoad === true) return false
 
   // MCP tools are always deferred (workflow-specific)
   if (tool.isMcp === true) return true
 
-  // Never defer ToolSearch itself — the model needs it to load everything else
+  // Never defer ToolSearch itself -the model needs it to load everything else
   if (tool.name === TOOL_SEARCH_TOOL_NAME) return false
 
   // Fork-first experiment: Agent must be available turn 1, not behind ToolSearch.
-  // Lazy require: static import of forkSubagent → coordinatorMode creates a cycle
+  // Lazy require: static import of forkSubagent ->coordinatorMode creates a cycle
   // through constants/tools.ts at module init.
   if (feature('FORK_SUBAGENT') && tool.name === AGENT_TOOL_NAME) {
     type ForkMod = typeof import('../AgentTool/forkSubagent.js')
@@ -118,7 +117,7 @@ export function isDeferredTool(tool: Tool): boolean {
 
 /**
  * Format one deferred-tool line for the <available-deferred-tools> user
- * message. Search hints (tool.searchHint) are not rendered — the
+ * message. Search hints (tool.searchHint) are not rendered -the
  * hints A/B (exp_xenhnnmn0smrx4, stopped Mar 21) showed no benefit.
  */
 export function formatDeferredToolLine(tool: Tool): string {

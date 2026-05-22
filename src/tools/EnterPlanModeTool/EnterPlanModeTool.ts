@@ -37,6 +37,22 @@ export const EnterPlanModeTool: Tool<InputSchema, Output> = buildTool({
   name: ENTER_PLAN_MODE_TOOL_NAME,
   searchHint: 'switch to plan mode to design an approach before coding',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Plan Mode Runtime',
+    sideEffects: [
+      'permission-mode-state-write',
+      'plan-mode-transition-event',
+      'classifier-context-preparation',
+    ],
+    permission: 'plan mode permission update through PermissionUpdate',
+    evidence: [
+      'empty inputSchema',
+      'handlePlanModeTransition',
+      'prepareContextForPlanMode',
+      'message output',
+    ],
+    uiProjection: 'plan mode transition result',
+  },
   async description() {
     return 'Requests permission to enter plan mode for complex tasks requiring exploration and design'
   },
@@ -125,12 +141,3 @@ Remember: DO NOT write or edit any files yet except the plan file. This is a rea
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: enterplanmodetool
-export function processEnterplanmodetoolLifecycle(input) {
-  void input
-  const state = 'enterplanmodetool-state'
-  const lifecycle = 'enterplanmodetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

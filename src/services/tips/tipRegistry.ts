@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import chalk from 'chalk'
 import { logForDebugging } from 'src/utils/debug.js'
 import { fileHistoryEnabled } from 'src/utils/fileHistory.js'
@@ -36,7 +35,7 @@ import {
   getMainLoopModel,
   getUserSpecifiedModelSetting,
 } from '../../utils/model/model.js'
-import { isCompatPlanningRouteAlias } from '../../dsxu/legacy/model/legacyProviderAliases.js'
+import { isProviderMigrationPlanningRouteAlias } from '../../utils/model/providerMigration/providerMigrationAliases.js'
 import { getPlatform } from '../../utils/platform.js'
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
 import { loadKnownMarketplacesConfigSafe } from '../../utils/plugins/marketplaceManager.js'
@@ -46,7 +45,7 @@ import {
   getCurrentSessionAgentColor,
   isCustomTitleEnabled,
 } from '../../utils/sessionStorage.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 import {
   formatGrantAmount,
   getCachedOverageCreditGrant,
@@ -439,7 +438,7 @@ const externalTips: Tip[] = [
   {
     id: 'desktop-app',
     content: async () =>
-      'DSXU Desktop handoff is legacy-only. Use the DSXU Code CLI or configured DSXU workbench entrypoint.',
+      'DSXU Desktop handoff is provider-migration-only. Use the DSXU Code CLI or configured DSXU workbench entrypoint.',
     cooldownSessions: 15,
     isRelevant: async () => false,
   },
@@ -481,7 +480,7 @@ const externalTips: Tip[] = [
       if (process.env.USER_TYPE === 'ant') return false
       const config = getGlobalConfig()
       const modelSetting = getUserSpecifiedModelSetting()
-      const hasPlanningRouteMode = isCompatPlanningRouteAlias(modelSetting)
+      const hasPlanningRouteMode = isProviderMigrationPlanningRouteAlias(modelSetting)
       // Show reminder if they have planning route mode and haven't used plan mode recently (3+ days)
       const daysSinceLastUse = config.lastPlanModeUse
         ? (Date.now() - config.lastPlanModeUse) / (1000 * 60 * 60 * 24)
@@ -640,14 +639,14 @@ const internalOnlyTips: Tip[] =
         {
           id: 'important-dsxumd',
           content: async () =>
-            '[ANT-ONLY] Use "IMPORTANT:" prefix for must-follow DSXU.md rules',
+            '[DSXU internal] Use "IMPORTANT:" prefix for must-follow DSXU.md rules',
           cooldownSessions: 30,
           isRelevant: async () => true,
         },
         {
           id: 'skillify',
           content: async () =>
-            '[ANT-ONLY] Use /skillify at the end of a workflow to turn it into a reusable skill',
+            '[DSXU internal] Use /skillify at the end of a workflow to turn it into a reusable skill',
           cooldownSessions: 15,
           isRelevant: async () => true,
         },

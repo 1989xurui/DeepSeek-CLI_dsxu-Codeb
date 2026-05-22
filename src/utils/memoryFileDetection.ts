@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { normalize, posix, win32 } from 'path'
 import {
@@ -116,7 +115,7 @@ function isAgentMemFile(filePath: string): boolean {
 /**
  * Check if a file is a DSXU-managed memory file (NOT user-managed instruction files).
  * Includes: auto-memory (memdir), agent memory, session memory/transcripts.
- * Excludes: DSXU.md, legacy instruction files, and rules/*.md (user-managed).
+ * Excludes: DSXU.md, provider-migration instruction files, and rules/*.md (user-managed).
  *
  * Use this for collapse/badge logic where user-managed files should show full diffs.
  */
@@ -251,7 +250,7 @@ export function isShellCommandTargetingMemory(command: string): boolean {
   return false
 }
 // Check if a glob/pattern targets auto-managed memory files only.
-// Excludes DSXU.md, legacy instruction files, and rules/ (user-managed).
+// Excludes DSXU.md, provider-migration instruction files, and rules/ (user-managed).
 // Used for collapse badge logic where user-managed files should not be
 // counted as "memory" operations.
 export function isAutoManagedMemoryPattern(pattern: string): boolean {

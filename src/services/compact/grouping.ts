@@ -61,12 +61,3 @@ export function groupMessagesByApiRound(messages: Message[]): Message[][] {
   }
   return groups
 }
-
-
-// V14 lifecycle shim: grouping
-export function processGroupingLifecycle(input) {
-  void input
-  const state = 'grouping-state'
-  const lifecycle = 'grouping:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

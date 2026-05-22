@@ -233,12 +233,3 @@ function ScrollBox({
     </ink-box>;
 }
 export default ScrollBox;
-
-
-// V14 lifecycle shim: scrollbox
-export function processScrollboxLifecycle(input) {
-  void input
-  const state = 'scrollbox-state'
-  const lifecycle = 'scrollbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

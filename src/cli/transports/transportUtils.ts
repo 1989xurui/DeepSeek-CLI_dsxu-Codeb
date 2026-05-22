@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { URL } from 'url'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import { HybridTransport } from './HybridTransport.js'
@@ -6,9 +5,9 @@ import { SSETransport } from './SSETransport.js'
 import type { Transport } from './Transport.js'
 import { WebSocketTransport } from './WebSocketTransport.js'
 
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const legacyCodeEnv = (name: string): string =>
-  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const providerMigrationCodeEnv = (name: string): string =>
+  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
 
 /**
  * Helper function to get the appropriate transport for a URL.
@@ -27,7 +26,7 @@ export function getTransportForUrl(
   if (
     isEnvTruthy(
       process.env.DSXU_CODE_USE_CCR_V2 ??
-        process.env[legacyCodeEnv('USE_CCR_V2')],
+        process.env[providerMigrationCodeEnv('USE_CCR_V2')],
     )
   ) {
     // v2: SSE for reads, HTTP POST for writes
@@ -48,7 +47,7 @@ export function getTransportForUrl(
     if (
       isEnvTruthy(
         process.env.DSXU_CODE_POST_FOR_SESSION_INGRESS_V2 ??
-          process.env[legacyCodeEnv('POST_FOR_SESSION_INGRESS_V2')],
+          process.env[providerMigrationCodeEnv('POST_FOR_SESSION_INGRESS_V2')],
       )
     ) {
       return new HybridTransport(url, headers, sessionId, refreshHeaders)

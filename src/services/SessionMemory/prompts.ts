@@ -3,7 +3,7 @@ import { join } from 'path'
 import { roughTokenCountEstimation } from '../../services/tokenEstimation.js'
 import {
   getDsxuConfigHomeDir,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
   isDsxuRuntimeMode,
 } from '../../utils/envUtils.js'
 import { getErrnoCode, toError } from '../../utils/errors.js'
@@ -15,7 +15,7 @@ const MAX_TOTAL_SESSION_MEMORY_TOKENS = 12000
 function getSessionMemoryConfigHomeDir(): string {
   return isDsxuRuntimeMode()
     ? getDsxuConfigHomeDir()
-    : getLegacyProviderConfigHomeDir()
+    : getProviderMigrationHomeDir()
 }
 
 export const DEFAULT_SESSION_MEMORY_TEMPLATE = `
@@ -116,7 +116,7 @@ export async function loadSessionMemoryTemplate(): Promise<string> {
 /**
  * Load custom session memory prompt from file if it exists
  * Custom prompts can be placed at ~/.dsxu/session-memory/prompt.md in DSXU
- * mode, or ~/.dsxu/session-memory/prompt.md for explicit legacy migration.
+ * mode, or ~/.dsxu/session-memory/prompt.md for explicit provider migration.
  * Use {{variableName}} syntax for variable substitution (e.g., {{currentNotes}}, {{notesPath}})
  */
 export async function loadSessionMemoryPrompt(): Promise<string> {
@@ -265,7 +265,7 @@ function substituteVariables(
 /**
  * Check if the session memory content is essentially empty (matches the template).
  * This is used to detect if no actual content has been extracted yet,
- * which means we should fall back to legacy compact behavior.
+ * which means we should fall back to the main compact behavior.
  */
 export async function isSessionMemoryEmpty(content: string): Promise<boolean> {
   const template = await loadSessionMemoryTemplate()

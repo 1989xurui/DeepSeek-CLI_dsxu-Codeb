@@ -14,21 +14,3 @@ const color = {
 } satisfies Command
 
 export default color
-
-
-// V14 command lifecycle shim: color
-export function processColorCommandLifecycle(input) {
-  void input
-  const state = 'color-command-state'
-  const lifecycle = 'color:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'color',
-  }
-}
-
-export function runColorCommand(input) {
-  return processColorCommandLifecycle(input)
-}

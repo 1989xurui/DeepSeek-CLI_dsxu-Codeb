@@ -103,11 +103,3 @@ export function UserToolResultMessage(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: usertoolresultmessage
-export function processUsertoolresultmessageLifecycle(input) {
-  void input
-  const state = 'usertoolresultmessage-state'
-  const lifecycle = 'usertoolresultmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

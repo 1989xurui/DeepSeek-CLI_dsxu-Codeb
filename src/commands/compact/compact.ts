@@ -107,7 +107,7 @@ export const call: LocalCommandCall = async (args, context) => {
       false,
     )
 
-    // Reset lastSummarizedMessageId since legacy compaction replaces all messages
+    // Reset lastSummarizedMessageId since main compaction replaces all messages
     // and the old message UUID will no longer exist in the new messages array
     setLastSummarizedMessageId(undefined)
 

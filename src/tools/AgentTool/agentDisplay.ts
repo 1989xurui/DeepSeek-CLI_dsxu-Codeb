@@ -102,12 +102,3 @@ export function compareAgentsByName(
     sensitivity: 'base',
   })
 }
-
-
-// V14 lifecycle shim: agentdisplay
-export function processAgentdisplayLifecycle(input) {
-  void input
-  const state = 'agentdisplay-state'
-  const lifecycle = 'agentdisplay:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

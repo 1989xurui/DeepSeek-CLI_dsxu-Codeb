@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { APIUserAbortError } from '../../types/providerSdk.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
@@ -69,7 +68,7 @@ import {
   getTotalInputTokens,
   getTotalOutputTokens,
 } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -537,7 +536,7 @@ export const hasPermissionsToUseTool: CanUseToolFn = async (
         appState.denialTracking ??
         createDenialTrackingState()
       // PowerShell requires explicit user permission in auto mode unless
-      // POWERSHELL_AUTO_MODE (ant-only build flag) is on. When disabled, this
+      // POWERSHELL_AUTO_MODE (dsxu internal build flag) is on. When disabled, this
       // guard keeps PS out of the classifier and skips the acceptEdits
       // fast-path below. When enabled, PS flows through to the classifier like
       // Bash ...the classifier prompt gets POWERSHELL_DENY_GUIDANCE appended so
@@ -1085,7 +1084,7 @@ export async function checkRuleBasedPermissions(
   ) {
     return toolPermissionResult
   }
-  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, legacy instruction dirs) are
+  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, provider-migration source instruction dirs) are
   // bypass-immune ...they must prompt even when a PreToolUse hook returned
   // allow. checkPathSafetyForAutoEdit returns {type:'safetyCheck'} for these.
   if (
@@ -1182,7 +1181,7 @@ async function hasPermissionsToUseToolInner(
   ) {
     return toolPermissionResult
   }
-  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, legacy instruction dirs) are
+  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, provider-migration source instruction dirs) are
   // bypass-immune ...they must prompt even in bypassPermissions mode.
   // checkPathSafetyForAutoEdit returns {type:'safetyCheck'} for these paths.
   if (

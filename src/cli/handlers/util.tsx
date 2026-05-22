@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 /**
  * Miscellaneous subcommand handlers ...extracted from main.tsx for lazy loading.
@@ -41,7 +40,7 @@ export async function setupTokenHandler(root: Root): Promise<void> {
               </Box>}
             <ConsoleOAuthFlow onDone={() => {
             void resolve();
-          }} mode="setup-token" startingMessage="This legacy setup-token flow is isolated. DSXU Code uses DSXU_API_KEY / DEEPSEEK_API_KEY / DSXU_DEEPSEEK_API_KEY by default." />
+          }} mode="setup-token" startingMessage="This provider-migration setup-token flow is isolated. DSXU Code uses DSXU_API_KEY / DEEPSEEK_API_KEY / DSXU_DEEPSEEK_API_KEY by default." />
           </Box>
         </KeybindingSetup>
       </AppStateProvider>);

@@ -401,11 +401,3 @@ function ShellOutputContent(t0) {
 function _temp2(line_0, i_1) {
   return <Text key={i_1} wrap="truncate-end">{line_0}</Text>;
 }
-
-// V14 lifecycle shim: shelldetaildialog
-export function processShelldetaildialogLifecycle(input) {
-  void input
-  const state = 'shelldetaildialog-state'
-  const lifecycle = 'shelldetaildialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

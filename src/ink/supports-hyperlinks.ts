@@ -55,12 +55,3 @@ export function supportsHyperlinks(
 
   return false
 }
-
-
-// V14 lifecycle shim: supports-hyperlinks
-export function processSupportsHyperlinksLifecycle(input) {
-  void input
-  const state = 'supports-hyperlinks-state'
-  const lifecycle = 'supports-hyperlinks:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

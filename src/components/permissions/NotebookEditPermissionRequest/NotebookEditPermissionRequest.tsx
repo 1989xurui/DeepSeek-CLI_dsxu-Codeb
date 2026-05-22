@@ -163,11 +163,3 @@ function _temp(input) {
   }
   return result.data;
 }
-
-// V14 lifecycle shim: notebookeditpermissionrequest
-export function processNotebookeditpermissionrequestLifecycle(input) {
-  void input
-  const state = 'notebookeditpermissionrequest-state'
-  const lifecycle = 'notebookeditpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

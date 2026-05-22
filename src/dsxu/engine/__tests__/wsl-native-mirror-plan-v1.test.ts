@@ -64,10 +64,16 @@ describe('WSL native mirror plan V1', () => {
 
       expect(plan.sourceRoot).toBe('/mnt/d/DSXU-code')
       expect(plan.mirrorRoot).toBe('~/work/DSXU-code')
-      expect(plan.syncMode).toBe('SAFE_OVERLAY_COPY')
+      expect(plan.syncMode).toBe(plan.dirtyCount === 0 ? 'SAFE_OVERLAY_COPY' : 'PLAN_ONLY')
+      expect(plan.canAutoSync).toBe(plan.dirtyCount === 0)
       expect(plan.commands.join('\n')).toContain('rsync -a')
       expect(plan.commands.join('\n')).not.toContain('--delete')
-      expect(plan.dirtyCount).toBe(0)
+      if (plan.dirtyCount > 0) {
+        expect(plan.status).toBe('BLOCKED_EVIDENCED')
+        expect(plan.blockers).toContain('source workspace has dirty or untracked work; require dirty ledger before mirror sync')
+      } else {
+        expect(plan.status).toBe('DONE_EVIDENCED')
+      }
     },
     45_000,
   )

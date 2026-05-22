@@ -85,12 +85,3 @@ export function incrementProjectOnboardingSeenCount(): void {
     projectOnboardingSeenCount: current.projectOnboardingSeenCount + 1,
   }))
 }
-
-
-// V14 lifecycle shim: projectonboardingstate
-export function processProjectonboardingstateLifecycle(input) {
-  void input
-  const state = 'projectonboardingstate-state'
-  const lifecycle = 'projectonboardingstate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

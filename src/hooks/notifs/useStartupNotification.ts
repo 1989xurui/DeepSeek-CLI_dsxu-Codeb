@@ -39,12 +39,3 @@ export function useStartupNotification(
       .catch(logError)
   }, [addNotification])
 }
-
-
-// V14 lifecycle shim: usestartupnotification
-export function processUsestartupnotificationLifecycle(input) {
-  void input
-  const state = 'usestartupnotification-state'
-  const lifecycle = 'usestartupnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

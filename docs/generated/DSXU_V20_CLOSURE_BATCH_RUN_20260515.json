@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "dsxu.v20.closure-batch-runner.v1",
+  "generatedAt": "2026-05-15T03:39:44.055Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_PREFLIGHT_READY_RELEASE_EXPORT_READY",
+  "commandCount": 17,
+  "passCount": 17,
+  "failCount": 0,
+  "blockerBoardStatus": "PASS_RELEASE_PREFLIGHT_READY_CLEAN_EXPORT_READY",
+  "finalPreflightStatus": "PASS",
+  "cleanExportPreflightStatus": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+  "mutationCommandCount": 57,
+  "p12WorkOrderCount": 14,
+  "stageExecutionStatus": "STAGED_OWNER_GIT_PACKETS",
+  "postAuthorizationStatus": "POST_STAGE_VERIFIED_REMAINING_GATES_BLOCKED",
+  "didMutateGit": false,
+  "didStageGitInPriorExecution": true,
+  "didMutateFilesystem": false,
+  "didRunFinalTests": false,
+  "didCreateExport": false,
+  "results": [
+    {
+      "id": "p12-target-collection",
+      "command": "bun run scripts/dsxu-p12-target-reference-collection-pack.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"READY_FOR_REAL_TARGET_REFERENCE_COLLECTION_NOT_EVIDENCE\",\n  \"workOrderCount\": 14,\n  \"targetManifestBacklogSlotCount\": 0,\n  \"pairedRawLogCount\": 0,\n  \"didFabricateTargetLogs\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_COLLECTION_WORK_ORDERS_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "p12-target-discovery",
+      "command": "bun run scripts/dsxu-p12-target-manifest-discovery.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"READY_TARGET_REFERENCE_MANIFEST_DISCOVERED\",\n  \"candidateCount\": 1,\n  \"readyCandidateCount\": 1,\n  \"canonicalTargetReferenceManifestPath\": \"D:\\\\DSXU-code\\\\.dsxu\\\\trace\\\\p12-target-reference-codex-runner-v1\\\\target-reference-manifest.json\",\n  \"canonicalAcceptedLogCount\": 14,\n  \"didFabricateTargetLogs\": false,\n  \"didRunComparison\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "p12-target-intake",
+      "command": "bun run scripts/dsxu-p12-target-manifest-intake.ts --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"READY_FOR_RAW_READINESS_IMPORT\",\n  \"acceptedLogCount\": 14,\n  \"rejectedLogCount\": 0,\n  \"rawLogExistsCount\": 14,\n  \"artifactExistsCount\": 56,\n  \"didFabricateTargetLogs\": false,\n  \"didRunComparison\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "p12-raw-readiness-current",
+      "command": "bun run scripts/dsxu-p12-raw-readiness.ts --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"schemaVersion\": \"dsxu.p12.raw-readiness-cli.v1\",\n  \"status\": \"PASS\",\n  \"p12Status\": \"PASS\",\n  \"deferredEvalStatus\": \"PASS\",\n  \"p12PairedRawLogCount\": 14,\n  \"p12MinimumPairedRawLogsForPass\": 14,\n  \"p12ReplayFamilyGapCount\": 0,\n  \"p12RequiredAdditionalSameTaskPairCount\": 0,\n  \"deferredEvalWaitingRawLiveCount\": 0,\n  \"mustNotClaimComparisonWin\": false,\n  \"nextAction\": \"ready-for-delta-review\",\n  \"evidencePath\": \"D:\\\\DSXU-code\\\\.dsxu\\\\trace\\\\raw-evidence-readiness-register-v1\\\\raw-evidence-readiness-register.evidence.json\",\n  \"tracePath\": \"D:\\\\DSXU-code\\\\.dsxu\\\\trace\\\\raw-evidence-readiness-register-v1\\\\raw-evidence-readiness-register.trace.json\",\n  \"blockers\": []\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "owner-git-preflight",
+      "command": "bun run scripts/dsxu-owner-git-mutation-preflight.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "tion report\"\n    },\n    {\n      \"gate\": \"acl-residue\",\n      \"count\": 4,\n      \"status\": \"PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME\",\n      \"canMutateNow\": false,\n      \"requiredAction\": \"ACL residues are signed non-product runtime and excluded from release/export\"\n    },\n    {\n      \"gate\": \"p12-target-reference-raw\",\n      \"count\": 14,\n      \"status\": \"READY_FOR_DELTA_REVIEW\",\n      \"canMutateNow\": false,\n      \"requiredAction\": \"import real targetReferenceManifestPath; do not use templates, generic logs, target-only logs, or DSXU-side logs\"\n    },\n    {\n      \"gate\": \"final-six-stage-tests-and-clean-export\",\n      \"count\": 1,\n      \"status\": \"PASS_READY_FOR_RELEASE_CLOSURE\",\n      \"canMutateNow\": false,\n      \"requiredAction\": \"run release closure tests and clean-export preflight; create export only as explicit release action\"\n    }\n  ],\n  \"blockers\": [],\n  \"nextAction\": \"run final preflight, release closure tests, and clean-export preflight; create export only as explicit release action\",\n  \"rule\": \"Preflight is evidence-only. It does not stage, commit, delete, reset, clean, force ACL residue deletion, fabricate target logs, run final tests, or create export artifacts.\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "owner-git-product-stage-plan",
+      "command": "bun run scripts/dsxu-owner-git-product-stage-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"STAGED_BY_OWNER_GIT_EXECUTION\",\n  \"totalProductPaths\": 1746,\n  \"stageReadyPaths\": 1746,\n  \"packetCount\": 11,\n  \"didMutateGit\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "owner-git-deletion-stage-plan",
+      "command": "bun run scripts/dsxu-owner-git-stage-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"STAGED_BY_OWNER_GIT_EXECUTION\",\n  \"totalDeletionPaths\": 147,\n  \"stageReadyPaths\": 147,\n  \"packetCount\": 6,\n  \"didMutateGit\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "owner-git-mutation-command-plan",
+      "command": "bun run scripts/dsxu-owner-git-mutation-command-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"STAGED_BY_OWNER_GIT_EXECUTION\",\n  \"productPathCount\": 1746,\n  \"deletionPathCount\": 147,\n  \"commandCount\": 57,\n  \"didMutateGit\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "owner-git-authorization-board",
+      "command": "bun run scripts/dsxu-v20-owner-git-authorization-board.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"AUTHORIZED_AND_STAGED_PENDING_REMAINING_GATES\",\n  \"ownerPacketCount\": 17,\n  \"productPathCount\": 1746,\n  \"deletionPathCount\": 147,\n  \"totalPlannedPaths\": 1893,\n  \"gitStatusShort\": {\n    \"total\": 2005,\n    \"modified\": 1650,\n    \"deleted\": 116,\n    \"untracked\": 0\n  },\n  \"commandCount\": 57,\n  \"commandPathCount\": 1893,\n  \"canEnterAuthorizationExecution\": false,\n  \"didMutateGit\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "post-authorization-verification",
+      "command": "bun run scripts/dsxu-v20-post-authorization-verification-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"POST_STAGE_VERIFIED_REMAINING_GATES_BLOCKED\",\n  \"steps\": 7,\n  \"mutationCommandCount\": 57,\n  \"didMutateGit\": true,\n  \"didRunVerification\": true,\n  \"didCreateExport\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "acl-preflight",
+      "command": "bun run scripts/dsxu-acl-residue-preflight.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME\",\n  \"residueCount\": 4,\n  \"existingResidues\": 4,\n  \"writableResidues\": 4,\n  \"deletableResidues\": 0,\n  \"externallySignedResidues\": 4,\n  \"activeProductReferenceRows\": 0,\n  \"didMutateFilesystem\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "acl-closure-plan",
+      "command": "bun run scripts/dsxu-acl-residue-closure-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME\",\n  \"residueCount\": 4,\n  \"readyRows\": 0,\n  \"permissionDeniedRows\": 0,\n  \"signedExternalRows\": 4,\n  \"didMutateFilesystem\": false,\n  \"didStageGit\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "commercial-ip-preflight",
+      "command": "bun run scripts/dsxu-commercial-ip-release-preflight.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING\",\n  \"activeReviewRequiredRows\": 0,\n  \"publicReleaseThirdPartyRows\": 0,\n  \"didRewriteSource\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "six-stage-plan",
+      "command": "bun run scripts/dsxu-v20-six-stage-test-plan.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"READY_FOR_RELEASE_CLOSURE_TESTS\",\n  \"stages\": 6,\n  \"p12PairedRawLogCount\": 14,\n  \"p12MinimumPairedRawLogsForPass\": 14,\n  \"p12ReplayFamilyGapCount\": 0,\n  \"deletionStagePlanReady\": true,\n  \"aclResidues\": 0,\n  \"didRunFinalTests\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "final-preflight",
+      "command": "bun run scripts/dsxu-v20-final-preflight.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"PASS\",\n  \"gitStatusShort\": {\n    \"total\": 2005,\n    \"modified\": 1650,\n    \"deleted\": 116,\n    \"untracked\": 0\n  },\n  \"gates\": 7,\n  \"canRunFinalSixStageTests\": true,\n  \"canCreateCleanExport\": true,\n  \"didRunFinalTests\": false,\n  \"didCreateExport\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_FINAL_PREFLIGHT_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_FINAL_PREFLIGHT_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "clean-export-preflight",
+      "command": "bun run scripts/dsxu-clean-export-preflight.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"PASS_READY_TO_CREATE_CLEAN_EXPORT\",\n  \"canCreateCleanExport\": true,\n  \"didCreateExport\": false,\n  \"blockers\": 0,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.csv\"\n}",
+      "stderrTail": ""
+    },
+    {
+      "id": "blocker-action-board",
+      "command": "bun run scripts/dsxu-v20-blocker-action-board.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "stdoutTail": "{\n  \"status\": \"PASS_RELEASE_PREFLIGHT_READY_CLEAN_EXPORT_READY\",\n  \"actionCount\": 7,\n  \"didMutateGit\": false,\n  \"didMutateFilesystem\": false,\n  \"didRunFinalTests\": false,\n  \"didCreateExport\": false,\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json\",\n  \"outputCsv\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V20_BLOCKER_ACTION_BOARD_20260515.csv\"\n}",
+      "stderrTail": ""
+    }
+  ],
+  "nextAction": "release/export preflight is ready; create export only as an explicit release action",
+  "rule": "This batch runner refreshes evidence and plans only. It does not stage, commit, delete, reset, clean, run final tests, or create export artifacts."
+}

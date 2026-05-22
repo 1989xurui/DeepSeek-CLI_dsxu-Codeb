@@ -77,20 +77,3 @@ export async function getAllLspServers(): Promise<{
     servers: allServers,
   }
 }
-
-
-// V14 strict lifecycle shim: services-lsp-config
-export function processServicesLspConfigStrictLifecycle(input) {
-  void input
-  const state = 'services-lsp-config-state'
-  const lifecycle = 'services-lsp-config:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesLspConfigStrict(input) {
-  return processServicesLspConfigStrictLifecycle(input)
-}

@@ -40,11 +40,3 @@ export function MessageModel(t0) {
 function _temp(c) {
   return c.type === "text";
 }
-
-// V14 lifecycle shim: messagemodel
-export function processMessagemodelLifecycle(input) {
-  void input
-  const state = 'messagemodel-state'
-  const lifecycle = 'messagemodel:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

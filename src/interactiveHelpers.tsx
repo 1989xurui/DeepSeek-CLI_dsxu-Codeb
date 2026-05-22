@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 import { appendFileSync } from 'fs';
 import React from 'react';
@@ -13,7 +12,7 @@ import { isSynchronizedOutputSupported } from './ink/terminal.js';
 import type { RenderOptions, Root, TextProps } from './ink.js';
 import { KeybindingSetup } from './keybindings/KeybindingProviderSetup.js';
 import { startDeferredPrefetches } from './main.js';
-import { checkGate_CACHED_OR_BLOCKING, initializeGrowthBook, resetGrowthBook } from './services/analytics/growthbook.js';
+import { checkGate_CACHED_OR_BLOCKING, initializeFeatureFlags, resetFeatureFlags } from './services/analytics/featureFlags.js';
 import { isQualifiedForGrove } from './services/api/grove.js';
 import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js';
 import { AppStateProvider } from './state/AppState.js';
@@ -141,14 +140,14 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     }
 
     // Signal that trust has been verified for this session.
-    // GrowthBook checks this to decide whether to include auth headers.
+    // feature flag provider checks this to decide whether to include auth headers.
     setSessionTrustAccepted(true);
 
-    // Reset and reinitialize GrowthBook after trust is established.
+    // Reset and reinitialize feature flag provider after trust is established.
     // Defense for login/logout: clears any prior client so the next init
     // picks up fresh auth headers.
-    resetGrowthBook();
-    void initializeGrowthBook();
+    resetFeatureFlags();
+    void initializeFeatureFlags();
 
     // Now that trust is established, prefetch system context if it wasn't already
     void getSystemContext();
@@ -246,7 +245,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     // channel notifications for the whole session    gh#37026.
     // checkGate_CACHED_OR_BLOCKING returns immediately if disk already says
     // true; only blocks on a cold/stale-false cache (awaits the same memoized
-    // initializeGrowthBook promise fired earlier). Also warms the
+    // initializeFeatureFlags promise fired earlier). Also warms the
     // isChannelsEnabled() check in the dev-channels dialog below.
     if (getAllowedChannels().length > 0 || (devChannels?.length ?? 0) > 0) {
       await checkGate_CACHED_OR_BLOCKING('tengu_harbor');
@@ -255,8 +254,8 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
       const [{
         isChannelsEnabled
       }, {
-        getCompatProviderTokens
-      }] = await Promise.all([import('./services/mcp/channelAllowlist.js'), import('./dsxu/legacy/auth/legacyProviderControlAuth.js')]);
+        getProviderControlTokens
+      }] = await Promise.all([import('./services/mcp/channelAllowlist.js'), import('./services/auth/dsxuProviderControlAuth.js')]);
       // Skip the dialog when channels are blocked (tengu_harbor off or no
       // OAuth)    accepting then immediately seeing "not available" in
       // ChannelsNotice is worse than no dialog. Append entries anyway so
@@ -264,7 +263,7 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
       // named. dev:true here is for the flag label in ChannelsNotice
       // (hasNonDev check); the allowlist bypass it also grants is moot
       // since the gate blocks upstream.
-      if (!isChannelsEnabled() || !getCompatProviderTokens()?.accessToken) {
+      if (!isChannelsEnabled() || !getProviderControlTokens()?.accessToken) {
         setAllowedChannels([...getAllowedChannels(), ...devChannels.map(c => ({
           ...c,
           dev: true

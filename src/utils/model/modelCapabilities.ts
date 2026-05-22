@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs'
+﻿import { readFileSync } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
 import isEqual from 'lodash-es/isEqual.js'
 import memoize from 'lodash-es/memoize.js'
@@ -6,9 +6,9 @@ import { join } from 'path'
 import { z } from 'zod/v4'
 import { DSXU_CONTROL_AUTH_BETA_HEADER } from '../../constants/oauth.js'
 import { getProviderClient } from '../../services/api/client.js'
-import { isLegacyCloudSubscriber } from '../auth.js'
+import { isProviderSubscriptionAccount } from '../auth.js'
 import { logForDebugging } from '../debug.js'
-import { getLegacyProviderConfigHomeDir } from '../envUtils.js'
+import { getProviderMigrationHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import { isEssentialTrafficOnly } from '../privacyLevel.js'
@@ -36,7 +36,7 @@ const CacheFileSchema = lazySchema(() =>
 export type ModelCapability = z.infer<ReturnType<typeof ModelCapabilitySchema>>
 
 function getCacheDir(): string {
-  return join(getLegacyProviderConfigHomeDir(), 'cache')
+  return join(getProviderMigrationHomeDir(), 'cache')
 }
 
 function getCachePath(): string {
@@ -57,7 +57,7 @@ function sortForMatching(models: ModelCapability[]): ModelCapability[] {
   )
 }
 
-// Keyed on cache path so tests that set legacy provider config envs get a fresh read
+// Keyed on cache path so tests that set provider-migration source config envs get a fresh read
 const loadCache = memoize(
   (path: string): ModelCapability[] | null => {
     try {
@@ -88,7 +88,7 @@ export async function refreshModelCapabilities(): Promise<void> {
 
   try {
     const providerClient = await getProviderClient({ maxRetries: 1 })
-    const betas = isLegacyCloudSubscriber()
+    const betas = isProviderSubscriptionAccount()
       ? [DSXU_CONTROL_AUTH_BETA_HEADER]
       : undefined
     const parsed: ModelCapability[] = []
@@ -117,13 +117,4 @@ export async function refreshModelCapabilities(): Promise<void> {
       `[modelCapabilities] fetch failed: ${error instanceof Error ? error.message : 'unknown'}`,
     )
   }
-}
-
-
-// V14 lifecycle shim: modelcapabilities
-export function processModelcapabilitiesLifecycle(input) {
-  void input
-  const state = 'modelcapabilities-state'
-  const lifecycle = 'modelcapabilities:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

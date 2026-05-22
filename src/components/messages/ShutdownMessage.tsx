@@ -129,11 +129,3 @@ export function getShutdownMessageSummary(content: string): string | null {
   }
   return null;
 }
-
-// V14 lifecycle shim: shutdownmessage
-export function processShutdownmessageLifecycle(input) {
-  void input
-  const state = 'shutdownmessage-state'
-  const lifecycle = 'shutdownmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,9 +1,9 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { constants as fsConstants } from 'fs'
 import { access, writeFile } from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
-import { getDynamicConfig_BLOCKS_ON_INIT } from 'src/services/analytics/growthbook.js'
+import { getDynamicConfig_BLOCKS_ON_INIT } from 'src/services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -20,7 +20,7 @@ import { logError } from './log.js'
 import { gte, lt } from './semver.js'
 import { getInitialSettings } from './settings/settings.js'
 import {
-  filterLegacyProviderAliases,
+  filterProviderMigrationSourceAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
@@ -410,7 +410,7 @@ export async function getGcsDistTags(): Promise<NpmDistTags> {
 }
 
 /**
- * Get version history from npm registry (ant-only feature)
+ * Get version history from npm registry (dsxu internal feature)
  * Returns versions sorted newest-first, limited to the specified count
  *
  * Uses NATIVE_PACKAGE_URL when available because:
@@ -470,7 +470,7 @@ export async function installGlobalPackage(
   }
 
   try {
-    await removeLegacyProviderAliasesFromShellConfigs()
+    await removeProviderMigrationSourceAliasesFromShellConfigs()
     // Check if we're using npm from Windows path in WSL
     if (!env.isRunningWithBun() && env.isNpmFromWindowsPath()) {
       logError(new Error('Windows NPM detected in WSL environment'))
@@ -533,10 +533,10 @@ To fix this issue:
 }
 
 /**
- * Remove legacy provider aliases from shell configuration files.
+ * Remove provider-migration source aliases from shell configuration files.
  * This helps clean up old installation methods when switching to native or npm global
  */
-async function removeLegacyProviderAliasesFromShellConfigs(): Promise<void> {
+async function removeProviderMigrationSourceAliasesFromShellConfigs(): Promise<void> {
   const configMap = getShellConfigPaths()
 
   // Process each shell config file
@@ -545,11 +545,11 @@ async function removeLegacyProviderAliasesFromShellConfigs(): Promise<void> {
       const lines = await readFileLines(configFile)
       if (!lines) continue
 
-      const { filtered, hadAlias } = filterLegacyProviderAliases(lines)
+      const { filtered, hadAlias } = filterProviderMigrationSourceAliases(lines)
 
       if (hadAlias) {
         await writeFileLines(configFile, filtered)
-        logForDebugging(`Removed legacy provider alias from ${configFile}`)
+        logForDebugging(`Removed provider-migration source alias from ${configFile}`)
       }
     } catch (error) {
       // Don't fail the whole operation if one file can't be processed

@@ -44,6 +44,19 @@ export const SyntheticOutputTool = buildTool({
   name: SYNTHETIC_OUTPUT_TOOL_NAME,
   searchHint: 'return the final response as structured JSON',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Structured Output Surface',
+    sideEffects: [
+      'final-structured-output-projection',
+    ],
+    permission: 'allow-only final structured output; no external mutation',
+    evidence: [
+      'dynamic JSON schema',
+      'structured_output payload',
+      'non-interactive session gate',
+    ],
+    uiProjection: 'structured output result summary',
+  },
   async description(): Promise<string> {
     return 'Return structured output in the requested format'
   },
@@ -160,13 +173,4 @@ function buildSyntheticOutputTool(
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) }
   }
-}
-
-
-// V14 lifecycle shim: syntheticoutputtool
-export function processSyntheticoutputtoolLifecycle(input) {
-  void input
-  const state = 'syntheticoutputtool-state'
-  const lifecycle = 'syntheticoutputtool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

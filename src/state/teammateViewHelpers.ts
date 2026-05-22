@@ -139,12 +139,3 @@ export function stopOrDismissAgent(
     }
   })
 }
-
-
-// V14 lifecycle shim: teammateviewhelpers
-export function processTeammateviewhelpersLifecycle(input) {
-  void input
-  const state = 'teammateviewhelpers-state'
-  const lifecycle = 'teammateviewhelpers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

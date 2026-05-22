@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "dsxu.v20.owner-git-stage-execution.v1",
+  "generatedAt": "2026-05-15T02:27:09.884Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "STAGED_OWNER_GIT_PACKETS",
+  "productPathCount": 1746,
+  "deletionPathCount": 147,
+  "didStageGit": true,
+  "didCommit": false,
+  "didReset": false,
+  "didClean": false,
+  "didCreateExport": false,
+  "rule": "This report records explicit Owner/Git staging only. It does not commit, reset, clean, delete evidence directories, run final tests, or create export artifacts.",
+  "commandCount": 58,
+  "stagedCommandCount": 58,
+  "failedCommandCount": 0,
+  "totalPlannedPathCount": 1893,
+  "failures": [],
+  "outputJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.json",
+  "outputCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.csv",
+  "nextAction": "run post-authorization verification, owner-git preflight, final preflight, and ACL closure review"
+}

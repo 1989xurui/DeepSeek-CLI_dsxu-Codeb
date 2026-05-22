@@ -1,0 +1,5 @@
+"path","residueClass","status","commandPlan","requiresExplicitAuthorization"
+"src/dsxu/engine/retrieval/integration-example.ts","empty-module-residue","SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME","Remove-Item -LiteralPath ""src/dsxu/engine/retrieval/integration-example.ts""","true"
+"src/dsxu/integration/harness/recovery-runtime-v3-harness.ts","empty-module-residue","SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME","Remove-Item -LiteralPath ""src/dsxu/integration/harness/recovery-runtime-v3-harness.ts""","true"
+"src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts","empty-module-residue","SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME","Remove-Item -LiteralPath ""src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts""","true"
+"src/dsxu/engine/adapters/bridge-adapter.ts","retired-adapter-tombstone","SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME","Remove-Item -LiteralPath ""src/dsxu/engine/adapters/bridge-adapter.ts""","true"

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { isAbsolute, join, normalize, sep } from 'path'
@@ -6,7 +5,7 @@ import {
   getIsNonInteractiveSession,
   getProjectRoot,
 } from '../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   getDsxuConfigHomeDir,
   getDsxuCodeEnv,
@@ -79,7 +78,7 @@ export function isExtractModeActive(): boolean {
  * Returns the base directory for persistent memory storage.
  * Resolution order:
  *   1. DSXU_CODE_REMOTE_MEMORY_DIR env var (explicit DSXU override)
- *   2. DSXU_CODE_REMOTE_MEMORY_DIR env var (legacy migration override)
+ *   2. DSXU_CODE_REMOTE_MEMORY_DIR env var (provider migration override)
  *   3. ~/.dsxu (default DSXU config home)
  */
 export function getMemoryBaseDir(): string {

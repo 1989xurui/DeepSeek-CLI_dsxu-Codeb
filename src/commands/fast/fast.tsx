@@ -266,11 +266,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   });
   return <FastModePicker onDone={onDone} unavailableReason={unavailableReason} />;
 }
-
-// V14 lifecycle shim: fast
-export function processFastLifecycle(input) {
-  void input
-  const state = 'fast-state'
-  const lifecycle = 'fast:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

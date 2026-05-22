@@ -93,11 +93,3 @@ export function UltrareviewOverageDialog(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: ultrareviewoveragedialog
-export function processUltrareviewoveragedialogLifecycle(input) {
-  void input
-  const state = 'ultrareviewoveragedialog-state'
-  const lifecycle = 'ultrareviewoveragedialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

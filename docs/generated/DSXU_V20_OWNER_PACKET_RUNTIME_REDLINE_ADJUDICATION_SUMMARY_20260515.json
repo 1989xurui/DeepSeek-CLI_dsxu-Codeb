@@ -1,0 +1,49 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.owner-packet-runtime-redline-adjudication.v1",
+    "generatedAt":  "2026-05-15T06:31:01+08:00",
+    "rawRedlineRows":  59,
+    "activeBlockingRedlineRows":  0,
+    "nonBlockingAdjudicatedRows":  59,
+    "byAdjudication":  [
+                           {
+                               "adjudication":  "MAINLINE_TOOL_LIFECYCLE_OWNER_ALLOWED",
+                               "count":  53
+                           },
+                           {
+                               "adjudication":  "UI_FALLBACK_MESSAGE_LABEL_NOT_PROVIDER_RUNTIME",
+                               "count":  4
+                           },
+                           {
+                               "adjudication":  "PLATFORM_UTILITY_OWNER_ALLOWED_NOT_TOOL_RUNTIME",
+                               "count":  1
+                           },
+                           {
+                               "adjudication":  "QUERY_ENGINE_COMPOSITION_OWNER_ALLOWED",
+                               "count":  1
+                           }
+                       ],
+    "byPacket":  [
+                     {
+                         "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                         "rawRedlineRows":  53,
+                         "activeBlockingRows":  0
+                     },
+                     {
+                         "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                         "rawRedlineRows":  4,
+                         "activeBlockingRows":  0
+                     },
+                     {
+                         "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                         "rawRedlineRows":  1,
+                         "activeBlockingRows":  0
+                     },
+                     {
+                         "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                         "rawRedlineRows":  1,
+                         "activeBlockingRows":  0
+                     }
+                 ],
+    "rule":  "Raw pattern hits must be owner-adjudicated. Tool definitions inside Tool Lifecycle, QueryEngine construction inside Query/entry owner, UI fallback message labels, and ripgrep platform utility probes are not second runtimes; any unclassified hit remains blocking.",
+    "nextAction":  "Use this adjudication to continue Owner/Git packet signoff; do not treat it as final release PASS."
+}

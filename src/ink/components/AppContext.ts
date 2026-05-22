@@ -19,12 +19,3 @@ const AppContext = createContext<Props>({
 AppContext.displayName = 'InternalAppContext'
 
 export default AppContext
-
-
-// V14 lifecycle shim: appcontext
-export function processAppcontextLifecycle(input) {
-  void input
-  const state = 'appcontext-state'
-  const lifecycle = 'appcontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

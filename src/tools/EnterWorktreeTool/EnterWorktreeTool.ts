@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { getSessionId, setOriginalCwd } from '../../bootstrap/state.js'
 import { clearSystemPromptSections } from '../../constants/systemPromptSections.js'
@@ -54,6 +53,23 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
   name: ENTER_WORKTREE_TOOL_NAME,
   searchHint: 'create an isolated git worktree and switch into it',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Worktree Lifecycle',
+    sideEffects: [
+      'git-worktree-create',
+      'process-cwd-change',
+      'session-worktree-state-write',
+      'system-prompt-cache-clear',
+    ],
+    permission: 'passthrough permission before worktree creation and cwd switch',
+    evidence: [
+      'inputSchema.name',
+      'worktreePath output',
+      'worktreeBranch output',
+      'session storage worktree state',
+    ],
+    uiProjection: 'worktree creation and active cwd summary',
+  },
   async description() {
     return 'Creates an isolated worktree (via git or configured hooks) and switches the session into it'
   },
@@ -72,6 +88,12 @@ export const EnterWorktreeTool: Tool<InputSchema, Output> = buildTool({
   shouldDefer: true,
   toAutoClassifierInput(input) {
     return input.name ?? ''
+  },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `EnterWorktree wants to create and switch into worktree '${input.name ?? '(auto name)'}'.`,
+    }
   },
   renderToolUseMessage,
   renderToolResultMessage,

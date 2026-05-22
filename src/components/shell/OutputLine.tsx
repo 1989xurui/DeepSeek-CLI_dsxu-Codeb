@@ -115,11 +115,3 @@ export function stripUnderlineAnsi(content: string): string {
   // eslint-disable-next-line no-control-regex
   /\u001b\[([0-9]+;)*4(;[0-9]+)*m|\u001b\[4(;[0-9]+)*m|\u001b\[([0-9]+;)*4m/g, '');
 }
-
-// V14 lifecycle shim: outputline
-export function processOutputlineLifecycle(input) {
-  void input
-  const state = 'outputline-state'
-  const lifecycle = 'outputline:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

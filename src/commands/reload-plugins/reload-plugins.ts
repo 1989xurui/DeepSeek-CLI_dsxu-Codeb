@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
 import { redownloadUserSettings } from '../../services/settingsSync/index.js'
@@ -73,11 +72,11 @@ export function getDsxuReloadPluginsRuntimeProfile(): {
     command: '/reload-plugins',
     remoteEnv: [
       'DSXU_CODE_REMOTE',
-      'DSXU_CODE_REMOTE legacy alias',
+      'DSXU_CODE_REMOTE provider-migration alias',
       'remote mode runtime state',
     ],
     activationEvidence: [
-      'DSXU_CODE_REMOTE is checked before the legacy DSXU_CODE_REMOTE migration alias',
+      'DSXU_CODE_REMOTE is checked before the provider-migration DSXU_CODE_REMOTE alias',
       'reloads active plugins through refreshActivePlugins and updates AppState',
       'refresh result reports plugin, skill, agent, hook, MCP, and LSP counts',
       'remote user settings can be redownloaded before plugin cache sweep',

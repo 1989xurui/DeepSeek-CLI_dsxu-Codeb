@@ -117,12 +117,3 @@ function cosineSimilarity(a: number[], b: number[]): number {
   const denom = Math.sqrt(normA) * Math.sqrt(normB);
   return denom === 0 ? 0 : dot / denom;
 }
-
-
-// V14 lifecycle shim: store
-export function processStoreLifecycle(input) {
-  void input
-  const state = 'store-state'
-  const lifecycle = 'store:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

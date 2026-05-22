@@ -92,12 +92,3 @@ function unwrapDefault<T extends (...args: never[]) => unknown>(
 ): T {
   return typeof mod === 'function' ? mod : mod.default
 }
-
-
-// V14 lifecycle shim: imageprocessor
-export function processImageprocessorLifecycle(input) {
-  void input
-  const state = 'imageprocessor-state'
-  const lifecycle = 'imageprocessor:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

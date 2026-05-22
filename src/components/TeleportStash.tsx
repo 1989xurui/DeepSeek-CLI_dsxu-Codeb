@@ -113,11 +113,3 @@ export function TeleportStash({
     }]} onChange={handleSelectChange} />}
     </Dialog>;
 }
-
-// V14 lifecycle shim: teleportstash
-export function processTeleportstashLifecycle(input) {
-  void input
-  const state = 'teleportstash-state'
-  const lifecycle = 'teleportstash:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { chmod, mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -194,8 +193,8 @@ export async function countConcurrentSessions(): Promise<number> {
       count++
     } else if (getPlatform() !== 'wsl') {
       // Stale file from a crashed session ...sweep it. Skip on WSL: if
-      // A legacy provider sessions directory may be shared with Windows-native
-      // tools (symlink or legacy config dir), so a Windows PID may not be
+      // A provider-migration sessions directory may be shared with Windows-native
+      // tools (symlink or provider-migration config dir), so a Windows PID may not be
       // probeable from WSL
       // and we'd falsely delete a live session's file. This is just
       // telemetry so conservative undercount is acceptable.

@@ -217,11 +217,3 @@ export function AgentDetail(t0) {
   }
   return t24;
 }
-
-// V14 lifecycle shim: agentdetail
-export function processAgentdetailLifecycle(input) {
-  void input
-  const state = 'agentdetail-state'
-  const lifecycle = 'agentdetail:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

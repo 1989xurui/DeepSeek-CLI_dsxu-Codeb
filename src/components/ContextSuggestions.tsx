@@ -44,19 +44,3 @@ export function ContextSuggestions(t0) {
 function _temp(suggestion, i) {
   return <Box key={i} flexDirection="column" marginTop={i === 0 ? 0 : 1}><Box><StatusIcon status={suggestion.severity} withSpace={true} /><Text bold={true}>{suggestion.title}</Text>{suggestion.savingsTokens ? <Text dimColor={true}>{" "}{figures.arrowRight} save ~{formatTokens(suggestion.savingsTokens)}</Text> : null}</Box><Box marginLeft={2}><Text dimColor={true}>{suggestion.detail}</Text></Box></Box>;
 }
-
-// V14 strict lifecycle shim: components-ContextSuggestions
-export function processComponentsContextSuggestionsStrictLifecycle(input) {
-  void input
-  const state = 'components-ContextSuggestions-state'
-  const lifecycle = 'components-ContextSuggestions:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsContextSuggestionsStrict(input) {
-  return processComponentsContextSuggestionsStrictLifecycle(input)
-}

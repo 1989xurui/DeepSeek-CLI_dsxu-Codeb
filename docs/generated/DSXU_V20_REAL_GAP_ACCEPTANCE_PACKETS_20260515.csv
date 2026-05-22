@@ -1,0 +1,6 @@
+packet_id,status,owner,surface,source_owners,remaining_live_input
+"V20-RG-01-project-intake","FOCUSED_ACCEPTANCE_READY","DSXU Project Intake / Context Owner","external project files, .mcp.json, DSXU.md, commands, skills, hooks","DSXU MCP Config|DSXU Skills Loader|DSXU MCP / Plugin Adapter Boundary|DSXU Plugin Runtime",""
+"V20-RG-02-external-agent-host","FOCUSED_ACCEPTANCE_READY","DSXU Control Plane Adapter Boundary","external host / agent session ingress","DSXU Control Plane Adapter Boundary|DSXU Control Plane Adapter Boundary",""
+"V20-RG-03-external-chat-agent-api","FOCUSED_ACCEPTANCE_READY","DSXU Model Router / Cost Evidence Owner","chat-completions-compatible client and agent API boundary","DSXU API Service Provider Boundary",""
+"V20-RG-04-operator-dashboard","FOCUSED_ACCEPTANCE_READY","DSXU Control Plane Visible-State Owner","operator dashboard / UI / TUI visible state","DSXU Operator Visible-State Projection",""
+"V20-RG-05-target-reference-raw-input","LIVE_TARGET_INPUT_REQUIRED","P12 Target Reference Intake","real paired target-reference raw transcript manifest","external target-reference evidence owner","targetReferenceManifestPath still required for final P12 PASS"

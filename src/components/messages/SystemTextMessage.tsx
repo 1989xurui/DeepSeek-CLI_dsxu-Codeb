@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { Box, Text, type TextProps } from '../../ink.js';
 import { feature } from 'bun:bundle';
 import * as React from 'react';
@@ -823,12 +823,4 @@ function BridgeStatusMessage(t0) {
     t7 = $[12];
   }
   return t7;
-}
-
-// V14 lifecycle shim: systemtextmessage
-export function processSystemtextmessageLifecycle(input) {
-  void input
-  const state = 'systemtextmessage-state'
-  const lifecycle = 'systemtextmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

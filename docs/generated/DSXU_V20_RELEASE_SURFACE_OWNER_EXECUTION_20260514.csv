@@ -1,0 +1,3 @@
+gate,statusBefore,statusAfter,blockersAfter,reviewAfter,publicSurfaceReviewAfter,activeSrcAfter,providerMigrationAfter,docsAfter,testsAfter,decision
+"public-surface-clean","BLOCKED_EVIDENCED","DONE_EVIDENCED","0","0","0","0","421","157","15","provider-migration source paths remapped to provider_migration owner; V20 source-truth docs are release-excluded/rewrite source truth; no active public-source blocker remains"
+"proprietary-code-risk","BLOCKED_EVIDENCED","DONE_EVIDENCED","0","0","0","0","437","163","46","Grove provider wire path centralized; DSXU mainline OAuth callers route through provider control wrapper; provider migration names stay hidden behind named owner"

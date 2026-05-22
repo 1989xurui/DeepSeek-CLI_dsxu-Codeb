@@ -319,11 +319,3 @@ export function MarkdownTable({
   // Render as a single Ansi block to prevent Ink from wrapping mid-row
   return <Ansi>{tableLines.join('\n')}</Ansi>;
 }
-
-// V14 lifecycle shim: markdowntable
-export function processMarkdowntableLifecycle(input) {
-  void input
-  const state = 'markdowntable-state'
-  const lifecycle = 'markdowntable:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

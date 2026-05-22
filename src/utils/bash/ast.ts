@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * AST-based bash command analysis using tree-sitter.
  *
@@ -416,7 +415,7 @@ export function parseForSecurityFromAst(
     // panic). Adversarially triggerable ...`(( a[0][0]... ))` with ~2800
     // subscripts hits PARSE_TIMEOUT_MICROS under the 10K length limit.
     // Previously indistinguishable from module-not-loaded  -> routed to
-    // legacy (parse-unavailable), which lacks EVAL_LIKE_BUILTINS ...`trap`,
+    // fallback (parse-unavailable), which lacks EVAL_LIKE_BUILTINS ...`trap`,
     // `enable`, `hash` leaked with Bash(*). Fail closed: too-complex  -> ask.
     return {
       kind: 'too-complex',
@@ -2184,7 +2183,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
           break // no more args ...`timeout` alone, inert
         }
       } else if (a[0] === 'nice') {
-        // `nice cmd`, `nice -n N cmd`, `nice -N cmd` (legacy). All run cmd
+        // `nice cmd`, `nice -n N cmd`, `nice -N cmd` (historical). All run cmd
         // at a lower priority. argv[0] check must see the wrapped cmd.
         if (a[1] === '-n' && a[2] && /^-?\d+$/.test(a[2])) {
           a = a.slice(3)
@@ -2193,7 +2192,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
         } else if (a[1] && /[$(`]/.test(a[1])) {
           // SECURITY: walkArgument returns node.text for arithmetic_expansion,
           // so `nice $((0-5)) jq ...` has a[1]='$((0-5))'. Bash expands it to
-          // '-5' (legacy nice syntax) and execs jq; we'd slice(1) here and
+          // '-5' (historical nice syntax) and execs jq; we'd slice(1) here and
           // set name='$((0-5))' which skips the jq system() check entirely.
           // Fail closed ...mirrors the timeout-duration fail-closed above.
           return {
@@ -2464,7 +2463,7 @@ export function checkSemantics(commands: SimpleCommand[]): SemanticCheckResult {
     }
     // jq's system() built-in executes arbitrary shell commands, and flags
     // like --from-file can read arbitrary files into jq variables. On the
-    // legacy path these are caught by validateJqCommand in bashSecurity.ts,
+    // fallback path these are caught by validateJqCommand in bashSecurity.ts,
     // but that validator is gated behind `astSubcommands === null` and
     // never runs when the AST parse succeeds. Mirror the checks here so
     // the AST path has the same defence.

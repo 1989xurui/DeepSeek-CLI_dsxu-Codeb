@@ -52,12 +52,3 @@ export function consumeAbsoluteRemovedFlag(): boolean {
   absoluteNodeRemoved = false
   return had
 }
-
-
-// V14 lifecycle shim: node-cache
-export function processNodeCacheLifecycle(input) {
-  void input
-  const state = 'node-cache-state'
-  const lifecycle = 'node-cache:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

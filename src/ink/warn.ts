@@ -7,12 +7,3 @@ export function ifNotInteger(value: number | undefined, name: string): void {
     level: 'warn',
   })
 }
-
-
-// V14 lifecycle shim: warn
-export function processWarnLifecycle(input) {
-  void input
-  const state = 'warn-state'
-  const lifecycle = 'warn:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

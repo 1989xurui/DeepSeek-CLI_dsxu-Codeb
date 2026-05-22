@@ -201,11 +201,3 @@ export function FilePermissionDialog<T extends ToolInput = ToolInput>({
       </Box>
     </>;
 }
-
-// V14 lifecycle shim: filepermissiondialog
-export function processFilepermissiondialogLifecycle(input) {
-  void input
-  const state = 'filepermissiondialog-state'
-  const lifecycle = 'filepermissiondialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

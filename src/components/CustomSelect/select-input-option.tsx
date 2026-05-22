@@ -485,11 +485,3 @@ export function SelectInputOption(t0) {
 function _temp(c) {
   return c.type === "image";
 }
-
-// V14 lifecycle shim: select-input-option
-export function processSelectInputOptionLifecycle(input) {
-  void input
-  const state = 'select-input-option-state'
-  const lifecycle = 'select-input-option:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

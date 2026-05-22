@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { LRUCache } from 'lru-cache'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'

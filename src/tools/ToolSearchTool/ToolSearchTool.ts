@@ -313,6 +313,22 @@ export const ToolSearchTool = buildTool({
   },
   name: TOOL_SEARCH_TOOL_NAME,
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Tool Discovery Surface',
+    sideEffects: [
+      'deferred-tool-index-read',
+      'tool-search-analytics',
+      'pending-mcp-server-state-read',
+    ],
+    permission: 'read-only tool discovery; does not execute selected tools',
+    evidence: [
+      'inputSchema.query/max_results',
+      'deferred tool list',
+      'matched tool names output',
+      'search outcome analytics',
+    ],
+    uiProjection: 'tool search matches and pending MCP server notice',
+  },
   async description() {
     return getPrompt()
   },
@@ -501,13 +517,4 @@ export function getDsxuToolSearchRuntimeProfile(): {
       'keyword scoring prioritizes exact MCP/server/tool-name parts',
     ],
   }
-}
-
-
-// V14 lifecycle shim: toolsearchtool
-export function processToolsearchtoolLifecycle(input) {
-  void input
-  const state = 'toolsearchtool-state'
-  const lifecycle = 'toolsearchtool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

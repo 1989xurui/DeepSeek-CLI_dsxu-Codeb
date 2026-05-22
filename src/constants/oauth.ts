@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getDsxuCodeEnv, isEnvTruthy } from 'src/utils/envUtils.js'
 
 // Default to prod config, override with test/staging if enabled
@@ -77,7 +76,7 @@ export const CONSOLE_OAUTH_SCOPES = [
   REMOTE_SESSION_PROFILE_SCOPE,
 ] as const
 
-// Remote-session OAuth scopes for legacy cloud subscribers.
+// Remote-session OAuth scopes for provider migration subscribers.
 export const REMOTE_SESSION_OAUTH_SCOPES = [
   REMOTE_SESSION_PROFILE_SCOPE,
   REMOTE_SESSION_INFERENCE_SCOPE,
@@ -287,6 +286,6 @@ export function getOauthConfig(): OauthConfig {
   return config
 }
 
-export function getLegacyCloudOrigin(): string {
+export function getProviderCloudOrigin(): string {
   return getOauthConfig().REMOTE_CLOUD_ORIGIN
 }

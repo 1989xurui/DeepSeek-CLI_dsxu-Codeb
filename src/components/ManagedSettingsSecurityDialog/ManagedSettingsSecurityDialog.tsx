@@ -146,11 +146,3 @@ export function ManagedSettingsSecurityDialog(t0) {
 function _temp(item, index) {
   return <Box key={index} paddingLeft={2}><Text><Text dimColor={true}>· </Text><Text>{item}</Text></Text></Box>;
 }
-
-// V14 lifecycle shim: managedsettingssecuritydialog
-export function processManagedsettingssecuritydialogLifecycle(input) {
-  void input
-  const state = 'managedsettingssecuritydialog-state'
-  const lifecycle = 'managedsettingssecuritydialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -89,8 +89,6 @@ export interface ToolContext {
   mainlineInitialAppState?: Partial<AppState>
   /** Explicit MCP clients for wrapped mainline MCP resource tools. */
   mainlineMcpClients?: MCPServerConnection[]
-  /** Explicit opt-in fallback to simplified engine tools when mainline class execution fails. */
-  allowMainlineToolFallback?: boolean
 }
 
 /** 工具输出 */
@@ -342,6 +340,8 @@ export interface QueryEngineConfig {
   }
   /** Auto-connect MCP from .mcp.json and inject MCP tools before running. */
   mcpAutoConnect?: boolean
+  /** Mainline MCP clients supplied by src/services/mcp; engine does not own MCP transport startup. */
+  mainlineMcpClients?: MCPServerConnection[]
   /** Hard cap for tool calls executed in a single turn (default: 12). */
   maxToolCallsPerTurn?: number
   /** Tool execution mode for a turn. */
@@ -904,7 +904,7 @@ export interface FullAbsorbExecutionReport {
   importedTools: number
   totalTools: number
   waves: FullAbsorbWaveResult[]
-  legacyBridges?: Array<{
+  providerMigrationBridges?: Array<{
     name: string
     connected: boolean
     detail: string

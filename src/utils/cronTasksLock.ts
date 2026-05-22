@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Scheduler lease lock for the runtime scheduled_tasks.json.
 //
 // When multiple DSXU sessions run in the same project directory, only one
@@ -20,10 +19,10 @@ import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
 import { jsonStringify } from './slowOperations.js'
 import { isDsxuRuntimeMode } from './envUtils.js'
-const LEGACY_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 function getLockFileRel(): string {
   return join(
-    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_PROJECT_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR,
     'scheduled_tasks.lock',
   )
 }

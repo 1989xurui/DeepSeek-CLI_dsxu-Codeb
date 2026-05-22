@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { dirname, isAbsolute, sep } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/LSPDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
@@ -298,6 +297,23 @@ export const FileEditTool = buildTool({
   name: FILE_EDIT_TOOL_NAME,
   searchHint: 'modify file contents in place',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU File Mutation Tool',
+    sideEffects: [
+      'filesystem-write',
+      'lsp-diagnostic-refresh',
+      'skill-directory-activation',
+      'git-diff-evidence',
+    ],
+    permission: 'filesystem edit permission via checkWritePermissionForTool',
+    evidence: [
+      'inputSchema.file_path',
+      'readFileState preflight',
+      'checkWritePermissionForTool',
+      'structuredPatch/gitDiff output',
+    ],
+    uiProjection: 'file edit progress, rejected message, result diff',
+  },
   strict: true,
   async description() {
     return 'A tool for editing files'
@@ -578,7 +594,7 @@ export const FileEditTool = buildTool({
         errorCode: 9,
       }
     }
-    // Additional validation for DSXU/legacy DSXU settings files
+    // Additional validation for DSXU/provider-migration settings files
     const settingsValidationResult = validateInputForSettingsFileEdit(
       fullFilePath,
       file,
@@ -772,7 +788,7 @@ export const FileEditTool = buildTool({
     if (absoluteFilePath.endsWith(`${sep}DSXU.md`)) {
       logEvent('tengu_write_dsxu_instruction', {})
     } else if (absoluteFilePath.endsWith(`${sep}${'CL' + 'AUDE'}.md`)) {
-      logEvent('tengu_write_legacy_instruction', {})
+      logEvent('tengu_write_source_provider_instruction', {})
     }
     countLinesChanged(patch)
     logFileOperation({

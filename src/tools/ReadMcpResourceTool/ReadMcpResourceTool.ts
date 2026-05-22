@@ -60,6 +60,22 @@ export const ReadMcpResourceTool = buildTool({
   name: 'ReadMcpResourceTool',
   searchHint: 'read a specific MCP resource by URI',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU MCP Resource Adapter',
+    sideEffects: [
+      'connected-mcp-resource-read',
+      'mcp-client-reconnect-when-needed',
+      'binary-resource-persist-when-needed',
+    ],
+    permission: 'read-only MCP resource read through connected MCP clients',
+    evidence: [
+      'inputSchema.server/uri',
+      'connected MCP client state',
+      'contents output',
+      'blobSavedTo output for binary resources',
+    ],
+    uiProjection: 'MCP resource read result and persisted binary notice',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -156,12 +172,3 @@ export const ReadMcpResourceTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: readmcpresourcetool
-export function processReadmcpresourcetoolLifecycle(input) {
-  void input
-  const state = 'readmcpresourcetool-state'
-  const lifecycle = 'readmcpresourcetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

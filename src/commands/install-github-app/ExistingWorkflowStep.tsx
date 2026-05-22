@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Select } from 'src/components/CustomSelect/index.js';
 import { Box, Text } from '../../ink.js';
@@ -68,7 +68,7 @@ export function ExistingWorkflowStep(t0) {
   }
   let t6;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Box flexDirection="column" marginBottom={1}><Text>A legacy workflow file already exists at{" "}<Text color="permission">.github/workflows/dsxu-pr-assistant.yml</Text></Text><Text dimColor={true}>What would you like to do?</Text></Box>;
+    t6 = <Box flexDirection="column" marginBottom={1}><Text>A provider-migration workflow file already exists at{" "}<Text color="permission">.github/workflows/dsxu-pr-assistant.yml</Text></Text><Text dimColor={true}>What would you like to do?</Text></Box>;
     $[8] = t6;
   } else {
     t6 = $[8];
@@ -84,7 +84,7 @@ export function ExistingWorkflowStep(t0) {
   }
   let t8;
   if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <Box marginTop={1}><Text dimColor={true}>View the latest workflow template at:{" "}<Text color="permission">DSXU GitHub workflow template or legacy migration docs</Text></Text></Box>;
+    t8 = <Box marginTop={1}><Text dimColor={true}>View the latest workflow template at:{" "}<Text color="permission">DSXU GitHub workflow template or provider migration docs</Text></Text></Box>;
     $[12] = t8;
   } else {
     t8 = $[12];
@@ -99,12 +99,4 @@ export function ExistingWorkflowStep(t0) {
     t9 = $[15];
   }
   return t9;
-}
-
-// V14 lifecycle shim: existingworkflowstep
-export function processExistingworkflowstepLifecycle(input) {
-  void input
-  const state = 'existingworkflowstep-state'
-  const lifecycle = 'existingworkflowstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

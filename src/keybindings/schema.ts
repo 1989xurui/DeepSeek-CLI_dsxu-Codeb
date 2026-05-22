@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Zod schema for keybindings.json configuration.
  * Used for validation and JSON schema generation.
@@ -151,7 +150,7 @@ export const KEYBINDING_ACTIONS = [
   'diff:viewDetails',
   'diff:previousFile',
   'diff:nextFile',
-  // Model picker actions (ant-only)
+  // Model picker actions (dsxu internal)
   'modelPicker:decreaseEffort',
   'modelPicker:increaseEffort',
   // Select component actions (distinct from confirm: to avoid collisions)

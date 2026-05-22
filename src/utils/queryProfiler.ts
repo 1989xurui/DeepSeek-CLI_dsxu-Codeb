@@ -1,4 +1,3 @@
-﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Query profiling utility for measuring and reporting time spent in the query
  * pipeline from user input to first token arrival. Enable by setting DSXU_CODE_PROFILE_QUERY=1

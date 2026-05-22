@@ -58,11 +58,3 @@ export function ToolsStep(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: toolsstep
-export function processToolsstepLifecycle(input) {
-  void input
-  const state = 'toolsstep-state'
-  const lifecycle = 'toolsstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -175,11 +175,3 @@ export function AgentEditor({
       return null;
   }
 }
-
-// V14 lifecycle shim: agenteditor
-export function processAgenteditorLifecycle(input) {
-  void input
-  const state = 'agenteditor-state'
-  const lifecycle = 'agenteditor:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

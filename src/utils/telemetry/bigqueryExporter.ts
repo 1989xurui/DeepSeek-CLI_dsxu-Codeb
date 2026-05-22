@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Attributes, HrTime } from '@opentelemetry/api'
 import { type ExportResult, ExportResultCode } from '@opentelemetry/core'
 import {
@@ -11,7 +10,7 @@ import {
 import axios from 'axios'
 import { checkMetricsEnabled } from 'src/services/api/metricsOptOut.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
-import { getSubscriptionType, isLegacyCloudSubscriber } from '../auth.js'
+import { getSubscriptionType, isProviderSubscriptionAccount } from '../auth.js'
 import { checkHasTrustDialogAccepted } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { errorMessage, toError } from '../errors.js'
@@ -22,7 +21,7 @@ import { getDSXUCodeUserAgent } from '../userAgent.js'
 
 const PROVIDER_API_ORIGIN = `https://api.${'anth' + 'ropic'}.com`
 const METRICS_PATH = `/api/${'cl' + 'aude'}_code/metrics`
-const LEGACY_METRICS_ENDPOINT_ENV = 'ANT_CL' + 'AUDE_CODE_METRICS_ENDPOINT'
+const PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV = 'ANT_CL' + 'AUDE_CODE_METRICS_ENDPOINT'
 
 type DataPoint = {
   attributes: Record<string, string>
@@ -53,10 +52,10 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
 
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env[LEGACY_METRICS_ENDPOINT_ENV]
+      process.env[PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV]
     ) {
       this.endpoint =
-        process.env[LEGACY_METRICS_ENDPOINT_ENV] + METRICS_PATH
+        process.env[PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV] + METRICS_PATH
     } else {
       this.endpoint = defaultEndpoint
     }
@@ -174,8 +173,8 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
     }
 
     // Add customer type and subscription type
-    if (isLegacyCloudSubscriber()) {
-      resourceAttributes['user.customer_type'] = 'legacy_cloud'
+    if (isProviderSubscriptionAccount()) {
+      resourceAttributes['user.customer_type'] = 'provider_cloud'
       const subscriptionType = getSubscriptionType()
       if (subscriptionType) {
         resourceAttributes['user.subscription_type'] = subscriptionType

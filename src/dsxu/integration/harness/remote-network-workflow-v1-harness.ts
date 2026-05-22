@@ -8,11 +8,11 @@ import {
   applyDsxuSubprocessProxyEnv,
   buildDsxuRelayProxyRequest,
 } from '../../network'
-import { createDsxuLocalProviderBackend } from '../../engine/provider-backend/local-provider-backend'
+import { createDsxuLocalProviderBackend } from '../../../services/bridge/dsxuLocalProviderBackend'
 import {
   createRemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../../engine/provider-backend/dsxu-remote-session-manager'
+} from '../../../services/bridge/dsxuRemoteSessionCoordinator'
 
 export type RemoteNetworkWorkflowTraceEvent = {
   ts: number

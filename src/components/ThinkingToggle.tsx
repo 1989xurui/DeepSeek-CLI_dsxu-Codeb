@@ -150,11 +150,3 @@ export function ThinkingToggle(t0) {
   return t11;
 }
 function _temp() {}
-
-// V14 lifecycle shim: thinkingtoggle
-export function processThinkingtoggleLifecycle(input) {
-  void input
-  const state = 'thinkingtoggle-state'
-  const lifecycle = 'thinkingtoggle:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

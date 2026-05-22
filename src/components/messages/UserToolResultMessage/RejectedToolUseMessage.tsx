@@ -13,11 +13,3 @@ export function RejectedToolUseMessage() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: rejectedtoolusemessage
-export function processRejectedtoolusemessageLifecycle(input) {
-  void input
-  const state = 'rejectedtoolusemessage-state'
-  const lifecycle = 'rejectedtoolusemessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

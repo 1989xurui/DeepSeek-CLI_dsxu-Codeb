@@ -51,20 +51,3 @@ ${prompt}
 ${guidelines}
 `
 }
-
-
-// V14 strict lifecycle shim: tools-WebFetchTool-prompt
-export function processToolsWebFetchToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-WebFetchTool-prompt-state'
-  const lifecycle = 'tools-WebFetchTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsWebFetchToolPromptStrict(input) {
-  return processToolsWebFetchToolPromptStrictLifecycle(input)
-}

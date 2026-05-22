@@ -185,12 +185,3 @@ export function getDsxuSwarmWorkerPermissionRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 lifecycle shim: swarmworkerhandler
-export function processSwarmworkerhandlerLifecycle(input) {
-  void input
-  const state = 'swarmworkerhandler-state'
-  const lifecycle = 'swarmworkerhandler:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -54,11 +54,3 @@ export function ConfigurableShortcutHint(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: configurableshortcuthint
-export function processConfigurableshortcuthintLifecycle(input) {
-  void input
-  const state = 'configurableshortcuthint-state'
-  const lifecycle = 'configurableshortcuthint:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

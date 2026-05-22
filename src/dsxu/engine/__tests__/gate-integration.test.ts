@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { BridgeAdapter } from '../adapters/bridge-adapter'
 import { runVerifyGate } from '../verify-gate'
 import { ReviewerSubagent } from '../reviewer-subagent'
 import type { QueryEvent, QueryResult } from '../types'
@@ -52,29 +51,6 @@ describe('GateIntegration', () => {
 
     expect(reviewResult.score).toBeGreaterThanOrEqual(50)
     expect(verifiedResult.exitReason).toBe('end_turn')
-  })
-
-  it('exposes the DSXU bridge gate config through the current adapter', async () => {
-    const verificationCallback = vi.fn().mockResolvedValue(true)
-    const gateConfig = BridgeAdapter.createDefaultGateConfig(verificationCallback)
-
-    expect(gateConfig.enabled).toBe(true)
-    expect(gateConfig.gatedTools).toEqual(
-      expect.arrayContaining(['FileEdit', 'Bash', 'FileWrite', 'PowerShell']),
-    )
-
-    const result = await gateConfig.gateCheck?.('Bash', { command: 'test' }, {} as any)
-
-    expect(result?.allowed).toBe(true)
-    expect(verificationCallback).toHaveBeenCalledWith('Bash', { command: 'test' })
-  })
-
-  it('keeps unsafe shell commands blocked at the adapter gate', async () => {
-    const gateCheck = BridgeAdapter.createVerificationGateCheck()
-    const result = await gateCheck('Bash', { command: 'rm -rf /' }, {} as any)
-
-    expect(result.allowed).toBe(false)
-    expect(result.reason).toContain('dangerous command')
   })
 
   it('continues after recoverable shell verification when configured to continue', async () => {

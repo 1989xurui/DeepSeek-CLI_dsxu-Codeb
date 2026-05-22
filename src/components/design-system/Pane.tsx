@@ -74,11 +74,3 @@ export function Pane(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: pane
-export function processPaneLifecycle(input) {
-  void input
-  const state = 'pane-state'
-  const lifecycle = 'pane:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

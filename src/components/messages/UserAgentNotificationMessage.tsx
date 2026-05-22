@@ -80,11 +80,3 @@ export function UserAgentNotificationMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: useragentnotificationmessage
-export function processUseragentnotificationmessageLifecycle(input) {
-  void input
-  const state = 'useragentnotificationmessage-state'
-  const lifecycle = 'useragentnotificationmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

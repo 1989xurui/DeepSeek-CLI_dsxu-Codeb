@@ -14,10 +14,10 @@ export {
   SONNET_4_6_PROVIDER_CONFIG,
   SONNET_4_PROVIDER_CONFIG,
   processConfigsLifecycle,
-} from '../../dsxu/legacy/model/legacyProviderModelConfigs.js'
+} from './providerMigration/providerMigrationModelConfigs.js'
 
 export type {
   CanonicalModelId,
   ModelConfig,
   ModelKey,
-} from '../../dsxu/legacy/model/legacyProviderModelConfigs.js'
+} from './providerMigration/providerMigrationModelConfigs.js'

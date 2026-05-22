@@ -48,11 +48,3 @@ export function ctrlOToExpand(): string {
   const shortcut = getShortcutDisplay('app:toggleTranscript', 'Global', 'ctrl+o');
   return chalk.dim(`(${shortcut} to expand)`);
 }
-
-// V14 lifecycle shim: ctrlotoexpand
-export function processCtrlotoexpandLifecycle(input) {
-  void input
-  const state = 'ctrlotoexpand-state'
-  const lifecycle = 'ctrlotoexpand:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

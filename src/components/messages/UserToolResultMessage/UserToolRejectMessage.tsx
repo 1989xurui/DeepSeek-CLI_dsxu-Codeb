@@ -92,11 +92,3 @@ export function UserToolRejectMessage(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: usertoolrejectmessage
-export function processUsertoolrejectmessageLifecycle(input) {
-  void input
-  const state = 'usertoolrejectmessage-state'
-  const lifecycle = 'usertoolrejectmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

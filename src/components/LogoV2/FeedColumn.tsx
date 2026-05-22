@@ -56,11 +56,3 @@ export function FeedColumn(t0) {
 function _temp(feed) {
   return calculateFeedWidth(feed);
 }
-
-// V14 lifecycle shim: feedcolumn
-export function processFeedcolumnLifecycle(input) {
-  void input
-  const state = 'feedcolumn-state'
-  const lifecycle = 'feedcolumn:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

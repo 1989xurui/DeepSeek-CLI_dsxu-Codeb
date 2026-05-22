@@ -118,7 +118,7 @@ export function MessageSelector({
       ...summarizeInputProps,
       onChange: setSummarizeFromFeedback
     });
-    if ("external" === 'ant') {
+    if (false) {
       baseOptions.push({
         value: 'summarize_up_to',
         label: 'Summarize up to here',
@@ -827,12 +827,4 @@ export function messagesAfterAreOnlySynthetic(messages: Message[], fromIndex: nu
     // Other types (e.g., tombstone) are non-meaningful, continue
   }
   return true;
-}
-
-// V14 lifecycle shim: messageselector
-export function processMessageselectorLifecycle(input) {
-  void input
-  const state = 'messageselector-state'
-  const lifecycle = 'messageselector:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

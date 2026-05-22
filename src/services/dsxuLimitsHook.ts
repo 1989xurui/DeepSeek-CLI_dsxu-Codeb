@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   type DsxuLimits,
   currentLimits,
@@ -20,13 +20,4 @@ export function useDsxuLimits(): DsxuLimits {
   }, [])
 
   return limits
-}
-
-
-// V14 lifecycle shim: DsxuLimitshook
-export function processDsxuLimitshookLifecycle(input) {
-  void input
-  const state = 'DsxuLimitshook-state'
-  const lifecycle = 'DsxuLimitshook:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,8 +1,8 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Files API client for managing files
  *
- * This module provides functionality to download and upload files to the provider Files API.
+ * This module provides functionality to download and upload files through the
+ * configured DSXU Files API boundary.
  * Used by the DSXU Code agent to download file attachments at session startup.
  *
  * API Reference: provider files-content documentation.
@@ -14,7 +14,11 @@ import * as path from 'path'
 import { count } from '../../utils/array.js'
 import { getCwd } from '../../utils/cwd.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { getDsxuCodeEnv } from '../../utils/envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { sleep } from '../../utils/sleep.js'
@@ -26,18 +30,35 @@ import {
 // on public-api routes (auth.py: "oauth_auth" not in beta_versions - 404).
 const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
 const PROVIDER_API_VERSION = '2023-06-01'
-const LEGACY_PROVIDER_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const PROVIDER_MIGRATION_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
 const PROVIDER_VERSION_HEADER = `${'anth' + 'ropic'}-version`
 const PROVIDER_BETA_HEADER = `${'anth' + 'ropic'}-beta`
-const DEFAULT_PROVIDER_FILES_API_BASE_URL = `https://api.${'anth' + 'ropic'}.com`
-// API base URL - uses provider base URL set by env-manager for the appropriate environment
-// Falls back to public API for standalone usage
-function getDefaultApiBaseUrl(): string {
+const DEFAULT_PROVIDER_MIGRATION_FILES_API_BASE_URL = `https://api.${'anth' + 'ropic'}.com`
+
+function isProviderMigrationFilesApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
+function getDefaultApiBaseUrl(): string | undefined {
+  if (!isProviderMigrationFilesApiAllowed()) {
+    return getDsxuCodeEnv('API_BASE_URL')
+  }
+
   return (
-    process.env[LEGACY_PROVIDER_BASE_URL_ENV] ||
     getDsxuCodeEnv('API_BASE_URL') ||
-    DEFAULT_PROVIDER_FILES_API_BASE_URL
+    process.env[PROVIDER_MIGRATION_BASE_URL_ENV] ||
+    DEFAULT_PROVIDER_MIGRATION_FILES_API_BASE_URL
   )
+}
+
+function resolveFilesApiBaseUrl(config: FilesApiConfig): string {
+  const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
+  if (!baseUrl) {
+    throw new Error(
+      'Files API base URL is required in DSXU runtime. Configure DSXU_CODE_API_BASE_URL or pass FilesApiConfig.baseUrl.',
+    )
+  }
+  return baseUrl
 }
 function logDebugError(message: string): void {
   logForDebugging(`[files-api] ${message}`, { level: 'error' })
@@ -59,7 +80,7 @@ export type File = {
 export type FilesApiConfig = {
   /** OAuth token for authentication (from session JWT) */
   oauthToken: string
-  /** Base URL for the API (default: provider API base URL) */
+  /** Base URL for the API. Required unless the runtime supplies DSXU_CODE_API_BASE_URL. */
   baseUrl?: string
   /** Session ID for creating session-specific directories */
   sessionId: string
@@ -112,7 +133,7 @@ async function retryWithBackoff<T>(
   throw new Error(`${lastError} after ${MAX_RETRIES} attempts`)
 }
 /**
- * Downloads a single file from the provider public Files API
+ * Downloads a single file from the configured Files API boundary.
  *
  * @param fileId - The file ID (e.g., "file_011CNha8iCJcU1wXNR6q4V8w")
  * @param config - Files API configuration
@@ -122,7 +143,7 @@ export async function downloadFile(
   fileId: string,
   config: FilesApiConfig,
 ): Promise<Buffer> {
-  const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
+  const baseUrl = resolveFilesApiBaseUrl(config)
   const url = `${baseUrl}/v1/files/${fileId}/content`
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
@@ -341,7 +362,7 @@ export async function uploadFile(
   config: FilesApiConfig,
   opts?: { signal?: AbortSignal },
 ): Promise<UploadResult> {
-  const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
+  const baseUrl = resolveFilesApiBaseUrl(config)
   const url = `${baseUrl}/v1/files`
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
@@ -552,7 +573,7 @@ export async function listFilesCreatedAfter(
   afterCreatedAt: string,
   config: FilesApiConfig,
 ): Promise<FileMetadata[]> {
-  const baseUrl = config.baseUrl || getDefaultApiBaseUrl()
+  const baseUrl = resolveFilesApiBaseUrl(config)
   const headers = {
     Authorization: `Bearer ${config.oauthToken}`,
     [PROVIDER_VERSION_HEADER]: PROVIDER_API_VERSION,

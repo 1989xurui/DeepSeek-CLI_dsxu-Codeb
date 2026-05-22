@@ -62,11 +62,3 @@ export function WizardDialogLayout(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: wizarddialoglayout
-export function processWizarddialoglayoutLifecycle(input) {
-  void input
-  const state = 'wizarddialoglayout-state'
-  const lifecycle = 'wizarddialoglayout:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

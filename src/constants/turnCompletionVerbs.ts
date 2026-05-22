@@ -10,12 +10,3 @@ export const TURN_COMPLETION_VERBS = [
   'Sautéed',
   'Worked',
 ]
-
-
-// V14 lifecycle shim: turncompletionverbs
-export function processTurncompletionverbsLifecycle(input) {
-  void input
-  const state = 'turncompletionverbs-state'
-  const lifecycle = 'turncompletionverbs:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

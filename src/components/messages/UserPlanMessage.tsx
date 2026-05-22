@@ -39,11 +39,3 @@ export function UserPlanMessage(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: userplanmessage
-export function processUserplanmessageLifecycle(input) {
-  void input
-  const state = 'userplanmessage-state'
-  const lifecycle = 'userplanmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

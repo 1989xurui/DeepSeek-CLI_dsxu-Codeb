@@ -26,10 +26,16 @@ export interface DSxuConfig {
     deepseekApiKey?: string
     /** DeepSeek base URL */
     deepseekBaseUrl: string
-    /** OpenAI API Key (fallback) */
+    /** External fallback API key (explicit fallback only) */
     openaiApiKey?: string
-    /** Ollama base URL (local fallback) */
+    /** Local model base URL (explicit local fallback only) */
     ollamaBaseUrl: string
+    /** Explicitly enable all non-DeepSeek model fallbacks */
+    allowProviderFallbacks?: boolean
+    /** Explicitly enable external provider fallback */
+    allowOpenAIFallback?: boolean
+    /** Explicitly enable local provider fallback */
+    allowOllamaFallback?: boolean
   }
 
   // Models
@@ -109,6 +115,9 @@ export const DEFAULT_CONFIG: DSxuConfig = {
   api: {
     deepseekBaseUrl: 'https://api.deepseek.com',
     ollamaBaseUrl: 'http://localhost:11434',
+    allowProviderFallbacks: false,
+    allowOpenAIFallback: false,
+    allowOllamaFallback: false,
   },
   models: {
     chatModel: DEEPSEEK_V4_FLASH_MODEL,
@@ -196,6 +205,15 @@ export function loadEnvConfig(): Partial<DSxuConfig> {
   if (process.env.OPENAI_API_KEY) config.api.openaiApiKey = process.env.OPENAI_API_KEY
   if (process.env.DEEPSEEK_BASE_URL) config.api.deepseekBaseUrl = process.env.DEEPSEEK_BASE_URL
   if (process.env.OLLAMA_BASE_URL) config.api.ollamaBaseUrl = process.env.OLLAMA_BASE_URL
+  if (process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS) {
+    config.api.allowProviderFallbacks = process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS === '1'
+  }
+  if (process.env.DSXU_ALLOW_OPENAI_FALLBACK) {
+    config.api.allowOpenAIFallback = process.env.DSXU_ALLOW_OPENAI_FALLBACK === '1'
+  }
+  if (process.env.DSXU_ALLOW_OLLAMA_FALLBACK) {
+    config.api.allowOllamaFallback = process.env.DSXU_ALLOW_OLLAMA_FALLBACK === '1'
+  }
 
   if (process.env.DSXU_MODEL) config.models.chatModel = process.env.DSXU_MODEL
   if (process.env.DSXU_MAX_TURNS) config.engine.maxTurns = parseInt(process.env.DSXU_MAX_TURNS)

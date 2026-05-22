@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Plugin option storage and substitution.
  *
@@ -194,7 +193,7 @@ export function savePluginOptions(
  * "uninstall failed" message for a cleanup side-effect.
  */
 export function deletePluginOptions(pluginId: string): void {
-  // Settings side ...also wipes the legacy mcpServers sub-key (same story:
+  // Settings side ...also wipes the pre-versioned mcpServers sub-key (same story:
   // orphaned on uninstall, never cleaned up before this PR).
   //
   // Use `undefined` (not `delete`) because `updateSettingsForSource` merges
@@ -307,14 +306,14 @@ export function substitutePluginVariables(
   value: string,
   plugin: { path: string; source?: string },
 ): string {
-  const legacyPrefix = 'CL' + 'AUDE'
+  const providerMigrationPrefix = 'CL' + 'AUDE'
   const placeholderRegex = (name: string) =>
     new RegExp(String.raw`\$\{${name}\}`, 'g')
   const normalize = (p: string) =>
     process.platform === 'win32' ? p.replace(/\\/g, '/') : p
   let out = value
     .replace(placeholderRegex('DSXU_PLUGIN_ROOT'), () => normalize(plugin.path))
-    .replace(placeholderRegex(`${legacyPrefix}_PLUGIN_ROOT`), () =>
+    .replace(placeholderRegex(`${providerMigrationPrefix}_PLUGIN_ROOT`), () =>
       normalize(plugin.path),
     )
   // source can be absent (e.g. hooks where pluginRoot is a skill root without
@@ -325,7 +324,7 @@ export function substitutePluginVariables(
       .replace(placeholderRegex('DSXU_PLUGIN_DATA'), () =>
         normalize(getPluginDataDir(source)),
       )
-      .replace(placeholderRegex(`${legacyPrefix}_PLUGIN_DATA`), () =>
+      .replace(placeholderRegex(`${providerMigrationPrefix}_PLUGIN_DATA`), () =>
         normalize(getPluginDataDir(source)),
       )
   }

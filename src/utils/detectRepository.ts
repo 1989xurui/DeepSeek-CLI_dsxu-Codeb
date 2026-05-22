@@ -127,7 +127,7 @@ export function parseGitRemote(input: string): ParsedRepository | null {
  * Parses a git remote URL or "owner/repo" string and returns "owner/repo".
  * Only returns results for github.com hosts — GHE URLs return null.
  * Use parseGitRemote() for GHE support.
- * Also accepts plain "owner/repo" strings for backward compatibility.
+ * Also accepts plain "owner/repo" strings for existing callers.
  */
 export function parseGitHubRepository(input: string): string | null {
   const trimmed = input.trim()

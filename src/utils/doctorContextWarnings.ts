@@ -1,4 +1,4 @@
-﻿import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
+import { roughTokenCountEstimation } from '../services/tokenEstimation.js'
 import type { Tool, ToolPermissionContext } from '../Tool.js'
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js'
 import { countMcpToolTokens } from './analyzeContext.js'
@@ -277,13 +277,4 @@ export function getDsxuDoctorContextWarningsRuntimeProfile() {
       'unreachable permission rules are surfaced with concrete fixes',
     ],
   }
-}
-
-
-// V14 lifecycle shim: doctorcontextwarnings
-export function processDoctorcontextwarningsLifecycle(input) {
-  void input
-  const state = 'doctorcontextwarnings-state'
-  const lifecycle = 'doctorcontextwarnings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

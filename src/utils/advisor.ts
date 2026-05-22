@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { BetaUsage } from 'src/types/providerSdk.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { shouldIncludeFirstPartyOnlyBetas } from './betas.js'
 import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
 import { getInitialSettings } from './settings/settings.js'
-import { isCompatAdvisorCapableModel } from '../dsxu/legacy/model/legacyProviderAdvisorModel.js'
+import { isProviderMigrationAdvisorCapableModel } from './model/providerMigration/providerMigrationAdvisorModel.js'
 
 // The SDK does not yet have types for advisor blocks.
 // TODO(hackyon): Migrate to the real provider SDK types when this feature ships publicly
@@ -89,12 +88,12 @@ export function getExperimentAdvisorModels():
 // @[MODEL LAUNCH]: Add the new model if it supports the advisor tool.
 // Checks whether the main loop model supports calling the advisor tool.
 export function modelSupportsAdvisor(model: string): boolean {
-  return isCompatAdvisorCapableModel(model)
+  return isProviderMigrationAdvisorCapableModel(model)
 }
 
 // @[MODEL LAUNCH]: Add the new model if it can serve as an advisor model.
 export function isValidAdvisorModel(model: string): boolean {
-  return isCompatAdvisorCapableModel(model)
+  return isProviderMigrationAdvisorCapableModel(model)
 }
 
 export function getInitialAdvisorSetting(): string | undefined {

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * REPL integration hook for DSXU SSH sessions.
  *
@@ -16,11 +15,11 @@ import type { ToolUseConfirm } from '../components/permissions/PermissionRequest
 import {
   createSyntheticAssistantMessage,
   createToolStub,
-} from '../dsxu/engine/provider-backend/dsxu-remote-permission-bridge.js'
+} from '../services/bridge/remotePermissionProjection.js'
 import {
   convertSDKMessage,
   isSessionEndMessage,
-} from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
+} from '../services/bridge/dsxuSdkMessageProjection.js'
 import type { SSHSession } from '../ssh/createSSHSession.js'
 import type { SSHSessionManager } from '../ssh/SSHSessionManager.js'
 import type { Tool } from '../Tool.js'

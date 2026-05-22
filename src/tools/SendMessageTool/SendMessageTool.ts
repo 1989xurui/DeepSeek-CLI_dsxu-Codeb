@@ -1,8 +1,7 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getSessionId, isReplBridgeActive } from '../../bootstrap/state.js'
-import { postDsxuProviderPeerMessage } from '../../dsxu/engine/provider-backend/local-provider-backend.js'
+import { postDsxuProviderPeerMessage } from '../../services/bridge/dsxuLocalProviderBackend.js'
 import type { Tool, ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { findTeammateTaskByAgentId } from '../../tasks/InProcessTeammateTask/InProcessTeammateTask.js'
@@ -44,6 +43,7 @@ import { resumeAgentBackground } from '../AgentTool/resumeAgent.js'
 import { SEND_MESSAGE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
+const PROVIDER_MIGRATION_BRIDGE_FLAG = 'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
 
 const StructuredMessage = lazySchema(() =>
   z.discriminatedUnion('type', [
@@ -72,9 +72,9 @@ const inputSchema = lazySchema(() =>
       .string()
       .describe(
         feature('UDS_INBOX')
-          ? isLegacyBridgeMessagingEnabled()
-            ? 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, "provider:<session-id>" for a DSXU provider peer, or "bridge:<session-id>" for an explicit legacy bridge peer'
-            : 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, or "provider:<session-id>" for a DSXU provider peer. Legacy bridge targets are disabled by default.'
+          ? isProviderMigrationBridgeMessagingEnabled()
+            ? 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, "provider:<session-id>" for a DSXU provider peer, or "bridge:<session-id>" for an explicit provider-migration bridge peer'
+            : 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, or "provider:<session-id>" for a DSXU provider peer. Provider-migration bridge targets are disabled by default.'
           : 'Recipient: teammate name, or "*" for broadcast to all teammates',
       ),
     summary: z
@@ -134,8 +134,8 @@ export type SendMessageToolOutput =
   | RequestOutput
   | ResponseOutput
 
-export function isLegacyBridgeMessagingEnabled(): boolean {
-  return isEnvTruthy(process.env.DSXU_ENABLE_LEGACY_BRIDGE)
+export function isProviderMigrationBridgeMessagingEnabled(): boolean {
+  return isEnvTruthy(process.env[PROVIDER_MIGRATION_BRIDGE_FLAG])
 }
 
 export function getDsxuSendMessageRuntimeProfile(): {
@@ -153,32 +153,32 @@ export function getDsxuSendMessageRuntimeProfile(): {
       'stopped agent resume',
       'UDS local peer',
       'DSXU provider peer',
-      'bridge migration peer (legacy flag only)',
+      'bridge migration peer (provider-migration flag only)',
     ],
     permissionPolicy:
-      'DSXU allows local teammate routing, uses provider: for DSXU-owned peer sessions, and keeps bridge: behind explicit legacy migration approval.',
+      'DSXU allows local teammate routing, uses provider: for DSXU-owned peer sessions, and keeps bridge: behind explicit provider migration approval.',
     activationEvidence: [
       'messages to running local agents are queued for next tool round',
       'stopped agents are resumed through AgentTool/resumeAgent',
       'shutdown and plan approval messages use structured teammate mailbox protocol',
-      'provider: peers route through DSXU provider backend events, not the legacy bridge shell',
+      'provider: peers route through DSXU provider backend events, not the provider-migration bridge shell',
     ],
   }
 }
 
-async function isLegacyBridgeConnected(): Promise<boolean> {
-  if (!isLegacyBridgeMessagingEnabled()) return false
+async function isProviderMigrationBridgeConnected(): Promise<boolean> {
+  if (!isProviderMigrationBridgeMessagingEnabled()) return false
   const { getReplBridgeHandle } = await import(
-    '../../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+    '../../services/bridge/dsxuRemoteBridgeFacade.js'
   )
   return Boolean(getReplBridgeHandle()) && isReplBridgeActive()
 }
 
-async function postLegacyBridgeMessage(
+async function postProviderMigrationBridgeMessage(
   target: string,
   message: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const { postInterDSXUMessage } = await import('../../dsxu/engine/provider-backend/dsxu-provider-compat.js')
+  const { postInterDSXUMessage } = await import('../../services/bridge/dsxuRemoteBridgeFacade.js')
   return postInterDSXUMessage(target, message)
 }
 
@@ -587,6 +587,23 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
     name: SEND_MESSAGE_TOOL_NAME,
     searchHint: 'send messages to agent teammates (swarm protocol)',
     maxResultSizeChars: 100_000,
+    runtimeMetadata: {
+      owner: 'DSXU Agent Message Router',
+      sideEffects: [
+        'agent-message-queue-write',
+        'agent-resume-request',
+        'swarm-control-message',
+        'cross-session-message-when-approved',
+      ],
+      permission: 'local allow; explicit ask/deny for provider or provider-migration bridge messaging',
+      evidence: [
+        'inputSchema.to/message',
+        'parseAddress route',
+        'permission decision for provider/bridge routes',
+        'routing output',
+      ],
+      uiProjection: 'agent/swarm message result and routing summary',
+    },
 
     userFacingName() {
       return 'SendMessage'
@@ -661,21 +678,21 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         }
       }
       if (addr.scheme === 'bridge') {
-        if (!isLegacyBridgeMessagingEnabled()) {
+        if (!isProviderMigrationBridgeMessagingEnabled()) {
           return {
             behavior: 'deny' as const,
             message:
-              'Legacy bridge messaging is disabled in the DSXU default mainline. Use local Agent/SendMessage continuation, or set DSXU_ENABLE_LEGACY_BRIDGE=1 only for isolated migration work.',
+              'Provider-migration bridge messaging is disabled in the DSXU default mainline. Use local Agent/SendMessage continuation, or set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
             decisionReason: {
               type: 'safetyCheck',
-              reason: 'Legacy bridge messaging is disabled by default',
+              reason: 'Provider-migration bridge messaging is disabled by default',
               classifierApprovable: false,
             },
           }
         }
         return {
           behavior: 'ask' as const,
-          message: `Send a message to Remote Control session ${input.to}? It arrives as a user prompt on the receiving DSXU session (possibly another machine) via the configured DSXU bridge provider.`,
+          message: `Send a message to provider-migration bridge session ${input.to}? It arrives as a user prompt on the receiving DSXU session (possibly another machine) via the configured DSXU provider-migration bridge provider.`,
           // safetyCheck (not mode) ...permissions.ts guards this before both
           // bypassPermissions (step 1g) and auto-mode's allowlist/classifier.
           // Cross-machine prompt injection must stay bypass-immune.
@@ -718,11 +735,11 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         }
       }
       if (addr.scheme === 'bridge') {
-        if (!isLegacyBridgeMessagingEnabled()) {
+        if (!isProviderMigrationBridgeMessagingEnabled()) {
           return {
             result: false,
             message:
-              'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_LEGACY_BRIDGE=1 only for isolated migration work.',
+              'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
             errorCode: 9,
           }
         }
@@ -737,9 +754,9 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
             errorCode: 9,
           }
         }
-        // Check the legacy bridge handle lazily so the DSXU default mainline
+        // Check the provider-migration bridge handle lazily so the DSXU default mainline
         // does not load bridge modules unless a bridge target is explicit.
-        if (!(await isLegacyBridgeConnected())) {
+        if (!(await isProviderMigrationBridgeConnected())) {
           return {
             result: false,
             message:
@@ -848,18 +865,18 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
       if (typeof input.message === 'string') {
         const addr = parseAddress(input.to)
         if (addr.scheme === 'bridge') {
-          if (!isLegacyBridgeMessagingEnabled()) {
+          if (!isProviderMigrationBridgeMessagingEnabled()) {
             return {
               data: {
                 success: false,
                 message:
-                  'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_LEGACY_BRIDGE=1 only for isolated migration work.',
+                  'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
               },
             }
           }
           // Re-check handle after permission approval; the bridge can drop
           // while the prompt is waiting.
-          if (!(await isLegacyBridgeConnected())) {
+          if (!(await isProviderMigrationBridgeConnected())) {
             return {
               data: {
                 success: false,
@@ -867,7 +884,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
               },
             }
           }
-          const result = await postLegacyBridgeMessage(addr.target, input.message)
+          const result = await postProviderMigrationBridgeMessage(addr.target, input.message)
           const preview = input.summary || truncate(input.message, 50)
           return {
             data: {

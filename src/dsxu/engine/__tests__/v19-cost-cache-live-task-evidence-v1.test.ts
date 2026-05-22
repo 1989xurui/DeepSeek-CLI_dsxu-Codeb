@@ -222,7 +222,7 @@ describe('V19 cost/cache fresh live task evidence', () => {
     expect(summary.liveProviderUsage).toBe(true)
     expect(summary.non22LiveTask).toBe(true)
     expect(summary.broad22Run).toBe(false)
-    expect(summary.sourceProviderStatus).toBe('DONE-EVIDENCED')
+    expect(summary.providerMigrationSourceStatus).toBe('DONE-EVIDENCED')
     expect(summary.policy).toBe('flash_only_deepseek_native_prefix_cache')
     expect(summary.cacheHitLiftObserved).toBe(true)
     expect(summary.aggregate).toMatchObject({

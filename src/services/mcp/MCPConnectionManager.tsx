@@ -70,11 +70,3 @@ export function MCPConnectionManager(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: mcpconnectionmanager
-export function processMcpconnectionmanagerLifecycle(input) {
-  void input
-  const state = 'mcpconnectionmanager-state'
-  const lifecycle = 'mcpconnectionmanager:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

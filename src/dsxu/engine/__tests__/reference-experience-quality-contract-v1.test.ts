@@ -58,7 +58,7 @@ describe('DSXU reference experience quality absorption contract', () => {
     expect(allLanding).toContain('src/tools/AgentTool/prompt.ts')
     expect(allLanding).toContain('src/tools/SendMessageTool/prompt.ts')
     expect(allLanding).toContain('src/dsxu/engine/permission-usability.ts')
-    expect(allLanding).toContain('src/dsxu/engine/mcp-client.ts')
+    expect(allLanding).toContain('src/services/mcp/client.ts')
     expect(allLanding).toContain('src/dsxu/engine/system-prompt.ts')
 
     expect(existsSync(join(root, 'src', 'tools', 'AgentTool', 'prompt.ts'))).toBe(true)

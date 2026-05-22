@@ -342,12 +342,3 @@ export async function updatePluginCli(
     handlePluginCommandError(error, 'update', plugin)
   }
 }
-
-
-// V14 lifecycle shim: pluginclicommands
-export function processPluginclicommandsLifecycle(input) {
-  void input
-  const state = 'pluginclicommands-state'
-  const lifecycle = 'pluginclicommands:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

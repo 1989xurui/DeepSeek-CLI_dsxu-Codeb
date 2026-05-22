@@ -53,14 +53,13 @@ const hasDSXUModelGateway = (): boolean =>
       process.env.LITELLM_BASE_URL,
   )
 
-const LEGACY_CLOUD_LOGIN_METHOD = 'cla' + 'udeai'
-const LEGACY_CLOUD_AUTH_SOURCE = 'cla' + 'ude.ai'
-const LEGACY_OAUTH_REQUEST_FLAG = 'loginWith' + 'Cl' + 'audeAi'
-const LEGACY_PROVIDER_API_KEY_ENV =
+const PROVIDER_SUBSCRIPTION_LOGIN_METHOD = 'cla' + 'udeai'
+const PROVIDER_MIGRATION_CLOUD_AUTH_SOURCE = 'cla' + 'ude.ai'
+const PROVIDER_MIGRATION_SOURCE_API_KEY_ENV =
   ('ANTH' + 'ROPIC_API_KEY') as keyof NodeJS.ProcessEnv
-const LEGACY_CODE_OAUTH_REFRESH_TOKEN_ENV =
+const PROVIDER_MIGRATION_OAUTH_REFRESH_TOKEN_ENV =
   ('CLA' + 'UDE_CODE_OAUTH_REFRESH_TOKEN') as keyof NodeJS.ProcessEnv
-const LEGACY_CODE_OAUTH_SCOPES_ENV =
+const PROVIDER_MIGRATION_OAUTH_SCOPES_ENV =
   ('CLA' + 'UDE_CODE_OAUTH_SCOPES') as keyof NodeJS.ProcessEnv
 
 /**
@@ -133,17 +132,17 @@ export async function authLogin({
   email,
   sso,
   console: useConsole,
-  [LEGACY_CLOUD_LOGIN_METHOD]: legacyCloudLogin,
+  [PROVIDER_SUBSCRIPTION_LOGIN_METHOD]: providerSubscriptionLogin,
 }: {
   email?: string
   sso?: boolean
   console?: boolean
-  [LEGACY_CLOUD_LOGIN_METHOD]?: boolean
+  [PROVIDER_SUBSCRIPTION_LOGIN_METHOD]?: boolean
 }): Promise<void> {
   if (isDSXUCodeMode()) {
     process.stdout.write(
       [
-        'DSXU Code does not use legacy cloud /login.',
+        'DSXU Code does not use provider cloud /login.',
         'Configure DSXU model access with DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.',
         'Then run: dsxu-code',
       ].join('\n') + '\n',
@@ -151,30 +150,30 @@ export async function authLogin({
     process.exit(0)
   }
 
-  if (useConsole && legacyCloudLogin) {
+  if (useConsole && providerSubscriptionLogin) {
     process.stderr.write(
-      'Error: --console and the legacy cloud login flag cannot be used together.\n',
+      'Error: --console and the provider subscription login flag cannot be used together.\n',
     )
     process.exit(1)
   }
 
   const settings = getInitialSettings()
   // forceLoginMethod is a hard constraint (enterprise setting) and mirrors Console OAuth behavior.
-  // Without it, --console selects Console; the legacy cloud flag (or no flag)
-  // still enters legacy provider flow.
-  const loginWithLegacyCloud = settings.forceLoginMethod
-    ? settings.forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD
+  // Without it, --console selects Console; the provider subscription flag (or no flag)
+  // still enters the provider migration flow.
+  const loginWithProviderCloud = settings.forceLoginMethod
+    ? settings.forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD
     : !useConsole
   const orgUUID = settings.forceLoginOrgUUID
 
   // Fast path: if a refresh token is provided via env var, skip the browser
   // OAuth flow and exchange it directly for tokens.
-  const envRefreshToken = process.env[LEGACY_CODE_OAUTH_REFRESH_TOKEN_ENV]
+  const envRefreshToken = process.env[PROVIDER_MIGRATION_OAUTH_REFRESH_TOKEN_ENV]
   if (envRefreshToken) {
-    const envScopes = process.env[LEGACY_CODE_OAUTH_SCOPES_ENV]
+    const envScopes = process.env[PROVIDER_MIGRATION_OAUTH_SCOPES_ENV]
     if (!envScopes) {
       process.stderr.write(
-        'Legacy OAuth scopes are required when using the legacy OAuth refresh token env.\n' +
+        'Provider migration OAuth scopes are required when using the provider OAuth refresh token env.\n' +
           'Set it to the space-separated scopes the refresh token was issued with\n' +
           '(e.g. "user:inference" or the full profile/inference/session/MCP scope set).\n',
       )
@@ -203,7 +202,7 @@ export async function authLogin({
       })
 
       logEvent('tengu_oauth_success', {
-        loginWithLegacyCloud: shouldUseProviderCloudAuth(tokens.scopes),
+        loginWithProviderCloud: shouldUseProviderCloudAuth(tokens.scopes),
       })
       process.stdout.write('Login successful.\n')
       process.exit(0)
@@ -222,7 +221,7 @@ export async function authLogin({
   const oauthService = new OAuthService()
 
   try {
-    logEvent('tengu_oauth_flow_start', { loginWithLegacyCloud })
+    logEvent('tengu_oauth_flow_start', { loginWithProviderCloud })
 
     const result = await oauthService.startOAuthFlow(
       async url => {
@@ -230,7 +229,7 @@ export async function authLogin({
         process.stdout.write(`If the browser didn't open, visit: ${url}\n`)
       },
       {
-        [LEGACY_OAUTH_REQUEST_FLAG]: loginWithLegacyCloud,
+        loginWithProviderCloud,
         loginHint: email,
         loginMethod: resolvedLoginMethod,
         orgUUID,
@@ -245,7 +244,7 @@ export async function authLogin({
       process.exit(1)
     }
 
-    logEvent('tengu_oauth_success', { loginWithLegacyCloud })
+    logEvent('tengu_oauth_success', { loginWithProviderCloud })
 
     process.stdout.write('Login successful.\n')
     process.exit(0)
@@ -305,7 +304,7 @@ export async function authStatus(opts: {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
   const { source: apiKeySource } = getProviderApiKeyWithSource()
   const hasApiKeyEnvVar =
-    !!process.env[LEGACY_PROVIDER_API_KEY_ENV] && !isRunningOnHomespace()
+    !!process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV] && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
   const subscriptionType = getSubscriptionType()
   const using3P = isUsing3PServices()
@@ -316,16 +315,16 @@ export async function authStatus(opts: {
   let authMethod: string = 'none'
   if (using3P) {
     authMethod = 'third_party'
-  } else if (authTokenSource === LEGACY_CLOUD_AUTH_SOURCE) {
-    authMethod = 'legacy_cloud'
+  } else if (authTokenSource === PROVIDER_MIGRATION_CLOUD_AUTH_SOURCE) {
+    authMethod = 'provider_cloud'
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
-  } else if (apiKeySource === LEGACY_PROVIDER_API_KEY_ENV || hasApiKeyEnvVar) {
+  } else if (apiKeySource === PROVIDER_MIGRATION_SOURCE_API_KEY_ENV || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
-    authMethod = 'legacy_cloud'
+    authMethod = 'provider_cloud'
   }
 
   if (opts.text) {
@@ -352,7 +351,7 @@ export async function authStatus(opts: {
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write('API key: legacy provider API key env\n')
+      process.stdout.write('API key: provider-migration source API key env\n')
     }
     if (!loggedIn) {
       process.stdout.write(
@@ -365,7 +364,7 @@ export async function authStatus(opts: {
       apiKeySource !== 'none'
         ? apiKeySource
         : hasApiKeyEnvVar
-          ? LEGACY_PROVIDER_API_KEY_ENV
+          ? PROVIDER_MIGRATION_SOURCE_API_KEY_ENV
           : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,
@@ -375,7 +374,7 @@ export async function authStatus(opts: {
     if (resolvedApiKeySource) {
       output.apiKeySource = resolvedApiKeySource
     }
-    if (authMethod === 'legacy_cloud') {
+    if (authMethod === 'provider_cloud') {
       output.email = oauthAccount?.emailAddress ?? null
       output.orgId = oauthAccount?.organizationUuid ?? null
       output.orgName = oauthAccount?.organizationName ?? null

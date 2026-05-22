@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 //
 // Only reachable in ant builds (gated by feature('VOICE_MODE') in useVoice.ts import).
 //
@@ -18,7 +17,7 @@ import {
   checkAndRefreshOAuthTokenIfNeeded,
   isProviderAuthEnabled,
 } from '../utils/auth.js'
-import { getCompatProviderTokens } from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlTokens } from './auth/dsxuProviderControlAuth.js'
 import { logForDebugging } from '../utils/debug.js'
 import { getUserAgent } from '../utils/http.js'
 import { logError } from '../utils/log.js'
@@ -29,7 +28,7 @@ import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 const KEEPALIVE_MSG = '{"type":"KeepAlive"}'
 const CLOSE_STREAM_MSG = '{"type":"CloseStream"}'
 
-import { getFeatureValue_CACHED_MAY_BE_STALE } from './analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from './analytics/featureFlags.js'
 
 //        Constants
 
@@ -100,7 +99,7 @@ export function isVoiceStreamAvailable(): boolean {
   if (!isProviderAuthEnabled()) {
     return false
   }
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
   return tokens !== null && tokens.accessToken !== null
 }
 
@@ -113,7 +112,7 @@ export async function connectVoiceStream(
   // Ensure OAuth token is fresh before connecting
   await checkAndRefreshOAuthTokenIfNeeded()
 
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
   if (!tokens?.accessToken) {
     logForDebugging('[voice_stream] No OAuth token available')
     return null
@@ -144,7 +143,7 @@ export async function connectVoiceStream(
   })
 
   // Route through conversation-engine with Deepgram Nova 3 (bypassing
-  // the server's project_bell_v2_config GrowthBook gate). The server
+  // the server's project_bell_v2_config feature flag provider gate). The server
   // clients independently.
   const isNova3 = getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_cobalt_frost',
@@ -254,7 +253,7 @@ export async function connectVoiceStream(
           clearTimeout(noDataTimer)
           resolveFinalize = null
           cancelNoDataTimer = null
-          // Legacy Deepgram can leave an interim in lastTranscriptText
+          // Historical Deepgram can leave an interim in lastTranscriptText
           // with no TranscriptEndpoint (websocket_manager.py sends
           // TranscriptChunk and TranscriptEndpoint as independent
           // channel items). All resolve triggers must promote it;

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "dsxu.v20.real-gap-productization-review.v1",
+  "generatedAt": "2026-05-14T16:30:00+08:00",
+  "currentGitStatusShort": {
+    "total": 1838,
+    "modified": 1630,
+    "deleted": 147,
+    "untracked": 61
+  },
+  "sourceInputs": [
+    "docs/DSXU_V20_MASTER_PLAN_20260514.md",
+    "docs/generated/DSXU_V20_BATCH_CLOSURE_BOARD_SUMMARY_20260514.json",
+    "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_UPDATE_SUMMARY_20260514.json",
+    "source import/use scan for MCP, plugin, skill, permission, bridge, browser, state, cost, evidence and recovery owners"
+  ],
+  "decisionSummary": {
+    "MAINLINE_PRESENT_NEEDS_RUNTIME_ACCEPTANCE": 2,
+    "MAINLINE_PRESENT_NEEDS_REAL_SERVER_ACCEPTANCE": 1,
+    "PARTIAL_CONTRACT_NEEDS_PRODUCTIZATION": 4,
+    "MAINLINE_PRESENT_NEEDS_REAL_BROWSER_ACCEPTANCE": 1,
+    "MAINLINE_PRESENT_NEEDS_CONTRACT_ACCEPTANCE": 1,
+    "MAINLINE_PRESENT_NEEDS_E2E_ACCEPTANCE": 1,
+    "PARTIAL_PRODUCTIZATION": 1,
+    "NOT_STARTED_BY_DESIGN": 1
+  },
+  "hardBlockers": [
+    "owner/Git signoff still pending for accepted/remapped packets",
+    "147 deletion mutation-ready paths are not staged or committed",
+    "4 ACL residues still require external ownership/permission closure",
+    "V20 real-gap acceptance is not complete",
+    "final six-stage acceptance and clean export remain last"
+  ],
+  "rule": "This review does not create a second runtime. Existing mainline owners carry productization; partial gaps must be closed in those owners or remain blocked."
+}

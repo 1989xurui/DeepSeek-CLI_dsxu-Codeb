@@ -3,9 +3,9 @@ import { isModelAlias, isModelFamilyAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'
 import { resolveOverriddenModel } from './modelStrings.js'
 import {
-  hasCompatProviderModelPrefix,
-  withCompatProviderModelPrefix,
-} from '../../dsxu/legacy/model/legacyProviderModelAllowlist.js'
+  hasProviderMigrationModelPrefix,
+  withProviderMigrationModelPrefix,
+} from './providerMigration/providerMigrationModelAllowlist.js'
 
 /**
  * Check if a model belongs to a given family by checking if its name
@@ -37,7 +37,7 @@ function prefixMatchesModel(modelName: string, prefix: string): boolean {
 
 /**
  * Check if a model matches a version-prefix entry in the allowlist.
- * Supports shorthand by mapping it to the hidden compatibility provider prefix.
+ * Supports shorthand by mapping it to the hidden provider migration model prefix.
  * Resolves input aliases before matching.
  */
 function modelMatchesVersionPrefix(model: string, entry: string): boolean {
@@ -50,10 +50,10 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
   if (prefixMatchesModel(resolvedModel, entry)) {
     return true
   }
-  // Try with the hidden compatibility model prefix for compatibility allowlists.
+  // Try with the hidden provider migration model prefix for migration allowlists.
   if (
-    !hasCompatProviderModelPrefix(entry) &&
-    prefixMatchesModel(resolvedModel, withCompatProviderModelPrefix(entry))
+    !hasProviderMigrationModelPrefix(entry) &&
+    prefixMatchesModel(resolvedModel, withProviderMigrationModelPrefix(entry))
   ) {
     return true
   }
@@ -164,13 +164,4 @@ export function isModelAllowed(model: string): boolean {
   }
 
   return false
-}
-
-
-// V14 lifecycle shim: modelallowlist
-export function processModelallowlistLifecycle(input) {
-  void input
-  const state = 'modelallowlist-state'
-  const lifecycle = 'modelallowlist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

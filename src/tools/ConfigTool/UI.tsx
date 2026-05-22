@@ -35,19 +35,3 @@ export function renderToolResultMessage(content: Output): React.ReactNode {
 export function renderToolUseRejectedMessage(): React.ReactNode {
   return <Text color="warning">Config change rejected</Text>;
 }
-
-// V14 strict lifecycle shim: tools-ConfigTool-UI
-export function processToolsConfigToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-ConfigTool-UI-state'
-  const lifecycle = 'tools-ConfigTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsConfigToolUIStrict(input) {
-  return processToolsConfigToolUIStrictLifecycle(input)
-}

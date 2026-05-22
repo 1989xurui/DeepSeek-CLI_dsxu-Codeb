@@ -4,7 +4,7 @@ import {
   getTerminalFocusState,
   subscribeTerminalFocus,
 } from '../ink/terminal-focus-state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { generateAwaySummary } from '../services/awaySummary.js'
 import type { Message } from '../types/message.js'
 import { createAwaySummaryMessage } from '../utils/messages.js'
@@ -122,13 +122,4 @@ export function useAwaySummary(
     if (getTerminalFocusState() !== 'blurred') return
     void generateRef.current?.()
   }, [isLoading])
-}
-
-
-// V14 lifecycle shim: useawaysummary
-export function processUseawaysummaryLifecycle(input) {
-  void input
-  const state = 'useawaysummary-state'
-  const lifecycle = 'useawaysummary:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -41,19 +41,3 @@ export function useGetToolFromMessages(toolUseID, tools, lookups) {
   }
   return t0;
 }
-
-// V14 strict lifecycle shim: components-messages-UserToolResultMessage-utils
-export function processComponentsMessagesUserToolResultMessageUtilsStrictLifecycle(input) {
-  void input
-  const state = 'components-messages-UserToolResultMessage-utils-state'
-  const lifecycle = 'components-messages-UserToolResultMessage-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsMessagesUserToolResultMessageUtilsStrict(input) {
-  return processComponentsMessagesUserToolResultMessageUtilsStrictLifecycle(input)
-}

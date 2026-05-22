@@ -184,12 +184,3 @@ function findBracketObject(
 
   return isInner ? { start: start + 1, end } : { start, end: end + 1 }
 }
-
-
-// V14 lifecycle shim: textobjects
-export function processTextobjectsLifecycle(input) {
-  void input
-  const state = 'textobjects-state'
-  const lifecycle = 'textobjects:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

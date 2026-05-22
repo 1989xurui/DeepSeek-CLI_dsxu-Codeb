@@ -219,11 +219,3 @@ export function formatTeammateMessageContent(content: string): string {
   }
   return content;
 }
-
-// V14 lifecycle shim: planapprovalmessage
-export function processPlanapprovalmessageLifecycle(input) {
-  void input
-  const state = 'planapprovalmessage-state'
-  const lifecycle = 'planapprovalmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

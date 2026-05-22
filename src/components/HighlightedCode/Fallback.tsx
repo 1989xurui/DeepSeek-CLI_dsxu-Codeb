@@ -190,11 +190,3 @@ function Highlighted(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: fallback
-export function processFallbackLifecycle(input) {
-  void input
-  const state = 'fallback-state'
-  const lifecycle = 'fallback:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

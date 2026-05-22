@@ -56,11 +56,3 @@ export function UserImageMessage(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: userimagemessage
-export function processUserimagemessageLifecycle(input) {
-  void input
-  const state = 'userimagemessage-state'
-  const lifecycle = 'userimagemessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

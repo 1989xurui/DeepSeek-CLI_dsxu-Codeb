@@ -1,13 +1,13 @@
 /**
- * SDK MCP Transport Bridge
+ * SDK MCP Control Transport
  *
- * This file implements a transport bridge that allows MCP servers running in the SDK process
+ * This file implements a control transport that allows MCP servers running in the SDK process
  * to communicate with the DSXU Code CLI process through control messages.
  *
  * ## Architecture Overview
  *
  * Unlike regular MCP servers that run as separate processes, SDK MCP servers run in-process
- * within the SDK. This requires a special transport mechanism to bridge communication between:
+ * within the SDK. This requires a special transport mechanism to route communication between:
  * - The CLI process (where the MCP client runs)
  * - The SDK process (where the SDK MCP server runs)
  *
@@ -50,7 +50,7 @@ export type SendMcpMessageCallback = (
 /**
  * CLI-side transport for SDK MCP servers.
  *
- * This transport is used in the CLI process to bridge communication between:
+ * This transport is used in the CLI process to route communication between:
  * - The CLI's MCP Client (which wants to call tools on SDK MCP servers)
  * - The SDK process (where the actual MCP server runs)
  *
@@ -97,7 +97,7 @@ export class SdkControlClientTransport implements Transport {
 /**
  * SDK-side transport for SDK MCP servers.
  *
- * This transport is used in the SDK process to bridge communication between:
+ * This transport is used in the SDK process to route communication between:
  * - Control requests coming from the CLI (via stdin)
  * - The actual MCP server running in the SDK process
  *
@@ -133,13 +133,4 @@ export class SdkControlServerTransport implements Transport {
     this.isClosed = true
     this.onclose?.()
   }
-}
-
-
-// V14 lifecycle shim: sdkcontroltransport
-export function processSdkcontroltransportLifecycle(input) {
-  void input
-  const state = 'sdkcontroltransport-state'
-  const lifecycle = 'sdkcontroltransport:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -125,11 +125,3 @@ export function PromptStep() {
   }
   return t9;
 }
-
-// V14 lifecycle shim: promptstep
-export function processPromptstepLifecycle(input) {
-  void input
-  const state = 'promptstep-state'
-  const lifecycle = 'promptstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

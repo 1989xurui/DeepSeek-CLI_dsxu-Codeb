@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   type DsxuBrowserContext,
   createDsxuBrowserMcpServer,
@@ -9,13 +8,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { format } from 'util'
 import { shutdownDatadog } from '../../services/analytics/datadog.js'
 import { shutdown1PEventLogging } from '../../services/analytics/firstPartyEventLogger.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
 import { initializeAnalyticsSink } from '../../services/analytics/sink.js'
-import { getCompatProviderAccessToken } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlAccessToken } from '../../services/auth/dsxuProviderControlAuth.js'
 import { enableConfigs, getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvTruthy } from '../envUtils.js'
@@ -145,7 +144,7 @@ export function createChromeContext(
           return getGlobalConfig().oauthAccount?.accountUuid
         },
         getOAuthToken: async () => {
-          return getCompatProviderAccessToken() ?? ''
+          return getProviderControlAccessToken() ?? ''
         },
         ...(isLocalBridge() && { devUserId: 'dev_user_local' }),
       },
@@ -155,8 +154,8 @@ export function createChromeContext(
     // a lightning-mode agent loop in Node and calls the extension's
     // lightning_turn tool once per iteration for execution.
     //
-    // Ant-only: the extension's lightning_turn is build-time-gated via
-    // import.meta.env.ANT_ONLY_BUILD - the whole lightning/ module graph is
+    // DSXU internal: the extension's lightning_turn is build-time-gated via
+    // import.meta.env.DSXU_INTERNAL_BUILD - the whole lightning/ module graph is
     // tree-shaken from the public extension build (build:prod greps for a
     // marker to verify). Without this injection, the Node MCP server's
     // ListTools also filters browser_task + lightning_turn out, so external

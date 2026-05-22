@@ -19,8 +19,8 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 
 /**
  * Check if the provider base URL is a first-party API URL.
- * Returns true if not set (default API) or points to the legacy first-party
- * API hosts used by the compatibility transport.
+ * Returns true if not set (default API) or points to the first-party
+ * API hosts accepted by the provider-migration transport boundary.
  */
 export function isFirstPartyProviderBaseUrl(): boolean {
   const providerHost = 'anth' + 'ropic'
@@ -38,12 +38,4 @@ export function isFirstPartyProviderBaseUrl(): boolean {
   } catch {
     return false
   }
-}
-
-// V14 lifecycle shim: providers
-export function processProvidersLifecycle(input) {
-  void input
-  const state = 'providers-state'
-  const lifecycle = 'providers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

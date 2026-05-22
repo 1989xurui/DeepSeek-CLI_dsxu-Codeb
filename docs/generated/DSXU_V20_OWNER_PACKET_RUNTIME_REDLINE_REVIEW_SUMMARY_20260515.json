@@ -1,0 +1,122 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.owner-packet-runtime-redline-review.v2",
+    "generatedAt":  "2026-05-15T06:28:54+08:00",
+    "totalRows":  1602,
+    "productScannedRows":  1586,
+    "directoryRows":  5,
+    "sourceFilesScanned":  1616,
+    "testEvidenceRows":  16,
+    "redlineRows":  59,
+    "packets":  [
+                    {
+                        "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                        "total":  467,
+                        "present":  467,
+                        "directories":  0,
+                        "productScanned":  467,
+                        "sourceFilesScanned":  467,
+                        "testEvidence":  0,
+                        "redlinePaths":  0,
+                        "clearProductPaths":  467,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                        "total":  285,
+                        "present":  285,
+                        "directories":  0,
+                        "productScanned":  285,
+                        "sourceFilesScanned":  285,
+                        "testEvidence":  0,
+                        "redlinePaths":  1,
+                        "clearProductPaths":  284,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                        "total":  170,
+                        "present":  170,
+                        "directories":  0,
+                        "productScanned":  169,
+                        "sourceFilesScanned":  169,
+                        "testEvidence":  1,
+                        "redlinePaths":  4,
+                        "clearProductPaths":  165,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-05-external-integration-adapter-boundary",
+                        "total":  29,
+                        "present":  29,
+                        "directories":  1,
+                        "productScanned":  27,
+                        "sourceFilesScanned":  32,
+                        "testEvidence":  2,
+                        "redlinePaths":  0,
+                        "clearProductPaths":  27,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                        "total":  106,
+                        "present":  106,
+                        "directories":  3,
+                        "productScanned":  99,
+                        "sourceFilesScanned":  124,
+                        "testEvidence":  7,
+                        "redlinePaths":  0,
+                        "clearProductPaths":  99,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                        "total":  178,
+                        "present":  178,
+                        "directories":  0,
+                        "productScanned":  178,
+                        "sourceFilesScanned":  178,
+                        "testEvidence":  0,
+                        "redlinePaths":  0,
+                        "clearProductPaths":  178,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                        "total":  20,
+                        "present":  20,
+                        "directories":  0,
+                        "productScanned":  20,
+                        "sourceFilesScanned":  20,
+                        "testEvidence":  0,
+                        "redlinePaths":  1,
+                        "clearProductPaths":  19,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                        "total":  205,
+                        "present":  205,
+                        "directories":  0,
+                        "productScanned":  202,
+                        "sourceFilesScanned":  202,
+                        "testEvidence":  3,
+                        "redlinePaths":  53,
+                        "clearProductPaths":  149,
+                        "missing":  0
+                    },
+                    {
+                        "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                        "total":  142,
+                        "present":  142,
+                        "directories":  1,
+                        "productScanned":  139,
+                        "sourceFilesScanned":  139,
+                        "testEvidence":  3,
+                        "redlinePaths":  0,
+                        "clearProductPaths":  139,
+                        "missing":  0
+                    }
+                ],
+    "redlineRule":  "Scan current OGR-06/12/05/07/08/10/03/04 product paths for old agent simulator, old engine MCP/builtin runtime, provider fallback runtime, UI/adapter direct runtime execution, and compatibility holding runtime names. Directory status rows are recursively scanned for source files; tests are classified as evidence, not product runtime.",
+    "conclusion":  "No redline-free packet is a final release PASS; clear rows remain pending owner/Git signoff and later six-stage tests."
+}

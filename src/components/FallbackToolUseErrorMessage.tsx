@@ -113,11 +113,3 @@ export function FallbackToolUseErrorMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: fallbacktooluseerrormessage
-export function processFallbacktooluseerrormessageLifecycle(input) {
-  void input
-  const state = 'fallbacktooluseerrormessage-state'
-  const lifecycle = 'fallbacktooluseerrormessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

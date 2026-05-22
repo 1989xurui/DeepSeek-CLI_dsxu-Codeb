@@ -94,12 +94,3 @@ async function handleCoordinatorPermission(
 
 export { handleCoordinatorPermission }
 export type { CoordinatorPermissionParams }
-
-
-// V14 lifecycle shim: coordinatorhandler
-export function processCoordinatorhandlerLifecycle(input) {
-  void input
-  const state = 'coordinatorhandler-state'
-  const lifecycle = 'coordinatorhandler:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

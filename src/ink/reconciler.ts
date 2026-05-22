@@ -517,20 +517,3 @@ const reconciler = createReconciler<
 dispatcher.discreteUpdates = reconciler.discreteUpdates.bind(reconciler)
 
 export default reconciler
-
-
-// V14 strict lifecycle shim: ink-reconciler
-export function processInkReconcilerStrictLifecycle(input) {
-  void input
-  const state = 'ink-reconciler-state'
-  const lifecycle = 'ink-reconciler:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runInkReconcilerStrict(input) {
-  return processInkReconcilerStrictLifecycle(input)
-}

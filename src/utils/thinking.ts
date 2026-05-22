@@ -1,17 +1,16 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import type { Theme } from './theme.js'
 import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { getCanonicalName } from './model/model.js'
 import { isDeepSeekV4ModelLike } from './model/deepseekV4Control.js'
 import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider } from './model/providers.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 import {
-  supportsCompatAdaptiveThinking,
-  supportsCompatProviderThinking,
-} from '../dsxu/legacy/model/legacyProviderThinking.js'
+  supportsProviderMigrationAdaptiveThinking,
+  supportsProviderMigrationThinking,
+} from './model/providerMigration/providerMigrationThinking.js'
 
 export type ThinkingConfig =
   | { type: 'adaptive' }
@@ -19,7 +18,7 @@ export type ThinkingConfig =
   | { type: 'disabled' }
 
 /**
- * Build-time gate (feature) + runtime gate (GrowthBook). The build flag
+ * Build-time gate (feature) + runtime gate (feature flag provider). The build flag
  * controls code inclusion in external builds; the GB flag controls rollout.
  */
 export function isUltrathinkEnabled(): boolean {
@@ -105,7 +104,7 @@ export function modelSupportsThinking(model: string): boolean {
   // launch DRI and research. This can greatly affect model quality and bashing.
   const canonical = getCanonicalName(model)
   const provider = getAPIProvider()
-  return supportsCompatProviderThinking({
+  return supportsProviderMigrationThinking({
     canonical,
     model,
     provider,
@@ -123,9 +122,9 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
     return supported3P
   }
   const canonical = getCanonicalName(model)
-  const compatibilitySupport = supportsCompatAdaptiveThinking(canonical)
-  if (compatibilitySupport !== undefined) {
-    return compatibilitySupport
+  const providerMigrationSupport = supportsProviderMigrationAdaptiveThinking(canonical)
+  if (providerMigrationSupport !== undefined) {
+    return providerMigrationSupport
   }
   // IMPORTANT: Do not change adaptive thinking support without notifying the
   // model launch DRI and research. This can greatly affect model quality and

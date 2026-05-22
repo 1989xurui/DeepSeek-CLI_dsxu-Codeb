@@ -16,7 +16,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { isCompatPromptCacheBreakDetectionExcludedModel } from '../../dsxu/legacy/model/legacyProviderPromptCacheEnv.js'
+import { isProviderMigrationPromptCacheBreakDetectionExcludedModel } from '../../utils/model/providerMigration/providerMigrationPromptCacheEnv.js'
 
 function getCacheBreakDiffPath(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -135,15 +135,15 @@ export function getDsxuPromptCacheRuntimeProfile(): {
   diffDir: string
   trackedSources: readonly string[]
   minCacheMissTokens: number
-  legacyPolicy: string
+  providerMigrationPolicy: string
 } {
   return {
     runtime: 'DSXU Prompt Cache Break Detection',
     diffDir: getPromptCacheDiffDir(),
     trackedSources: TRACKED_SOURCE_PREFIXES,
     minCacheMissTokens: MIN_CACHE_MISS_TOKENS,
-    legacyPolicy:
-      'Provider fields in snapshots are treated as wire/cache compatibility only; DSXU owns cache accounting and diff storage',
+    providerMigrationPolicy:
+      'Provider fields in snapshots are treated as wire/cache migration projection only; DSXU owns cache accounting and diff storage',
   }
 }
 
@@ -156,9 +156,9 @@ export function getDsxuPromptCacheRuntimeProfile(): {
 const CACHE_TTL_5MIN_MS = 5 * 60 * 1000
 export const CACHE_TTL_1HOUR_MS = 60 * 60 * 1000
 
-// Models to exclude from cache break detection through hidden compatibility policy.
+// Models to exclude from cache break detection through hidden provider-migration policy.
 function isExcludedModel(model: string): boolean {
-  return isCompatPromptCacheBreakDetectionExcludedModel(model)
+  return isProviderMigrationPromptCacheBreakDetectionExcludedModel(model)
 }
 
 /**
@@ -755,13 +755,4 @@ async function writeCacheBreakDiff(
   } catch {
     return undefined
   }
-}
-
-
-// V14 lifecycle shim: promptcachebreakdetection
-export function processPromptcachebreakdetectionLifecycle(input) {
-  void input
-  const state = 'promptcachebreakdetection-state'
-  const lifecycle = 'promptcachebreakdetection:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

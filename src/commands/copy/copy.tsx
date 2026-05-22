@@ -368,11 +368,3 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   }
   return <CopyPicker fullText={text} codeBlocks={codeBlocks} messageAge={age} onDone={onDone} />;
 };
-
-// V14 lifecycle shim: copy
-export function processCopyLifecycle(input) {
-  void input
-  const state = 'copy-state'
-  const lifecycle = 'copy:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -210,11 +210,3 @@ export function SelectMulti(t0) {
   return t12;
 }
 function _temp() {}
-
-// V14 lifecycle shim: selectmulti
-export function processSelectmultiLifecycle(input) {
-  void input
-  const state = 'selectmulti-state'
-  const lifecycle = 'selectmulti:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

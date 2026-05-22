@@ -138,11 +138,3 @@ function _temp2(exitState) {
 function _temp(s) {
   return s.mcp.tools;
 }
-
-// V14 lifecycle shim: mcptoollistview
-export function processMcptoollistviewLifecycle(input) {
-  void input
-  const state = 'mcptoollistview-state'
-  const lifecycle = 'mcptoollistview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

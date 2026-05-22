@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   getSessionIngressToken,
   setSessionIngressToken,
@@ -109,21 +108,21 @@ export function getSessionIngressAuthToken(): string | null {
     return envToken
   }
 
-  // 2. Check file descriptor (legacy path), with file fallback
+  // 2. Check file descriptor (provider-migration path), with file fallback
   return getTokenFromFileDescriptor()
 }
 
 /**
  * Build auth headers for the current session token.
- * Legacy session keys use Cookie auth + X-Organization-Uuid;
+ * Provider-migration session keys use Cookie auth + X-Organization-Uuid;
  * JWTs use Bearer auth.
  */
-const LEGACY_SESSION_KEY_PREFIX = ['sk', 'ant', 'sid'].join('-')
+const PROVIDER_MIGRATION_SESSION_KEY_PREFIX = ['sk', 'ant', 'sid'].join('-')
 
 export function getSessionIngressAuthHeaders(): Record<string, string> {
   const token = getSessionIngressAuthToken()
   if (!token) return {}
-  if (token.startsWith(LEGACY_SESSION_KEY_PREFIX)) {
+  if (token.startsWith(PROVIDER_MIGRATION_SESSION_KEY_PREFIX)) {
     const headers: Record<string, string> = {
       Cookie: `sessionKey=${token}`,
     }

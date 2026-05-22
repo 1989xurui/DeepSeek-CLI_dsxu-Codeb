@@ -46,11 +46,11 @@ const SEARCH_TOOLS = new Set([
   'find_dsns',
   // Notion (mcp.notion.com — kebab-case, normalized)
   'search',
-  // Gmail (DSXU/legacy hosted connector)
+  // Gmail (DSXU/provider-migration hosted connector)
   'gmail_search_messages',
-  // Google Drive (legacy hosted + @modelcontextprotocol/server-gdrive)
+  // Google Drive (provider-migration hosted + @modelcontextprotocol/server-gdrive)
   'google_drive_search',
-  // Google Calendar (DSXU/legacy hosted connector)
+  // Google Calendar (DSXU/provider-migration hosted connector)
   'gcal_find_my_free_time',
   'gcal_find_meeting_times',
   'gcal_find_user_emails',
@@ -84,7 +84,7 @@ const SEARCH_TOOLS = new Set([
   // Stripe
   'search_stripe_resources',
   'search_stripe_documentation',
-  // PubMed (DSXU/legacy hosted connector + community)
+  // PubMed (DSXU/provider-migration hosted connector + community)
   'search_articles',
   'find_related_articles',
   'lookup_article_by_citation',
@@ -256,16 +256,16 @@ const READ_TOOLS = new Set([
   'get_comments',
   'get_users',
   'get_self',
-  // Gmail (DSXU/legacy hosted connector)
+  // Gmail (DSXU/provider-migration hosted connector)
   'gmail_get_profile',
   'gmail_read_message',
   'gmail_read_thread',
   'gmail_list_drafts',
   'gmail_list_labels',
-  // Google Drive (legacy hosted + @modelcontextprotocol/server-gdrive)
+  // Google Drive (provider-migration hosted + @modelcontextprotocol/server-gdrive)
   'google_drive_fetch',
   'google_drive_export',
-  // Google Calendar (DSXU/legacy hosted connector)
+  // Google Calendar (DSXU/provider-migration hosted connector)
   'gcal_list_calendars',
   'gcal_list_events',
   'gcal_get_event',
@@ -450,7 +450,7 @@ const READ_TOOLS = new Set([
   'list_coupons',
   'list_disputes',
   'fetch_stripe_resources',
-  // PubMed (DSXU/legacy hosted connector + community)
+  // PubMed (DSXU/provider-migration hosted connector + community)
   'get_article_metadata',
   'get_full_text_article',
   'convert_article_ids',
@@ -466,7 +466,7 @@ const READ_TOOLS = new Set([
   'pubmed_spell',
   'pubmed_cite',
   'pubmed_related',
-  // BigQuery (DSXU/legacy hosted connector + community)
+  // BigQuery (DSXU/provider-migration hosted connector + community)
   'bigquery_query',
   'bigquery_schema',
   'list_dataset_ids',
@@ -625,13 +625,4 @@ export function getDsxuMcpCollapseRuntimeProfile(): {
       ),
     },
   }
-}
-
-
-// V14 lifecycle shim: classifyforcollapse
-export function processClassifyforcollapseLifecycle(input) {
-  void input
-  const state = 'classifyforcollapse-state'
-  const lifecycle = 'classifyforcollapse:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

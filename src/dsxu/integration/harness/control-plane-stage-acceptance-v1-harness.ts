@@ -14,11 +14,11 @@ import {
   shouldAllowDsxuUpstreamRelay,
 } from '../../network'
 import { createLocalDSXUProviderContract } from '../../engine/provider-contract'
-import { createDsxuLocalProviderBackend } from '../../engine/provider-backend/local-provider-backend'
+import { createDsxuLocalProviderBackend } from '../../../services/bridge/dsxuLocalProviderBackend'
 import {
   createRemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../../engine/provider-backend/dsxu-remote-session-manager'
+} from '../../../services/bridge/dsxuRemoteSessionCoordinator'
 
 export type DsxuControlPlaneStageCheck = {
   name: string
@@ -111,7 +111,7 @@ function checkNoLegacyDirectories(root: string): DsxuControlPlaneStageCheck {
 function checkProviderCompatFacade(root: string): DsxuControlPlaneStageCheck {
   const compatPath = join(
     root,
-    'src/dsxu/engine/provider-backend/dsxu-provider-compat.ts',
+    'src/services/bridge/dsxuRemoteBridgeFacade.ts',
   )
   const compat = readFileSync(compatPath, 'utf8')
   const forbiddenPatterns = [
@@ -127,7 +127,7 @@ function checkProviderCompatFacade(root: string): DsxuControlPlaneStageCheck {
     .map(pattern => pattern.source)
 
   return {
-    name: 'provider-compat-facade-thin',
+    name: 'provider-migration-facade-thin',
     ok: offenders.length === 0,
     evidence: {
       path: compatPath,
@@ -204,7 +204,7 @@ function checkSdkControlAdapter(): DsxuControlPlaneStageCheck {
   const unsupported = handleDsxuUnknownInboundControlMessage(
     registry,
     'cp12-sdk-1',
-    { type: 'legacy_bridge_reconnect', request_id: 'legacy' },
+    { type: 'provider_migration_bridge_reconnect', request_id: 'provider-migration' },
   )
   const supported = handleDsxuUnknownInboundControlMessage(
     registry,
@@ -411,7 +411,7 @@ async function checkProviderContract(): Promise<DsxuControlPlaneStageCheck> {
   return {
     name: 'provider-contract-defaults',
     ok:
-      provider.legacyBridge.enabled === false &&
+      provider.providerMigrationBridge.enabled === false &&
       blockedRemote.status === 'blocked' &&
       events.includes('remote_blocked') &&
       deniedPermission.behavior === 'deny' &&
@@ -419,7 +419,7 @@ async function checkProviderContract(): Promise<DsxuControlPlaneStageCheck> {
       !JSON.stringify(redacted).includes('should_not_leak'),
     evidence: {
       identity: provider.identity,
-      legacyBridge: provider.legacyBridge,
+      providerMigrationBridge: provider.providerMigrationBridge,
       blockedRemote,
       deniedPermission,
       events,

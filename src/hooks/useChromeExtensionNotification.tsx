@@ -1,8 +1,8 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { Text } from '../ink.js';
-import { isDSXUAISubscriber } from '../utils/auth.js';
+import { isProviderSubscriptionAccount } from '../utils/auth.js';
 import { isChromeExtensionInstalled, shouldEnableDsxuBrowserProvider } from '../utils/dsxuBrowserProvider/setup.js';
-import { isRunningOnHomespace } from '../utils/envUtils.js';
+import { isDsxuRuntimeMode, isRunningOnHomespace } from '../utils/envUtils.js';
 import { useStartupNotification } from './notifs/useStartupNotification.js';
 function getChromeFlag(): boolean | undefined {
   if (process.argv.includes('--chrome')) {
@@ -21,10 +21,10 @@ async function _temp() {
   if (!shouldEnableDsxuBrowserProvider(chromeFlag)) {
     return null;
   }
-  if (true && !isDSXUAISubscriber()) {
+  if (!isDsxuRuntimeMode() && !isProviderSubscriptionAccount()) {
     return {
       key: "chrome-requires-subscription",
-      jsx: <Text color="error">DSXU Browser Provider requires a legacy cloud subscription</Text>,
+      jsx: <Text color="error">DSXU Browser Provider requires provider-migration cloud credentials</Text>,
       priority: "immediate",
       timeoutMs: 5000
     };
@@ -46,12 +46,4 @@ async function _temp() {
     };
   }
   return null;
-}
-
-// V14 lifecycle shim: usechromeextensionnotification
-export function processUsechromeextensionnotificationLifecycle(input) {
-  void input
-  const state = 'usechromeextensionnotification-state'
-  const lifecycle = 'usechromeextensionnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

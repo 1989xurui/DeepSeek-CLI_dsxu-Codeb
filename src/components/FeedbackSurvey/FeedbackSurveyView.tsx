@@ -105,11 +105,3 @@ export function FeedbackSurveyView(t0) {
   }
   return t10;
 }
-
-// V14 lifecycle shim: feedbacksurveyview
-export function processFeedbacksurveyviewLifecycle(input) {
-  void input
-  const state = 'feedbacksurveyview-state'
-  const lifecycle = 'feedbacksurveyview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

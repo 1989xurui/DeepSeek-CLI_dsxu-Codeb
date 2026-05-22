@@ -3,7 +3,7 @@ import { getSessionId } from '../../bootstrap/state.js'
 import {
   getBridgeBaseUrlOverride,
   getBridgeTokenOverride,
-} from '../../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+} from '../../services/bridge/dsxuRemoteBridgeFacade.js'
 import type { ToolUseContext } from '../../Tool.js'
 import type {
   LocalJSXCommandContext,
@@ -57,14 +57,14 @@ export async function call(
   // Always save the custom title (session name)
   await saveCustomTitle(sessionId, newName, fullPath)
 
-  // Sync title to bridge session on the legacy cloud route (best-effort, non-blocking).
+  // Sync title to bridge session on the provider migration route (best-effort, non-blocking).
   // v2 env-less bridge stores cse_* in replBridgeSessionId —
   // updateBridgeSessionTitle retags internally for the compat endpoint.
   const appState = context.getAppState()
   const bridgeSessionId = appState.replBridgeSessionId
   if (bridgeSessionId && !isDsxuRuntimeMode()) {
     const tokenOverride = getBridgeTokenOverride()
-    void import('../../dsxu/engine/provider-backend/dsxu-provider-compat.js').then(
+    void import('../../services/bridge/dsxuRemoteBridgeFacade.js').then(
       ({ updateBridgeSessionTitle }) =>
         updateBridgeSessionTitle(bridgeSessionId, newName, {
           baseUrl: getBridgeBaseUrlOverride(),
@@ -91,7 +91,7 @@ export function getDsxuRenameCommandRuntimeProfile(): {
   command: '/rename'
   runtime: 'DSXU Local Session Rename'
   activationEvidence: readonly string[]
-  legacyIsolation: readonly string[]
+  providerMigrationIsolation: readonly string[]
 } {
   return {
     command: '/rename',
@@ -101,18 +101,9 @@ export function getDsxuRenameCommandRuntimeProfile(): {
       'saveAgentName updates DSXU prompt-bar session identity',
       'DSXU_CODE_MODE skips cloud bridge title synchronization',
     ],
-    legacyIsolation: [
-      'updateBridgeSessionTitle is legacy-only',
-      'legacy cloud title sync cannot run from DSXU runtime',
+    providerMigrationIsolation: [
+      'updateBridgeSessionTitle is provider migration remote only',
+      'provider migration title sync cannot run from DSXU runtime',
     ],
   }
-}
-
-
-// V14 lifecycle shim: rename
-export function processRenameLifecycle(input) {
-  void input
-  const state = 'rename-state'
-  const lifecycle = 'rename:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

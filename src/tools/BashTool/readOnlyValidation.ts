@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { z } from 'zod/v4'
 import { getOriginalCwd } from '../../bootstrap/state.js'
 import {
@@ -31,7 +30,7 @@ import {
   type PathCommand,
 } from './pathValidation.js'
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
-const LEGACY_PROVIDER_CLI_HELP_REGEXES = [
+const PROVIDER_MIGRATION_SOURCE_CLI_HELP_REGEXES = [
   new RegExp(`^${'cl' + 'aude'} -h$`),
   new RegExp(`^${'cl' + 'aude'} --help$`),
 ]
@@ -1099,9 +1098,9 @@ const COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   ...PYRIGHT_READ_ONLY_COMMANDS,
   ...DOCKER_READ_ONLY_COMMANDS,
 }
-// gh commands are ant-only since they make network requests, which goes against
+// gh commands are dsxu internal since they make network requests, which goes against
 // the read-only validation principle of no network access
-const ANT_ONLY_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
+const DSXU_INTERNAL_COMMAND_ALLOWLIST: Record<string, CommandConfig> = {
   // All gh read-only commands from shared validation map
   ...GH_READ_ONLY_COMMANDS,
   // aki ...provider internal knowledge-base search CLI.
@@ -1171,7 +1170,7 @@ function getCommandAllowlist(): Record<string, CommandConfig> {
     allowlist = rest
   }
   if (process.env.USER_TYPE === 'ant') {
-    return { ...allowlist, ...ANT_ONLY_COMMAND_ALLOWLIST }
+    return { ...allowlist, ...DSXU_INTERNAL_COMMAND_ALLOWLIST }
   }
   return allowlist
 }
@@ -1448,12 +1447,12 @@ const READONLY_COMMAND_REGEXES = new Set([
   // Allow newlines in single quotes (safe) but not in double quotes (could be dangerous with variable expansion)
   // Also allow optional 2>&1 stderr redirection at the end
   /^echo(?:\s+(?:'[^']*'|"[^"$<>\n\r]*"|[^|;&`$(){}><#\\!"'\s]+))*(?:\s+2>&1)?\s*$/,
-  // DSXU CLI help, with legacy provider help kept only for migration
+  // DSXU CLI help, with provider-migration source help kept only for migration intake
   /^dsxu -h$/,
   /^dsxu --help$/,
   /^dsxu-code -h$/,
   /^dsxu-code --help$/,
-  ...LEGACY_PROVIDER_CLI_HELP_REGEXES,
+  ...PROVIDER_MIGRATION_SOURCE_CLI_HELP_REGEXES,
   // Git readonly commands are now handled via COMMAND_ALLOWLIST with explicit flag validation
   // (git status, git blame, git ls-files, git config --get, git remote, git tag, git branch)
   /^uniq(?:\s+(?:-[a-zA-Z]+|--[a-zA-Z-]+(?:=\S+)?|-[fsw]\s+\d+))*(?:\s|$)\s*$/, // Only allow flags, no input/output files
@@ -1892,7 +1891,7 @@ export function getDsxuBashReadOnlyRuntimeProfile(): {
     activationEvidence: [
       'checkReadOnlyConstraints returns allow only when every subcommand validates read-only',
       'DSXU CLI help commands are explicitly recognized',
-      'legacy provider CLI help commands remain migration-only read-only entries',
+      'provider-migration source CLI help commands remain migration-only read-only entries',
     ],
   }
 }

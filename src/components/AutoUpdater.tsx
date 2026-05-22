@@ -197,19 +197,3 @@ export function AutoUpdater({
         </Text>}
     </Box>;
 }
-
-// V14 strict lifecycle shim: components-AutoUpdater
-export function processComponentsAutoUpdaterStrictLifecycle(input) {
-  void input
-  const state = 'components-AutoUpdater-state'
-  const lifecycle = 'components-AutoUpdater:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsAutoUpdaterStrict(input) {
-  return processComponentsAutoUpdaterStrictLifecycle(input)
-}

@@ -38,12 +38,3 @@ export function migrateBypassPermissionsAcceptedToSettings(): void {
     )
   }
 }
-
-
-// V14 lifecycle shim: migratebypasspermissionsacceptedtosettings
-export function processMigratebypasspermissionsacceptedtosettingsLifecycle(input) {
-  void input
-  const state = 'migratebypasspermissionsacceptedtosettings-state'
-  const lifecycle = 'migratebypasspermissionsacceptedtosettings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

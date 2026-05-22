@@ -115,11 +115,3 @@ function isSubsequence(text: string, query: string): boolean {
   }
   return j === query.length;
 }
-
-// V14 lifecycle shim: historysearchdialog
-export function processHistorysearchdialogLifecycle(input) {
-  void input
-  const state = 'historysearchdialog-state'
-  const lifecycle = 'historysearchdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

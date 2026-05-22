@@ -4,11 +4,3 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<undefined> {
     display: 'system'
   });
 }
-
-// V14 lifecycle shim: output-style
-export function processOutputStyleLifecycle(input) {
-  void input
-  const state = 'output-style-state'
-  const lifecycle = 'output-style:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

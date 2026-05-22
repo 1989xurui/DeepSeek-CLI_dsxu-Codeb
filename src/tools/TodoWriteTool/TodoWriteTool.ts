@@ -33,6 +33,20 @@ export const TodoWriteTool = buildTool({
   name: TODO_WRITE_TOOL_NAME,
   searchHint: 'manage the session task checklist',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Visible Task State',
+    sideEffects: [
+      'session-todo-state-write',
+      'verification-nudge-projection',
+    ],
+    permission: 'allow-only app-state update; no external filesystem mutation',
+    evidence: [
+      'inputSchema.todos',
+      'oldTodos/newTodos output',
+      'verificationNudgeNeeded output',
+    ],
+    uiProjection: 'visible todo/task checklist state',
+  },
   strict: true,
   async description() {
     return DESCRIPTION
@@ -113,12 +127,3 @@ export const TodoWriteTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: todowritetool
-export function processTodowritetoolLifecycle(input) {
-  void input
-  const state = 'todowritetool-state'
-  const lifecycle = 'todowritetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

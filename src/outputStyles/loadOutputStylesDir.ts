@@ -97,12 +97,3 @@ export function clearOutputStyleCaches(): void {
   loadMarkdownFilesForSubdir.cache?.clear?.()
   clearPluginOutputStyleCache()
 }
-
-
-// V14 lifecycle shim: loadoutputstylesdir
-export function processLoadoutputstylesdirLifecycle(input) {
-  void input
-  const state = 'loadoutputstylesdir-state'
-  const lifecycle = 'loadoutputstylesdir:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

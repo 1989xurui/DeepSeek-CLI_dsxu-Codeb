@@ -22,21 +22,3 @@ export const contextNonInteractive: Command = {
   },
   load: () => import('./context-noninteractive.js'),
 }
-
-
-// V14 command lifecycle shim: context
-export function processContextCommandLifecycle(input) {
-  void input
-  const state = 'context-command-state'
-  const lifecycle = 'context:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'context',
-  }
-}
-
-export function runContextCommand(input) {
-  return processContextCommandLifecycle(input)
-}

@@ -36,6 +36,21 @@ export const CollectEvidenceTool = buildTool({
   name: COLLECT_EVIDENCE_TOOL_NAME,
   searchHint: 'summarize latest verification evidence',
   maxResultSizeChars: 30_000,
+  runtimeMetadata: {
+    owner: 'DSXU Evidence Collector',
+    sideEffects: [
+      'transcript-evidence-read',
+      'verification-summary-projection',
+    ],
+    permission: 'read-only evidence summary; cannot replace required verification',
+    evidence: [
+      'semantic verification events',
+      'rawCommandCount/uniqueCommandCount output',
+      'evidenceDigest output',
+      'warningCount output',
+    ],
+    uiProjection: 'verification evidence digest and next action',
+  },
   async description() {
     return 'Collect concise verification evidence after native test runs'
   },

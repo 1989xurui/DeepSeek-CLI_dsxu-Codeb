@@ -55,11 +55,3 @@ export function GroupedToolUseContent({
     tools
   });
 }
-
-// V14 lifecycle shim: groupedtoolusecontent
-export function processGroupedtoolusecontentLifecycle(input) {
-  void input
-  const state = 'groupedtoolusecontent-state'
-  const lifecycle = 'groupedtoolusecontent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

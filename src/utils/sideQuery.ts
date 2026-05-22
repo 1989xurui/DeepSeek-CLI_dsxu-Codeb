@@ -219,12 +219,3 @@ export async function sideQuery(opts: SideQueryOptions): Promise<BetaMessage> {
 
   return response
 }
-
-
-// V14 lifecycle shim: sidequery
-export function processSidequeryLifecycle(input) {
-  void input
-  const state = 'sidequery-state'
-  const lifecycle = 'sidequery:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

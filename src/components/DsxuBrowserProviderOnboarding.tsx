@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { logEvent } from 'src/services/analytics/index.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- enter to continue
@@ -117,12 +117,4 @@ function _temp(current) {
     ...current,
     hasCompletedDsxuBrowserProviderOnboarding: true
   };
-}
-
-// V14 lifecycle shim: DsxuBrowserProvideronboarding
-export function processDsxuBrowserProvideronboardingLifecycle(input) {
-  void input
-  const state = 'DsxuBrowserProvideronboarding-state'
-  const lifecycle = 'DsxuBrowserProvideronboarding:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

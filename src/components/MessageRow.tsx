@@ -380,11 +380,3 @@ export function areMessageRowPropsEqual(prev: Props, next: Props): boolean {
   return true;
 }
 export const MessageRow = React.memo(MessageRowImpl, areMessageRowPropsEqual);
-
-// V14 lifecycle shim: messagerow
-export function processMessagerowLifecycle(input) {
-  void input
-  const state = 'messagerow-state'
-  const lifecycle = 'messagerow:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

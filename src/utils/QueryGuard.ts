@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Synchronous state machine for the query lifecycle, compatible with
  * React's `useSyncExternalStore`.

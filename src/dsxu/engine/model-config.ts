@@ -10,7 +10,7 @@ import {
   type DeepSeekV4ApiMode,
   type DeepSeekV4Model,
 } from '../../utils/model/deepseekV4Control'
-import { getCompatDeepSeekModelMapping } from '../legacy/model/legacyProviderModelRuntimeCompat'
+import { getProviderMigrationDeepSeekModelMapping } from '../../utils/model/providerMigration/providerMigrationModelCompat'
 
 export type DeepSeekApiMode = DeepSeekV4ApiMode
 
@@ -24,7 +24,7 @@ export type DeepSeekModelFeature = {
   supportsToolCalls: boolean
   supportsPrefixCompletion: boolean
   apiMode: DeepSeekApiMode
-  lifecycle: 'current' | 'compatibility'
+  lifecycle: 'current' | 'provider-migration'
 }
 
 export type DSXUDeepSeekModelConfig = DeepSeekModelConfig & DeepSeekModelFeature
@@ -59,17 +59,17 @@ export const DEEPSEEK_MODELS: Record<DeepSeekV4Model, DSXUDeepSeekModelConfig> =
   ]),
 ) as Record<DeepSeekV4Model, DSXUDeepSeekModelConfig>
 
-export const COMPATIBILITY_MAPPING: Record<string, DeepSeekV4Model> =
-  getCompatDeepSeekModelMapping()
+export const PROVIDER_MIGRATION_MODEL_MAPPING: Record<string, DeepSeekV4Model> =
+  getProviderMigrationDeepSeekModelMapping()
 
 export function getModelConfig(modelName: string): DSXUDeepSeekModelConfig {
   if (modelName in DEEPSEEK_MODELS) {
     return DEEPSEEK_MODELS[modelName as DeepSeekV4Model]
   }
 
-  const mappedName = COMPATIBILITY_MAPPING[modelName]
+  const mappedName = PROVIDER_MIGRATION_MODEL_MAPPING[modelName]
   if (mappedName && DEEPSEEK_MODELS[mappedName]) {
-    console.warn(`[ModelConfig] Using compatibility mapping: ${modelName} -> ${mappedName}`)
+    console.warn(`[ModelConfig] Using provider migration mapping: ${modelName} -> ${mappedName}`)
     return DEEPSEEK_MODELS[mappedName]
   }
 
@@ -85,8 +85,8 @@ export function isDeepSeekNativeModel(modelName: string): boolean {
   return modelName in DEEPSEEK_MODELS
 }
 
-export function isCompatibilityModel(modelName: string): boolean {
-  return modelName in COMPATIBILITY_MAPPING
+export function isProviderMigrationMappedModel(modelName: string): boolean {
+  return modelName in PROVIDER_MIGRATION_MODEL_MAPPING
 }
 
 export function getAvailableModels(): string[] {

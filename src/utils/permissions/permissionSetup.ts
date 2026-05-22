@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { relative } from 'path'
 import {
@@ -40,7 +39,7 @@ import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from 'src/services/analytics/growthbook.js'
+} from 'src/services/analytics/featureFlags.js'
 import {
   addDirHelpMessage,
   validateDirectoryForWorkspace,
@@ -77,7 +76,7 @@ import {
 } from './PermissionUpdate.js'
 import type { PermissionUpdateDestination } from './PermissionUpdateSchema.js'
 import {
-  normalizeLegacyToolName,
+  normalizeProviderMigrationToolName,
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
@@ -242,7 +241,7 @@ export function isDangerousTaskPermission(
   toolName: string,
   _ruleContent: string | undefined,
 ): boolean {
-  return normalizeLegacyToolName(toolName) === AGENT_TOOL_NAME
+  return normalizeProviderMigrationToolName(toolName) === AGENT_TOOL_NAME
 }
 
 function formatPermissionSource(source: PermissionRuleSource): string {
@@ -696,7 +695,7 @@ export function initialPermissionModeFromCLI({
 }): { mode: PermissionMode; notification?: string } {
   const settings = getSettings_DEPRECATED() || {}
 
-  // Check GrowthBook gate first - highest precedence
+  // Check feature flag provider gate first - highest precedence
   const growthBookDisableBypassPermissionsMode =
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
       'tengu_disable_bypass_permissions_mode',
@@ -891,7 +890,7 @@ export async function initializeToolPermissionContext({
   overlyBroadBashPermissions: DangerousPermissionInfo[]
 }> {
   // Parse comma-separated allowed and disallowed tools if provided
-  // Normalize legacy tool names (e.g., 'Task' ->'Agent') so that in-memory
+  // Normalize provider-migration tool aliases (e.g., 'Task' ->'Agent') so that in-memory
   // rule removal in stripDangerousPermissionsForAutoMode matches correctly.
   const parsedAllowedToolsCli = parseToolListFromCLI(allowedToolsCli).map(
     rule => permissionRuleValueToString(permissionRuleValueFromString(rule)),
@@ -902,9 +901,9 @@ export async function initializeToolPermissionContext({
   // We need to check if base tools were explicitly provided (not just empty default)
   if (baseToolsCli && baseToolsCli.length > 0) {
     const baseToolsResult = parseBaseToolsFromCLI(baseToolsCli)
-    // Normalize legacy tool names (e.g., 'Task' ->'Agent') so user-provided
+    // Normalize provider-migration tool aliases (e.g., 'Task' ->'Agent') so user-provided
     // base tool lists using old names still match canonical names.
-    const baseToolsSet = new Set(baseToolsResult.map(normalizeLegacyToolName))
+    const baseToolsSet = new Set(baseToolsResult.map(normalizeProviderMigrationToolName))
     const allToolNames = getToolsForDefaultPreset()
     const toolsToDisallow = allToolNames.filter(tool => !baseToolsSet.has(tool))
     parsedDisallowedToolsCli = [...parsedDisallowedToolsCli, ...toolsToDisallow]
@@ -946,7 +945,7 @@ export async function initializeToolPermissionContext({
   // Load all permission rules from disk
   const rulesFromDisk = loadAllPermissionRulesFromDisk()
 
-  // Ant-only: Detect overly broad shell allow rules for all modes.
+  // DSXU internal: Detect overly broad shell allow rules for all modes.
   // Bash(*) or PowerShell(*) are equivalent to YOLO mode for that shell.
   // Skip in CCR/BYOC where --allowed-tools is the intended pre-approval mechanism.
   // Variable name kept for return-field compat; contains both shells.
@@ -965,7 +964,7 @@ export async function initializeToolPermissionContext({
     ]
   }
 
-  // Ant-only: Detect dangerous shell permissions for auto mode
+  // DSXU internal: Detect dangerous shell permissions for auto mode
   // Dangerous permissions (like Bash(*), Bash(python:*), PowerShell(iex:*)) would auto-allow
   // before the classifier can evaluate them, defeating the purpose of safer YOLO mode
   let dangerousPermissions: DangerousPermissionInfo[] = []
@@ -1036,7 +1035,7 @@ export async function initializeToolPermissionContext({
 export type AutoModeGateCheckResult = {
   // Transform function (not a pre-computed context) so callers can apply it
   // inside setAppState(prev => ...) against the CURRENT context. Pre-computing
-  // the context here captured a stale snapshot: the async GrowthBook await
+  // the context here captured a stale snapshot: the async feature flag provider await
   // below can be outrun by a mid-turn shift-tab, and returning
   // { ...currentContext, ... } would overwrite the user's mode change.
   updateContext: (ctx: ToolPermissionContext) => ToolPermissionContext
@@ -1070,7 +1069,7 @@ export function getAutoModeUnavailableNotification(
  *
  * Returns a transform function (not a pre-computed context) that callers
  * apply inside setAppState(prev => ...) against the CURRENT context. This
- * prevents the async GrowthBook await from clobbering mid-turn mode changes
+ * prevents the async feature flag provider await from clobbering mid-turn mode changes
  * (e.g., user shift-tabs to acceptEdits while this check is in flight).
  *
  * The transform re-checks mode/prePlanMode against the fresh ctx to avoid
@@ -1086,7 +1085,7 @@ export async function verifyAutoModeGateAccess(
 ): Promise<AutoModeGateCheckResult> {
   // Auto-mode config ...runs in ALL builds (circuit breaker, carousel, kick-out)
   // Fresh read of tengu_auto_mode_config.enabled ...this async check runs once
-  // after GrowthBook initialization and is the authoritative source for
+  // after feature flag provider initialization and is the authoritative source for
   // isAutoModeAvailable. The sync startup path uses stale cache; this
   // corrects it. Circuit breaker (enabled==='disabled') takes effect here.
   const autoModeConfig = await getDynamicConfig_BLOCKS_ON_INIT<{
@@ -1095,7 +1094,7 @@ export async function verifyAutoModeGateAccess(
   }>('tengu_auto_mode_config', {})
   const enabledState = parseAutoModeEnabledState(autoModeConfig?.enabled)
   const disabledBySettings = isAutoModeDisabledBySettings()
-  // Treat settings-disable the same as GrowthBook 'disabled' for circuit-breaker
+  // Treat settings-disable the same as feature flag provider 'disabled' for circuit-breaker
   // semantics ...blocks SDK/explicit re-entry via isAutoModeGateEnabled().
   autoModeStateModule?.setAutoModeCircuitBroken(
     enabledState === 'disabled' || disabledBySettings,
@@ -1133,7 +1132,7 @@ export async function verifyAutoModeGateAccess(
   const autoModeFlagCli = autoModeStateModule?.getAutoModeFlagCli() ?? false
 
   // Return a transform function that re-evaluates context-dependent conditions
-  // against the CURRENT context at setAppState time. The async GrowthBook
+  // against the CURRENT context at setAppState time. The async feature flag provider
   // results above (canEnterAuto, carouselAvailable, enabledState, reason) are
   // closure-captured ...those don't depend on context. But mode, prePlanMode,
   // and isAutoModeAvailable checks MUST use the fresh ctx or a mid-await
@@ -1302,7 +1301,7 @@ export function getAutoModeUnavailableReason(): AutoModeUnavailableReason | null
 }
 
 /**
- * The `enabled` field in the tengu_auto_mode_config GrowthBook JSON config.
+ * The `enabled` field in the tengu_auto_mode_config feature flag provider JSON config.
  * Controls auto mode availability in UI surfaces (CLI, IDE, Desktop).
  * - 'enabled': auto mode is available in the shift-tab carousel (or equivalent)
  * - 'disabled': auto mode is fully unavailable ...circuit breaker for incident response
@@ -1322,7 +1321,7 @@ function parseAutoModeEnabledState(value: unknown): AutoModeEnabledState {
 
 /**
  * Reads the `enabled` field from tengu_auto_mode_config (cached, may be stale).
- * Defaults to 'disabled' if GrowthBook is unavailable or the field is unset.
+ * Defaults to 'disabled' if feature flag provider is unavailable or the field is unset.
  * Other surfaces (IDE, Desktop) should call this to decide whether to surface
  * auto mode in their mode pickers.
  */
@@ -1337,7 +1336,7 @@ const NO_CACHED_AUTO_MODE_CONFIG = Symbol('no-cached-auto-mode-config')
 
 /**
  * Like getAutoModeEnabledState but returns undefined when no cached value
- * exists (cold start, before GrowthBook init). Used by the sync
+ * exists (cold start, before feature flag provider init). Used by the sync
  * circuit-breaker check in initialPermissionModeFromCLI, which must not
  * conflate "not yet fetched" with "fetched and disabled" ...the former
  * defers to verifyAutoModeGateAccess, the latter blocks immediately.

@@ -59,6 +59,22 @@ export const CronCreateTool = buildTool({
   name: CRON_CREATE_TOOL_NAME,
   searchHint: 'schedule a recurring or one-shot prompt',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Scheduled Task Lifecycle',
+    sideEffects: [
+      'cron-task-create',
+      'durable-schedule-file-write-when-enabled',
+      'scheduler-enable-state-write',
+    ],
+    permission: 'passthrough permission before schedule creation',
+    evidence: [
+      'inputSchema.cron/prompt',
+      'cron parser validation',
+      'scheduled task id output',
+      'humanSchedule output',
+    ],
+    uiProjection: 'scheduled task creation message and next run summary',
+  },
   shouldDefer: true,
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -116,6 +132,12 @@ export const CronCreateTool = buildTool({
     }
     return { result: true }
   },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `CronCreate wants to schedule '${input.prompt}' on '${input.cron}'.`,
+    }
+  },
   async call({ cron, prompt, recurring = true, durable = false }) {
     // Kill switch forces session-only; schema stays stable so the model sees
     // no validation errors when the gate flips mid-session.
@@ -157,12 +179,3 @@ export const CronCreateTool = buildTool({
   renderToolUseMessage: renderCreateToolUseMessage,
   renderToolResultMessage: renderCreateResultMessage,
 } satisfies ToolDef<InputSchema, CreateOutput>)
-
-
-// V14 lifecycle shim: croncreatetool
-export function processCroncreatetoolLifecycle(input) {
-  void input
-  const state = 'croncreatetool-state'
-  const lifecycle = 'croncreatetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

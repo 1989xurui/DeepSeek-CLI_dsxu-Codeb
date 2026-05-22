@@ -1,11 +1,11 @@
-﻿import { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
 import { verifyApiKey } from '../services/api/dsxu.js'
 import {
   getProviderApiKeyWithSource,
   getApiKeyFromApiKeyHelper,
   isProviderAuthEnabled,
-  isDSXUAISubscriber,
+  isProviderSubscriptionAccount,
 } from '../utils/auth.js'
 
 export type VerificationStatus =
@@ -23,7 +23,7 @@ export type ApiKeyVerificationResult = {
 
 export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    if (!isProviderAuthEnabled() || isDSXUAISubscriber()) {
+    if (!isProviderAuthEnabled() || isProviderSubscriptionAccount()) {
       return 'valid'
     }
     // Use skipRetrievingKeyFromApiKeyHelper to avoid executing apiKeyHelper
@@ -41,7 +41,7 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
   const [error, setError] = useState<Error | null>(null)
 
   const verify = useCallback(async (): Promise<void> => {
-    if (!isProviderAuthEnabled() || isDSXUAISubscriber()) {
+    if (!isProviderAuthEnabled() || isProviderSubscriptionAccount()) {
       setStatus('valid')
       return
     }
@@ -81,13 +81,4 @@ export function useApiKeyVerification(): ApiKeyVerificationResult {
     reverify: verify,
     error,
   }
-}
-
-
-// V14 lifecycle shim: useapikeyverification
-export function processUseapikeyverificationLifecycle(input) {
-  void input
-  const state = 'useapikeyverification-state'
-  const lifecycle = 'useapikeyverification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

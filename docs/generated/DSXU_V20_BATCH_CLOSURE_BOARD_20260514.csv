@@ -1,0 +1,9 @@
+gate,count,status,nextAction
+"release-surface-source","2","CLOSED_SOURCE_BLOCKERS","keep V18/V19/V20 source-truth docs release-excluded/rewrite; no active public source debt"
+"runtime-redline-high-risk-packets","919","REDLINE_CLEAR_PENDING_OWNER_GIT","owner/Git signoff can focus on absorb/delete/release-exclude instead of hidden runtime"
+"ogr12-mainline-keep","248","KEEP_PENDING_OWNER_GIT","sign off imported utilities as mainline helpers only"
+"ogr12-delete-state","1","DELETE_STATE_PENDING_GIT_MUTATION","single duplicate desktop deep-link helper already removed from source; stage removal only after Git review"
+"ogr12-replace-delete-still-present","0","NONE_REMAINING_AFTER_RESOLVER_FIX","no present no-import shared utility remains after .js-to-.ts import resolution"
+"deletion-mutation-ready","147","READY_PENDING_GIT_MUTATION","stage removal only after explicit Git mutation review; do not restore old runtime"
+"acl-residue","4","EXTERNAL_PERMISSION_BLOCKED","delete when ownership/ACL permits; do not preserve tombstones as product paths"
+"final-tests-clean-export","1","BLOCKED_UNTIL_OWNER_GIT_MUTATION_REAL_GAP","six-stage tests and clean export remain last"

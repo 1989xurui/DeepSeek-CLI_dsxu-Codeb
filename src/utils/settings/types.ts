@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
-import { LEGACY_CLOUD_CONFIG_SCOPE } from '../../constants/legacyProviderProtocol.js'
+import { PROVIDER_MIGRATION_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
@@ -11,13 +11,13 @@ import {
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
 import {
   DSXU_CODE_SETTINGS_SCHEMA_URL,
-  LEGACY_CODE_SETTINGS_SCHEMA_URL,
+  PROVIDER_MIGRATION_CODE_SETTINGS_SCHEMA_URL,
 } from './constants.js'
 import { PermissionRuleSchema } from './permissionValidation.js'
 
-export const LEGACY_MEMORY_EXCLUDES_SETTING = `${'clau' + 'de'}MdExcludes`
+export const PROVIDER_MIGRATION_MEMORY_EXCLUDES_SETTING = `${'clau' + 'de'}MdExcludes`
 
-// Re-export hook schemas and types from centralized location for backward compatibility
+// Re-export hook schemas and types from the centralized location for settings migration.
 export {
   type AgentHook,
   type BashCommandHook,
@@ -215,10 +215,10 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
 /**
  * Unified schema for settings files
  *
- * ⚠️ BACKWARD COMPATIBILITY NOTICE ⚠️
+ * Settings migration safety notice
  *
  * This schema defines the structure of DSXU user settings files.
- * We support backward-compatible changes! Here's how:
+ * We support schema-stable changes during settings migration. Here's how:
  *
  * ✅ ALLOWED CHANGES:
  * - Adding new optional fields (always use .optional())
@@ -234,12 +234,12 @@ export const DeniedMcpServerEntrySchema = lazySchema(() =>
  * - Making types more restrictive
  * - Renaming fields without keeping the old name
  *
- * TO ENSURE BACKWARD COMPATIBILITY:
+ * TO ENSURE SETTINGS MIGRATION SAFETY:
  * 1. Run: npm run test:file -- test/utils/settings/backward-compatibility.test.ts
  * 2. If tests fail, you've introduced a breaking change
  * 3. When adding new fields, add a test to BACKWARD_COMPATIBILITY_CONFIGS
  *
- * The settings system handles backward compatibility automatically:
+ * The settings system handles historical config safety automatically:
  * - When updating settings, invalid fields are preserved in the file (see settings.ts lines 233-249)
  * - Type coercion via z.coerce (e.g., env vars convert numbers to strings)
  * - .passthrough() preserves unknown fields in permissions object
@@ -264,7 +264,7 @@ export const SettingsSchema = lazySchema(() =>
       $schema: z
         .union([
           z.literal(DSXU_CODE_SETTINGS_SCHEMA_URL),
-          z.literal(LEGACY_CODE_SETTINGS_SCHEMA_URL),
+          z.literal(PROVIDER_MIGRATION_CODE_SETTINGS_SCHEMA_URL),
         ])
         .optional()
         .describe('JSON Schema reference for DSXU Code settings'),
@@ -550,7 +550,7 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'When set in managed settings, blocks non-plugin customization sources for the listed surfaces. ' +
             'Array form locks specific surfaces (e.g. ["skills", "hooks"]); `true` locks all four; `false` is an explicit no-op. ' +
-            'Blocked: ~/.dsxu/{surface}/, .dsxu/{surface}/ (project), legacy config aliases, settings.json hooks, .mcp.json. ' +
+            'Blocked: ~/.dsxu/{surface}/, .dsxu/{surface}/ (project), provider-migration source config aliases, settings.json hooks, .mcp.json. ' +
             'NOT blocked: managed (policySettings) sources, plugin-provided customizations. ' +
             'Composes with strictKnownMarketplaces for end-to-end admin control — plugins gated by ' +
             'marketplace allowlist, everything else blocked here.',
@@ -629,12 +629,12 @@ export const SettingsSchema = lazySchema(() =>
             'these exact sources are blocked from being added as marketplaces. The check happens BEFORE ' +
             'downloading, so blocked sources never touch the filesystem.',
         ),
-      // Force a specific login method: legacy cloud subscriber auth or console billing.
+      // Force a specific login method: provider subscription auth or console billing.
       forceLoginMethod: z
-        .enum([LEGACY_CLOUD_CONFIG_SCOPE, 'console'])
+        .enum([PROVIDER_MIGRATION_CONFIG_SCOPE, 'console'])
         .optional()
         .describe(
-          'Force a specific login method: legacy cloud subscriber auth or console billing',
+          'Force a specific login method: provider subscription auth or console billing',
         ),
       // Organization UUID to use for OAuth login (will be added as URL param to authorization URL)
       forceLoginOrgUUID: z
@@ -820,7 +820,7 @@ export const SettingsSchema = lazySchema(() =>
               .enum(['disable'])
               .optional()
               .describe(
-                'Prevent legacy CLI protocol handler registration with the OS',
+                'Prevent provider-migration source CLI protocol handler registration with the OS',
               ),
           }
         : {}),
@@ -835,7 +835,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Custom directory for plan files, relative to project root. ' +
-            'If not set, defaults to ~/.dsxu/plans/ with legacy config fallback.',
+            'If not set, defaults to ~/.dsxu/plans/ with provider-migration source config fallback.',
         ),
       ...(process.env.USER_TYPE === 'ant'
         ? {
@@ -895,7 +895,7 @@ export const SettingsSchema = lazySchema(() =>
           }
         : {}),
       // Teams/Enterprise opt-IN for channel notifications. Default OFF.
-      // MCP servers that declare the legacy channel capability can push
+      // MCP servers that declare the provider-migration source channel capability can push
       // inbound messages into the conversation; for managed orgs this only
       // works when explicitly enabled. Which servers can connect at all is
       // still governed by allowedMcpServers/deniedMcpServers. Not
@@ -907,7 +907,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Teams/Enterprise opt-in for channel notifications (MCP servers with the ' +
-            'legacy channel capability pushing inbound messages). Default off. ' +
+            'provider-migration source channel capability pushing inbound messages). Default off. ' +
             'Set true to allow; users then select servers via --channels.',
         ),
       // Org-level channel plugin allowlist. When set, REPLACES the
@@ -1063,12 +1063,12 @@ export const SettingsSchema = lazySchema(() =>
         .array(z.string())
         .optional()
         .describe(
-          'Glob patterns or absolute paths of DSXU.md / legacy memory files to exclude from loading. ' +
+          'Glob patterns or absolute paths of DSXU.md / provider-migration source memory files to exclude from loading. ' +
             'Patterns are matched against absolute file paths using picomatch. ' +
             'Only applies to User, Project, and Local memory types (Managed/policy files cannot be excluded). ' +
             'Examples: "/home/user/monorepo/DSXU.md", "**/code/DSXU.md", "**/some-dir/.dsxu/rules/**"',
         ),
-      [LEGACY_MEMORY_EXCLUDES_SETTING]: z.array(z.string()).optional(),
+      [PROVIDER_MIGRATION_MEMORY_EXCLUDES_SETTING]: z.array(z.string()).optional(),
       pluginTrustMessage: z
         .string()
         .optional()

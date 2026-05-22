@@ -66,11 +66,3 @@ function _temp() {
   } = getSettingsWithAllErrors();
   return errors;
 }
-
-// V14 lifecycle shim: usesettingserrors
-export function processUsesettingserrorsLifecycle(input) {
-  void input
-  const state = 'usesettingserrors-state'
-  const lifecycle = 'usesettingserrors:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

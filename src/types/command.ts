@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { UUID } from 'crypto'
 import type { CanUseToolFn } from '../hooks/useCanUseTool.js'
@@ -157,25 +156,25 @@ type LocalJSXCommand = {
  *
  * This is separate from `isEnabled()`:
  *   - `availability` = who can use this (auth/provider requirement, static)
- *   - `isEnabled()`  = is this turned on right now (GrowthBook, platform, env vars)
+ *   - `isEnabled()`  = is this turned on right now (feature flag provider, platform, env vars)
  *
  * Commands without `availability` are available everywhere.
  * Commands with `availability` are only shown if the user matches at least one
  * of the listed auth types. See meetsAvailabilityRequirement() in commands.ts.
  *
  * Example: `availability: ['dsxu', 'console']` shows the command in DSXU
- * runtime mode and direct Console API key users, while still allowing legacy
- * DSXU-gated commands to declare `dsxu-ai` during migration.
+ * runtime mode and direct Console API key users, while still allowing provider
+ * migration-gated commands to declare `dsxu-ai` during migration.
  */
 export type CommandAvailability =
-  // DSXU runtime mode (DeepSeek/DSXU provider, not legacy cloud OAuth)
+  // DSXU runtime mode (DeepSeek/DSXU provider, not provider migration OAuth)
   | 'dsxu'
-  // Legacy cloud OAuth subscriber (Pro/Max/Team/Enterprise)
+  // Provider migration OAuth subscriber (Pro/Max/Team/Enterprise)
   | 'dsxu-ai'
-  // Console API key user (direct provider API, not via legacy cloud OAuth)
+  // Console API key user (direct provider API, not via provider migration OAuth)
   | 'console'
 
-export const LEGACY_CLOUD_AVAILABILITY =
+export const PROVIDER_MIGRATION_CLOUD_AVAILABILITY =
   ('clau' + 'de-ai') as CommandAvailability
 
 export type CommandBase = {
@@ -226,7 +225,7 @@ export function getDsxuCommandRuntimeProfile(): {
   commandKinds: readonly string[]
   availability: readonly CommandAvailability[]
   availabilityModes: readonly CommandAvailability[]
-  legacyPolicy: string
+  providerMigrationPolicy: string
   activationEvidence: readonly string[]
 } {
   return {
@@ -234,12 +233,12 @@ export function getDsxuCommandRuntimeProfile(): {
     commandKinds: ['prompt', 'local', 'local-jsx'],
     availability: ['dsxu', 'console', 'dsxu-ai'],
     availabilityModes: ['dsxu', 'console', 'dsxu-ai'],
-    legacyPolicy:
+    providerMigrationPolicy:
       'commands may declare dsxu-ai during migration, but DSXU runtime mode has its own first-class availability gate',
     activationEvidence: [
       'PromptCommand carries tool/model/hook/skill metadata for model-visible command execution',
       'LocalCommand and LocalJSXCommand keep shell/UI command execution behind typed call contracts',
-      'availability separates DSXU runtime commands from legacy cloud and console-only commands',
+      'availability separates DSXU runtime commands from provider migration and console-only commands',
       'LocalJSXCommandContext carries resume, MCP config, IDE install, and API key change hooks into slash commands',
     ],
   }

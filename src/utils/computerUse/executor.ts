@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * CLI `ComputerExecutor` implementation. Wraps two native modules:
  *   - `@ant/computer-use-input` (Rust/enigo) ...mouse, keyboard, frontmost app

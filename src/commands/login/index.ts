@@ -9,8 +9,8 @@ export default () =>
     description: isDsxuRuntimeMode()
       ? 'Configure DSXU model provider credentials'
       : hasProviderApiKeyAuth()
-        ? 'Switch legacy provider accounts'
-        : 'Sign in with a legacy provider account',
+        ? 'Switch provider migration accounts'
+        : 'Sign in with a provider migration account',
     isEnabled: () => !isEnvTruthy(process.env.DISABLE_LOGIN_COMMAND),
     load: () => import('./login.js'),
   }) satisfies Command
@@ -18,36 +18,18 @@ export default () =>
 export function getDsxuLoginCommandRuntimeProfile(): {
   runtime: 'DSXU Login Command'
   dsxuDescription: string
-  legacyPolicy: string
+  providerMigrationPolicy: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Login Command',
     dsxuDescription: 'Configure DSXU model provider credentials',
-    legacyPolicy:
-      'Legacy provider wording is kept only outside DSXU runtime mode for migration compatibility',
+    providerMigrationPolicy:
+      'Provider migration wording is kept only outside DSXU runtime mode',
     activationEvidence: [
-      'DSXU runtime mode replaces legacy provider sign-in description',
+      'DSXU runtime mode replaces provider migration sign-in description',
       'DISABLE_LOGIN_COMMAND still disables the command globally',
-      'command lifecycle shim remains available for audit evidence',
+      'command metadata remains the only login command owner surface',
     ],
   }
-}
-
-
-// V14 command lifecycle shim: login
-export function processLoginCommandLifecycle(input) {
-  void input
-  const state = 'login-command-state'
-  const lifecycle = 'login:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'login',
-  }
-}
-
-export function runLoginCommand(input) {
-  return processLoginCommandLifecycle(input)
 }

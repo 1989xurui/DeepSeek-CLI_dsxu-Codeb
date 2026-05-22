@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import { execa } from 'execa';
 import { readFile } from 'fs/promises';
@@ -29,10 +28,10 @@ const INTERNAL_MARKETPLACE_NAME = 'dsxu-code-marketplace';
 const INTERNAL_MARKETPLACE_REPO = 'providers/dsxu-code-marketplace';
 const OFFICIAL_MARKETPLACE_REPO = 'providers/dsxu-plugins-official';
 function getMarketplaceName(): string {
-  return "external" === 'ant' ? INTERNAL_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME;
+  return false ? INTERNAL_MARKETPLACE_NAME : OFFICIAL_MARKETPLACE_NAME;
 }
 function getMarketplaceRepo(): string {
-  return "external" === 'ant' ? INTERNAL_MARKETPLACE_REPO : OFFICIAL_MARKETPLACE_REPO;
+  return false ? INTERNAL_MARKETPLACE_REPO : OFFICIAL_MARKETPLACE_REPO;
 }
 function getPluginId(): string {
   return `thinkback@${getMarketplaceName()}`;

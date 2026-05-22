@@ -1,1 +1,1 @@
-export * from '../dsxu/legacy/auth/legacyProviderAuth.js'
+export * from '../services/auth/dsxuProviderAuth.js'

@@ -102,11 +102,3 @@ export async function installPluginAndNotify(pluginId: string, pluginName: strin
     });
   }
 }
-
-// V14 lifecycle shim: usepluginrecommendationbase
-export function processUsepluginrecommendationbaseLifecycle(input) {
-  void input
-  const state = 'usepluginrecommendationbase-state'
-  const lifecycle = 'usepluginrecommendationbase:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

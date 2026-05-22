@@ -26,33 +26,44 @@ describe('C05 tool compatibility absorption clean', () => {
     expect(out.result?.content.toLowerCase()).toContain('dsxu-compat');
   });
 
-  test('TaskCreateTool routes into Agent lifecycle create action', async () => {
-    const out = await executor.execute({
-      toolId: 'TaskCreateTool',
-      input: { taskId: 'task-c05-1', title: 'compat-create' },
-      context: baseContext,
-    });
+  test('TaskCreateTool alias executes the real mainline TaskCreate tool', async () => {
+    const previousTaskListId = process.env.DSXU_CODE_TASK_LIST_ID;
+    process.env.DSXU_CODE_TASK_LIST_ID = `c05-task-mainline-${Date.now()}`;
+    try {
+      const out = await executor.execute({
+        toolId: 'TaskCreateTool',
+        input: {
+          subject: 'compat-create',
+          description: 'Verify TaskCreateTool lands on the real task owner.',
+          activeForm: 'Verifying TaskCreate owner',
+          metadata: { source: 'c05-tool-compat' },
+        },
+        context: baseContext,
+      });
 
-    expect(out.allowed).toBeTrue();
-    expect(out.result?.content).toContain('agent-action=create');
-    expect(out.result?.content).toContain('task-c05-1');
+      expect(out.allowed).toBeTrue();
+      expect(out.result?.content).toContain('Task #1 created successfully');
+      expect(out.result?.content).not.toContain('agent-action=');
+    } finally {
+      if (previousTaskListId === undefined) {
+        delete process.env.DSXU_CODE_TASK_LIST_ID;
+      } else {
+        process.env.DSXU_CODE_TASK_LIST_ID = previousTaskListId;
+      }
+    }
   });
 
-  test('TaskStopTool routes into Agent lifecycle stop action', async () => {
-    await executor.execute({
-      toolId: 'TaskCreateTool',
-      input: { taskId: 'task-c05-2', title: 'to-stop' },
-      context: baseContext,
-    });
-
+  test('TaskStopTool alias does not fall back to local Agent lifecycle simulation', async () => {
     const out = await executor.execute({
       toolId: 'TaskStopTool',
-      input: { taskId: 'task-c05-2' },
+      input: { task_id: 'missing-c05-task' },
       context: baseContext,
     });
 
     expect(out.allowed).toBeTrue();
-    expect(out.result?.content).toContain('agent-action=stop');
+    expect(out.result?.isError).toBeTrue();
+    expect(out.result?.content).toContain('No task found with ID: missing-c05-task');
+    expect(out.result?.content).not.toContain('agent-action=');
   });
 
   test('ReadTool alias remains executable in mainline', async () => {
@@ -70,15 +81,15 @@ describe('C05 tool compatibility absorption clean', () => {
     expect(out.result?.content).toContain('line-a');
   });
 
-  test('EnterPlanModeTool routes to AgentTool message action', async () => {
+  test('EnterPlanModeTool alias executes the real plan-mode owner', async () => {
     const out = await executor.execute({
       toolId: 'EnterPlanModeTool',
-      input: { taskId: 'task-c05-plan', message: 'enter-plan' },
+      input: {},
       context: baseContext,
     });
 
     expect(out.allowed).toBeTrue();
-    expect(out.result?.content).toContain('agent-action=message');
-    expect(out.result?.content).toContain('task-c05-plan');
+    expect(out.result?.content).toContain('Entered plan mode');
+    expect(out.result?.content).not.toContain('agent-action=');
   });
 });

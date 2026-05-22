@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "dsxu.v24.work-state-timeline-acceptance.v1",
+  "generatedAt": "2026-05-15T05:27:32.610Z",
+  "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+  "rows": [
+    {
+      "id": "workstate-goal-plan-current-step",
+      "owner": "UI/TUI Work-State",
+      "mechanism": "visible goal, plan, current step, and next action",
+      "evidenceFiles": "src/screens/REPL.tsx; src/components/PromptInput/PromptInput.tsx; src/components/PromptInput/PromptInputFooter.tsx",
+      "fileHitCount": 3,
+      "signalHitCount": 1407,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "capture DSXU window or stream-json trace showing state transitions"
+    },
+    {
+      "id": "workstate-tool-permission-visible",
+      "owner": "Tool Gate / Permission Gate",
+      "mechanism": "visible tool execution and permission request state",
+      "evidenceFiles": "src/components/permissions/PermissionRequest.tsx; src/tools/BashTool/BashTool.tsx; src/tools/PowerShellTool/PowerShellTool.tsx",
+      "fileHitCount": 3,
+      "signalHitCount": 1812,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "prove permission denial and recovery are visible in TUI/CLI timeline"
+    },
+    {
+      "id": "workstate-failure-recovery-visible",
+      "owner": "Recovery",
+      "mechanism": "visible failure owner, cause, verified facts, and recovery path",
+      "evidenceFiles": "src/utils/conversationRecovery.ts; src/utils/errors.ts",
+      "fileHitCount": 2,
+      "signalHitCount": 1683,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "run failure-injection trace and verify no fake PASS"
+    },
+    {
+      "id": "workstate-agent-visible",
+      "owner": "Agent Lifecycle",
+      "mechanism": "visible worker state and parent synthesis evidence",
+      "evidenceFiles": "src/components/AgentProgressLine.tsx; src/tools/TaskCreateTool/TaskCreateTool.ts; src/tools/TaskOutputTool/TaskOutputTool.tsx",
+      "fileHitCount": 3,
+      "signalHitCount": 1249,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "run serial/parallel worker replay with parent evidence references"
+    },
+    {
+      "id": "workstate-cost-visible",
+      "owner": "Cost Evidence",
+      "mechanism": "visible model, token, cache, route, and cost trend",
+      "evidenceFiles": "src/commands/cost/cost.ts; src/commands/usage/usage.tsx; src/services/cache-stats.ts",
+      "fileHitCount": 3,
+      "signalHitCount": 1509,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "show cost/cache/route in CLI/TUI/stream-json task evidence"
+    },
+    {
+      "id": "workstate-stream-json-contract",
+      "owner": "CLI/API Bridge",
+      "mechanism": "same work-state emitted through CLI/TUI/stream-json",
+      "evidenceFiles": "src/cli/structuredIO.ts; src/cli/ndjsonSafeStringify.ts; src/utils/streamJsonStdoutGuard.ts",
+      "fileHitCount": 3,
+      "signalHitCount": 1260,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "run a stream-json task and compare state with TUI evidence"
+    }
+  ],
+  "rule": "This audit proves UI/TUI/CLI state signals only. Window or stream-json experience evidence is still required."
+}

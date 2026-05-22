@@ -1,0 +1,486 @@
+{
+  "schemaVersion": "dsxu.v20.closure-board.v4",
+  "generatedAt": "2026-05-15T10:25:00+08:00",
+  "gitStatusShort": {
+    "total": 1893,
+    "modified": 1648,
+    "deleted": 147,
+    "untracked": 98
+  },
+  "rows": [
+    {
+      "gate": "release-surface-source",
+      "count": 2,
+      "status": "CLOSED_SOURCE_BLOCKERS",
+      "nextAction": "Keep provider-migration/source-truth docs release-excluded or rewritten for clean export."
+    },
+    {
+      "gate": "runtime-redline-owner-packets",
+      "count": 1602,
+      "status": "RAW_59_ADJUDICATED_0_ACTIVE_BLOCKERS_PENDING_OWNER_GIT",
+      "nextAction": "1586 product/directory rows scanned; 59 raw hits owner-adjudicated as non-blocking. Continue Owner/Git signoff; this is not final PASS."
+    },
+    {
+      "gate": "C2 priority x OGR mapping",
+      "count": 320,
+      "status": "OWNER_DISPOSITION_DONE_FEATURE_ACCEPTANCE_PENDING",
+      "nextAction": "42 review_candidate rows and 278 shared utility review rows mapped to named OGR packets; OGR-13 holding bucket is zero; feature acceptance remains pending."
+    },
+    {
+      "gate": "Owner/Git packet matrix",
+      "count": 17,
+      "status": "AUTHORIZATION_BOARD_READY_PENDING_EXPLICIT_EXECUTION",
+      "nextAction": "Current register has 1893 rows; authorization board validates 17 owner packets, 57 git add commands, 1746 product paths and 147 deletion paths. Explicit Owner/Git execution remains required."
+    },
+    {
+      "gate": "OGR-01 docs/release evidence",
+      "count": 52,
+      "status": "OWNER_ACCEPTED_DOCS_EVIDENCE_PENDING_GIT",
+      "nextAction": "Owner signoff required for docs/generated/release evidence; non-ship evidence must remain release-excluded or be rewritten for clean export."
+    },
+    {
+      "gate": "OGR-12 imported shared utilities",
+      "count": 254,
+      "status": "OWNER_ACCEPTED_IMPORTED_UTILITY_PENDING_GIT",
+      "nextAction": "Keep only imported helpers with import/use evidence; no runtime ownership. Unused or product-specific helpers stay replace/delete candidates."
+    },
+    {
+      "gate": "deletion-mutation-signoff",
+      "count": 147,
+      "status": "GIT_MUTATION_REVIEW_ACCEPTED_STAGE_PLAN_READY_NOT_STAGED",
+      "nextAction": "147 accepted deletion paths are grouped into 6 stage packets. Only explicit Git mutation/stage authorization should make the D count drop; do not restore old runtime."
+    },
+    {
+      "gate": "ACL residue",
+      "count": 4,
+      "status": "PREFLIGHT_BLOCKED_EXTERNAL_RESIDUE_DELETE_WHEN_ALLOWED",
+      "nextAction": "ACL preflight confirms 4 existing residues, 0 active product refs, no filesystem mutation; close through external permission/ownership handling or explicit owner/Git decision."
+    },
+    {
+      "gate": "commercial/IP/brand release gate",
+      "count": 0,
+      "status": "ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING",
+      "nextAction": "Commercial/IP active blockers are zero; final notice/license/package metadata review still required before export."
+    },
+    {
+      "gate": "V20 real-gap owner coverage",
+      "count": 12,
+      "status": "P12_TARGET_RAW_PASS_DELTA_READY",
+      "nextAction": "P12 target manifest discovered at D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json; intake accepted 14/14 logs; raw readiness PASS with 14/14 paired logs and family gap 0."
+    },
+    {
+      "gate": "focused verification since real-gap review",
+      "count": 39,
+      "status": "PASS_FOCUSED_NOT_FINAL",
+      "nextAction": "Focused evidence now includes P12 target discovery/intake/raw-readiness/delta PASS plus owner/Git authorization board and 16-gate closure batch. This is still not final six-stage testing."
+    },
+    {
+      "gate": "final six-stage tests",
+      "count": 6,
+      "status": "PLAN_READY_FINAL_PREFLIGHT_BLOCKED",
+      "nextAction": "Six-stage plan exists, but final preflight is blocked. Run only after P12, owner/Git mutation, deletion, ACL, and release gates pass."
+    },
+    {
+      "gate": "clean export",
+      "count": 1,
+      "status": "PREFLIGHT_BLOCKED",
+      "nextAction": "Clean export preflight is blocked; no export artifact created."
+    }
+  ],
+  "focusedVerification": [
+    {
+      "command": "bun --env-file=.env ./src/entrypoints/dsxu-code.tsx mcp doctor --json",
+      "result": "WARN",
+      "meaning": "MCP doctor honest smoke; no real MCP server configured."
+    },
+    {
+      "command": "bun test src/services/mcp/__tests__/doctor.test.ts",
+      "result": "PASS",
+      "tests": 2,
+      "expects": 13
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts",
+      "result": "PASS",
+      "tests": 1,
+      "expects": 12
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/bridge-gate.test.ts src/dsxu/engine/__tests__/remote-lifecycle-v1.test.ts src/dsxu/engine/__tests__/browser-dev-server-proof-v1.test.ts src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts",
+      "result": "PASS",
+      "tests": 8,
+      "expects": 68
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/release-test-gate-v1.test.ts src/dsxu/engine/__tests__/v18-open-source-package-gate-v1.test.ts src/dsxu/engine/__tests__/reference-governance-absorption-contract-v1.test.ts",
+      "result": "PASS",
+      "tests": 15,
+      "expects": 198
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts src/dsxu/engine/__tests__/api-service.test.ts src/dsxu/engine/__tests__/llm-adapter-owner-v1.test.ts src/dsxu/engine/__tests__/goal-driven-optimization-contract-v1.test.ts src/dsxu/engine/__tests__/toolchain-selfcheck-v1.test.ts src/dsxu/engine/__tests__/product-reality-hardening-contract-v1.test.ts src/dsxu/engine/__tests__/high-pressure-reference-absorption-contract-v1.test.ts src/dsxu/engine/__tests__/next-stage-productization-contract-v1.test.ts src/dsxu/engine/__tests__/v11-100-point-roadmap-contract-v1.test.ts src/dsxu/engine/__tests__/v7-productization-contract-v1.test.ts src/dsxu/engine/__tests__/v8-product-build-contract-v1.test.ts",
+      "result": "PASS",
+      "tests": 71,
+      "expects": 4996
+    },
+    {
+      "command": "bun test src/services/mcp/__tests__/doctor.test.ts src/dsxu/engine/__tests__/v8-real-mcp-server-v1.test.ts src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts src/dsxu/engine/__tests__/remote-lifecycle-v1.test.ts",
+      "result": "PASS",
+      "tests": 9,
+      "expects": 82,
+      "meaning": "real-gap focused acceptance smoke for MCP, external adapter boundary, and remote lifecycle"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/browser-dev-server-proof-v1.test.ts src/dsxu/engine/__tests__/frontend-project-dev-server-v1.test.ts src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts src/dsxu/engine/__tests__/v19-cost-cache-live-task-evidence-v1.test.ts",
+      "result": "PASS",
+      "tests": 8,
+      "expects": 164,
+      "meaning": "real-gap focused acceptance smoke for browser/dev-server proof and cost evidence"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/real-task-replay-suite-v1.test.ts src/dsxu/engine/__tests__/remote-network-workflow-v1.test.ts",
+      "result": "PASS",
+      "tests": 3,
+      "expects": 46,
+      "meaning": "real-gap focused acceptance smoke for real-task replay and remote network workflow"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 2,
+      "expects": 19,
+      "meaning": "real-gap focused acceptance smoke for extension owner and control-plane stage acceptance"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+      "result": "PARTIAL_FAIL_THEN_FIXED",
+      "tests": 10,
+      "passed": 9,
+      "failed": 1,
+      "expects": 144,
+      "meaning": "terminal/TUI acceptance exposed WSL home probe SIGTERM on cold/busy startup"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"starts the real WSL TUI\"",
+      "result": "PASS",
+      "tests": 1,
+      "expects": 15,
+      "meaning": "focused verification after WSL home probe retry/structured-failure fix"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 3,
+      "expects": 26,
+      "meaning": "V20 real-gap owner contract for project intake, external host, chat/agent API and operator dashboard"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts src/dsxu/engine/__tests__/visible-shared-owner-v20.test.ts",
+      "result": "PASS",
+      "tests": 6,
+      "expects": 37,
+      "meaning": "Regression guard for external, extension and visible-state owner boundaries"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/api-service.test.ts src/dsxu/engine/__tests__/llm-adapter-owner-v1.test.ts",
+      "result": "PASS",
+      "tests": 22,
+      "expects": 51,
+      "meaning": "Provider/API fallback owner regression after chat-agent API runtime profile"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/phase12-raw-comparison-v1.test.ts src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts",
+      "result": "PASS",
+      "tests": 17,
+      "expects": 203,
+      "durationSeconds": 123,
+      "meaning": "P12 targetReferenceManifestPath import and raw readiness gates are intact; no target-reference raw logs fabricated"
+    },
+    {
+      "command": "bun run p12:raw-readiness --help",
+      "result": "PASS",
+      "meaning": "P12 raw-readiness CLI manifest import entry is available"
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts src/dsxu/engine/__tests__/control-plane-v1.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 14,
+      "expects": 74,
+      "meaning": "operator projection is exported through control-plane and control-plane regressions pass"
+    },
+    {
+      "command": "bun run p12:raw-readiness --evidenceDir .dsxu/trace/p12-raw-readiness-cli-v1",
+      "result": "BLOCKED_EVIDENCED",
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 14,
+      "nextAction": "collect-target-reference-raw-logs",
+      "meaning": "P12 CLI runs current readiness and preserves hard target-reference manifest blocker without fabricating logs"
+    },
+    {
+      "command": "bun run owner-git:preflight",
+      "result": "PASS_ALIGNED_BLOCKED_EVIDENCED",
+      "registerRows": 1888,
+      "canStageDeletionPackets": true,
+      "ownerAcceptedOrConditionalPaths": 1741,
+      "deletionMutationReadyPaths": 147,
+      "aclResidueRows": 4,
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "meaning": "Git mutation preflight is aligned and evidence-only; it does not stage or delete anything."
+    },
+    {
+      "command": "bun run owner-git:stage-plan",
+      "result": "READY_PENDING_EXPLICIT_GIT_STAGE",
+      "totalDeletionPaths": 147,
+      "stageReadyPaths": 147,
+      "packetCount": 6,
+      "didMutateGit": false,
+      "meaning": "147 accepted deletion paths have an exact stage plan, but no git mutation was performed."
+    },
+    {
+      "command": "bun run acl:preflight",
+      "result": "BLOCKED_EXTERNAL_PERMISSION_OR_SIGNOFF",
+      "residueCount": 4,
+      "existingResidues": 4,
+      "writableResidues": 4,
+      "activeProductReferenceRows": 0,
+      "didMutateFilesystem": false,
+      "meaning": "ACL residues are still external closure items; preflight did not delete or change permissions."
+    },
+    {
+      "command": "bun run v20:six-stage-plan",
+      "result": "BLOCKED_UNTIL_UPSTREAM_GATES_PASS",
+      "stages": 6,
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 14,
+      "deletionStagePlanReady": true,
+      "aclResidues": 4,
+      "didRunFinalTests": false,
+      "meaning": "Final function/experience/recovery/performance/eval/release test order is materialized but intentionally not run before upstream gates."
+    },
+    {
+      "command": "bun run owner-git:product-stage-plan",
+      "result": "READY_PENDING_EXPLICIT_OWNER_GIT_STAGE",
+      "totalProductPaths": 1741,
+      "stageReadyPaths": 1741,
+      "packetCount": 11,
+      "didMutateGit": false,
+      "meaning": "Non-deletion M/?? paths have exact owner packet stage plan; no git mutation was performed."
+    },
+    {
+      "command": "bun run p12:target-intake",
+      "result": "BLOCKED_MISSING_TARGET_REFERENCE_MANIFEST",
+      "acceptedLogCount": 0,
+      "rejectedLogCount": 0,
+      "rawLogExistsCount": 0,
+      "artifactExistsCount": 0,
+      "didFabricateTargetLogs": false,
+      "didRunComparison": false,
+      "meaning": "P12 manifest intake contract is materialized and still requires real targetReferenceManifestPath."
+    },
+    {
+      "command": "bun run v20:final-preflight",
+      "result": "BLOCKED",
+      "gitStatusTotal": 1888,
+      "modified": 1648,
+      "deleted": 147,
+      "untracked": 93,
+      "gates": 7,
+      "canRunFinalSixStageTests": false,
+      "canCreateCleanExport": false,
+      "didRunFinalTests": false,
+      "didCreateExport": false,
+      "meaning": "Final preflight remains blocked and did not run final tests or export."
+    },
+    {
+      "command": "bun run clean-export:preflight",
+      "result": "BLOCKED",
+      "canCreateCleanExport": false,
+      "didCreateExport": false,
+      "blockers": 4,
+      "meaning": "Clean export gate remains blocked; no export artifact was created."
+    },
+    {
+      "command": "bun run p12:target-collection",
+      "result": "READY_FOR_REAL_TARGET_REFERENCE_COLLECTION_NOT_EVIDENCE",
+      "workOrderCount": 14,
+      "targetManifestBacklogSlotCount": 0,
+      "pairedRawLogCount": 0,
+      "didFabricateTargetLogs": false,
+      "meaning": "P12 target collection work orders and template exist; they are not raw evidence."
+    },
+    {
+      "command": "bun run owner-git:mutation-command-plan",
+      "result": "READY_PENDING_EXPLICIT_AUTHORIZATION_NOT_EXECUTED",
+      "productPathCount": 1741,
+      "deletionPathCount": 147,
+      "commandCount": 57,
+      "didMutateGit": false,
+      "meaning": "Exact Git mutation command plan exists, but no command was run."
+    },
+    {
+      "command": "bun run acl:closure-plan",
+      "result": "READY_PENDING_EXPLICIT_OWNER_GIT_MUTATION_OR_EXTERNAL_PERMISSION",
+      "residueCount": 4,
+      "readyRows": 4,
+      "didMutateFilesystem": false,
+      "didStageGit": false,
+      "meaning": "ACL residue deletion plan exists, but no deletion or staging occurred."
+    },
+    {
+      "command": "bun run commercial-ip:preflight",
+      "result": "ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING",
+      "activeReviewRequiredRows": 0,
+      "publicReleaseThirdPartyRows": 0,
+      "didRewriteSource": false,
+      "meaning": "Commercial/IP active blockers are zero; final notices remain release preflight work."
+    },
+    {
+      "command": "bun run v20:blocker-board",
+      "result": "BLOCKED_FIXED_ACTION_ORDER",
+      "actionCount": 7,
+      "didMutateGit": false,
+      "didMutateFilesystem": false,
+      "didRunFinalTests": false,
+      "didCreateExport": false,
+      "meaning": "Fixed blocker order is materialized; no gate was bypassed."
+    },
+    {
+      "command": "bun run p12:target-contract",
+      "result": "CONTRACT_READY_TARGET_MANIFEST_STILL_REQUIRED",
+      "workOrderCount": 14,
+      "currentAcceptedTargetLogs": 0,
+      "didFabricateTargetLogs": false,
+      "meaning": "P12 target manifest contract is frozen; no target logs fabricated."
+    },
+    {
+      "command": "bun run v20:post-auth-plan",
+      "result": "READY_PLAN_NOT_EXECUTED",
+      "steps": 7,
+      "mutationCommandCount": 57,
+      "didMutateGit": false,
+      "didRunVerification": false,
+      "didCreateExport": false,
+      "meaning": "Post-authorization verification order is ready but not executed."
+    },
+    {
+      "command": "bun run v20:closure-batch",
+      "result": "PASS_EVIDENCE_REFRESHED_BLOCKERS_REMAIN",
+      "commandCount": 14,
+      "passCount": 14,
+      "failCount": 0,
+      "mutationCommandCount": 57,
+      "p12WorkOrderCount": 14,
+      "didMutateGit": false,
+      "didCreateExport": false,
+      "meaning": "Batch refresh successfully reran 14 closure gates and preserved real blockers."
+    },
+    {
+      "command": "bun run owner-git:authorization-board",
+      "result": "READY_FOR_EXPLICIT_OWNER_GIT_AUTHORIZATION_NOT_EXECUTED",
+      "ownerPacketCount": 17,
+      "productPathCount": 1745,
+      "deletionPathCount": 147,
+      "totalPlannedPaths": 1892,
+      "commandCount": 57,
+      "commandPathCount": 1892,
+      "canEnterAuthorizationExecution": true,
+      "didMutateGit": false,
+      "meaning": "Owner/Git product and deletion packets are ready for explicit authorization; no stage, commit, delete, reset, final tests, or export was performed.",
+      "evidencePath": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json"
+    },
+    {
+      "command": "bun run p12:target-discovery",
+      "result": "READY_TARGET_REFERENCE_MANIFEST_DISCOVERED",
+      "candidateCount": 1,
+      "readyCandidateCount": 1,
+      "canonicalTargetReferenceManifestPath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "canonicalAcceptedLogCount": 14,
+      "didFabricateTargetLogs": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json",
+      "meaning": "Local discovery found an existing real target-reference manifest; no target logs were fabricated."
+    },
+    {
+      "command": "bun run p12:target-intake --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "result": "READY_FOR_RAW_READINESS_IMPORT",
+      "acceptedLogCount": 14,
+      "rawLogExistsCount": 14,
+      "artifactExistsCount": 56,
+      "didFabricateTargetLogs": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json",
+      "meaning": "Target manifest intake validates all 14 same-task target-reference logs and artifacts."
+    },
+    {
+      "command": "bun run p12:raw-readiness --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "result": "PASS",
+      "p12Status": "PASS",
+      "p12PairedRawLogCount": 14,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 0,
+      "deltaStatus": "PASS",
+      "criticalFindings": 0,
+      "evidencePath": ".dsxu/trace/raw-evidence-readiness-register-v1/raw-evidence-readiness-register.evidence.json",
+      "meaning": "P12 raw readiness and delta report are PASS; comparison win still requires honest delta review language."
+    }
+  ],
+  "ownerGitRegisterRefresh": {
+    "registerPath": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260515.csv",
+    "registerSummaryPath": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_SUMMARY_20260515.json",
+    "packetMatrixPath": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_20260515.csv",
+    "packetMatrixSummaryPath": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_SUMMARY_20260515.json",
+    "evidencePath": "docs/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_REFRESH_20260515.md",
+    "totalRows": 1893,
+    "modified": 1648,
+    "deleted": 147,
+    "untracked": 98,
+    "currentRefreshRows": 20,
+    "ownerRemapRows": 58,
+    "packetCount": 17,
+    "otherSourceBucketRows": 0,
+    "realGapAcceptanceRows": 3,
+    "packetExecutionPath": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_20260515.csv",
+    "packetExecutionSummaryPath": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_SUMMARY_20260515.json",
+    "p12RawReadinessCliRows": 3,
+    "ownerGitMutationPreflightRows": 1,
+    "ownerGitStagePlanRows": 1,
+    "aclResiduePreflightRows": 1,
+    "sixStageTestPlanRows": 1,
+    "p12TargetManifestIntakeRows": 1,
+    "ownerGitProductStagePlanRows": 1,
+    "finalPreflightRows": 1,
+    "cleanExportPreflightRows": 1,
+    "p12TargetCollectionPackRows": 1,
+    "ownerGitMutationCommandPlanRows": 1,
+    "aclResidueClosurePlanRows": 1,
+    "commercialIpReleasePreflightRows": 1,
+    "blockerActionBoardRows": 1,
+    "p12TargetManifestContractBoardRows": 1,
+    "closureBatchRunnerRows": 1,
+    "postAuthorizationVerificationPlanRows": 1,
+    "ownerGitAuthorizationBoardRows": 1,
+    "p12TargetManifestDiscoveryRows": 1
+  },
+  "rule": "This board is current execution guidance, not release PASS. It folds real-gap owner contracts, P12 collection/intake/readiness, owner/Git preflight, product/deletion stage planning, mutation command planning, authorization board, ACL preflight/closure planning, commercial/IP release preflight, final preflight, clean export preflight, blocker action board, and six-stage test planning into named OGR packets and does not stage, commit, reset, clean, delete ACL residues, bypass commercial/IP/brand review, treat owner-disposition evidence as final feature acceptance, run final tests, or create export artifacts.",
+  "ownerGitMutationPreflight": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_PREFLIGHT_20260515.json",
+  "ownerGitStagePlan": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json",
+  "aclResiduePreflight": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json",
+  "sixStageTestPlan": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json",
+  "p12TargetManifestIntake": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json",
+  "ownerGitProductStagePlan": "docs/generated/DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json",
+  "finalPreflight": "docs/generated/DSXU_V20_FINAL_PREFLIGHT_20260515.json",
+  "cleanExportPreflight": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+  "p12TargetCollectionPack": "docs/generated/DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json",
+  "ownerGitMutationCommandPlan": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json",
+  "aclResidueClosurePlan": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json",
+  "commercialIpReleasePreflight": "docs/generated/DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json",
+  "blockerActionBoard": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json",
+  "p12TargetManifestContractBoard": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.json",
+  "postAuthorizationVerificationPlan": "docs/generated/DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json",
+  "closureBatchRun": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.json",
+  "ownerGitAuthorizationBoard": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json",
+  "p12TargetManifestDiscovery": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json",
+  "p12RawReadinessEvidence": ".dsxu/trace/raw-evidence-readiness-register-v1/raw-evidence-readiness-register.evidence.json",
+  "p12RawDeltaReport": ".dsxu/trace/raw-evidence-readiness-register-v1/p12-raw-comparison/phase12-raw-delta-report.evidence.json"
+}

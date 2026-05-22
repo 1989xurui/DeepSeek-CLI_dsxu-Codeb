@@ -1,0 +1,5 @@
+﻿"path","gitStatus","exists","length","residueClass","activeProductReferenceHits","activeProductReferenceHitPaths","testEvidenceReferenceHits","decision"
+"src/dsxu/engine/retrieval/integration-example.ts","M","True","10","empty-module-residue","0","","0","READY_FOR_EXTERNAL_DELETE_OR_OWNER_SIGNOFF"
+"src/dsxu/integration/harness/recovery-runtime-v3-harness.ts","M","True","10","empty-module-residue","0","","0","READY_FOR_EXTERNAL_DELETE_OR_OWNER_SIGNOFF"
+"src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts","M","True","11","empty-module-residue","0","","0","READY_FOR_EXTERNAL_DELETE_OR_OWNER_SIGNOFF"
+"src/dsxu/engine/adapters/bridge-adapter.ts","M","True","321","retired-adapter-tombstone","0","","3","READY_FOR_EXTERNAL_DELETE_OR_OWNER_SIGNOFF"

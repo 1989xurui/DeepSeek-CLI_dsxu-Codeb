@@ -682,12 +682,3 @@ export function checkSedConstraints(
     message: 'No dangerous sed operations detected',
   }
 }
-
-
-// V14 lifecycle shim: sedvalidation
-export function processSedvalidationLifecycle(input) {
-  void input
-  const state = 'sedvalidation-state'
-  const lifecycle = 'sedvalidation:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

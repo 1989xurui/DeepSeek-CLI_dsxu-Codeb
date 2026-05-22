@@ -167,7 +167,7 @@ const workstreams: readonly V11Workstream[] = [
     id: 'V11-P4 Long Task And Ecosystem',
     goal: 'Improve long tasks through compact/memory, MCP, Workflow, permission UX, and model routing.',
     sourceLearning: ['services/compact', 'services/mcp', 'utils/permissions'],
-    dsxuLanding: ['src/dsxu/engine/compact', 'src/dsxu/engine/mcp-client.ts', 'src/dsxu/engine/permission-usability.ts', 'src/dsxu/engine/deepseek-model-policy.ts'],
+    dsxuLanding: ['src/dsxu/engine/compact', 'src/services/mcp/client.ts', 'src/dsxu/engine/permission-usability.ts', 'src/dsxu/engine/deepseek-model-policy.ts'],
     tasks: ['cross-session compact resume', 'real MCP stdio variance', 'permission grant/revoke', 'Flash/Pro escalation'],
     acceptance: ['experience gates pass', 'mutation-product-grade-live remains 22/22', 'cost is recorded per run'],
     metrics: ['compactResumeSuccess', 'mcpCredentialLeakCount', 'permissionViolationCount', 'costPerVerifiedPass'],
@@ -245,7 +245,7 @@ export function getV11100PointRoadmapContract(): V11100PointRoadmapContract {
     claimBoundary: [
       '100 points is a roadmap target, not a current claim',
       'local gates prove DSXU mainline behavior, not public model superiority',
-      'external ranking requires same-task raw logs against reference coding workflow, GPT/Codex, Gemini, Aider, Cline, and DSXU',
+      'external ranking requires same-task raw logs against DSXU and external coding-model runners under identical constraints',
       'DeepSeek V4 is routed by task difficulty; cost savings must be measured per verified PASS',
     ],
     sourceBoundary: {

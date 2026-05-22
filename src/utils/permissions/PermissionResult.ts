@@ -9,7 +9,7 @@ import type {
   PermissionResult,
 } from '../../types/permissions.js'
 
-// Re-export for backwards compatibility
+// Re-export for provider-migration import continuity
 export type {
   PermissionAllowDecision,
   PermissionAskDecision,

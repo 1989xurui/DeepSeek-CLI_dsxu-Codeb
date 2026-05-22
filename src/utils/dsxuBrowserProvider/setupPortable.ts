@@ -1,4 +1,4 @@
-﻿import { readdir } from 'fs/promises'
+import { readdir } from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
 import { isFsInaccessible } from '../errors.js'
@@ -230,13 +230,4 @@ export async function isChromeExtensionInstalledPortable(
 export function isChromeExtensionInstalled(log?: Logger): Promise<boolean> {
   const browserPaths = getAllBrowserDataPathsPortable()
   return isChromeExtensionInstalledPortable(browserPaths, log)
-}
-
-
-// V14 lifecycle shim: setupportable
-export function processSetupportableLifecycle(input) {
-  void input
-  const state = 'setupportable-state'
-  const lifecycle = 'setupportable:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

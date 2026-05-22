@@ -41,11 +41,3 @@ export function OffscreenFreeze({
   }
   return <Box ref={ref}>{cached.current}</Box>;
 }
-
-// V14 lifecycle shim: offscreenfreeze
-export function processOffscreenfreezeLifecycle(input) {
-  void input
-  const state = 'offscreenfreeze-state'
-  const lifecycle = 'offscreenfreeze:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

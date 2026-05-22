@@ -164,11 +164,3 @@ export function TeleportResumeWrapper(t0) {
   }
   return t8;
 }
-
-// V14 lifecycle shim: teleportresumewrapper
-export function processTeleportresumewrapperLifecycle(input) {
-  void input
-  const state = 'teleportresumewrapper-state'
-  const lifecycle = 'teleportresumewrapper:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

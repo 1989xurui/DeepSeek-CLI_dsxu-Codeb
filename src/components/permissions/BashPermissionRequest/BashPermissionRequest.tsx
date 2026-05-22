@@ -1,11 +1,10 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import { feature } from 'bun:bundle';
 import figures from 'figures';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text, useTheme } from '../../../ink.js';
 import { useKeybinding } from '../../../keybindings/useKeybinding.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/featureFlags.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../../services/analytics/index.js';
 import { sanitizeToolNameForAnalytics } from '../../../services/analytics/metadata.js';
 import { useAppState } from '../../../state/AppState.js';
@@ -207,7 +206,7 @@ function BashPermissionRequestInner({
   // Editable prefix ...initialize synchronously with the best prefix we can
   // extract without tree-sitter, then refine via tree-sitter for compound
   // commands. The sync path matters because TREE_SITTER_BASH is gated
-  // ant-only: in external builds the async refinement below always resolves
+  // dsxu internal: in external builds the async refinement below always resolves
   // to [] and this initial value is what the user sees.
   //
   // Lazy initializer: this runs regex + split on every render if left in

@@ -13,11 +13,3 @@ export function UserToolCanceledMessage() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: usertoolcanceledmessage
-export function processUsertoolcanceledmessageLifecycle(input) {
-  void input
-  const state = 'usertoolcanceledmessage-state'
-  const lifecycle = 'usertoolcanceledmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

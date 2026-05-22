@@ -60,11 +60,3 @@ export function MessageTimestamp(t0) {
 function _temp(c) {
   return c.type === "text";
 }
-
-// V14 lifecycle shim: messagetimestamp
-export function processMessagetimestampLifecycle(input) {
-  void input
-  const state = 'messagetimestamp-state'
-  const lifecycle = 'messagetimestamp:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

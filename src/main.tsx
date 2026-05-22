@@ -1,9 +1,9 @@
-﻿// These side-effects must run before all other imports:
+// These side-effects must run before all other imports:
 // 1. profileCheckpoint marks entry before heavy module evaluation begins
 // 2. startMdmRawRead fires MDM subprocesses (plutil/reg query) so they run in
 //    parallel with the remaining ~135ms of imports below
-// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + legacy API
-//    key) in parallel 锟?isRemoteManagedSettingsEligible() otherwise reads them
+// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + provider-migration API
+//    key) in parallel; isRemoteManagedSettingsEligible() otherwise reads them
 //    sequentially via sync spawn inside applySafeConfigEnvironmentVariables()
 //    (~65ms on every macOS startup)
 import { profileCheckpoint, profileReport } from './utils/startupProfiler.js';
@@ -32,8 +32,8 @@ import { getSystemContext, getUserContext } from './context.js';
 import { init, initializeTelemetryAfterTrust } from './entrypoints/init.js';
 import { addToHistory } from './history.js';
 import type { Root } from './ink.js';
-import { launchRepl } from './dsxu/legacy/replLauncher.js';
-import { hasGrowthBookEnvOverride, initializeGrowthBook, refreshGrowthBookAfterAuthChange } from './services/analytics/growthbook.js';
+import { launchRepl } from './entrypoints/replLauncher.js';
+import { hasFeatureFlagEnvOverride, initializeFeatureFlags, refreshFeatureFlagsAfterAuthChange } from './services/analytics/featureFlags.js';
 import { fetchBootstrapData } from './services/api/bootstrap.js';
 import { type DownloadResult, downloadSessionFiles, type FilesApiConfig, parseFileSpecs } from './services/api/filesApi.js';
 import { prefetchPassesEligibility } from './services/api/referral.js';
@@ -47,7 +47,7 @@ import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, is
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
 import { count, uniq } from './utils/array.js';
 import { installAsciicastRecorder } from './utils/asciicast.js';
-import { getSubscriptionType, isLegacyCloudSubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
+import { getSubscriptionType, isProviderSubscriptionAccount, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
@@ -80,7 +80,7 @@ const assistantModule = feature('KAIROS') ? require('./assistant/index.js') as t
 const kairosGate = feature('KAIROS') ? require('./assistant/gate.js') as typeof import('./assistant/gate.js') : null;
 import { relative, resolve } from 'path';
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { initializeAnalyticsGates } from 'src/services/analytics/sink.js';
 import { getOriginalCwd, setAdditionalDirectoriesForDsxuInstructions, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
@@ -104,7 +104,7 @@ import { setupDsxuBrowserProvider, shouldAutoEnableDsxuBrowserProvider, shouldEn
 import { getContextWindowForModel } from './utils/context.js';
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
-import { hasNodeOption, isBareMode, isDsxuRuntimeMode, isEnvTruthy, isInProtectedNamespace, isLegacyProviderServiceShellAllowed } from './utils/envUtils.js';
+import { getDsxuCodeEnv, hasNodeOption, isBareMode, isDsxuRuntimeMode, isEnvTruthy, isInProtectedNamespace, isProviderMigrationServiceShellAllowed } from './utils/envUtils.js';
 import { refreshExampleCommands } from './utils/exampleCommands.js';
 import type { FpsMetrics } from './utils/fpsTracker.js';
 import { getWorktreePaths } from './utils/getWorktreePaths.js';
@@ -138,21 +138,21 @@ import { validateUuid } from './utils/uuid.js';
 
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 
-const DSXU_LEGACY_CODE_ENV_PREFIX = 'CL' + 'AUDE_CODE_';
-const dsxuLegacyCodeEnv = (suffix: string): string => `${DSXU_LEGACY_CODE_ENV_PREFIX}${suffix}`;
-const DSXU_LEGACY_PROVIDER_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL';
-const DSXU_LEGACY_PROVIDER_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL';
-const DSXU_LEGACY_CODE_COMMAND = 'cl' + 'aude';
-const DSXU_LEGACY_CODE_CLOUD_SOURCE = `${DSXU_LEGACY_CODE_COMMAND}ai`;
-const DSXU_LEGACY_CODE_DESKTOP_CLIENT = `${DSXU_LEGACY_CODE_COMMAND}-desktop`;
-const DSXU_LEGACY_CODE_VSCODE_CLIENT = `${DSXU_LEGACY_CODE_COMMAND}-vscode`;
-const DSXU_LEGACY_DESKTOP_IMPORT_COMMAND = `add-from-${DSXU_LEGACY_CODE_COMMAND}-desktop`;
-const DSXU_LEGACY_PROVIDER_SUBSCRIPTION_OPTION = `--${DSXU_LEGACY_CODE_CLOUD_SOURCE}`;
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CL' + 'AUDE_CODE_';
+const providerMigrationCodeEnv = (suffix: string): string => `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}${suffix}`;
+const DSXU_PROVIDER_MIGRATION_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL';
+const DSXU_PROVIDER_MIGRATION_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL';
+const PROVIDER_MIGRATION_CODE_COMMAND = 'cl' + 'aude';
+const PROVIDER_MIGRATION_CLOUD_SOURCE = `${PROVIDER_MIGRATION_CODE_COMMAND}ai`;
+const PROVIDER_MIGRATION_DESKTOP_CLIENT = `${PROVIDER_MIGRATION_CODE_COMMAND}-desktop`;
+const PROVIDER_MIGRATION_VSCODE_CLIENT = `${PROVIDER_MIGRATION_CODE_COMMAND}-vscode`;
+const PROVIDER_MIGRATION_DESKTOP_IMPORT_COMMAND = `add-from-${PROVIDER_MIGRATION_CODE_COMMAND}-desktop`;
+const DSXU_PROVIDER_MIGRATION_SUBSCRIPTION_OPTION = `--${PROVIDER_MIGRATION_CLOUD_SOURCE}`;
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
 import { clearServerCache } from 'src/services/mcp/client.js';
-import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupLegacyCloudMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getDsxuCodeMcpConfigsCore, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
-import { isLegacyCloudMcpEnabled } from 'src/services/mcp/dsxuProvider.js';
+import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupProviderMigrationMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getDsxuCodeMcpConfigsCore, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
+import { isProviderMigrationMcpEnabled } from 'src/services/mcp/dsxuProvider.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
@@ -183,7 +183,7 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
-import { runLegacyExternalProviderAliasMigration, runLegacyProviderDefaultModelMigration, runLegacyProviderExplicitModelCleanup, runLegacyProviderLongContextPinMigration, runLegacyProviderTierModelCleanup } from './migrations/dsxuLegacyModelMigrations.js';
+import { runProviderMigrationExternalProviderAliasMigration, runProviderMigrationDefaultModelMigration, runProviderMigrationExplicitModelCleanup, runProviderMigrationLongContextPinMigration, runProviderMigrationTierModelCleanup } from './migrations/providerMigrationModelMigrations.js';
 import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
 import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOptInForDefaultOffer.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -209,22 +209,29 @@ import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from '.
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_imports_loaded');
 
-function shouldLoadLegacyProviderServiceShell(): boolean {
-  return !isDsxuRuntimeMode() || isLegacyProviderServiceShellAllowed();
+function shouldLoadProviderMigrationServiceShell(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed();
 }
 
-function blockLegacyProviderServiceShell(flagName: string): never {
-  process.stderr.write(chalk.red(`Error: ${flagName} belongs to the old provider/remote shell and is disabled on the DSXU Code default local CLI/TUI mainline. Set DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL=1 only for isolated migration work.\n`));
+function resolveStartupFilesApiBaseUrl(): string | undefined {
+  const dsxuBaseUrl = getDsxuCodeEnv('API_BASE_URL');
+  if (dsxuBaseUrl) return dsxuBaseUrl;
+  if (!shouldLoadProviderMigrationServiceShell()) return undefined;
+  return process.env[DSXU_PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL;
+}
+
+function blockProviderMigrationServiceShell(flagName: string): never {
+  process.stderr.write(chalk.red(`Error: ${flagName} belongs to the provider migration remote shell and is disabled on the DSXU Code default local CLI/TUI mainline. Set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated migration work.\n`));
   process.exit(1);
 }
 
 function loadRemoteManagedSettingsIfAllowed(): void {
-  if (!shouldLoadLegacyProviderServiceShell()) return;
+  if (!shouldLoadProviderMigrationServiceShell()) return;
   void import('./services/remoteManagedSettings/index.js').then(m => m.loadRemoteManagedSettings());
 }
 
 function refreshRemoteManagedSettingsIfAllowed(): void {
-  if (!shouldLoadLegacyProviderServiceShell()) return;
+  if (!shouldLoadProviderMigrationServiceShell()) return;
   void import('./services/remoteManagedSettings/index.js').then(m => m.refreshRemoteManagedSettings());
 }
 
@@ -292,7 +299,7 @@ if ("external" !== 'ant' && isBeingDebugged()) {
 
 /**
  * Per-session skill/plugin telemetry. Called from both the interactive path
- * and the headless -p path (before runHeadless) 锟?both go through
+ * and the headless -p path (before runHeadless) -both go through
  * main.tsx but branch before the interactive startup path, so it needs two
  * call sites here rather than one here + one in QueryEngine.
  */
@@ -313,7 +320,7 @@ function getCertEnvVarTelemetry(): Record<string, boolean> {
   if (process.env.NODE_EXTRA_CA_CERTS) {
     result.has_node_extra_ca_certs = true;
   }
-  if (process.env[dsxuLegacyCodeEnv('CLIENT_CERT')]) {
+  if (process.env[providerMigrationCodeEnv('CLIENT_CERT')]) {
     result.has_client_cert = true;
   }
   if (hasNodeOption('--use-system-ca')) {
@@ -340,7 +347,7 @@ async function logStartupTelemetry(): Promise<void> {
   });
 }
 
-// @[MODEL LAUNCH]: Consider whether DSXU needs a compatibility migration for saved model strings.
+// @[MODEL LAUNCH]: Consider whether DSXU needs a provider-migration projection for saved model strings.
 // Bump this when adding a new sync migration so existing users re-run the set.
 const CURRENT_MIGRATION_VERSION = 11;
 function runMigrations(): void {
@@ -348,16 +355,16 @@ function runMigrations(): void {
     migrateAutoUpdatesToSettings();
     migrateBypassPermissionsAcceptedToSettings();
     migrateEnableAllProjectMcpServersToSettings();
-    runLegacyProviderDefaultModelMigration();
-    runLegacyProviderLongContextPinMigration();
-    runLegacyProviderExplicitModelCleanup();
-    runLegacyProviderTierModelCleanup();
+    runProviderMigrationDefaultModelMigration();
+    runProviderMigrationLongContextPinMigration();
+    runProviderMigrationExplicitModelCleanup();
+    runProviderMigrationTierModelCleanup();
     migrateReplBridgeEnabledToRemoteControlAtStartup();
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       resetAutoModeOptInForDefaultOffer();
     }
-    if ("external" === 'ant') {
-      runLegacyExternalProviderAliasMigration();
+    if (false) {
+      runProviderMigrationExternalProviderAliasMigration();
     }
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
       ...prev,
@@ -409,11 +416,11 @@ export function startDeferredPrefetches(): void {
   // However, the spawned processes and async work still contend for CPU and event
   // loop time, which skews startup benchmarks (CPU profiles, time-to-first-render
   // measurements). Skip all of it when we're only measuring startup performance.
-  if (isEnvTruthy(process.env[dsxuLegacyCodeEnv('EXIT_AFTER_FIRST_RENDER')]) ||
+  if (isEnvTruthy(process.env[providerMigrationCodeEnv('EXIT_AFTER_FIRST_RENDER')]) ||
   // --bare: skip ALL prefetches. These are cache-warms for the REPL's
   // first-turn responsiveness (initUser, getUserContext, tips, countFiles,
   // modelCapabilities, change detectors). Scripted -p calls don't have a
-  // "user is typing" window to hide this work in 锟?it's pure overhead on
+  // "user is typing" window to hide this work in -it's pure overhead on
   // the critical path.
   isBareMode()) {
     return;
@@ -424,10 +431,10 @@ export function startDeferredPrefetches(): void {
   void getUserContext();
   prefetchSystemContextIfSafe();
   void getRelevantTips();
-  if (isEnvTruthy(process.env[dsxuLegacyCodeEnv('USE_BEDROCK')]) && !isEnvTruthy(process.env[dsxuLegacyCodeEnv('SKIP_BEDROCK_AUTH')])) {
+  if (isEnvTruthy(process.env[providerMigrationCodeEnv('USE_BEDROCK')]) && !isEnvTruthy(process.env[providerMigrationCodeEnv('SKIP_BEDROCK_AUTH')])) {
     void prefetchAwsCredentialsAndBedRockInfoIfSafe();
   }
-  if (isEnvTruthy(process.env[dsxuLegacyCodeEnv('USE_VERTEX')]) && !isEnvTruthy(process.env[dsxuLegacyCodeEnv('SKIP_VERTEX_AUTH')])) {
+  if (isEnvTruthy(process.env[providerMigrationCodeEnv('USE_VERTEX')]) && !isEnvTruthy(process.env[providerMigrationCodeEnv('SKIP_VERTEX_AUTH')])) {
     void prefetchGcpCredentialsIfSafe();
   }
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
@@ -443,8 +450,8 @@ export function startDeferredPrefetches(): void {
     void skillChangeDetector.initialize();
   }
 
-  // Event loop stall detector 锟?logs when the main thread is blocked >500ms
-  if ("external" === 'ant') {
+  // Event loop stall detector -logs when the main thread is blocked >500ms
+  if (false) {
     void import('./utils/eventLoopStallDetector.js').then(m => m.startEventLoopStallDetector());
   }
 }
@@ -535,7 +542,7 @@ function eagerLoadSettings(): void {
 }
 function initializeEntrypoint(isNonInteractive: boolean): void {
   // Skip if already set (e.g., by SDK or other entrypoints)
-  if (process.env[dsxuLegacyCodeEnv('ENTRYPOINT')]) {
+  if (process.env[providerMigrationCodeEnv('ENTRYPOINT')]) {
     return;
   }
   const cliArgs = process.argv.slice(2);
@@ -543,19 +550,19 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
   // Check for MCP serve command (handle flags before mcp serve, e.g., --debug mcp serve)
   const mcpIndex = cliArgs.indexOf('mcp');
   if (mcpIndex !== -1 && cliArgs[mcpIndex + 1] === 'serve') {
-    process.env[dsxuLegacyCodeEnv('ENTRYPOINT')] = 'mcp';
+    process.env[providerMigrationCodeEnv('ENTRYPOINT')] = 'mcp';
     return;
   }
-  if (isEnvTruthy(process.env[dsxuLegacyCodeEnv('ACTION')])) {
-    process.env[dsxuLegacyCodeEnv('ENTRYPOINT')] = 'dsxu-code-github-action';
+  if (isEnvTruthy(process.env[providerMigrationCodeEnv('ACTION')])) {
+    process.env[providerMigrationCodeEnv('ENTRYPOINT')] = 'dsxu-code-github-action';
     return;
   }
 
   // Note: 'local-agent' entrypoint is set by the local agent mode launcher
-  // via DSXU_LEGACY_CODE_ENTRYPOINT env var (handled by early return above)
+  // via provider-migration ENTRYPOINT env alias (handled by early return above)
 
   // Set based on interactive status
-  process.env[dsxuLegacyCodeEnv('ENTRYPOINT')] = isNonInteractive ? 'sdk-cli' : 'cli';
+  process.env[providerMigrationCodeEnv('ENTRYPOINT')] = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
 // Set by early argv processing when `dsxu-code open <url>` is detected (interactive mode only)
@@ -625,7 +632,7 @@ export async function main() {
   });
   profileCheckpoint('main_warning_handler_initialized');
 
-  // Check for cc:// or cc+unix:// URL in argv 锟?rewrite so the main command
+  // Check for cc:// or cc+unix:// URL in argv -rewrite so the main command
   // handles it, giving the full interactive TUI instead of a stripped-down subcommand.
   // For headless (-p), we rewrite to the internal `open` subcommand.
   if (feature('DIRECT_CONNECT')) {
@@ -660,7 +667,7 @@ export async function main() {
     }
   }
 
-  // Handle deep link URIs early 锟?this is invoked by the OS protocol handler
+  // Handle deep link URIs early -this is invoked by the OS protocol handler
   // and should bail out before full init since it only needs to parse the URI
   // and open a terminal.
   if (feature('LODESTONE')) {
@@ -681,8 +688,8 @@ export async function main() {
     // macOS URL handler: when LaunchServices launches our .app bundle, the
     // URL arrives via Apple Event (not argv). LaunchServices overwrites
     // __CFBundleIdentifier to the launching bundle's ID, which is a precise
-    // positive signal 锟?cheaper than importing and guessing with heuristics.
-    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === `com.${'anth' + 'ropic'}.${DSXU_LEGACY_CODE_COMMAND}-code-url-handler`) {
+    // positive signal -cheaper than importing and guessing with heuristics.
+    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === `com.${'anth' + 'ropic'}.${PROVIDER_MIGRATION_CODE_COMMAND}-code-url-handler`) {
       const {
         enableConfigs
       } = await import('./utils/config.js');
@@ -695,9 +702,9 @@ export async function main() {
     }
   }
 
-  // `dsxu-code assistant [sessionId]` 锟?stash and strip so the main
+  // `dsxu-code assistant [sessionId]` -stash and strip so the main
   // command handles it, giving the full interactive TUI. Position-0 only
-  // (matching the ssh pattern below) 锟?indexOf would false-positive on
+  // (matching the ssh pattern below) -indexOf would false-positive on
   // `dsxu-code -p "explain assistant"`. Root-flag-before-subcommand
   // (e.g. `--debug assistant`) falls through to the stub, which
   // prints usage.
@@ -714,7 +721,7 @@ export async function main() {
         rawArgs.splice(0, 1); // drop 'assistant'
         process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs];
       }
-      // else: `dsxu-code assistant --help` 锟?fall through to stub
+      // else: `dsxu-code assistant --help` -fall through to stub
     }
   }
 
@@ -725,7 +732,7 @@ export async function main() {
   if (feature('SSH_REMOTE') && _pendingSSH) {
     const rawCliArgs = process.argv.slice(2);
     // SSH-specific flags can appear before the host positional (e.g.
-    // `ssh --permission-mode auto host /tmp` 锟?standard POSIX flags-before-
+    // `ssh --permission-mode auto host /tmp` -standard POSIX flags-before-
     // positionals). Pull them all out BEFORE checking whether a host was
     // given, so `dsxu-code ssh --permission-mode auto host` and `dsxu-code ssh host
     // --permission-mode auto` are equivalent. The host check below only needs
@@ -800,7 +807,7 @@ export async function main() {
       }
       const rest = rawCliArgs.slice(consumed);
 
-      // Headless (-p) mode is not supported with SSH in v1 锟?reject early
+      // Headless (-p) mode is not supported with SSH in v1 -reject early
       // so the flag doesn't silently cause local execution.
       if (rest.includes('-p') || rest.includes('--print')) {
         process.stderr.write('Error: headless (-p/--print) mode is not supported with dsxu-code ssh\n');
@@ -836,34 +843,34 @@ export async function main() {
   // Determine client type
   const clientType = (() => {
     if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action';
-    const entrypoint = process.env[dsxuLegacyCodeEnv('ENTRYPOINT')];
+    const entrypoint = process.env[providerMigrationCodeEnv('ENTRYPOINT')];
     if (entrypoint === 'sdk-ts') return 'sdk-typescript';
     if (entrypoint === 'sdk-py') return 'sdk-python';
     if (entrypoint === 'sdk-cli') return 'sdk-cli';
-    if (entrypoint === DSXU_LEGACY_CODE_VSCODE_CLIENT) return DSXU_LEGACY_CODE_VSCODE_CLIENT;
+    if (entrypoint === PROVIDER_MIGRATION_VSCODE_CLIENT) return PROVIDER_MIGRATION_VSCODE_CLIENT;
     if (entrypoint === 'local-agent') return 'local-agent';
-    if (entrypoint === DSXU_LEGACY_CODE_DESKTOP_CLIENT) return DSXU_LEGACY_CODE_DESKTOP_CLIENT;
+    if (entrypoint === PROVIDER_MIGRATION_DESKTOP_CLIENT) return PROVIDER_MIGRATION_DESKTOP_CLIENT;
 
     // Check if session-ingress token is provided (indicates remote session)
-    const hasSessionIngressToken = process.env[dsxuLegacyCodeEnv('SESSION_ACCESS_TOKEN')] || process.env[dsxuLegacyCodeEnv('WEBSOCKET_AUTH_FILE_DESCRIPTOR')];
+    const hasSessionIngressToken = process.env[providerMigrationCodeEnv('SESSION_ACCESS_TOKEN')] || process.env[providerMigrationCodeEnv('WEBSOCKET_AUTH_FILE_DESCRIPTOR')];
     if (entrypoint === 'remote' || hasSessionIngressToken) {
       return 'remote';
     }
     return 'cli';
   })();
   setClientType(clientType);
-  const previewFormat = process.env[dsxuLegacyCodeEnv('QUESTION_PREVIEW_FORMAT')];
+  const previewFormat = process.env[providerMigrationCodeEnv('QUESTION_PREVIEW_FORMAT')];
   if (previewFormat === 'markdown' || previewFormat === 'html') {
     setQuestionPreviewFormat(previewFormat);
   } else if (!clientType.startsWith('sdk-') &&
   // Desktop and CCR pass previewFormat via toolConfig; when the feature is
-  // gated off they pass undefined 锟?don't override that with markdown.
-  clientType !== DSXU_LEGACY_CODE_DESKTOP_CLIENT && clientType !== 'local-agent' && clientType !== 'remote') {
+  // gated off they pass undefined -don't override that with markdown.
+  clientType !== PROVIDER_MIGRATION_DESKTOP_CLIENT && clientType !== 'local-agent' && clientType !== 'remote') {
     setQuestionPreviewFormat('markdown');
   }
 
   // Tag sessions created via `dsxu-code remote-control` so the backend can identify them
-  if (process.env[dsxuLegacyCodeEnv('ENVIRONMENT_KIND')] === 'bridge') {
+  if (process.env[providerMigrationCodeEnv('ENVIRONMENT_KIND')] === 'bridge') {
     setSessionSource('remote-control');
   }
   profileCheckpoint('main_client_type_determined');
@@ -927,10 +934,10 @@ async function run(): Promise<CommanderCommand> {
   program.hook('preAction', async thisCommand => {
     profileCheckpoint('preAction_start');
     // Await async subprocess loads started at module evaluation (lines 12-20).
-    // Nearly free 锟?subprocesses complete during the ~135ms of imports above.
+    // Nearly free -subprocesses complete during the ~135ms of imports above.
     // Must resolve before init() which triggers the first settings read
-    // (applySafeConfigEnvironmentVariables 锟?getSettingsForSource('policySettings')
-    // 锟?isRemoteManagedSettingsEligible 锟?sync keychain reads otherwise ~65ms).
+    // (applySafeConfigEnvironmentVariables -getSettingsForSource('policySettings')
+    // -isRemoteManagedSettingsEligible -sync keychain reads otherwise ~65ms).
     await Promise.all([ensureMdmSettingsLoaded(), ensureKeychainPrefetchCompleted()]);
     profileCheckpoint('preAction_after_mdm');
     await init();
@@ -939,7 +946,7 @@ async function run(): Promise<CommanderCommand> {
     // process.title on Windows sets the console title directly; on POSIX,
     // terminal shell integration may mirror the process name to the tab.
     // After init() so settings.json env can also gate this (gh-4765).
-    if (!isEnvTruthy(process.env[dsxuLegacyCodeEnv('DISABLE_TERMINAL_TITLE')])) {
+    if (!isEnvTruthy(process.env[providerMigrationCodeEnv('DISABLE_TERMINAL_TITLE')])) {
       process.title = 'dsxu-code';
     }
 
@@ -959,7 +966,7 @@ async function run(): Promise<CommanderCommand> {
     // (plugin list, plugin install, mcp *) have their own actions and
     // never see it. Wire it up here so getInlinePlugins() works everywhere.
     // thisCommand.opts() is typed {} here because this hook is attached
-    // before .option('--plugin-dir', ...) in the chain 锟?extra-typings
+    // before .option('--plugin-dir', ...) in the chain -extra-typings
     // builds the type as options are added. Narrow with a runtime guard;
     // the collect accumulator + [] default guarantee string[] in practice.
     const pluginDir = thisCommand.getOptionValue('pluginDir');
@@ -970,7 +977,7 @@ async function run(): Promise<CommanderCommand> {
     runMigrations();
     profileCheckpoint('preAction_after_migrations');
 
-    // Legacy provider remote-managed settings are not part of the DSXU
+    // Provider migration remote-managed settings are not part of the DSXU
     // default local CLI/TUI mainline. Keep the migration path explicit.
     loadRemoteManagedSettingsIfAllowed();
     void loadPolicyLimits();
@@ -987,7 +994,7 @@ async function run(): Promise<CommanderCommand> {
   const productName = isDSXUCodeMode ? 'DSXU Code' : 'DSXU Code';
   const commandName = 'dsxu-code';
   const bareModeHelp = isDSXUCodeMode
-    ? 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU.md auto-discovery. Sets DSXU_CODE_SIMPLE=1 and internal legacy simple-mode compatibility. DSXU auth uses DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.'
+    ? 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU.md auto-discovery. Sets DSXU_CODE_SIMPLE=1 and provider-migration simple-mode alias. DSXU auth uses DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.'
     : 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU instruction auto-discovery. Sets DSXU_CODE_SIMPLE=1. Provider auth is API-key or apiKeyHelper via --settings; OAuth and keychain are not read. 3P providers use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.';
   const modelHelp = isDSXUCodeMode
     ? `Model for the current session. Provide a DSXU/DeepSeek alias (e.g. 'flash', 'pro', 'deepseek-v4-flash', or 'deepseek-v4-pro').`
@@ -1005,7 +1012,7 @@ async function run(): Promise<CommanderCommand> {
     ? 'Install DSXU Code native build. Use [target] to specify version (stable, latest, or specific version)'
     : 'Install DSXU Code native build. Use [target] to specify version (stable, latest, or specific version)';
   program.name(commandName).description(`${productName} - starts an interactive coding session by default, use -p/--print for non-interactive output`).argument('[prompt]', 'Your prompt', String)
-  // Subcommands inherit helpOption via commander's copyInheritedSettings 锟?  // setting it once here covers mcp, plugin, auth, and all other subcommands.
+  // Subcommands inherit helpOption via commander's copyInheritedSettings -  // setting it once here covers mcp, plugin, auth, and all other subcommands.
   .helpOption('-h, --help', 'Display help for command').option('-d, --debug [filter]', 'Enable debug mode with optional category filtering (e.g., "api,hooks" or "!1p,!file")', (_value: string | true) => {
     // If value is provided, it will be the filter string
     // If not provided but flag is present, value will be true
@@ -1050,7 +1057,7 @@ async function run(): Promise<CommanderCommand> {
     if ((options as {
       bare?: boolean;
     }).bare) {
-      process.env[dsxuLegacyCodeEnv('SIMPLE')] = '1';
+      process.env[providerMigrationCodeEnv('SIMPLE')] = '1';
     }
 
     // Ignore "code" as a prompt - treat it the same as no prompt
@@ -1069,8 +1076,8 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Assistant mode: when .dsxu/settings.json has assistant: true AND
-    // the tengu_kairos GrowthBook gate is on, force brief on. Permission
-    // mode is left to the user 锟?settings defaultMode or --permission-mode
+    // the tengu_kairos feature flag provider gate is on, force brief on. Permission
+    // mode is left to the user -settings defaultMode or --permission-mode
     // apply as normal. REPL-typed messages already default to 'next'
     // priority (messageQueueManager.enqueue) so they drain mid-turn between
     // tool calls. SendUserMessage (BriefTool) is enabled via the brief env
@@ -1090,14 +1097,14 @@ async function run(): Promise<CommanderCommand> {
     }).assistant && assistantModule) {
       // --assistant (Agent SDK daemon mode): force the latch before
       // isAssistantMode() runs below. The daemon has already checked
-      // entitlement 锟?don't make the child re-check tengu_kairos.
+      // entitlement -don't make the child re-check tengu_kairos.
       assistantModule.markAssistantForced();
     }
     if (feature('KAIROS') && assistantModule?.isAssistantMode() &&
     // Spawned teammates share the leader's cwd + settings.json, so
     // isAssistantMode() is true for them too. --agent-id being set
     // means we ARE a spawned teammate (extractTeammateOptions runs
-    // ~170 lines later so check the raw commander option) 锟?don't
+    // ~170 lines later so check the raw commander option) -don't
     // re-init the team or override teammateMode/proactive/brief.
     !(options as {
       agentId?: unknown;
@@ -1106,8 +1113,8 @@ async function run(): Promise<CommanderCommand> {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.warn(chalk.yellow('Assistant mode disabled: directory is not trusted. Accept the trust dialog and restart.'));
       } else {
-        // Blocking gate check 锟?returns cached `true` instantly; if disk
-        // cache is false/missing, lazily inits GrowthBook and fetches fresh
+        // Blocking gate check -returns cached `true` instantly; if disk
+        // cache is false/missing, lazily inits feature flag provider and fetches fresh
         // (max ~5s). --assistant skips the gate entirely (daemon is
         // pre-entitled).
         kairosEnabled = assistantModule.isAssistantForced() || (await kairosGate.isKairosEnabled());
@@ -1152,7 +1159,7 @@ async function run(): Promise<CommanderCommand> {
     const agentsJson = options.agents;
     const agentCli = options.agent;
     if (feature('BG_SESSIONS') && agentCli) {
-      process.env[dsxuLegacyCodeEnv('AGENT')] = agentCli;
+      process.env[providerMigrationCodeEnv('AGENT')] = agentCli;
     }
 
     // NOTE: LSP manager initialization is intentionally deferred until after
@@ -1171,13 +1178,13 @@ async function run(): Promise<CommanderCommand> {
     // Extract disable slash commands flag
     const disableSlashCommands = options.disableSlashCommands || false;
 
-    // Extract tasks mode options (ant-only)
-    const tasksOption = "external" === 'ant' && (options as {
+    // Extract tasks mode options (dsxu-internal)
+    const tasksOption = false && (options as {
       tasks?: boolean | string;
     }).tasks;
     const taskListId = tasksOption ? typeof tasksOption === 'string' ? tasksOption : DEFAULT_TASKS_MODE_TASK_LIST_ID : undefined;
-    if ("external" === 'ant' && taskListId) {
-      process.env[dsxuLegacyCodeEnv('TASK_LIST_ID')] = taskListId;
+    if (false && taskListId) {
+      process.env[providerMigrationCodeEnv('TASK_LIST_ID')] = taskListId;
     }
 
     // Extract worktree option
@@ -1224,7 +1231,7 @@ async function run(): Promise<CommanderCommand> {
     let storedTeammateOpts: TeammateOptions | undefined;
     if (isAgentSwarmsEnabled()) {
       // Extract agent identity options (for tmux-spawned agents)
-      // These replace the DSXU legacy-code env environment variables
+      // These replace the provider-migration env identity aliases
       const teammateOpts = extractTeammateOptions(options);
       storedTeammateOpts = teammateOpts;
 
@@ -1261,12 +1268,12 @@ async function run(): Promise<CommanderCommand> {
     }).sdkUrl ?? undefined;
 
     // Allow env var to enable partial messages (used by sandbox gateway for baku)
-    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env[dsxuLegacyCodeEnv('INCLUDE_PARTIAL_MESSAGES')]);
+    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env[providerMigrationCodeEnv('INCLUDE_PARTIAL_MESSAGES')]);
 
     // Enable all hook event types when explicitly requested via SDK option
-    // or when running in DSXU_LEGACY_CODE_REMOTE mode (CCR needs them).
+    // or when running in provider-migration remote mode (CCR needs them).
     // Without this, only SessionStart and Setup events are emitted.
-    if (includeHookEvents || isEnvTruthy(process.env[dsxuLegacyCodeEnv('REMOTE')])) {
+    if (includeHookEvents || isEnvTruthy(process.env[providerMigrationCodeEnv('REMOTE')])) {
       setAllHookEventsEnabled(true);
     }
 
@@ -1307,14 +1314,14 @@ async function run(): Promise<CommanderCommand> {
       rc?: string | true;
     }).rc;
     // Actual bridge check is deferred to after showSetupScreens() so that
-    // trust is established and GrowthBook has auth headers.
+    // trust is established and feature flag provider has auth headers.
     let remoteControl = false;
     const remoteControlName = typeof remoteControlOption === 'string' && remoteControlOption.length > 0 ? remoteControlOption : undefined;
 
-    if (isDsxuRuntimeMode() && !isLegacyProviderServiceShellAllowed()) {
-      if (teleport) blockLegacyProviderServiceShell('--teleport');
-      if (remote !== null) blockLegacyProviderServiceShell('--remote');
-      if (remoteControlOption !== undefined) blockLegacyProviderServiceShell('--remote-control/--rc');
+    if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+      if (teleport) blockProviderMigrationServiceShell('--teleport');
+      if (remote !== null) blockProviderMigrationServiceShell('--remote');
+      if (remoteControlOption !== undefined) blockProviderMigrationServiceShell('--remote-control/--rc');
     }
 
     // Validate session ID if provided
@@ -1350,21 +1357,25 @@ async function run(): Promise<CommanderCommand> {
       file?: string[];
     }).file;
     if (fileSpecs && fileSpecs.length > 0) {
-      // Get session ingress token (provided by EnvManager via DSXU_LEGACY_CODE_SESSION_ACCESS_TOKEN)
+      // Get session ingress token (provided by the DSXU/provider-migration EnvManager)
       const sessionToken = getSessionIngressAuthToken();
       if (!sessionToken) {
-        process.stderr.write(chalk.red(`Error: Session token required for file downloads. ${dsxuLegacyCodeEnv('SESSION_ACCESS_TOKEN')} must be set.\n`));
+        process.stderr.write(chalk.red(`Error: Session token required for file downloads. ${providerMigrationCodeEnv('SESSION_ACCESS_TOKEN')} must be set.\n`));
         process.exit(1);
       }
 
       // Resolve session ID: prefer remote session ID, fall back to internal session ID
-      const fileSessionId = process.env[dsxuLegacyCodeEnv('REMOTE_SESSION_ID')] || getSessionId();
+      const fileSessionId = process.env[providerMigrationCodeEnv('REMOTE_SESSION_ID')] || getSessionId();
       const files = parseFileSpecs(fileSpecs);
       if (files.length > 0) {
-        // Use DSXU legacy provider base URL if set (by EnvManager), otherwise use OAuth config
-        // This ensures consistency with session ingress API in all environments
+        const filesApiBaseUrl = resolveStartupFilesApiBaseUrl();
+        if (!filesApiBaseUrl) {
+          process.stderr.write(chalk.red('Error: DSXU_CODE_API_BASE_URL is required for --file downloads on the default DSXU local mainline.\n'));
+          process.exit(1);
+        }
+
         const config: FilesApiConfig = {
-          baseUrl: process.env[DSXU_LEGACY_PROVIDER_BASE_URL_ENV] || getOauthConfig().BASE_API_URL,
+          baseUrl: filesApiBaseUrl,
           oauthToken: sessionToken,
           sessionId: fileSessionId
         };
@@ -1513,7 +1524,7 @@ async function run(): Promise<CommanderCommand> {
       }
       if (Object.keys(allConfigs).length > 0) {
         // SDK hosts (Nest/Desktop) own their server naming and may reuse
-        // built-in names 锟?skip reserved-name checks for type:'sdk'.
+        // built-in names -skip reserved-name checks for type:'sdk'.
         const nonSdkConfigNames = Object.entries(allConfigs).filter(([, config]) => config.type !== 'sdk').map(([name]) => name);
         let reservedNameError: string | null = null;
         if (nonSdkConfigNames.some(isDsxuBrowserProviderMCPServer)) {
@@ -1528,14 +1539,14 @@ async function run(): Promise<CommanderCommand> {
           }
         }
         if (reservedNameError) {
-          // stderr+exit(1) 锟?a throw here becomes a silent unhandled
+          // stderr+exit(1) -a throw here becomes a silent unhandled
           // rejection in stream-json mode (void main() in cli.tsx).
           process.stderr.write(`Error: ${reservedNameError}\n`);
           process.exit(1);
         }
 
         // Add dynamic scope to all configs. type:'sdk' entries pass through
-        // unchanged 锟?they're extracted into sdkMcpConfigs downstream and
+        // unchanged -they're extracted into sdkMcpConfigs downstream and
         // passed to print.ts. The Python SDK relies on this path (it doesn't
         // send sdkMcpServers in the initialize message). Dropping them here
         // broke Coworker (inc-5122). The policy filter below already exempts
@@ -1572,7 +1583,7 @@ async function run(): Promise<CommanderCommand> {
     };
     // Store the explicit CLI flag so teammates can inherit it
     setChromeFlagOverride(chromeOpts.chrome);
-    const enableDsxuBrowserProvider = shouldEnableDsxuBrowserProvider(chromeOpts.chrome) && (isDSXUCodeMode || "external" === 'ant' || isLegacyCloudSubscriber());
+    const enableDsxuBrowserProvider = shouldEnableDsxuBrowserProvider(chromeOpts.chrome) && (isDSXUCodeMode || false || isProviderSubscriptionAccount());
     const autoEnableDsxuBrowserProvider = !enableDsxuBrowserProvider && shouldAutoEnableDsxuBrowserProvider();
     if (enableDsxuBrowserProvider) {
       const platform = getPlatform();
@@ -1639,7 +1650,7 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // chicago MCP: guarded Computer Use (app allowlist + frontmost gate +
-    // SCContentFilter screenshots). Ant-only, GrowthBook-gated 锟?failures
+    // SCContentFilter screenshots). DSXU internal, feature flag provider-gated -failures
     // are silent (this is dogfooding). Platform + interactive checks inline
     // so non-macOS / print-mode ants skip the heavy @ant/computer-use-mcp
     // import entirely. gates.js is light (type-only package import).
@@ -1676,19 +1687,19 @@ async function run(): Promise<CommanderCommand> {
     // Store additional directories for DSXU.md loading (controlled by env var)
     setAdditionalDirectoriesForDsxuInstructions(addDir);
 
-    // Channel server allowlist from --channels flag 锟?servers whose
+    // Channel server allowlist from --channels flag -servers whose
     // inbound push notifications should register this session. The option
     // is added inside a feature() block so TS doesn't know about it
-    // on the options type 锟?same pattern as --assistant at main.tsx:1824.
+    // on the options type -same pattern as --assistant at main.tsx:1824.
     // devChannels is deferred: showSetupScreens shows a confirmation dialog
     // and only appends to allowedChannels on accept.
     let devChannels: ChannelEntry[] | undefined;
     if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
       // Parse plugin:name@marketplace / server:Y tags into typed entries.
       // Tag decides trust model downstream: plugin-kind hits marketplace
-      // verification + GrowthBook allowlist, server-kind always fails
+      // verification + feature flag provider allowlist, server-kind always fails
       // allowlist (schema is plugin-only) unless dev flag is set.
-      // Untagged or marketplace-less plugin entries are hard errors 锟?      // silently not-matching in the gate would look like channels are
+      // Untagged or marketplace-less plugin entries are hard errors -      // silently not-matching in the gate would look like channels are
       // "on" but nothing ever fires.
       const parseChannelEntries = (raw: string[], flag: string): ChannelEntry[] => {
         const entries: ChannelEntry[] = [];
@@ -1743,11 +1754,11 @@ async function run(): Promise<CommanderCommand> {
         }
       }
       // Flag-usage telemetry. Plugin identifiers are logged (same tier as
-      // tengu_plugin_installed 锟?public-registry-style names); server-kind
+      // tengu_plugin_installed -public-registry-style names); server-kind
       // names are not (MCP-server-name tier, opt-in-only elsewhere).
       // Per-server gate outcomes land in tengu_mcp_channel_gate once
       // servers connect. Dev entries go through a confirmation dialog after
-      // this 锟?dev_plugins captures what was typed, not what was accepted.
+      // this -dev_plugins captures what was typed, not what was accepted.
       if (channelEntries.length > 0 || (devChannels?.length ?? 0) > 0) {
         const joinPluginIds = (entries: ChannelEntry[]) => {
           const ids = entries.flatMap(e => e.kind === 'plugin' ? [`${e.name}@${e.marketplace}`] : []);
@@ -1772,14 +1783,14 @@ async function run(): Promise<CommanderCommand> {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const {
         BRIEF_TOOL_NAME,
-        LEGACY_BRIEF_TOOL_NAME
+        BRIEF_TOOL_ALIAS_NAME
       } = require('./tools/BriefTool/prompt.js') as typeof import('./tools/BriefTool/prompt.js');
       const {
         isBriefEntitled
       } = require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js');
       /* eslint-enable @typescript-eslint/no-require-imports */
       const parsed = parseToolListFromCLI(baseTools);
-      if ((parsed.includes(BRIEF_TOOL_NAME) || parsed.includes(LEGACY_BRIEF_TOOL_NAME)) && isBriefEntitled()) {
+      if ((parsed.includes(BRIEF_TOOL_NAME) || parsed.includes(BRIEF_TOOL_ALIAS_NAME)) && isBriefEntitled()) {
         setUserMsgOptIn(true);
       }
     }
@@ -1803,7 +1814,7 @@ async function run(): Promise<CommanderCommand> {
     } = initResult;
 
     // Handle overly broad shell allow rules for ant users (Bash(*), PowerShell(*))
-    if ("external" === 'ant' && overlyBroadBashPermissions.length > 0) {
+    if (false && overlyBroadBashPermissions.length > 0) {
       for (const permission of overlyBroadBashPermissions) {
         logForDebugging(`Ignoring overly broad shell permission ${permission.ruleDisplay} from ${permission.sourceDisplay}`);
       }
@@ -1820,21 +1831,21 @@ async function run(): Promise<CommanderCommand> {
     });
     void assertMinVersion();
 
-    // Legacy cloud config fetch: -p mode only (interactive uses useManageMCPConnections
+    // Provider migration config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
-    const legacyCloudMcpConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() && isLegacyCloudMcpEnabled() &&
-    // --bare / SIMPLE: skip legacy cloud proxy servers (datadog, Gmail,
-    // Slack, BigQuery, PubMed 锟?6-14s each to connect). Scripted calls
+    const providerMigrationMcpConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() && isProviderMigrationMcpEnabled() &&
+    // --bare / SIMPLE: skip provider migration proxy servers (datadog, Gmail,
+    // Slack, BigQuery, PubMed -6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
-    !isBareMode() ? import('src/services/mcp/legacyRemoteMcpProvider.js').then(m => m.fetchLegacyCloudMcpConfigsIfEligible()).then(configs => {
+    !isBareMode() ? import('src/services/mcp/providerConnectorMigration.js').then(m => m.fetchProviderMigrationMcpConfigsIfEligible()).then(configs => {
       const {
         allowed,
         blocked
       } = filterMcpServersByPolicy(configs);
       if (blocked.length > 0) {
-        process.stderr.write(`Warning: old cloud MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
+        process.stderr.write(`Warning: provider migration MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
       }
       return allowed;
     }) : Promise.resolve({});
@@ -1846,7 +1857,7 @@ async function run(): Promise<CommanderCommand> {
     logForDebugging('[STARTUP] Loading MCP configs...');
     const mcpConfigStart = Date.now();
     let mcpConfigResolvedMs: number | undefined;
-    // --bare skips auto-discovered MCP (.mcp.json, user settings, plugins) 锟?    // only explicit --mcp-config works. dynamicMcpConfig is spread onto
+    // --bare skips auto-discovered MCP (.mcp.json, user settings, plugins) -    // only explicit --mcp-config works. dynamicMcpConfig is spread onto
     // allMcpConfigs downstream so it survives this skip.
     const mcpConfigPromise = (strictMcpConfig || isBareMode() ? Promise.resolve({
       servers: {} as Record<string, ScopedMcpServerConfig>
@@ -1911,7 +1922,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Apply coordinator mode tool filtering for headless path
     // (mirrors useMergedTools.ts filtering for REPL/interactive path)
-    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env[dsxuLegacyCodeEnv('COORDINATOR_MODE')])) {
+    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env[providerMigrationCodeEnv('COORDINATOR_MODE')])) {
       const {
         applyCoordinatorToolFilter
       } = await import('./utils/toolPool.js');
@@ -1950,21 +1961,21 @@ async function run(): Promise<CommanderCommand> {
       messagingSocketPath?: string;
     }).messagingSocketPath : undefined;
     // Parallelize setup() with commands+agents loading. setup()'s ~28ms is
-    // mostly startUdsMessaging (socket bind, ~20ms) 锟?not disk-bound, so it
+    // mostly startUdsMessaging (socket bind, ~20ms) -not disk-bound, so it
     // doesn't contend with getCommands' file reads. Gated on !worktreeEnabled
     // since --worktree makes setup() process.chdir() (setup.ts:203), and
     // commands/agents need the post-chdir cwd.
     const preSetupCwd = getCwd();
-    // Register bundled skills/plugins before kicking getCommands() 锟?they're
+    // Register bundled skills/plugins before kicking getCommands(); they are
     // pure in-memory array pushes (<1ms, zero I/O) that getBundledSkills()
     // reads synchronously. Previously ran inside setup() after ~20ms of
     // await points, so the parallel getCommands() memoized an empty list.
-    if (process.env[dsxuLegacyCodeEnv('ENTRYPOINT')] !== 'local-agent') {
-      // V15: bundled legacy plugins are retired from default startup.
+    if (process.env[providerMigrationCodeEnv('ENTRYPOINT')] !== 'local-agent') {
+      // V15: bundled provider-migration plugins are retired from default startup.
       // DSXU plugin/tool semantics now enter through the control plane.
       initBundledSkills();
     }
-    const setupPromise = process.env[dsxuLegacyCodeEnv('LOCAL_RECOVERY')] === '1' ? (async () => {
+    const setupPromise = process.env[providerMigrationCodeEnv('LOCAL_RECOVERY')] === '1' ? (async () => {
       setOriginalCwd(preSetupCwd);
       setProjectRoot(preSetupCwd);
       logForDebugging('[STARTUP] setup() skipped in local recovery mode');
@@ -1985,7 +1996,7 @@ async function run(): Promise<CommanderCommand> {
     profileCheckpoint('action_after_setup');
 
     // Replay user messages into stream-json only when the socket was
-    // explicitly requested. The auto-generated socket is passive 锟?it
+    // explicitly requested. The auto-generated socket is passive -it
     // lets tools inject if they want to, but turning it on by default
     // shouldn't reshape stream-json for SDK consumers who never touch it.
     // Callers who inject and also want those injections visible in the
@@ -2024,13 +2035,13 @@ async function run(): Promise<CommanderCommand> {
       // getCommands Promise.all await below. Trust is implicit in -p mode
       // (same gate as prefetchSystemContextIfSafe).
       void getSystemContext();
-      // Kick getUserContext now too 锟?its first await (fs.readFile in
+      // Kick getUserContext now too -its first await (fs.readFile in
       // getMemoryFiles) yields naturally, so the DSXU.md directory walk
       // runs during the ~280ms overlap window before the context
       // Promise.all join in print.ts. The void getUserContext() in
       // startDeferredPrefetches becomes a memoize cache-hit.
       void getUserContext();
-      // Kick ensureModelStringsInitialized now 锟?for Bedrock this triggers
+      // Kick ensureModelStringsInitialized now -for Bedrock this triggers
       // a 100-200ms profile fetch that was awaited serially at
       // print.ts:739. updateBedrockModelStrings is sequential()-wrapped so
       // the await joins the in-flight fetch. Non-Bedrock is a sync
@@ -2048,19 +2059,19 @@ async function run(): Promise<CommanderCommand> {
     }
 
     // Ant model aliases (capybara-fast etc.) resolve via the
-    // tengu_ant_model_override GrowthBook flag. _CACHED_MAY_BE_STALE reads
+    // tengu_ant_model_override feature flag provider flag. _CACHED_MAY_BE_STALE reads
     // disk synchronously; disk is populated by a fire-and-forget write. On a
     // cold cache, parseUserSpecifiedModel returns the unresolved alias, the
-    // API 404s, and -p exits before the async write lands 锟?crashloop on
+    // API 404s, and -p exits before the async write lands -crashloop on
     // fresh pods. Awaiting init here populates the in-memory payload map that
     // _CACHED_MAY_BE_STALE now checks first. Gated so the warm path stays
     // non-blocking:
-    //  - explicit model via --model or DSXU legacy provider model env (both feed alias resolution)
+    //  - explicit model via --model or DSXU provider migration model env (both feed alias resolution)
     //  - no env override (which short-circuits _CACHED_MAY_BE_STALE before disk)
     //  - flag absent from disk (== null also catches pre-#22279 poisoned null)
-    const explicitModel = options.model || process.env[DSXU_LEGACY_PROVIDER_MODEL_ENV];
-    if ("external" === 'ant' && explicitModel && explicitModel !== 'default' && !hasGrowthBookEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
-      await initializeGrowthBook();
+    const explicitModel = options.model || process.env[DSXU_PROVIDER_MIGRATION_MODEL_ENV];
+    if (false && explicitModel && explicitModel !== 'default' && !hasFeatureFlagEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
+      await initializeFeatureFlags();
     }
 
     // Special case the default model with the null keyword
@@ -2113,7 +2124,7 @@ async function run(): Promise<CommanderCommand> {
     // Store the main thread agent type in bootstrap state so hooks can access it
     setMainThreadAgentType(mainThreadAgentDefinition?.agentType);
 
-    // Log agent flag usage 锟?only log agent name for built-in agents to avoid leaking custom agent names
+    // Log agent flag usage -only log agent name for built-in agents to avoid leaking custom agent names
     if (mainThreadAgentDefinition) {
       logEvent('tengu_agent_flag', {
         agentType: isBuiltInAgent(mainThreadAgentDefinition) ? mainThreadAgentDefinition.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS : 'custom' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2205,7 +2216,7 @@ async function run(): Promise<CommanderCommand> {
         // Log agent memory loaded event for tmux teammates
         if (customAgent.memory) {
           logEvent('tengu_agent_memory_loaded', {
-            ...("external" === 'ant' && {
+            ...(false && {
               agent_type: customAgent.agentType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
             }),
             scope: customAgent.memory as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2221,7 +2232,7 @@ async function run(): Promise<CommanderCommand> {
       }
     }
     maybeActivateBrief(options);
-    // defaultView: 'chat' is a persisted opt-in 锟?check entitlement and set
+    // defaultView: 'chat' is a persisted opt-in -check entitlement and set
     // userMsgOptIn so the tool + prompt section activate. Interactive-only:
     // defaultView is a display preference; SDK sessions have no display, and
     // the assistant installer writes defaultView:'chat' to settings.local.json
@@ -2245,7 +2256,7 @@ async function run(): Promise<CommanderCommand> {
     // access and conflict with delegation instructions.
     if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
       proactive?: boolean;
-    }).proactive || isEnvTruthy(process.env[dsxuLegacyCodeEnv('PROACTIVE')])) && !coordinatorModeModule?.isCoordinatorMode()) {
+    }).proactive || isEnvTruthy(process.env[providerMigrationCodeEnv('PROACTIVE')])) && !coordinatorModeModule?.isCoordinatorMode()) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const briefVisibility = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js')).isBriefEnabled() ? 'Call SendUserMessage at checkpoints to mark where things stand.' : 'The user will see any text you output.' : 'The user will see any text you output.';
       /* eslint-enable @typescript-eslint/no-require-imports */
@@ -2257,7 +2268,7 @@ async function run(): Promise<CommanderCommand> {
       appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${assistantAddendum}` : assistantAddendum;
     }
 
-    // Ink root is only needed for interactive sessions 锟?patchConsole in the
+    // Ink root is only needed for interactive sessions -patchConsole in the
     // Ink constructor would swallow console output in headless mode.
     let root!: Root;
     let getFpsMetrics!: () => FpsMetrics | undefined;
@@ -2268,8 +2279,8 @@ async function run(): Promise<CommanderCommand> {
       const ctx = getRenderContext(false);
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
-      // Install asciicast recorder before Ink mounts (ant-only, opt-in via DSXU_LEGACY_CODE_TERMINAL_RECORDING=1)
-      if ("external" === 'ant') {
+      // Install asciicast recorder before Ink mounts (dsxu-internal, opt-in via provider-migration TERMINAL_RECORDING=1)
+      if (false) {
         installAsciicastRecorder();
       }
       const {
@@ -2279,7 +2290,7 @@ async function run(): Promise<CommanderCommand> {
 
       // Log startup time now, before any blocking dialog renders. Logging
       // from REPL's first render (the old location) included however long
-      // the user sat on trust/OAuth/onboarding/resume-picker 锟?p99 was ~70s
+      // the user sat on trust/OAuth/onboarding/resume-picker -p99 was ~70s
       // dominated by dialog-wait time, not code-path startup.
       logEvent('tengu_timer', {
         event: 'startup' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -2290,12 +2301,12 @@ async function run(): Promise<CommanderCommand> {
       const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableDsxuBrowserProvider, devChannels);
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
-      // Now that trust is established and GrowthBook has auth headers,
+      // Now that trust is established and feature flag provider has auth headers,
       // resolve the --remote-control / --rc entitlement gate.
       if (feature('BRIDGE_MODE') && remoteControlOption !== undefined) {
         const {
           getBridgeDisabledReason
-        } = await import('./dsxu/engine/provider-backend/dsxu-provider-compat.js');
+        } = await import('./services/bridge/dsxuRemoteBridgeFacade.js');
         const disabledReason = await getBridgeDisabledReason();
         remoteControl = disabledReason === null;
         if (disabledReason) {
@@ -2303,7 +2314,7 @@ async function run(): Promise<CommanderCommand> {
         }
       }
 
-      // Check for pending agent memory snapshot updates (only for --agent mode, ant-only)
+      // Check for pending agent memory snapshot updates (only for --agent mode, dsxu-internal)
       if (feature('AGENT_MEMORY_SNAPSHOT') && mainThreadAgentDefinition && isCustomAgent(mainThreadAgentDefinition) && mainThreadAgentDefinition.memory && mainThreadAgentDefinition.pendingSnapshotUpdate) {
         const agentDef = mainThreadAgentDefinition;
         const choice = await launchSnapshotUpdateDialog(root, {
@@ -2330,17 +2341,17 @@ async function run(): Promise<CommanderCommand> {
         // Keep in sync with the post-login logic in src/commands/login.tsx
         refreshRemoteManagedSettingsIfAllowed();
         void refreshPolicyLimits();
-        // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
+        // Clear user data cache BEFORE feature flag provider refresh so it picks up fresh credentials
         resetUserCache();
-        // Refresh GrowthBook after login to get updated feature flags for provider MCPs
-        refreshGrowthBookAfterAuthChange();
+        // Refresh feature flag provider after login to get updated feature flags for provider MCPs
+        refreshFeatureFlagsAfterAuthChange();
         // Clear any stale trusted device token then enroll for Remote Control.
         // Both self-gate on tengu_sessions_elevated_auth_enforcement internally
-        // 锟?enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
-        // the GrowthBook reinit above), clearTrustedDeviceToken() via the
+        // -enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
+        // the feature flag provider reinit above), clearTrustedDeviceToken() via the
         // sync cached check (acceptable since clear is idempotent).
-        if (shouldLoadLegacyProviderServiceShell()) {
-          void import('./dsxu/engine/provider-backend/dsxu-provider-compat.js').then(m => {
+        if (shouldLoadProviderMigrationServiceShell()) {
+          void import('./services/bridge/dsxuRemoteBridgeFacade.js').then(m => {
             m.clearTrustedDeviceToken();
             return m.enrollTrustedDevice();
           });
@@ -2389,7 +2400,7 @@ async function run(): Promise<CommanderCommand> {
     // Check quota status, fast mode, passes eligibility, and bootstrap data
     // after trust is established. These make API calls which could trigger
     // apiKeyHelper execution.
-    // --bare / SIMPLE: skip 锟?these are cache-warms for the REPL's
+    // --bare / SIMPLE: skip -these are cache-warms for the REPL's
     // first-turn responsiveness (quota, passes, fastMode, bootstrap data). Fast
     // mode doesn't apply to the Agent SDK anyway (see getFastModeUnavailableReason).
     const bgRefreshThrottleMs = getFeatureValue_CACHED_MAY_BE_STALE('tengu_cicada_nap_ms', 0);
@@ -2461,11 +2472,11 @@ async function run(): Promise<CommanderCommand> {
       tools: [],
       commands: []
     }) : prefetchAllMcpResources(regularMcpConfigs);
-    const legacyCloudMcpPromise = isNonInteractiveSession ? Promise.resolve({
+    const providerMigrationMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
-    }) : legacyCloudMcpConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
+    }) : providerMigrationMcpConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
       clients: [],
       tools: [],
       commands: []
@@ -2474,16 +2485,16 @@ async function run(): Promise<CommanderCommand> {
     // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
     // local dedup flags, so merging two calls can yield duplicates. print.ts
     // already uniqBy's the final tool pool, but dedup here keeps appState clean.
-    const mcpPromise = Promise.all([localMcpPromise, legacyCloudMcpPromise]).then(([local, legacyCloud]) => ({
-      clients: [...local.clients, ...legacyCloud.clients],
-      tools: uniqBy([...local.tools, ...legacyCloud.tools], 'name'),
-      commands: uniqBy([...local.commands, ...legacyCloud.commands], 'name')
+    const mcpPromise = Promise.all([localMcpPromise, providerMigrationMcpPromise]).then(([local, providerMigration]) => ({
+      clients: [...local.clients, ...providerMigration.clients],
+      tools: uniqBy([...local.tools, ...providerMigration.tools], 'name'),
+      commands: uniqBy([...local.commands, ...providerMigration.commands], 'name')
     }));
 
     // Start hooks early so they run in parallel with MCP connections.
     // Skip for initOnly/init/maintenance (handled separately), non-interactive
     // (handled via setupTrigger), and resume/continue (conversationRecovery.ts
-    // fires 'resume' instead 锟?without this guard, hooks fire TWICE on /resume
+    // fires 'resume' instead -without this guard, hooks fire TWICE on /resume
     // and the second systemMessage clobbers the first. gh-30825)
     const hooksPromise = initOnly || init || maintenance || isNonInteractiveSession || options.continue || options.resume ? null : processSessionStartHooks('startup', {
       agentType: mainThreadAgentDefinition?.agentType,
@@ -2492,13 +2503,13 @@ async function run(): Promise<CommanderCommand> {
 
     // MCP never blocks REPL render OR turn 1 TTFT. useManageMCPConnections
     // populates appState.mcp async as servers connect (connectToServer is
-    // memoized 锟?the prefetch calls above and the hook converge on the same
+    // memoized -the prefetch calls above and the hook converge on the same
     // connections). getToolUseContext reads store.getState() fresh via
     // computeTools(), so turn 1 sees whatever's connected by query time.
     // Slow servers populate for turn 2+. Matches interactive-no-prompt
     // behavior. Print mode: per-server push into headlessStore (below).
     const hookMessages: Awaited<NonNullable<typeof hooksPromise>> = [];
-    // Suppress transient unhandledRejection 锟?the prefetch warms the
+    // Suppress transient unhandledRejection -the prefetch warms the
     // memoized connectToServer cache but nobody awaits it in interactive.
     mcpPromise.catch(() => {});
     const mcpClients: Awaited<typeof mcpPromise>['clients'] = [];
@@ -2576,7 +2587,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Register PID file for concurrent-session detection (~/.dsxu/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
-    // REPL path registers 锟?not subcommands like `dsxu-code doctor`. Chained:
+    // REPL path registers -not subcommands like `dsxu-code doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
     void registerSession().then(registered => {
       if (!registered) return;
@@ -2592,7 +2603,7 @@ async function run(): Promise<CommanderCommand> {
       });
     });
 
-    // Initialize versioned plugins system (triggers V1鈫扸2 migration if
+    // Initialize versioned plugins system (triggers V1 to V2 migration if
     // needed). Then run orphan GC, THEN warm the Grep/Glob exclusion cache.
     // Sequencing matters: the warmup scans disk for .orphaned_at markers,
     // so it must see the GC's Pass 1 (remove markers from reinstalled
@@ -2600,17 +2611,17 @@ async function run(): Promise<CommanderCommand> {
     // warm also lands before autoupdate (fires on first submit in REPL)
     // can orphan this session's active version underneath us.
     // --bare / SIMPLE: skip plugin version sync + orphan cleanup. These
-    // are install/upgrade bookkeeping that scripted calls don't need 锟?    // the next interactive session will reconcile. The await here was
+    // are install/upgrade bookkeeping that scripted calls don't need -    // the next interactive session will reconcile. The await here was
     // blocking -p on a marketplace round-trip.
     if (isBareMode()) {
-      // skip 锟?no-op
+      // skip -no-op
     } else if (isNonInteractiveSession) {
       // In headless mode, await to ensure plugin sync completes before CLI exits
       await initializeVersionedPlugins();
       profileCheckpoint('action_after_plugins_init');
       void cleanupOrphanedPluginVersionsInBackground().then(() => getGlobExclusionsForPluginCache());
     } else {
-      // In interactive mode, fire-and-forget 锟?this is purely bookkeeping
+      // In interactive mode, fire-and-forget -this is purely bookkeeping
       // that doesn't affect runtime behavior of the current session
       void initializeVersionedPlugins().then(async () => {
         profileCheckpoint('action_after_plugins_init');
@@ -2648,15 +2659,15 @@ async function run(): Promise<CommanderCommand> {
 
       // Kick SessionStart hooks now so the subprocess spawn overlaps with
       // MCP connect + plugin init + print.ts import below. loadInitialMessages
-      // joins this at print.ts:4397. Guarded same as loadInitialMessages 锟?      // continue/resume/teleport paths don't fire startup hooks (or fire them
+      // joins this at print.ts:4397. Guarded same as loadInitialMessages -      // continue/resume/teleport paths don't fire startup hooks (or fire them
       // conditionally inside the resume branch, where this promise is
       // undefined and the ?? fallback runs). Also skip when setupTrigger is
-      // set 锟?those paths run setup hooks first (print.ts:544), and session
+      // set -those paths run setup hooks first (print.ts:544), and session
       // start hooks must wait until setup completes.
       const sessionStartHooksPromise = options.continue || options.resume || teleport || setupTrigger ? undefined : processSessionStartHooks('startup');
       // Suppress transient unhandledRejection if this rejects before
       // loadInitialMessages awaits it. Downstream await still observes the
-      // rejection 锟?this just prevents the spurious global handler fire.
+      // rejection -this just prevents the spurious global handler fire.
       sessionStartHooksPromise?.catch(() => {});
       profileCheckpoint('before_validateForceLoginOrg');
       // Validate org restriction for non-interactive sessions
@@ -2690,7 +2701,7 @@ async function run(): Promise<CommanderCommand> {
         // executeForkedSlashCommand (processSlashCommand.tsx:132) and
         // AgentTool's shouldRunAsync. The REPL initialState sets this at
         // ~3459; headless was defaulting to false, so the daemon child's
-        // scheduled tasks and Agent-tool calls ran synchronously 锟?N
+        // scheduled tasks and Agent-tool calls ran synchronously -N
         // overdue cron tasks on spawn = N serial subagent turns blocking
         // user input. Computed at :1620, well before this branch.
         ...(feature('KAIROS') ? {
@@ -2707,8 +2718,8 @@ async function run(): Promise<CommanderCommand> {
         void checkAndDisableBypassPermissions(toolPermissionContext);
       }
 
-      // Async check of auto mode gate 锟?corrects state and disables auto if needed.
-      // Gated on TRANSCRIPT_CLASSIFIER (not USER_TYPE) so GrowthBook kill switch runs for external builds too.
+      // Async check of auto mode gate -corrects state and disables auto if needed.
+      // Gated on TRANSCRIPT_CLASSIFIER (not USER_TYPE) so feature flag provider kill switch runs for external builds too.
       if (feature('TRANSCRIPT_CLASSIFIER')) {
         void verifyAutoModeGateAccess(toolPermissionContext, headlessStore.getState().fastMode).then(({
           updateContext
@@ -2734,7 +2745,7 @@ async function run(): Promise<CommanderCommand> {
       setSdkBetas(filterAllowedSdkBetas(betas));
 
       // Print-mode MCP: per-server incremental push into headlessStore.
-      // Mirrors useManageMCPConnections 锟?push pending first (so ToolSearch's
+      // Mirrors useManageMCPConnections -push pending first (so ToolSearch's
       // pending-check at ToolSearchTool.ts:334 sees them), then replace with
       // connected/failed as each server settles.
       const connectMcpBatch = (configs: Record<string, ScopedMcpServerConfig>, label: string): Promise<void> => {
@@ -2766,42 +2777,42 @@ async function run(): Promise<CommanderCommand> {
           }));
         }, configs).catch(err => logForDebugging(`[MCP] ${label} connect error: ${err}`));
       };
-      // Await all MCP configs 锟?print mode is often single-turn, so
+      // Await all MCP configs -print mode is often single-turn, so
       // "late-connecting servers visible next turn" doesn't help. SDK init
       // message and turn-1 tool list both need configured MCP tools present.
       // Zero-server case is free via the early return in connectMcpBatch.
       // Connectors parallelize inside getMcpToolsCommandsAndResources
-      // (processBatched with Promise.all). DSXU legacy cloud is awaited too 锟?its
+      // (processBatched with Promise.all). DSXU provider migration is awaited too -its
       // fetch was kicked off early (line ~2558) so only residual time blocks
-      // here. --bare skips DSXU legacy cloud entirely for perf-sensitive scripts.
+      // here. --bare skips DSXU provider migration entirely for perf-sensitive scripts.
       profileCheckpoint('before_connectMcp');
       await connectMcpBatch(regularMcpConfigs, 'regular');
       profileCheckpoint('after_connectMcp');
-      // Dedup: suppress plugin MCP servers that duplicate a DSXU legacy cloud
-      // connector (connector wins), then connect DSXU legacy cloud servers.
-      // Bounded wait 锟?#23725 made this blocking so single-turn -p sees
+      // Dedup: suppress plugin MCP servers that duplicate a DSXU provider migration
+      // connector (connector wins), then connect DSXU provider migration servers.
+      // Bounded wait -#23725 made this blocking so single-turn -p sees
       // connectors, but with 40+ slow connectors tengu_startup_perf p99
       // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
       // the promise keeps running and updates headlessStore in the
       // background so turn 2+ still sees connectors.
-      const LEGACY_CLOUD_MCP_TIMEOUT_MS = 5_000;
-      const legacyCloudConnect = legacyCloudMcpConfigPromise.then(legacyCloudConfigs => {
-        if (Object.keys(legacyCloudConfigs).length > 0) {
-          const legacyCloudSigs = new Set<string>();
-          for (const config of Object.values(legacyCloudConfigs)) {
+      const PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS = 5_000;
+      const providerMigrationConnect = providerMigrationMcpConfigPromise.then(providerMigrationConfigs => {
+        if (Object.keys(providerMigrationConfigs).length > 0) {
+          const providerMigrationSigs = new Set<string>();
+          for (const config of Object.values(providerMigrationConfigs)) {
             const sig = getMcpServerSignature(config);
-            if (sig) legacyCloudSigs.add(sig);
+            if (sig) providerMigrationSigs.add(sig);
           }
           const suppressed = new Set<string>();
           for (const [name, config] of Object.entries(regularMcpConfigs)) {
             if (!name.startsWith('plugin:')) continue;
             const sig = getMcpServerSignature(config);
-            if (sig && legacyCloudSigs.has(sig)) suppressed.add(name);
+            if (sig && providerMigrationSigs.has(sig)) suppressed.add(name);
           }
           if (suppressed.size > 0) {
-            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate DSXU legacy cloud connectors: ${[...suppressed].join(', ')}`);
+            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate DSXU provider migration connectors: ${[...suppressed].join(', ')}`);
             // Disconnect before filtering from state. Only connected
-            // servers need cleanup 锟?clearServerCache on a never-connected
+            // servers need cleanup -clearServerCache on a never-connected
             // server triggers a real connect just to kill it (memoize
             // cache-miss path, see useManageMCPConnections.ts:870).
             for (const c of headlessStore.getState().mcp.clients) {
@@ -2835,37 +2846,37 @@ async function run(): Promise<CommanderCommand> {
             });
           }
         }
-        // Suppress legacy cloud connectors that duplicate an enabled
+        // Suppress provider migration connectors that duplicate an enabled
         // manual server (URL-signature match). Plugin dedup above only
         // handles `plugin:*` keys; this catches manual `.mcp.json` entries.
-        // plugin:* must be excluded here 锟?step 1 already suppressed
-        // those (legacy cloud wins); leaving them in suppresses the
+        // plugin:* must be excluded here -step 1 already suppressed
+        // those (provider migration wins); leaving them in suppresses the
         // connector too, and neither survives (gh-39974).
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
         const {
-          servers: dedupedLegacyCloud
-        } = dedupLegacyCloudMcpServers(legacyCloudConfigs, nonPluginConfigs);
-        return connectMcpBatch(dedupedLegacyCloud, DSXU_LEGACY_CODE_CLOUD_SOURCE);
+          servers: dedupedProviderMigration
+        } = dedupProviderMigrationMcpServers(providerMigrationConfigs, nonPluginConfigs);
+        return connectMcpBatch(dedupedProviderMigration, PROVIDER_MIGRATION_CLOUD_SOURCE);
       });
-      let legacyCloudTimer: ReturnType<typeof setTimeout> | undefined;
-      const legacyCloudTimedOut = await Promise.race([legacyCloudConnect.then(() => false), new Promise<boolean>(resolve => {
-        legacyCloudTimer = setTimeout(r => r(true), LEGACY_CLOUD_MCP_TIMEOUT_MS, resolve);
+      let providerMigrationTimer: ReturnType<typeof setTimeout> | undefined;
+      const providerMigrationTimedOut = await Promise.race([providerMigrationConnect.then(() => false), new Promise<boolean>(resolve => {
+        providerMigrationTimer = setTimeout(r => r(true), PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS, resolve);
       })]);
-      if (legacyCloudTimer) clearTimeout(legacyCloudTimer);
-      if (legacyCloudTimedOut) {
-        logForDebugging(`[MCP] provider connectors not ready after ${LEGACY_CLOUD_MCP_TIMEOUT_MS}ms; proceeding while background connection continues`);
+      if (providerMigrationTimer) clearTimeout(providerMigrationTimer);
+      if (providerMigrationTimedOut) {
+        logForDebugging(`[MCP] provider connectors not ready after ${PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS}ms; proceeding while background connection continues`);
       }
-      profileCheckpoint('after_connectMcp_legacy_cloud');
+      profileCheckpoint('after_connectMcp_provider_migration_cloud');
 
       // In headless mode, start deferred prefetches immediately (no user typing delay)
       // --bare / SIMPLE: startDeferredPrefetches early-returns internally.
       // backgroundHousekeeping (initExtractMemories, pruneShellSnapshots,
       // cleanupOldMessageFiles) and sdkHeapDumpMonitor are all bookkeeping
-      // that scripted calls don't need 锟?the next interactive session reconciles.
+      // that scripted calls don't need -the next interactive session reconciles.
       if (!isBareMode()) {
         startDeferredPrefetches();
         void import('./utils/backgroundHousekeeping.js').then(m => m.startBackgroundHousekeeping());
-        if ("external" === 'ant') {
+        if (false) {
           void import('./utils/sdkHeapDumpMonitor.js').then(m => m.startSdkMemoryMonitor());
         }
       }
@@ -2948,7 +2959,7 @@ async function run(): Promise<CommanderCommand> {
     // Log model config at startup
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      env_var: process.env[DSXU_LEGACY_PROVIDER_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      env_var: process.env[DSXU_PROVIDER_MIGRATION_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       settings_file: (getInitialSettings() || {}).model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       subscriptionType: getSubscriptionType() as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -3004,7 +3015,7 @@ async function run(): Promise<CommanderCommand> {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const {
         isCcrMirrorEnabled
-      } = require('./dsxu/engine/provider-backend/dsxu-provider-compat.js') as typeof import('./dsxu/engine/provider-backend/dsxu-provider-compat.js');
+      } = require('./services/bridge/dsxuRemoteBridgeFacade.js') as typeof import('./services/bridge/dsxuRemoteBridgeFacade.js');
       /* eslint-enable @typescript-eslint/no-require-imports */
       ccrMirrorEnabled = isCcrMirrorEnabled();
     }
@@ -3113,7 +3124,7 @@ async function run(): Promise<CommanderCommand> {
         advisorModel
       }),
       // Compute teamContext synchronously to avoid useEffect setState during render.
-      // KAIROS: assistantTeamContext takes precedence 锟?set earlier in the
+      // KAIROS: assistantTeamContext takes precedence -set earlier in the
       // KAIROS block so Agent(name: "foo") can spawn in-process teammates
       // without TeamCreate. computeInitialTeamContext() is for tmux-spawned
       // teammates reading their own identity, not the assistant-mode leader.
@@ -3126,7 +3137,7 @@ async function run(): Promise<CommanderCommand> {
     }
     const initialTools = mcpTools;
 
-    // Increment numStartups synchronously 锟?first-render readers like
+    // Increment numStartups synchronously -first-render readers like
     // shouldShowEffortCallout (via useState initializer) need the updated
     // value before setImmediate fires. Defer only telemetry.
     saveGlobalConfig(current => ({
@@ -3138,15 +3149,15 @@ async function run(): Promise<CommanderCommand> {
       logSessionTelemetry();
     });
 
-    // Set up per-turn session environment data uploader (ant-only build).
+    // Set up per-turn session environment data uploader (dsxu-internal build).
     // Default-enabled for all ant users when working in a provider-owned
     // repo. Captures git/filesystem state (NOT transcripts) at each turn so
     // environments can be recreated at any user message index. Gating:
     //   - Build-time: this import is stubbed in external builds.
     //   - Runtime: uploader checks provider-owned remote + gcloud auth.
-    //   - Safety: DSXU_LEGACY_CODE_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
+    //   - Safety: provider-migration DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
     // Import is dynamic + async to avoid adding startup latency.
-    const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
+    const sessionUploaderPromise = false ? import('./utils/sessionDataUploader.js') : null;
 
     // Defer session uploader resolution to the onTurnComplete callback to avoid
     // adding a new top-level await in main.tsx (performance-critical path).
@@ -3280,7 +3291,7 @@ async function run(): Promise<CommanderCommand> {
       // spawn ssh with unix-socket -R forward to a local auth proxy, hand
       // the REPL an SSHSession. Tools run remotely, UI renders locally.
       // `--local` skips probe/deploy/ssh and spawns the current binary
-      // directly with the same env 锟?e2e test of the proxy/auth plumbing.
+      // directly with the same env -e2e test of the proxy/auth plumbing.
       const {
         createSSHSession,
         createLocalSSHSession,
@@ -3299,7 +3310,7 @@ async function run(): Promise<CommanderCommand> {
           process.stderr.write(`Connecting to ${_pendingSSH.host}...` + `\n`);
           // In-place progress: \r + EL0 (erase to end of line). Final \n on
           // success so the next message lands on a fresh line. No-op when
-          // stderr isn't a TTY (piped/redirected) 锟?\r would just emit noise.
+          // stderr isn't a TTY (piped/redirected) -\r would just emit noise.
           const isTTY = process.stderr.isTTY;
           let hadProgress = false;
           sshSession = await createSSHSession({
@@ -3342,19 +3353,19 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssistantChat.sessionId || _pendingAssistantChat.discover)) {
-      // `dsxu-code assistant [sessionId]` 锟?REPL as a pure viewer client
+      // `dsxu-code assistant [sessionId]` -REPL as a pure viewer client
       // of a remote assistant session. The agentic loop runs remotely; this
       // process streams live events and POSTs messages. History is lazy-
       // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
-      if (!shouldLoadLegacyProviderServiceShell()) {
-        blockLegacyProviderServiceShell('assistant remote viewer');
+      if (!shouldLoadProviderMigrationServiceShell()) {
+        blockProviderMigrationServiceShell('assistant remote viewer');
       }
       const {
         discoverAssistantSessions
       } = await import('./assistant/sessionDiscovery.js');
       let targetSessionId = _pendingAssistantChat.sessionId;
 
-      // Discovery flow 锟?list bridge environments, filter sessions
+      // Discovery flow -list bridge environments, filter sessions
       if (!targetSessionId) {
         let sessions;
         try {
@@ -3397,15 +3408,17 @@ async function run(): Promise<CommanderCommand> {
       // Auth: call prepareApiRequest() once for orgUUID, but use a
       // getAccessToken closure for the token so reconnects get fresh tokens.
       const {
-        checkAndRefreshOAuthTokenIfNeeded,
-        getCompatOAuthTokens: getDsxuControlOAuthTokens
+        checkAndRefreshOAuthTokenIfNeeded
       } = await import('./utils/auth.js');
+      const {
+        getProviderControlTokens
+      } = await import('./services/auth/dsxuProviderControlAuth.js');
       const {
         prepareApiRequest
       } = await import('./utils/teleport/api.js');
       const {
         createRemoteSessionConfig
-      } = await import('./dsxu/engine/provider-backend/dsxu-remote-session-manager.js');
+      } = await import('./services/bridge/dsxuRemoteSessionCoordinator.js');
       await checkAndRefreshOAuthTokenIfNeeded();
       let apiCreds;
       try {
@@ -3413,7 +3426,7 @@ async function run(): Promise<CommanderCommand> {
       } catch (e) {
         return await exitWithError(root, `Error: ${e instanceof Error ? e.message : 'Failed to authenticate'}`, () => gracefulShutdown(1));
       }
-      const getAccessToken = (): string => getDsxuControlOAuthTokens()?.accessToken ?? apiCreds.accessToken;
+      const getAccessToken = (): string => getProviderControlTokens()?.accessToken ?? apiCreds.accessToken;
 
       // Brief mode activation: setKairosActive(true) satisfies BOTH opt-in
       // and entitlement for isBriefEnabled() (BriefTool.ts:124-132).
@@ -3447,7 +3460,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (options.resume || options.fromPr || teleport || remote !== null) {
-      // Handle resume flow - from file (ant-only), session ID, or interactive selector
+      // Handle resume flow - from file (dsxu-internal), session ID, or interactive selector
 
       // Clear stale caches before resuming to ensure fresh file/skill discovery
       const {
@@ -3561,12 +3574,12 @@ async function run(): Promise<CommanderCommand> {
 
         // Create remote session config for the REPL
         const {
-          getCompatOAuthTokens: getTokensForRemote
-        } = await import('./utils/auth.js');
+          getProviderControlTokens
+        } = await import('./services/auth/dsxuProviderControlAuth.js');
         const {
           createRemoteSessionConfig
-        } = await import('./dsxu/engine/provider-backend/dsxu-remote-session-manager.js');
-        const getAccessTokenForRemote = (): string => getTokensForRemote()?.accessToken ?? apiCreds.accessToken;
+        } = await import('./services/bridge/dsxuRemoteSessionCoordinator.js');
+        const getAccessTokenForRemote = (): string => getProviderControlTokens()?.accessToken ?? apiCreds.accessToken;
         const remoteSessionConfig = createRemoteSessionConfig(createdSession.id, getAccessTokenForRemote, apiCreds.orgUUID, hasInitialPrompt);
 
         // Add remote session info as initial system message
@@ -3692,7 +3705,7 @@ async function run(): Promise<CommanderCommand> {
           }
         }
       }
-      if ("external" === 'ant') {
+      if (false) {
         if (options.resume && typeof options.resume === 'string' && !maybeSessionId) {
           // Check for ccshare URL (e.g. https://go/ccshare/boris-20260311-211036)
           const {
@@ -3742,7 +3755,7 @@ async function run(): Promise<CommanderCommand> {
                 logOption = await loadTranscriptFromFile(resolvedPath);
               } catch (error) {
                 if (!isENOENT(error)) throw error;
-                // ENOENT: not a file path 锟?fall through to session-ID handling
+                // ENOENT: not a file path -fall through to session-ID handling
               }
               if (logOption) {
                 const result = await loadConversationForResume(logOption, undefined /* sourceFile */);
@@ -3889,7 +3902,7 @@ async function run(): Promise<CommanderCommand> {
       // knows the session originated externally. Linux xdg-open and
       // browsers with "always allow" set dispatch the link with no OS-level
       // confirmation, so this is the only signal the user gets that the
-      // prompt 锟?and the working directory / DSXU.md it implies 锟?came
+      // prompt -and the working directory / DSXU.md it implies -came
       // from an external source rather than something they typed.
       let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null;
       if (feature('LODESTONE')) {
@@ -3927,18 +3940,18 @@ async function run(): Promise<CommanderCommand> {
   if (canUserConfigureAdvisor()) {
     program.addOption(new Option('--advisor <model>', 'Enable the server-side advisor tool with the specified model (alias or full ID).').hideHelp());
   }
-  if ("external" === 'ant') {
-    program.addOption(new Option('--delegate-permissions', '[ANT-ONLY] Alias for --permission-mode auto.').implies({
+  if (false) {
+    program.addOption(new Option('--delegate-permissions', '[DSXU internal] Alias for --permission-mode auto.').implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--dangerously-skip-permissions-with-classifiers', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
+    program.addOption(new Option('--dangerously-skip-permissions-with-classifiers', '[DSXU internal] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--afk', '[ANT-ONLY] Deprecated alias for --permission-mode auto.').hideHelp().implies({
+    program.addOption(new Option('--afk', '[DSXU internal] Deprecated alias for --permission-mode auto.').hideHelp().implies({
       permissionMode: 'auto'
     }));
-    program.addOption(new Option('--tasks [id]', '[ANT-ONLY] Tasks mode: watch for tasks and auto-process them. Optional id is used as both the task list ID and agent ID (defaults to "tasklist").').argParser(String).hideHelp());
-    program.option('--agent-teams', '[ANT-ONLY] Force DSXU to use multi-agent mode for solving problems', () => true);
+    program.addOption(new Option('--tasks [id]', '[DSXU internal] Tasks mode: watch for tasks and auto-process them. Optional id is used as both the task list ID and agent ID (defaults to "tasklist").').argParser(String).hideHelp());
+    program.option('--agent-teams', '[DSXU internal] Force DSXU to use multi-agent mode for solving problems', () => true);
   }
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     program.addOption(new Option('--enable-auto-mode', 'Opt in to auto mode').hideHelp());
@@ -3961,7 +3974,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // Teammate identity options (set by leader when spawning tmux teammates)
-  // These replace the DSXU legacy-code env environment variables
+  // These replace the provider-migration env identity aliases
   program.addOption(new Option('--agent-id <id>', 'Teammate agent ID').hideHelp());
   program.addOption(new Option('--agent-name <name>', 'Teammate display name').hideHelp());
   program.addOption(new Option('--team-name <name>', 'Team name for swarm coordination').hideHelp());
@@ -3988,9 +4001,9 @@ async function run(): Promise<CommanderCommand> {
 
   // -p/--print mode: skip subcommand registration. The 52 subcommands
   // (mcp, auth, plugin, skill, task, config, doctor, update, etc.) are
-  // never dispatched in print mode 锟?commander routes the prompt to the
+  // never dispatched in print mode -commander routes the prompt to the
   // default action. The subcommand registration path was measured at ~65ms
-  // on baseline 锟?mostly the isBridgeEnabled() call (25ms settings Zod parse
+  // on baseline -mostly the isBridgeEnabled() call (25ms settings Zod parse
   // + 40ms sync keychain subprocess), both hidden by the try/catch that
   // always returns false before enableConfigs(). cc:// URLs are rewritten to
   // `open` at main() line ~851 BEFORE this runs, so argv check is safe here.
@@ -4047,6 +4060,14 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpGetHandler(name);
   });
+  mcp.command('doctor').description('Inspect MCP config, registry, owner boundaries, and release readiness without spawning MCP servers').option('--json', 'Print JSON doctor report').action(async (options: {
+    json?: boolean;
+  }) => {
+    const {
+      mcpDoctorHandler
+    } = await import('./cli/handlers/mcp.js');
+    await mcpDoctorHandler(options);
+  });
   mcp.command('add-json <name> <json>').description('Add an MCP server (stdio or SSE) with a JSON string').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').option('--client-secret', 'Prompt for OAuth client secret (or set MCP_CLIENT_SECRET env var)').action(async (name: string, json: string, options: {
     scope?: string;
     clientSecret?: true;
@@ -4056,7 +4077,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddJsonHandler(name, json, options);
   });
-  mcp.command('import-desktop').description('Import MCP servers from DSXU desktop MCP config; legacy desktop config is migration-only').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command('import-desktop').description('Import MCP servers from DSXU desktop MCP config; provider-migration desktop config is migration-only').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -4064,7 +4085,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddFromDesktopHandler(options);
   });
-  mcp.command(DSXU_LEGACY_DESKTOP_IMPORT_COMMAND).description('Legacy migration: import MCP servers from a legacy desktop config into DSXU').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command(PROVIDER_MIGRATION_DESKTOP_IMPORT_COMMAND).description('Provider migration: import MCP servers from a provider-migration desktop config into DSXU').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -4220,7 +4241,7 @@ async function run(): Promise<CommanderCommand> {
   // DSXU provider auth
 
   const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Sign in to your DSXU provider account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use provider console API usage billing').option(DSXU_LEGACY_PROVIDER_SUBSCRIPTION_OPTION, 'Use provider subscription (default)').action(async (loginOptions: {
+  auth.command('login').description('Sign in to your DSXU provider account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use provider console API usage billing').option(DSXU_PROVIDER_MIGRATION_SUBSCRIPTION_OPTION, 'Use provider subscription (default)').action(async (loginOptions: {
     email?: string;
     sso?: boolean;
     console?: boolean;
@@ -4231,7 +4252,7 @@ async function run(): Promise<CommanderCommand> {
       sso,
       console: useConsole
     } = loginOptions;
-    const legacyCloudLogin = Boolean(loginOptions[DSXU_LEGACY_CODE_CLOUD_SOURCE]);
+    const providerMigrationLogin = Boolean(loginOptions[PROVIDER_MIGRATION_CLOUD_SOURCE]);
     const {
       authLogin
     } = await import('./cli/handlers/auth.js');
@@ -4239,7 +4260,7 @@ async function run(): Promise<CommanderCommand> {
       email,
       sso,
       console: useConsole,
-      [DSXU_LEGACY_CODE_CLOUD_SOURCE]: legacyCloudLogin
+      [PROVIDER_MIGRATION_CLOUD_SOURCE]: providerMigrationLogin
     });
   });
   auth.command('status').description('Show authentication status').option('--json', 'Output as JSON (default)').option('--text', 'Output as human-readable text').action(async (opts: {
@@ -4384,7 +4405,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/plugins.js');
     await pluginUpdateHandler(plugin, options);
   });
-  // END ANT-ONLY
+  // END DSXU-INTERNAL
 
   // Setup token command
   program.command('setup-token').description(setupTokenDescription).action(async () => {
@@ -4407,7 +4428,7 @@ async function run(): Promise<CommanderCommand> {
   });
   if (feature('TRANSCRIPT_CLASSIFIER')) {
     // Skip when tengu_auto_mode_config.enabled === 'disabled' (circuit breaker).
-    // Reads from disk cache 锟?GrowthBook isn't initialized at registration time.
+    // Reads from disk cache -feature flag provider isn't initialized at registration time.
     if (getAutoModeEnabledStateIfCached() !== 'disabled') {
       const autoModeCmd = program.command('auto-mode').description('Inspect auto mode classifier configuration');
       autoModeCmd.command('defaults').description('Print the default auto mode environment, allow, and deny rules as JSON').action(async () => {
@@ -4434,12 +4455,12 @@ async function run(): Promise<CommanderCommand> {
     }
   }
 
-  // Remote Control command 锟?connect local environment to DSXU legacy cloud/code.
+  // Remote Control command -connect local environment to DSXU provider migration/code.
   // The actual command is intercepted by the fast-path in cli.tsx before
   // Commander.js runs, so this registration exists only for help output.
   // Always hidden: isBridgeEnabled() at this point (before enableConfigs)
-  // would throw inside isLegacyCloudSubscriber -> getGlobalConfig and return
-  // false via the try/catch 锟?but not before paying ~65ms of side effects
+  // would throw inside isProviderSubscriptionAccount -> getGlobalConfig and return
+  // false via the try/catch -but not before paying ~65ms of side effects
   // (25ms settings Zod parse + 40ms sync `security` keychain subprocess).
   // The dynamic visibility never worked; the command was always hidden.
   if (feature('BRIDGE_MODE')) {
@@ -4493,9 +4514,9 @@ async function run(): Promise<CommanderCommand> {
     await update();
   });
 
-  // dsxu-code up 锟?run the project's DSXU.md "# dsxu-code up" setup instructions.
-  if ("external" === 'ant') {
-    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the DSXU setup section of the nearest instruction file').action(async () => {
+  // dsxu-code up -run the project's DSXU.md "# dsxu-code up" setup instructions.
+  if (false) {
+    program.command('up').description('[DSXU internal] Initialize or upgrade the local dev environment using the DSXU setup section of the nearest instruction file').action(async () => {
       const {
         up
       } = await import('src/cli/up.js');
@@ -4503,10 +4524,10 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // dsxu-code rollback (ant-only)
+  // dsxu-code rollback (dsxu-internal)
   // Rolls back to previous releases
-  if ("external" === 'ant') {
-    program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  dsxu-code rollback                                    Go 1 version back from current\n  dsxu-code rollback 3                                  Go 3 versions back from current\n  dsxu-code rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
+  if (false) {
+    program.command('rollback [target]').description('[DSXU internal] Roll back to a previous release\n\nExamples:\n  dsxu-code rollback                                    Go 1 version back from current\n  dsxu-code rollback 3                                  Go 3 versions back from current\n  dsxu-code rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
       list?: boolean;
       dryRun?: boolean;
       safe?: boolean;
@@ -4528,15 +4549,15 @@ async function run(): Promise<CommanderCommand> {
     await installHandler(target, options);
   });
 
-  // ant-only commands
-  if ("external" === 'ant') {
+  // dsxu-internal commands
+  if (false) {
     const validateLogId = (value: string) => {
       const maybeSessionId = validateUuid(value);
       if (maybeSessionId) return maybeSessionId;
       return Number(value);
     };
     // dsxu-code log
-    program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
+    program.command('log').description('[DSXU internal] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
       const {
         logHandler
       } = await import('./cli/handlers/ant.js');
@@ -4544,7 +4565,7 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // dsxu-code error
-    program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
+    program.command('error').description('[DSXU internal] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
       const {
         errorHandler
       } = await import('./cli/handlers/ant.js');
@@ -4552,7 +4573,7 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // dsxu-code export
-    program.command('export').description('[ANT-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
+    program.command('export').description('[DSXU internal] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
 Examples:
   $ dsxu-code export 0 conversation.txt                Export conversation at log index 0
   $ dsxu-code export <uuid> conversation.txt           Export conversation by session ID
@@ -4563,8 +4584,8 @@ Examples:
       } = await import('./cli/handlers/ant.js');
       await exportHandler(source, outputFile);
     });
-    if ("external" === 'ant') {
-      const taskCmd = program.command('task').description('[ANT-ONLY] Manage task list tasks');
+    if (false) {
+      const taskCmd = program.command('task').description('[DSXU internal] Manage task list tasks');
       taskCmd.command('create <subject>').description('Create a new task').option('-d, --description <text>', 'Task description').option('-l, --list <id>', 'Task list ID (defaults to "tasklist")').action(async (subject: string, opts: {
         description?: string;
         list?: string;
@@ -4722,7 +4743,7 @@ async function logTenguInit({
         assistantActivationPath: assistantActivationPath as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
       }),
       autoUpdatesChannel: (getInitialSettings().autoUpdatesChannel ?? 'latest') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      ...("external" === 'ant' ? (() => {
+      ...(false ? (() => {
         const cwd = getCwd();
         const gitRoot = findGitRoot(cwd);
         const rp = gitRoot ? relative(gitRoot, cwd) || '.' : undefined;
@@ -4738,7 +4759,7 @@ async function logTenguInit({
 function maybeActivateProactive(options: unknown): void {
   if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
     proactive?: boolean;
-  }).proactive || isEnvTruthy(process.env[dsxuLegacyCodeEnv('PROACTIVE')]))) {
+  }).proactive || isEnvTruthy(process.env[providerMigrationCodeEnv('PROACTIVE')]))) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const proactiveModule = require('./proactive/index.js');
     if (!proactiveModule.isProactiveActive()) {
@@ -4751,15 +4772,15 @@ function maybeActivateBrief(options: unknown): void {
   const briefFlag = (options as {
     brief?: boolean;
   }).brief;
-  const briefEnv = isEnvTruthy(process.env[dsxuLegacyCodeEnv('BRIEF')]);
+  const briefEnv = isEnvTruthy(process.env[providerMigrationCodeEnv('BRIEF')]);
   if (!briefFlag && !briefEnv) return;
-  // --brief / DSXU_LEGACY_CODE_BRIEF are explicit opt-ins: check entitlement,
+  // --brief / provider-migration BRIEF are explicit opt-ins: check entitlement,
   // then set userMsgOptIn to activate the tool + prompt section. The env
   // var also grants entitlement (isBriefEntitled() reads it), so setting
-  // DSXU_LEGACY_CODE_BRIEF=1 alone force-enables for dev/testing 锟?no GB gate
+  // provider-migration BRIEF=1 alone force-enables for dev/testing; no GB gate
   // needed. initialIsBriefOnly reads getUserMsgOptIn() directly.
   // Conditional require: static import would leak the tool name string
-  // into external builds via BriefTool.ts 锟?prompt.ts.
+  // into external builds via BriefTool.ts and prompt.ts.
   /* eslint-disable @typescript-eslint/no-require-imports */
   const {
     isBriefEntitled

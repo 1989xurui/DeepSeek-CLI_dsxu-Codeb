@@ -51,7 +51,7 @@ export function buildLiteLLMChatRequest(input: {
   const policy = decideDSXUDeepSeekPolicy(input.policy ?? { workflowKind: 'generic_chat' })
   const request: DSXULiteLLMChatRequest = {
     model: policy.litellmModel,
-    messages: convertToOpenAIMessages(input.messages),
+    messages: convertToChatCompletionsMessages(input.messages),
     max_tokens: input.maxTokens ?? policy.maxTokens,
     stream: false,
     thinking: {
@@ -116,11 +116,11 @@ export function createLiteLLMDSXULLMCall(config?: DSXULiteLLMGatewayConfig): LLM
       throw new Error(`LiteLLM gateway error ${response.status}: ${await response.text()}`)
     }
 
-    return parseOpenAICompatibleResponse(await response.json())
+    return parseChatCompletionsCompatibleResponse(await response.json())
   }
 }
 
-function convertToOpenAIMessages(messages: Message[]): Array<Record<string, unknown>> {
+function convertToChatCompletionsMessages(messages: Message[]): Array<Record<string, unknown>> {
   const result: Array<Record<string, unknown>> = []
   for (const message of messages) {
     if (message.role === 'tool') {
@@ -156,7 +156,7 @@ function convertToOpenAIMessages(messages: Message[]): Array<Record<string, unkn
   return result
 }
 
-function parseOpenAICompatibleResponse(data: any): LLMResponse {
+function parseChatCompletionsCompatibleResponse(data: any): LLMResponse {
   const choice = data.choices?.[0]
   const message = choice?.message ?? {}
   const toolCalls = (message.tool_calls ?? []).map((toolCall: any) => {

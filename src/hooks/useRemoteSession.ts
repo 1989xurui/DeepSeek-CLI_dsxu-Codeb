@@ -1,21 +1,20 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { BoundedUUIDSet } from '../dsxu/engine/provider-backend/bounded-uuid-set.js'
+import { BoundedUUIDSet } from '../services/bridge/boundedUuidSet.js'
 import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js'
 import type { SpinnerMode } from '../components/Spinner/types.js'
 import {
   type RemotePermissionResponse,
   type RemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
+} from '../services/bridge/dsxuRemoteSessionCoordinator.js'
 import {
   createSyntheticAssistantMessage,
   createToolStub,
-} from '../dsxu/engine/provider-backend/dsxu-remote-permission-bridge.js'
+} from '../services/bridge/remotePermissionProjection.js'
 import {
   convertSDKMessage,
   isSessionEndMessage,
-} from '../dsxu/engine/provider-backend/dsxu-sdk-message-adapter.js'
+} from '../services/bridge/dsxuSdkMessageProjection.js'
 import { useSetAppState } from '../state/AppState.js'
 import type { AppState } from '../state/AppStateStore.js'
 import type { Tool } from '../Tool.js'
@@ -561,7 +560,7 @@ export function getDsxuUseRemoteSessionRuntimeProfile() {
   return {
     runtime: 'DSXU Remote Session Hook',
     defaultBehavior:
-      'remote session lifecycle is reusable through DSXU coordinator config, not implicit legacy cloud login',
+      'remote session lifecycle is reusable through DSXU coordinator config, not implicit provider migration login',
     providerTarget: 'DSXU Remote Session Provider',
     activationEvidence: [
       'config-driven session activation controls remote mode',

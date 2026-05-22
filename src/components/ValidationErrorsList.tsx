@@ -145,11 +145,3 @@ function _temp(acc, error) {
   acc[file].push(error);
   return acc;
 }
-
-// V14 lifecycle shim: validationerrorslist
-export function processValidationerrorslistLifecycle(input) {
-  void input
-  const state = 'validationerrorslist-state'
-  const lifecycle = 'validationerrorslist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

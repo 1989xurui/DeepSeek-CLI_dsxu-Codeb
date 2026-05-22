@@ -1,4 +1,4 @@
-export type DSXUV6CompletionState =
+﻿export type DSXUV6CompletionState =
   | 'green'
   | 'green_with_guard'
   | 'blocked_by_compatibility'
@@ -43,7 +43,7 @@ const providerReplacement: DSXUV6CompletionItem = {
   requiredEvidence: [
     'default CLI starts through DSXU local provider mode',
     'remote-control and old control aliases are rejected in DSXU_CODE_MODE',
-    'legacy auth and remote managed settings load only behind explicit legacy provider gates',
+    'provider-migration auth and remote managed settings load only behind explicit provider-migration gates',
     'old proxy shell is archived and not imported by default init',
     'SendMessage legacy targets are legacy-only; provider: uses DSXU provider backend',
     'provider shell archival is complete after import scan and five live smokes',
@@ -240,7 +240,7 @@ const finalP6Archive: DSXUV6CompletionItem = {
   ],
   requiredEvidence: [
     'default CLI does not import or execute old shells',
-    'compatibility aliases are either removed, remapped, or legacy-flag-only',
+    'provider-migration aliases are either removed, remapped, or provider-migration-flag-only',
     'moving a directory will not break build, dynamic import, tests, or explicit legacy mode expectations',
     'current evidence proves old control/session/proxy shell directories are archived from the active source tree',
   ],
@@ -250,7 +250,7 @@ const finalP6Archive: DSXUV6CompletionItem = {
   ],
   state: 'green_with_guard',
   archiveDecision:
-    'Provider shell directories have been moved to the non-DSXU archive after compatibility aliases were remapped to DSXU provider facades and five selected live smokes passed.',
+    'Provider shell directories have been moved to the non-DSXU archive after provider-migration aliases were remapped to DSXU provider facades and five selected live smokes passed.',
 }
 
 export function getDsxuV6MainlineCompletionContract(): DSXUV6MainlineCompletionContract {

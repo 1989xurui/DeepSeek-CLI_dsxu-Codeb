@@ -14,19 +14,3 @@ export function renderToolResultMessage(output: Output): React.ReactNode {
       </Text>
     </MessageResponse>;
 }
-
-// V14 strict lifecycle shim: tools-RemoteTriggerTool-UI
-export function processToolsRemoteTriggerToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-RemoteTriggerTool-UI-state'
-  const lifecycle = 'tools-RemoteTriggerTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsRemoteTriggerToolUIStrict(input) {
-  return processToolsRemoteTriggerToolUIStrictLifecycle(input)
-}

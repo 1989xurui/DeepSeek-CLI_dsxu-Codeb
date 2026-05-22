@@ -107,20 +107,3 @@ const advisor = {
 } satisfies Command
 
 export default advisor
-
-
-// V14 strict lifecycle shim: commands-advisor
-export function processCommandsAdvisorStrictLifecycle(input) {
-  void input
-  const state = 'commands-advisor-state'
-  const lifecycle = 'commands-advisor:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsAdvisorStrict(input) {
-  return processCommandsAdvisorStrictLifecycle(input)
-}

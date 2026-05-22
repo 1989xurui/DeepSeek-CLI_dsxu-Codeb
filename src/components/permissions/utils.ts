@@ -23,20 +23,3 @@ export function logUnaryPermissionEvent(
     },
   })
 }
-
-
-// V14 strict lifecycle shim: components-permissions-utils
-export function processComponentsPermissionsUtilsStrictLifecycle(input) {
-  void input
-  const state = 'components-permissions-utils-state'
-  const lifecycle = 'components-permissions-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsPermissionsUtilsStrict(input) {
-  return processComponentsPermissionsUtilsStrictLifecycle(input)
-}

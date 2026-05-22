@@ -11,7 +11,7 @@ export type V18ProprietaryCodeRiskSeverity = 'blocker' | 'review' | 'justified'
 
 export type V18ProprietaryCodeRiskBucket =
   | 'active_src'
-  | 'compat'
+  | 'provider_migration'
   | 'tests'
   | 'docs'
   | 'scripts'
@@ -55,8 +55,8 @@ export type V18ProprietaryCodeRiskGate = {
   blockerCount: number
   reviewCount: number
   justifiedCount: number
-  compatModelAliasJustifiedCount: number
-  compatProtocolJustifiedCount: number
+  providerMigrationModelAliasJustifiedCount: number
+  providerMigrationProtocolJustifiedCount: number
   sourceTruthDocJustifiedCount: number
   benchContractJustifiedCount: number
   publicSurfaceReviewCount: number
@@ -70,20 +70,20 @@ export type V18ProprietaryCodeRiskGate = {
   safeguards: readonly string[]
 }
 
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_VENDOR = ['anth', 'ropic'].join('')
-const LEGACY_VENDOR_SCOPE = `@${LEGACY_VENDOR}-ai/`
-const LEGACY_PRODUCT_CODE_ENV = `${LEGACY_PRODUCT.toUpperCase()}_CODE`
-const LEGACY_PRODUCT_ENV = LEGACY_PRODUCT.toUpperCase()
-const LEGACY_VENDOR_ENV = LEGACY_VENDOR.toUpperCase()
-const LEGACY_REFERENCE_PREFIX = `\u539f\u4ee3\u7801${LEGACY_PRODUCT}/`
+const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')
+const SOURCE_REFERENCE_VENDOR = ['anth', 'ropic'].join('')
+const SOURCE_REFERENCE_VENDOR_SCOPE = `@${SOURCE_REFERENCE_VENDOR}-ai/`
+const SOURCE_REFERENCE_PRODUCT_CODE_ENV = `${SOURCE_REFERENCE_PRODUCT.toUpperCase()}_CODE`
+const SOURCE_REFERENCE_PRODUCT_ENV = SOURCE_REFERENCE_PRODUCT.toUpperCase()
+const SOURCE_REFERENCE_VENDOR_ENV = SOURCE_REFERENCE_VENDOR.toUpperCase()
+const SOURCE_REFERENCE_PREFIX = `\u539f\u4ee3\u7801${SOURCE_REFERENCE_PRODUCT}/`
 const LEGACY_INTERNAL_STAGING_DOMAIN = ['staging', 'ant', 'dev'].join('.')
 const LEGACY_FEDSTART_DOMAIN = ['fedstart', 'com'].join('.')
 const LEGACY_PROXY_DIR = ['upstream', 'proxy'].join('')
 const LEGACY_AUTH_BETA_HEADER_SYMBOL = ['OAUTH', 'BETA', 'HEADER'].join('_')
 
 const EXCLUDED_PREFIXES = [
-  LEGACY_REFERENCE_PREFIX,
+  SOURCE_REFERENCE_PREFIX,
   '\u975edsxu-code\u9879\u76ee\u6587\u4ef6/',
   '\u9694\u79bb\u5904\u7406/',
   '.dsxu/',
@@ -108,18 +108,28 @@ const TRACKED_PATH_RISK_RULES: readonly {
   },
   {
     ruleId: 'legacy-runtime-shell-path',
-    pattern: new RegExp(`^(\\.${LEGACY_PRODUCT}|\\.dsevo|dsevo|evals)(/|$)`, 'i'),
+    pattern: new RegExp(`^(\\.${SOURCE_REFERENCE_PRODUCT}|\\.dsevo|dsevo|evals)(/|$)`, 'i'),
     reason: 'historical private state and old eval side paths must stay outside release packaging',
   },
   {
     ruleId: 'legacy-runtime-shell-path',
     pattern: new RegExp(
-      `^(start-${LEGACY_PRODUCT}\\.(cmd|ps1)|crash-handler\\.js|deepseek-proxy\\.(js|ts)|test-(context-budget|cost-ledger|infra-tasks)\\.(js|cjs))$`,
+      `^(start-${SOURCE_REFERENCE_PRODUCT}\\.(cmd|ps1)|crash-handler\\.js|deepseek-proxy\\.(js|ts)|test-(context-budget|cost-ledger|infra-tasks)\\.(js|cjs))$`,
       'i',
     ),
     reason: 'old root shims must be deleted or moved out of the release surface',
   },
 ]
+
+function isProviderMigrationBoundaryPath(path: string): boolean {
+  return (
+    /^src\/utils\/model\/providerMigration\//.test(path) ||
+    /^src\/utils\/commitAttributionProviderMigration\.ts$/.test(path) ||
+    /^src\/utils\/envCompat\.ts$/.test(path) ||
+    /^src\/services\/mockRateLimitsProviderMigration\//.test(path) ||
+    /^src\/services\/auth\/dsxuProvider(?:Control)?Auth\.ts$/.test(path)
+  )
+}
 
 function normalizePath(path: string): string {
   return path.replace(/\\/g, '/').replace(/^"|"$/g, '')
@@ -138,6 +148,7 @@ function bucketForPath(path: string): V18ProprietaryCodeRiskBucket {
   if (PACKAGE_FILES.has(path)) return 'package'
   if (/^scripts\/benchmark\//.test(path)) return 'tests'
   if (
+    isProviderMigrationBoundaryPath(path) ||
     /^src\/dsxu\/legacy\//.test(path) ||
     /^src\/migrations\//.test(path) ||
     path === 'src/utils/model/configs.ts' ||
@@ -145,7 +156,7 @@ function bucketForPath(path: string): V18ProprietaryCodeRiskBucket {
     /^src\/constants\/legacy/i.test(path) ||
     /^migrations\//.test(path)
   ) {
-    return 'compat'
+    return 'provider_migration'
   }
   if (/^src\//.test(path)) {
     if (/\/__tests__\//.test(path) || /\.test\.[cm]?[tj]sx?$/.test(path)) return 'tests'
@@ -160,7 +171,7 @@ function bucketForPath(path: string): V18ProprietaryCodeRiskBucket {
 function initializeBucketCounts(): Record<V18ProprietaryCodeRiskBucket, number> {
   return {
     active_src: 0,
-    compat: 0,
+    provider_migration: 0,
     tests: 0,
     docs: 0,
     scripts: 0,
@@ -204,10 +215,11 @@ function isPublicSurfaceReviewBucket(bucket: V18ProprietaryCodeRiskBucket): bool
   return bucket === 'active_src' || bucket === 'package' || bucket === 'scripts' || bucket === 'other'
 }
 
-function isHiddenCompatModelAlias(path: string, bucket: V18ProprietaryCodeRiskBucket): boolean {
+function isHiddenProviderMigrationModelAlias(path: string, bucket: V18ProprietaryCodeRiskBucket): boolean {
   return (
-    bucket === 'compat' &&
-    (/^src\/dsxu\/legacy\//.test(path) ||
+    bucket === 'provider_migration' &&
+    (isProviderMigrationBoundaryPath(path) ||
+      /^src\/dsxu\/legacy\//.test(path) ||
       /^src\/migrations\//.test(path) ||
       /^src\/utils\/model\/legacy/i.test(path) ||
       /^src\/constants\/legacy/i.test(path) ||
@@ -216,12 +228,15 @@ function isHiddenCompatModelAlias(path: string, bucket: V18ProprietaryCodeRiskBu
   )
 }
 
-function isHiddenCompatProtocol(path: string, bucket: V18ProprietaryCodeRiskBucket): boolean {
-  return bucket === 'compat' && /^src\/dsxu\/legacy\/auth\//.test(path)
+function isHiddenProviderMigrationProtocol(path: string, bucket: V18ProprietaryCodeRiskBucket): boolean {
+  return bucket === 'provider_migration' && (
+    /^src\/dsxu\/legacy\/auth\//.test(path) ||
+    /^src\/services\/auth\/dsxuProvider(?:Control)?Auth\.ts$/.test(path)
+  )
 }
 
 function isCanonicalSourceTruthDoc(path: string): boolean {
-  return /^docs\/DSXU_V(?:18|19)_/i.test(path)
+  return /^docs\/(?:generated\/)?DSXU_V(?:18|19|20)_/i.test(path)
 }
 
 function isBenchContractEvidence(bucket: V18ProprietaryCodeRiskBucket): boolean {
@@ -242,7 +257,7 @@ function nonPublicJustifiedReason(
   bucket: V18ProprietaryCodeRiskBucket,
 ): string | undefined {
   if (isCanonicalSourceTruthDoc(path)) {
-    return 'V18/V19 source-truth document retains historical/reference wording; release export must rewrite or exclude it'
+    return 'V18/V19/V20 source-truth document retains historical/reference wording; release export must rewrite or exclude it'
   }
   if (isBenchContractEvidence(bucket)) {
     return 'test or benchmark fixture retains legacy wording as BENCH_CONTRACT_ONLY evidence and must not define public product surface'
@@ -251,20 +266,20 @@ function nonPublicJustifiedReason(
 }
 
 const VENDOR_BRAND_OR_API_PATTERNS = [
-  new RegExp(`\\b${LEGACY_PRODUCT}\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_VENDOR}\\b`, 'i'),
-  new RegExp(`${escapeRegExp(LEGACY_PRODUCT)}\\.ai`, 'i'),
-  new RegExp(`api\\.${escapeRegExp(LEGACY_VENDOR)}\\.com`, 'i'),
-  new RegExp(`${escapeRegExp(LEGACY_VENDOR)}-beta`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_PRODUCT}\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_VENDOR}\\b`, 'i'),
+  new RegExp(`${escapeRegExp(SOURCE_REFERENCE_PRODUCT)}\\.ai`, 'i'),
+  new RegExp(`api\\.${escapeRegExp(SOURCE_REFERENCE_VENDOR)}\\.com`, 'i'),
+  new RegExp(`${escapeRegExp(SOURCE_REFERENCE_VENDOR)}-beta`, 'i'),
   new RegExp(escapeRegExp(LEGACY_INTERNAL_STAGING_DOMAIN), 'i'),
   new RegExp(escapeRegExp(LEGACY_FEDSTART_DOMAIN), 'i'),
   /\bLEGACY_(?:VENDOR_DOMAIN|CLOUD_NAME|CLOUD_AI_NAME|CLOUD_COM_NAME|PLATFORM_HOST|API_HOST|CLI_APP_ID|CLI_API_PATH|CUSTOM_OAUTH_ENV|OAUTH_CLIENT_ID_ENV|LOCAL_OAUTH_ENV_PREFIX)\b/,
 ] as const
 
 const VENDOR_ENV_PATTERNS = [
-  new RegExp(`\\b${LEGACY_VENDOR_ENV}_[A-Z0-9_]+\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_PRODUCT_CODE_ENV}_[A-Z0-9_]+\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_PRODUCT_ENV}_[A-Z0-9_]+\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_VENDOR_ENV}_[A-Z0-9_]+\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_PRODUCT_CODE_ENV}_[A-Z0-9_]+\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_PRODUCT_ENV}_[A-Z0-9_]+\\b`, 'i'),
   new RegExp(`\\b${['sk', 'ant'].join('-')}[a-z0-9_-]*`, 'i'),
 ] as const
 
@@ -360,13 +375,13 @@ export function buildV18ProprietaryCodeRiskGate(input: {
 
     const lines = file.content.split(/\r?\n/)
     lines.forEach((line, index) => {
-      if (PACKAGE_FILES.has(path) && line.includes(LEGACY_VENDOR_SCOPE)) {
+      if (PACKAGE_FILES.has(path) && line.includes(SOURCE_REFERENCE_VENDOR_SCOPE)) {
         pushIssue(issues, {
           severity: 'blocker',
           ruleId: 'vendor-dependency',
           path,
           line: index + 1,
-          match: LEGACY_VENDOR_SCOPE,
+          match: SOURCE_REFERENCE_VENDOR_SCOPE,
           reason: 'package metadata still references a vendor-scoped dependency instead of a DSXU-owned boundary',
         })
         return
@@ -439,17 +454,17 @@ export function buildV18ProprietaryCodeRiskGate(input: {
       const oauthProtocol = firstMatch(LEGACY_OAUTH_PROTOCOL_PATTERNS, line)
       if (oauthProtocol) {
         const justifiedSeverity = nonPublicJustifiedSeverity(path, bucket)
-        const hiddenCompatProtocol = isHiddenCompatProtocol(path, bucket)
+        const hiddenProviderMigrationProtocol = isHiddenProviderMigrationProtocol(path, bucket)
         pushIssue(issues, {
-          severity: hiddenCompatProtocol ? 'justified' : justifiedSeverity ?? 'review',
+          severity: hiddenProviderMigrationProtocol ? 'justified' : justifiedSeverity ?? 'review',
           ruleId: 'legacy-oauth-protocol',
           path,
           line: index + 1,
           match: oauthProtocol,
-          reason: hiddenCompatProtocol
-            ? 'legacy OAuth/control protocol naming is retained inside a hidden DSXU compatibility auth boundary and must not define public control-plane ownership'
+          reason: hiddenProviderMigrationProtocol
+            ? 'provider OAuth/control protocol naming is retained inside a hidden DSXU provider-migration auth boundary and must not define public control-plane ownership'
             : nonPublicJustifiedReason(path, bucket) ??
-              'legacy OAuth/control protocol naming remains and must be centralized under DSXU auth/control ownership',
+              'provider OAuth/control protocol naming remains and must be centralized under DSXU auth/control ownership',
         })
         return
       }
@@ -457,19 +472,19 @@ export function buildV18ProprietaryCodeRiskGate(input: {
       const modelFamily = firstMatch(MODEL_FAMILY_PATTERNS, line)
       if (modelFamily) {
         if (isModelFamilyFalsePositive(path, line, modelFamily)) return
-        const hiddenCompatAlias = isHiddenCompatModelAlias(path, bucket)
+        const hiddenProviderMigrationAlias = isHiddenProviderMigrationModelAlias(path, bucket)
         const justifiedSeverity = nonPublicJustifiedSeverity(path, bucket)
         pushIssue(issues, {
-          severity: hiddenCompatAlias ? 'justified' : justifiedSeverity ?? 'review',
+          severity: hiddenProviderMigrationAlias ? 'justified' : justifiedSeverity ?? 'review',
           ruleId: 'vendor-model-family',
           path,
           line: index + 1,
           match: modelFamily,
           reason:
-            (hiddenCompatAlias
-              ? 'legacy model-family alias is retained inside a hidden DSXU compatibility or migration boundary and must not leak to public release surfaces'
+            (hiddenProviderMigrationAlias
+              ? 'legacy model-family alias is retained inside a hidden DSXU provider-migration boundary and must not leak to public release surfaces'
               : nonPublicJustifiedReason(path, bucket)) ??
-            'legacy model-family wording remains and should be moved to DSXU/DeepSeek route aliases or documented compatibility maps',
+            'legacy model-family wording remains and should be moved to DSXU/DeepSeek route aliases or documented provider-migration maps',
         })
       }
     })
@@ -497,14 +512,14 @@ export function buildV18ProprietaryCodeRiskGate(input: {
   const blockerCount = issues.filter(issue => issue.severity === 'blocker').length
   const reviewCount = issues.filter(issue => issue.severity === 'review').length
   const justifiedCount = issues.filter(issue => issue.severity === 'justified').length
-  const compatModelAliasJustifiedCount = issues.filter(
+  const providerMigrationModelAliasJustifiedCount = issues.filter(
     issue => issue.severity === 'justified' && issue.ruleId === 'vendor-model-family',
   ).length
-  const compatProtocolJustifiedCount = issues.filter(
+  const providerMigrationProtocolJustifiedCount = issues.filter(
     issue =>
       issue.severity === 'justified' &&
       issue.ruleId === 'legacy-oauth-protocol' &&
-      isHiddenCompatProtocol(issue.path, issue.bucket),
+      isHiddenProviderMigrationProtocol(issue.path, issue.bucket),
   ).length
   const sourceTruthDocJustifiedCount = issues.filter(
     issue => issue.severity === 'justified' && isCanonicalSourceTruthDoc(issue.path),
@@ -529,8 +544,8 @@ export function buildV18ProprietaryCodeRiskGate(input: {
     blockerCount,
     reviewCount,
     justifiedCount,
-    compatModelAliasJustifiedCount,
-    compatProtocolJustifiedCount,
+    providerMigrationModelAliasJustifiedCount,
+    providerMigrationProtocolJustifiedCount,
     sourceTruthDocJustifiedCount,
     benchContractJustifiedCount,
     publicSurfaceReviewCount,
@@ -545,11 +560,11 @@ export function buildV18ProprietaryCodeRiskGate(input: {
       'gate distinguishes release blockers from review debt so cleanup is evidence-ordered, not blind replacement',
       'gate excludes the original reference, quarantine/archive, local evidence, node_modules, and runtime scratch directories',
       'old control/remote/proxy path imports in active source are blockers; historical tests/docs are review debt until rewritten or justified',
-      'compatibility paths are counted separately so old aliases can exist only behind DSXU-owned migration boundaries',
+      'provider-migration paths are counted separately so old aliases can exist only behind DSXU-owned migration boundaries',
       'benchmark scripts are classified with tests so benchmark-only search contracts do not inflate public-surface review debt',
-      'public-surface review count tracks active source, package, general scripts, and other release text separately from compat/docs/tests',
-      'hidden compatibility model aliases are justified findings, not cleanup debt, as long as they stay behind DSXU-owned compatibility boundaries',
-      'hidden compatibility auth protocol symbols are justified findings when confined to DSXU legacy auth boundaries',
+      'public-surface review count tracks active source, package, general scripts, and other release text separately from provider_migration/docs/tests',
+      'hidden provider-migration model aliases are justified findings, not cleanup debt, as long as they stay behind DSXU-owned provider-migration boundaries',
+      'hidden provider-migration auth protocol symbols are justified findings when confined to DSXU legacy auth boundaries',
       'V18/V19 source-truth documents are justified findings and must be rewritten or excluded in release export instead of edited in place for packaging optics',
       'test and benchmark fixtures are justified BENCH_CONTRACT_ONLY findings when they retain legacy names as anti-regression evidence',
       'vendor model-family wording is tracked as review debt because it affects product ownership and routing clarity, not immediate runtime safety',

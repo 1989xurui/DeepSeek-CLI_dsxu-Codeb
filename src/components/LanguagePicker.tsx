@@ -83,11 +83,3 @@ export function LanguagePicker(t0) {
   }
   return t8;
 }
-
-// V14 lifecycle shim: languagepicker
-export function processLanguagepickerLifecycle(input) {
-  void input
-  const state = 'languagepicker-state'
-  const lifecycle = 'languagepicker:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

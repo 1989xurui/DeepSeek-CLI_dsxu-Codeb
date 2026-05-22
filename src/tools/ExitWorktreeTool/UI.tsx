@@ -22,19 +22,3 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
       <Text dimColor>Returned to {output.originalCwd}</Text>
     </Box>;
 }
-
-// V14 strict lifecycle shim: tools-ExitWorktreeTool-UI
-export function processToolsExitWorktreeToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-ExitWorktreeTool-UI-state'
-  const lifecycle = 'tools-ExitWorktreeTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsExitWorktreeToolUIStrict(input) {
-  return processToolsExitWorktreeToolUIStrictLifecycle(input)
-}

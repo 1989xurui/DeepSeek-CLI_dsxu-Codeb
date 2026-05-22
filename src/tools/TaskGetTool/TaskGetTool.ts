@@ -39,6 +39,19 @@ export const TaskGetTool = buildTool({
   name: TASK_GET_TOOL_NAME,
   searchHint: 'retrieve a task by ID',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Task Lifecycle',
+    sideEffects: [
+      'task-state-read',
+    ],
+    permission: 'read-only task lookup',
+    evidence: [
+      'inputSchema.taskId',
+      'task list id',
+      'task output',
+    ],
+    uiProjection: 'single task visible state',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -126,12 +139,3 @@ export const TaskGetTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: taskgettool
-export function processTaskgettoolLifecycle(input) {
-  void input
-  const state = 'taskgettool-state'
-  const lifecycle = 'taskgettool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

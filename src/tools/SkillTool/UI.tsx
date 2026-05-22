@@ -54,7 +54,7 @@ export function renderToolUseMessage({
   if (!skill) {
     return null;
   }
-  // Look up the command to check if it came from the legacy /commands folder
+  // Look up the command to check if it came from the migrated /commands folder.
   const command = commands?.find(c => c.name === skill);
   const displayName = command?.loadedFrom === 'commands_DEPRECATED' ? `/${skill}` : skill;
   return displayName;
@@ -124,20 +124,4 @@ export function renderToolUseErrorMessage(result: ToolResultBlockParam['content'
     })}
       <FallbackToolUseErrorMessage result={result} verbose={verbose} />
     </>;
-}
-
-// V14 strict lifecycle shim: tools-SkillTool-UI
-export function processToolsSkillToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-SkillTool-UI-state'
-  const lifecycle = 'tools-SkillTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsSkillToolUIStrict(input) {
-  return processToolsSkillToolUIStrictLifecycle(input)
 }

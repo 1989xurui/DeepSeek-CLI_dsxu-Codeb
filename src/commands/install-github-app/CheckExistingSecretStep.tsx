@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useState } from 'react';
 import TextInput from '../../components/TextInput.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
@@ -101,7 +101,7 @@ export function CheckExistingSecretStep(t0) {
   }
   let t9;
   if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-    t9 = <Box marginBottom={1}><Text color="warning">Legacy DSXU_API_KEY already exists in repository secrets. DSXU prefers DSXU_API_KEY.</Text></Box>;
+    t9 = <Box marginBottom={1}><Text color="warning">Existing DSXU_API_KEY already exists in repository secrets. DSXU prefers DSXU_API_KEY.</Text></Box>;
     $[16] = t9;
   } else {
     t9 = $[16];
@@ -186,12 +186,4 @@ export function CheckExistingSecretStep(t0) {
     t18 = $[41];
   }
   return t18;
-}
-
-// V14 lifecycle shim: checkexistingsecretstep
-export function processCheckexistingsecretstepLifecycle(input) {
-  void input
-  const state = 'checkexistingsecretstep-state'
-  const lifecycle = 'checkexistingsecretstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

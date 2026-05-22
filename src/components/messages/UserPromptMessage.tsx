@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 import type { TextBlockParam } from 'src/types/providerSdk.js';
 import React, { useContext, useMemo } from 'react';
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js';
 import { Box } from '../../ink.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js';
 import { useAppState } from '../../state/AppState.js';
 import { getDsxuCodeEnv, isEnvTruthy } from '../../utils/envUtils.js';
 import { logError } from '../../utils/log.js';

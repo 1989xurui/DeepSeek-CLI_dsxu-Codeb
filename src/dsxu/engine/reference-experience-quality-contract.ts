@@ -231,7 +231,7 @@ const items: readonly ReferenceExperienceQualityItem[] = [
     objective:
       'Move MCP beyond mock proof toward real stdio ecosystem behavior: resource, tool call, timeout, reconnect, stale cache, and redaction.',
     referenceBehavior: ['services/mcp', 'tools/MCPTool', 'tools/ReadMcpResourceTool'],
-    dsxuLanding: ['src/services/mcp', 'src/dsxu/engine/mcp-client.ts', 'src/dsxu/engine/engine-tool-adapter.ts'],
+    dsxuLanding: ['src/services/mcp', 'src/services/mcp/client.ts', 'src/dsxu/engine/engine-tool-adapter.ts'],
     behaviorContract: [
       'stdio MCP server can connect, list resources, read resources, and call tools',
       'tool errors and dirty data trigger replan',

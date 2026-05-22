@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: DSXU-owned capability is active in DSXU mainline.
 import * as path from 'path'
 import { pathToFileURL } from 'url'
 import type { InitializeParams } from 'vscode-languageserver-protocol'

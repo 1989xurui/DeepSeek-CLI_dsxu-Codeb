@@ -135,11 +135,3 @@ export function PermissionRuleInput(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: permissionruleinput
-export function processPermissionruleinputLifecycle(input) {
-  void input
-  const state = 'permissionruleinput-state'
-  const lifecycle = 'permissionruleinput:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

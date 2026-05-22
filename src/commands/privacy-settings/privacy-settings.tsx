@@ -55,11 +55,3 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNo
   // Show the GroveDialog for users who haven't accepted terms yet
   return <GroveDialog showIfAlreadyViewed={true} onDone={onDoneWithDecision} location={'settings'} />;
 }
-
-// V14 lifecycle shim: privacy-settings
-export function processPrivacySettingsLifecycle(input) {
-  void input
-  const state = 'privacy-settings-state'
-  const lifecycle = 'privacy-settings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

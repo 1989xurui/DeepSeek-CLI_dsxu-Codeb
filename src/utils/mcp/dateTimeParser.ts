@@ -1,4 +1,4 @@
-import { queryCompatSmallModel } from '../../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
+import { queryProviderMigrationSmallModel } from '../model/providerMigration/providerMigrationSmallModelQuery.js'
 import { logError } from '../log.js'
 import { extractTextContent } from '../messages.js'
 import { asSystemPrompt } from '../systemPromptType.js'
@@ -65,7 +65,7 @@ Output format: ${formatDescription}
 Parse the user's input into ISO 8601 format. Return ONLY the formatted string, or "INVALID" if the input is incomplete or unparseable.`
 
   try {
-    const result = await queryCompatSmallModel({
+    const result = await queryProviderMigrationSmallModel({
       systemPrompt,
       userPrompt,
       signal,
@@ -118,13 +118,4 @@ export function looksLikeISO8601(input: string): boolean {
   // ISO 8601 date: YYYY-MM-DD
   // ISO 8601 datetime: YYYY-MM-DDTHH:MM:SS...
   return /^\d{4}-\d{2}-\d{2}(T|$)/.test(input.trim())
-}
-
-
-// V14 lifecycle shim: datetimeparser
-export function processDatetimeparserLifecycle(input) {
-  void input
-  const state = 'datetimeparser-state'
-  const lifecycle = 'datetimeparser:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

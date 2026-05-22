@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { getSessionId } from '../../bootstrap/state.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -76,6 +75,23 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
   name: TEAM_CREATE_TOOL_NAME,
   searchHint: 'create a multi-agent swarm team',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Agent Team Lifecycle',
+    sideEffects: [
+      'team-file-write',
+      'task-directory-initialization',
+      'leader-team-state-write',
+      'teammate-color-assignment',
+    ],
+    permission: 'passthrough permission before team creation',
+    evidence: [
+      'inputSchema.team_name',
+      'team_file_path output',
+      'lead_agent_id output',
+      'team lifecycle analytics',
+    ],
+    uiProjection: 'team visible state and leader task list',
+  },
   shouldDefer: true,
 
   userFacingName() {
@@ -92,6 +108,12 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
 
   toAutoClassifierInput(input) {
     return input.team_name
+  },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `TeamCreate wants to create swarm team '${input.team_name}'.`,
+    }
   },
 
   async validateInput(input, _context) {
@@ -222,7 +244,7 @@ export const TeamCreateTool: Tool<InputSchema, Output> = buildTool({
         getResolvedTeammateMode() as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
-    // Note: We intentionally don't set a legacy agent-id env for the team lead because:
+    // Note: We intentionally don't set a provider-migration agent-id env for the team lead because:
     // 1. The lead is not a "teammate" - isTeammate() should return false for them
     // 2. Their ID is deterministic (team-lead@teamName) and can be derived when needed
     // 3. Setting it would cause isTeammate() to return true, breaking inbox polling

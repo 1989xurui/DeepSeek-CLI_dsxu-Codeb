@@ -88,12 +88,3 @@ export function getSymbolAtPosition(
     return null
   }
 }
-
-
-// V14 lifecycle shim: symbolcontext
-export function processSymbolcontextLifecycle(input) {
-  void input
-  const state = 'symbolcontext-state'
-  const lifecycle = 'symbolcontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

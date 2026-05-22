@@ -16,20 +16,3 @@ export function getAgentSourceDisplayName(
   }
   return capitalize(getSettingSourceName(source))
 }
-
-
-// V14 strict lifecycle shim: components-agents-utils
-export function processComponentsAgentsUtilsStrictLifecycle(input) {
-  void input
-  const state = 'components-agents-utils-state'
-  const lifecycle = 'components-agents-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsAgentsUtilsStrict(input) {
-  return processComponentsAgentsUtilsStrictLifecycle(input)
-}

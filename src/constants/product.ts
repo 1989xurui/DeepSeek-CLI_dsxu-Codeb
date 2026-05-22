@@ -1,4 +1,4 @@
-﻿export const PRODUCT_URL = 'https://docs.dsxu.local/code'
+export const PRODUCT_URL = 'https://docs.dsxu.local/code'
 
 // DSXU Code Remote session URLs. These defaults are local/product-owned
 // placeholders; production deployments should set the DSXU_REMOTE_SESSION_* envs.
@@ -76,13 +76,4 @@ export function getRemoteSessionUrl(
     : sessionId
   const baseUrl = getRemoteSessionBaseUrl(compatId, ingressUrl)
   return `${baseUrl}/code/${compatId}`
-}
-
-
-// V14 lifecycle shim: product
-export function processProductLifecycle(input) {
-  void input
-  const state = 'product-state'
-  const lifecycle = 'product:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

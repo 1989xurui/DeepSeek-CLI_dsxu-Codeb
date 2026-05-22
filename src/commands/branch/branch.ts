@@ -296,12 +296,3 @@ export async function call(
     return null
   }
 }
-
-
-// V14 lifecycle shim: branch
-export function processBranchLifecycle(input) {
-  void input
-  const state = 'branch-state'
-  const lifecycle = 'branch:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

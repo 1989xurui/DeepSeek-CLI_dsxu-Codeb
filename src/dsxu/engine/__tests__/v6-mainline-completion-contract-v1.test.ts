@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+﻿import { describe, expect, test } from 'bun:test'
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import {
@@ -58,20 +58,20 @@ describe('DSXU V6 mainline completion contract', () => {
     expect(item?.state).toBe('green_with_guard')
     expect(item?.archiveDecision).toContain('old control/session/proxy shell directories are archived')
     expect(providerProfile.defaultPathRules.join('\n')).toContain('local provider mode')
-    expect(providerProfile.archivalRequirements.join('\n')).toContain('compatibility aliases')
+    expect(providerProfile.archivalRequirements.join('\n')).toContain('provider-migration aliases')
 
-    expect(cli).toContain('Legacy bridge/remote-control is not part of the default path')
+    expect(cli).toContain('map old shell aliases to the DSXU provider contract in default mode')
     expect(cli).toContain("args[0] === 'remote-control'")
-    expect(init).toContain('shouldLoadLegacyProviderServiceShell')
+    expect(init).toContain('shouldLoadProviderMigrationServiceShell')
     expect(init).toContain("isEnvTruthy(getDsxuCodeEnv('REMOTE'))")
-    expect(main).toContain('shouldLoadLegacyProviderServiceShell')
-    expect(main).toContain("./dsxu/engine/provider-backend/dsxu-remote-session-manager.js")
+    expect(main).toContain('shouldLoadProviderMigrationServiceShell')
+    expect(main).toContain("./services/bridge/dsxuRemoteSessionCoordinator.js")
     expect(main).not.toContain("await import('./remote/DsxuRemoteSessionCoordinator.js')")
-    expect(sendMessage).toContain('DSXU_ENABLE_LEGACY_BRIDGE')
-    expect(sendMessage).toContain("provider-backend/dsxu-provider-compat.js")
+    expect(sendMessage).toContain('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
+    expect(sendMessage).toContain("../services/bridge/dsxuRemoteBridgeFacade.js")
     expect(sendMessage).not.toContain("../../bridge/replBridgeHandle.js")
     expect(briefUpload).toContain('feature(\'BRIDGE_MODE\')')
-    expect(briefUpload).toContain("provider-backend/dsxu-provider-compat.js")
+    expect(briefUpload).toContain("../services/bridge/dsxuRemoteBridgeFacade.js")
     expect(briefUpload).not.toContain("../../bridge/bridgeConfig.js")
 
     const events: unknown[] = []
@@ -137,7 +137,7 @@ describe('DSXU V6 mainline completion contract', () => {
     expect(adapter).toContain('redactCredentialLikeValues')
     expect(provider).toContain('redactCredentialLikeValues')
     expect(permission?.requiredEvidence.join('\n')).toContain('test/build policy is explicit')
-    expect(permissionTests).toContain('covers the DSXU shell permission matrix')
+    expect(permissionTests).toContain('DSXU shell permission matrix')
     expect(permissionTests).toContain('hard deny')
     expect(permissionTests).toContain('acceptEdits')
     expect(prompt?.requiredEvidence.join('\n')).toContain('Edit/Write success steers to verification')

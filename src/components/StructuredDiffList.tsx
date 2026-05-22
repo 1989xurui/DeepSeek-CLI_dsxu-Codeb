@@ -27,11 +27,3 @@ export function StructuredDiffList({
         <Text dimColor>...</Text>
       </NoSelect>);
 }
-
-// V14 lifecycle shim: structureddifflist
-export function processStructureddifflistLifecycle(input) {
-  void input
-  const state = 'structureddifflist-state'
-  const lifecycle = 'structureddifflist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

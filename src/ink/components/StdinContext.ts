@@ -47,12 +47,3 @@ const StdinContext = createContext<Props>({
 StdinContext.displayName = 'InternalStdinContext'
 
 export default StdinContext
-
-
-// V14 lifecycle shim: stdincontext
-export function processStdincontextLifecycle(input) {
-  void input
-  const state = 'stdincontext-state'
-  const lifecycle = 'stdincontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

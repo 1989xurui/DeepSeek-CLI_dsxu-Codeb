@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { isBridgeEnabled } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js';
-import { getCompatProviderTokens } from '../dsxu/legacy/auth/legacyProviderControlAuth.js';
+import { isBridgeEnabled } from '../services/bridge/dsxuRemoteBridgeFacade.js';
+import { getProviderControlTokens } from '../services/auth/dsxuProviderControlAuth.js';
 import { Box, Text } from '../ink.js';
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
@@ -69,7 +69,7 @@ export function shouldShowRemoteCallout(): boolean {
   const config = getGlobalConfig();
   if (config.remoteDialogSeen) return false;
   if (!isBridgeEnabled()) return false;
-  const tokens = getCompatProviderTokens();
+  const tokens = getProviderControlTokens();
   if (!tokens?.accessToken) return false;
   return true;
 }
@@ -84,12 +84,4 @@ export function getDsxuRemoteCalloutRuntimeProfile() {
       'remote enable/dismiss UX is retained for DSXU provider onboarding',
     ],
   }
-}
-
-// V14 lifecycle shim: remotecallout
-export function processRemotecalloutLifecycle(input) {
-  void input
-  const state = 'remotecallout-state'
-  const lifecycle = 'remotecallout:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

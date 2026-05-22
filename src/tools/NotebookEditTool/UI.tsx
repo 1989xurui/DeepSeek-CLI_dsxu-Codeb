@@ -90,19 +90,3 @@ export function renderToolResultMessage({
       </Box>
     </MessageResponse>;
 }
-
-// V14 strict lifecycle shim: tools-NotebookEditTool-UI
-export function processToolsNotebookEditToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-NotebookEditTool-UI-state'
-  const lifecycle = 'tools-NotebookEditTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsNotebookEditToolUIStrict(input) {
-  return processToolsNotebookEditToolUIStrictLifecycle(input)
-}

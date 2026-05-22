@@ -58,6 +58,22 @@ export const GlobTool = buildTool({
   name: GLOB_TOOL_NAME,
   searchHint: 'find files by name pattern or wildcard',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU File Search Tool',
+    sideEffects: [
+      'filesystem-read',
+      'glob-search',
+      'permission-filtered-file-discovery',
+    ],
+    permission: 'filesystem read/search permission via checkReadPermissionForTool',
+    evidence: [
+      'inputSchema.pattern/path',
+      'checkReadPermissionForTool',
+      'filenames output',
+      'truncated/numFiles output',
+    ],
+    uiProjection: 'glob result summary and matched filenames',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -196,12 +212,3 @@ export const GlobTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: globtool
-export function processGlobtoolLifecycle(input) {
-  void input
-  const state = 'globtool-state'
-  const lifecycle = 'globtool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

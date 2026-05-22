@@ -42,11 +42,3 @@ export function OrderedListItem(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: orderedlistitem
-export function processOrderedlistitemLifecycle(input) {
-  void input
-  const state = 'orderedlistitem-state'
-  const lifecycle = 'orderedlistitem:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

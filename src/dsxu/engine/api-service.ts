@@ -1,8 +1,9 @@
 ﻿/**
- * #37 API Service with three-backend fallback.
+ * #37 API Service provider transport boundary.
  *
- * DeepSeek primary -> OpenAI backup -> Ollama local fallback.
- * Provides automatic health checks, failover, and recovery checks.
+ * DeepSeek is the default owner. External and local providers are explicit
+ * fallback boundaries for tests, recovery drills, or operator-approved degraded mode.
+ * They are not registered implicitly as a second provider runtime.
  *
  */
 
@@ -34,11 +35,17 @@ export interface APIServiceConfig {
   /** DeepSeek API key */
   deepseekKey?: string
   deepseekUrl?: string
-  /** OpenAI API key for optional backup. */
+  /** External fallback API key for optional backup. */
   openaiKey?: string
   openaiUrl?: string
-  /** Ollama URL for local fallback. */
+  /** Local model URL for fallback. */
   ollamaUrl?: string
+  /** Enable all non-DeepSeek provider fallbacks explicitly. */
+  allowProviderFallbacks?: boolean
+  /** Enable external provider fallback explicitly. */
+  allowOpenAIFallback?: boolean
+  /** Enable local provider fallback explicitly. */
+  allowOllamaFallback?: boolean
   /** Health check interval in milliseconds. */
   healthCheckInterval?: number
   /** Maximum consecutive failures before marking a backend unhealthy. */
@@ -51,9 +58,56 @@ export interface APIServiceConfig {
   openrouterTitle?: string
 }
 
+export function getDsxuApiServiceRuntimeProfile(): {
+  runtime: 'DSXU API Service Provider Boundary'
+  owner: 'DSXU Model Router / Cost Evidence Owner'
+  primaryProvider: 'DeepSeek-compatible transport'
+  fallbackPolicy: 'explicit-operator-gated-only'
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU API Service Provider Boundary',
+    owner: 'DSXU Model Router / Cost Evidence Owner',
+    primaryProvider: 'DeepSeek-compatible transport',
+    fallbackPolicy: 'explicit-operator-gated-only',
+    activationEvidence: [
+      'DeepSeek-compatible chat completions are the default provider route',
+      'external chat/agent API use requires explicit operator opt-in before non-DeepSeek fallback is enabled',
+      'external provider fallback requires allowProviderFallbacks or provider-specific opt-in',
+      'local provider fallback requires allowProviderFallbacks or local opt-in',
+      'usage tokens are normalized before cost evidence is attached to the response',
+    ],
+    releaseRiskControls: [
+      'external chat-completions-compatible clients do not create a second provider runtime',
+      'external fallback cannot activate from environment keys alone without the owner gate',
+      'circuit breaker state belongs to the provider boundary, not Query Loop orchestration',
+      'model names are normalized through DSXU DeepSeek V4 control before dispatch',
+    ],
+  }
+}
+
 const HEALTH_CHECK_INTERVAL = 60_000  // 1 minute.
 const MAX_CONSECUTIVE_FAILURES = 3
 const RECOVERY_CHECK_INTERVAL = 5 * 60_000  // Retry recovery after 5 minutes.
+
+function isTruthyEnv(value: string | undefined): boolean {
+  return value === '1' || value?.toLowerCase() === 'true'
+}
+
+function isOpenAIFallbackAllowed(config?: APIServiceConfig): boolean {
+  return config?.allowProviderFallbacks === true
+    || config?.allowOpenAIFallback === true
+    || isTruthyEnv(process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS)
+    || isTruthyEnv(process.env.DSXU_ALLOW_OPENAI_FALLBACK)
+}
+
+function isOllamaFallbackAllowed(config?: APIServiceConfig): boolean {
+  return config?.allowProviderFallbacks === true
+    || config?.allowOllamaFallback === true
+    || isTruthyEnv(process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS)
+    || isTruthyEnv(process.env.DSXU_ALLOW_OLLAMA_FALLBACK)
+}
 
 export class APIService {
   private backends: APIBackend[] = []
@@ -97,9 +151,9 @@ export class APIService {
       })
     }
 
-    // Backend 2: OpenAI fallback.
+    // Backend 2: explicit external provider fallback boundary.
     const oaiKey = config?.openaiKey || process.env.OPENAI_API_KEY || ''
-    if (oaiKey) {
+    if (oaiKey && isOpenAIFallbackAllowed(config)) {
       const circuitBreaker = new CircuitBreaker({
         failureThreshold: config?.maxFailures ?? MAX_CONSECUTIVE_FAILURES,
         cooldownMs: config?.circuitBreakerCooldownMs ?? RECOVERY_CHECK_INTERVAL,
@@ -120,26 +174,28 @@ export class APIService {
       })
     }
 
-    // Backend 3: local Ollama fallback.
-    const ollamaUrl = config?.ollamaUrl || process.env.DSXU_OLLAMA_URL || 'http://localhost:11434'
-    const circuitBreaker = new CircuitBreaker({
-      failureThreshold: config?.maxFailures ?? MAX_CONSECUTIVE_FAILURES,
-      cooldownMs: config?.circuitBreakerCooldownMs ?? RECOVERY_CHECK_INTERVAL,
-    })
-    this.backends.push({
-      name: 'ollama',
-      baseUrl: ollamaUrl,
-      apiKey: '', // DSXU comment sanitized.
-      modelMap: {
-        'deepseek-v4-flash': process.env.DSXU_OLLAMA_CHAT_MODEL || 'qwen3-coder:27b',
-        'deepseek-v4-pro': process.env.DSXU_OLLAMA_REASONER_MODEL || 'qwen3:27b',
-      },
-      enabled: true,
-      lastHealthCheck: 0,
-      healthy: true,
-      consecutiveFailures: 0,
-      circuitBreaker,
-    })
+    // Backend 3: explicit local provider fallback boundary.
+    if (isOllamaFallbackAllowed(config)) {
+      const ollamaUrl = config?.ollamaUrl || process.env.DSXU_OLLAMA_URL || 'http://localhost:11434'
+      const circuitBreaker = new CircuitBreaker({
+        failureThreshold: config?.maxFailures ?? MAX_CONSECUTIVE_FAILURES,
+        cooldownMs: config?.circuitBreakerCooldownMs ?? RECOVERY_CHECK_INTERVAL,
+      })
+      this.backends.push({
+        name: 'ollama',
+        baseUrl: ollamaUrl,
+        apiKey: '', // DSXU comment sanitized.
+        modelMap: {
+          'deepseek-v4-flash': process.env.DSXU_OLLAMA_CHAT_MODEL || 'qwen3-coder:27b',
+          'deepseek-v4-pro': process.env.DSXU_OLLAMA_REASONER_MODEL || 'qwen3:27b',
+        },
+        enabled: true,
+        lastHealthCheck: 0,
+        healthy: true,
+        consecutiveFailures: 0,
+        circuitBreaker,
+      })
+    }
   }
 
   /** DSXU comment sanitized. */

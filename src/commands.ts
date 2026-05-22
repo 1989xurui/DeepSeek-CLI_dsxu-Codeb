@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import addDir from './commands/add-dir/index.js'
 import autofixPr from './commands/autofix-pr/index.js'
 import backfillSessions from './commands/backfill-sessions/index.js'
@@ -160,7 +160,7 @@ import {
   clearPluginSkillsCache,
 } from './utils/plugins/loadPluginCommands.js'
 import memoize from 'lodash-es/memoize.js'
-import { isUsing3PServices, isDSXUAISubscriber } from './utils/auth.js'
+import { isUsing3PServices, isProviderSubscriptionAccount } from './utils/auth.js'
 import { isFirstPartyProviderBaseUrl } from './utils/model/providers.js'
 import { isDsxuRuntimeMode } from './utils/envUtils.js'
 import env from './commands/env/index.js'
@@ -214,7 +214,7 @@ export type {
   ResumeEntrypoint,
 } from './types/command.js'
 export { getCommandName, isCommandEnabled } from './types/command.js'
-export { LEGACY_CLOUD_AVAILABILITY } from './types/command.js'
+export { PROVIDER_MIGRATION_CLOUD_AVAILABILITY } from './types/command.js'
 
 // Commands that get eliminated from the external build
 export const INTERNAL_ONLY_COMMANDS = memoize((): Command[] => [
@@ -447,14 +447,14 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         if (isDsxuRuntimeMode()) return true
         break
       case 'dsxu-ai':
-        if (isDSXUAISubscriber()) return true
+        if (isProviderSubscriptionAccount()) return true
         break
       case 'console':
-        // Console API key user = direct first-party API customer (not 3P, not legacy cloud).
+        // Console API key user = direct first-party API customer (not 3P, not provider migration).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set PROVIDER_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (
-          !isDSXUAISubscriber() &&
+          !isProviderSubscriptionAccount() &&
           !isUsing3PServices() &&
           isFirstPartyProviderBaseUrl()
         )
@@ -811,7 +811,7 @@ export function getDsxuCommandRegistryRuntimeProfile(): {
     bridgeSafeCount: BRIDGE_SAFE_COMMANDS.size,
     activationEvidence: [
       'getCommands loads all command sources then filters by availability and isEnabled',
-      'DSXU availability can expose DSXU-only commands without legacy cloud subscriber state',
+      'DSXU availability can expose DSXU-only commands without provider migration subscriber state',
       'dynamic skills are inserted before built-in commands when newly discovered',
       'remote and bridge command allowlists prevent local-only UI/fs/git commands from leaking into remote surfaces',
     ],

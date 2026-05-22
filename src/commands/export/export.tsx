@@ -88,11 +88,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContex
     onDone(result.message);
   }} />;
 }
-
-// V14 lifecycle shim: export
-export function processExportLifecycle(input) {
-  void input
-  const state = 'export-state'
-  const lifecycle = 'export:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

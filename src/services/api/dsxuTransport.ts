@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   BetaContentBlock,
   BetaContentBlockParam,
@@ -94,13 +93,13 @@ import {
   getDefaultOpusModel,
   getDefaultSonnetModel,
   isNonCustomOpusModel,
-} from '../../dsxu/legacy/model/legacyProviderModel.js'
+} from '../../utils/model/providerMigration/providerMigrationModel.js'
 import {
   asSystemPrompt,
   type SystemPrompt,
 } from '../../utils/systemPromptType.js'
 import { tokenCountFromLastAPIResponse } from '../../utils/tokens.js'
-import { getDynamicConfig_BLOCKS_ON_INIT } from '../analytics/growthbook.js'
+import { getDynamicConfig_BLOCKS_ON_INIT } from '../analytics/featureFlags.js'
 import {
   currentLimits,
   extractQuotaStatusFromError,
@@ -151,7 +150,7 @@ import {
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { Notification } from 'src/context/notifications.js'
 import { addToTotalSessionCost } from 'src/cost-tracker.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'
 import type { AgentId } from 'src/types/ids.js'
 import {
   ADVISOR_TOOL_INSTRUCTIONS,
@@ -161,7 +160,7 @@ import {
   modelSupportsAdvisor,
 } from 'src/utils/advisor.js'
 import { getAgentContext } from 'src/utils/agentContext.js'
-import { isLegacyCloudSubscriber } from 'src/utils/auth.js'
+import { isProviderSubscriptionAccount } from 'src/utils/auth.js'
 import {
   getToolSearchBetaHeader,
   modelSupportsStructuredOutputs,
@@ -213,10 +212,10 @@ import {
 } from '../../utils/model/model.js'
 import type { DeepSeekV4RouteInput } from '../../utils/model/deepseekV4Control.js'
 import {
-  isCompatDefaultCodingPromptCachingDisabled,
-  isCompatDefaultHighCapacityPromptCachingDisabled,
-  isCompatSmallFastPromptCachingDisabled,
-} from '../../dsxu/legacy/model/legacyProviderPromptCacheEnv.js'
+  isProviderMigrationDefaultCodingPromptCachingDisabled,
+  isProviderMigrationDefaultHighCapacityPromptCachingDisabled,
+  isProviderMigrationSmallFastPromptCachingDisabled,
+} from '../../utils/model/providerMigration/providerMigrationPromptCacheEnv.js'
 import {
   startSessionActivity,
   stopSessionActivity,
@@ -350,19 +349,19 @@ export function getPromptCachingEnabled(model: string): boolean {
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) return false
 
   // Check if we should disable for small/fast model
-  if (isCompatSmallFastPromptCachingDisabled()) {
+  if (isProviderMigrationSmallFastPromptCachingDisabled()) {
     const smallFastModel = getSmallFastModel()
     if (model === smallFastModel) return false
   }
 
   // Check if we should disable for default coding model
-  if (isCompatDefaultCodingPromptCachingDisabled()) {
+  if (isProviderMigrationDefaultCodingPromptCachingDisabled()) {
     const defaultSonnet = getDefaultSonnetModel()
     if (model === defaultSonnet) return false
   }
 
   // Check if we should disable for default high-capacity model
-  if (isCompatDefaultHighCapacityPromptCachingDisabled()) {
+  if (isProviderMigrationDefaultHighCapacityPromptCachingDisabled()) {
     const defaultOpus = getDefaultOpusModel()
     if (model === defaultOpus) return false
   }
@@ -393,9 +392,9 @@ export function getCacheControl({
  *
  * Only applied when:
  * 1. User is eligible (ant or subscriber within rate limits)
- * 2. The query source matches a pattern in the GrowthBook allowlist
+ * 2. The query source matches a pattern in the feature flag provider allowlist
  *
- * GrowthBook config shape: { allowlist: string[] }
+ * feature flag provider config shape: { allowlist: string[] }
  * Patterns support trailing '*' for prefix matching.
  * Examples:
  * - { allowlist: ["repl_main_thread*", "sdk"] } -> main thread + SDK only
@@ -403,11 +402,11 @@ export function getCacheControl({
  * - { allowlist: ["*"] } -> all sources
  *
  * The allowlist is cached in STATE for session stability -> prevents mixed
- * TTLs when GrowthBook's disk cache updates mid-request.
+ * TTLs when feature flag provider's disk cache updates mid-request.
  */
 function should1hCacheTTL(querySource?: QuerySource): boolean {
   // 3P Bedrock users get 1h TTL when opted in via env var -> they manage their own billing
-  // No GrowthBook gating needed since 3P users don't have GrowthBook configured
+  // No feature flag provider gating needed since 3P users don't have feature flag provider configured
   if (
     getAPIProvider() === 'bedrock' &&
     isEnvTruthy(process.env.ENABLE_PROMPT_CACHING_1H_BEDROCK)
@@ -422,13 +421,13 @@ function should1hCacheTTL(querySource?: QuerySource): boolean {
   if (userEligible === null) {
     userEligible =
       process.env.USER_TYPE === 'ant' ||
-      (isLegacyCloudSubscriber() && !currentLimits.isUsingOverage)
+      (isProviderSubscriptionAccount() && !currentLimits.isUsingOverage)
     setPromptCache1hEligible(userEligible)
   }
   if (!userEligible) return false
 
   // Cache allowlist in bootstrap state for session stability -> prevents mixed
-  // TTLs when GrowthBook's disk cache updates mid-request
+  // TTLs when feature flag provider's disk cache updates mid-request
   let allowlist = getPromptCache1hAllowlist()
   if (allowlist === null) {
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
@@ -951,6 +950,22 @@ export async function* executeNonStreamingRequest(
   return e.value as BetaMessage
 }
 
+function hasStartedStreamingToolState(
+  newMessages: AssistantMessage[],
+  contentBlocks: Array<BetaContentBlock | ConnectorTextBlock | undefined>,
+): boolean {
+  const hasYieldedToolUse = newMessages.some(message => {
+    const content = message.message.content
+    return Array.isArray(content) && content.some(block =>
+      block.type === 'tool_use' || block.type === 'server_tool_use',
+    )
+  })
+  if (hasYieldedToolUse) return true
+  return contentBlocks.some(block =>
+    block?.type === 'tool_use' || block?.type === 'server_tool_use',
+  )
+}
+
 /**
  * Extracts the request ID from the most recent assistant message in the
  * conversation. Used to link consecutive API requests in analytics so we can
@@ -1060,11 +1075,11 @@ async function* queryModel(
   StreamEvent | AssistantMessage | SystemAPIErrorMessage,
   void
 > {
-  // Check cheap conditions first -> the off-switch await blocks on GrowthBook
+  // Check cheap conditions first -> the off-switch await blocks on feature flag provider
   // init (~10ms). For non-high-capacity models this skips the await
   // entirely. Subscribers don't hit this path at all.
   if (
-    !isLegacyCloudSubscriber() &&
+    !isProviderSubscriptionAccount() &&
     isNonCustomOpusModel(options.model) &&
     (
       await getDynamicConfig_BLOCKS_ON_INIT<{ activated: boolean }>(
@@ -1160,7 +1175,7 @@ async function* queryModel(
     'query',
   )
 
-  // Precompute once -> isDeferredTool does 2 GrowthBook lookups per call
+  // Precompute once -> isDeferredTool does 2 feature flag provider lookups per call
   const deferredToolNames = new Set<string>()
   if (useToolSearch) {
     for (const t of tools) {
@@ -1219,7 +1234,7 @@ async function* queryModel(
   // Determine if cached microcompact is enabled for this model.
   // Computed once here (in async context) and captured by paramsFromContext.
   // The beta header is also captured here to avoid a top-level import of the
-  // ant-only CACHE_EDITING_BETA_HEADER constant.
+  // dsxu internal CACHE_EDITING_BETA_HEADER constant.
   let cachedMCEnabled = false
   let cacheEditingBetaHeader = ''
   if (feature('CACHED_MICROCOMPACT')) {
@@ -2505,12 +2520,16 @@ async function* queryModel(
       }
 
       // When the flag is enabled, skip the non-streaming fallback and let the
-      // error propagate to withRetry. The mid-stream fallback causes double tool
-      // execution when streaming tool execution is active: the partial stream
-      // starts a tool, then the non-streaming retry produces the same tool_use
-      // and runs it again. See inc-4258.
+      // error propagate to withRetry. Also fail closed once tool state has
+      // started: the partial stream may already have yielded a tool_use, and a
+      // non-streaming retry could produce the same tool again.
+      const hasToolStateBeforeFallback = hasStartedStreamingToolState(
+        newMessages,
+        contentBlocks,
+      )
       const disableFallback =
         isDsxuCodeEnvTruthy('DISABLE_NONSTREAMING_FALLBACK') ||
+        hasToolStateBeforeFallback ||
         getFeatureValue_CACHED_MAY_BE_STALE(
           'tengu_disable_streaming_to_non_streaming_fallback',
           false,
@@ -2537,9 +2556,11 @@ async function* queryModel(
           fallback_disabled: true,
           request_id: (streamRequestId ??
             'unknown') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-          fallback_cause: (streamIdleAborted
-            ? 'watchdog'
-            : 'other') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          fallback_cause: (hasToolStateBeforeFallback
+            ? 'tool_state_started'
+            : streamIdleAborted
+              ? 'watchdog'
+              : 'other') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         })
         throw streamingError
       }
@@ -2578,7 +2599,7 @@ async function* queryModel(
       // If the streaming failure was itself a 529, count it toward the
       // consecutive-529 budget so total 529s-before-model-fallback is the
       // same whether the overload was hit in streaming or non-streaming mode.
-      // This is a speculative fix for legacy upstream issue 1513
+      // This is a provider-migration carryover fix for upstream issue 1513
       // Instrumentation: proves executeNonStreamingRequest was entered (vs. the
       // fallback event firing but the call itself hanging at dispatch).
       logForDiagnosticsNoPII('info', 'cli_nonstreaming_fallback_started')

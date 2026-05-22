@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { UUID } from 'crypto'
 import { logEvent } from 'src/services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/metadata.js'
@@ -402,7 +401,7 @@ async function executeUserInput(params: ExecuteUserInputParams): Promise<void> {
     // so the guard must be active during those awaits to ensure concurrent
     // handlePromptSubmit calls queue (via the isActive check above) instead
     // of starting a second executeUserInput. This call is a no-op if the
-    // guard is already in dispatching (legacy queue-processor path).
+    // guard is already in dispatching (fallback queue-processor path).
     queryGuard.reserve()
     queryCheckpoint('query_process_user_input_start')
     const newMessages: Message[] = []

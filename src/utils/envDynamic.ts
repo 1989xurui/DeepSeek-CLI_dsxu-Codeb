@@ -109,8 +109,8 @@ export async function getTerminalWithJetBrainsDetectionAsync(): Promise<
   return env.terminal
 }
 
-// Synchronous version that returns cached result or falls back to env.terminal
-// Used for backward compatibility - callers should migrate to async version
+// Synchronous version that returns cached result or falls back to env.terminal.
+// Historical callers should migrate to the async version.
 export function getTerminalWithJetBrainsDetection(): string | null {
   // Check for JetBrains terminal on Linux/Windows
   if (process.env.TERMINAL_EMULATOR === 'JetBrains-JediTerm') {

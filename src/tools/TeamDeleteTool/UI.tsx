@@ -17,19 +17,3 @@ export function renderToolResultMessage(content: Output | string, _progressMessa
   }
   return null;
 }
-
-// V14 strict lifecycle shim: tools-TeamDeleteTool-UI
-export function processToolsTeamDeleteToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-TeamDeleteTool-UI-state'
-  const lifecycle = 'tools-TeamDeleteTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsTeamDeleteToolUIStrict(input) {
-  return processToolsTeamDeleteToolUIStrictLifecycle(input)
-}

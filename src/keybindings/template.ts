@@ -50,12 +50,3 @@ export function generateKeybindingsTemplate(): string {
 
   return jsonStringify(config, null, 2) + '\n'
 }
-
-
-// V14 lifecycle shim: template
-export function processTemplateLifecycle(input) {
-  void input
-  const state = 'template-state'
-  const lifecycle = 'template:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

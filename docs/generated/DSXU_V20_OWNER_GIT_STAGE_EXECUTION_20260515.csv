@@ -1,0 +1,327 @@
+"commandId","group","ownerPacket","pathCount","status","exitCode","stdoutTail","stderrTail","startedAt","finishedAt"
+"product:V20-OGR-01-docs-generated-plan:1","product","V20-OGR-01-docs-generated-plan","40","STAGED","0","","T_REVIEW_REGISTER_REFRESH_20260515.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_20260514.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_20260514.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_20260515.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_UPDATE_20260514.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_P0_SOURCE_CLEANUP_EXECUTION_20260514.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DSXU_V20_P1_PRODUCT_SIGNAL_OWNER_CLEANUP_20260514.md', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.390Z","2026-05-15T02:26:25.462Z"
+"product:V20-OGR-01-docs-generated-plan:2","product","V20-OGR-01-docs-generated-plan","12","STAGED","0","","aced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_REAL_GAP_PRODUCTIZATION_REVIEW_20260514.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_REAL_GAP_PRODUCTIZATION_REVIEW_SUMMARY_20260514.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_20260514.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_SUMMARY_20260514.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.462Z","2026-05-15T02:26:25.587Z"
+"product:V20-OGR-03-tool-permission-lifecycle:1","product","V20-OGR-03-tool-permission-lifecycle","40","STAGED","0","","BriefTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/BriefTool/attachments.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/BriefTool/upload.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/CollectEvidenceTool/CollectEvidenceTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ConfigTool/ConfigTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ConfigTool/prompt.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/BashTool/modeValidation.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/__tests__/v20-tool-permission-owner-gate.test.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.587Z","2026-05-15T02:26:25.663Z"
+"product:V20-OGR-03-tool-permission-lifecycle:2","product","V20-OGR-03-tool-permission-lifecycle","40","STAGED","0","","src/tools/FileEditTool/FileEditTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/FileReadTool/FileReadTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/FileReadTool/limits.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/FileWriteTool/FileWriteTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/GlobTool/GlobTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/GrepTool/GrepTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/LSPTool/LSPTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.663Z","2026-05-15T02:26:25.741Z"
+"product:V20-OGR-03-tool-permission-lifecycle:3","product","V20-OGR-03-tool-permission-lifecycle","40","STAGED","0","","e next time Git touches it
+warning: in the working copy of 'src/tools/ScheduleCronTool/CronCreateTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ScheduleCronTool/CronDeleteTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ScheduleCronTool/CronListTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ScheduleCronTool/prompt.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/shared/spawnMultiAgent.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/RemoteTriggerTool/providerMigrationRemoteTriggerProvider.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/RunNativeTestTool/RunNativeTestTool.test.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.741Z","2026-05-15T02:26:25.819Z"
+"product:V20-OGR-03-tool-permission-lifecycle:4","product","V20-OGR-03-tool-permission-lifecycle","40","STAGED","0","","eamCreateTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/TeamDeleteTool/TeamDeleteTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/TodoWriteTool/TodoWriteTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ToolSearchTool/ToolSearchTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/TungstenTool/TungstenTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/WebFetchTool/WebFetchTool.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/WebFetchTool/utils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/testing/TestingPermissionTool.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.820Z","2026-05-15T02:26:25.895Z"
+"product:V20-OGR-03-tool-permission-lifecycle:5","product","V20-OGR-03-tool-permission-lifecycle","32","STAGED","0","","', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/classifierDecision.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/dangerousPatterns.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/permissionRuleParser.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/permissionSetup.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/permissions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/permissionsLoader.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/permissions/shellRuleMatching.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.895Z","2026-05-15T02:26:25.975Z"
+"product:V20-OGR-04-mcp-skill-plugin-registry:1","product","V20-OGR-04-mcp-skill-plugin-registry","40","STAGED","0","","e working copy of 'src/commands/mcp/addCommand.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/mcp/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/plugin/index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/plugin/usePagination.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/reload-plugins/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/reload-plugins/reload-plugins.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/skills/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/mcp/MCPRemoteServerMenu.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:25.975Z","2026-05-15T02:26:26.097Z"
+"product:V20-OGR-04-mcp-skill-plugin-registry:2","product","V20-OGR-04-mcp-skill-plugin-registry","40","STAGED","0","","in the working copy of 'src/services/mcp/client.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/dsxuProvider.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/headersHelper.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/officialRegistry.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/__tests__/doctor.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/doctor.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mcp/providerConnectorMigration.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.097Z","2026-05-15T02:26:26.200Z"
+"product:V20-OGR-04-mcp-skill-plugin-registry:3","product","V20-OGR-04-mcp-skill-plugin-registry","40","STAGED","0","","py of 'src/skills/bundled/dsxuApiContent.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/skills/bundled/scheduleRemoteAgents.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/skills/loadSkillsDir.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/desktopMcpImport.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/mcp/elicitationValidation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/mcpValidation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/addDirPluginSettings.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/installedPluginsManager.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.200Z","2026-05-15T02:26:26.309Z"
+"product:V20-OGR-04-mcp-skill-plugin-registry:4","product","V20-OGR-04-mcp-skill-plugin-registry","21","STAGED","0","","pPluginIntegration.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/officialMarketplaceGcs.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/officialMarketplaceStartupCheck.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/pluginLoader.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/pluginOptionsStorage.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/refresh.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/validatePlugin.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/plugins/zipCacheAdapters.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.309Z","2026-05-15T02:26:26.408Z"
+"product:V20-OGR-05-agent-task-lifecycle:1","product","V20-OGR-05-agent-task-lifecycle","40","STAGED","0","","warning: in the working copy of 'src/commands/agents/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/tasks/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/agents/ModelSelector.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/agents/generateAgent.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.408Z","2026-05-15T02:26:26.491Z"
+"product:V20-OGR-05-agent-task-lifecycle:2","product","V20-OGR-05-agent-task-lifecycle","40","STAGED","0","","warning: in the working copy of 'src/components/Messages.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/messages/RateLimitMessage.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.491Z","2026-05-15T02:26:26.573Z"
+"product:V20-OGR-05-agent-task-lifecycle:3","product","V20-OGR-05-agent-task-lifecycle","40","STAGED","0","","warning: in the working copy of 'src/components/tasks/RemoteSessionDetailDialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/v19-cost-cache-live-task-evidence-v1.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/v19-cost-cache-live-task-evidence.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.573Z","2026-05-15T02:26:26.658Z"
+"product:V20-OGR-05-agent-task-lifecycle:4","product","V20-OGR-05-agent-task-lifecycle","40","STAGED","0","","/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tasks/LocalShellTask/guards.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/AgentTool.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/agentMemorySnapshot.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/agentToolUtils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/built-in/dsxuCodeGuideAgent.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/built-in/verificationAgent.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/AgentTool/builtInAgents.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.658Z","2026-05-15T02:26:26.743Z"
+"product:V20-OGR-05-agent-task-lifecycle:5","product","V20-OGR-05-agent-task-lifecycle","40","STAGED","0","","be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/messages.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/messages/systemInit.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/agent.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/swarm/permissionSync.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/swarm/spawnUtils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/swarm/teamHelpers.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/tasks.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/teammate.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.743Z","2026-05-15T02:26:26.829Z"
+"product:V20-OGR-05-agent-task-lifecycle:6","product","V20-OGR-05-agent-task-lifecycle","2","STAGED","0","","warning: in the working copy of 'src/utils/teammateMailbox.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.829Z","2026-05-15T02:26:26.898Z"
+"product:V20-OGR-05-external-integration-adapter-boundary:1","product","V20-OGR-05-external-integration-adapter-boundary","32","STAGED","0","","ouches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/boundedUuidSet.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/dsxuLocalProviderBackend.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/dsxuRemoteBridgeFacade.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/dsxuRemoteSessionCoordinator.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/dsxuSdkMessageProjection.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/bridge/remotePermissionProjection.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.898Z","2026-05-15T02:26:26.980Z"
+"product:V20-OGR-06-ui-tui-visible-state:1","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/AutoModeOptInDialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ConsoleOAuthFlow.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:26.980Z","2026-05-15T02:26:27.065Z"
+"product:V20-OGR-06-ui-tui-visible-state:2","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/DesktopHandoff.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/DiagnosticsDisplay.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/Feedback.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/FeedbackSurvey/submitTranscriptShare.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/FeedbackSurvey/useFeedbackSurvey.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/grove/Grove.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.065Z","2026-05-15T02:26:27.151Z"
+"product:V20-OGR-06-ui-tui-visible-state:3","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/LogSelector.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/LogoV2/ChannelsNotice.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/LogoV2/DsxuLongContextNotice.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/LogoV2/GuestPassesUpsell.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/LogoV2/OverageCreditUpsell.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/LogoV2/feedConfigs.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/memory/MemoryFileSelector.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.151Z","2026-05-15T02:26:27.235Z"
+"product:V20-OGR-06-ui-tui-visible-state:4","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/Onboarding.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/permissions/hooks.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.235Z","2026-05-15T02:26:27.321Z"
+"product:V20-OGR-06-ui-tui-visible-state:5","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/PromptInput/PromptInput.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/PromptInput/PromptInputFooterLeftSide.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.321Z","2026-05-15T02:26:27.406Z"
+"product:V20-OGR-06-ui-tui-visible-state:6","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/components/ScrollKeybindingHandler.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/Settings/Config.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/Settings/Usage.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.406Z","2026-05-15T02:26:27.495Z"
+"product:V20-OGR-06-ui-tui-visible-state:7","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/hooks/notifs/useCanSwitchToExistingSubscription.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/notifs/useModelMigrationNotifications.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.495Z","2026-05-15T02:26:27.579Z"
+"product:V20-OGR-06-ui-tui-visible-state:8","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","warning: in the working copy of 'src/hooks/useAssistantHistory.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/useChromeExtensionNotification.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.579Z","2026-05-15T02:26:27.673Z"
+"product:V20-OGR-06-ui-tui-visible-state:9","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","","2026-05-15T02:26:27.673Z","2026-05-15T02:26:27.745Z"
+"product:V20-OGR-06-ui-tui-visible-state:10","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","","2026-05-15T02:26:27.745Z","2026-05-15T02:26:27.805Z"
+"product:V20-OGR-06-ui-tui-visible-state:11","product","V20-OGR-06-ui-tui-visible-state","40","STAGED","0","","","2026-05-15T02:26:27.805Z","2026-05-15T02:26:27.864Z"
+"product:V20-OGR-06-ui-tui-visible-state:12","product","V20-OGR-06-ui-tui-visible-state","36","STAGED","0","","he working copy of 'src/dsxu/control-plane/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/screens/REPL.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/voiceStreamSTT.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/BashTool/BashToolResultMessage.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/EnterPlanModeTool/UI.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/tools/ExitPlanModeTool/UI.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/voice/voiceModeEnabled.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/control-plane/operatorStateProjection.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.864Z","2026-05-15T02:26:27.934Z"
+"product:V20-OGR-07-provider-migration-model-cost:1","product","V20-OGR-07-provider-migration-model-cost","40","STAGED","0","","ngine/provider-contract.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/v18-model-public-surface-gate.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/v18-provider-service-shell-policy.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/constants/providerMigrationProtocol.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/control-plane/controlProviderMigrationProtocol.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/provider-migration-model-alias-isolation-v1.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/provider-migration-model-migration-boundary-v1.test.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:27.934Z","2026-05-15T02:26:28.004Z"
+"product:V20-OGR-07-provider-migration-model-cost:2","product","V20-OGR-07-provider-migration-model-cost","40","STAGED","0","","ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/types/providerSdk.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/api.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/migrations/providerMigrationModelMigrations.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/auth/dsxuBillingAccess.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/auth/dsxuProviderAuth.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/auth/dsxuProviderControlAuth.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.004Z","2026-05-15T02:26:28.086Z"
+"product:V20-OGR-07-provider-migration-model-cost:3","product","V20-OGR-07-provider-migration-model-cost","27","STAGED","0","","laced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationSmallModelQuery.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationThinking.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationToolSearchModel.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationUltraplanModel.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationUsageLimit.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/model/providerMigration/providerMigrationWebSearchModel.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.086Z","2026-05-15T02:26:28.169Z"
+"product:V20-OGR-08-cli-command-transport:1","product","V20-OGR-08-cli-command-transport","40","STAGED","0","","xt time Git touches it
+warning: in the working copy of 'src/commands/chrome/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/clear/caches.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/clear/conversation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/clear/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/color/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/commit-push-pr.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/compact/compact.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/compact/index.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.169Z","2026-05-15T02:26:28.240Z"
+"product:V20-OGR-08-cli-command-transport:2","product","V20-OGR-08-cli-command-transport","40","STAGED","0","","uches it
+warning: in the working copy of 'src/commands/feedback/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/files/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/heapdump/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/help/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/hooks/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/ide/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/insights.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/install-github-app/CheckExistingSecretStep.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.240Z","2026-05-15T02:26:28.346Z"
+"product:V20-OGR-08-cli-command-transport:3","product","V20-OGR-08-cli-command-transport","40","STAGED","0","",": in the working copy of 'src/commands/output-style/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/passes/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/perf-issue/index.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/permissions/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/plan/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/pr_comments/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/privacy-settings/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/rate-limit-options/index.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.346Z","2026-05-15T02:26:28.439Z"
+"product:V20-OGR-08-cli-command-transport:4","product","V20-OGR-08-cli-command-transport","40","STAGED","0","","warning: in the working copy of 'src/commands/status/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/stickers/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/stickers/stickers.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/summary/index.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/terminalSetup/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/terminalSetup/terminalSetup.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/theme/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/thinkback/index.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.439Z","2026-05-15T02:26:28.533Z"
+"product:V20-OGR-08-cli-command-transport:5","product","V20-OGR-08-cli-command-transport","21","STAGED","0","","d by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/vim/vim.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/voice/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/commands/voice/voice.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/entrypoints/cli.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/entrypoints/dsxu-code.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/entrypoints/init.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/entrypoints/sdk/coreSchemas.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/entrypoints/replLauncher.tsx', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.533Z","2026-05-15T02:26:28.598Z"
+"product:V20-OGR-09-dsxu-engine-mainline:1","product","V20-OGR-09-dsxu-engine-mainline","40","STAGED","0","","y of 'src/dsxu/engine/goal-driven-optimization-contract.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/graph/graph-memory.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/high-pressure-reference-absorption-contract.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/llm-adapter-owner-v1.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/tool-definition-v20.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/visible-shared-owner-v20.test.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.598Z","2026-05-15T02:26:28.680Z"
+"product:V20-OGR-09-dsxu-engine-mainline:2","product","V20-OGR-09-dsxu-engine-mainline","40","STAGED","0","",".ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-owner-git-stage-plan.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-p12-raw-readiness.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-p12-target-manifest-intake.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-final-preflight.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-six-stage-test-plan.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/v20-real-gap-acceptance.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.680Z","2026-05-15T02:26:28.763Z"
+"product:V20-OGR-09-dsxu-engine-mainline:3","product","V20-OGR-09-dsxu-engine-mainline","9","STAGED","0","","me Git touches it
+warning: in the working copy of 'scripts/dsxu-p12-target-manifest-contract-board.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-p12-target-manifest-discovery.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-p12-target-reference-collection-pack.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-blocker-action-board.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-closure-batch-runner.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-owner-git-authorization-board.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/dsxu-v20-post-authorization-verification-plan.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.763Z","2026-05-15T02:26:28.822Z"
+"product:V20-OGR-10-entry-query-tool-composition:1","product","V20-OGR-10-entry-query-tool-composition","20","STAGED","0","","f 'src/commands.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/constants/betas.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/constants/system.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/constants/tools.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/extended-tools.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/dsxu/engine/types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/query/config.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.822Z","2026-05-15T02:26:28.920Z"
+"product:V20-OGR-12-shared-platform-utilities:1","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","f 'src/constants/spinnerVerbs.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/context.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/coordinator/coordinatorMode.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/analytics/firstPartyEventLogger.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/analytics/firstPartyEventLoggingExporter.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/analytics/metadata.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/compact/autoCompact.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/analytics/featureFlags.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:28.920Z","2026-05-15T02:26:29.003Z"
+"product:V20-OGR-12-shared-platform-utilities:2","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","ng.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/remoteManagedSettings/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/remoteManagedSettings/syncCache.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/remoteManagedSettings/syncCacheState.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/settingsSync/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/settingsSync/types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/static-analysis/parsers/tsc.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/services/tips/tipRegistry.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.003Z","2026-05-15T02:26:29.083Z"
+"product:V20-OGR-12-shared-platform-utilities:3","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/bash/bashParser.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/bash/commands.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/bash/parser.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/betas.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/cleanup.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/collapseReadSearch.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/concurrentSessions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/config.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.083Z","2026-05-15T02:26:29.174Z"
+"product:V20-OGR-12-shared-platform-utilities:4","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","g copy of 'src/utils/envDynamic.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/envUtils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/errors.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/fastMode.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/git.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/handlePromptSubmit.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/http.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/ide.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/envCompat.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.174Z","2026-05-15T02:26:29.260Z"
+"product:V20-OGR-12-shared-platform-utilities:5","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","ches it
+warning: in the working copy of 'src/utils/pdfUtils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/peerAddress.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/privacyLevel.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/readFileInRange.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/releaseNotes.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/sandbox/sandbox-adapter.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/secureStorage/keychainPrefetch.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/secureStorage/macOsKeychainHelpers.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.260Z","2026-05-15T02:26:29.342Z"
+"product:V20-OGR-12-shared-platform-utilities:6","product","V20-OGR-12-shared-platform-utilities","40","STAGED","0","","Git touches it
+warning: in the working copy of 'src/utils/settings/toolValidationConfig.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/settings/types.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/shellConfig.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/stats.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/statsCache.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/subprocessEnv.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/suggestions/commandSuggestions.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/telemetry/bigqueryExporter.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.342Z","2026-05-15T02:26:29.461Z"
+"product:V20-OGR-12-shared-platform-utilities:7","product","V20-OGR-12-shared-platform-utilities","14","STAGED","0","","', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/tmuxSocket.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/toolResultStorage.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/toolSchemaCache.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/toolSearch.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/undercover.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/user.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/worktree.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/worktreeModeEnabled.ts', LF will be replaced by CRLF the next time Git touches it","2026-05-15T02:26:29.461Z","2026-05-15T02:26:29.549Z"
+"deletion:V20-OGR-02-delete-old-evidence-review-runtime:1","deletion","V20-OGR-02-delete-old-evidence-review-runtime","40","STAGED","0","","","2026-05-15T02:26:29.549Z","2026-05-15T02:26:29.600Z"
+"deletion:V20-OGR-02-delete-old-evidence-review-runtime:2","deletion","V20-OGR-02-delete-old-evidence-review-runtime","5","STAGED","0","","","2026-05-15T02:26:29.600Z","2026-05-15T02:26:29.645Z"
+"deletion:V20-OGR-02-delete-old-provider-legacy-harness:1","deletion","V20-OGR-02-delete-old-provider-legacy-harness","40","STAGED","0","","","2026-05-15T02:26:29.645Z","2026-05-15T02:26:29.698Z"
+"deletion:V20-OGR-02-delete-old-provider-legacy-harness:2","deletion","V20-OGR-02-delete-old-provider-legacy-harness","31","STAGED","0","","","2026-05-15T02:26:29.698Z","2026-05-15T02:26:29.754Z"
+"deletion:V20-OGR-02-delete-state-owner-review:1","deletion","V20-OGR-02-delete-state-owner-review","27","STAGED","0","","","2026-05-15T02:26:29.754Z","2026-05-15T02:26:29.886Z"
+"deletion:V20-OGR-03-delete-engine-builtin-tools-runtime:1","deletion","V20-OGR-03-delete-engine-builtin-tools-runtime","2","STAGED","0","","","2026-05-15T02:26:29.886Z","2026-05-15T02:26:29.943Z"
+"deletion:V20-OGR-04-delete-engine-mcp-client-runtime:1","deletion","V20-OGR-04-delete-engine-mcp-client-runtime","1","STAGED","0","","","2026-05-15T02:26:29.943Z","2026-05-15T02:26:29.991Z"
+"deletion:V20-OGR-12-delete-duplicate-desktop-deeplink-helper:1","deletion","V20-OGR-12-delete-duplicate-desktop-deeplink-helper","1","STAGED","0","","","2026-05-15T02:26:29.991Z","2026-05-15T02:26:30.037Z"
+"product:V20-OGR-01-docs-generated-plan:1000","product","V20-OGR-01-docs-generated-plan","2","FAILED","128","","fatal: pathspec 'D:\DSXU-code\docs\generated\DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.csv' did not match any files","2026-05-15T02:26:30.037Z","2026-05-15T02:26:30.079Z"

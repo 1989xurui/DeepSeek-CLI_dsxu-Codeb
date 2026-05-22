@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 import { feature } from 'bun:bundle'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { ToolUseContext } from '../../Tool.js'
@@ -49,7 +48,7 @@ const COMPACTABLE_TOOLS = new Set<string>([
   'Write',
 ])
 
-// --- Cached microcompact state (ant-only, gated by feature('CACHED_MICROCOMPACT')) ---
+// --- Cached microcompact state (dsxu internal, gated by feature('CACHED_MICROCOMPACT')) ---
 
 // Lazy-initialized cached MC module and state to avoid importing in external builds.
 // The imports and state live inside feature() checks for dead code elimination.
@@ -285,7 +284,7 @@ export async function microcompactMessages(
     }
   }
 
-  // Legacy microcompact path removed — tengu_cache_plum_violet is always true.
+  // Provider-migration microcompact path removed; tengu_cache_plum_violet is always true.
   // For contexts where cached microcompact is not available (external builds,
   // non-ant users, unsupported models, sub-agents), no compaction happens here;
   // autocompact handles context pressure instead.
@@ -298,7 +297,7 @@ export async function microcompactMessages(
  *
  * Key differences from regular microcompact:
  * - Does NOT modify local message content (cache_reference and cache_edits are added at API layer)
- * - Uses count-based trigger/keep thresholds from GrowthBook config
+ * - Uses count-based trigger/keep thresholds from feature flag provider config
  * - Takes precedence over regular microcompact (no disk persistence)
  * - Tracks tool results and queues cache edits for the API layer
  */

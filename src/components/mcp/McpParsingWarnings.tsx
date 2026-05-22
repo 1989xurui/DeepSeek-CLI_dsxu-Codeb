@@ -210,11 +210,3 @@ function _temp3(t0) {
 function filterErrors(errors: ValidationError[], severity: 'fatal' | 'warning'): ValidationError[] {
   return errors.filter(e => e.mcpErrorMetadata?.severity === severity);
 }
-
-// V14 lifecycle shim: mcpparsingwarnings
-export function processMcpparsingwarningsLifecycle(input) {
-  void input
-  const state = 'mcpparsingwarnings-state'
-  const lifecycle = 'mcpparsingwarnings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

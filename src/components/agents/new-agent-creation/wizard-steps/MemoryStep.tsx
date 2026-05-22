@@ -110,11 +110,3 @@ export function MemoryStep() {
   }
   return t4;
 }
-
-// V14 lifecycle shim: memorystep
-export function processMemorystepLifecycle(input) {
-  void input
-  const state = 'memorystep-state'
-  const lifecycle = 'memorystep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

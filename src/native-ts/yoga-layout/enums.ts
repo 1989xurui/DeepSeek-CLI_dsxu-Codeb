@@ -132,12 +132,3 @@ export const Wrap = {
   WrapReverse: 2,
 } as const
 export type Wrap = (typeof Wrap)[keyof typeof Wrap]
-
-
-// V14 lifecycle shim: enums
-export function processEnumsLifecycle(input) {
-  void input
-  const state = 'enums-state'
-  const lifecycle = 'enums:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

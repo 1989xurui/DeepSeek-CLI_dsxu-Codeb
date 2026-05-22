@@ -271,11 +271,3 @@ function _temp() {}
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {
   return <MobileQRCode onDone={onDone} />;
 }
-
-// V14 lifecycle shim: mobile
-export function processMobileLifecycle(input) {
-  void input
-  const state = 'mobile-state'
-  const lifecycle = 'mobile:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

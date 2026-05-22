@@ -1,4 +1,5 @@
-// DSXU V18 ownership marker: channel notification support is isolated from legacy provider auth by default.
+// Channel notification support defaults to DSXU channels; provider migration
+// notifications stay behind explicit auth and runtime gates.
 /**
  * Channel notifications ...lets an MCP server push user messages into the
  * conversation. A "channel" (Discord, Slack, SMS, etc.) is just an MCP server
@@ -12,7 +13,7 @@
  * with (the channel's MCP tool, SendUserMessage, or both).
  *
  * feature('KAIROS') || feature('KAIROS_CHANNELS'). Runtime gate tengu_harbor.
- * Legacy cloud channels require OAuth auth; API key users are blocked until
+ * Provider migration channels require OAuth auth; API key users are blocked until
  * console gets a channelsEnabled admin surface. Teams/Enterprise orgs
  * must explicitly opt in via channelsEnabled: true in managed settings.
  */
@@ -21,14 +22,15 @@ import type { ServerCapabilities } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v4'
 import { type ChannelEntry, getAllowedChannels } from '../../bootstrap/state.js'
 import {
-  LEGACY_CLOUD_CHANNEL_CAPABILITY,
-  LEGACY_CLOUD_CHANNEL_METHOD,
-  LEGACY_CLOUD_CHANNEL_PERMISSION_METHOD,
-  LEGACY_CLOUD_CHANNEL_PERMISSION_REQUEST_METHOD,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
+  PROVIDER_MIGRATION_CHANNEL_METHOD,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_REQUEST_METHOD,
+} from '../../constants/providerMigrationProtocol.js'
 import { CHANNEL_TAG } from '../../constants/xml.js'
 import { getSubscriptionType } from '../../utils/auth.js'
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { parsePluginIdentifier } from '../../utils/plugins/pluginIdentifier.js'
 import { getSettingsForSource } from '../../utils/settings/settings.js'
@@ -39,8 +41,8 @@ import {
   isChannelsEnabled,
 } from './channelAllowlist.js'
 import {
-  getLegacyCloudMcpDisabledReason,
-  isLegacyCloudMcpEnabled,
+  getProviderMigrationMcpDisabledReason,
+  isProviderMigrationMcpEnabled,
 } from './dsxuProvider.js'
 
 export const ChannelMessageNotificationSchema = lazySchema(() =>
@@ -48,7 +50,7 @@ export const ChannelMessageNotificationSchema = lazySchema(() =>
     .object({
       method: z.union([
         z.literal('notifications/dsxu/channel'),
-        z.literal(LEGACY_CLOUD_CHANNEL_METHOD),
+        z.literal(PROVIDER_MIGRATION_CHANNEL_METHOD),
       ]),
       params: z.object({
         content: z.string(),
@@ -59,12 +61,12 @@ export const ChannelMessageNotificationSchema = lazySchema(() =>
     })
     .superRefine((value, ctx) => {
       if (
-        value.method === LEGACY_CLOUD_CHANNEL_METHOD &&
-        !isLegacyCloudMcpEnabled()
+        value.method === PROVIDER_MIGRATION_CHANNEL_METHOD &&
+        !isProviderMigrationMcpEnabled()
       ) {
         ctx.addIssue({
           code: 'custom',
-          message: getLegacyCloudMcpDisabledReason(),
+          message: getProviderMigrationMcpDisabledReason(),
           path: ['method'],
         })
       }
@@ -73,9 +75,9 @@ export const ChannelMessageNotificationSchema = lazySchema(() =>
 
 /**
  * Structured permission reply from a channel server. Servers that support
- * this declare the legacy cloud permission capability and
+ * this declare the provider migration permission capability and
  * emit this event INSTEAD of relaying "yes tbxkq" as text via
- * the legacy cloud channel method. Explicit opt-in per server ...a channel that
+ * the provider migration channel method. Explicit opt-in per server ...a channel that
  * just wants to relay text never becomes a permission surface by accident.
  *
  * The server parses the user's reply (spec: /^\s*(y|yes|n|no)\s+([a-km-z]{5})\s*$/i)
@@ -86,14 +88,14 @@ export const ChannelMessageNotificationSchema = lazySchema(() =>
  */
 export const CHANNEL_PERMISSION_METHOD =
   'notifications/dsxu/channel/permission'
-export const LEGACY_CHANNEL_PERMISSION_METHOD =
-  LEGACY_CLOUD_CHANNEL_PERMISSION_METHOD
+export const PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD =
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD
 export const ChannelPermissionNotificationSchema = lazySchema(() =>
   z
     .object({
       method: z.union([
         z.literal(CHANNEL_PERMISSION_METHOD),
-        z.literal(LEGACY_CHANNEL_PERMISSION_METHOD),
+        z.literal(PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD),
       ]),
       params: z.object({
         request_id: z.string(),
@@ -102,12 +104,13 @@ export const ChannelPermissionNotificationSchema = lazySchema(() =>
     })
     .superRefine((value, ctx) => {
       if (
-        value.method === LEGACY_CHANNEL_PERMISSION_METHOD &&
-        !isLegacyCloudMcpEnabled()
+        value.method ===
+          PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD &&
+        !isProviderMigrationMcpEnabled()
       ) {
         ctx.addIssue({
           code: 'custom',
-          message: getLegacyCloudMcpDisabledReason(),
+          message: getProviderMigrationMcpDisabledReason(),
           path: ['method'],
         })
       }
@@ -127,8 +130,8 @@ export const ChannelPermissionNotificationSchema = lazySchema(() =>
  */
 export const CHANNEL_PERMISSION_REQUEST_METHOD =
   'notifications/dsxu/channel/permission_request'
-export const LEGACY_CHANNEL_PERMISSION_REQUEST_METHOD =
-  LEGACY_CLOUD_CHANNEL_PERMISSION_REQUEST_METHOD
+export const PROVIDER_MIGRATION_CHANNEL_PERMISSION_REQUEST_NOTIFICATION_METHOD =
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_REQUEST_METHOD
 export type ChannelPermissionRequestParams = {
   request_id: string
   tool_name: string
@@ -163,7 +166,7 @@ export function wrapChannelMessage(
 /**
  * Effective allowlist for the current session. Team/enterprise orgs can set
  * allowedChannelPlugins in managed settings ...when set, it REPLACES the
- * GrowthBook ledger (admin owns the trust decision). Undefined falls back
+ * feature flag provider ledger (admin owns the trust decision). Undefined falls back
  * to the ledger. Unmanaged users always get the ledger.
  *
  * Callers already read sub/policy for the policy gate ...pass them in to
@@ -222,12 +225,12 @@ export function findChannelEntry(
  * feature('KAIROS') || feature('KAIROS_CHANNELS') first (build-time
  * elimination). Gate order: capability  ?runtime gate (tengu_harbor)  ? * auth (OAuth only)  ?org policy  ?session --channels  ?allowlist.
  * API key users are blocked at the auth layer ...channels requires
- * legacy cloud auth; console orgs have no admin opt-in surface yet.
+ * provider migration auth; console orgs have no admin opt-in surface yet.
  *
  *   skip      Not a channel server, or managed org hasn't opted in, or
  *             not in session --channels. Connection stays up; handler
  *             not registered.
- *   register  Subscribe to the DSXU or legacy cloud channel method.
+ *   register  Subscribe to the DSXU or provider migration channel method.
  *
  * Which servers can connect at all is governed by allowedMcpServers ... * this gate only decides whether the notification handler registers.
  */
@@ -236,26 +239,26 @@ export function gateChannelServer(
   capabilities: ServerCapabilities | undefined,
   pluginSource: string | undefined,
 ): ChannelGateResult {
-  // Channel servers declare DSXU or legacy cloud capability keys (MCP's
+  // Channel servers declare DSXU or provider migration capability keys (MCP's
   // presence-signal idiom ...same as `tools: {}`). Truthy covers `{}` and
   // `true`; absent/undefined/explicit-`false` all fail. Key matches the
   // notification method namespace.
   const hasDsxuChannel = Boolean(capabilities?.experimental?.['dsxu/channel'])
-  const hasLegacyCloudChannel = Boolean(
-    capabilities?.experimental?.[LEGACY_CLOUD_CHANNEL_CAPABILITY],
+  const hasProviderMigrationChannel = Boolean(
+    capabilities?.experimental?.[PROVIDER_MIGRATION_CHANNEL_CAPABILITY],
   )
-  if (!hasDsxuChannel && !hasLegacyCloudChannel) {
+  if (!hasDsxuChannel && !hasProviderMigrationChannel) {
     return {
       action: 'skip',
       kind: 'capability',
       reason: 'server did not declare dsxu/channel capability',
     }
   }
-  if (hasLegacyCloudChannel && !isLegacyCloudMcpEnabled()) {
+  if (hasProviderMigrationChannel && !isProviderMigrationMcpEnabled()) {
     return {
       action: 'skip',
       kind: 'disabled',
-      reason: getLegacyCloudMcpDisabledReason(),
+      reason: getProviderMigrationMcpDisabledReason(),
     }
   }
 
@@ -273,12 +276,12 @@ export function gateChannelServer(
   // OAuth-only. API key users (console) are blocked ...there's no
   // channelsEnabled admin surface in console yet, so the policy opt-in
   // flow doesn't exist for them. Drop this when console parity lands.
-  if (hasLegacyCloudChannel && !getCompatProviderTokens()?.accessToken) {
+  if (hasProviderMigrationChannel && !getProviderControlTokens()?.accessToken) {
     return {
       action: 'skip',
       kind: 'auth',
       reason:
-        'legacy cloud channels require explicit legacy authentication; DSXU channels should use dsxu/channel capability',
+        'provider migration channels require explicit provider migration authentication; DSXU channels should use dsxu/channel capability',
     }
   }
 
@@ -373,7 +376,7 @@ export function gateChannelServer(
 export function getDsxuChannelNotificationRuntimeProfile(): {
   runtime: 'DSXU Channel Notification'
   primaryMethods: readonly string[]
-  legacyMethods: readonly string[]
+  providerMigrationMethods: readonly string[]
   activationEvidence: readonly string[]
 } {
   return {
@@ -383,14 +386,14 @@ export function getDsxuChannelNotificationRuntimeProfile(): {
       CHANNEL_PERMISSION_METHOD,
       CHANNEL_PERMISSION_REQUEST_METHOD,
     ],
-    legacyMethods: [
-      LEGACY_CLOUD_CHANNEL_METHOD,
-      LEGACY_CHANNEL_PERMISSION_METHOD,
-      LEGACY_CHANNEL_PERMISSION_REQUEST_METHOD,
+    providerMigrationMethods: [
+      PROVIDER_MIGRATION_CHANNEL_METHOD,
+      PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
+      PROVIDER_MIGRATION_CHANNEL_PERMISSION_REQUEST_NOTIFICATION_METHOD,
     ],
     activationEvidence: [
       'DSXU channel notifications validate dsxu/channel as the primary provider capability',
-      'legacy cloud channel notifications are rejected unless explicit legacy migration is enabled',
+      'provider migration channel notifications are rejected unless explicit provider migration is enabled',
       'channel messages are wrapped in source-tagged XML before entering the command queue',
       'permission replies use structured notification payloads rather than free-text interception',
     ],

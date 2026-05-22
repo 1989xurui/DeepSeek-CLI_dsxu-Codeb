@@ -1,4 +1,4 @@
-import { getCompatDefaultTierModelId } from '../../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
+import { getProviderMigrationDefaultTierModelId } from '../../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
 const STATUSLINE_SYSTEM_PROMPT = `You are a status line setup agent for DSXU Code. Your job is to create or update the statusLine command in the user's DSXU Code settings.
@@ -142,7 +142,7 @@ export const STATUSLINE_SETUP_AGENT: BuiltInAgentDefinition = {
   model:
     process.env.DSXU_CODE_MODE === '1'
       ? 'inherit'
-      : getCompatDefaultTierModelId(),
+      : getProviderMigrationDefaultTierModelId(),
   color: 'orange',
   getSystemPrompt: () => STATUSLINE_SYSTEM_PROMPT,
 }
@@ -165,13 +165,4 @@ export function getDsxuStatuslineSetupRuntimeProfile(): {
       'inherits DeepSeek/DSXU model strategy in DSXU mode',
     ],
   }
-}
-
-
-// V14 lifecycle shim: statuslinesetup
-export function processStatuslinesetupLifecycle(input) {
-  void input
-  const state = 'statuslinesetup-state'
-  const lifecycle = 'statuslinesetup:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

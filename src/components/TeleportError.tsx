@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useState } from 'react';
-import { checkIsGitClean, checkNeedsLegacyCloudLogin } from 'src/utils/background/remote/preconditions.js';
+import { checkIsGitClean, checkNeedsProviderMigrationLogin } from 'src/utils/background/remote/preconditions.js';
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
 import { Box, Text } from '../ink.js';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
@@ -18,7 +18,7 @@ type TeleportErrorProps = {
 // a new object in checkErrors' deps and caused the mount effect to
 // re-fire on every render.
 const EMPTY_ERRORS_TO_IGNORE: ReadonlySet<TeleportLocalErrorType> = new Set();
-const LEGACY_CLOUD_LOGIN_METHOD = 'clau' + 'deai';
+const PROVIDER_SUBSCRIPTION_LOGIN_METHOD = 'clau' + 'deai';
 export function TeleportError(t0) {
   const $ = _c(18);
   const {
@@ -89,12 +89,12 @@ export function TeleportError(t0) {
   } else {
     t6 = $[8];
   }
-  const handleLoginWithDSXUAI = t6;
+  const handleProviderSubscriptionLogin = t6;
   let t7;
   if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
     t7 = value => {
       if (value === "login") {
-        handleLoginWithDSXUAI();
+        handleProviderSubscriptionLogin();
       } else {
         onCancel();
       }
@@ -136,7 +136,7 @@ export function TeleportError(t0) {
         if (isLoggingIn) {
           let t9;
           if ($[14] !== handleLoginComplete) {
-            t9 = <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod={LEGACY_CLOUD_LOGIN_METHOD} />;
+            t9 = <ConsoleOAuthFlow onDone={handleLoginComplete} mode="login" forceLoginMethod={PROVIDER_SUBSCRIPTION_LOGIN_METHOD} />;
             $[14] = handleLoginComplete;
             $[15] = t9;
           } else {
@@ -146,15 +146,15 @@ export function TeleportError(t0) {
         }
         let t9;
         if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-          t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires a legacy cloud account.</Text><Text dimColor={true}>Your DSXU model provider subscription will be used by DSXU Code.</Text></Box>;
+          t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires provider-migration cloud credentials.</Text><Text dimColor={true}>Those credentials are used only by the remote workspace adapter.</Text></Box>;
           $[16] = t9;
         } else {
           t9 = $[16];
         }
         let t10;
         if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-          t10 = <Dialog title="Log in to legacy cloud" onCancel={onCancel}>{t9}<Select options={[{
-              label: "Login with legacy cloud account",
+          t10 = <Dialog title="Log in to provider-migration cloud" onCancel={onCancel}>{t9}<Select options={[{
+              label: "Login with provider-migration cloud account",
               value: "login"
             }, {
               label: "Exit",
@@ -178,7 +178,7 @@ function _temp() {
 }
 export async function getTeleportErrors(): Promise<Set<TeleportLocalErrorType>> {
   const errors = new Set<TeleportLocalErrorType>();
-  const [needsLogin, isGitClean] = await Promise.all([checkNeedsLegacyCloudLogin(), checkIsGitClean()]);
+  const [needsLogin, isGitClean] = await Promise.all([checkNeedsProviderMigrationLogin(), checkIsGitClean()]);
   if (needsLogin) {
     errors.add('needsLogin');
   }
@@ -186,12 +186,4 @@ export async function getTeleportErrors(): Promise<Set<TeleportLocalErrorType>> 
     errors.add('needsGitStash');
   }
   return errors;
-}
-
-// V14 lifecycle shim: teleporterror
-export function processTeleporterrorLifecycle(input) {
-  void input
-  const state = 'teleporterror-state'
-  const lifecycle = 'teleporterror:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import type { Permutations } from 'src/types/utils.js'
@@ -485,7 +484,7 @@ export function popAllEditable(
 }
 
 // ============================================================================
-// Backward-compatible aliases (deprecated ...prefer new names)
+// Deprecated migration aliases. Prefer the command-queue names above.
 // ============================================================================
 
 /** @deprecated Use subscribeToCommandQueue */

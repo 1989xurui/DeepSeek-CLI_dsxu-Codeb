@@ -158,11 +158,3 @@ export function FileWritePermissionRequest(props) {
 function _temp(input) {
   return FileWriteTool.inputSchema.parse(input);
 }
-
-// V14 lifecycle shim: filewritepermissionrequest
-export function processFilewritepermissionrequestLifecycle(input) {
-  void input
-  const state = 'filewritepermissionrequest-state'
-  const lifecycle = 'filewritepermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

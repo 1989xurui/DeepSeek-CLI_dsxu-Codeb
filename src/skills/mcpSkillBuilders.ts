@@ -42,12 +42,3 @@ export function getMCPSkillBuilders(): MCPSkillBuilders {
   }
   return builders
 }
-
-
-// V14 lifecycle shim: mcpskillbuilders
-export function processMcpskillbuildersLifecycle(input) {
-  void input
-  const state = 'mcpskillbuilders-state'
-  const lifecycle = 'mcpskillbuilders:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -146,20 +146,3 @@ export const RARITY_COLORS = {
   epic: 'autoAccept',
   legendary: 'warning',
 } as const satisfies Record<Rarity, keyof import('../utils/theme.js').Theme>
-
-
-// V14 strict lifecycle shim: buddy-types
-export function processBuddyTypesStrictLifecycle(input) {
-  void input
-  const state = 'buddy-types-state'
-  const lifecycle = 'buddy-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runBuddyTypesStrict(input) {
-  return processBuddyTypesStrictLifecycle(input)
-}

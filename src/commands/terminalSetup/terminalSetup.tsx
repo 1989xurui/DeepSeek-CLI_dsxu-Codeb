@@ -28,7 +28,7 @@ const NATIVE_CSIU_TERMINALS: Record<string, string> = {
   kitty: 'Kitty',
   'iTerm.app': 'iTerm2',
   WezTerm: 'WezTerm',
-  WarpTerminal: 'Warp'
+  WarpTerminal: 'CSI-u terminal'
 };
 
 /**
@@ -71,7 +71,7 @@ function formatPathLink(filePath: string): string {
   return `\x1b]8;;${fileUrl}\x07${filePath}\x1b]8;;\x07`;
 }
 export function shouldOfferTerminalSetup(): boolean {
-  // iTerm2, WezTerm, Ghostty, Kitty, and Warp natively support CSI u / Kitty
+  // Known modern terminals natively support CSI u / Kitty
   // keyboard protocol, which DSXU Code already parses. No setup needed for
   // these terminals.
   return platform() === 'darwin' && env.terminal === 'Apple_Terminal' || env.terminal === 'vscode' || env.terminal === 'cursor' || env.terminal === 'windsurf' || env.terminal === 'alacritty' || env.terminal === 'zed';
@@ -118,8 +118,8 @@ export async function setupTerminal(theme: ThemeName): Promise<string> {
   });
   maybeMarkProjectOnboardingComplete();
 
-  // Install shell completions (ant-only, since the completion command is ant-only)
-  if ("external" === 'ant') {
+  // Install shell completions (dsxu internal, since the completion command is dsxu internal)
+  if (false) {
     result += await setupShellCompletion(theme);
   }
   return result;
@@ -175,7 +175,7 @@ ${platformTerminals}   • IDE: VSCode, Cursor, Windsurf, Zed
    • Other: Alacritty
 3. Return to tmux/screen - settings will persist
 
-${chalk.dim('Note: iTerm2, WezTerm, Ghostty, Kitty, and Warp support Shift+Enter natively.')}`;
+${chalk.dim('Note: terminals with native CSI u / Kitty keyboard support already support Shift+Enter.')}`;
     onDone(message);
     return null;
   }

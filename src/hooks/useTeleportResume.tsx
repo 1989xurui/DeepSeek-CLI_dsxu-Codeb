@@ -82,11 +82,3 @@ export function useTeleportResume(source) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: useteleportresume
-export function processUseteleportresumeLifecycle(input) {
-  void input
-  const state = 'useteleportresume-state'
-  const lifecycle = 'useteleportresume:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

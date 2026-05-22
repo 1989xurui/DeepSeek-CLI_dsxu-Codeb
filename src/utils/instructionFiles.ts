@@ -48,7 +48,7 @@ import {
 } from '../bootstrap/state.js'
 import { truncateEntrypointContent } from '../memdir/memdir.js'
 import { getAutoMemEntrypoint, isAutoMemoryEnabled } from '../memdir/paths.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   getCurrentProjectConfig,
   getManagedDsxuRulesDir,
@@ -59,7 +59,7 @@ import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import {
   getDsxuConfigHomeDir,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
   isEnvTruthy,
 } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
@@ -99,19 +99,15 @@ export const MAX_MEMORY_CHARACTER_COUNT = 40000
 const DSXU_INSTRUCTION_FILE = 'DSXU.md'
 const DSXU_LOCAL_INSTRUCTION_FILE = 'DSXU.local.md'
 const DSXU_RULES_DIR = '.dsxu'
-const LEGACY_PROVIDER_INSTRUCTION_BASENAME = 'CL' + 'AUDE'
-const LEGACY_PROVIDER_INSTRUCTION_FILE = `${LEGACY_PROVIDER_INSTRUCTION_BASENAME}.md`
-const LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE = `${LEGACY_PROVIDER_INSTRUCTION_BASENAME}.local.md`
-const LEGACY_PROVIDER_RULES_DIR = '.' + ('cl' + 'aude')
-const LEGACY_PROVIDER_INSTRUCTIONS_ENV =
-  'DSXU_ENABLE_LEGACY_' + 'CL' + 'AUDE' + '_INSTRUCTIONS'
-const DSXU_LEGACY_INSTRUCTIONS_ENV = 'DSXU_ENABLE_LEGACY_PROVIDER_INSTRUCTIONS'
+const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME = 'CL' + 'AUDE'
+const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE = `${PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME}.md`
+const PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE = `${PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME}.local.md`
+const PROVIDER_MIGRATION_SOURCE_RULES_DIR = '.' + ('cl' + 'aude')
+const PROVIDER_MIGRATION_INSTRUCTIONS_ENV =
+  'DSXU_ENABLE_PROVIDER_MIGRATION_INSTRUCTIONS'
 
-function legacyProviderInstructionsEnabled(): boolean {
-  return (
-    isEnvTruthy(process.env[DSXU_LEGACY_INSTRUCTIONS_ENV]) ||
-    isEnvTruthy(process.env[LEGACY_PROVIDER_INSTRUCTIONS_ENV])
-  )
+function providerMigrationInstructionsEnabled(): boolean {
+  return isEnvTruthy(process.env[PROVIDER_MIGRATION_INSTRUCTIONS_ENV])
 }
 
 function getDsxuManagedInstructionDir(): string {
@@ -154,24 +150,28 @@ function getProjectInstructionFiles(dir: string): string[] {
     join(dir, DSXU_INSTRUCTION_FILE),
     join(dir, DSXU_RULES_DIR, DSXU_INSTRUCTION_FILE),
   ]
-  if (!legacyProviderInstructionsEnabled()) return dsxuFiles
+  if (!providerMigrationInstructionsEnabled()) return dsxuFiles
   return [
-    join(dir, LEGACY_PROVIDER_INSTRUCTION_FILE),
-    join(dir, LEGACY_PROVIDER_RULES_DIR, LEGACY_PROVIDER_INSTRUCTION_FILE),
+    join(dir, PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE),
+    join(
+      dir,
+      PROVIDER_MIGRATION_SOURCE_RULES_DIR,
+      PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE,
+    ),
     ...dsxuFiles,
   ]
 }
 
 function getProjectRulesDirs(dir: string): string[] {
   const dsxuDirs = [join(dir, DSXU_RULES_DIR, 'rules')]
-  if (!legacyProviderInstructionsEnabled()) return dsxuDirs
-  return [join(dir, LEGACY_PROVIDER_RULES_DIR, 'rules'), ...dsxuDirs]
+  if (!providerMigrationInstructionsEnabled()) return dsxuDirs
+  return [join(dir, PROVIDER_MIGRATION_SOURCE_RULES_DIR, 'rules'), ...dsxuDirs]
 }
 
 function getLocalInstructionFiles(dir: string): string[] {
   const dsxuFiles = [join(dir, DSXU_LOCAL_INSTRUCTION_FILE)]
-  if (!legacyProviderInstructionsEnabled()) return dsxuFiles
-  return [join(dir, LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE), ...dsxuFiles]
+  if (!providerMigrationInstructionsEnabled()) return dsxuFiles
+  return [join(dir, PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE), ...dsxuFiles]
 }
 
 // File extensions that are allowed for @include directives
@@ -905,7 +905,7 @@ export const getMemoryFiles = memoize(
         conditionalRule: false,
       })),
     )
-    if (legacyProviderInstructionsEnabled()) {
+    if (providerMigrationInstructionsEnabled()) {
       result.push(
         ...(await processMemoryFile(
           getMemoryPath('Managed'),
@@ -945,7 +945,7 @@ export const getMemoryFiles = memoize(
           conditionalRule: false,
         })),
       )
-      if (legacyProviderInstructionsEnabled()) {
+      if (providerMigrationInstructionsEnabled()) {
         result.push(
           ...(await processMemoryFile(
             getMemoryPath('User'),
@@ -1294,7 +1294,7 @@ export type DsxuInstructionRuntimeStatus = {
   projectRulesDirs: string[]
   userRulesDir: string
   managedRulesDir: string
-  legacyProviderInstructions: 'disabled' | 'migration-only'
+  providerMigrationInstructions: 'disabled' | 'migration-only'
 }
 
 export function getDsxuInstructionRuntimeStatus(
@@ -1307,7 +1307,7 @@ export function getDsxuInstructionRuntimeStatus(
     projectRulesDirs: getProjectRulesDirs(dir),
     userRulesDir: getDsxuUserRulesDir(),
     managedRulesDir: getDsxuManagedRulesDir(),
-    legacyProviderInstructions: legacyProviderInstructionsEnabled()
+    providerMigrationInstructions: providerMigrationInstructionsEnabled()
       ? 'migration-only'
       : 'disabled',
   }
@@ -1329,7 +1329,7 @@ export function getDsxuInstructionRuntimeProfile(
       `${DSXU_RULES_DIR}/${DSXU_INSTRUCTION_FILE}`,
       `${DSXU_RULES_DIR}/rules/*.md`,
     ],
-    migrationFlag: DSXU_LEGACY_INSTRUCTIONS_ENV,
+    migrationFlag: PROVIDER_MIGRATION_INSTRUCTIONS_ENV,
   }
 }
 
@@ -1358,7 +1358,7 @@ export async function getManagedAndUserConditionalRules(
       false,
     )),
   )
-  if (legacyProviderInstructionsEnabled()) {
+  if (providerMigrationInstructionsEnabled()) {
     result.push(
       ...(await processConditionedMdRules(
         targetPath,
@@ -1381,7 +1381,7 @@ export async function getManagedAndUserConditionalRules(
         true,
       )),
     )
-    if (legacyProviderInstructionsEnabled()) {
+    if (providerMigrationInstructionsEnabled()) {
       result.push(
         ...(await processConditionedMdRules(
           targetPath,
@@ -1591,7 +1591,7 @@ export async function shouldShowDsxuInstructionExternalIncludesWarning(): Promis
 
 /**
  * Check if a file path is a DSXU instruction file (DSXU.md, DSXU.local.md, or .dsxu/rules/*.md).
- * Legacy provider instruction paths are recognized only when the explicit migration flag is enabled.
+ * Provider-migration instruction paths are recognized only when the explicit migration flag is enabled.
  */
 export function isMemoryFilePath(filePath: string): boolean {
   const name = basename(filePath)
@@ -1607,18 +1607,20 @@ export function isMemoryFilePath(filePath: string): boolean {
     return true
   }
 
-  if (!legacyProviderInstructionsEnabled()) return false
+  if (!providerMigrationInstructionsEnabled()) return false
 
   if (
-    name === LEGACY_PROVIDER_INSTRUCTION_FILE ||
-    name === LEGACY_PROVIDER_LOCAL_INSTRUCTION_FILE
+    name === PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE ||
+    name === PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE
   ) {
     return true
   }
 
   if (
     name.endsWith('.md') &&
-    filePath.includes(`${sep}${LEGACY_PROVIDER_RULES_DIR}${sep}rules${sep}`)
+    filePath.includes(
+      `${sep}${PROVIDER_MIGRATION_SOURCE_RULES_DIR}${sep}rules${sep}`,
+    )
   ) {
     return true
   }

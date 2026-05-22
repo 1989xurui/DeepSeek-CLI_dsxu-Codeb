@@ -1,6 +1,7 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { getOauthProfileFromApiKey } from 'src/services/oauth/getOauthProfile.js';
-import { isDSXUAISubscriber } from 'src/utils/auth.js';
+import { isProviderSubscriptionAccount } from 'src/utils/auth.js';
+import { isDsxuRuntimeMode } from 'src/utils/envUtils.js';
 import { Text } from '../../ink.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
@@ -8,17 +9,22 @@ import { useStartupNotification } from './useStartupNotification.js';
 const MAX_SHOW_COUNT = 3;
 
 /**
- * Hook to check if the user has a subscription on Console but isn't logged into it.
+ * Hook to check if the user has a provider-migration subscription on Console
+ * but is not logged into it.
  */
 export function useCanSwitchToExistingSubscription() {
   useStartupNotification(_temp2);
 }
 
 /**
- * Checks if the user has a subscription but is not currently logged into it.
- * This helps inform users they should run /login to access their subscription.
+ * Checks whether a provider-migration account can switch to a subscription
+ * login. DSXU runtime owns identity through the DSXU Provider and never shows
+ * this migration hint.
  */
 async function _temp2() {
+  if (isDsxuRuntimeMode()) {
+    return null;
+  }
   if ((getGlobalConfig().subscriptionNoticeCount ?? 0) >= MAX_SHOW_COUNT) {
     return null;
   }
@@ -42,7 +48,7 @@ function _temp(current) {
 }
 async function getExistingDSXUSubscription(): Promise<'Max' | 'Pro' | null> {
   // If already using subscription auth, there is nothing to switch to
-  if (isDSXUAISubscriber()) {
+  if (isProviderSubscriptionAccount()) {
     return null;
   }
   const profile = await getOauthProfileFromApiKey();
@@ -56,12 +62,4 @@ async function getExistingDSXUSubscription(): Promise<'Max' | 'Pro' | null> {
     return 'Pro';
   }
   return null;
-}
-
-// V14 lifecycle shim: usecanswitchtoexistingsubscription
-export function processUsecanswitchtoexistingsubscriptionLifecycle(input) {
-  void input
-  const state = 'usecanswitchtoexistingsubscription-state'
-  const lifecycle = 'usecanswitchtoexistingsubscription:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

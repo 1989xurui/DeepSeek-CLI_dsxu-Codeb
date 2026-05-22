@@ -41,11 +41,3 @@ export function useDeprecationWarningNotification(model) {
   }
   useEffect(t0, t1);
 }
-
-// V14 lifecycle shim: usedeprecationwarningnotification
-export function processUsedeprecationwarningnotificationLifecycle(input) {
-  void input
-  const state = 'usedeprecationwarningnotification-state'
-  const lifecycle = 'usedeprecationwarningnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

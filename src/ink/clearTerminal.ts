@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Cross-platform terminal clearing with scrollback support.
  * Detects modern terminals that support ESC[3J for clearing scrollback.

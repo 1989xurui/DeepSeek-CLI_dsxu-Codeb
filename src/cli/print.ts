@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+﻿// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { feature } from 'bun:bundle'
 import { readFile, stat } from 'fs/promises'
 import { dirname } from 'path'
@@ -28,7 +27,7 @@ import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
 } from 'src/services/analytics/index.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'
 import { logForDebugging } from 'src/utils/debug.js'
 import {
   logForDiagnosticsNoPII,
@@ -131,20 +130,20 @@ import type {
 } from 'src/entrypoints/sdk/controlTypes.js'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import {
-  DSXU_COMPAT_AUTH_CALLBACK_SUBTYPE,
-  DSXU_COMPAT_AUTH_SUBTYPE,
-  DSXU_COMPAT_AUTH_WAIT_SUBTYPE,
-  DSXU_COMPAT_CLOUD_CHANNEL_CAPABILITY,
-  DSXU_COMPAT_CLOUD_MCP_TRANSPORT,
-  DSXU_COMPAT_OAUTH_REQUEST_FLAG,
-  dsxuCompatCodeEnv,
-} from 'src/dsxu/control-plane/controlCompatProtocol.js'
+  DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE,
+  DSXU_PROVIDER_MIGRATION_AUTH_SUBTYPE,
+  DSXU_PROVIDER_MIGRATION_AUTH_WAIT_SUBTYPE,
+  DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY,
+  DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT,
+  DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG,
+  dsxuProviderMigrationCodeEnv,
+} from 'src/dsxu/control-plane/controlProviderMigrationProtocol.js'
 import { cwd } from 'process'
 import { getCwd } from 'src/utils/cwd.js'
 import omit from 'lodash-es/omit.js'
 import reject from 'lodash-es/reject.js'
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js'
-import type { DsxuControlSessionHandle } from 'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+import type { DsxuControlSessionHandle } from '../services/bridge/dsxuRemoteBridgeFacade.js'
 import { getRemoteSessionUrl } from 'src/constants/product.js'
 import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js'
 import { hasPermissionsToUseTool } from 'src/utils/permissions/permissions.js'
@@ -336,7 +335,7 @@ import {
   isDsxuRuntimeMode,
   isEnvTruthy,
   isEnvDefinedFalsy,
-  isCompatProviderServiceShellAllowed,
+  isProviderMigrationServiceShellAllowed,
 } from '../utils/envUtils.js'
 import { installPluginsForHeadless } from '../utils/plugins/headlessPluginInstall.js'
 import { refreshActivePlugins } from '../utils/plugins/refresh.js'
@@ -358,7 +357,7 @@ import { getRunningTasks } from '../utils/task/framework.js'
 import { isBackgroundTask } from '../tasks/types.js'
 import { stopTask } from '../tasks/stopTask.js'
 import { drainSdkEvents } from '../utils/sdkEventQueue.js'
-import { initializeGrowthBook } from '../services/analytics/growthbook.js'
+import { initializeFeatureFlags } from '../services/analytics/featureFlags.js'
 import { errorMessage, toError } from '../utils/errors.js'
 import { sleep } from '../utils/sleep.js'
 import { isExtractModeActive } from '../memdir/paths.js'
@@ -506,7 +505,7 @@ export async function runHeadless(
   if (
     process.env.USER_TYPE === 'ant' &&
     (isEnvTruthy(process.env.DSXU_CODE_EXIT_AFTER_FIRST_RENDER) ||
-      isEnvTruthy(process.env[dsxuCompatCodeEnv('EXIT_AFTER_FIRST_RENDER')]))
+      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('EXIT_AFTER_FIRST_RENDER')]))
   ) {
     process.stderr.write(
       `\nStartup time: ${Math.round(process.uptime() * 1000)}ms\n`,
@@ -523,7 +522,7 @@ export async function runHeadless(
   if (
     feature('DOWNLOAD_USER_SETTINGS') &&
     (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-      isEnvTruthy(process.env[dsxuCompatCodeEnv('REMOTE')]) ||
+      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
       getIsRemoteMode())
   ) {
     void downloadUserSettings()
@@ -555,7 +554,7 @@ export async function runHeadless(
     proactiveModule &&
     !proactiveModule.isProactiveActive() &&
     (isEnvTruthy(process.env.DSXU_CODE_PROACTIVE) ||
-      isEnvTruthy(process.env[dsxuCompatCodeEnv('PROACTIVE')]))
+      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('PROACTIVE')]))
   ) {
     proactiveModule.activateProactive('command')
   }
@@ -576,9 +575,9 @@ export async function runHeadless(
   }
   headlessProfilerCheckpoint('after_grove_check')
 
-  // Initialize GrowthBook so feature flags take effect in headless mode.
+  // Initialize feature flag provider so feature flags take effect in headless mode.
   // Without this, the disk cache is empty and all flags fall back to defaults.
-  void initializeGrowthBook()
+  void initializeFeatureFlags()
 
   if (options.resumeSessionAt && !options.resume) {
     process.stderr.write(`Error: --resume-session-at requires --resume\n`)
@@ -872,7 +871,7 @@ export async function runHeadless(
   const transformToStreamlined =
     feature('STREAMLINED_OUTPUT') &&
     (isEnvTruthy(process.env.DSXU_CODE_STREAMLINED_OUTPUT) ||
-      isEnvTruthy(process.env[dsxuCompatCodeEnv('STREAMLINED_OUTPUT')])) &&
+      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('STREAMLINED_OUTPUT')])) &&
     options.outputFormat === 'stream-json'
       ? createStreamlinedTransformer()
       : null
@@ -1187,7 +1186,7 @@ function runHeadlessStreaming(
   // Auto-resume interrupted turns on restart so CC continues from where it
   // left off without requiring the SDK to re-send the prompt.
   const resumeInterruptedTurnEnv =
-    process.env[dsxuCompatCodeEnv('RESUME_INTERRUPTED_TURN')]
+    process.env[dsxuProviderMigrationCodeEnv('RESUME_INTERRUPTED_TURN')]
   if (
     turnInterruptionState &&
     turnInterruptionState.kind !== 'none' &&
@@ -1540,7 +1539,7 @@ function runHeadlessStreaming(
   let controlSessionLastForwardedIndex = 0
 
   // Forward new messages from mutableMessages to the DSXU control session.
-  // Called incrementally during each turn (so compat remote UI sees progress
+  // Called incrementally during each turn (so provider-migration remote UI sees progress
   // and stays alive during permission waits) and again after the turn.
   //
   // writeMessages has its own UUID-based dedup (initialMessageUUIDs,
@@ -1668,9 +1667,9 @@ function runHeadlessStreaming(
           headers: connection.config.headers,
           oauth: connection.config.oauth,
         }
-      } else if (connection.config.type === DSXU_COMPAT_CLOUD_MCP_TRANSPORT) {
+      } else if (connection.config.type === DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT) {
         config = {
-          type: DSXU_COMPAT_CLOUD_MCP_TRANSPORT,
+          type: DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT,
           url: connection.config.url,
           id: connection.config.id,
         }
@@ -1696,8 +1695,8 @@ function runHeadlessStreaming(
             }))
           : undefined
       // Capabilities passthrough with allowlist pre-filter. DSXU workbench
-      // reads experimental['dsxu/channel']; compat IDE clients may still send
-      // experimental compatibility channel capability during migration.
+      // reads experimental['dsxu/channel']; provider-migration IDE clients may still send
+      // provider-migration channel capability during migration.
       // Enable-channel prompt - only echo it if channel_enable would
       // actually pass the allowlist. Not a security boundary (the
       // handler re-runs the full gate); just avoids dead buttons.
@@ -1709,12 +1708,12 @@ function runHeadlessStreaming(
       ) {
         const exp = { ...connection.capabilities.experimental }
         if (
-          (exp['dsxu/channel'] || exp[DSXU_COMPAT_CLOUD_CHANNEL_CAPABILITY]) &&
+          (exp['dsxu/channel'] || exp[DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY]) &&
           (!isChannelsEnabled() ||
             !isChannelAllowlisted(connection.config.pluginSource))
         ) {
           delete exp['dsxu/channel']
-          delete exp[DSXU_COMPAT_CLOUD_CHANNEL_CAPABILITY]
+          delete exp[DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY]
         }
         if (Object.keys(exp).length > 0) {
           capabilities = { experimental: exp }
@@ -1743,7 +1742,7 @@ function runHeadlessStreaming(
       await Promise.all([
         feature('DOWNLOAD_USER_SETTINGS') &&
         (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-          isEnvTruthy(process.env[dsxuCompatCodeEnv('REMOTE')]) ||
+          isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
           getIsRemoteMode())
           ? withDiagnosticsTiming('headless_user_settings_download', () =>
               downloadUserSettings(),
@@ -1766,13 +1765,13 @@ function runHeadlessStreaming(
 
   // Background plugin installation for all headless users
   // Installs marketplaces from extraKnownMarketplaces and missing enabled plugins
-  // compat sync_plugin_install env=true: resolved in run() before the first
+  // provider-migration sync_plugin_install env=true: resolved in run() before the first
   // query so plugins are guaranteed available on the first ask().
   let pluginInstallPromise: Promise<void> | null = null
   // --bare / SIMPLE: skip plugin install. Scripted calls don't add plugins
   // mid-session; the next interactive run reconciles.
   if (!isBareMode()) {
-    if (isEnvTruthy(process.env[dsxuCompatCodeEnv('SYNC_PLUGIN_INSTALL')])) {
+    if (isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('SYNC_PLUGIN_INSTALL')])) {
       pluginInstallPromise = installPluginsAndApplyMcpInBackground()
     } else {
       void installPluginsAndApplyMcpInBackground()
@@ -1787,7 +1786,7 @@ function runHeadlessStreaming(
   let currentAgents = agents
 
   // Clear all plugin-related caches, reload commands/agents/hooks.
-  // Called after compat sync_plugin_install env completes (before first query)
+  // Called after provider-migration sync_plugin_install env completes (before first query)
   // and after non-sync background install finishes.
   // refreshActivePlugins calls clearAllCaches() which is required because
   // loadAllPlugins() may have run during main.tsx startup BEFORE managed
@@ -1914,14 +1913,14 @@ function runHeadlessStreaming(
     await updateSdkMcp()
     headlessProfilerCheckpoint('after_updateSdkMcp')
 
-    // Resolve deferred plugin installation (compat sync_plugin_install env).
+    // Resolve deferred plugin installation (provider-migration sync_plugin_install env).
     // The promise was started eagerly so installation overlaps with other init.
     // Awaiting here guarantees plugins are available before the first ask().
-    // If the compat sync plugin install timeout env is set, races against that
+    // If the provider-migration sync plugin install timeout env is set, races against that
     // deadline and proceeds without plugins on timeout (logging an error).
     if (pluginInstallPromise) {
       const timeoutMs = parseInt(
-        process.env[dsxuCompatCodeEnv('SYNC_PLUGIN_INSTALL_TIMEOUT_MS')] || '',
+        process.env[dsxuProviderMigrationCodeEnv('SYNC_PLUGIN_INSTALL_TIMEOUT_MS')] || '',
         10,
       )
       if (timeoutMs > 0) {
@@ -1930,7 +1929,7 @@ function runHeadlessStreaming(
         if (result === 'timeout') {
           logError(
             new Error(
-              `compat sync_plugin_install env: plugin installation timed out after ${timeoutMs}ms`,
+              `provider-migration sync_plugin_install env: plugin installation timed out after ${timeoutMs}ms`,
             ),
           )
           logEvent('tengu_sync_plugin_install_timeout', {
@@ -2255,7 +2254,7 @@ function runHeadlessStreaming(
               },
             })) {
               // Forward messages to the DSXU control session incrementally (mid-turn) so
-              // compat remote UI sees progress and the connection stays alive
+              // provider-migration remote UI sees progress and the connection stays alive
               // while blocked on permission requests.
               forwardMessagesToControlSession()
 
@@ -2323,7 +2322,7 @@ function runHeadlessStreaming(
             options.promptSuggestions &&
             !isEnvDefinedFalsy(
               process.env.DSXU_CODE_ENABLE_PROMPT_SUGGESTION ??
-                process.env[dsxuCompatCodeEnv('ENABLE_PROMPT_SUGGESTION')],
+                process.env[dsxuProviderMigrationCodeEnv('ENABLE_PROMPT_SUGGESTION')],
             )
           ) {
             // TS narrows suggestionState to never in the while loop body;
@@ -2845,10 +2844,10 @@ function runHeadlessStreaming(
   // extension via handleAuthDone - mcp_reconnect.
   const oauthAuthPromises = new Map<string, Promise<void>>()
 
-  // In-flight compatibility OAuth flow. DSXU keeps this as a
+  // In-flight provider-migration OAuth flow. DSXU keeps this as a
   // migration-only remote provider contract; the default DeepSeek/DSXU path
   // uses DSXU provider keys and session ingress instead.
-  let compatOAuth: {
+  let providerMigrationOAuth: {
     service: OAuthService
     flow: Promise<void>
   } | null = null
@@ -2878,7 +2877,7 @@ function runHeadlessStreaming(
 
       if (message.type === 'control_request') {
         if (message.request.subtype === 'interrupt') {
-          // Track escapes for attribution (ant-only feature)
+          // Track escapes for attribution (dsxu-internal feature)
           if (feature('COMMIT_ATTRIBUTION')) {
             setAppState(prev => ({
               ...prev,
@@ -3116,7 +3115,7 @@ function runHeadlessStreaming(
             if (
               feature('DOWNLOAD_USER_SETTINGS') &&
               (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-                isEnvTruthy(process.env[dsxuCompatCodeEnv('REMOTE')]) ||
+                isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
                 getIsRemoteMode())
             ) {
               // Re-pull user settings so enabledPlugins pushed from the
@@ -3562,15 +3561,15 @@ function runHeadlessStreaming(
               `No active OAuth flow for server: ${serverName}`,
             )
           }
-        } else if (message.request.subtype === DSXU_COMPAT_AUTH_SUBTYPE) {
-          // Compatibility OAuth over the control channel. The SDK client owns
+        } else if (message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_SUBTYPE) {
+          // Provider-migration OAuth over the control channel. The SDK client owns
           // the user's browser (we're headless in -p mode); we hand back
           // both URLs and wait. Automatic URL - localhost listener catches
           // the redirect if the browser is on this host; manual URL - the
-          // success page shows "code#state" for the compatibility oauth callback.
-          const loginWithCompatCloud =
+          // success page shows "code#state" for the provider-migration OAuth callback.
+          const loginWithProviderMigrationCloud =
             (message.request as Record<string, unknown>)[
-              DSXU_COMPAT_OAUTH_REQUEST_FLAG
+              DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG
             ] !== false
 
           // Clean up any prior flow. cleanup() closes the localhost listener
@@ -3578,10 +3577,10 @@ function runHeadlessStreaming(
           // pending (AuthCodeListener.close() does not reject) but its object
           // graph becomes unreachable once the server handle is released and
           // is GC'd - no fd or port is held.
-          compatOAuth?.service.cleanup()
+          providerMigrationOAuth?.service.cleanup()
 
           logEvent('tengu_oauth_flow_start', {
-            loginWithCompatCloud: loginWithCompatCloud ?? true,
+            loginWithProviderMigrationCloud: loginWithProviderMigrationCloud ?? true,
           })
 
           const service = new OAuthService()
@@ -3604,7 +3603,7 @@ function runHeadlessStreaming(
                 urlResolver({ manualUrl, automaticUrl: automaticUrl! })
               },
               {
-                [DSXU_COMPAT_OAUTH_REQUEST_FLAG]: loginWithCompatCloud,
+                [DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG]: loginWithProviderMigrationCloud,
                 skipBrowserOpen: true,
               },
             )
@@ -3612,28 +3611,28 @@ function runHeadlessStreaming(
               // installOAuthTokens: performLogout (clear stale state) -
               // store profile - saveOAuthTokensIfNeeded - clearOAuthTokenCache
               // - clearAuthRelatedCaches. After this resolves, the memoized
-              // compat provider token cache in this process is invalidated; the
+              // provider-control token cache in this process is invalidated; the
               // next API call re-reads keychain/file and works. No respawn.
               await installOAuthTokens(tokens)
               logEvent('tengu_oauth_success', {
-                loginWithCompatCloud: loginWithCompatCloud ?? true,
+                loginWithProviderMigrationCloud: loginWithProviderMigrationCloud ?? true,
               })
             })
             .finally(() => {
               service.cleanup()
-              if (compatOAuth?.service === service) {
-                compatOAuth = null
+              if (providerMigrationOAuth?.service === service) {
+                providerMigrationOAuth = null
               }
             })
 
-          compatOAuth = { service, flow }
+          providerMigrationOAuth = { service, flow }
 
           // Attach the rejection handler before awaiting so a synchronous
           // startOAuthFlow failure doesn't surface as an unhandled rejection.
-          // The compatibility OAuth callback handler re-awaits flow for the manual
+          // The provider-migration OAuth callback handler re-awaits flow for the manual
           // path and surfaces the real error to the client.
           void flow.catch(err =>
-            logForDebugging(`compat_oauth_authenticate flow ended: ${err}`, {
+            logForDebugging(`provider_migration_oauth_authenticate flow ended: ${err}`, {
               level: 'info',
             }),
           )
@@ -3660,30 +3659,30 @@ function runHeadlessStreaming(
             sendControlResponseError(message, errorMessage(error))
           }
         } else if (
-          message.request.subtype === DSXU_COMPAT_AUTH_CALLBACK_SUBTYPE ||
-          message.request.subtype === DSXU_COMPAT_AUTH_WAIT_SUBTYPE
+          message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE ||
+          message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_WAIT_SUBTYPE
         ) {
-          if (!compatOAuth) {
+          if (!providerMigrationOAuth) {
             sendControlResponseError(
               message,
-              'No active compatibility authenticate flow',
+              'No active provider migration authenticate flow',
             )
           } else {
             // Inject the manual code synchronously - must happen in stdin
-            // message order so a subsequent compatibility authenticate doesn't
+            // message order so a subsequent provider migration authenticate doesn't
             // replace the service before this code lands.
-            if (message.request.subtype === DSXU_COMPAT_AUTH_CALLBACK_SUBTYPE) {
-              compatOAuth.service.handleManualAuthCodeInput({
+            if (message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE) {
+              providerMigrationOAuth.service.handleManualAuthCodeInput({
                 authorizationCode: message.request.authorizationCode,
                 state: message.request.state,
               })
             }
             // Detach the await - the stdin reader is serial and blocking
-            // here deadlocks the compatibility OAuth wait path: flow may
-            // only resolve via a future compatibility OAuth callback on stdin,
+            // here deadlocks the provider-migration OAuth wait path: flow may
+            // only resolve via a future provider-migration OAuth callback on stdin,
             // which can't be read while we're parked. Capture the binding;
-            // compatOAuth is nulled in flow's own .finally.
-            const { flow } = compatOAuth
+            // providerMigrationOAuth is nulled in flow's own .finally.
+            const { flow } = providerMigrationOAuth
             void flow.then(
               () => {
                 const accountInfo = getAccountInformation()
@@ -3810,7 +3809,7 @@ function runHeadlessStreaming(
         } else if (message.request.subtype === 'get_settings') {
           const currentAppState = getAppState()
           const model = getMainLoopModel()
-          // modelSupportsEffort gate matches compat model adapter - applied.effort must
+          // modelSupportsEffort gate matches provider-migration model adapter - applied.effort must
           // mirror what actually goes to the API, not just what's configured.
           const effort = modelSupportsEffort(model)
             ? resolveAppliedEffort(model, currentAppState.effortValue)
@@ -3819,7 +3818,7 @@ function runHeadlessStreaming(
             ...getSettingsWithSources(),
             applied: {
               model,
-              // Numeric effort (ant-only) - null; SDK schema is string-level only.
+              // Numeric effort (dsxu-internal) - null; SDK schema is string-level only.
               effort: typeof effort === 'string' ? effort : null,
             },
           })
@@ -3945,7 +3944,7 @@ function runHeadlessStreaming(
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'remote_control') {
           if (message.request.enabled) {
-            if (isDsxuRuntimeMode() && !isCompatProviderServiceShellAllowed()) {
+            if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
               const { handleDsxuProviderAliasCommand } = await import(
                 'src/dsxu/engine/provider-alias.js'
               )
@@ -3965,7 +3964,7 @@ function runHeadlessStreaming(
                 buildDsxuControlConnectUrl,
                 getDsxuControlSessionId,
               } = await import(
-                'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+                '../services/bridge/dsxuRemoteBridgeFacade.js'
               )
               // Already connected
               sendControlResponseSuccess(message, {
@@ -3996,13 +3995,13 @@ function runHeadlessStreaming(
                   },
                 ] = await Promise.all([
                   import(
-                    'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+                    '../services/bridge/dsxuRemoteBridgeFacade.js'
                   ),
                   import(
-                    'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+                    '../services/bridge/dsxuRemoteBridgeFacade.js'
                   ),
                   import(
-                    'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+                    '../services/bridge/dsxuRemoteBridgeFacade.js'
                   ),
                 ])
                 const handle = await initDsxuControlSession({
@@ -4194,7 +4193,7 @@ function runHeadlessStreaming(
         message !== null &&
         'file_attachments' in message
           ? await import(
-              'src/dsxu/engine/provider-backend/dsxu-provider-compat.js'
+              '../services/bridge/dsxuRemoteBridgeFacade.js'
             ).then(m =>
               m.resolveAndPrepend(message, message.message.content),
             )
@@ -4203,7 +4202,7 @@ function runHeadlessStreaming(
       enqueue({
         mode: 'prompt' as const,
         // file_attachments rides the protobuf catchall from the web composer.
-        // The compat attachment resolver is loaded only when such attachments
+        // The provider-migration attachment resolver is loaded only when such attachments
         // exist so the DSXU default mainline does not eagerly import it.
         value: messageContent,
         uuid: message.uuid,
@@ -4751,7 +4750,7 @@ function handleSetPermissionMode(
  * handler that enqueues channel messages at priority:'next' - drainCommandQueue
  * picks them up between turns.
  *
- * Intentionally does NOT register the compat channel/permission handler that
+ * Intentionally does NOT register the provider-migration channel/permission handler that
  * useManageMCPConnections sets up for interactive mode. That handler resolves
  * a pending dialog inside handleInteractivePermission - but print.ts never
  * calls handleInteractivePermission. When SDK permission lands on 'ask', it
@@ -5127,7 +5126,7 @@ async function loadInitialMessages(
   }
 
   // Handle resume in print mode (accepts session ID or URL)
-  // URLs are [ANT-ONLY]
+  // URLs are [DSXU internal]
   if (options.resume) {
     try {
       logEvent('tengu_resume_print', {})
@@ -5148,7 +5147,7 @@ async function loadInitialMessages(
       }
 
       // Hydrate local transcript from remote before loading
-      if (isEnvTruthy(process.env[dsxuCompatCodeEnv('USE_CCR_V2')])) {
+      if (isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('USE_CCR_V2')])) {
         // Await restore alongside hydration so SSE catchup lands on
         // restored state, not a fresh default.
         const [, metadata] = await Promise.all([
@@ -5187,7 +5186,7 @@ async function loadInitialMessages(
         // For URL-based or CCR v2 resume, start with empty session (it was hydrated but empty)
         if (
           parsedSessionId.isUrl ||
-          isEnvTruthy(process.env[dsxuCompatCodeEnv('USE_CCR_V2')])
+          isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('USE_CCR_V2')])
         ) {
           // Execute SessionStart hooks for startup since we're starting a new session
           return {

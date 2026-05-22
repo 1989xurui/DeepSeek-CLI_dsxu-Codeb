@@ -243,20 +243,3 @@ export function getDangerousEnvVarsSources(): string[] {
 
   return sources
 }
-
-
-// V14 strict lifecycle shim: components-TrustDialog-utils
-export function processComponentsTrustDialogUtilsStrictLifecycle(input) {
-  void input
-  const state = 'components-TrustDialog-utils-state'
-  const lifecycle = 'components-TrustDialog-utils:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsTrustDialogUtilsStrict(input) {
-  return processComponentsTrustDialogUtilsStrictLifecycle(input)
-}

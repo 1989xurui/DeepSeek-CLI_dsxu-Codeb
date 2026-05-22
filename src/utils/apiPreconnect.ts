@@ -7,34 +7,39 @@
  * before the API request in -p mode; unbounded "user is typing" window in
  * interactive mode).
  *
- * Bun's fetch shares a keep-alive connection pool globally, so the real API
+ * Bun fetch shares a keep-alive connection pool globally, so the real API
  * request reuses the warmed connection.
  *
- * Called from init.ts AFTER applyExtraCACertsFromConfig() + configureGlobalAgents()
- * so settings.json env vars are applied and the TLS cert store is finalized.
- * The early cli.tsx call site was removed — it ran before settings.json loaded,
- * so provider base URL/proxy/mTLS in settings would be invisible and preconnect
- * would warm the wrong pool (or worse, lock BoringSSL's cert store before
- * NODE_EXTRA_CA_CERTS was applied).
+ * Called from init.ts after certificates and global agents are configured, so
+ * settings.json env vars and TLS/proxy state are already applied.
  *
  * Skipped when:
- * - proxy/mTLS/unix socket configured (preconnect would use wrong transport —
- *   the SDK passes a custom dispatcher/agent that doesn't share the global pool)
- * - Bedrock/Vertex/Foundry (different endpoints, different auth)
+ * - DSXU runtime is active and provider-migration service shell is not explicit.
+ * - proxy/mTLS/unix socket is configured.
+ * - Bedrock/Vertex/Foundry use a different endpoint and auth path.
  */
 
 import { getOauthConfig } from '../constants/oauth.js'
-import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
+import {
+  getDsxuCodeEnv,
+  isDsxuRuntimeMode,
+  isEnvTruthy,
+  isProviderMigrationServiceShellAllowed,
+} from './envUtils.js'
 
 let fired = false
-const LEGACY_PROVIDER_BASE_URL_ENV =
+const PROVIDER_MIGRATION_BASE_URL_ENV =
   ('ANTH' + 'ROPIC_BASE_URL') as keyof NodeJS.ProcessEnv
 
 export function preconnectProviderApi(): void {
   if (fired) return
   fired = true
 
-  // Skip if using a cloud provider — different endpoint + auth
+  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+    return
+  }
+
+  // Skip cloud providers with a different endpoint and auth path.
   if (
     isEnvTruthy(getDsxuCodeEnv('USE_BEDROCK')) ||
     isEnvTruthy(getDsxuCodeEnv('USE_VERTEX')) ||
@@ -42,7 +47,8 @@ export function preconnectProviderApi(): void {
   ) {
     return
   }
-  // Skip if proxy/mTLS/unix — SDK's custom dispatcher won't reuse this pool
+
+  // Skip proxy/mTLS/unix socket; the SDK dispatcher will not reuse this pool.
   if (
     process.env.HTTPS_PROXY ||
     process.env.https_proxy ||
@@ -57,13 +63,13 @@ export function preconnectProviderApi(): void {
 
   // Use configured base URL (staging, local, or custom gateway). Covers
   // provider base URL env + USE_STAGING_OAUTH + USE_LOCAL_OAUTH in one lookup.
-  // NODE_EXTRA_CA_CERTS no longer a skip — init.ts applied it before this fires.
+  // NODE_EXTRA_CA_CERTS no longer skips preconnect because init.ts applied it first.
   const baseUrl =
-    process.env[LEGACY_PROVIDER_BASE_URL_ENV] || getOauthConfig().BASE_API_URL
+    process.env[PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL
 
-  // Fire and forget. HEAD means no response body — the connection is eligible
+  // Fire and forget. HEAD means no response body; the connection is eligible
   // for keep-alive pool reuse immediately after headers arrive. 10s timeout
-  // so a slow network doesn't hang the process; abort is fine since the real
+  // so a slow network does not hang the process; abort is fine since the real
   // request will handshake fresh if needed.
   // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
   void fetch(baseUrl, {

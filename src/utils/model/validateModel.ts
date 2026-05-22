@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { MODEL_ALIASES } from './aliases.js'
 import { isModelAllowed } from './modelAllowlist.js'
 import { getAPIProvider } from './providers.js'
@@ -10,7 +10,7 @@ import {
   APIConnectionError,
   AuthenticationError,
 } from '../../types/providerSdk.js'
-import { getThirdPartyCompatFallbackModelSuggestion } from '../../dsxu/legacy/model/legacyProviderModel.js'
+import { getThirdPartyProviderMigrationFallbackModelSuggestion } from './providerMigration/providerMigrationModel.js'
 
 // Cache valid models to avoid repeated API calls
 const validModelCache = new Map<string, boolean>()
@@ -42,9 +42,9 @@ export async function validateModel(
     return { valid: true }
   }
 
-  const legacyCustomModelEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
+  const providerMigrationCustomModelEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
   // Check if it matches the custom model option (pre-validated by the user)
-  if (!isDSXUCodeMode() && normalizedModel === process.env[legacyCustomModelEnv]) {
+  if (!isDSXUCodeMode() && normalizedModel === process.env[providerMigrationCustomModelEnv]) {
     return { valid: true }
   }
 
@@ -146,14 +146,5 @@ function handleValidationError(
 function get3PFallbackSuggestion(model: string): string | undefined {
   if (isDSXUCodeMode()) return undefined
   if (getAPIProvider() === 'firstParty') return undefined
-  return getThirdPartyCompatFallbackModelSuggestion(model)
-}
-
-
-// V14 lifecycle shim: validatemodel
-export function processValidatemodelLifecycle(input) {
-  void input
-  const state = 'validatemodel-state'
-  const lifecycle = 'validatemodel:session-lifecycle'
-  return { state, lifecycle, invoked: true }
+  return getThirdPartyProviderMigrationFallbackModelSuggestion(model)
 }

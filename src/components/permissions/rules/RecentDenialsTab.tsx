@@ -204,11 +204,3 @@ function _temp2() {
 function _temp() {
   return getAutoModeDenials();
 }
-
-// V14 lifecycle shim: recentdenialstab
-export function processRecentdenialstabLifecycle(input) {
-  void input
-  const state = 'recentdenialstab-state'
-  const lifecycle = 'recentdenialstab:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

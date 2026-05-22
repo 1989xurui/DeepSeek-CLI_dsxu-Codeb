@@ -1,4 +1,4 @@
-import memoize from 'lodash-es/memoize.js'
+﻿import memoize from 'lodash-es/memoize.js'
 import { getAPIProvider } from './providers.js'
 
 export type ModelCapabilityOverride =
@@ -25,7 +25,7 @@ const TIERS = [
 
 /**
  * Check whether a 3p model capability override is set for a model that matches one of
- * the pinned legacy provider default-model env vars.
+ * the pinned provider-migration default-model env vars.
  */
 export const get3PModelCapabilityOverride = memoize(
   (model: string, capability: ModelCapabilityOverride): boolean | undefined => {
@@ -48,12 +48,3 @@ export const get3PModelCapabilityOverride = memoize(
   },
   (model, capability) => `${model.toLowerCase()}:${capability}`,
 )
-
-
-// V14 lifecycle shim: modelsupportoverrides
-export function processModelsupportoverridesLifecycle(input) {
-  void input
-  const state = 'modelsupportoverrides-state'
-  const lifecycle = 'modelsupportoverrides:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

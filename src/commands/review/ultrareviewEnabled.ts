@@ -1,4 +1,4 @@
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 
 /**
  * Runtime gate for /ultrareview. GB config's `enabled` field controls
@@ -11,13 +11,4 @@ export function isUltrareviewEnabled(): boolean {
     unknown
   > | null>('tengu_review_bughunter_config', null)
   return cfg?.enabled === true
-}
-
-
-// V14 lifecycle shim: ultrareviewenabled
-export function processUltrareviewenabledLifecycle(input) {
-  void input
-  const state = 'ultrareviewenabled-state'
-  const lifecycle = 'ultrareviewenabled:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

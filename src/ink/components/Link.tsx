@@ -39,11 +39,3 @@ export default function Link(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: link
-export function processLinkLifecycle(input) {
-  void input
-  const state = 'link-state'
-  const lifecycle = 'link:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -437,11 +437,3 @@ function _temp(agent) {
     overriddenBy: agent.overriddenBy || null
   };
 }
-
-// V14 lifecycle shim: agentslist
-export function processAgentslistLifecycle(input) {
-  void input
-  const state = 'agentslist-state'
-  const lifecycle = 'agentslist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

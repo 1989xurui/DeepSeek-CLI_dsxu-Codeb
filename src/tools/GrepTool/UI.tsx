@@ -198,19 +198,3 @@ export function getToolUseSummary(input: Partial<{
   }
   return truncate(input.pattern, TOOL_SUMMARY_MAX_LENGTH);
 }
-
-// V14 strict lifecycle shim: tools-GrepTool-UI
-export function processToolsGrepToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-GrepTool-UI-state'
-  const lifecycle = 'tools-GrepTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsGrepToolUIStrict(input) {
-  return processToolsGrepToolUIStrictLifecycle(input)
-}

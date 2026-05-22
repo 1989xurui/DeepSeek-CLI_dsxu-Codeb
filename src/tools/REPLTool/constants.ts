@@ -9,7 +9,7 @@ export const REPL_TOOL_NAME = 'REPL'
 
 /**
  * REPL mode is default-on for interactive CLI agents (opt out with
- * DSXU_CODE_REPL=0). The legacy DSXU_REPL_MODE=1 also forces it on.
+ * DSXU_CODE_REPL=0). The provider-migration DSXU_REPL_MODE=1 also forces it on.
  *
  * SDK entrypoints (sdk-ts, sdk-py, sdk-cli) are NOT defaulted on — SDK
  * consumers script direct tool calls (Bash, Read, etc.) and REPL mode
@@ -47,20 +47,3 @@ export const REPL_ONLY_TOOLS = new Set([
   'NotebookEdit',
   'Agent',
 ])
-
-
-// V14 strict lifecycle shim: tools-REPLTool-constants
-export function processToolsREPLToolConstantsStrictLifecycle(input) {
-  void input
-  const state = 'tools-REPLTool-constants-state'
-  const lifecycle = 'tools-REPLTool-constants:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsREPLToolConstantsStrict(input) {
-  return processToolsREPLToolConstantsStrictLifecycle(input)
-}

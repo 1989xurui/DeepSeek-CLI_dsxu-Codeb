@@ -364,7 +364,7 @@ export async function setup(
       setImmediate(() => {
         void import('./utils/attributionHooks.js').then(
           ({ registerAttributionHooks }) => {
-            registerAttributionHooks() // Register attribution tracking hooks (ant-only feature)
+            registerAttributionHooks() // Register attribution tracking hooks (dsxu internal feature)
           },
         )
       })

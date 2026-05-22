@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "dsxu.v20.p12-target-collection-pack-cli.v1",
+  "generatedAt": "2026-05-15T03:39:19.520Z",
+  "status": "READY_FOR_REAL_TARGET_REFERENCE_COLLECTION_NOT_EVIDENCE",
+  "taskCount": 14,
+  "workOrderCount": 14,
+  "expansionBacklogCount": 0,
+  "targetManifestBacklogSlotCount": 0,
+  "minimumPairedRawLogsForPass": 14,
+  "pairedRawLogCount": 0,
+  "requiredAdditionalSameTaskPairCount": 0,
+  "currentPackCanReachPass": true,
+  "mustNotClaimComparisonWin": true,
+  "evidencePath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-collection-v1\\target-reference-collection-pack.evidence.json",
+  "manifestTemplatePath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-collection-v1\\target-reference-manifest.template.json",
+  "runbookPath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-collection-v1\\target-reference-runbook.md",
+  "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-collection-v1\\target-reference-collection-pack.trace.json",
+  "didFabricateTargetLogs": false,
+  "didImportTargetManifest": false,
+  "nextAction": "fill target-reference-manifest.template.json only with real same-task target-reference outputs, then run p12:target-intake and p12:raw-readiness",
+  "rule": "The collection pack and template are not target-reference raw evidence and do not count toward P12 PASS."
+}

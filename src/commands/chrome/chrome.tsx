@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React, { useState } from 'react';
 import { type OptionWithDescription, Select } from '../../components/CustomSelect/select.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
@@ -282,11 +282,3 @@ export const call = async function (onDone: (result?: string) => void): Promise<
   const isWSL = env.isWslEnvironment();
   return <DsxuBrowserProviderMenu onDone={onDone} isExtensionInstalled={isExtensionInstalled} configEnabled={config.DsxuBrowserProviderDefaultEnabled} isBrowserProviderAllowed={isSubscriber} isWSL={isWSL} />;
 };
-
-// V14 lifecycle shim: chrome
-export function processChromeLifecycle(input) {
-  void input
-  const state = 'chrome-state'
-  const lifecycle = 'chrome:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

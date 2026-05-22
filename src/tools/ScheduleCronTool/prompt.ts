@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/featureFlags.js'
 import { DEFAULT_CRON_JITTER_CONFIG } from '../../utils/cronTasks.js'
 import { isDsxuRuntimeMode, isDsxuCodeEnvTruthy } from '../../utils/envUtils.js'
 
@@ -11,7 +11,7 @@ export const DEFAULT_MAX_AGE_DAYS =
 /**
  * Unified gate for the cron scheduling system. Combines the build-time
  * `feature('AGENT_TRIGGERS')` flag (dead code elimination) with the runtime
- * `tengu_kairos_cron` GrowthBook gate on a 5-minute refresh window.
+ * `tengu_kairos_cron` feature flag provider gate on a 5-minute refresh window.
  *
  * AGENT_TRIGGERS is independently shippable from KAIROS — the cron module
  * graph (cronScheduler/cronTasks/cronTasksLock/cron.ts + the three tools +
@@ -24,7 +24,7 @@ export const DEFAULT_MAX_AGE_DAYS =
  * imperative setup, never at module scope — so the disk cache has had a
  * chance to populate.
  *
- * The default is `true` — /loop is GA (announced in changelog). GrowthBook
+ * The default is `true` — /loop is GA (announced in changelog). feature flag provider
  * is disabled for Bedrock/Vertex/Foundry and when DISABLE_TELEMETRY /
  * DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC are set; a `false` default would
  * break /loop for those users (GH #31759). The GB gate now serves purely as
@@ -192,9 +192,9 @@ export function getDsxuCronPromptRuntimeProfile(): {
       CRON_LIST_TOOL_NAME,
     ],
     durablePath: getScheduledTasksPath(),
-    disableEnv: ['DSXU_CODE_DISABLE_CRON', 'DSXU_CODE_DISABLE_CRON legacy'],
+    disableEnv: ['DSXU_CODE_DISABLE_CRON', 'DSXU_CODE_DISABLE_CRON provider-migration alias'],
     activationEvidence: [
-      'isKairosCronEnabled checks DSXU disable env before legacy alias',
+      'isKairosCronEnabled checks DSXU disable env before provider-migration alias',
       'durable cron writes to .dsxu/scheduled_tasks.json in DSXU mode',
       'prompt differentiates session-only and durable task persistence',
       'recurring jobs include jitter and max-age guidance for long-running stability',

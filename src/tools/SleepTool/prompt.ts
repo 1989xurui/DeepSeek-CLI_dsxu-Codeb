@@ -24,20 +24,3 @@ You can call this concurrently with other tools — it won't interfere with them
 Prefer this over \`Bash(sleep ...)\` — it doesn't hold a shell process.
 
 Each wake-up costs an API call, but the prompt cache expires after 5 minutes of inactivity — balance accordingly.`
-
-
-// V14 strict lifecycle shim: tools-SleepTool-prompt
-export function processToolsSleepToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-SleepTool-prompt-state'
-  const lifecycle = 'tools-SleepTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsSleepToolPromptStrict(input) {
-  return processToolsSleepToolPromptStrictLifecycle(input)
-}

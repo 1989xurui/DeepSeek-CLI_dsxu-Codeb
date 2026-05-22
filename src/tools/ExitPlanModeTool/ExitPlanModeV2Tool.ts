@@ -148,6 +148,22 @@ export const ExitPlanModeV2Tool: Tool<InputSchema, Output> = buildTool({
   name: EXIT_PLAN_MODE_V2_TOOL_NAME,
   searchHint: 'present plan for approval and start coding (plan mode only)',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Plan Mode Runtime',
+    sideEffects: [
+      'permission-mode-state-write',
+      'plan-approval-record-write',
+      'teammate-approval-mailbox-write-when-needed',
+    ],
+    permission: 'user or team-lead plan approval before leaving plan mode',
+    evidence: [
+      'inputSchema.plan',
+      'approval state output',
+      'awaitingLeaderApproval output',
+      'requestId output',
+    ],
+    uiProjection: 'plan approval dialog or team approval state',
+  },
   async description() {
     return 'Prompts the user to exit plan mode and start coding'
   },

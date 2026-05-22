@@ -55,11 +55,3 @@ export function useModalOrTerminalSize(fallback) {
 export function useModalScrollRef() {
   return useContext(ModalContext)?.scrollRef ?? null;
 }
-
-// V14 lifecycle shim: modalcontext
-export function processModalcontextLifecycle(input) {
-  void input
-  const state = 'modalcontext-state'
-  const lifecycle = 'modalcontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

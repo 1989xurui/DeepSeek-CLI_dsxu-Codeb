@@ -33,11 +33,3 @@ export function ExpandShellOutputProvider(t0) {
 export function useExpandShellOutput() {
   return useContext(ExpandShellOutputContext);
 }
-
-// V14 lifecycle shim: expandshelloutputcontext
-export function processExpandshelloutputcontextLifecycle(input) {
-  void input
-  const state = 'expandshelloutputcontext-state'
-  const lifecycle = 'expandshelloutputcontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

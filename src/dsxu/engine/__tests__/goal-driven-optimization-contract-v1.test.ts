@@ -26,7 +26,7 @@ describe('DSXU goal driven optimization contract', () => {
     const refs = contract.scorecard.flatMap(area => area.externalReference).join('\n')
 
     expect(refs).toContain('SWE-bench')
-    expect(refs).toContain('Aider Polyglot')
+    expect(refs).toContain('polyglot edit benchmarks')
     expect(refs).toContain('Terminal-Bench')
     expect(contract.gates.externalComparison).toContain('横向评测报告')
     expect(contract.rules.join('\n')).toContain('public ranking requires same-task external model raw logs')

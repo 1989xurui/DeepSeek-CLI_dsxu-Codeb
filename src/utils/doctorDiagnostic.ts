@@ -36,18 +36,18 @@ import { SandboxManager } from './sandbox/sandbox-adapter.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import { CUSTOMIZATION_SURFACES } from './settings/types.js'
 import {
-  findLegacyProviderAlias,
-  findValidLegacyProviderAlias,
+  findProviderMigrationSourceAlias,
+  findValidProviderMigrationSourceAlias,
   getShellConfigPaths,
 } from './shellConfig.js'
 import { jsonParse } from './slowOperations.js'
 import { which } from './which.js'
 
-const LEGACY_CLI_BIN = 'cl' + 'aude'
+const PROVIDER_MIGRATION_SOURCE_CLI_BIN = 'cl' + 'aude'
 const DSXU_CLI_BIN = 'dsxu-code'
-const CLI_BIN_CANDIDATES = [DSXU_CLI_BIN, LEGACY_CLI_BIN] as const
-const LEGACY_PROVIDER_SCOPE = '@' + 'anth' + 'ropic-ai'
-const LEGACY_PROVIDER_PACKAGE = `${LEGACY_PROVIDER_SCOPE}/${LEGACY_CLI_BIN}-code`
+const CLI_BIN_CANDIDATES = [DSXU_CLI_BIN, PROVIDER_MIGRATION_SOURCE_CLI_BIN] as const
+const PROVIDER_MIGRATION_SOURCE_SCOPE = '@' + 'anth' + 'ropic-ai'
+const PROVIDER_MIGRATION_SOURCE_PACKAGE = `${PROVIDER_MIGRATION_SOURCE_SCOPE}/${PROVIDER_MIGRATION_SOURCE_CLI_BIN}-code`
 
 export type InstallationType =
   | 'npm-global'
@@ -222,19 +222,19 @@ async function detectMultipleInstallations(): Promise<
   if (await localInstallationExists()) {
     installations.push({ type: 'npm-local', path: join(homedir(), '.dsxu', 'local') })
   }
-  const legacyLocalPath = join(homedir(), `.${LEGACY_CLI_BIN}`, 'local')
+  const providerMigrationLocalPath = join(homedir(), `.${PROVIDER_MIGRATION_SOURCE_CLI_BIN}`, 'local')
   try {
-    await fs.stat(legacyLocalPath)
-    if (!installations.some(i => i.path === legacyLocalPath)) {
-      installations.push({ type: 'npm-local', path: legacyLocalPath })
+    await fs.stat(providerMigrationLocalPath)
+    if (!installations.some(i => i.path === providerMigrationLocalPath)) {
+      installations.push({ type: 'npm-local', path: providerMigrationLocalPath })
     }
   } catch {
     // Not found
   }
 
   // Check for global npm installation
-  const packagesToCheck = [LEGACY_PROVIDER_PACKAGE]
-  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== LEGACY_PROVIDER_PACKAGE) {
+  const packagesToCheck = [PROVIDER_MIGRATION_SOURCE_PACKAGE]
+  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== PROVIDER_MIGRATION_SOURCE_PACKAGE) {
     packagesToCheck.push(MACRO.PACKAGE_URL)
   }
   const npmResult = await execFileNoThrow('npm', [
@@ -247,7 +247,7 @@ async function detectMultipleInstallations(): Promise<
     const npmPrefix = npmResult.stdout.trim()
     const isWindows = getPlatform() === 'windows'
 
-    // First check for active installations via DSXU/legacy bin.
+    // First check for active installations via DSXU/provider-migration bin.
     // Linux / macOS have prefix/bin/<bin> and prefix/lib/node_modules;
     // Windows has prefix/<bin> and prefix/node_modules.
     const globalBinPath = await (async () => {
@@ -478,8 +478,8 @@ async function detectConfigurationIssues(
     })
   }
 
-  const existingAlias = await findLegacyProviderAlias()
-  const validAlias = await findValidLegacyProviderAlias()
+  const existingAlias = await findProviderMigrationSourceAlias()
+  const validAlias = await findValidProviderMigrationSourceAlias()
 
   // Check if running local installation but it's not in PATH
   if (type === 'npm-local') {
@@ -560,10 +560,10 @@ export async function getDoctorDiagnostic(): Promise<DiagnosticInfo> {
 
     for (const install of npmInstalls) {
       if (install.type === 'npm-global') {
-        let uninstallCmd = `npm -g uninstall ${LEGACY_PROVIDER_PACKAGE}`
+        let uninstallCmd = `npm -g uninstall ${PROVIDER_MIGRATION_SOURCE_PACKAGE}`
         if (
           MACRO.PACKAGE_URL &&
-          MACRO.PACKAGE_URL !== LEGACY_PROVIDER_PACKAGE
+          MACRO.PACKAGE_URL !== PROVIDER_MIGRATION_SOURCE_PACKAGE
         ) {
           uninstallCmd += ` && npm -g uninstall ${MACRO.PACKAGE_URL}`
         }

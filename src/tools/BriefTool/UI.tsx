@@ -98,19 +98,3 @@ export function AttachmentList(t0) {
 function _temp(att) {
   return <Box key={att.path} flexDirection="row"><Text dimColor={true}>{figures.pointerSmall} {att.isImage ? "[image]" : "[file]"}{" "}</Text><Text>{getDisplayPath(att.path)}</Text><Text dimColor={true}> ({formatFileSize(att.size)})</Text></Box>;
 }
-
-// V14 strict lifecycle shim: tools-BriefTool-UI
-export function processToolsBriefToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-BriefTool-UI-state'
-  const lifecycle = 'tools-BriefTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsBriefToolUIStrict(input) {
-  return processToolsBriefToolUIStrictLifecycle(input)
-}

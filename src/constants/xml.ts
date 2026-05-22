@@ -84,20 +84,3 @@ export const COMMON_INFO_ARGS = [
   'status',
   '?',
 ]
-
-
-// V14 strict lifecycle shim: constants-xml
-export function processConstantsXmlStrictLifecycle(input) {
-  void input
-  const state = 'constants-xml-state'
-  const lifecycle = 'constants-xml:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runConstantsXmlStrict(input) {
-  return processConstantsXmlStrictLifecycle(input)
-}

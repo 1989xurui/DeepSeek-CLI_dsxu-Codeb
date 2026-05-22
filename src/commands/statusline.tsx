@@ -21,19 +21,3 @@ const statusline = {
   }
 } satisfies Command;
 export default statusline;
-
-// V14 strict lifecycle shim: commands-statusline
-export function processCommandsStatuslineStrictLifecycle(input) {
-  void input
-  const state = 'commands-statusline-state'
-  const lifecycle = 'commands-statusline:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsStatuslineStrict(input) {
-  return processCommandsStatuslineStrictLifecycle(input)
-}

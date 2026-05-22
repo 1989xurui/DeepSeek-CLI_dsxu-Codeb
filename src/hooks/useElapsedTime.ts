@@ -35,12 +35,3 @@ export function useElapsedTime(
 
   return useSyncExternalStore(subscribe, get, get)
 }
-
-
-// V14 lifecycle shim: useelapsedtime
-export function processUseelapsedtimeLifecycle(input) {
-  void input
-  const state = 'useelapsedtime-state'
-  const lifecycle = 'useelapsedtime:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

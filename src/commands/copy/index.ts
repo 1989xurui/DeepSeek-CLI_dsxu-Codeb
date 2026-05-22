@@ -13,21 +13,3 @@ const copy = {
 } satisfies Command
 
 export default copy
-
-
-// V14 command lifecycle shim: copy
-export function processCopyCommandLifecycle(input) {
-  void input
-  const state = 'copy-command-state'
-  const lifecycle = 'copy:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'copy',
-  }
-}
-
-export function runCopyCommand(input) {
-  return processCopyCommandLifecycle(input)
-}

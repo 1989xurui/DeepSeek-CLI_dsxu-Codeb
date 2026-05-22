@@ -17,7 +17,7 @@ export const MACOS_PREFERENCE_DOMAIN =
  *
  * These keys live under SOFTWARE\Policies which is on the WOW64 shared key
  * list — both 32-bit and 64-bit processes see the same values without
- * redirection. Do not move these legacy-compatible keys under SOFTWARE, as SOFTWARE is
+ * redirection. Do not move these provider-migration-compatible keys under SOFTWARE, as SOFTWARE is
  * redirected and 32-bit processes would silently read from WOW6432Node.
  * See: https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys
  */
@@ -40,7 +40,7 @@ export const MDM_SUBPROCESS_TIMEOUT_MS = 5000
 
 /**
  * Build the list of macOS plist paths in priority order (highest first).
- * Evaluates `process.env.USER_TYPE` at call time so ant-only paths are
+ * Evaluates `process.env.USER_TYPE` at call time so dsxu internal paths are
  * included only when appropriate.
  */
 export function getMacOSPlistPaths(): Array<{ path: string; label: string }> {
@@ -74,7 +74,7 @@ export function getMacOSPlistPaths(): Array<{ path: string; label: string }> {
         'Preferences',
         `${MACOS_PREFERENCE_DOMAIN}.plist`,
       ),
-      label: 'user preferences (ant-only)',
+      label: 'user preferences (dsxu internal)',
     })
   }
 

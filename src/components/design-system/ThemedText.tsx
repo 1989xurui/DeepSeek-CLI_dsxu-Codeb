@@ -121,11 +121,3 @@ export default function ThemedText(t0) {
   }
   return t8;
 }
-
-// V14 lifecycle shim: themedtext
-export function processThemedtextLifecycle(input) {
-  void input
-  const state = 'themedtext-state'
-  const lifecycle = 'themedtext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

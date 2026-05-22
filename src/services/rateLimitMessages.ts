@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Centralized rate limit message generation
  * Single source of truth for all rate limit-related messages
@@ -9,7 +8,7 @@ import {
   getSubscriptionType,
   isOverageProvisioningAllowed,
 } from '../utils/auth.js'
-import { hasLegacyCloudBillingAccess } from '../utils/billing.js'
+import { hasProviderSubscriptionBillingAccess } from './auth/dsxuBillingAccess.js'
 import { formatResetTime } from '../utils/format.js'
 import type { DsxuLimits } from './dsxuLimits.js'
 
@@ -89,7 +88,7 @@ export function getRateLimitMessage(
     if (
       isTeamOrEnterprise &&
       hasExtraUsageEnabled &&
-      !hasLegacyCloudBillingAccess()
+      !hasProviderSubscriptionBillingAccess()
     ) {
       return null
     }

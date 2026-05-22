@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React from 'react';
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js';
@@ -26,7 +26,7 @@ export function InstallAppStep(t0) {
   useKeybinding("confirm:yes", onSubmit, t1);
   let t2;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box flexDirection="column" marginBottom={1}><Text bold={true}>Legacy GitHub App migration</Text></Box>;
+    t2 = <Box flexDirection="column" marginBottom={1}><Text bold={true}>Provider-migration GitHub App setup</Text></Box>;
     $[1] = t2;
   } else {
     t2 = $[1];
@@ -90,12 +90,4 @@ export function InstallAppStep(t0) {
     t10 = $[11];
   }
   return t10;
-}
-
-// V14 lifecycle shim: installappstep
-export function processInstallappstepLifecycle(input) {
-  void input
-  const state = 'installappstep-state'
-  const lifecycle = 'installappstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

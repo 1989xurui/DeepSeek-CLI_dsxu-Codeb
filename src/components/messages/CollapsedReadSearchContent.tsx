@@ -481,11 +481,3 @@ export function CollapsedReadSearchContent({
         </Text>}
     </Box>;
 }
-
-// V14 lifecycle shim: collapsedreadsearchcontent
-export function processCollapsedreadsearchcontentLifecycle(input) {
-  void input
-  const state = 'collapsedreadsearchcontent-state'
-  const lifecycle = 'collapsedreadsearchcontent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

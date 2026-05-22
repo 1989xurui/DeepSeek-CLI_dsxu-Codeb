@@ -26,21 +26,3 @@ const feedback = {
 } satisfies Command
 
 export default feedback
-
-
-// V14 command lifecycle shim: feedback
-export function processFeedbackCommandLifecycle(input) {
-  void input
-  const state = 'feedback-command-state'
-  const lifecycle = 'feedback:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'feedback',
-  }
-}
-
-export function runFeedbackCommand(input) {
-  return processFeedbackCommandLifecycle(input)
-}

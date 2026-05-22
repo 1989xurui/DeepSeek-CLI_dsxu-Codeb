@@ -575,11 +575,3 @@ function _temp() {
   const hooksDisabled = settings?.disableAllHooks === true;
   return hooksDisabled && getSettingsForSource("policySettings")?.disableAllHooks === true;
 }
-
-// V14 lifecycle shim: hooksconfigmenu
-export function processHooksconfigmenuLifecycle(input) {
-  void input
-  const state = 'hooksconfigmenu-state'
-  const lifecycle = 'hooksconfigmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

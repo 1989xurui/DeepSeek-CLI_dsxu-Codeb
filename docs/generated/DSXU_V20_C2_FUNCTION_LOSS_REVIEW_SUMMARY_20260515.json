@@ -1,0 +1,63 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.c2-function-loss-review.v1",
+    "generatedAt":  "2026-05-15T06:12:27+08:00",
+    "scope":  "Audit whether C2 final absorption signoff means owner disposition or implemented feature acceptance.",
+    "totalRows":  1902,
+    "ownerDispositionComplete":  true,
+    "implementedFeatureAcceptanceComplete":  false,
+    "reason":  "C2 signoff maps reference files to DSXU owners, exclusion/adaptation, helper retention, or no-absorption decisions. It does not by itself prove all referenced behavior has been implemented, UX-tested, or release-accepted.",
+    "byFinalDecision":  [
+                            {
+                                "decision":  "C2_MAINLINE_ABSORPTION_SIGNED_BY_NAMED_OWNER",
+                                "count":  988
+                            },
+                            {
+                                "decision":  "C2_PRODUCT_SPECIFIC_REFERENCE_EXCLUDED_OR_ADAPTED",
+                                "count":  594
+                            },
+                            {
+                                "decision":  "C2_REVIEW_CANDIDATE_EXCLUDED_OR_ADAPTED_BY_OWNER",
+                                "count":  7
+                            },
+                            {
+                                "decision":  "C2_REVIEW_CANDIDATE_MAPPED_TO_NAMED_OWNER",
+                                "count":  35
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_BASELINE_PRESENT_NO_NEW_ABSORPTION",
+                                "count":  201
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_KEEP_WITH_IMPORT_USE_EVIDENCE",
+                                "count":  73
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_NOT_IMPORTED_TO_DSXU_NO_ABSORPTION",
+                                "count":  4
+                            }
+                        ],
+    "featureLossRiskBuckets":  [
+                                   {
+                                       "bucket":  "product_specific_excluded_or_adapted",
+                                       "count":  594,
+                                       "risk":  "must verify no useful DSXU capability was hidden behind product-specific source behavior"
+                                   },
+                                   {
+                                       "bucket":  "review_candidate_excluded_or_adapted",
+                                       "count":  7,
+                                       "risk":  "must remain explicit DSXU adaptation or exclusion, not silent loss"
+                                   },
+                                   {
+                                       "bucket":  "shared_utility_baseline_or_noop",
+                                       "count":  201,
+                                       "risk":  "baseline/no-op means no new absorption, not proof of feature parity"
+                                   },
+                                   {
+                                       "bucket":  "shared_utility_not_present",
+                                       "count":  4,
+                                       "risk":  "no absorption unless a named DSXU owner later proves need"
+                                   }
+                               ],
+    "guardrail":  "Do not treat C2 owner-disposition completion as feature parity. Real feature acceptance remains under Owner/Git packets, real-gap acceptance, commercial/IP/brand release review, six-stage tests, and clean export.",
+    "nextAction":  "Continue fixed order: Owner/Git packets -\u003e 147 deletion mutation review -\u003e 4 ACL residues -\u003e commercial/IP/brand review -\u003e real-gap acceptance -\u003e six-stage tests -\u003e clean export."
+}

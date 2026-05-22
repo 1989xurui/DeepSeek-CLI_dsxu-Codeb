@@ -61,11 +61,3 @@ export function SandboxPromptFooterHint() {
   }
   return t3;
 }
-
-// V14 lifecycle shim: sandboxpromptfooterhint
-export function processSandboxpromptfooterhintLifecycle(input) {
-  void input
-  const state = 'sandboxpromptfooterhint-state'
-  const lifecycle = 'sandboxpromptfooterhint:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

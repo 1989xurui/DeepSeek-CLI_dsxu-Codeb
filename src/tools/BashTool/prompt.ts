@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { prependBullets } from '../../constants/prompts.js'
 import { getAttributionTexts } from '../../utils/attribution.js'
@@ -50,7 +49,7 @@ export function getDsxuBashPromptRuntimeProfile(): {
     },
     backgroundDisableEnv: [
       'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
-      'legacy provider disable-background-tasks alias',
+      'provider-migration source disable-background-tasks alias',
     ],
     activationEvidence: [
       'prompt steers file read/edit/write/search to dedicated DSXU tools instead of shell',

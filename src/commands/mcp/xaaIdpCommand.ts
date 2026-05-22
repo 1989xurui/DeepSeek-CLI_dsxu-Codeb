@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * `dsxu-code mcp xaa` ...manage the XAA (SEP-990) IdP connection.
  *

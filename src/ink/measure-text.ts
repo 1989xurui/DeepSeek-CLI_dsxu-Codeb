@@ -45,12 +45,3 @@ function measureText(text: string, maxWidth: number): Output {
 }
 
 export default measureText
-
-
-// V14 lifecycle shim: measure-text
-export function processMeasureTextLifecycle(input) {
-  void input
-  const state = 'measure-text-state'
-  const lifecycle = 'measure-text:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

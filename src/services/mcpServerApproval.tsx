@@ -38,11 +38,3 @@ export async function handleMcpjsonServerApprovals(root: Root): Promise<void> {
     }
   });
 }
-
-// V14 lifecycle shim: mcpserverapproval
-export function processMcpserverapprovalLifecycle(input) {
-  void input
-  const state = 'mcpserverapproval-state'
-  const lifecycle = 'mcpserverapproval:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

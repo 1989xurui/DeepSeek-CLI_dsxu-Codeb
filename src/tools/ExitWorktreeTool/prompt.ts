@@ -38,20 +38,3 @@ If called outside an EnterWorktree session, the tool is a **no-op**: it reports 
 - Verification / evidence: cite the action, restored cwd, and whether the worktree was kept or removed.
 `
 }
-
-
-// V14 strict lifecycle shim: tools-ExitWorktreeTool-prompt
-export function processToolsExitWorktreeToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-ExitWorktreeTool-prompt-state'
-  const lifecycle = 'tools-ExitWorktreeTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsExitWorktreeToolPromptStrict(input) {
-  return processToolsExitWorktreeToolPromptStrictLifecycle(input)
-}

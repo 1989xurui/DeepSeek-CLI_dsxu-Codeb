@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "dsxu.v20.ogr12.shared-utility-import-use-review.v1",
+  "generatedAt": "2026-05-14T15:49:56.170Z",
+  "ownerPacket": "V20-OGR-12-shared-platform-utilities",
+  "targetCount": 249,
+  "summaryByDecision": {
+    "KEEP_MAINLINE_IMPORTED_UTILITY": 248,
+    "DELETE_STATE_REVIEW_KEEP_DELETED": 1
+  },
+  "importedMainlineKeep": 248,
+  "noImportReplaceDeleteCandidates": 0,
+  "deleteStateReview": 1,
+  "testOnlyReview": 0,
+  "nonRuntimeReviewOnly": 0,
+  "resolverFix": "resolves .js/.jsx/.mjs/.cjs specifiers to .ts/.tsx source files before classifying import/use evidence",
+  "rule": "Shared utilities are retained only with real import/use evidence from named DSXU owners; unimported helpers remain replace/delete candidates and cannot become a second runtime."
+}

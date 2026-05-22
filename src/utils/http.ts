@@ -5,31 +5,31 @@
 import axios from 'axios'
 import {
   getProviderApiKey,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from './auth.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-  handleCompatProviderAuth401Error,
-} from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+  handleProviderControlAuth401Error,
+} from '../services/auth/dsxuProviderControlAuth.js'
 import { getDsxuCodeEnv } from './envUtils.js'
 import { getDSXUCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
-const LEGACY_AGENT_SDK_VERSION_ENV = 'CL' + 'AUDE_AGENT_SDK_VERSION'
-const LEGACY_AGENT_SDK_CLIENT_APP_ENV = 'CL' + 'AUDE_AGENT_SDK_CLIENT_APP'
+const PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV = 'CL' + 'AUDE_AGENT_SDK_VERSION'
+const PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV = 'CL' + 'AUDE_AGENT_SDK_CLIENT_APP'
 
 // WARNING: downstream logs rely on the product token in this user agent.
 // Please do NOT change this without making sure that logging also gets updated!
 export function getUserAgent(): string {
   const sdkVersion =
     process.env.DSXU_AGENT_SDK_VERSION ??
-    process.env[LEGACY_AGENT_SDK_VERSION_ENV]
+    process.env[PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV]
   const agentSdkVersion = sdkVersion ? `, agent-sdk/${sdkVersion}` : ''
   // SDK consumers can identify their app/library via DSXU_AGENT_SDK_CLIENT_APP
   const sdkClientApp =
     process.env.DSXU_AGENT_SDK_CLIENT_APP ??
-    process.env[LEGACY_AGENT_SDK_CLIENT_APP_ENV]
+    process.env[PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV]
   const clientApp = sdkClientApp
     ? `, client-app/${sdkClientApp}`
     : ''
@@ -51,13 +51,13 @@ export function getMCPUserAgent(): string {
   }
   const sdkVersion =
     process.env.DSXU_AGENT_SDK_VERSION ??
-    process.env[LEGACY_AGENT_SDK_VERSION_ENV]
+    process.env[PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV]
   if (sdkVersion) {
     parts.push(`agent-sdk/${sdkVersion}`)
   }
   const sdkClientApp =
     process.env.DSXU_AGENT_SDK_CLIENT_APP ??
-    process.env[LEGACY_AGENT_SDK_CLIENT_APP_ENV]
+    process.env[PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV]
   if (sdkClientApp) {
     parts.push(`client-app/${sdkClientApp}`)
   }
@@ -80,8 +80,8 @@ export type AuthHeaders = {
  * Returns either OAuth headers for Max/Pro users or API key headers for regular users
  */
 export function getAuthHeaders(): AuthHeaders {
-  if (isLegacyCloudSubscriber()) {
-    const accessToken = getCompatProviderAccessToken()
+  if (isProviderSubscriptionAccount()) {
+    const accessToken = getProviderControlAccessToken()
     if (!accessToken) {
       return {
         headers: {},
@@ -89,7 +89,7 @@ export function getAuthHeaders(): AuthHeaders {
       }
     }
     return {
-      headers: getCompatProviderBearerHeaders(accessToken),
+      headers: getProviderControlBearerHeaders(accessToken),
     }
   }
   // TODO: this will fail if the API key is being set to an LLM Gateway key
@@ -138,9 +138,9 @@ export async function withOAuth401Retry<T>(
         typeof err.response?.data === 'string' &&
         err.response.data.includes('OAuth token has been revoked'))
     if (!isAuthError) throw err
-    const failedAccessToken = getCompatProviderAccessToken()
+    const failedAccessToken = getProviderControlAccessToken()
     if (!failedAccessToken) throw err
-    await handleCompatProviderAuth401Error(failedAccessToken)
+    await handleProviderControlAuth401Error(failedAccessToken)
     return await request()
   }
 }

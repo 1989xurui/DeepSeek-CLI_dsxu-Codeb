@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * SDK Core Schemas - Zod schemas for serializable SDK data types.
  *
@@ -10,10 +9,10 @@
 
 import { z } from 'zod/v4'
 import {
-  LEGACY_CLOUD_CHANNEL_CAPABILITY,
-  LEGACY_CLOUD_CONFIG_SCOPE,
-  LEGACY_CLOUD_MCP_TRANSPORT,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
+  PROVIDER_MIGRATION_CONFIG_SCOPE,
+  PROVIDER_MIGRATION_MCP_TRANSPORT,
+} from '../../constants/providerMigrationProtocol.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
 // ============================================================================
@@ -115,7 +114,7 @@ export const ThinkingConfigSchema = lazySchema(() =>
 
 export const McpStdioServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal('stdio').optional(), // Optional for backwards compatibility
+    type: z.literal('stdio').optional(), // Optional for older MCP config files.
     command: z.string(),
     args: z.array(z.string()).optional(),
     env: z.record(z.string(), z.string()).optional(),
@@ -154,19 +153,19 @@ export const McpServerConfigForProcessTransportSchema = lazySchema(() =>
   ]),
 )
 
-export const McpLegacyCloudProxyServerConfigSchema = lazySchema(() =>
+export const McpProviderMigrationProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal(LEGACY_CLOUD_MCP_TRANSPORT),
+    type: z.literal(PROVIDER_MIGRATION_MCP_TRANSPORT),
     url: z.string(),
     id: z.string(),
   }),
 )
 
-// Broader config type for status responses, including legacy cloud proxy output.
+// Broader config type for status responses, including provider migration proxy output.
 export const McpServerStatusConfigSchema = lazySchema(() =>
   z.union([
     McpServerConfigForProcessTransportSchema(),
-    McpLegacyCloudProxyServerConfigSchema(),
+    McpProviderMigrationProxyServerConfigSchema(),
   ]),
 )
 
@@ -195,7 +194,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          `Configuration scope (e.g., project, user, local, ${LEGACY_CLOUD_CONFIG_SCOPE}, managed)`,
+          `Configuration scope (e.g., project, user, local, ${PROVIDER_MIGRATION_CONFIG_SCOPE}, managed)`,
         ),
       tools: z
         .array(
@@ -219,7 +218,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         })
         .optional()
         .describe(
-          `@internal Server capabilities (available when connected). experimental['${LEGACY_CLOUD_CHANNEL_CAPABILITY}'] is only present if the server's plugin is on the approved channels allowlist; use its presence to decide whether to show an Enable-channel prompt.`,
+          `@internal Server capabilities (available when connected). experimental['${PROVIDER_MIGRATION_CHANNEL_CAPABILITY}'] is only present if the server's plugin is on the approved channels allowlist; use its presence to decide whether to show an Enable-channel prompt.`,
         ),
     })
     .describe('Status information for an MCP server connection.'),

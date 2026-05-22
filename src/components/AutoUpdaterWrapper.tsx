@@ -88,11 +88,3 @@ export function AutoUpdaterWrapper(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: autoupdaterwrapper
-export function processAutoupdaterwrapperLifecycle(input) {
-  void input
-  const state = 'autoupdaterwrapper-state'
-  const lifecycle = 'autoupdaterwrapper:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -164,11 +164,3 @@ function markDialogAsShown(): void {
     }
   }));
 }
-
-// V14 lifecycle shim: ideonboardingdialog
-export function processIdeonboardingdialogLifecycle(input) {
-  void input
-  const state = 'ideonboardingdialog-state'
-  const lifecycle = 'ideonboardingdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

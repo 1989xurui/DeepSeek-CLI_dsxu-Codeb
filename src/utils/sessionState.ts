@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 export type SessionState = 'idle' | 'running' | 'requires_action'
 /**
  * Context carried with requires_action transitions so downstream

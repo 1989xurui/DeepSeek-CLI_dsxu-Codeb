@@ -375,11 +375,3 @@ function _temp(toolNames) {
   }
   return `${toolNames.slice(0, -1).join(", ")}, and ${toolNames[toolNames.length - 1]}`;
 }
-
-// V14 lifecycle shim: confirmstep
-export function processConfirmstepLifecycle(input) {
-  void input
-  const state = 'confirmstep-state'
-  const lifecycle = 'confirmstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

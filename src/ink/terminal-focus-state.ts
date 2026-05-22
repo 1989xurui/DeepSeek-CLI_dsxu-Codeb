@@ -45,12 +45,3 @@ export function resetTerminalFocusState(): void {
     cb()
   }
 }
-
-
-// V14 lifecycle shim: terminal-focus-state
-export function processTerminalFocusStateLifecycle(input) {
-  void input
-  const state = 'terminal-focus-state-state'
-  const lifecycle = 'terminal-focus-state:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -272,11 +272,3 @@ export function UserTextMessage(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: usertextmessage
-export function processUsertextmessageLifecycle(input) {
-  void input
-  const state = 'usertextmessage-state'
-  const lifecycle = 'usertextmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -30,7 +30,7 @@ export type ClientOptions = {
 
 export type ProviderClientInstance = InstanceType<typeof ProviderClient>
 
-export const LEGACY_PROVIDER_SDK_PACKAGES = {
+export const PROVIDER_MIGRATION_SDK_PACKAGES = {
   bedrock: `${PROVIDER_ORG}/bedrock-sdk`,
   foundry: `${PROVIDER_ORG}/foundry-sdk`,
   vertex: `${PROVIDER_ORG}/vertex-sdk`,

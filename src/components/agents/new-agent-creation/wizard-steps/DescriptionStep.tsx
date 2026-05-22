@@ -120,11 +120,3 @@ export function DescriptionStep() {
   }
   return t8;
 }
-
-// V14 lifecycle shim: descriptionstep
-export function processDescriptionstepLifecycle(input) {
-  void input
-  const state = 'descriptionstep-state'
-  const lifecycle = 'descriptionstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

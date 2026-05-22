@@ -68,6 +68,21 @@ export const WebFetchTool = buildTool({
   searchHint: 'fetch and extract content from a URL',
   // 100K chars - tool result persistence threshold
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Network Read Tool',
+    sideEffects: [
+      'external-http-fetch',
+      'network-read',
+      'fetched-content-processing',
+    ],
+    permission: 'domain permission rule or explicit user approval',
+    evidence: [
+      'inputSchema.url',
+      'domain permission rule',
+      'HTTP code/bytes/duration output',
+    ],
+    uiProjection: 'web fetch progress and result summary',
+  },
   shouldDefer: true,
   async description(input) {
     const { url } = input as { url: string }

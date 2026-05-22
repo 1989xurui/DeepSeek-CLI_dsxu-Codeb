@@ -11,7 +11,7 @@ import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
 import { Box, Link, Text } from '../../ink.js';
 import type { RemoteAgentTaskState } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js';
 import { getRemoteTaskSessionUrl } from '../../tasks/RemoteAgentTask/RemoteAgentTask.js';
-import { AGENT_TOOL_NAME, LEGACY_AGENT_TOOL_NAME } from '../../tools/AgentTool/constants.js';
+import { AGENT_TOOL_NAME, SOURCE_AGENT_TOOL_ALIAS_NAME } from '../../tools/AgentTool/constants.js';
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js';
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../../tools/ExitPlanModeTool/constants.js';
 import { openBrowser } from '../../utils/browser.js';
@@ -103,7 +103,7 @@ function UltraplanSessionDetail(t0) {
       }
       calls++;
       lastBlock = block;
-      if (block.name === AGENT_TOOL_NAME || block.name === LEGACY_AGENT_TOOL_NAME) {
+      if (block.name === AGENT_TOOL_NAME || block.name === SOURCE_AGENT_TOOL_ALIAS_NAME) {
         spawns++;
       }
     }
@@ -912,12 +912,4 @@ export function getDsxuRemoteSessionDetailRuntimeProfile() {
       'open/kill/back actions remain available for DSXU remote provider surfaces',
     ],
   }
-}
-
-// V14 lifecycle shim: remotesessiondetaildialog
-export function processRemotesessiondetaildialogLifecycle(input) {
-  void input
-  const state = 'remotesessiondetaildialog-state'
-  const lifecycle = 'remotesessiondetaildialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

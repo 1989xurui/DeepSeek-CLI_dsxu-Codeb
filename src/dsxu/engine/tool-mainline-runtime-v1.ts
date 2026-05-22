@@ -1,15 +1,10 @@
-import { getMainlineCoreToolAdapters } from './engine-tool-adapter';
+import {
+  getMainlineCoreToolAdapters,
+  getMainlineMcpToolAdaptersForClients,
+} from './engine-tool-adapter';
 import { createDefaultBriefGenerator } from './brief/brief-generator';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import {
-  appendAgentTaskMessage,
-  createAgentTaskLifecycleState,
-  projectAgentTaskLifecycleSummary,
-  registerAgentTask,
-  transitionAgentTask,
-  type AgentTaskLifecycleState,
-} from './coordinator-v1';
 import {
   evaluateToolGate,
   evaluateToolPermissionContext,
@@ -17,17 +12,18 @@ import {
   type ToolPermissionEvaluation,
 } from './tool-gate-v1';
 import { buildDsxuToolEvidencePack, type DsxuToolEvidencePack } from './tool-evidence-pack-v1';
-import { MCPManager } from './mcp-client';
 import { ToolRegistry } from './tool-registry';
 import { convertRuntimeToolToV1, createToolRegistryV1 } from './tool-registry-v1';
 import type { ToolDefinition, ToolPermissionContext, ToolRuntimeExecutionResult } from './tool-types-v1';
 import type { Message, ToolContext } from './types';
+import type { MCPServerConnection } from '../../services/mcp/types';
 
 export interface MainlineToolExecutionInput {
   toolId: string;
   input: Record<string, any>;
   context: ToolPermissionContext;
   concurrentToolIds?: string[];
+  mainlineMcpClients?: MCPServerConnection[];
 }
 
 export interface MainlineToolExecutionOutput {
@@ -54,21 +50,20 @@ export function createToolMainlineExecutor() {
   const v1Registry = createToolRegistryV1();
   let mainlineToolsReady: Promise<void> | null = null;
   const engineToolContexts = new Map<string, ToolContext>();
-  const agentLifecycles = new Map<string, AgentTaskLifecycleState>();
   const briefGenerator = createDefaultBriefGenerator();
   const remoteTriggers = new Map<string, { triggerId: string; payload: Record<string, any>; at: number }>();
-  const mcpManager = new MCPManager();
-  let mcpRegisteredForCwd: string | null = null;
+  let registeredMcpClientKey: string | null = null;
 
-  async function ensureMcpToolsConnected(cwd: string): Promise<void> {
-    if (mcpRegisteredForCwd === cwd) return;
-    await mcpManager.connectFromConfig(cwd);
-    const mcpTools = mcpManager.getToolDefinitions();
+  async function ensureMcpToolsRegistered(clients: MCPServerConnection[] | undefined): Promise<void> {
+    const connectedClients = (clients ?? []).filter(client => client.type === 'connected');
+    const key = connectedClients.map(client => client.name).sort().join('\n');
+    if (registeredMcpClientKey === key) return;
+    const mcpTools = await getMainlineMcpToolAdaptersForClients(connectedClients);
     if (mcpTools.length > 0) {
       runtimeRegistry.registerAll(mcpTools);
       v1Registry.registerRuntimeTools(mcpTools);
     }
-    mcpRegisteredForCwd = cwd;
+    registeredMcpClientKey = key;
   }
 
   function ensureMainlineCoreTools(): Promise<void> {
@@ -83,13 +78,12 @@ export function createToolMainlineExecutor() {
 
   async function execute(input: MainlineToolExecutionInput): Promise<MainlineToolExecutionOutput> {
     await ensureMainlineCoreTools();
+    await ensureMcpToolsRegistered(input.mainlineMcpClients);
     const originalToolId = input.toolId.trim();
     const resolvedToolId = resolveToolAlias(originalToolId);
     const managedServiceResult = await tryExecuteMainlineManagedServiceTool(originalToolId, input, {
       briefGenerator,
       remoteTriggers,
-      mcpManager,
-      ensureMcpToolsConnected,
     });
     if (managedServiceResult) {
       const managedServiceTool = convertRuntimeToolToV1({
@@ -111,35 +105,6 @@ export function createToolMainlineExecutor() {
         result: managedServiceResult,
       };
     }
-    if (resolvedToolId === 'AgentTool') {
-      const agentNormalizedInput = normalizeAgentToolInput(originalToolId, input.input);
-      const result = executeAgentTool(
-        { ...input, toolId: resolvedToolId, input: agentNormalizedInput },
-        agentLifecycles,
-      );
-      const agentTool = convertRuntimeToolToV1({
-        name: 'AgentTool',
-        description: 'agent lifecycle tool',
-        inputSchema: { type: 'object', properties: { action: { type: 'string' } }, required: ['action'] },
-        execute: async () => ({ content: 'ok', isError: false }),
-      });
-      const permission: ToolPermissionEvaluation = {
-        allowed: true,
-        reason: 'agent tool uses coordinator lifecycle in mainline runtime',
-      };
-      const gate = evaluateToolGate(agentTool, {
-        allowedPermissionLevel: input.context.allowedPermissionLevel,
-        requireConfirmationForWrite: input.context.requireConfirmationForWrite,
-      });
-      return {
-        allowed: true,
-        permission,
-        gate,
-        evidencePack: buildMainlineEvidencePack(input, originalToolId, resolvedToolId, agentTool, permission, gate, result),
-        result,
-      };
-    }
-
     const v1Tool = v1Registry.getByToolId(resolvedToolId);
     if (!v1Tool) {
       const missingTool = convertRuntimeToolToV1({
@@ -184,7 +149,7 @@ export function createToolMainlineExecutor() {
       resolvedToolId,
       input.input,
       toolUseId,
-      getEngineToolContext(input.context, engineToolContexts),
+      getEngineToolContext(input.context, engineToolContexts, input.mainlineMcpClients),
     );
 
     const result = {
@@ -234,11 +199,13 @@ function buildMainlineEvidencePack(
 function getEngineToolContext(
   context: ToolPermissionContext,
   contexts: Map<string, ToolContext>,
+  mainlineMcpClients?: MCPServerConnection[],
 ): ToolContext {
   const key = context.sessionId || 'default'
   const existing = contexts.get(key)
   if (existing) {
     existing.cwd = context.cwd
+    existing.mainlineMcpClients = mainlineMcpClients
     return existing
   }
 
@@ -246,6 +213,7 @@ function getEngineToolContext(
     cwd: context.cwd,
     sessionId: context.sessionId,
     gear: 1,
+    mainlineMcpClients,
     mainlinePermissionCallback: async request => ({
       behavior: 'allow',
       updatedInput: request.input,
@@ -282,17 +250,19 @@ function resolveToolAlias(toolId: string): string {
     LSPTool: 'LSP',
     ToolSearchTool: 'Glob',
 
-    // Agent/task/team lifecycle aliases
-    AgentTool: 'AgentTool',
-    SendMessageTool: 'AgentTool',
-    AskUserQuestionTool: 'AgentTool',
-    ConfigTool: 'AgentTool',
-    SkillTool: 'AgentTool',
-    TodoWriteTool: 'AgentTool',
-    EnterPlanModeTool: 'AgentTool',
-    ExitPlanModeV2Tool: 'AgentTool',
-    EnterWorktreeTool: 'AgentTool',
-    ExitWorktreeTool: 'AgentTool',
+    // Agent/task/team lifecycle aliases must land on the real mainline tools,
+    // never on a local lifecycle simulator inside this executor.
+    AgentTool: 'Agent',
+    SendMessageTool: 'SendMessage',
+    AskUserQuestionTool: 'AskUserQuestion',
+    ConfigTool: 'Config',
+    SkillTool: 'Skill',
+    TodoWriteTool: 'TodoWrite',
+    EnterPlanModeTool: 'EnterPlanMode',
+    ExitPlanModeTool: 'ExitPlanMode',
+    ExitPlanModeV2Tool: 'ExitPlanMode',
+    EnterWorktreeTool: 'EnterWorktree',
+    ExitWorktreeTool: 'ExitWorktree',
     BriefTool: 'BriefTool',
     RemoteTriggerTool: 'RemoteTriggerTool',
     CronCreateTool: 'CronCreateTool',
@@ -303,14 +273,14 @@ function resolveToolAlias(toolId: string): string {
     ListMcpResourcesTool: 'ListMcpResourcesTool',
     ReadMcpResourceTool: 'ReadMcpResourceTool',
     McpAuthTool: 'McpAuthTool',
-    TaskCreateTool: 'AgentTool',
-    TaskGetTool: 'AgentTool',
-    TaskListTool: 'AgentTool',
-    TaskOutputTool: 'AgentTool',
-    TaskUpdateTool: 'AgentTool',
-    TaskStopTool: 'AgentTool',
-    TeamCreateTool: 'AgentTool',
-    TeamDeleteTool: 'AgentTool',
+    TaskCreateTool: 'TaskCreate',
+    TaskGetTool: 'TaskGet',
+    TaskListTool: 'TaskList',
+    TaskOutputTool: 'TaskOutput',
+    TaskUpdateTool: 'TaskUpdate',
+    TaskStopTool: 'TaskStop',
+    TeamCreateTool: 'TeamCreate',
+    TeamDeleteTool: 'TeamDelete',
   };
   return aliases[normalized] || normalized;
 }
@@ -321,8 +291,6 @@ async function tryExecuteMainlineManagedServiceTool(
   deps: {
     briefGenerator: ReturnType<typeof createDefaultBriefGenerator>;
     remoteTriggers: Map<string, { triggerId: string; payload: Record<string, any>; at: number }>;
-    mcpManager: MCPManager;
-    ensureMcpToolsConnected: (cwd: string) => Promise<void>;
   },
 ): Promise<ToolRuntimeExecutionResult | null> {
   if (originalToolId === 'BriefTool') {
@@ -410,78 +378,12 @@ async function tryExecuteMainlineManagedServiceTool(
     };
   }
 
-  if (originalToolId === 'ListMcpResourcesTool') {
-    await deps.ensureMcpToolsConnected(input.context.cwd);
-    const targetServer = String(input.input.server || '');
-    if (targetServer) {
-      const resources = await deps.mcpManager.listResourcesByServer(targetServer);
-      return {
-        toolUseId: `mcp-resources-${Date.now()}`,
-        content: JSON.stringify({ server: targetServer, resources }, null, 2),
-        isError: false,
-      };
-    }
-    const servers = deps.mcpManager.getConnectedServerNames();
-    const byServer: Record<string, any[]> = {};
-    for (const server of servers) {
-      byServer[server] = await deps.mcpManager.listResourcesByServer(server);
-    }
+  if (originalToolId === 'WriteMcpResourceTool') {
     return {
-      toolUseId: `mcp-resources-${Date.now()}`,
-      content: JSON.stringify({ servers, resourcesByServer: byServer }, null, 2),
-      isError: false,
-    };
-  }
-
-  if (originalToolId === 'ReadMcpResourceTool' || originalToolId === 'WriteMcpResourceTool') {
-    await deps.ensureMcpToolsConnected(input.context.cwd);
-    const server = String(input.input.server || '').trim();
-    const uri = String(input.input.uri || '');
-    if (!server) {
-      return {
-        toolUseId: `mcp-read-resource-${Date.now()}`,
-        content: 'missing required field: server',
-        isError: true,
-      };
-    }
-
-    const mode = String(input.input.mode || (originalToolId === 'WriteMcpResourceTool' ? 'write' : 'read')).toLowerCase();
-    if (mode === 'write') {
-      const toolName = String(input.input.writeToolName || 'write_resource');
-      const args = {
-        uri: String(input.input.uri || ''),
-        content: String(input.input.content || ''),
-        mimeType: input.input.mimeType,
-      };
-      const result = await deps.mcpManager.callToolByServer(server, toolName, args);
-      return {
-        toolUseId: `mcp-write-resource-${Date.now()}`,
-        content: normalizeMcpResult(result),
-        isError: false,
-        meta: { server, toolName },
-      };
-    }
-
-    if (input.input.uriTemplate) {
-      const templateResult = await deps.mcpManager.readResourceTemplateByServer(
-        server,
-        String(input.input.uriTemplate),
-        typeof input.input.arguments === 'object' && input.input.arguments !== null ? input.input.arguments : {},
-      );
-      return {
-        toolUseId: `mcp-read-resource-template-${Date.now()}`,
-        content: normalizeMcpResult(templateResult),
-        isError: false,
-        meta: { server, uriTemplate: input.input.uriTemplate },
-      };
-    }
-
-    const result = await deps.mcpManager.readResourceByServer(server, uri);
-    return {
-      toolUseId: `mcp-read-resource-${Date.now()}`,
-      content: normalizeMcpResult(result),
-      isError: false,
-      meta: { server, uri },
+      toolUseId: `mcp-write-resource-${Date.now()}`,
+      content: 'WriteMcpResourceTool must be exposed as a named MCP server tool through DSXU mainline MCP clients; tool-mainline-runtime no longer owns a standalone MCP manager.',
+      isError: true,
+      meta: { owner: 'services/mcp', replaceDeleteCandidate: 'engine-mcp-client' },
     };
   }
 
@@ -491,10 +393,6 @@ async function tryExecuteMainlineManagedServiceTool(
       content: 'mcp auth is delegated to server-level auth config in .mcp.json and server runtime',
       isError: false,
     };
-  }
-
-  if (originalToolId.startsWith('mcp__')) {
-    await deps.ensureMcpToolsConnected(input.context.cwd);
   }
 
   if (originalToolId === 'WorkflowTool') {
@@ -510,18 +408,6 @@ async function tryExecuteMainlineManagedServiceTool(
   }
 
   return null;
-}
-
-function normalizeMcpResult(result: any): string {
-  if (!result) return '';
-  if (Array.isArray(result?.contents)) {
-    return result.contents.map((c: any) => c?.text || c?.data || JSON.stringify(c)).join('\n').slice(0, 30_000);
-  }
-  if (Array.isArray(result?.content)) {
-    return result.content.map((c: any) => c?.text || c?.data || JSON.stringify(c)).join('\n').slice(0, 30_000);
-  }
-  if (typeof result === 'string') return result.slice(0, 30_000);
-  return JSON.stringify(result, null, 2).slice(0, 30_000);
 }
 
 function resolveCronStorePath(cwd: string): string {
@@ -565,101 +451,4 @@ function writeCronJobsToDisk(cwd: string, jobs: Map<string, PersistedCronJob>): 
     jobs: [...jobs.values()],
   };
   writeFileSync(storePath, JSON.stringify(payload, null, 2), 'utf8');
-}
-
-function normalizeAgentToolInput(originalToolId: string, input: Record<string, any>): Record<string, any> {
-  const normalized = originalToolId.trim();
-  if (normalized === 'AgentTool') return input;
-
-  const inheritedAgentTaskId = String(input.agentTaskId || input.taskId || input.teamId || `agent-task-${Date.now()}`);
-  const inheritedAgentId = String(input.agentId || input.ownerId || 'agent-default');
-  const inheritedObjective = String(input.objective || input.title || input.goal || 'no-objective');
-  const inheritedMessage = String(input.message || input.content || input.update || input.note || '');
-
-  if (normalized === 'TaskCreateTool' || normalized === 'TeamCreateTool') {
-    return {
-      ...input,
-      action: 'create',
-      agentTaskId: inheritedAgentTaskId,
-      agentId: inheritedAgentId,
-      objective: inheritedObjective,
-    };
-  }
-
-  if (normalized === 'TaskStopTool' || normalized === 'TeamDeleteTool') {
-    return {
-      ...input,
-      action: 'stop',
-      agentTaskId: inheritedAgentTaskId,
-      agentId: inheritedAgentId,
-      message: inheritedMessage,
-    };
-  }
-
-  if (
-    normalized === 'SendMessageTool' ||
-    normalized === 'AskUserQuestionTool' ||
-    normalized === 'ConfigTool' ||
-    normalized === 'SkillTool' ||
-    normalized === 'TodoWriteTool' ||
-    normalized === 'EnterPlanModeTool' ||
-    normalized === 'ExitPlanModeV2Tool' ||
-    normalized === 'EnterWorktreeTool' ||
-    normalized === 'ExitWorktreeTool' ||
-    normalized === 'TaskUpdateTool' ||
-    normalized === 'TaskGetTool' ||
-    normalized === 'TaskListTool' ||
-    normalized === 'TaskOutputTool'
-  ) {
-    return {
-      ...input,
-      action: 'message',
-      agentTaskId: inheritedAgentTaskId,
-      agentId: inheritedAgentId,
-      message: inheritedMessage || `message-from-${normalized}`,
-    };
-  }
-
-  return input;
-}
-
-function executeAgentTool(
-  input: MainlineToolExecutionInput,
-  lifecycles: Map<string, AgentTaskLifecycleState>,
-): ToolRuntimeExecutionResult {
-  const sessionId = input.context.sessionId;
-  const action = String(input.input.action || '');
-  const agentTaskId = String(input.input.agentTaskId || `agent-task-${Date.now()}`);
-  const agentId = String(input.input.agentId || 'agent-default');
-  const objective = String(input.input.objective || 'no-objective');
-  const message = String(input.input.message || '');
-
-  let state = lifecycles.get(sessionId) || createAgentTaskLifecycleState(input.context.sessionId);
-
-  if (action === 'create') {
-    state = registerAgentTask(state, { agentTaskId, agentId, objective });
-  } else if (action === 'start') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'running', reason: 'started-by-mainline' });
-  } else if (action === 'pause') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'paused', reason: 'paused-by-mainline' });
-  } else if (action === 'resume') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'running', reason: 'resumed-by-mainline' });
-  } else if (action === 'stop') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'stopped', reason: 'stopped-by-mainline' });
-  } else if (action === 'complete') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'completed', reason: 'completed-by-mainline' });
-  } else if (action === 'fail') {
-    state = transitionAgentTask(state, { agentTaskId, to: 'failed', reason: 'failed-by-mainline' });
-  } else if (action === 'message') {
-    state = appendAgentTaskMessage(state, { agentTaskId, message });
-  }
-
-  lifecycles.set(sessionId, state);
-  const summary = projectAgentTaskLifecycleSummary(state);
-  return {
-    toolUseId: `agent-tool-${Date.now()}`,
-    content: `agent-action=${action}; task=${agentTaskId}; summary=${JSON.stringify(summary)}`,
-    isError: false,
-    meta: { action, agentTaskId, summary },
-  };
 }

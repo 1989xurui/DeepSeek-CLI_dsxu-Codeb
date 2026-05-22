@@ -106,11 +106,3 @@ export default function ErrorOverview({
         </Box>}
     </Box>;
 }
-
-// V14 lifecycle shim: erroroverview
-export function processErroroverviewLifecycle(input) {
-  void input
-  const state = 'erroroverview-state'
-  const lifecycle = 'erroroverview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

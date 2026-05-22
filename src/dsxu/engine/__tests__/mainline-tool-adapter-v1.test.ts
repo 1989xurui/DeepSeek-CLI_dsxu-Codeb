@@ -405,7 +405,7 @@ describe('DSXU engine tool adapter V2', () => {
       expect(guidance).toContain('subagent_type="verification"')
       expect(guidance).toContain('SendMessage')
       expect(guidance).toContain('spot-check 2-3 command blocks')
-      expect(guidance).not.toMatch(new RegExp(`${legacyVendor}|tengu_hive_evidence|GrowthBook|ant-only|${mojibakePatternSource}`))
+      expect(guidance).not.toMatch(new RegExp(`${legacyVendor}|tengu_hive_evidence|GrowthBook|dsxu internal|${mojibakePatternSource}`))
 
       process.env.DSXU_CODE_DISABLE_VERIFICATION_AGENT = '1'
       expect(isDsxuVerificationAgentEnabled()).toBe(false)
@@ -445,7 +445,7 @@ describe('DSXU engine tool adapter V2', () => {
       const nudge = getDsxuVerificationNudgeText()
       expect(nudge).toContain('subagent_type="verification"')
       expect(nudge).toContain('only the verifier issues a verdict')
-      expect(nudge).not.toMatch(new RegExp(`${legacyVendor}|tengu_hive_evidence|GrowthBook|ant-only|${mojibakePatternSource}`))
+      expect(nudge).not.toMatch(new RegExp(`${legacyVendor}|tengu_hive_evidence|GrowthBook|dsxu internal|${mojibakePatternSource}`))
 
       const todoBlock = TodoWriteTool.mapToolResultToToolResultBlockParam({
         verificationNudgeNeeded: true,
@@ -626,16 +626,16 @@ describe('DSXU engine tool adapter V2', () => {
 
     const remoteResult = AgentTool.mapToolResultToToolResultBlockParam({
       status: 'remote_launched',
-      taskId: 'legacy-remote-1',
-      sessionUrl: 'https://example.invalid/session/legacy-remote-1',
-      description: 'Legacy remote smoke',
+      taskId: 'provider-migration-remote-1',
+      sessionUrl: 'https://example.invalid/session/provider-migration-remote-1',
+      description: 'Provider migration remote smoke',
       prompt: 'Run remote smoke.',
-      outputFile: 'D:/tmp/legacy-remote-1.txt',
+      outputFile: 'D:/tmp/provider-migration-remote-1.txt',
     } as any, 'tool-agent-remote-1')
     const remoteText = toolResultText(remoteResult)
 
-    expect(remoteText).toContain('Legacy remote agent launched')
-    expect(remoteText).toContain('explicit DSXU legacy gate')
+    expect(remoteText).toContain('Provider-migration remote agent launched')
+    expect(remoteText).toContain('explicit DSXU provider-migration gate')
     expect(remoteText).toContain('Never fabricate or predict the remote agent result')
     expect(remoteText).not.toMatch(forbiddenVisibleText)
   })
@@ -831,8 +831,8 @@ describe('DSXU engine tool adapter V2', () => {
   })
 
   test('keeps Agent remote isolation out of the default DSXU schema', () => {
-    const previous = process.env.DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT
-    delete process.env.DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT
+    const previous = process.env.DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT
+    delete process.env.DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT
 
     try {
       expect(AgentTool.inputSchema.safeParse({
@@ -848,14 +848,14 @@ describe('DSXU engine tool adapter V2', () => {
       }).success).toBe(false)
     } finally {
       if (previous === undefined) {
-        delete process.env.DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT
+        delete process.env.DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT
       } else {
-        process.env.DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT = previous
+        process.env.DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT = previous
       }
     }
   })
 
-  test('keeps legacy remote Agent shell dynamically loaded behind the explicit gate', () => {
+  test('keeps provider-migration remote Agent shell dynamically loaded behind the explicit gate', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/tools/AgentTool/AgentTool.tsx'),
       'utf8',
@@ -865,10 +865,10 @@ describe('DSXU engine tool adapter V2', () => {
     expect(source).not.toContain("import { teleportToRemote")
     expect(source).toContain("await import('../../tasks/RemoteAgentTask/RemoteAgentTask.js')")
     expect(source).toContain("await import('../../utils/teleport.js')")
-    expect(source).toContain('DSXU_CODE_ENABLE_LEGACY_REMOTE_AGENT')
+    expect(source).toContain('DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT')
   })
 
-  test('keeps Agent model override schema DSXU-first while preserving compatibility aliases', () => {
+  test('keeps Agent model override schema DSXU-first while preserving provider-migration aliases', () => {
     const base = {
       description: 'Run model alias smoke',
       prompt: 'Run model alias smoke.',
@@ -897,9 +897,9 @@ describe('DSXU engine tool adapter V2', () => {
     }).success).toBe(false)
   })
 
-  test('keeps SendMessage bridge route explicit legacy only by default', async () => {
-    const previous = process.env.DSXU_ENABLE_LEGACY_BRIDGE
-    delete process.env.DSXU_ENABLE_LEGACY_BRIDGE
+  test('keeps SendMessage bridge route explicit provider-migration only by default', async () => {
+    const previous = process.env.DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE
+    delete process.env.DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE
 
     try {
       const sendMessagePrompt = getSendMessageToolPrompt()
@@ -908,7 +908,7 @@ describe('DSXU engine tool adapter V2', () => {
 
       const permission = await SendMessageTool.checkPermissions({
         to: 'bridge:session_123',
-        summary: 'legacy bridge smoke',
+        summary: 'provider migration bridge smoke',
         message: 'hello',
       }, {} as any)
       expect(permission.behavior).toBe('deny')
@@ -916,16 +916,16 @@ describe('DSXU engine tool adapter V2', () => {
 
       const validation = await SendMessageTool.validateInput({
         to: 'bridge:session_123',
-        summary: 'legacy bridge smoke',
+        summary: 'provider migration bridge smoke',
         message: 'hello',
       }, {} as any)
       expect(validation.result).toBe(false)
       expect(validation.message).toContain('DSXU default mainline')
     } finally {
       if (previous === undefined) {
-        delete process.env.DSXU_ENABLE_LEGACY_BRIDGE
+        delete process.env.DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE
       } else {
-        process.env.DSXU_ENABLE_LEGACY_BRIDGE = previous
+        process.env.DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE = previous
       }
     }
   })
@@ -1304,7 +1304,9 @@ describe('DSXU engine tool adapter V2', () => {
       'Config',
       'Edit',
       'EnterPlanMode',
+      'EnterWorktree',
       'ExitPlanMode',
+      'ExitWorktree',
       'Glob',
       'Grep',
       'LSP',
@@ -1318,7 +1320,11 @@ describe('DSXU engine tool adapter V2', () => {
       'TaskCreate',
       'TaskGet',
       'TaskList',
+      'TaskOutput',
+      'TaskStop',
       'TaskUpdate',
+      'TeamCreate',
+      'TeamDelete',
       'TodoWrite',
       'Write',
       'workflow',
@@ -1346,7 +1352,13 @@ describe('DSXU engine tool adapter V2', () => {
     const taskCreate = tools.find(tool => tool.name === 'TaskCreate')
     const taskGet = tools.find(tool => tool.name === 'TaskGet')
     const taskList = tools.find(tool => tool.name === 'TaskList')
+    const taskOutput = tools.find(tool => tool.name === 'TaskOutput')
+    const taskStop = tools.find(tool => tool.name === 'TaskStop')
     const taskUpdate = tools.find(tool => tool.name === 'TaskUpdate')
+    const teamCreate = tools.find(tool => tool.name === 'TeamCreate')
+    const teamDelete = tools.find(tool => tool.name === 'TeamDelete')
+    const enterWorktree = tools.find(tool => tool.name === 'EnterWorktree')
+    const exitWorktree = tools.find(tool => tool.name === 'ExitWorktree')
     const workflow = tools.find(tool => tool.name === 'workflow')
 
     expect(agent?.description).toContain('agent')
@@ -1371,7 +1383,13 @@ describe('DSXU engine tool adapter V2', () => {
     expect(taskCreate?.description).toContain('task')
     expect(taskGet?.description).toContain('task')
     expect(taskList?.description).toContain('tasks')
+    expect(taskOutput?.description).toContain('task')
+    expect(taskStop?.description).toContain('task')
     expect(taskUpdate?.description).toContain('task')
+    expect(teamCreate?.description).toContain('team')
+    expect(teamDelete?.description).toContain('team')
+    expect(enterWorktree?.description).toContain('worktree')
+    expect(exitWorktree?.description).toContain('worktree')
     expect(workflow?.description).toContain('workflow')
     expect(agent?.inputSchema.properties?.prompt).toBeTruthy()
     expect(read?.inputSchema.properties?.file_path).toBeTruthy()
@@ -1395,7 +1413,13 @@ describe('DSXU engine tool adapter V2', () => {
     expect(taskCreate?.inputSchema.properties?.subject).toBeTruthy()
     expect(taskGet?.inputSchema.properties?.taskId).toBeTruthy()
     expect(taskList?.inputSchema.type).toBe('object')
+    expect(taskOutput?.inputSchema.properties?.task_id).toBeTruthy()
+    expect(taskStop?.inputSchema.properties?.task_id).toBeTruthy()
     expect(taskUpdate?.inputSchema.properties?.taskId).toBeTruthy()
+    expect(teamCreate?.inputSchema.properties?.team_name).toBeTruthy()
+    expect(teamDelete?.inputSchema.type).toBe('object')
+    expect(enterWorktree?.inputSchema.properties?.name).toBeTruthy()
+    expect(exitWorktree?.inputSchema.type).toBe('object')
     expect(workflow?.inputSchema.properties?.action).toBeTruthy()
   })
 
@@ -1415,7 +1439,9 @@ describe('DSXU engine tool adapter V2', () => {
       'Config',
       'Edit',
       'EnterPlanMode',
+      'EnterWorktree',
       'ExitPlanMode',
+      'ExitWorktree',
       'Glob',
       'Grep',
       'LSP',
@@ -1429,7 +1455,11 @@ describe('DSXU engine tool adapter V2', () => {
       'TaskCreate',
       'TaskGet',
       'TaskList',
+      'TaskOutput',
+      'TaskStop',
       'TaskUpdate',
+      'TeamCreate',
+      'TeamDelete',
       'TodoWrite',
       'Write',
       'workflow',
@@ -1441,7 +1471,8 @@ describe('DSXU engine tool adapter V2', () => {
     expect(readResult.isError).toBe(false)
     expect(readResult.content).toContain('alpha')
     expect(readResult.meta?.mainlineToolClassCall).toBe(true)
-    expect(readResult.meta?.executionFallback).toBeUndefined()
+    const legacyExecutionFallbackKey = ['execution', 'Fallback'].join('')
+    expect((readResult.meta as Record<string, unknown> | undefined)?.[legacyExecutionFallbackKey]).toBeUndefined()
 
     const writePath = join(cwd, 'write.txt')
     const writeResult = await registry.execute('Write', {
@@ -3447,7 +3478,7 @@ describe('DSXU engine tool adapter V2', () => {
     expect(denied.meta?.permissionSource).toBe('mainline-tool-checkPermissions')
   })
 
-  test('fails closed on mature schema validation before execution fallback', async () => {
+  test('fails closed on mature schema validation without legacy execution fallback', async () => {
     const registry = new ToolRegistry()
     await registerMainlineCoreToolAdapters(registry)
 

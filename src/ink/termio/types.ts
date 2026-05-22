@@ -234,20 +234,3 @@ export type Action =
   | { type: 'bell' }
   | { type: 'reset' } // Full terminal reset (ESC c)
   | { type: 'unknown'; sequence: string } // Unrecognized sequence
-
-
-// V14 strict lifecycle shim: ink-termio-types
-export function processInkTermioTypesStrictLifecycle(input) {
-  void input
-  const state = 'ink-termio-types-state'
-  const lifecycle = 'ink-termio-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runInkTermioTypesStrict(input) {
-  return processInkTermioTypesStrictLifecycle(input)
-}

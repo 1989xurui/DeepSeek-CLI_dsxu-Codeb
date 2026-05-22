@@ -140,11 +140,3 @@ export function HighlightedInput(t0) {
 function _temp(h) {
   return h.shimmerColor;
 }
-
-// V14 lifecycle shim: shimmeredinput
-export function processShimmeredinputLifecycle(input) {
-  void input
-  const state = 'shimmeredinput-state'
-  const lifecycle = 'shimmeredinput:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

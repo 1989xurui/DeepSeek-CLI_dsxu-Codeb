@@ -28,8 +28,14 @@ import { SkillTool as MainlineSkillTool } from '../../tools/SkillTool/SkillTool.
 import { TaskCreateTool as MainlineTaskCreateTool } from '../../tools/TaskCreateTool/TaskCreateTool.js'
 import { TaskGetTool as MainlineTaskGetTool } from '../../tools/TaskGetTool/TaskGetTool.js'
 import { TaskListTool as MainlineTaskListTool } from '../../tools/TaskListTool/TaskListTool.js'
+import { TaskOutputTool as MainlineTaskOutputTool } from '../../tools/TaskOutputTool/TaskOutputTool.js'
+import { TaskStopTool as MainlineTaskStopTool } from '../../tools/TaskStopTool/TaskStopTool.js'
 import { TaskUpdateTool as MainlineTaskUpdateTool } from '../../tools/TaskUpdateTool/TaskUpdateTool.js'
+import { TeamCreateTool as MainlineTeamCreateTool } from '../../tools/TeamCreateTool/TeamCreateTool.js'
+import { TeamDeleteTool as MainlineTeamDeleteTool } from '../../tools/TeamDeleteTool/TeamDeleteTool.js'
 import { TodoWriteTool as MainlineTodoWriteTool } from '../../tools/TodoWriteTool/TodoWriteTool.js'
+import { EnterWorktreeTool as MainlineEnterWorktreeTool } from '../../tools/EnterWorktreeTool/EnterWorktreeTool.js'
+import { ExitWorktreeTool as MainlineExitWorktreeTool } from '../../tools/ExitWorktreeTool/ExitWorktreeTool.js'
 import { WorkflowTool as MainlineWorkflowTool } from '../../tools/WorkflowTool/WorkflowTool.js'
 import { createAbortController } from '../../utils/abortController.js'
 import { enableConfigs } from '../../utils/config.js'
@@ -41,14 +47,6 @@ import { setShellIfWindows } from '../../utils/windowsPaths.js'
 import { zodToJsonSchema } from '../../utils/zodToJsonSchema.js'
 import { fetchToolsForClient } from '../../services/mcp/client.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
-import {
-  BashTool as BuiltinBashTool,
-  EditTool as BuiltinEditTool,
-  GlobTool as BuiltinGlobTool,
-  GrepTool as BuiltinGrepTool,
-  ReadTool as BuiltinReadTool,
-  WriteTool as BuiltinWriteTool,
-} from './builtin-tools'
 import type { ToolDefinition, ToolContext, ToolOutput } from './types'
 import type { ToolRegistry } from './tool-registry'
 import { redactCredentialLikeValues } from './provider-contract'
@@ -76,21 +74,26 @@ export type MainlineCoreToolName =
   | 'TaskCreate'
   | 'TaskGet'
   | 'TaskList'
+  | 'TaskOutput'
+  | 'TaskStop'
   | 'TaskUpdate'
+  | 'TeamCreate'
+  | 'TeamDelete'
+  | 'EnterWorktree'
+  | 'ExitWorktree'
   | 'workflow'
 
 type MainlineToolRegistration = {
   mainline: MainlineTool
-  fallback?: ToolDefinition
 }
 
 const MAINLINE_CORE_TOOLS: MainlineToolRegistration[] = [
-  { mainline: MainlineReadTool as MainlineTool, fallback: BuiltinReadTool },
-  { mainline: MainlineEditTool as MainlineTool, fallback: BuiltinEditTool },
-  { mainline: MainlineWriteTool as MainlineTool, fallback: BuiltinWriteTool },
-  { mainline: MainlineBashTool as MainlineTool, fallback: BuiltinBashTool },
-  { mainline: MainlineGrepTool as MainlineTool, fallback: BuiltinGrepTool },
-  { mainline: MainlineGlobTool as MainlineTool, fallback: BuiltinGlobTool },
+  { mainline: MainlineReadTool as MainlineTool },
+  { mainline: MainlineEditTool as MainlineTool },
+  { mainline: MainlineWriteTool as MainlineTool },
+  { mainline: MainlineBashTool as MainlineTool },
+  { mainline: MainlineGrepTool as MainlineTool },
+  { mainline: MainlineGlobTool as MainlineTool },
   { mainline: MainlinePowerShellTool as MainlineTool },
   { mainline: MainlineLSPTool as MainlineTool },
   { mainline: MainlineListMcpResourcesTool as MainlineTool },
@@ -107,7 +110,13 @@ const MAINLINE_CORE_TOOLS: MainlineToolRegistration[] = [
   { mainline: MainlineTaskCreateTool as MainlineTool },
   { mainline: MainlineTaskGetTool as MainlineTool },
   { mainline: MainlineTaskListTool as MainlineTool },
+  { mainline: MainlineTaskOutputTool as MainlineTool },
+  { mainline: MainlineTaskStopTool as MainlineTool },
   { mainline: MainlineTaskUpdateTool as MainlineTool },
+  { mainline: MainlineTeamCreateTool as MainlineTool },
+  { mainline: MainlineTeamDeleteTool as MainlineTool },
+  { mainline: MainlineEnterWorktreeTool as MainlineTool },
+  { mainline: MainlineExitWorktreeTool as MainlineTool },
   { mainline: MainlineWorkflowTool as MainlineTool },
 ]
 
@@ -129,7 +138,6 @@ async function mainlineDescription(tool: MainlineTool, tools: Tools): Promise<st
 
 export async function adaptMainlineToolToEngine(
   mainlineTool: MainlineTool,
-  fallbackTool: ToolDefinition | undefined,
   tools: Tools,
 ): Promise<ToolDefinition> {
   const description = await mainlineDescription(mainlineTool, tools)
@@ -156,42 +164,8 @@ export async function adaptMainlineToolToEngine(
 
       try {
         const output = await executeMainlineTool(mainlineTool, parsed.data, context, tools)
-        if (
-          fallbackTool &&
-          output.isError &&
-          output.meta?.source === 'mainline-tool-call-error' &&
-          (context.allowMainlineToolFallback === true ||
-            isRecoverableRuntimeDependencyError(output.content))
-        ) {
-          const fallbackOutput = await fallbackTool.execute(parsed.data, context)
-          return {
-            ...fallbackOutput,
-            meta: {
-              ...(fallbackOutput.meta ?? {}),
-              mainlineToolAdapter: true,
-              mainlineToolName: mainlineTool.name,
-              mainlineToolClassCall: true,
-              executionFallback: fallbackTool.name,
-              fallbackReason: output.content,
-            },
-          }
-        }
         return output
       } catch (error) {
-        if (fallbackTool && context.allowMainlineToolFallback === true) {
-          const output = await fallbackTool.execute(parsed.data, context)
-          return {
-            ...output,
-            meta: {
-              ...(output.meta ?? {}),
-              mainlineToolAdapter: true,
-              mainlineToolName: mainlineTool.name,
-              executionFallback: fallbackTool.name,
-              fallbackReason: error instanceof Error ? error.message : String(error),
-            },
-          }
-        }
-
         return {
           content: error instanceof Error ? error.message : String(error),
           isError: true,
@@ -207,16 +181,12 @@ export async function adaptMainlineToolToEngine(
   }
 }
 
-function isRecoverableRuntimeDependencyError(content: string): boolean {
-  return /uv_spawn|ENOENT|EPERM|EACCES|spawn .* not found|command not found/i.test(content)
-}
-
 export async function getMainlineCoreToolAdapters(): Promise<ToolDefinition[]> {
   ensureSourceRuntimeGlobals()
   const tools = MAINLINE_CORE_TOOLS.map(item => item.mainline) as Tools
   return Promise.all(
     MAINLINE_CORE_TOOLS.map(item =>
-      adaptMainlineToolToEngine(item.mainline, item.fallback, tools),
+      adaptMainlineToolToEngine(item.mainline, tools),
     ),
   )
 }
@@ -243,7 +213,7 @@ export async function getMainlineMcpToolAdaptersForClients(
 
   return Promise.all(
     dynamicMcpTools.map(tool =>
-      adaptMainlineToolToEngine(tool as MainlineTool, undefined, tools),
+      adaptMainlineToolToEngine(tool as MainlineTool, tools),
     ),
   )
 }

@@ -1,5 +1,5 @@
-﻿import type { OverageDisabledReason } from 'src/services/dsxuLimits.js'
-import { isLegacyCloudSubscriber } from '../auth.js'
+import type { OverageDisabledReason } from 'src/services/dsxuLimits.js'
+import { isProviderSubscriptionAccount } from '../auth.js'
 import { getGlobalConfig } from '../config.js'
 import { is1mContextDisabled } from '../context.js'
 
@@ -48,7 +48,7 @@ export function checkOpus1mAccess(): boolean {
     return false
   }
 
-  if (isLegacyCloudSubscriber()) {
+  if (isProviderSubscriptionAccount()) {
     // Subscribers have access if extra usage is enabled for their account
     return isExtraUsageEnabled()
   }
@@ -62,20 +62,11 @@ export function checkSonnet1mAccess(): boolean {
     return false
   }
 
-  if (isLegacyCloudSubscriber()) {
+  if (isProviderSubscriptionAccount()) {
     // Subscribers have access if extra usage is enabled for their account
     return isExtraUsageEnabled()
   }
 
   // Non-subscribers (API/PAYG) have access
   return true
-}
-
-
-// V14 lifecycle shim: check1maccess
-export function processCheck1maccessLifecycle(input) {
-  void input
-  const state = 'check1maccess-state'
-  const lifecycle = 'check1maccess:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

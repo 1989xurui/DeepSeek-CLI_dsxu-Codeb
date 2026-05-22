@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomUUID } from 'crypto'
 import { rm } from 'fs'
 import { appendFile, copyFile, mkdir } from 'fs/promises'
@@ -280,7 +279,7 @@ function createSpeculationFeedbackMessage(
       ? ` (${formatDuration(sessionTotalMs)} this session)`
       : ''
   return createSystemMessage(
-    `[ANT-ONLY] ${parts.join(' · ')} · ${savedText}${sessionSuffix}`,
+    `[DSXU internal] ${parts.join(' · ')} · ${savedText}${sessionSuffix}`,
     'warning',
   )
 }

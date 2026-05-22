@@ -1,0 +1,82 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.c2-ogr-cross-signoff.v2",
+    "generatedAt":  "2026-05-15T06:28:54+08:00",
+    "totalPriorityRows":  320,
+    "reviewCandidateRows":  42,
+    "sharedUtilityReviewRows":  278,
+    "otherSourceBucketRows":  0,
+    "packetSummary":  [
+                          {
+                              "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                              "count":  115,
+                              "inCurrentGitStatus":  96,
+                              "c2Only":  19
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                              "count":  110,
+                              "inCurrentGitStatus":  4,
+                              "c2Only":  106
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                              "count":  40,
+                              "inCurrentGitStatus":  11,
+                              "c2Only":  29
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                              "count":  16,
+                              "inCurrentGitStatus":  16,
+                              "c2Only":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                              "count":  12,
+                              "inCurrentGitStatus":  0,
+                              "c2Only":  12
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                              "count":  12,
+                              "inCurrentGitStatus":  10,
+                              "c2Only":  2
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                              "count":  11,
+                              "inCurrentGitStatus":  1,
+                              "c2Only":  10
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                              "count":  4,
+                              "inCurrentGitStatus":  4,
+                              "c2Only":  0
+                          }
+                      ],
+    "decisionSummary":  [
+                            {
+                                "decision":  "baseline-no-new-absorption-not-feature-pass",
+                                "count":  201
+                            },
+                            {
+                                "decision":  "imported-shared-utility-pending-owner-git-signoff",
+                                "count":  73
+                            },
+                            {
+                                "decision":  "named-owner-mapped-pending-owner-git-signoff",
+                                "count":  35
+                            },
+                            {
+                                "decision":  "adapt-or-exclude-signed-by-owner-not-feature-pass",
+                                "count":  7
+                            },
+                            {
+                                "decision":  "not-imported-no-absorption",
+                                "count":  4
+                            }
+                        ],
+    "rule":  "C2 priority rows are owner-disposition evidence, not feature parity. Shared utilities require real import/use; review candidates require named owner signoff or explicit adapt/exclude.",
+    "nextAction":  "Process OGR-06/12, then OGR-05, OGR-07, remaining owner packets, then 147 deletion mutation review."
+}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Abort-responsive sleep. Resolves after `ms` milliseconds, or immediately
  * when `signal` aborts (so backoff loops don't block shutdown).

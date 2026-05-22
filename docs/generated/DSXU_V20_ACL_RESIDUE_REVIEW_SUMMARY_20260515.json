@@ -1,0 +1,19 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.acl-residue-review.v1",
+    "generatedAt":  "2026-05-15T06:47:37+08:00",
+    "total":  4,
+    "readyRows":  4,
+    "activeProductReferenceRows":  0,
+    "byResidueClass":  [
+                           {
+                               "residueClass":  "empty-module-residue",
+                               "count":  3
+                           },
+                           {
+                               "residueClass":  "retired-adapter-tombstone",
+                               "count":  1
+                           }
+                       ],
+    "rule":  "ACL residues are not product owners. Empty modules or tombstones may remain only as external permission/owner cleanup items; delete when permissions allow or sign off explicitly. Do not add imports to them.",
+    "nextAction":  "After owner/Git packet signoff, close these through external permission deletion or explicit owner signoff; no deletion performed in this review."
+}

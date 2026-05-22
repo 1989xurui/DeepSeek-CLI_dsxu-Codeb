@@ -8,6 +8,7 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { Box, Text } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { type ExtraUsage, fetchUtilization, type RateLimit, type Utilization } from '../../services/api/usage.js';
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js';
 import { formatResetText } from '../../utils/format.js';
 import { logError } from '../../utils/log.js';
 import { jsonStringify } from '../../utils/slowOperations.js';
@@ -15,7 +16,7 @@ import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Byline } from '../design-system/Byline.js';
 import { ProgressBar } from '../design-system/ProgressBar.js';
 import { isEligibleForOverageCreditGrant, OverageCreditUpsell } from '../LogoV2/OverageCreditUpsell.js';
-import { getCompatHighCapacityWeeklyLimit } from '../../dsxu/legacy/model/legacyProviderUsageLimit.js';
+import { getProviderMigrationHighCapacityWeeklyLimit } from '../../utils/model/providerMigration/providerMigrationUsageLimit.js';
 type LimitBarProps = {
   title: string;
   limit: RateLimit;
@@ -181,9 +182,15 @@ export function Usage(): React.ReactNode {
   } = useTerminalSize();
   const availableWidth = columns - 2; // 2 for screen padding
   const maxWidth = Math.min(availableWidth, 80);
+  const dsxuRuntimeMode = isDsxuRuntimeMode();
   const loadUtilization = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    if (dsxuRuntimeMode) {
+      setUtilization(null);
+      setIsLoading(false);
+      return;
+    }
     try {
       const data = await fetchUtilization();
       setUtilization(data);
@@ -199,7 +206,7 @@ export function Usage(): React.ReactNode {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dsxuRuntimeMode]);
   useEffect(() => {
     void loadUtilization();
   }, [loadUtilization]);
@@ -207,8 +214,17 @@ export function Usage(): React.ReactNode {
     void loadUtilization();
   }, {
     context: 'Settings',
-    isActive: !!error && !isLoading
+    isActive: !dsxuRuntimeMode && !!error && !isLoading
   });
+  if (dsxuRuntimeMode) {
+    return <Box flexDirection="column" gap={1}>
+        <Text dimColor>Provider-migration subscription usage is disabled in DSXU runtime.</Text>
+        <Text dimColor>Use DSXU cost/evidence telemetry for local model, tool, and task usage.</Text>
+        <Text dimColor>
+          <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
+        </Text>
+      </Box>;
+  }
   if (error) {
     return <Box flexDirection="column" gap={1}>
         <Text color="error">Error: {error}</Text>
@@ -241,7 +257,7 @@ export function Usage(): React.ReactNode {
     limit: utilization.seven_day
   }, ...(showHighCapacityRouteBar ? [{
     title: 'Current week (high-capacity route)',
-    limit: getCompatHighCapacityWeeklyLimit(utilization)
+    limit: getProviderMigrationHighCapacityWeeklyLimit(utilization)
   }] : [])];
   return <Box flexDirection="column" gap={1} width="100%">
       {limits.some(({
@@ -274,6 +290,9 @@ function ExtraUsageSection(t0) {
     maxWidth
   } = t0;
   const subscriptionType = getSubscriptionType();
+  if (isDsxuRuntimeMode()) {
+    return null;
+  }
   const isProOrMax = subscriptionType === "pro" || subscriptionType === "max";
   if (!isProOrMax) {
     return false;
@@ -372,20 +391,4 @@ function ExtraUsageSection(t0) {
     t10 = $[19];
   }
   return t10;
-}
-
-// V14 strict lifecycle shim: components-Settings-Usage
-export function processComponentsSettingsUsageStrictLifecycle(input) {
-  void input
-  const state = 'components-Settings-Usage-state'
-  const lifecycle = 'components-Settings-Usage:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsSettingsUsageStrict(input) {
-  return processComponentsSettingsUsageStrictLifecycle(input)
 }

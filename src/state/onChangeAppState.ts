@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { setMainLoopModelOverride } from '../bootstrap/state.js'
 import {
   clearApiKeyHelperCache,
@@ -133,7 +132,7 @@ export function onChangeAppState({
       verbose,
     }))
   }
-  // tungstenPanelVisible (ant-only tmux panel sticky toggle)
+  // tungstenPanelVisible (dsxu internal tmux panel sticky toggle)
   if (process.env.USER_TYPE === 'ant') {
     if (
       newState.tungstenPanelVisible !== oldState.tungstenPanelVisible &&

@@ -130,11 +130,3 @@ function _temp(server_0) {
     value: server_0
   };
 }
-
-// V14 lifecycle shim: mcpservermultiselectdialog
-export function processMcpservermultiselectdialogLifecycle(input) {
-  void input
-  const state = 'mcpservermultiselectdialog-state'
-  const lifecycle = 'mcpservermultiselectdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

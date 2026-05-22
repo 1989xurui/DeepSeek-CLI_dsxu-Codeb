@@ -83,11 +83,3 @@ export function ProgressBar(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: progressbar
-export function processProgressbarLifecycle(input) {
-  void input
-  const state = 'progressbar-state'
-  const lifecycle = 'progressbar:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

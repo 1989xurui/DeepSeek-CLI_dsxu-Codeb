@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-import { c as _c } from "react/compiler-runtime";
+﻿import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { installOAuthTokens } from '../cli/handlers/auth.js';
@@ -19,7 +18,7 @@ import { Select } from './CustomSelect/select.js';
 import { KeyboardShortcutHint } from './design-system/KeyboardShortcutHint.js';
 import { Spinner } from './Spinner.js';
 import TextInput from './TextInput.js';
-const LEGACY_CLOUD_LOGIN_METHOD = 'cla' + 'udeai';
+const PROVIDER_SUBSCRIPTION_LOGIN_METHOD = 'cla' + 'udeai';
 type Props = {
   onDone(): void;
   startingMessage?: string;
@@ -63,7 +62,7 @@ export function ConsoleOAuthFlow({
   if (isDsxuRuntimeMode()) {
     return <Box flexDirection="column" gap={1}>
       <Text color="warning">DSXU Code uses DSXU Provider credentials in runtime mode.</Text>
-      <Text dimColor>Legacy OAuth is disabled by default; use DeepSeek or the DSXU Provider.</Text>
+      <Text dimColor>Provider-migration OAuth is disabled by default; use DeepSeek or the DSXU Provider.</Text>
       <Text dimColor>Press Enter to return.</Text>
     </Box>;
   }
@@ -71,7 +70,7 @@ export function ConsoleOAuthFlow({
   const settings = getSettings_DEPRECATED() || {};
   const forceLoginMethod = forceLoginMethodProp ?? settings.forceLoginMethod;
   const orgUUID = settings.forceLoginOrgUUID;
-  const forcedMethodMessage = forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD ? 'Login method pre-selected: Subscription Plan (legacy cloud entitlement)' : forceLoginMethod === 'console' ? 'Login method pre-selected: API Usage Billing (Provider Console)' : null;
+  const forcedMethodMessage = forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD ? 'Login method pre-selected: Subscription Plan (provider subscription entitlement)' : forceLoginMethod === 'console' ? 'Login method pre-selected: API Usage Billing (Provider Console)' : null;
   const terminal = useTerminalNotification();
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus>(() => {
     if (mode === 'setup-token') {
@@ -79,7 +78,7 @@ export function ConsoleOAuthFlow({
         state: 'ready_to_start'
       };
     }
-    if (forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD || forceLoginMethod === 'console') {
+    if (forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD || forceLoginMethod === 'console') {
       return {
         state: 'ready_to_start'
       };
@@ -91,9 +90,9 @@ export function ConsoleOAuthFlow({
   const [pastedCode, setPastedCode] = useState('');
   const [cursorOffset, setCursorOffset] = useState(0);
   const [oauthService] = useState(() => new OAuthService());
-  const [loginWithLegacyCloud, setLoginWithLegacyCloud] = useState(() => {
-    // Use legacy cloud auth for setup-token mode to support user:inference scope
-    return mode === 'setup-token' || forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD;
+  const [loginWithProviderCloud, setLoginWithProviderCloud] = useState(() => {
+    // Use provider subscription auth for setup-token mode to support user:inference scope
+    return mode === 'setup-token' || forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD;
   });
   // After a few seconds we suggest the user to copy/paste url if the
   // browser did not open automatically. In this flow we expect the user to
@@ -104,8 +103,8 @@ export function ConsoleOAuthFlow({
 
   // Log forced login method on mount
   useEffect(() => {
-    if (forceLoginMethod === LEGACY_CLOUD_LOGIN_METHOD) {
-      logEvent('tengu_oauth_legacy_cloud_forced', {});
+    if (forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD) {
+      logEvent('tengu_oauth_provider_cloud_forced', {});
     } else if (forceLoginMethod === 'console') {
       logEvent('tengu_oauth_console_forced', {});
     }
@@ -122,7 +121,7 @@ export function ConsoleOAuthFlow({
   // Handle Enter to continue on success state
   useKeybinding('confirm:yes', () => {
     logEvent('tengu_oauth_success', {
-      loginWithLegacyCloud
+      loginWithProviderCloud
     });
     onDone();
   }, {
@@ -200,7 +199,7 @@ export function ConsoleOAuthFlow({
   const startOAuth = useCallback(async () => {
     try {
       logEvent('tengu_oauth_flow_start', {
-        loginWithLegacyCloud
+        loginWithProviderCloud
       });
       const result = await oauthService.startOAuthFlow(async url_0 => {
         setOAuthStatus({
@@ -209,7 +208,7 @@ export function ConsoleOAuthFlow({
         });
         setTimeout(setShowPastePrompt, 3000, true);
       }, {
-        loginWithLegacyCloud,
+        loginWithProviderCloud,
         inferenceOnly: mode === 'setup-token',
         expiresIn: mode === 'setup-token' ? 365 * 24 * 60 * 60 : undefined,
         // 1 year for setup-token
@@ -271,7 +270,7 @@ export function ConsoleOAuthFlow({
         ssl_error: sslHint !== null
       });
     }
-  }, [oauthService, setShowPastePrompt, loginWithLegacyCloud, mode, orgUUID]);
+  }, [oauthService, setShowPastePrompt, loginWithProviderCloud, mode, orgUUID]);
   const pendingOAuthStartRef = useRef(false);
   useEffect(() => {
     if (oauthStatus.state === 'ready_to_start' && !pendingOAuthStartRef.current) {
@@ -287,16 +286,16 @@ export function ConsoleOAuthFlow({
   useEffect(() => {
     if (mode === 'setup-token' && oauthStatus.state === 'success') {
       // Delay to ensure static content is fully rendered before exiting
-      const timer_0 = setTimeout((loginWithLegacyCloud_0, onDone_0) => {
+      const timer_0 = setTimeout((loginWithProviderCloud_0, onDone_0) => {
         logEvent('tengu_oauth_success', {
-          loginWithLegacyCloud: loginWithLegacyCloud_0
+          loginWithProviderCloud: loginWithProviderCloud_0
         });
         // Don't clear terminal so the token remains visible
         onDone_0();
-      }, 500, loginWithLegacyCloud, onDone);
+      }, 500, loginWithProviderCloud, onDone);
       return () => clearTimeout(timer_0);
     }
-  }, [mode, oauthStatus, loginWithLegacyCloud, onDone]);
+  }, [mode, oauthStatus, loginWithProviderCloud, onDone]);
 
   // Cleanup OAuth service when component unmounts
   useEffect(() => {
@@ -336,7 +335,7 @@ export function ConsoleOAuthFlow({
             </Box>
           </Box>}
       <Box paddingLeft={1} flexDirection="column" gap={1}>
-        <OAuthStatusMessage oauthStatus={oauthStatus} mode={mode} startingMessage={startingMessage} forcedMethodMessage={forcedMethodMessage} showPastePrompt={showPastePrompt} pastedCode={pastedCode} setPastedCode={setPastedCode} cursorOffset={cursorOffset} setCursorOffset={setCursorOffset} textInputColumns={textInputColumns} handleSubmitCode={handleSubmitCode} setOAuthStatus={setOAuthStatus} setLoginWithLegacyCloud={setLoginWithLegacyCloud} />
+        <OAuthStatusMessage oauthStatus={oauthStatus} mode={mode} startingMessage={startingMessage} forcedMethodMessage={forcedMethodMessage} showPastePrompt={showPastePrompt} pastedCode={pastedCode} setPastedCode={setPastedCode} cursorOffset={cursorOffset} setCursorOffset={setCursorOffset} textInputColumns={textInputColumns} handleSubmitCode={handleSubmitCode} setOAuthStatus={setOAuthStatus} setLoginWithProviderCloud={setLoginWithProviderCloud} />
       </Box>
     </Box>;
 }
@@ -344,11 +343,11 @@ export function ConsoleOAuthFlow({
 export function getDsxuConsoleOAuthFlowRuntimeProfile() {
   return {
     runtime: 'DSXU Console OAuth Isolation',
-    defaultBehavior: 'DSXU runtime renders local-provider guidance instead of Legacy OAuth flow',
+    defaultBehavior: 'DSXU runtime renders local-provider guidance instead of provider OAuth flow',
     providerTarget: 'DSXU Identity Provider',
     activationEvidence: [
       'ConsoleOAuthFlow checks DSXU_CODE_MODE before creating OAuthService',
-      'Legacy cloud and Provider Console login paths are not entered by default',
+      'Provider subscription and Provider Console login paths are not entered by default',
       'identity setup is redirected to DSXU/DeepSeek provider configuration',
     ],
   };
@@ -366,7 +365,7 @@ type OAuthStatusMessageProps = {
   textInputColumns: number;
   handleSubmitCode: (value: string, url: string) => void;
   setOAuthStatus: (status: OAuthStatus) => void;
-  setLoginWithLegacyCloud: (value: boolean) => void;
+  setLoginWithProviderCloud: (value: boolean) => void;
 };
 function OAuthStatusMessage(t0) {
   const $ = _c(51);
@@ -383,12 +382,12 @@ function OAuthStatusMessage(t0) {
     textInputColumns,
     handleSubmitCode,
     setOAuthStatus,
-    setLoginWithLegacyCloud
+    setLoginWithProviderCloud
   } = t0;
   switch (oauthStatus.state) {
     case "idle":
       {
-        const t1 = startingMessage ? startingMessage : "DSXU Code can be used with your legacy cloud entitlement or billed based on API usage through your Console account.";
+        const t1 = startingMessage ? startingMessage : "DSXU Code can be used with your provider subscription entitlement or billed based on API usage through your Console account.";
         let t2;
         if ($[0] !== t1) {
           t2 = <Text bold={true}>{t1}</Text>;
@@ -407,8 +406,8 @@ function OAuthStatusMessage(t0) {
         let t4;
         if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
           t4 = {
-            label: <Text>Legacy cloud account -{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[ANT-ONLY]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
-            value: LEGACY_CLOUD_LOGIN_METHOD
+            label: <Text>Provider subscription account -{" "}<Text dimColor={true}>Pro, Max, Team, or Enterprise</Text>{false && <Text>{"\n"}<Text color="warning">[DSXU internal]</Text>{" "}<Text dimColor={true}>Please use this option unless you need to login to a special org for accessing sensitive data (e.g. customer data, HIPI data) with the Console option</Text></Text>}{"\n"}</Text>,
+            value: PROVIDER_SUBSCRIPTION_LOGIN_METHOD
           };
           $[3] = t4;
         } else {
@@ -435,7 +434,7 @@ function OAuthStatusMessage(t0) {
           t6 = $[5];
         }
         let t7;
-        if ($[6] !== setLoginWithLegacyCloud || $[7] !== setOAuthStatus) {
+        if ($[6] !== setLoginWithProviderCloud || $[7] !== setOAuthStatus) {
           t7 = <Box><Select options={t6} onChange={value_0 => {
               if (value_0 === "platform") {
                 logEvent("tengu_oauth_platform_selected", {});
@@ -446,16 +445,16 @@ function OAuthStatusMessage(t0) {
                 setOAuthStatus({
                   state: "ready_to_start"
                 });
-                if (value_0 === LEGACY_CLOUD_LOGIN_METHOD) {
-                  logEvent("tengu_oauth_legacy_cloud_selected", {});
-                  setLoginWithLegacyCloud(true);
+                if (value_0 === PROVIDER_SUBSCRIPTION_LOGIN_METHOD) {
+                  logEvent("tengu_oauth_provider_cloud_selected", {});
+                  setLoginWithProviderCloud(true);
                 } else {
                   logEvent("tengu_oauth_console_selected", {});
-                  setLoginWithLegacyCloud(false);
+                  setLoginWithProviderCloud(false);
                 }
               }
             }} /></Box>;
-          $[6] = setLoginWithLegacyCloud;
+          $[6] = setLoginWithProviderCloud;
           $[7] = setOAuthStatus;
           $[8] = t7;
         } else {

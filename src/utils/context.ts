@@ -1,1 +1,1 @@
-export * from '../dsxu/legacy/model/legacyProviderContext.js'
+export * from './model/providerMigration/providerMigrationContext.js'

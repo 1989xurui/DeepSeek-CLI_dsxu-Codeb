@@ -1,0 +1,218 @@
+{
+  "schemaVersion": "dsxu.v24.redline-owner-packet-triage.v1",
+  "generatedAt": "2026-05-15T05:27:32.633Z",
+  "status": "OPEN_OWNER_TRIAGE_REQUIRED",
+  "rowCount": 21,
+  "rows": [
+    {
+      "owner": "cli-command-transport",
+      "totalRows": 717,
+      "blockerReviewRows": 26,
+      "ownerReviewRows": 688,
+      "releaseCopyReviewRows": 1,
+      "infoReviewRows": 2,
+      "topDisposition": "runtime_duplication_pressure_review:564",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "ui-tui-work-state",
+      "totalRows": 833,
+      "blockerReviewRows": 24,
+      "ownerReviewRows": 796,
+      "releaseCopyReviewRows": 3,
+      "infoReviewRows": 10,
+      "topDisposition": "runtime_duplication_pressure_review:505",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "model-router-cost",
+      "totalRows": 790,
+      "blockerReviewRows": 8,
+      "ownerReviewRows": 779,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 3,
+      "topDisposition": "runtime_duplication_pressure_review:411",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "tool-lifecycle",
+      "totalRows": 758,
+      "blockerReviewRows": 7,
+      "ownerReviewRows": 704,
+      "releaseCopyReviewRows": 11,
+      "infoReviewRows": 36,
+      "topDisposition": "runtime_duplication_pressure_review:375",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "mcp-skill-registry",
+      "totalRows": 538,
+      "blockerReviewRows": 7,
+      "ownerReviewRows": 521,
+      "releaseCopyReviewRows": 5,
+      "infoReviewRows": 5,
+      "topDisposition": "runtime_duplication_pressure_review:434",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "config-settings",
+      "totalRows": 461,
+      "blockerReviewRows": 7,
+      "ownerReviewRows": 443,
+      "releaseCopyReviewRows": 2,
+      "infoReviewRows": 9,
+      "topDisposition": "runtime_duplication_pressure_review:280",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "api-contract-types",
+      "totalRows": 85,
+      "blockerReviewRows": 5,
+      "ownerReviewRows": 80,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:67",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "coding-workflow",
+      "totalRows": 85,
+      "blockerReviewRows": 5,
+      "ownerReviewRows": 73,
+      "releaseCopyReviewRows": 3,
+      "infoReviewRows": 4,
+      "topDisposition": "runtime_duplication_pressure_review:27",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "query-loop",
+      "totalRows": 63,
+      "blockerReviewRows": 5,
+      "ownerReviewRows": 58,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:45",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "hook-lifecycle",
+      "totalRows": 36,
+      "blockerReviewRows": 5,
+      "ownerReviewRows": 31,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:30",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "agent-task-lifecycle",
+      "totalRows": 108,
+      "blockerReviewRows": 4,
+      "ownerReviewRows": 101,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 3,
+      "topDisposition": "runtime_duplication_pressure_review:90",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "release-doctor",
+      "totalRows": 75,
+      "blockerReviewRows": 4,
+      "ownerReviewRows": 70,
+      "releaseCopyReviewRows": 1,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:69",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "dsxu-engine-mainline",
+      "totalRows": 870,
+      "blockerReviewRows": 3,
+      "ownerReviewRows": 831,
+      "releaseCopyReviewRows": 24,
+      "infoReviewRows": 12,
+      "topDisposition": "runtime_duplication_pressure_review:611",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "context-recovery",
+      "totalRows": 267,
+      "blockerReviewRows": 2,
+      "ownerReviewRows": 255,
+      "releaseCopyReviewRows": 2,
+      "infoReviewRows": 8,
+      "topDisposition": "runtime_duplication_pressure_review:135",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "evidence-telemetry",
+      "totalRows": 174,
+      "blockerReviewRows": 2,
+      "ownerReviewRows": 167,
+      "releaseCopyReviewRows": 2,
+      "infoReviewRows": 3,
+      "topDisposition": "runtime_duplication_pressure_review:119",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "public-challenge-eval",
+      "totalRows": 8,
+      "blockerReviewRows": 1,
+      "ownerReviewRows": 7,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 0,
+      "topDisposition": "entry_facade_owner_review:5",
+      "firstAction": "triage blocker review rows: implemented/test-only/release-excluded/owner-work"
+    },
+    {
+      "owner": "test-evidence-harness",
+      "totalRows": 1164,
+      "blockerReviewRows": 0,
+      "ownerReviewRows": 0,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 1164,
+      "topDisposition": "test_or_evidence_context_not_product_runtime:1164",
+      "firstAction": "keep as informational evidence"
+    },
+    {
+      "owner": "ide-api-bridge",
+      "totalRows": 163,
+      "blockerReviewRows": 0,
+      "ownerReviewRows": 162,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 1,
+      "topDisposition": "runtime_duplication_pressure_review:86",
+      "firstAction": "prove runtime/facade/compat paths map to a named owner"
+    },
+    {
+      "owner": "evidence-automation",
+      "totalRows": 136,
+      "blockerReviewRows": 0,
+      "ownerReviewRows": 0,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 136,
+      "topDisposition": "test_or_evidence_context_not_product_runtime:136",
+      "firstAction": "keep as informational evidence"
+    },
+    {
+      "owner": "permission-gate",
+      "totalRows": 91,
+      "blockerReviewRows": 0,
+      "ownerReviewRows": 91,
+      "releaseCopyReviewRows": 0,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:77",
+      "firstAction": "prove runtime/facade/compat paths map to a named owner"
+    },
+    {
+      "owner": "external-tool-provider",
+      "totalRows": 40,
+      "blockerReviewRows": 0,
+      "ownerReviewRows": 39,
+      "releaseCopyReviewRows": 1,
+      "infoReviewRows": 0,
+      "topDisposition": "runtime_duplication_pressure_review:20",
+      "firstAction": "prove runtime/facade/compat paths map to a named owner"
+    }
+  ]
+}

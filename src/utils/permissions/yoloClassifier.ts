@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ProviderSDK } from 'src/types/providerSdk.js'
 import type { BetaToolUnion } from 'src/types/providerSdk.js'
@@ -11,7 +10,7 @@ import {
   getSessionId,
   setLastClassifierRequests,
 } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from '../../services/analytics/metadata.js'
 import { getCacheControl } from '../../services/api/dsxu.js'
@@ -1045,7 +1044,7 @@ export async function classifyYoloAction(
     )
   }
   // Use getCacheControl for consistency with the main agent loop ->
-  // respects GrowthBook TTL allowlist and query-source gating.
+  // respects feature flag provider TTL allowlist and query-source gating.
   const cacheControl = getCacheControl({ querySource: 'auto_mode' })
   // Place cache_control on the action block. In the two-stage classifier,
   // stage 2 shares the same transcript+action prefix as stage 1 -> the
@@ -1058,7 +1057,7 @@ export async function classifyYoloAction(
     cache_control: cacheControl,
   })
   const model = getClassifierModel()
-  // Dispatch to 2-stage XML classifier if enabled via GrowthBook
+  // Dispatch to 2-stage XML classifier if enabled via feature flag provider
   if (isTwoStageClassifierEnabled()) {
     return classifyYoloActionXml(
       prefixMessages,
@@ -1271,7 +1270,7 @@ type AutoModeConfig = {
 }
 /**
  * Get the model for the classifier.
- * DSXU env var takes precedence, then GrowthBook JSON config override,
+ * DSXU env var takes precedence, then feature flag provider JSON config override,
  * then the main loop model.
  */
 function getClassifierModel(): string {
@@ -1290,7 +1289,7 @@ function getClassifierModel(): string {
 }
 /**
  * Resolve the XML classifier setting: DSXU env var takes precedence,
- * then GrowthBook. Returns undefined when unset (caller decides default).
+ * then feature flag provider. Returns undefined when unset (caller decides default).
  */
 function resolveTwoStageClassifier():
   | boolean

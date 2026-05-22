@@ -1,0 +1,8 @@
+"order","phase","command","purpose","requiresPriorAuthorization"
+"1","after-git-mutation","bun run owner-git:preflight","confirm register/status alignment after authorized staging or mutation","true"
+"2","after-git-mutation","bun run owner-git:product-stage-plan && bun run owner-git:stage-plan","confirm no product/deletion packet drift remains","true"
+"3","after-p12-manifest","bun run p12:target-intake --targetReferenceManifestPath <real-target-reference-manifest>","validate real target-reference manifest before raw readiness","false"
+"4","after-p12-manifest","bun run p12:raw-readiness --targetReferenceManifestPath <real-target-reference-manifest>","recompute paired raw evidence readiness","false"
+"5","final-test-entry","bun run v20:final-preflight","confirm final six-stage tests can start","true"
+"6","final-test-entry","execute commands from docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json in order","run function, experience, recovery, performance, eval, and release closure tests","true"
+"7","release-entry","bun run clean-export:preflight","confirm clean export is allowed after final preflight PASS","true"

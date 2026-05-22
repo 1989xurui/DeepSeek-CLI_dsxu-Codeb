@@ -34,19 +34,3 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
   const formattedOutput = jsonStringify(output, null, 2);
   return <OutputLine content={formattedOutput} verbose={verbose} />;
 }
-
-// V14 strict lifecycle shim: tools-ReadMcpResourceTool-UI
-export function processToolsReadMcpResourceToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-ReadMcpResourceTool-UI-state'
-  const lifecycle = 'tools-ReadMcpResourceTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsReadMcpResourceToolUIStrict(input) {
-  return processToolsReadMcpResourceToolUIStrictLifecycle(input)
-}

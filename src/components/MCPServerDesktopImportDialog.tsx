@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useState } from 'react';
 import { gracefulShutdown } from 'src/utils/gracefulShutdown.js';
@@ -130,7 +129,7 @@ export function MCPServerDesktopImportDialog(t0) {
   } else {
     t9 = $[15];
   }
-  const t10 = `Found ${t8} MCP ${t9} in DSXU desktop config or legacy desktop config.`;
+  const t10 = `Found ${t8} MCP ${t9} in DSXU desktop config or provider-migration source desktop config.`;
   let t11;
   if ($[16] !== collisions.length) {
     t11 = collisions.length > 0 && <Text color="warning">Note: Some servers already exist with the same name. If selected, they will be imported with a numbered suffix.</Text>;

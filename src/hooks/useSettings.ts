@@ -15,12 +15,3 @@ export type ReadonlySettings = AppState['settings']
 export function useSettings(): ReadonlySettings {
   return useAppState(s => s.settings)
 }
-
-
-// V14 lifecycle shim: usesettings
-export function processUsesettingsLifecycle(input) {
-  void input
-  const state = 'usesettings-state'
-  const lifecycle = 'usesettings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

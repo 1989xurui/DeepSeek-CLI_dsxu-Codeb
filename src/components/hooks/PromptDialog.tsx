@@ -87,11 +87,3 @@ function _temp(opt) {
     description: opt.description
   };
 }
-
-// V14 lifecycle shim: promptdialog
-export function processPromptdialogLifecycle(input) {
-  void input
-  const state = 'promptdialog-state'
-  const lifecycle = 'promptdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -97,7 +97,7 @@ export function Onboarding({
   // Create the steps array - determine which steps to include based on reAuth and oauthEnabled
   const apiKeyNeedingApproval = useMemo(() => {
     // Add API key step if needed
-    // DSXU Code uses the DSXU model gateway. Legacy Provider keys are not
+    // DSXU Code uses the DSXU model gateway. Provider-migration keys are not
     // part of the default path, but this step still protects old configs.
     const providerApiKey = getUsableApiKey(
       process.env.DSXU_API_KEY,

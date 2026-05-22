@@ -1,0 +1,278 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.owner-packet-signoff-matrix.v8",
+    "generatedAt":  "2026-05-15T08:40:00+08:00",
+    "packetCount":  17,
+    "totalStatus":  1869,
+    "totalDeletedReady":  147,
+    "totalC2Priority":  320,
+    "otherSourceBucketRows":  0,
+    "packetSummary":  [
+                          {
+                              "ownerPacket":  "V20-OGR-01-docs-generated-plan",
+                              "total":  52,
+                              "modified":  2,
+                              "deleted":  0,
+                              "untracked":  50,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "docs-generated-owner-signoff-required",
+                              "nextAction":  "sign off generated docs/evidence as release evidence, or move non-ship evidence out of release scope"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-evidence-review-runtime",
+                              "total":  45,
+                              "modified":  0,
+                              "deleted":  45,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-provider-legacy-harness",
+                              "total":  71,
+                              "modified":  0,
+                              "deleted":  71,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-state-owner-review",
+                              "total":  27,
+                              "modified":  0,
+                              "deleted":  27,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-delete-engine-builtin-tools-runtime",
+                              "total":  2,
+                              "modified":  0,
+                              "deleted":  2,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                              "total":  192,
+                              "modified":  188,
+                              "deleted":  0,
+                              "untracked":  4,
+                              "c2Priority":  12,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  12,
+                              "packetDecision":  "owner-signoff-ready-tool-permission-single-runtime",
+                              "nextAction":  "owner signoff against Tool Gate and Permission owner; reject hidden runner shortcuts"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-delete-engine-mcp-client-runtime",
+                              "total":  1,
+                              "modified":  0,
+                              "deleted":  1,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                              "total":  141,
+                              "modified":  138,
+                              "deleted":  0,
+                              "untracked":  3,
+                              "c2Priority":  11,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  11,
+                              "packetDecision":  "owner-signoff-ready-mcp-skill-plugin-single-runtime",
+                              "nextAction":  "owner signoff against src/services/mcp, skills, plugins registry only"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                              "total":  202,
+                              "modified":  202,
+                              "deleted":  0,
+                              "untracked":  0,
+                              "c2Priority":  16,
+                              "c2ReviewCandidate":  11,
+                              "c2SharedUtility":  5,
+                              "packetDecision":  "owner-signoff-ready-agent-task-single-orchestrator",
+                              "nextAction":  "owner signoff against AgentTool/Task lifecycle; reject simulator/runtime duplicates"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-external-integration-adapter-boundary",
+                              "total":  32,
+                              "modified":  30,
+                              "deleted":  0,
+                              "untracked":  2,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "owner-signoff-ready-external-adapter-boundary",
+                              "nextAction":  "owner signoff as adapter boundary; reject standalone host runtime"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                              "total":  474,
+                              "modified":  474,
+                              "deleted":  0,
+                              "untracked":  0,
+                              "c2Priority":  110,
+                              "c2ReviewCandidate":  6,
+                              "c2SharedUtility":  104,
+                              "packetDecision":  "owner-signoff-ready-visible-state-projection",
+                              "nextAction":  "owner signoff as UI/TUI projection; reject direct tool/query/provider runtime"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                              "total":  107,
+                              "modified":  97,
+                              "deleted":  0,
+                              "untracked":  10,
+                              "c2Priority":  40,
+                              "c2ReviewCandidate":  3,
+                              "c2SharedUtility":  37,
+                              "packetDecision":  "owner-signoff-ready-deepseek-provider-cost-boundary",
+                              "nextAction":  "owner signoff against DeepSeek adapter/router/cost evidence"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                              "total":  180,
+                              "modified":  179,
+                              "deleted":  0,
+                              "untracked":  1,
+                              "c2Priority":  12,
+                              "c2ReviewCandidate":  9,
+                              "c2SharedUtility":  3,
+                              "packetDecision":  "owner-signoff-required-cli-transport-entry-boundary",
+                              "nextAction":  "review CLI/transport as entry boundary only; no second query loop"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-09-dsxu-engine-mainline",
+                              "total":  68,
+                              "modified":  64,
+                              "deleted":  0,
+                              "untracked":  4,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "owner-signoff-required-dsxu-engine-mainline",
+                              "nextAction":  "review engine mainline composition and evidence terms"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                              "total":  20,
+                              "modified":  20,
+                              "deleted":  0,
+                              "untracked":  0,
+                              "c2Priority":  4,
+                              "c2ReviewCandidate":  1,
+                              "c2SharedUtility":  3,
+                              "packetDecision":  "owner-signoff-required-entry-query-tool-composition",
+                              "nextAction":  "review entry/query/tool composition only; no fallback composition"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-12-delete-duplicate-desktop-deeplink-helper",
+                              "total":  1,
+                              "modified":  0,
+                              "deleted":  1,
+                              "untracked":  0,
+                              "c2Priority":  0,
+                              "c2ReviewCandidate":  0,
+                              "c2SharedUtility":  0,
+                              "packetDecision":  "deletion-mutation-signoff-accepted-not-staged",
+                              "nextAction":  "accepted keep-deleted; stage only when explicit Git mutation permission is granted"
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                              "total":  254,
+                              "modified":  252,
+                              "deleted":  0,
+                              "untracked":  2,
+                              "c2Priority":  115,
+                              "c2ReviewCandidate":  12,
+                              "c2SharedUtility":  103,
+                              "packetDecision":  "conditional-signoff-shared-utility-only-if-imported",
+                              "nextAction":  "retain only imported utilities; mark unused/product-specific helpers replace-delete"
+                          }
+                      ],
+    "decisionSummary":  [
+                            {
+                                "decision":  "conditional-signoff-shared-utility-only-if-imported",
+                                "packets":  1,
+                                "paths":  254
+                            },
+                            {
+                                "decision":  "deletion-mutation-signoff-accepted-not-staged",
+                                "packets":  6,
+                                "paths":  147
+                            },
+                            {
+                                "decision":  "docs-generated-owner-signoff-required",
+                                "packets":  1,
+                                "paths":  52
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-agent-task-single-orchestrator",
+                                "packets":  1,
+                                "paths":  202
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-deepseek-provider-cost-boundary",
+                                "packets":  1,
+                                "paths":  107
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-external-adapter-boundary",
+                                "packets":  1,
+                                "paths":  32
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-mcp-skill-plugin-single-runtime",
+                                "packets":  1,
+                                "paths":  141
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-tool-permission-single-runtime",
+                                "packets":  1,
+                                "paths":  192
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-visible-state-projection",
+                                "packets":  1,
+                                "paths":  474
+                            },
+                            {
+                                "decision":  "owner-signoff-required-cli-transport-entry-boundary",
+                                "packets":  1,
+                                "paths":  180
+                            },
+                            {
+                                "decision":  "owner-signoff-required-dsxu-engine-mainline",
+                                "packets":  1,
+                                "paths":  68
+                            },
+                            {
+                                "decision":  "owner-signoff-required-entry-query-tool-composition",
+                                "packets":  1,
+                                "paths":  20
+                            }
+                        ],
+    "nextAction":  "real-gap acceptance remaining items, then final tests after release gates"
+}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * TMUX SOCKET ISOLATION
  * =====================
@@ -34,7 +33,7 @@ import { getPlatform } from './platform.js'
 const TMUX_COMMAND = 'tmux'
 const DSXU_SOCKET_PREFIX = 'dsxu'
 const DSXU_SKIP_PROMPT_HISTORY_ENV = 'DSXU_CODE_SKIP_PROMPT_HISTORY'
-const LEGACY_SKIP_PROMPT_HISTORY_ENV = `CL${'AUDE'}_CODE_SKIP_PROMPT_HISTORY`
+const PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV = `CL${'AUDE'}_CODE_SKIP_PROMPT_HISTORY`
 /**
  * Executes a tmux command, routing through WSL on Windows.
  * On Windows, tmux only exists inside WSL - WSL interop lets the tmux session
@@ -247,7 +246,7 @@ async function killTmuxServer(): Promise<void> {
 async function doInitialize(): Promise<void> {
   const socket = getDsxuSocketName()
   // Create a new session with our custom socket
-  // Pass DSXU and legacy skip-history env through tmux so nested sessions do
+  // Pass DSXU and provider-migration skip-history env through tmux so nested sessions do
   // not pollute the user's prompt history.
   //
   // On Windows, the tmux server inherits WSL_INTEROP from the short-lived
@@ -268,7 +267,7 @@ async function doInitialize(): Promise<void> {
     '-e',
     `${DSXU_SKIP_PROMPT_HISTORY_ENV}=true`,
     '-e',
-    `${LEGACY_SKIP_PROMPT_HISTORY_ENV}=true`,
+    `${PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV}=true`,
     ...(getPlatform() === 'windows'
       ? ['-e', 'WSL_INTEROP=/run/WSL/1_interop']
       : []),
@@ -310,7 +309,7 @@ async function doInitialize(): Promise<void> {
     socket,
     'set-environment',
     '-g',
-    LEGACY_SKIP_PROMPT_HISTORY_ENV,
+    PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV,
     'true',
   ])
   // Same WSL_INTEROP pin as the new-session -e above, but in the GLOBAL env

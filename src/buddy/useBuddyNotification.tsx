@@ -10,12 +10,12 @@ import { getRainbowColor } from '../utils/thinking.js';
 // buzz instead of a single UTC-midnight spike, gentler on soul-gen load.
 // Teaser window: April 1-7, 2026 only. Command stays live forever after.
 export function isBuddyTeaserWindow(): boolean {
-  if ("external" === 'ant') return true;
+  if (false) return true;
   const d = new Date();
   return d.getFullYear() === 2026 && d.getMonth() === 3 && d.getDate() <= 7;
 }
 export function isBuddyLive(): boolean {
-  if ("external" === 'ant') return true;
+  if (false) return true;
   const d = new Date();
   return d.getFullYear() > 2026 || d.getFullYear() === 2026 && d.getMonth() >= 3;
 }
@@ -94,12 +94,4 @@ export function findBuddyTriggerPositions(text: string): Array<{
     });
   }
   return triggers;
-}
-
-// V14 lifecycle shim: usebuddynotification
-export function processUsebuddynotificationLifecycle(input) {
-  void input
-  const state = 'usebuddynotification-state'
-  const lifecycle = 'usebuddynotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

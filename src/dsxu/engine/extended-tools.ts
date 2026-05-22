@@ -1,14 +1,13 @@
-/**
+﻿/**
  *
  *
- * 按 DSXU 使用频次排序，分批实现：
- *   Batch 1（本文件）：WebFetch, WebSearch, TodoWrite, AskUser
- *   Batch 2（后续）：NotebookEdit, LSP, Agent, Worktree
+ * 鎸?DSXU 浣跨敤棰戞鎺掑簭锛屽垎鎵瑰疄鐜帮細
+ *   Batch 1锛堟湰鏂囦欢锛夛細WebFetch, WebSearch, TodoWrite, AskUser
+ *   Batch 2锛堝悗缁級锛歂otebookEdit, LSP, Agent, Worktree
  *
- * 设计原则：
- * - 轻量直接：不依赖 Bun/Zod，纯 TS + fetch
- * - 与 builtin-tools 同接口：ToolDefinition
- * - 安全标记：readOnly / concurrencySafe
+ * 璁捐鍘熷垯锛? * - 杞婚噺鐩存帴锛氫笉渚濊禆 Bun/Zod锛岀函 TS + fetch
+ * - 涓?engine ToolDefinition 鍚屾帴鍙ｏ細ToolDefinition
+ * - 瀹夊叏鏍囪锛歳eadOnly / concurrencySafe
  */
 
 import type { ToolDefinition, ToolContext, ToolOutput } from './types'
@@ -22,7 +21,7 @@ function truncate(s: string, max = MAX_OUTPUT_CHARS): string {
   return s.slice(0, max) + `\n\n[...truncated, ${s.length - max} chars omitted]`
 }
 
-// ── WebFetch ──
+// 鈹€鈹€ WebFetch 鈹€鈹€
 
 export const WebFetchTool: ToolDefinition = {
   name: 'WebFetch',
@@ -67,7 +66,6 @@ export const WebFetchTool: ToolDefinition = {
         text = await resp.text()
       }
 
-      // 基础 HTML → 文本转换（轻量版，不引入 turndown）
       if (contentType.includes('html')) {
         text = htmlToText(text)
       }
@@ -84,20 +82,20 @@ export const WebFetchTool: ToolDefinition = {
   },
 }
 
-/** 基础 HTML → 文本（不引入外部依赖） */
+/** 鍩虹 HTML 鈫?鏂囨湰锛堜笉寮曞叆澶栭儴渚濊禆锛?*/
 function htmlToText(html: string): string {
   return html
     // Remove script/style
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    // Headers → markdown
+    // Headers 鈫?markdown
     .replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (_, level, text) => '#'.repeat(+level) + ' ' + text.trim() + '\n\n')
-    // Links → markdown
+    // Links 鈫?markdown
     .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
     // Lists
     .replace(/<li[^>]*>/gi, '- ')
     .replace(/<\/li>/gi, '\n')
-    // Paragraphs / divs → newlines
+    // Paragraphs / divs 鈫?newlines
     .replace(/<\/(p|div|section|article)>/gi, '\n\n')
     .replace(/<br\s*\/?>/gi, '\n')
     // Strip remaining tags
@@ -114,7 +112,7 @@ function htmlToText(html: string): string {
     .trim()
 }
 
-// ── WebSearch ──
+// 鈹€鈹€ WebSearch 鈹€鈹€
 
 export const WebSearchTool: ToolDefinition = {
   name: 'WebSearch',
@@ -134,7 +132,7 @@ export const WebSearchTool: ToolDefinition = {
     const numResults = Math.min((input.num_results as number) || 5, 10)
 
     try {
-      // Use the DuckDuckGo HTML endpoint without an API key.
+
       const encoded = encodeURIComponent(query)
       const resp = await fetch(`https://html.duckduckgo.com/html/?q=${encoded}`, {
         headers: {
@@ -149,7 +147,6 @@ export const WebSearchTool: ToolDefinition = {
 
       const html = await resp.text()
 
-      // Extract results from DDG HTML.
       const results = parseDDGResults(html, numResults)
 
       if (results.length === 0) {
@@ -198,7 +195,6 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
     }
   }
 
-  // Fallback: simpler regex if structured parsing fails
   if (results.length === 0) {
     const simpleResults = html.match(/<a[^>]*class="result__a"[^>]*>([\s\S]*?)<\/a>/gi) || []
     for (const match of simpleResults.slice(0, max)) {
@@ -213,9 +209,9 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
   return results
 }
 
-// ── TodoWrite ──
+// 鈹€鈹€ TodoWrite 鈹€鈹€
 
-/** 内存中的 TODO 列表（会话级） */
+/** 鍐呭瓨涓殑 TODO 鍒楄〃锛堜細璇濈骇锛?*/
 let sessionTodos: Array<{ id: string; text: string; status: 'pending' | 'done' | 'blocked'; priority: 'high' | 'medium' | 'low' }> = []
 
 export const TodoWriteTool: ToolDefinition = {
@@ -259,7 +255,7 @@ export const TodoWriteTool: ToolDefinition = {
     const blocked = newTodos.filter(t => t.status === 'blocked').length
 
     const summary = newTodos.map(t => {
-      const icon = t.status === 'done' ? '✅' : t.status === 'blocked' ? '🔴' : '⬜'
+      const icon = t.status === 'done' ? '[done]' : t.status === 'blocked' ? '[blocked]' : '[pending]'
       return `${icon} [${t.priority}] ${t.text}`
     }).join('\n')
 
@@ -270,19 +266,19 @@ export const TodoWriteTool: ToolDefinition = {
   },
 }
 
-/** 获取当前 TODO 列表（给其他模块用） */
+/** 鑾峰彇褰撳墠 TODO 鍒楄〃锛堢粰鍏朵粬妯″潡鐢級 */
 export function getSessionTodos() {
   return [...sessionTodos]
 }
 
-/** 重置 TODO 列表（新会话时调用） */
+/** 閲嶇疆 TODO 鍒楄〃锛堟柊浼氳瘽鏃惰皟鐢級 */
 export function resetSessionTodos() {
   sessionTodos = []
 }
 
-// ── AskUser ──
+// 鈹€鈹€ AskUser 鈹€鈹€
 
-/** AskUser 回调（由 CLI/UI 层注入） */
+/** AskUser 鍥炶皟锛堢敱 CLI/UI 灞傛敞鍏ワ級 */
 let askUserCallback: ((question: string) => Promise<string>) | null = null
 
 export function setAskUserCallback(cb: (question: string) => Promise<string>) {
@@ -325,9 +321,9 @@ export const AskUserTool: ToolDefinition = {
   },
 }
 
-// ── 注册扩展工具 ──
+// 鈹€鈹€ 娉ㄥ唽鎵╁睍宸ュ叿 鈹€鈹€
 
-/** 获取扩展工具（Batch 1） */
+/** 鑾峰彇鎵╁睍宸ュ叿锛圔atch 1锛?*/
 export const RewindFilesTool: ToolDefinition = {
   name: 'RewindFiles',
   description: 'Rewind tracked files to a previous file-history snapshot. Use dry_run=true to preview what would change.',
@@ -407,9 +403,7 @@ export function getExtendedTools(): ToolDefinition[] {
   return [WebFetchTool, WebSearchTool, TodoWriteTool, AskUserTool, RewindFilesTool, FrontmatterTool, MagicDocsTool]
 }
 
-/** 获取全部工具（核心 6 + 扩展 4 = 10） */
+/** 鑾峰彇鍏ㄩ儴宸ュ叿锛堟牳蹇?6 + 鎵╁睍 4 = 10锛?*/
 export function getAllTools(): ToolDefinition[] {
-  // 延迟导入避免循环
-  const { getCoreTools } = require('./builtin-tools')
-  return [...getCoreTools(), ...getExtendedTools()]
+  return getExtendedTools()
 }

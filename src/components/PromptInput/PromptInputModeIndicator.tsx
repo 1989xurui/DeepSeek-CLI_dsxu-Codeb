@@ -90,11 +90,3 @@ export function PromptInputModeIndicator(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: promptinputmodeindicator
-export function processPromptinputmodeindicatorLifecycle(input) {
-  void input
-  const state = 'promptinputmodeindicator-state'
-  const lifecycle = 'promptinputmodeindicator:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

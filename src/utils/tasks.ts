@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { z } from 'zod/v4'
@@ -151,7 +150,7 @@ export function isTodoV2Enabled(): boolean {
  * Resets the task list for a new swarm - clears any existing tasks.
  * Writes a high water mark file to prevent ID reuse after reset.
  * Should be called when a new swarm is created to ensure task numbering starts at 1.
- * Uses file locking to prevent race conditions when multiple DSXU/legacy agents run in parallel.
+ * Uses file locking to prevent race conditions when multiple DSXU/provider-migration agents run in parallel.
  */
 export async function resetTaskList(taskListId: string): Promise<void> {
   const dir = getTasksDir(taskListId)
@@ -201,7 +200,7 @@ export async function resetTaskList(taskListId: string): Promise<void> {
  * Priority:
  * 1. DSXU_CODE_TASK_LIST_ID - explicit task list ID
  * 2. In-process teammate: leader's team name (so teammates share the leader's task list)
- * 3. DSXU/legacy team env - set when running as a process-based teammate
+ * 3. DSXU/provider-migration team env - set when running as a process-based teammate
  * 4. Leader team name - set when the leader creates a team via TeamCreate
  * 5. Session ID - fallback for standalone sessions
  */
@@ -327,7 +326,7 @@ export async function getTask(
     const content = await readFile(path, 'utf-8')
     const data = jsonParse(content) as { status?: string }
 
-    // TEMPORARY: Migrate old status names for existing sessions (ant-only)
+    // TEMPORARY: Migrate old status names for existing sessions (dsxu internal)
     if (process.env.USER_TYPE === 'ant') {
       if (data.status === 'open') data.status = 'pending'
       else if (data.status === 'resolved') data.status = 'completed'
@@ -794,7 +793,7 @@ export async function getAgentStatuses(
 
   // Build status for each agent (leader is already in members)
   return teamData.members.map(member => {
-    // Check both name (new) and agentId (legacy) for backwards compatibility
+    // Check both name (new) and agentId (historical) during task-owner migration.
     const tasksByName = unresolvedTasksByOwner.get(member.name) || []
     const tasksById = unresolvedTasksByOwner.get(member.agentId) || []
     const currentTasks = uniq([...tasksByName, ...tasksById])

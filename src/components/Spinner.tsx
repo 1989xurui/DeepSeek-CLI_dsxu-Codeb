@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { Box, Text } from '../ink.js'
 import * as React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -7,10 +6,10 @@ import {
   computeGlimmerIndex,
   computeShimmerSegments,
   SHIMMER_INTERVAL_MS,
-} from '../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+} from '../services/bridge/dsxuRemoteBridgeFacade.js'
 import { feature } from 'bun:bundle'
 import { getKairosActive, getUserMsgOptIn } from '../bootstrap/state.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { isDsxuCodeEnvTruthy } from '../utils/envUtils.js'
 import { count } from '../utils/array.js'
 import sample from 'lodash-es/sample.js'
@@ -276,7 +275,7 @@ function SpinnerWithVerbInner({
   // re-render cadence, same as the old ApiMetricsLine did.
   let ttftText: string | null = null
   if (
-    "external" === 'ant' &&
+    false &&
     apiMetricsRef?.current &&
     apiMetricsRef.current.length > 0
   ) {
@@ -349,7 +348,7 @@ function SpinnerWithVerbInner({
         ? "Use /btw to ask a quick side question without interrupting DSXU's current work"
         : spinnerTip
 
-  // Budget text (ant-only) — shown above the tip line
+  // Budget text (dsxu-internal) — shown above the tip line
   let budgetText: string | null = null
   if (feature('TOKEN_BUDGET')) {
     const budget = getCurrentTurnTokenBudget()

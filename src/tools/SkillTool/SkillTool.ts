@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ToolResultBlockParam } from 'src/types/providerSdk.js'
 import uniqBy from 'lodash-es/uniqBy.js'
@@ -341,6 +340,23 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
   name: SKILL_TOOL_NAME,
   searchHint: 'invoke a slash-command skill',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Skill Runtime Adapter',
+    sideEffects: [
+      'skill-prompt-expansion',
+      'inline-context-injection',
+      'forked-agent-execution-when-skill-requires',
+      'mcp-skill-invocation-when-loaded',
+    ],
+    permission: 'skill existence, allow/deny, safe-properties, and agent context gates',
+    evidence: [
+      'inputSchema.skill',
+      'skill command lookup',
+      'safe property validation',
+      'agent or inline skill result evidence',
+    ],
+    uiProjection: 'skill invocation progress and result summary',
+  },
   get inputSchema(): InputSchema {
     return inputSchema()
   },
@@ -366,7 +382,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
         errorCode: 1,
       }
     }
-    // Remove leading slash if present (for compatibility)
+    // Normalize slash-command input into the DSXU skill command name.
     const hasLeadingSlash = trimmed.startsWith('/')
     if (hasLeadingSlash) {
       logEvent('tengu_skill_tool_slash_prefix', {})
@@ -374,7 +390,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     const normalizedCommandName = hasLeadingSlash
       ? trimmed.substring(1)
       : trimmed
-    // Remote canonical skill handling (ant-only experimental). Intercept
+    // Remote canonical skill handling (dsxu internal experimental). Intercept
     // `_canonical_<slug>` names before local command lookup since remote
     // skills are not in the local command registry.
     if (
@@ -432,7 +448,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
   ): Promise<PermissionDecision> {
     // Skills are just skill names, no arguments
     const trimmed = skill.trim()
-    // Remove leading slash if present (for compatibility)
+    // Normalize slash-command input into the DSXU skill command name.
     const commandName = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed
     const appState = context.getAppState()
     const permissionContext = appState.toolPermissionContext
@@ -475,7 +491,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
         }
       }
     }
-    // Remote canonical skills are ant-only experimental ...auto-grant.
+    // Remote canonical skills are dsxu internal experimental ...auto-grant.
     // Placed AFTER the deny loop so a user-configured Skill(_canonical_:*)
     // deny rule is honored (same pattern as safe-properties auto-allow below).
     // The skill content itself is canonical/curated, not user-authored.
@@ -579,7 +595,7 @@ export const SkillTool: Tool<InputSchema, Output, Progress> = buildTool({
     const trimmed = skill.trim()
     // Remove leading slash if present (for compatibility)
     const commandName = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed
-    // Remote canonical skill execution (ant-only experimental). Intercepts
+    // Remote canonical skill execution (dsxu internal experimental). Intercepts
     // `_canonical_<slug>` before local command lookup ...loads SKILL.md from
     // AKI/GCS (with local cache), injects content directly as a user message.
     // Remote skills are declarative markdown so no slash-command expansion
@@ -1019,19 +1035,12 @@ async function executeRemoteSkill(
   // (matches loadSkillsDir.ts:333). parseFrontmatter returns the original
   // content unchanged if no frontmatter is present.
   const { content: bodyContent } = parseFrontmatter(content, skillPath)
-  // Inject base directory header + ${DSXU_SKILL_DIR}/${DSXU_SESSION_ID}
-  // plus legacy ${DSXU_SKILL_DIR}/${DSXU_SESSION_ID} substitutions
-  // substitution (matches loadSkillsDir.ts) so the model can resolve relative
+  // Inject base directory header and DSXU substitution values so the model can resolve relative
   // refs like ./schemas/foo.json against the cache dir.
   const skillDir = dirname(skillPath)
   const normalizedDir =
     process.platform === 'win32' ? skillDir.replace(/\\/g, '/') : skillDir
   let finalContent = `Base directory for this skill: ${normalizedDir}\n\n${bodyContent}`
-  finalContent = finalContent.replace(/\$\{DSXU_SKILL_DIR\}/g, normalizedDir)
-  finalContent = finalContent.replace(
-    /\$\{DSXU_SESSION_ID\}/g,
-    getSessionId(),
-  )
   finalContent = finalContent.replace(/\$\{DSXU_SKILL_DIR\}/g, normalizedDir)
   finalContent = finalContent.replace(
     /\$\{DSXU_SESSION_ID\}/g,

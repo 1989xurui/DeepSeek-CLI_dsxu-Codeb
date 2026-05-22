@@ -86,11 +86,3 @@ export function InvalidSettingsDialog(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: invalidsettingsdialog
-export function processInvalidsettingsdialogLifecycle(input) {
-  void input
-  const state = 'invalidsettingsdialog-state'
-  const lifecycle = 'invalidsettingsdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

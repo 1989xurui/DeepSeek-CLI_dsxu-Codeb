@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import type {
   ToolResultBlockParam,
   ToolUseBlock,
@@ -98,7 +97,7 @@ import {
   tokenCountWithEstimation,
 } from './utils/tokens.js'
 import { ESCALATED_MAX_TOKENS } from './utils/context.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from './services/analytics/featureFlags.js'
 import { SLEEP_TOOL_NAME } from './tools/SleepTool/prompt.js'
 import { drainPendingAgentContinuationMessages } from './tasks/LocalAgentTask/LocalAgentTask.js'
 import { isBackgroundTask, type TaskState } from './tasks/types.js'

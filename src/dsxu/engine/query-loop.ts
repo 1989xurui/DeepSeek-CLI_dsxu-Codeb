@@ -107,6 +107,12 @@ export function createRecoveryBridge() {
     ): RecoveryDecision {
       return recoveryIntegration.quickDecide(reason, failureCount, 'query-loop recovery')
     },
+
+    shouldTriggerRecovery(failureCount: number, lastError?: string): boolean {
+      if (failureCount > 0) return true
+      if (!lastError) return false
+      return !/\b(?:ok|pass|passed|success|succeeded|done)\b/i.test(lastError)
+    },
   }
 }
 

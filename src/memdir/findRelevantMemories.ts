@@ -139,12 +139,3 @@ async function selectRelevantMemories(
     return []
   }
 }
-
-
-// V14 lifecycle shim: findrelevantmemories
-export function processFindrelevantmemoriesLifecycle(input) {
-  void input
-  const state = 'findrelevantmemories-state'
-  const lifecycle = 'findrelevantmemories:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -77,11 +77,3 @@ export function MethodStep() {
   }
   return t4;
 }
-
-// V14 lifecycle shim: methodstep
-export function processMethodstepLifecycle(input) {
-  void input
-  const state = 'methodstep-state'
-  const lifecycle = 'methodstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

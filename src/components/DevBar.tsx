@@ -6,7 +6,7 @@ import { Text, useInterval } from '../ink.js';
 
 // Show DevBar for dev builds or all ants
 function shouldShowDevBar(): boolean {
-  return "production" === 'development' || "external" === 'ant';
+  return "production" === 'development' || false;
 }
 export function DevBar() {
   const $ = _c(5);
@@ -35,7 +35,7 @@ export function DevBar() {
   const recentOps = t1;
   let t2;
   if ($[3] !== recentOps) {
-    t2 = <Text wrap="truncate-end" color="warning">[ANT-ONLY] slow sync: {recentOps}</Text>;
+    t2 = <Text wrap="truncate-end" color="warning">[DSXU internal] slow sync: {recentOps}</Text>;
     $[3] = recentOps;
     $[4] = t2;
   } else {
@@ -45,12 +45,4 @@ export function DevBar() {
 }
 function _temp(op) {
   return `${op.operation} (${Math.round(op.durationMs)}ms)`;
-}
-
-// V14 lifecycle shim: devbar
-export function processDevbarLifecycle(input) {
-  void input
-  const state = 'devbar-state'
-  const lifecycle = 'devbar:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * PowerShell-specific permission checking, adapted from bashPermissions.ts
  * for case-insensitive cmdlet matching.
@@ -1365,7 +1364,7 @@ export async function powershellToolHasPermission(
   // succeeded; 'application' means a script/executable path, not a cmdlet.
   // SECURITY: Same argLeaksValue gate as the per-subcommand loop below
   // (finding #32). Without it, `PowerShell(Write-Output:*)` exact-matches
-  // `Write-Output $env:DEEPSEEK_API_KEY` or legacy `$env:PROVIDER_API_KEY`,
+  // `Write-Output $env:DEEPSEEK_API_KEY` or provider-migration `$env:PROVIDER_API_KEY`,
   // pushes allow to decisions[], and
   // reduce returns it before the per-subcommand gate ever runs. The
   // allSubCommands.every check ensures NO command in the statement leaks
@@ -1532,7 +1531,7 @@ export async function powershellToolHasPermission(
       // SECURITY: User allow rule asserts the cmdlet is safe, NOT that
       // arbitrary variable expansion through it is safe. A user who allows
       // PowerShell(Write-Output:*) did not intend to auto-allow
-  // `Write-Output $env:DEEPSEEK_API_KEY` or legacy `$env:PROVIDER_API_KEY`.
+  // `Write-Output $env:DEEPSEEK_API_KEY` or provider-migration `$env:PROVIDER_API_KEY`.
   // Apply the same argLeaksValue
       // gate that protects the built-in allowlist path below ...rejects
       // Variable/Other/ScriptBlock/SubExpression elementTypes and colon-bound

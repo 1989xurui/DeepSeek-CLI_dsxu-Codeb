@@ -82,16 +82,27 @@ function wslPathToWindowsUnc(distro: string, wslPath: string): string {
 }
 
 async function getWslHome(distro: string): Promise<string> {
-  const { stdout } = await execFileAsync(
-    'wsl.exe',
-    ['-d', distro, '--', 'bash', '-lc', 'printf %s "$HOME"'],
-    {
-      timeout: 5_000,
-      maxBuffer: 1024 * 1024,
-      windowsHide: true,
-    },
-  )
-  return String(stdout).trim() || '/tmp'
+  let lastError: unknown
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const { stdout } = await execFileAsync(
+        'wsl.exe',
+        ['-d', distro, '--', 'bash', '-lc', 'printf %s "$HOME"'],
+        {
+          timeout: 15_000,
+          maxBuffer: 1024 * 1024,
+          windowsHide: true,
+        },
+      )
+      return String(stdout).trim() || '/tmp'
+    } catch (error) {
+      lastError = error
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt))
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(String(lastError ?? 'unknown WSL home probe failure'))
 }
 
 function buildWslProviderForwardEnv(
@@ -577,10 +588,56 @@ export async function runRealTuiExitSmoke(
   const timeoutMs = options.timeoutMs ?? 35_000
   const scenarioName = options.scenarioName ?? 'exit-smoke'
   const dir = await mkdtemp(join(tmpdir(), 'dsxu-real-tui-'))
-  const wslHome = await getWslHome(distro)
-  const wslEvidenceDir = `${wslHome}/.dsxu/trace/v18-tui`
-  const evidenceDir = wslPathToWindowsUnc(distro, wslEvidenceDir)
-  await mkdir(evidenceDir, { recursive: true })
+  let wslEvidenceDir = '/tmp/dsxu-real-tui'
+  let evidenceDir = join(dir, 'evidence')
+  try {
+    const wslHome = await getWslHome(distro)
+    wslEvidenceDir = `${wslHome}/.dsxu/trace/v18-tui`
+    evidenceDir = wslPathToWindowsUnc(distro, wslEvidenceDir)
+    await mkdir(evidenceDir, { recursive: true })
+  } catch (error) {
+    await mkdir(evidenceDir, { recursive: true })
+    const message = error instanceof Error ? error.message : String(error)
+    await rm(dir, { recursive: true, force: true })
+    return {
+      ok: false,
+      status: 'spawn_failed',
+      exitCode: null,
+      sentExit: false,
+      sawWelcome: false,
+      sawPrompt: false,
+      sawProgress: false,
+      progressMarkerCount: 0,
+      sawLoginWarning: false,
+      sawMojibake: false,
+      sawTerminalMojibake: false,
+      sawInputEncodingLoss: false,
+      sentInputCount: 0,
+      sawPromptAfterTask: false,
+      sawPermissionFallbackBar: false,
+      sawPermissionReplayMarker: false,
+      sawNoProgressReplayTrace: false,
+      sawBackgroundTaskReplayTrace: false,
+      sawBackgroundTaskPillMarker: false,
+      sawAutoContinueReplayMarker: false,
+      sawResumeReplayMarker: false,
+      sawResumeReplayQueuedTrace: false,
+      sawResumeSourceTruthGateTrace: false,
+      sawResumeProviderPreflightTrace: false,
+      sawAutoContinueEnqueuedTrace: false,
+      sawAutoContinueProcessedTrace: false,
+      sawAutoContinueSuppressedTrace: false,
+      sawTuiHealthTrace: false,
+      sawTuiStallTrace: false,
+      outputBytes: 0,
+      elapsedMs: 0,
+      tail: '',
+      transcriptPath: join(evidenceDir, `${scenarioName}.transcript.txt`),
+      tracePath: join(evidenceDir, `${scenarioName}.trace.jsonl`),
+      lifecycleTraceDir: join(evidenceDir, `${scenarioName}.lifecycle`),
+      error: `wsl home probe failed: ${message}`,
+    }
+  }
   const scriptPath = join(dir, 'harness.py')
   await writeFile(
     scriptPath,

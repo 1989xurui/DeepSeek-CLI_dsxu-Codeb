@@ -12,11 +12,3 @@ export function MCPServerDialogCopy() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: mcpserverdialogcopy
-export function processMcpserverdialogcopyLifecycle(input) {
-  void input
-  const state = 'mcpserverdialogcopy-state'
-  const lifecycle = 'mcpserverdialogcopy:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -71,11 +71,3 @@ export function handleSecurityCheckResult(result: SecurityCheckResult): boolean 
   }
   return true;
 }
-
-// V14 lifecycle shim: securitycheck
-export function processSecuritycheckLifecycle(input) {
-  void input
-  const state = 'securitycheck-state'
-  const lifecycle = 'securitycheck:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

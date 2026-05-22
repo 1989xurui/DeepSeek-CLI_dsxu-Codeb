@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import figures from 'figures'
 import { logError } from 'src/utils/log.js'
 import { callIdeRpc } from '../services/mcp/client.js'
@@ -11,8 +10,8 @@ import { jsonParse } from '../utils/slowOperations.js'
 class DiagnosticsTrackingError extends DSXUError {}
 
 const MAX_DIAGNOSTICS_SUMMARY_CHARS = 4000
-const LEGACY_FS_RIGHT_URI_PREFIX = `_${'cl' + 'aude'}_fs_right:`
-const LEGACY_FS_LEFT_URI_PREFIX = `_${'cl' + 'aude'}_fs_left:`
+const PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX = `_${'cl' + 'aude'}_fs_right:`
+const PROVIDER_MIGRATION_FS_LEFT_URI_PREFIX = `_${'cl' + 'aude'}_fs_left:`
 
 export interface Diagnostic {
   message: string
@@ -41,7 +40,7 @@ export class DiagnosticTrackingService {
   private lastProcessedTimestamps: Map<string, number> = new Map()
 
   // Track which files have received right file diagnostics and if they've changed
-  // Map<normalizedPath, lastLegacyRightFileDiagnostics>
+  // Map<normalizedPath, lastProviderMigrationRightFileDiagnostics>
   private rightFileDiagnosticsState: Map<string, Diagnostic[]> = new Map()
 
   static getInstance(): DiagnosticTrackingService {
@@ -82,8 +81,8 @@ export class DiagnosticTrackingService {
     // Remove our protocol prefixes
     const protocolPrefixes = [
       'file://',
-      LEGACY_FS_RIGHT_URI_PREFIX,
-      LEGACY_FS_LEFT_URI_PREFIX,
+      PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX,
+      PROVIDER_MIGRATION_FS_LEFT_URI_PREFIX,
     ]
 
     let normalized = fileUri
@@ -185,7 +184,7 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Get new diagnostics from file:// and legacy shadow-file URIs that aren't in the baseline.
+   * Get new diagnostics from file:// and provider-migration shadow-file URIs that aren't in the baseline.
    * Only processes diagnostics for files that have been edited.
    */
   async getNewDiagnostics(): Promise<DiagnosticFile[]> {
@@ -214,15 +213,15 @@ export class DiagnosticTrackingService {
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
       .filter(file => file.uri.startsWith('file://'))
 
-    const diagnosticsForLegacyRightUrisWithBaselinesMap = new Map<
+    const diagnosticsForProviderMigrationRightUrisWithBaselinesMap = new Map<
       string,
       DiagnosticFile
     >()
     allDiagnosticFiles
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
-      .filter(file => file.uri.startsWith(LEGACY_FS_RIGHT_URI_PREFIX))
+      .filter(file => file.uri.startsWith(PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX))
       .forEach(file => {
-        diagnosticsForLegacyRightUrisWithBaselinesMap.set(
+        diagnosticsForProviderMigrationRightUrisWithBaselinesMap.set(
           this.normalizeFileUri(file.uri),
           file,
         )
@@ -235,34 +234,34 @@ export class DiagnosticTrackingService {
       const normalizedPath = this.normalizeFileUri(file.uri)
       const baselineDiagnostics = this.baseline.get(normalizedPath) || []
 
-      // Get the legacy right-side shadow file if it exists
-      const legacyRightFile =
-        diagnosticsForLegacyRightUrisWithBaselinesMap.get(normalizedPath)
+      // Get the provider-migration right-side shadow file if it exists
+      const providerMigrationRightFile =
+        diagnosticsForProviderMigrationRightUrisWithBaselinesMap.get(normalizedPath)
 
       // Determine which file to use based on the state of right file diagnostics
       let fileToUse = file
 
-      if (legacyRightFile) {
+      if (providerMigrationRightFile) {
         const previousRightDiagnostics =
           this.rightFileDiagnosticsState.get(normalizedPath)
 
-        // Use the legacy right-side shadow file if:
+        // Use the provider-migration right-side shadow file if:
         // 1. We've never gotten right file diagnostics for this file (previousRightDiagnostics === undefined)
         // 2. OR the right file diagnostics have just changed
         if (
           !previousRightDiagnostics ||
           !this.areDiagnosticArraysEqual(
             previousRightDiagnostics,
-            legacyRightFile.diagnostics,
+            providerMigrationRightFile.diagnostics,
           )
         ) {
-          fileToUse = legacyRightFile
+          fileToUse = providerMigrationRightFile
         }
 
         // Update our tracking of right file diagnostics
         this.rightFileDiagnosticsState.set(
           normalizedPath,
-          legacyRightFile.diagnostics,
+          providerMigrationRightFile.diagnostics,
         )
       }
 

@@ -20,12 +20,8 @@ describe('DSXU release/quarantine test gate V1', () => {
 
   test('known stale side-path tests are quarantine, not release score', () => {
     expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/compact-session-integration.test.ts')).toBe('quarantine')
-    expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/skills-mainline-v1-clean.test.ts')).toBe('quarantine')
-    expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/skills-prompt-stack-v1-clean.test.ts')).toBe('quarantine')
-    expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/c02-prompt-stack-mainline-clean.test.ts')).toBe('quarantine')
     expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/prompt-processing-v1-clean.test.ts')).toBe('quarantine')
     expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/context-analysis-v1-clean.test.ts')).toBe('quarantine')
-    expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/c03-querycontext-classifiers-mainline-clean.test.ts')).toBe('quarantine')
     expect(classifyDsxuTestForGate('src/dsxu/engine/__tests__/c16-shell-full-audit-clean.test.ts')).toBe('quarantine')
     expect(DSXU_QUARANTINE_RULES.length).toBeGreaterThanOrEqual(5)
   })
@@ -36,10 +32,7 @@ describe('DSXU release/quarantine test gate V1', () => {
     expect(command[1]).toBe('test')
     expect(command.join('\n')).not.toContain('compact-session-integration')
     expect(command.join('\n')).not.toContain('c16-shell-full-audit-clean')
-    expect(command.join('\n')).not.toContain('skills-mainline-v1-clean')
-    expect(command.join('\n')).not.toContain('skills-prompt-stack-v1-clean')
     expect(command.join('\n')).not.toContain('prompt-processing-v1-clean')
     expect(command.join('\n')).not.toContain('context-analysis-v1-clean')
-    expect(command.join('\n')).not.toContain('c03-querycontext-classifiers-mainline-clean')
   })
 })

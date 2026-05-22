@@ -162,6 +162,22 @@ export const GrepTool = buildTool({
   searchHint: 'search file contents with regex (ripgrep)',
   // 20K chars - tool result persistence threshold
   maxResultSizeChars: 20_000,
+  runtimeMetadata: {
+    owner: 'DSXU File Search Tool',
+    sideEffects: [
+      'filesystem-read',
+      'regex-search',
+      'ripgrep-process-execution',
+    ],
+    permission: 'filesystem read/search permission via checkReadPermissionForTool',
+    evidence: [
+      'inputSchema.pattern/path',
+      'checkReadPermissionForTool',
+      'filenames/content output',
+      'limit/offset output',
+    ],
+    uiProjection: 'search result summary and matched files/content',
+  },
   strict: true,
   async description() {
     return getDescription()

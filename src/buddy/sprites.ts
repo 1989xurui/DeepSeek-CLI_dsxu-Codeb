@@ -512,12 +512,3 @@ export function renderFace(bones: CompanionBones): string {
       return `(${eye}.${eye})`
   }
 }
-
-
-// V14 lifecycle shim: sprites
-export function processSpritesLifecycle(input) {
-  void input
-  const state = 'sprites-state'
-  const lifecycle = 'sprites:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

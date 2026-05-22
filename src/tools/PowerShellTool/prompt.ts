@@ -34,7 +34,7 @@ export function getDsxuPowerShellPromptRuntimeProfile(): {
     runtime: 'DSXU PowerShell Prompt',
     backgroundDisableEnv: [
       'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
-      'legacy provider disable-background-tasks alias',
+      'provider-migration disable-background-tasks alias',
     ],
     fileOperationPolicy:
       'PowerShell is for terminal operations; Read/Edit/Write/Glob/Grep remain the specialized DSXU coding tools',

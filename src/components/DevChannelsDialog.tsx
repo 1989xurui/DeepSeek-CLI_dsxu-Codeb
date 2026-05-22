@@ -102,11 +102,3 @@ function _temp2(c) {
 function _temp() {
   gracefulShutdownSync(0);
 }
-
-// V14 lifecycle shim: devchannelsdialog
-export function processDevchannelsdialogLifecycle(input) {
-  void input
-  const state = 'devchannelsdialog-state'
-  const lifecycle = 'devchannelsdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

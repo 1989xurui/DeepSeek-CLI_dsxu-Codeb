@@ -68,11 +68,3 @@ function OrderedListComponent(t0) {
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 OrderedListComponent.Item = OrderedListItem;
 export const OrderedList = OrderedListComponent;
-
-// V14 lifecycle shim: orderedlist
-export function processOrderedlistLifecycle(input) {
-  void input
-  const state = 'orderedlist-state'
-  const lifecycle = 'orderedlist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

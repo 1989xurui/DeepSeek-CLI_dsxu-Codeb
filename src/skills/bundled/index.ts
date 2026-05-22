@@ -63,20 +63,3 @@ export function initBundledSkills(): void {
   }
   /* eslint-enable @typescript-eslint/no-require-imports */
 }
-
-
-// V14 strict lifecycle shim: skills-bundled-index
-export function processSkillsBundledIndexStrictLifecycle(input) {
-  void input
-  const state = 'skills-bundled-index-state'
-  const lifecycle = 'skills-bundled-index:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runSkillsBundledIndexStrict(input) {
-  return processSkillsBundledIndexStrictLifecycle(input)
-}

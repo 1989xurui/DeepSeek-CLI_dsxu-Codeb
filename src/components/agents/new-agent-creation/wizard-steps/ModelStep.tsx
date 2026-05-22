@@ -49,11 +49,3 @@ export function ModelStep() {
   }
   return t2;
 }
-
-// V14 lifecycle shim: modelstep
-export function processModelstepLifecycle(input) {
-  void input
-  const state = 'modelstep-state'
-  const lifecycle = 'modelstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

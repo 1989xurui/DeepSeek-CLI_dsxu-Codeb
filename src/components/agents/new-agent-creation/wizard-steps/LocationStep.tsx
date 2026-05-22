@@ -77,11 +77,3 @@ export function LocationStep() {
   }
   return t5;
 }
-
-// V14 lifecycle shim: locationstep
-export function processLocationstepLifecycle(input) {
-  void input
-  const state = 'locationstep-state'
-  const lifecycle = 'locationstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

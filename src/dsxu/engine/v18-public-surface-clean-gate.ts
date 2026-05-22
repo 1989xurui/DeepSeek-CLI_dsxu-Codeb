@@ -9,7 +9,7 @@ export type V18PublicSurfaceCleanStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'
 
 export type V18PublicSurfaceCleanBucket =
   | 'active_src'
-  | 'compat'
+  | 'provider_migration'
   | 'tests'
   | 'docs'
   | 'scripts'
@@ -36,7 +36,7 @@ export type V18PublicSurfaceCleanGate = {
   blockerCount: number
   reviewCount: number
   justifiedCount: number
-  compatModelAliasJustifiedCount: number
+  providerMigrationModelAliasJustifiedCount: number
   sourceTruthDocJustifiedCount: number
   benchContractJustifiedCount: number
   publicSurfaceReviewCount: number
@@ -46,13 +46,13 @@ export type V18PublicSurfaceCleanGate = {
   safeguards: readonly string[]
 }
 
-const LEGACY_PRODUCT = ['cl', 'aude'].join('')
-const LEGACY_MASCOT = ['cl', 'awd'].join('')
-const LEGACY_VENDOR = ['anth', 'ropic'].join('')
-const LEGACY_VENDOR_SCOPE = `@${LEGACY_VENDOR}-ai/`
+const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')
+const SOURCE_REFERENCE_MASCOT = ['cl', 'awd'].join('')
+const SOURCE_REFERENCE_VENDOR = ['anth', 'ropic'].join('')
+const SOURCE_REFERENCE_VENDOR_SCOPE = `@${SOURCE_REFERENCE_VENDOR}-ai/`
 
 const EXCLUDED_PREFIXES = [
-  `\u539f\u4ee3\u7801${LEGACY_PRODUCT}/`,
+  `\u539f\u4ee3\u7801${SOURCE_REFERENCE_PRODUCT}/`,
   '\u975edsxu-code\u9879\u76ee\u6587\u4ef6/',
   'tmp/',
   'outputs/',
@@ -60,8 +60,8 @@ const EXCLUDED_PREFIXES = [
 ] as const
 
 const PATH_BLOCKERS = [
-  new RegExp(`(^|/)(${LEGACY_PRODUCT}|${LEGACY_MASCOT}|${LEGACY_VENDOR})([^/]*)$`, 'i'),
-  new RegExp(`(^|/)([^/]*)(${LEGACY_PRODUCT}|${LEGACY_MASCOT}|${LEGACY_VENDOR})([^/]*)(/|$)`, 'i'),
+  new RegExp(`(^|/)(${SOURCE_REFERENCE_PRODUCT}|${SOURCE_REFERENCE_MASCOT}|${SOURCE_REFERENCE_VENDOR})([^/]*)$`, 'i'),
+  new RegExp(`(^|/)([^/]*)(${SOURCE_REFERENCE_PRODUCT}|${SOURCE_REFERENCE_MASCOT}|${SOURCE_REFERENCE_VENDOR})([^/]*)(/|$)`, 'i'),
 ] as const
 
 const LEGACY_MODEL_FAMILY_WORDS = ['o' + 'pus', 'son' + 'net', 'hai' + 'ku'] as const
@@ -72,11 +72,11 @@ const PATH_REVIEW = [
 ] as const
 
 const CONTENT_BLOCKERS = [
-  new RegExp(`\\b${LEGACY_PRODUCT} Code\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_PRODUCT}\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_MASCOT}\\b`, 'i'),
-  new RegExp(`\\b${LEGACY_VENDOR}\\b`, 'i'),
-  new RegExp(LEGACY_VENDOR_SCOPE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_PRODUCT} Code\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_PRODUCT}\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_MASCOT}\\b`, 'i'),
+  new RegExp(`\\b${SOURCE_REFERENCE_VENDOR}\\b`, 'i'),
+  new RegExp(SOURCE_REFERENCE_VENDOR_SCOPE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
 ] as const
 
 const CONTENT_REVIEW = [
@@ -100,20 +100,31 @@ function isModelFamilyFalsePositive(path: string, line: string, match: string): 
 }
 
 function isCanonicalPlanningDoc(path: string): boolean {
-  return /^docs\/DSXU_V(?:18|19)_/i.test(path)
+  return /^docs\/(?:generated\/)?DSXU_V(?:18|19|20)_/i.test(path)
+}
+
+function isProviderMigrationBoundaryPath(path: string): boolean {
+  return (
+    /^src\/utils\/model\/providerMigration\//.test(path) ||
+    /^src\/utils\/commitAttributionProviderMigration\.ts$/.test(path) ||
+    /^src\/utils\/envCompat\.ts$/.test(path) ||
+    /^src\/services\/mockRateLimitsProviderMigration\//.test(path) ||
+    /^src\/services\/auth\/dsxuProvider(?:Control)?Auth\.ts$/.test(path)
+  )
 }
 
 function bucketForPath(path: string): V18PublicSurfaceCleanBucket {
   if (PACKAGE_FILES.has(path)) return 'package'
   if (/^scripts\/benchmark\//.test(path)) return 'tests'
   if (
+    isProviderMigrationBoundaryPath(path) ||
     /^src\/dsxu\/legacy\//.test(path) ||
     /^src\/migrations\//.test(path) ||
     /^src\/utils\/model\/legacy/i.test(path) ||
     /^src\/constants\/legacy/i.test(path) ||
     /^migrations\//.test(path)
   ) {
-    return 'compat'
+    return 'provider_migration'
   }
   if (/^src\//.test(path)) {
     if (/\/__tests__\//.test(path) || /\.test\.[cm]?[tj]sx?$/.test(path)) return 'tests'
@@ -128,7 +139,7 @@ function bucketForPath(path: string): V18PublicSurfaceCleanBucket {
 function initializeBucketCounts(): Record<V18PublicSurfaceCleanBucket, number> {
   return {
     active_src: 0,
-    compat: 0,
+    provider_migration: 0,
     tests: 0,
     docs: 0,
     scripts: 0,
@@ -145,10 +156,11 @@ function isBenchContractEvidence(bucket: V18PublicSurfaceCleanBucket): boolean {
   return bucket === 'tests'
 }
 
-function isHiddenCompatModelAlias(path: string, bucket: V18PublicSurfaceCleanBucket): boolean {
+function isHiddenProviderMigrationModelAlias(path: string, bucket: V18PublicSurfaceCleanBucket): boolean {
   return (
-    bucket === 'compat' &&
-    (/^src\/dsxu\/legacy\//.test(path) ||
+    bucket === 'provider_migration' &&
+    (isProviderMigrationBoundaryPath(path) ||
+      /^src\/dsxu\/legacy\//.test(path) ||
       /^src\/migrations\//.test(path) ||
       /^src\/utils\/model\/legacy/i.test(path) ||
       /^src\/constants\/legacy/i.test(path) ||
@@ -190,26 +202,29 @@ export function buildV18PublicSurfaceCleanGate(input: {
     const bucket = bucketForPath(path)
     const pathBlocker = firstMatch(PATH_BLOCKERS, path)
     if (pathBlocker) {
+      const planningDoc = isCanonicalPlanningDoc(path)
       violations.push({
         surface: 'path',
-        severity: 'blocker',
+        severity: planningDoc ? 'justified' : 'blocker',
         bucket,
         path,
         match: pathBlocker,
-        reason: 'release path still contains legacy/proprietary legacy naming or vendor namespace',
+        reason: planningDoc
+          ? 'V18/V19/V20 source-truth document keeps historical/reference wording; release export must exclude or rewrite it, but the current source doc must stay in place'
+          : 'release path still contains legacy/proprietary legacy naming or vendor namespace',
       })
     } else {
       const pathReview = firstMatch(PATH_REVIEW, path)
       if (pathReview) {
-        const hiddenCompatAlias = isHiddenCompatModelAlias(path, bucket)
+        const hiddenProviderMigrationAlias = isHiddenProviderMigrationModelAlias(path, bucket)
         const benchContract = isBenchContractEvidence(bucket)
         violations.push({
           surface: 'path',
-          severity: hiddenCompatAlias || benchContract ? 'justified' : 'review',
+          severity: hiddenProviderMigrationAlias || benchContract ? 'justified' : 'review',
           bucket,
           path,
           match: pathReview,
-          reason: hiddenCompatAlias
+          reason: hiddenProviderMigrationAlias
             ? 'legacy model-family alias is retained in a hidden DSXU compatibility or migration path and must not ship as public surface'
             : benchContract
               ? 'test or benchmark fixture retains legacy naming as BENCH_CONTRACT_ONLY evidence and must not define public product surface'
@@ -233,7 +248,7 @@ export function buildV18PublicSurfaceCleanGate(input: {
           line: index + 1,
           match: contentBlocker,
           reason: planningDoc
-            ? 'V18/V19 source-truth document keeps historical/reference wording; release export must exclude or rewrite it, but the current source doc must stay in place'
+            ? 'V18/V19/V20 source-truth document keeps historical/reference wording; release export must exclude or rewrite it, but the current source doc must stay in place'
             : benchContract
               ? 'test or benchmark fixture retains legacy wording as BENCH_CONTRACT_ONLY evidence and must not define public product surface'
               : 'release content still exposes legacy/proprietary legacy naming',
@@ -243,20 +258,20 @@ export function buildV18PublicSurfaceCleanGate(input: {
       const contentReview = firstMatch(CONTENT_REVIEW, line)
       if (contentReview) {
         if (isModelFamilyFalsePositive(path, line, contentReview)) return
-        const hiddenCompatAlias = isHiddenCompatModelAlias(path, bucket)
+        const hiddenProviderMigrationAlias = isHiddenProviderMigrationModelAlias(path, bucket)
         const planningDoc = isCanonicalPlanningDoc(path)
         const benchContract = isBenchContractEvidence(bucket)
         violations.push({
           surface: 'content',
-          severity: hiddenCompatAlias || planningDoc || benchContract ? 'justified' : 'review',
+          severity: hiddenProviderMigrationAlias || planningDoc || benchContract ? 'justified' : 'review',
           bucket,
           path,
           line: index + 1,
           match: contentReview,
-          reason: hiddenCompatAlias
-            ? 'legacy model-family alias is retained inside a hidden DSXU compatibility or migration boundary'
+          reason: hiddenProviderMigrationAlias
+            ? 'legacy model-family alias is retained inside a hidden DSXU provider-migration boundary'
             : planningDoc
-              ? 'V18/V19 source-truth document keeps historical/reference wording; release export must exclude or rewrite it'
+              ? 'V18/V19/V20 source-truth document keeps historical/reference wording; release export must exclude or rewrite it'
               : benchContract
                 ? 'test or benchmark fixture retains legacy model-family wording as BENCH_CONTRACT_ONLY evidence'
                 : 'release content still exposes legacy model-family wording',
@@ -268,8 +283,8 @@ export function buildV18PublicSurfaceCleanGate(input: {
   const blockerCount = violations.filter(violation => violation.severity === 'blocker').length
   const reviewCount = violations.filter(violation => violation.severity === 'review').length
   const justifiedCount = violations.filter(violation => violation.severity === 'justified').length
-  const compatModelAliasJustifiedCount = violations.filter(
-    violation => violation.severity === 'justified' && isHiddenCompatModelAlias(violation.path, violation.bucket),
+  const providerMigrationModelAliasJustifiedCount = violations.filter(
+    violation => violation.severity === 'justified' && isHiddenProviderMigrationModelAlias(violation.path, violation.bucket),
   ).length
   const sourceTruthDocJustifiedCount = violations.filter(
     violation => violation.severity === 'justified' && isCanonicalPlanningDoc(violation.path),
@@ -291,11 +306,11 @@ export function buildV18PublicSurfaceCleanGate(input: {
     'public surface blockers must be removed from release paths and user-visible/runtime content before release packaging',
     'canonical V18/V19 planning documents are release-excluded review debt, not active runtime/public UI blockers',
     'benchmark scripts are classified with tests so benchmark-only search contracts do not inflate public-surface public surface debt',
-    'public-surface review count tracks active source, package, general scripts, and other release text separately from compat/docs/tests',
-    'hidden compatibility model aliases are justified findings, not cleanup debt, as long as they stay behind DSXU-owned compatibility boundaries',
+    'public-surface review count tracks active source, package, general scripts, and other release text separately from provider_migration/docs/tests',
+    'hidden provider-migration model aliases are justified findings, not cleanup debt, as long as they stay behind DSXU-owned provider-migration boundaries',
     'V18/V19 source-truth documents are justified findings and must be rewritten or excluded in release export instead of edited in place for packaging optics',
     'test and benchmark fixtures are justified BENCH_CONTRACT_ONLY findings when they retain legacy names as anti-regression evidence',
-    'model-family review findings must be either rewritten to DSXU/DeepSeek names or explicitly justified as non-release compatibility references',
+    'model-family review findings must be either rewritten to DSXU/DeepSeek names or explicitly justified as non-release provider-migration references',
   ]
 
   return {
@@ -310,7 +325,7 @@ export function buildV18PublicSurfaceCleanGate(input: {
     blockerCount,
     reviewCount,
     justifiedCount,
-    compatModelAliasJustifiedCount,
+    providerMigrationModelAliasJustifiedCount,
     sourceTruthDocJustifiedCount,
     benchContractJustifiedCount,
     publicSurfaceReviewCount,

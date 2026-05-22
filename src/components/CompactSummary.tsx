@@ -115,11 +115,3 @@ export function CompactSummary(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: compactsummary
-export function processCompactsummaryLifecycle(input) {
-  void input
-  const state = 'compactsummary-state'
-  const lifecycle = 'compactsummary:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

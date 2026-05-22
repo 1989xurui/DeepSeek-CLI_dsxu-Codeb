@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { BetaUsage as Usage } from 'src/types/providerSdk.js'
 import type {
@@ -29,7 +28,7 @@ import { isAutoMemoryEnabled } from '../memdir/paths.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../services/analytics/growthbook.js'
+} from '../services/analytics/featureFlags.js'
 import {
   getImageTooLargeErrorMessage,
   getPdfInvalidErrorMessage,
@@ -153,7 +152,7 @@ import { formatFileSize } from './format.js'
 import { validateImagesForAPI } from './imageValidation.js'
 import { safeParseJSON } from './json.js'
 import { logError, logMCPDebug } from './log.js'
-import { normalizeLegacyToolName } from './permissions/permissionRuleParser.js'
+import { normalizeProviderMigrationToolName } from './permissions/permissionRuleParser.js'
 import {
   getPlanModeV2AgentCount,
   getPlanModeV2ExploreAgentCount,
@@ -175,7 +174,7 @@ const MEMORY_CORRECTION_HINT =
 const TOOL_REFERENCE_TURN_BOUNDARY = 'Tool loaded.'
 /**
  * Appends a memory correction hint to a rejection/cancellation message
- * when auto-memory is enabled and the GrowthBook flag is on.
+ * when auto-memory is enabled and the feature flag provider flag is on.
  */
 export function withMemoryCorrectionHint(message: string): string {
   if (
@@ -1451,7 +1450,7 @@ function stripUnavailableToolReferencesFromUserMessage(
         if (!isToolReferenceBlock(c)) return false
         const toolName = (c as { tool_name?: string }).tool_name
         return (
-          toolName && !availableToolNames.has(normalizeLegacyToolName(toolName))
+          toolName && !availableToolNames.has(normalizeProviderMigrationToolName(toolName))
         )
       }),
   )
@@ -1471,7 +1470,7 @@ function stripUnavailableToolReferencesFromUserMessage(
           if (!isToolReferenceBlock(c)) return true
           const rawToolName = (c as { tool_name?: string }).tool_name
           if (!rawToolName) return true
-          const toolName = normalizeLegacyToolName(rawToolName)
+          const toolName = normalizeProviderMigrationToolName(rawToolName)
           const isAvailable = availableToolNames.has(toolName)
           if (!isAvailable) {
             logForDebugging(
@@ -2385,7 +2384,7 @@ type ToolResultContentItem = Extract<
  * search_result, document. All of these smoosh. tool_reference (beta) cannot
  * mix with other types - server ValueError - so we bail with null.
  *
- * - string/undefined content + all-text blocks - string (preserve legacy shape)
+ * - string/undefined content + all-text blocks - string (preserve historical shape)
  * - array content with tool_reference - null
  * - otherwise - array, with adjacent text merged (notebook.ts idiom)
  */
@@ -2410,7 +2409,7 @@ function smooshIntoToolResult(
   const allText = blocks.every(b => b.type === 'text')
   // Preserve string shape when existing was string/undefined and all incoming
   // blocks are text - this is the common case (hook reminders into Bash/Read
-  // results) and matches the legacy smoosh output shape.
+  // results) and matches the historical smoosh output shape.
   if (allText && (existing === undefined || typeof existing === 'string')) {
     const joined = [
       (existing ?? '').trim(),
@@ -2461,7 +2460,7 @@ export function mergeUserContentBlocks(
     return [...a, ...b]
   }
   if (!checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_chair_sermon')) {
-    // Legacy (ungated) smoosh: only string-content tool_result + all-text
+    // Historical (ungated) smoosh: only string-content tool_result + all-text
     // siblings - joined string. Matches pre-universal-smoosh behavior on main.
     // The precondition guarantees smooshIntoToolResult hits its string path
     // (no tool_reference bail, string output shape preserved).
@@ -3986,18 +3985,18 @@ You have exited auto mode. The user may now want to interact more directly. You 
     case 'hook_permission_decision':
       return []
   }
-  // Handle legacy attachments that were removed
+  // Handle historical attachments that were removed
   // IMPORTANT: if you remove an attachment type from normalizeAttachmentForAPI, make sure
   // to add it here to avoid errors from old --resume'd sessions that might still have
   // these attachment types.
-  const LEGACY_ATTACHMENT_TYPES = [
+  const HISTORICAL_ATTACHMENT_TYPES = [
     'autocheckpointing',
     'background_task_status',
     'todo',
     'task_progress', // removed in PR #19337
     'ultramemory', // removed in PR #23596
   ]
-  if (LEGACY_ATTACHMENT_TYPES.includes((attachment as { type: string }).type)) {
+  if (HISTORICAL_ATTACHMENT_TYPES.includes((attachment as { type: string }).type)) {
     return []
   }
   logAntError(

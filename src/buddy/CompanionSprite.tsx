@@ -368,11 +368,3 @@ function _temp2(s_0) {
 function _temp(s) {
   return s.companionReaction;
 }
-
-// V14 lifecycle shim: companionsprite
-export function processCompanionspriteLifecycle(input) {
-  void input
-  const state = 'companionsprite-state'
-  const lifecycle = 'companionsprite:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

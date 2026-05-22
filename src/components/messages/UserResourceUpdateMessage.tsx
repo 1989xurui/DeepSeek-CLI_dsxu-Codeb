@@ -118,11 +118,3 @@ export function UserResourceUpdateMessage(t0) {
 function _temp(update, i) {
   return <Box key={i}><Text><Text color="success">{REFRESH_ARROW}</Text>{" "}<Text dimColor={true}>{update.server}:</Text>{" "}<Text color="suggestion">{update.kind === "resource" ? formatUri(update.target) : update.target}</Text>{update.reason && <Text dimColor={true}> · {update.reason}</Text>}</Text></Box>;
 }
-
-// V14 lifecycle shim: userresourceupdatemessage
-export function processUserresourceupdatemessageLifecycle(input) {
-  void input
-  const state = 'userresourceupdatemessage-state'
-  const lifecycle = 'userresourceupdatemessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

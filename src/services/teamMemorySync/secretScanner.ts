@@ -353,12 +353,3 @@ export function getDsxuTeamMemorySecretScannerRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 lifecycle shim: secretscanner
-export function processSecretscannerLifecycle(input) {
-  void input
-  const state = 'secretscanner-state'
-  const lifecycle = 'secretscanner:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

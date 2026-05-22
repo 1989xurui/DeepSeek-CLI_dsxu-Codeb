@@ -150,12 +150,3 @@ export type LayoutNode = {
   free(): void
   freeRecursive(): void
 }
-
-
-// V14 lifecycle shim: node
-export function processNodeLifecycle(input) {
-  void input
-  const state = 'node-state'
-  const lifecycle = 'node:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

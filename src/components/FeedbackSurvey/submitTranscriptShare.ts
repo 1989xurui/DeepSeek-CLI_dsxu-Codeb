@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
 import { readFile, stat } from 'fs/promises'
 import type { Message } from '../../types/message.js'
@@ -21,7 +20,7 @@ type TranscriptShareResult = {
   transcriptId?: string
 }
 
-const LEGACY_TRANSCRIPT_SHARE_URL =
+const PROVIDER_MIGRATION_TRANSCRIPT_SHARE_URL =
   `https://api.${'anth' + 'ropic'}.com/api/` +
   `${'clau' + 'de'}_code_shared_session_transcripts`
 
@@ -90,7 +89,7 @@ export async function submitTranscriptShare(
     }
 
     const response = await axios.post(
-      LEGACY_TRANSCRIPT_SHARE_URL,
+      PROVIDER_MIGRATION_TRANSCRIPT_SHARE_URL,
       { content, appearance_id: appearanceId },
       {
         headers,

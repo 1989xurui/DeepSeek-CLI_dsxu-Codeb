@@ -325,11 +325,3 @@ export function GlimmerMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: glimmermessage
-export function processGlimmermessageLifecycle(input) {
-  void input
-  const state = 'glimmermessage-state'
-  const lifecycle = 'glimmermessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

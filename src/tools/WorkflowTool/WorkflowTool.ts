@@ -136,6 +136,21 @@ export const WorkflowTool = buildTool({
   name: WORKFLOW_TOOL_NAME,
   searchHint: 'run repeatable DSXU workflows',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Workflow Planner',
+    sideEffects: [
+      'context-policy-projection',
+      'workflow-prompt-rendering',
+    ],
+    permission: 'read-only workflow planning; execution remains through allowed tools',
+    evidence: [
+      'workflow definition source',
+      'executionPolicy output',
+      'executionStrategy output',
+      'argumentStatus output',
+    ],
+    uiProjection: 'workflow plan, allowed tools, and next action',
+  },
   async description() {
     return DESCRIPTION
   },

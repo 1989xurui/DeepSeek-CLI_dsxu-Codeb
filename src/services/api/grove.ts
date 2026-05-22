@@ -10,7 +10,12 @@ import { gracefulShutdown } from 'src/utils/gracefulShutdown.js'
 import { isEssentialTrafficOnly } from 'src/utils/privacyLevel.js'
 import { writeToStderr } from 'src/utils/process.js'
 import { getOauthConfig } from '../../constants/oauth.js'
+import { PROVIDER_MIGRATION_GROVE_NOTICE_PATH } from '../../constants/providerMigrationProtocol.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import {
   getAuthHeaders,
   getUserAgent,
@@ -21,6 +26,10 @@ import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 
 // Cache expiration: 24 hours
 const GROVE_CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
+
+function isProviderMigrationAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
 
 export type AccountSettings = {
   grove_enabled: boolean | null
@@ -52,6 +61,9 @@ export type ApiResult<T> = { success: true; data: T } | { success: false }
 export const getGroveSettings = memoize(
   async (): Promise<ApiResult<AccountSettings>> => {
     // Grove is a notification feature; during an outage, skipping it is correct.
+    if (!isProviderMigrationAccountApiAllowed()) {
+      return { success: false }
+    }
     if (isEssentialTrafficOnly()) {
       return { success: false }
     }
@@ -88,6 +100,7 @@ export const getGroveSettings = memoize(
  * Mark that the Grove notice has been viewed by the user
  */
 export async function markGroveNoticeViewed(): Promise<void> {
+  if (!isProviderMigrationAccountApiAllowed()) return
   try {
     await withOAuth401Retry(() => {
       const authHeaders = getAuthHeaders()
@@ -120,6 +133,7 @@ export async function markGroveNoticeViewed(): Promise<void> {
 export async function updateGroveSettings(
   groveEnabled: boolean,
 ): Promise<void> {
+  if (!isProviderMigrationAccountApiAllowed()) return
   try {
     await withOAuth401Retry(() => {
       const authHeaders = getAuthHeaders()
@@ -155,6 +169,10 @@ export async function updateGroveSettings(
  * false and the Grove dialog won't show until the next session.
  */
 export async function isQualifiedForGrove(): Promise<boolean> {
+  if (!isProviderMigrationAccountApiAllowed()) {
+    return false
+  }
+
   if (!isConsumerSubscriber()) {
     return false
   }
@@ -232,6 +250,9 @@ async function fetchAndStoreGroveConfig(accountId: string): Promise<void> {
 export const getGroveNoticeConfig = memoize(
   async (): Promise<ApiResult<GroveConfig>> => {
     // Grove is a notification feature; during an outage, skipping it is correct.
+    if (!isProviderMigrationAccountApiAllowed()) {
+      return { success: false }
+    }
     if (isEssentialTrafficOnly()) {
       return { success: false }
     }
@@ -242,7 +263,7 @@ export const getGroveNoticeConfig = memoize(
           throw new Error(`Failed to get auth headers: ${authHeaders.error}`)
         }
         return axios.get<GroveConfig>(
-          `${getOauthConfig().BASE_API_URL}${LEGACY_GROVE_PATH}`,
+          `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_GROVE_NOTICE_PATH}`,
           {
             headers: {
               ...authHeaders.headers,
@@ -321,6 +342,8 @@ export function calculateShouldShowGrove(
 }
 
 export async function checkGroveForNonInteractive(): Promise<void> {
+  if (!isProviderMigrationAccountApiAllowed()) return
+
   const [settingsResult, configResult] = await Promise.all([
     getGroveSettings(),
     getGroveNoticeConfig(),

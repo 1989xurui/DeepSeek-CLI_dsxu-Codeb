@@ -56,6 +56,36 @@ export type RefreshActivePluginsResult = {
   pluginCommands: Command[]
 }
 
+export function getDsxuPluginRefreshRuntimeProfile(): {
+  runtime: 'DSXU Plugin Refresh'
+  owner: 'DSXU Plugin Runtime'
+  layers: readonly string[]
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plugin Refresh',
+    owner: 'DSXU Plugin Runtime',
+    layers: [
+      'settings intent',
+      'cache/materialization',
+      'active AppState components',
+    ],
+    activationEvidence: [
+      'refreshActivePlugins clears plugin caches before loading fresh components',
+      'loadAllPlugins warms cache-only consumers before commands and agents are read',
+      'plugin MCP and LSP server counts are loaded before AppState is swapped',
+      'pluginReconnectKey increments so existing MCP connection manager owns reconnect',
+      'reinitializeLspServerManager keeps LSP plugin config under the LSP owner',
+    ],
+    releaseRiskControls: [
+      'plugin refresh does not create a second MCP runtime',
+      'plugin refresh does not create a second Agent orchestrator',
+      'plugin hooks are loaded through the registered hooks state, not hidden execution',
+    ],
+  }
+}
+
 /**
  * Refresh all active plugin components: commands, agents, hooks, MCP-reconnect
  * trigger, AppState plugin arrays. Clears ALL plugin caches (unlike the old

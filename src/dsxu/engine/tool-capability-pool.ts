@@ -1,5 +1,4 @@
 import type { ToolDefinition } from './types'
-import { getCoreTools, getReadOnlyTools } from './builtin-tools'
 import { getExtendedTools } from './extended-tools'
 import { getDebugTools } from './debug-tools'
 import { BlastRadiusTool } from './blast-radius'
@@ -17,9 +16,13 @@ export type ToolCapabilityPoolName =
 export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinition[] {
   switch (name) {
     case 'core':
-      return getCoreTools()
+      // V20: core tools are registered through engine-tool-adapter.ts over
+      // src/tools/* mature owners. The old builtin core pool is legacy
+      // recovery/test surface and must not be injected through capability pools.
+      return []
     case 'read_only':
-      return getReadOnlyTools()
+      // Same rule as core: Read/Grep/Glob must come from mainline adapters.
+      return []
     case 'extended':
       return getExtendedTools()
     case 'debug':
@@ -28,7 +31,6 @@ export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinit
       return [BlastRadiusTool, AccessibilityTreeTool]
     case 'full_absorb':
       return dedupeToolsByName([
-        ...getCoreTools(),
         ...getExtendedTools(),
         ...getDebugTools(),
         BlastRadiusTool,

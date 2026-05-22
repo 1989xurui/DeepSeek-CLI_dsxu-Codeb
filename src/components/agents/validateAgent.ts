@@ -107,12 +107,3 @@ export function validateAgent(
     warnings,
   }
 }
-
-
-// V14 lifecycle shim: validateagent
-export function processValidateagentLifecycle(input) {
-  void input
-  const state = 'validateagent-state'
-  const lifecycle = 'validateagent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

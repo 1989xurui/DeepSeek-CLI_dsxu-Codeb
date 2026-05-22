@@ -58,11 +58,3 @@ export function FlashingChar(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: flashingchar
-export function processFlashingcharLifecycle(input) {
-  void input
-  const state = 'flashingchar-state'
-  const lifecycle = 'flashingchar:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

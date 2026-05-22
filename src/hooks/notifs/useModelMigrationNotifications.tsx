@@ -7,7 +7,7 @@ import { useStartupNotification } from './useStartupNotification.js'
 // a notification if the write happened within the last 3s of this launch.
 // Future model migrations: add an entry to MIGRATIONS below.
 const MIGRATIONS: ((config: GlobalConfig) => Notification | undefined)[] = [
-  // Legacy standard-model migration for pro/max/team premium users.
+  // Provider-migration standard-model migration for premium users.
   config => {
     if (!recent(configNumber(config, ['son', 'net45To46MigrationTimestamp']))) {
       return
@@ -20,27 +20,27 @@ const MIGRATIONS: ((config: GlobalConfig) => Notification | undefined)[] = [
       timeoutMs: 3000,
     }
   },
-  // Legacy high-capacity migration. Both paths land on the current
+  // Provider-migration high-capacity migration. Both paths land on the current
   // high-capacity default for first-party compatibility.
   config => {
-    const legacyRemapTimestamp = configNumber(config, [
+    const providerMigrationRemapTimestamp = configNumber(config, [
       'legacy',
       'Op',
       'usMigrationTimestamp',
     ])
     const timestamp =
-      legacyRemapTimestamp ??
+      providerMigrationRemapTimestamp ??
       configNumber(config, ['op', 'usProMigrationTimestamp'])
-    const isLegacyRemap = Boolean(legacyRemapTimestamp)
+    const isProviderMigrationRemap = Boolean(providerMigrationRemapTimestamp)
     if (!recent(timestamp)) return
     return {
       key: 'high-capacity-model-update',
-      text: isLegacyRemap
-        ? 'Model updated to the current high-capacity coding model; set DSXU_CODE_DISABLE_LEGACY_MODEL_REMAP=1 to opt out'
+      text: isProviderMigrationRemap
+        ? 'Model updated to the current high-capacity coding model; set DSXU_CODE_DISABLE_PROVIDER_MIGRATION_MODEL_REMAP=1 to opt out'
         : 'Model updated to the current high-capacity coding model',
       color: 'suggestion',
       priority: 'high',
-      timeoutMs: isLegacyRemap ? 8000 : 3000,
+      timeoutMs: isProviderMigrationRemap ? 8000 : 3000,
     }
   },
 ]
@@ -71,12 +71,4 @@ function configNumber(
 ): number | undefined {
   const value = config[keyParts.join('') as keyof GlobalConfig]
   return typeof value === 'number' ? value : undefined
-}
-
-// V14 lifecycle shim: usemodelmigrationnotifications
-export function processUsemodelmigrationnotificationsLifecycle(input) {
-  void input
-  const state = 'usemodelmigrationnotifications-state'
-  const lifecycle = 'usemodelmigrationnotifications:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

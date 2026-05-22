@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import {
   logEvent,
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -215,7 +214,7 @@ import {
   getEffectiveContextWindowSize,
   isAutoCompactEnabled,
 } from '../services/compact/autoCompact.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   hasInstructionsLoadedHook,
   executeInstructionsLoadedHooks,
@@ -2586,7 +2585,7 @@ export function extractMcpResourceMentions(content: string): string[] {
 }
 export function extractAgentMentions(content: string): string[] {
   // Extract agent mentions in two formats:
-  // 1. @agent-<agent-type> (legacy/manual typing)
+  // 1. @agent-<agent-type> (manual/historical typing)
   //    Example: "@agent-code-elegance-refiner" - "agent-code-elegance-refiner"
   // 2. @"<agent-type> (agent)" (from autocomplete selection)
   //    Example: '@"code-reviewer (agent)"' - "code-reviewer"

@@ -11,9 +11,9 @@ export const SKILL_MODEL_VARS = {
 
 export const SKILL_PROMPT = `# DSXU API
 
-Use this skill when the user is building, debugging, or reviewing code that calls the DSXU/DeepSeek API, OpenAI-compatible client libraries, DSXU tool calling, prompt cache, FIM, thinking/reasoning mode, or the DSXU agent runtime.
+Use this skill when the user is building, debugging, or reviewing code that calls the DSXU/DeepSeek API, chat-completions-compatible client libraries, DSXU tool calling, prompt cache, FIM, thinking/reasoning mode, or the DSXU agent runtime.
 
-Prefer DSXU's OpenAI-compatible route unless the repository already has a stronger local abstraction. Preserve existing project style and tests. When code touches API cost, cache, usage, or retries, verify with a smoke test that returns nonzero usage or an explicit mocked usage assertion.
+Prefer DSXU's chat-completions-compatible route unless the repository already has a stronger local abstraction. Preserve existing project style and tests. When code touches API cost, cache, usage, or retries, verify with a smoke test that returns nonzero usage or an explicit mocked usage assertion.
 
 ## Reading Guide
 Choose the docs for the detected language, then include shared docs for model choice, prompt cache, tool use, and live sources.
@@ -29,7 +29,7 @@ Use WebFetch only when the user asks for current docs or when local docs are ins
 
 const COMMON_README = `# DSXU API Quickstart
 
-Use an OpenAI-compatible client with the DSXU/DeepSeek base URL and a DSXU provider key. Keep the base URL and key in configuration or environment variables.
+Use a chat-completions-compatible client with the DSXU/DeepSeek base URL and a DSXU provider key. Keep the base URL and key in configuration or environment variables.
 
 Recommended defaults:
 - General complex coding: {{PRO_ID}}
@@ -117,12 +117,4 @@ export const SKILL_FILES: Record<string, string> = {
   'typescript/dsxu-api/files-api.md': FILES_API,
   'typescript/dsxu-api/streaming.md': STREAMING,
   'typescript/dsxu-api/tool-use.md': TOOL_USE,
-}
-
-// V14 lifecycle shim: dsxuapicontent
-export function processDsxuApiContentLifecycle(input: unknown) {
-  void input
-  const state = 'dsxuapicontent-state'
-  const lifecycle = 'dsxuapicontent:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

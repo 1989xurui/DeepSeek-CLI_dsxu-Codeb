@@ -2,12 +2,12 @@ import { readFileSync } from 'fs'
 import { createInterface } from 'readline'
 
 type OutputFormat = 'text' | 'json'
-const PROVIDER_SDK_PACKAGE = `@${'anth' + 'ropic'}-ai/sdk`
-const LEGACY_PROVIDER_AUTH_TOKEN_ENV =
+const PROVIDER_MIGRATION_SOURCE_SDK_PACKAGE = `@${'anth' + 'ropic'}-ai/sdk`
+const PROVIDER_MIGRATION_AUTH_TOKEN_ENV =
   `${'ANTH' + 'ROPIC'}_AUTH_TOKEN` as keyof NodeJS.ProcessEnv
 
 async function createProviderClient(options: Record<string, unknown>) {
-  const { default: ProviderClient } = await import(PROVIDER_SDK_PACKAGE)
+  const { default: ProviderClient } = await import(PROVIDER_MIGRATION_SOURCE_SDK_PACKAGE)
   return new ProviderClient(options)
 }
 
@@ -125,7 +125,7 @@ function getApiKeyFromEnv(): string | undefined {
 function getAuthTokenFromEnv(): string | undefined {
   return (
     process.env.DSXU_CODE_OAUTH_TOKEN ||
-    process.env[LEGACY_PROVIDER_AUTH_TOKEN_ENV]
+    process.env[PROVIDER_MIGRATION_AUTH_TOKEN_ENV]
   )
 }
 

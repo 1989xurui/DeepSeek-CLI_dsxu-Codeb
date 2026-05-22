@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // React hook for hold-to-talk voice input using DSXU voice-stream STT.
 //
 // Hold the keybinding to record; release to stop and submit.  Auto-repeat
@@ -36,7 +35,7 @@ const DEFAULT_STT_LANGUAGE = 'en'
 // the voice_stream Deepgram backend.  Keys must be lowercase.
 //
 // This list must be a SUBSET of the server-side supported_language_codes
-// allowlist (GrowthBook: speech_to_text_voice_stream_config).
+// allowlist (feature flag provider: speech_to_text_voice_stream_config).
 // If the CLI sends a code the server rejects, the WebSocket closes with
 // 1008 "Unsupported language" and voice breaks.  Unsupported languages
 // fall back to DEFAULT_STT_LANGUAGE so recording still works.
@@ -77,7 +76,7 @@ const LANGUAGE_NAME_TO_CODE: Record<string, string> = {
   norsk: 'no',
 }
 
-// Subset of the GrowthBook speech_to_text_voice_stream_config allowlist.
+// Subset of the feature flag provider speech_to_text_voice_stream_config allowlist.
 // Sending a code not in the server allowlist closes the connection.
 const SUPPORTED_LANGUAGE_CODES = new Set([
   'en',

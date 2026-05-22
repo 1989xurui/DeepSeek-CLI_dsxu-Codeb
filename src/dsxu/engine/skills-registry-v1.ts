@@ -103,6 +103,7 @@ export type BatchSkillTask = {
   id: string
   goal: string
   dependsOn?: string[]
+  readOnly?: boolean
 }
 
 export type BatchSkillExecutionResult = {
@@ -110,10 +111,22 @@ export type BatchSkillExecutionResult = {
   output: {
     plan: {
       mode: 'parallel' | 'serial'
+      tasks: BatchSkillTask[]
       topologicalOrder: string[]
       hasDependencyCycle: boolean
     }
   }
+}
+
+export type CriticalSkillExecutionInput = {
+  skillId: string
+  payload: Record<string, any>
+}
+
+export type CriticalSkillExecutionResult = {
+  ok: boolean
+  diagnostics: string[]
+  output: Record<string, any>
 }
 
 export type IterationGuardInput = {
@@ -338,9 +351,138 @@ export function executeBatchSkill(input: {
     output: {
       plan: {
         mode: input.mode,
+        tasks: input.tasks,
         topologicalOrder: order,
         hasDependencyCycle,
       },
+    },
+  }
+}
+
+export function executeSkill(input: CriticalSkillExecutionInput): CriticalSkillExecutionResult {
+  switch (input.skillId) {
+    case 'batch': {
+      const tasks = Array.isArray(input.payload.tasks)
+        ? normalizeBatchSkillTasks(input.payload.tasks)
+        : []
+      const mode = input.payload.mode === 'serial' ? 'serial' : 'parallel'
+      const result = executeBatchSkill({ mode, tasks })
+
+      return {
+        ok: result.ok,
+        diagnostics: result.ok ? [] : ['batch-plan-dependency-cycle'],
+        output: result.output,
+      }
+    }
+    case 'debug':
+      return executeDebugSkill(input.payload)
+    case 'simplify':
+      return executeSimplifySkill(input.payload)
+    case 'verify':
+      return executeVerifySkill(input.payload)
+    default:
+      return {
+        ok: false,
+        diagnostics: [`unknown-skill:${input.skillId}`],
+        output: {
+          skillId: input.skillId,
+          reason: 'skill-not-owned-by-critical-registry',
+        },
+      }
+  }
+}
+
+function normalizeBatchSkillTasks(tasks: any[]): BatchSkillTask[] {
+  return tasks
+    .map((task, index) => {
+      const id = typeof task?.id === 'string' && task.id.length > 0 ? task.id : `task-${index + 1}`
+      const goal = typeof task?.goal === 'string' ? task.goal : ''
+      const dependsOn = Array.isArray(task?.dependsOn)
+        ? task.dependsOn.filter((dependency: unknown): dependency is string => typeof dependency === 'string')
+        : undefined
+      const readOnly = task?.readOnly === true ? true : undefined
+
+      return {
+        id,
+        goal,
+        ...(dependsOn && dependsOn.length > 0 ? { dependsOn } : {}),
+        ...(readOnly === true ? { readOnly } : {}),
+      }
+    })
+    .filter(task => task.goal.length > 0)
+}
+
+function executeDebugSkill(payload: Record<string, any>): CriticalSkillExecutionResult {
+  const errorText = String(payload.error ?? payload.message ?? '').trim()
+  const diagnostics = new Set<string>()
+  const normalizedError = errorText.toLowerCase()
+
+  if (normalizedError.includes('eaddrinuse') || normalizedError.includes('address already in use')) {
+    diagnostics.add('port-conflict')
+  }
+  if (normalizedError.includes('timeout') || normalizedError.includes('timed out')) {
+    diagnostics.add('timeout')
+  }
+  if (normalizedError.includes('permission') || normalizedError.includes('eacces')) {
+    diagnostics.add('permission-denied')
+  }
+  if (diagnostics.size === 0 && errorText.length > 0) {
+    diagnostics.add('unclassified-error')
+  }
+
+  return {
+    ok: errorText.length > 0,
+    diagnostics: Array.from(diagnostics),
+    output: {
+      error: errorText,
+      diagnosticCount: diagnostics.size,
+      nextAction:
+        diagnostics.has('port-conflict')
+          ? 'inspect-listener-and-retry-on-free-port'
+          : diagnostics.has('timeout')
+            ? 'capture-slow-boundary-and-retry-with-trace'
+            : diagnostics.size > 0
+              ? 'inspect-failing-boundary'
+              : 'provide-error-text',
+    },
+  }
+}
+
+function executeSimplifySkill(payload: Record<string, any>): CriticalSkillExecutionResult {
+  const text = String(payload.text ?? '')
+  const simplified = text
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimEnd()
+
+  return {
+    ok: simplified.length <= text.length,
+    diagnostics: simplified.length < text.length ? ['text-simplified'] : ['text-already-simple'],
+    output: {
+      text: simplified,
+      beforeLength: text.length,
+      afterLength: simplified.length,
+      removedCharacters: Math.max(0, text.length - simplified.length),
+    },
+  }
+}
+
+function executeVerifySkill(payload: Record<string, any>): CriticalSkillExecutionResult {
+  const checks = Array.isArray(payload.checks) ? payload.checks : []
+  const normalizedChecks = checks.map((check, index) => ({
+    name: typeof check?.name === 'string' && check.name.length > 0 ? check.name : `check-${index + 1}`,
+    passed: check?.passed === true,
+    details: typeof check?.details === 'string' ? check.details : undefined,
+  }))
+  const failedChecks = normalizedChecks.filter(check => !check.passed)
+
+  return {
+    ok: failedChecks.length === 0,
+    diagnostics: failedChecks.map(check => `failed:${check.name}`),
+    output: {
+      totalChecks: normalizedChecks.length,
+      passedChecks: normalizedChecks.filter(check => check.passed).map(check => check.name),
+      failedChecks,
     },
   }
 }

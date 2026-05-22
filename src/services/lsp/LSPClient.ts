@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: DSXU-owned capability is active in DSXU mainline.
 import { type ChildProcess, spawn } from 'child_process'
 import {
   createMessageConnection,

@@ -289,11 +289,3 @@ function FileStats(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: difffilelist
-export function processDifffilelistLifecycle(input) {
-  void input
-  const state = 'difffilelist-state'
-  const lifecycle = 'difffilelist:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

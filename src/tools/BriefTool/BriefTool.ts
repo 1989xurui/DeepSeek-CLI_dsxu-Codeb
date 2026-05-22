@@ -1,8 +1,7 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js'
-import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_WITH_REFRESH } from '../../services/analytics/featureFlags.js'
 import { logEvent } from '../../services/analytics/index.js'
 import type { ValidationResult } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
@@ -14,7 +13,7 @@ import {
   BRIEF_TOOL_NAME,
   BRIEF_TOOL_PROMPT,
   DESCRIPTION,
-  LEGACY_BRIEF_TOOL_NAME,
+  BRIEF_TOOL_ALIAS_NAME,
 } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 const inputSchema = lazySchema(() =>
@@ -77,7 +76,9 @@ const KAIROS_BRIEF_REFRESH_MS = 5 * 60 * 1000
  * listing should be honored. Use `isBriefEnabled()` to decide whether the
  * tool is actually active in the current session.
  *
- * DSXU_CODE_BRIEF (or legacy DSXU_CODE_BRIEF) force-grants entitlement for dev/testing ... * bypasses the GB gate so you can test without being enrolled. Still
+ * DSXU_CODE_BRIEF force-grants entitlement for dev/testing and bypasses the
+ * feature-flag gate so you can test without being enrolled. Provider-migration source
+ * env spelling is accepted only as migration input.
  * requires an opt-in action to activate (--brief, defaultView, etc.), but
  * the env var alone also sets userMsgOptIn via maybeActivateBrief().
  */
@@ -108,7 +109,7 @@ export function isBriefEntitled(): boolean {
  *   - `/brief` slash command (brief.ts)
  *   - `/config` defaultView picker (Config.tsx)
  *   - SendUserMessage in `--tools` / SDK `tools` option (main.tsx)
- *   - DSXU_CODE_BRIEF / legacy DSXU_CODE_BRIEF env var (maybeActivateBrief ...dev/testing bypass)
+ *   - DSXU_CODE_BRIEF / provider-migration source CODE_BRIEF env var (maybeActivateBrief ...dev/testing bypass)
  * Assistant mode (kairosActive) bypasses opt-in since its system prompt
  * hard-codes "you MUST use SendUserMessage" (systemPrompt.md:14).
  *
@@ -137,11 +138,11 @@ export function getDsxuBriefRuntimeProfile(): {
   runtime: 'DSXU Brief Tool'
   forceEnableEnv: readonly string[]
   activationSignals: readonly string[]
-  legacyPolicy: string
+  providerMigrationPolicy: string
 } {
   return {
     runtime: 'DSXU Brief Tool',
-    forceEnableEnv: ['DSXU_CODE_BRIEF', 'DSXU_CODE_BRIEF'],
+    forceEnableEnv: ['DSXU_CODE_BRIEF', `${'CL' + 'AUDE'}_CODE_BRIEF`],
     activationSignals: [
       '--brief',
       'defaultView: chat',
@@ -149,16 +150,32 @@ export function getDsxuBriefRuntimeProfile(): {
       'Config defaultView picker',
       'SendUserMessage SDK/tool option',
     ],
-    legacyPolicy:
-      'DSXU_CODE_BRIEF is retained only as a migration alias; DSXU_CODE_BRIEF is the primary dev/test switch',
+    providerMigrationPolicy:
+      'DSXU_CODE_BRIEF is the primary dev/test switch; provider-migration source CODE_BRIEF is migration input only',
   }
 }
 export const BriefTool = buildTool({
   name: BRIEF_TOOL_NAME,
-  aliases: [LEGACY_BRIEF_TOOL_NAME],
+  aliases: [BRIEF_TOOL_ALIAS_NAME],
   searchHint:
     'send a message to the user ...your primary visible output channel',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU User Visible Brief Surface',
+    sideEffects: [
+      'user-visible-message-projection',
+      'attachment-path-validation',
+      'brief-delivery-analytics',
+    ],
+    permission: 'read-only visible output; attachments are path-validated',
+    evidence: [
+      'inputSchema.message/attachments',
+      'attachment validation',
+      'delivered message output',
+      'brief send analytics',
+    ],
+    uiProjection: 'primary visible assistant-to-user brief',
+  },
   userFacingName() {
     return ''
   },

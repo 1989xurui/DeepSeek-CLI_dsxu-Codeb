@@ -39,12 +39,3 @@ export function useIdeLogging(mcpClients: MCPServerConnection[]): void {
     }
   }, [mcpClients])
 }
-
-
-// V14 lifecycle shim: useidelogging
-export function processUseideloggingLifecycle(input) {
-  void input
-  const state = 'useidelogging-state'
-  const lifecycle = 'useidelogging:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

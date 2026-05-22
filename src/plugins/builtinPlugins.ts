@@ -159,14 +159,6 @@ function skillDefinitionToCommand(definition: BundledSkillDefinition): Command {
 }
 
 
-// V14 lifecycle shim: builtinplugins
-export function processBuiltinpluginsLifecycle(input) {
-  void input
-  const state = 'builtinplugins-state'
-  const lifecycle = 'builtinplugins:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuBuiltinPluginsRuntimeProfile() {
   return {
     runtime: 'DSXU Built-in Plugin Registry',

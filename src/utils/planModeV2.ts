@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { getRateLimitTier, getSubscriptionType } from './auth.js'
 import { getDsxuCodeEnv, isEnvDefinedFalsy, isEnvTruthy } from './envUtils.js'
 export function getPlanModeV2AgentCount(): number {

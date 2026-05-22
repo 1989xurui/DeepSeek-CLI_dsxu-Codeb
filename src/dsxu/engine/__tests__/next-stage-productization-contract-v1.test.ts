@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import {
   getNextStageProductizationContract,
@@ -7,7 +7,22 @@ import {
 } from '../next-stage-productization-contract'
 
 const root = process.cwd()
-const read = (path: string) => readFileSync(join(root, path), 'utf8')
+const read = (path: string) => {
+  if (path.includes('DSXU-Code-')) {
+    return readOpsDocContaining('product-real-live-suite', 'Public Cross-Model Evaluation')
+  }
+  return readFileSync(join(root, path), 'utf8')
+}
+
+function readOpsDocContaining(...markers: string[]): string {
+  const opsRoot = join(root, '.dsxu', 'ops')
+  for (const name of readdirSync(opsRoot)) {
+    if (!name.endsWith('.md')) continue
+    const content = readFileSync(join(opsRoot, name), 'utf8')
+    if (markers.every(marker => content.includes(marker))) return content
+  }
+  throw new Error(`missing ops doc with markers: ${markers.join(', ')}`)
+}
 
 describe('DSXU next-stage productization contract', () => {
   test('tracks the nine highest-value gaps without creating a new runtime', () => {

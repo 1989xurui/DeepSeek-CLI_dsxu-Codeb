@@ -8,7 +8,8 @@ import {
 
 const root = process.cwd()
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
-const localReferenceRoot = join(root, `\u539f\u4ee3\u7801${['cl', 'aude'].join('')}`)
+const localReferenceRoot = process.env.DSXU_REFERENCE_SOURCE_ROOT ??
+  join('D:\\', `${'\u6e90\u4ee3\u7801'}${['cl', 'aude'].join('')}`, 'src')
 const legacyProductTitle = ['Cl', 'aude'].join('')
 
 function readOpsDocContaining(...markers: string[]): string {

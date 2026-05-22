@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "dsxu.v20.ogr12.replace-delete-mutation-review.v1",
+  "generatedAt": "2026-05-14T15:50:28.089Z",
+  "total": 1,
+  "byPacket": {
+    "OGR12-delete-duplicate-desktop-deeplink-helper": 1
+  },
+  "byFamily": {
+    "utils-no-import": 1
+  },
+  "byStatus": {
+    "D": 1
+  },
+  "resolverFix": "based on corrected .js specifier to .ts/.tsx import resolution and current git status",
+  "rule": "No-import OGR-12 helpers cannot remain in shared utilities. They are delete/move candidates unless owner/Git review proves hidden use and maps them to a named owner."
+}

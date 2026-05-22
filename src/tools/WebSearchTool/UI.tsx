@@ -98,19 +98,3 @@ export function getToolUseSummary(input: Partial<{
   }
   return truncate(input.query, TOOL_SUMMARY_MAX_LENGTH);
 }
-
-// V14 strict lifecycle shim: tools-WebSearchTool-UI
-export function processToolsWebSearchToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-WebSearchTool-UI-state'
-  const lifecycle = 'tools-WebSearchTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsWebSearchToolUIStrict(input) {
-  return processToolsWebSearchToolUIStrictLifecycle(input)
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useKeybindings } from '../keybindings/useKeybinding.js'
 import { type ExitState, useExitOnCtrlCD } from './useExitOnCtrlCD.js'
 

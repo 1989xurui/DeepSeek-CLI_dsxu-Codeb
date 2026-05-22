@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { DiagLogLevel, diag, trace } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 // OTLP/Prometheus exporters are dynamically imported inside the protocol
@@ -44,7 +43,7 @@ import {
   getOtelHeadersFromHelper,
   getSubscriptionType,
   is1PApiCustomer,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 
@@ -341,7 +340,7 @@ function isBigQueryMetricsEnabled() {
   // 3. DSXU for Teams users
   const subscriptionType = getSubscriptionType()
   const isC4EOrTeamUser =
-    isLegacyCloudSubscriber() &&
+    isProviderSubscriptionAccount() &&
     (subscriptionType === 'enterprise' || subscriptionType === 'team')
 
   return is1PApiCustomer() || isC4EOrTeamUser

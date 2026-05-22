@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Minimal cron expression parsing and next-run calculation.
 //
 // Supports the standard 5-field cron subset:

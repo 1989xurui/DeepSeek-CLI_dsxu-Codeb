@@ -28,12 +28,3 @@ export const COMMON_PARAMETERS: ReadonlySet<string> = new Set([
   ...COMMON_SWITCHES,
   ...COMMON_VALUE_PARAMS,
 ])
-
-
-// V14 lifecycle shim: commonparameters
-export function processCommonparametersLifecycle(input) {
-  void input
-  const state = 'commonparameters-state'
-  const lifecycle = 'commonparameters:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

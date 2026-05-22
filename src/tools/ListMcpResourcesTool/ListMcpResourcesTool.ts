@@ -51,6 +51,20 @@ export const ListMcpResourcesTool = buildTool({
   name: LIST_MCP_RESOURCES_TOOL_NAME,
   searchHint: 'list resources from connected MCP servers',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU MCP Resource Adapter',
+    sideEffects: [
+      'connected-mcp-resource-list',
+      'mcp-client-reconnect-when-needed',
+    ],
+    permission: 'read-only MCP resource listing through connected MCP clients',
+    evidence: [
+      'inputSchema.server',
+      'connected MCP client state',
+      'resource uri/name/server output',
+    ],
+    uiProjection: 'MCP resource list and server summary',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -121,12 +135,3 @@ export const ListMcpResourcesTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: listmcpresourcestool
-export function processListmcpresourcestoolLifecycle(input) {
-  void input
-  const state = 'listmcpresourcestool-state'
-  const lifecycle = 'listmcpresourcestool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -3,8 +3,8 @@ import { join } from 'path'
 import { getDsxuCodeEnv, isDsxuRuntimeMode } from '../envUtils.js'
 import { getPlatform } from '../platform.js'
 
-const LEGACY_CODE_PRODUCT = 'Clau' + 'deCode'
-const LEGACY_CODE_ETC_DIR = '/etc/' + ('clau' + 'de-code')
+const PROVIDER_MIGRATION_SOURCE_CODE_PRODUCT = 'Clau' + 'deCode'
+const PROVIDER_MIGRATION_SOURCE_CODE_ETC_DIR = '/etc/' + ('clau' + 'de-code')
 
 /**
  * Get the path to the managed settings directory based on the current platform.
@@ -28,11 +28,11 @@ export const getManagedFilePath = memoize(function (): string {
 
     switch (getPlatform()) {
     case 'macos':
-      return `/Library/Application Support/${LEGACY_CODE_PRODUCT}`
+      return `/Library/Application Support/${PROVIDER_MIGRATION_SOURCE_CODE_PRODUCT}`
     case 'windows':
-      return `C:\\Program Files\\${LEGACY_CODE_PRODUCT}`
+      return `C:\\Program Files\\${PROVIDER_MIGRATION_SOURCE_CODE_PRODUCT}`
     default:
-      return LEGACY_CODE_ETC_DIR
+      return PROVIDER_MIGRATION_SOURCE_CODE_ETC_DIR
   }
 })
 

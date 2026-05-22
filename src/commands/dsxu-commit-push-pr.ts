@@ -49,7 +49,7 @@ You are running inside the DSXU coding control plane. Prepare a safe branch, com
 5. If a PR already exists, update it; otherwise create a PR.
 6. Return the PR URL and the commit hash.
 
-Use heredoc syntax for commit and PR body. Do not mention legacy provider names; this is a DSXU workflow.${extra}`
+Use heredoc syntax for commit and PR body. Do not mention provider-migration source names; this is a DSXU workflow.${extra}`
 }
 
 const command = {

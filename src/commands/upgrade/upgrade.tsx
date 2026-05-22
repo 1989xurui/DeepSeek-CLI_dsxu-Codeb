@@ -2,13 +2,13 @@
 import type { LocalJSXCommandContext } from '../../commands.js';
 import { getOauthProfileFromOauthToken } from '../../services/oauth/getOauthProfile.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
-import { isDSXUAISubscriber } from '../../utils/auth.js';
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js';
+import { isProviderSubscriptionAccount } from '../../utils/auth.js';
+import { getProviderControlTokens } from '../../services/auth/dsxuProviderControlAuth.js';
 import { openBrowser } from '../../utils/browser.js';
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js';
 import { logError } from '../../utils/log.js';
 import { Login } from '../login/login.js';
-const LEGACY_CLOUD_UPGRADE_URL = `https://${'cl' + 'aude'}.ai/upgrade/max`;
+const PROVIDER_MIGRATION_CLOUD_UPGRADE_URL = `https://${'cl' + 'aude'}.ai/upgrade/max`;
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode | null> {
   try {
     if (isDsxuRuntimeMode()) {
@@ -16,8 +16,8 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
       return null;
     }
     // Check if user is already on the highest Max plan (20x)
-    if (isDSXUAISubscriber()) {
-      const tokens = getCompatProviderTokens();
+    if (isProviderSubscriptionAccount()) {
+      const tokens = getProviderControlTokens();
       let isMax20x = false;
       if (tokens?.subscriptionType && tokens?.rateLimitTier) {
         isMax20x = tokens.subscriptionType === 'max' && tokens.rateLimitTier === 'default_dsxu_max_20x';
@@ -30,7 +30,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
         return null;
       }
     }
-    const url = LEGACY_CLOUD_UPGRADE_URL;
+    const url = PROVIDER_MIGRATION_CLOUD_UPGRADE_URL;
     await openBrowser(url);
     return <Login startingMessage={'Starting new login following /upgrade. Exit with Ctrl-C to use existing account.'} onDone={success => {
       context.onChangeAPIKey();
@@ -38,15 +38,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     }} />;
   } catch (error) {
     logError(error as Error);
-    setTimeout(onDone, 0, `Failed to open browser. Please visit ${LEGACY_CLOUD_UPGRADE_URL} to upgrade.`);
+    setTimeout(onDone, 0, `Failed to open browser. Please visit ${PROVIDER_MIGRATION_CLOUD_UPGRADE_URL} to upgrade.`);
   }
   return null;
-}
-
-// V14 lifecycle shim: upgrade
-export function processUpgradeLifecycle(input) {
-  void input
-  const state = 'upgrade-state'
-  const lifecycle = 'upgrade:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

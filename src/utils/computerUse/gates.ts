@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { CoordinateMode, CuSubGates } from '@ant/computer-use-mcp/types'
 
-import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getDynamicConfig_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { getSubscriptionType } from '../auth.js'
 import { isEnvTruthy } from '../envUtils.js'
 

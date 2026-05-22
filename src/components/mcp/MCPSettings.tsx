@@ -2,11 +2,11 @@ import { c as _c } from "react/compiler-runtime";
 import React, { useEffect, useMemo } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import {
-  LEGACY_CLOUD_MCP_TRANSPORT,
-  isLegacyCloudMcpTransport,
-} from '../../constants/legacyProviderProtocol.js';
+  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  isProviderMigrationMcpTransport,
+} from '../../constants/providerMigrationProtocol.js';
 import { DsxuMcpAuthProvider } from '../../services/mcp/auth.js';
-import type { McpHTTPServerConfig, McpLegacyCloudProxyServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
+import type { McpHTTPServerConfig, McpProviderMigrationProxyServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
 import { extractAgentMcpServers, filterToolsByServer } from '../../services/mcp/utils.js';
 import { useAppState } from '../../state/AppState.js';
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js';
@@ -76,7 +76,7 @@ export function MCPSettings(t0) {
           const scope = client_0.config.scope;
           const isSSE = client_0.config.type === "sse";
           const isHTTP = client_0.config.type === "http";
-          const isLegacyCloudConnector = isLegacyCloudMcpTransport(client_0.config.type);
+          const isProviderMigrationConnector = isProviderMigrationMcpTransport(client_0.config.type);
           let isAuthenticated = undefined;
           if (isSSE || isHTTP) {
             const authProvider = new DsxuMcpAuthProvider(client_0.name, client_0.config as McpSSEServerConfig | McpHTTPServerConfig);
@@ -90,12 +90,12 @@ export function MCPSettings(t0) {
             client: client_0,
             scope
           };
-          if (isLegacyCloudConnector) {
+          if (isProviderMigrationConnector) {
             return {
               ...baseInfo,
-              transport: LEGACY_CLOUD_MCP_TRANSPORT,
+              transport: PROVIDER_MIGRATION_MCP_TRANSPORT,
               isAuthenticated: false,
-              config: client_0.config as McpLegacyCloudProxyServerConfig
+              config: client_0.config as McpProviderMigrationProxyServerConfig
             };
           } else {
             if (isSSE) {
@@ -211,7 +211,7 @@ export function MCPSettings(t0) {
           t9 = $[25];
         }
         const serverTools_0 = t9;
-        const defaultTab = isLegacyCloudMcpTransport(viewState.server.transport) ? "Legacy connector migration" : "DSXU Code";
+        const defaultTab = isProviderMigrationMcpTransport(viewState.server.transport) ? "Provider connector migration" : "DSXU Code";
         if (viewState.server.transport === "stdio") {
           let t10;
           if ($[26] !== viewState.server) {
@@ -398,12 +398,4 @@ function _temp2(s_0) {
 }
 function _temp(s) {
   return s.mcp;
-}
-
-// V14 lifecycle shim: mcpsettings
-export function processMcpsettingsLifecycle(input) {
-  void input
-  const state = 'mcpsettings-state'
-  const lifecycle = 'mcpsettings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -2,16 +2,16 @@ import { describe, it, expect } from 'bun:test'
 import {
   getModelConfig,
   isDeepSeekNativeModel,
-  isCompatibilityModel,
+  isProviderMigrationMappedModel,
   getAvailableModels,
   recommendModelForTask,
   DEEPSEEK_MODELS,
-  COMPATIBILITY_MAPPING,
+  PROVIDER_MIGRATION_MODEL_MAPPING,
   DEEPSEEK_1M_CONTEXT_WINDOW,
   DEEPSEEK_V4_MAX_OUTPUT_TOKENS,
 } from '../model-config'
 
-const LEGACY_PROVIDER_SONNET_46 = `${'cl' + 'aude'}-sonnet-4-6`
+const PROVIDER_MIGRATION_SOURCE_SONNET_46 = `${'cl' + 'aude'}-sonnet-4-6`
 
 describe('model-config', () => {
   it('gets config for current DeepSeek V4 models', () => {
@@ -26,16 +26,16 @@ describe('model-config', () => {
     expect(getModelConfig('deepseek-chat').name).toBe('deepseek-v4-flash')
     expect(getModelConfig('deepseek-coder').name).toBe('deepseek-v4-flash')
     expect(getModelConfig('deepseek-reasoner').name).toBe('deepseek-v4-flash')
-    expect(getModelConfig(LEGACY_PROVIDER_SONNET_46).name).toBe('deepseek-v4-pro')
+    expect(getModelConfig(PROVIDER_MIGRATION_SOURCE_SONNET_46).name).toBe('deepseek-v4-pro')
   })
 
-  it('identifies native models and compatibility aliases', () => {
+  it('identifies native models and provider-migration aliases', () => {
     expect(isDeepSeekNativeModel('deepseek-v4-flash')).toBe(true)
     expect(isDeepSeekNativeModel('deepseek-v4-pro')).toBe(true)
     expect(isDeepSeekNativeModel('deepseek-chat')).toBe(false)
-    expect(isCompatibilityModel(LEGACY_PROVIDER_SONNET_46)).toBe(true)
-    expect(isCompatibilityModel('deepseek-chat')).toBe(true)
-    expect(isCompatibilityModel('deepseek-v4-flash')).toBe(false)
+    expect(isProviderMigrationMappedModel(PROVIDER_MIGRATION_SOURCE_SONNET_46)).toBe(true)
+    expect(isProviderMigrationMappedModel('deepseek-chat')).toBe(true)
+    expect(isProviderMigrationMappedModel('deepseek-v4-flash')).toBe(false)
   })
 
   it('recommends models for tasks', () => {
@@ -50,10 +50,10 @@ describe('model-config', () => {
     expect(models).toEqual(['deepseek-v4-flash', 'deepseek-v4-pro'])
   })
 
-  it('exports model and compatibility maps', () => {
+  it('exports model and provider-migration maps', () => {
     expect(DEEPSEEK_MODELS['deepseek-v4-flash']).toBeDefined()
     expect(DEEPSEEK_MODELS['deepseek-v4-pro']).toBeDefined()
-    expect(COMPATIBILITY_MAPPING['deepseek-chat']).toBe('deepseek-v4-flash')
-    expect(COMPATIBILITY_MAPPING['deepseek-reasoner']).toBe('deepseek-v4-flash')
+    expect(PROVIDER_MIGRATION_MODEL_MAPPING['deepseek-chat']).toBe('deepseek-v4-flash')
+    expect(PROVIDER_MIGRATION_MODEL_MAPPING['deepseek-reasoner']).toBe('deepseek-v4-flash')
   })
 })

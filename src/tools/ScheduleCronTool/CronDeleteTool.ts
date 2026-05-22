@@ -36,6 +36,20 @@ export const CronDeleteTool = buildTool({
   name: CRON_DELETE_TOOL_NAME,
   searchHint: 'cancel a scheduled cron job',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Scheduled Task Lifecycle',
+    sideEffects: [
+      'cron-task-delete',
+      'durable-schedule-file-write-when-enabled',
+    ],
+    permission: 'passthrough permission before schedule deletion',
+    evidence: [
+      'inputSchema.id',
+      'cron ownership validation',
+      'deleted id output',
+    ],
+    uiProjection: 'scheduled task deletion message',
+  },
   shouldDefer: true,
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -79,6 +93,12 @@ export const CronDeleteTool = buildTool({
     }
     return { result: true }
   },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `CronDelete wants to cancel scheduled job '${input.id}'.`,
+    }
+  },
   async call({ id }) {
     await removeCronTasks([id])
     return { data: { id } }
@@ -93,12 +113,3 @@ export const CronDeleteTool = buildTool({
   renderToolUseMessage: renderDeleteToolUseMessage,
   renderToolResultMessage: renderDeleteResultMessage,
 } satisfies ToolDef<InputSchema, DeleteOutput>)
-
-
-// V14 lifecycle shim: crondeletetool
-export function processCrondeletetoolLifecycle(input) {
-  void input
-  const state = 'crondeletetool-state'
-  const lifecycle = 'crondeletetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Session Memory automatically maintains a markdown file with notes about the current conversation.
  * It runs periodically in the background using a forked subagent to extract key information
@@ -66,13 +65,13 @@ import {
 // Feature Gate and Config (Cached - Non-blocking)
 // ============================================================================
 // These functions return cached values from disk immediately without blocking
-// on GrowthBook initialization. Values may be stale but are updated in background.
+// on feature flag provider initialization. Values may be stale but are updated in background.
 
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import {
   getDynamicConfig_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../analytics/growthbook.js'
+} from '../analytics/featureFlags.js'
 
 /**
  * Check if session memory feature is enabled.
@@ -308,7 +307,7 @@ const extractSessionMemory = sequential(async function (
 
   // Check gate lazily when hook runs (cached, non-blocking)
   if (!isSessionMemoryGateEnabled()) {
-    // Log gate failure once per session (ant-only)
+    // Log gate failure once per session (dsxu internal)
     if (process.env.USER_TYPE === 'ant' && !hasLoggedGateFailure) {
       hasLoggedGateFailure = true
       logEvent('tengu_session_memory_gate_disabled', {})
@@ -385,7 +384,7 @@ export function initSessionMemory(): void {
   // Session memory is used for compaction, so respect auto-compact settings
   const autoCompactEnabled = isAutoCompactEnabled()
 
-  // Log initialization state (ant-only to avoid noise in external logs)
+  // Log initialization state (dsxu internal to avoid noise in external logs)
   if (process.env.USER_TYPE === 'ant') {
     logEvent('tengu_session_memory_init', {
       auto_compact_enabled: autoCompactEnabled,

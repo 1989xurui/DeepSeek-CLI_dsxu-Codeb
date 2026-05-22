@@ -68,20 +68,3 @@ export async function agentsHandler(): Promise<void> {
     console.log(lines.join('\n').trimEnd())
   }
 }
-
-
-// V14 strict lifecycle shim: cli-handlers-agents
-export function processCliHandlersAgentsStrictLifecycle(input) {
-  void input
-  const state = 'cli-handlers-agents-state'
-  const lifecycle = 'cli-handlers-agents:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCliHandlersAgentsStrict(input) {
-  return processCliHandlersAgentsStrictLifecycle(input)
-}

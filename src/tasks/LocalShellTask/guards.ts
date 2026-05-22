@@ -9,7 +9,7 @@ import type { ShellCommand } from '../../utils/ShellCommand.js'
 export type BashTaskKind = 'bash' | 'monitor'
 
 export type LocalShellTaskState = TaskStateBase & {
-  type: 'local_bash' // Keep as 'local_bash' for backward compatibility with persisted session state
+  type: 'local_bash' // Historical persisted session state uses this value.
   command: string
   result?: {
     code: number
@@ -38,13 +38,4 @@ export function isLocalShellTask(task: unknown): task is LocalShellTaskState {
     'type' in task &&
     task.type === 'local_bash'
   )
-}
-
-
-// V14 lifecycle shim: guards
-export function processGuardsLifecycle(input) {
-  void input
-  const state = 'guards-state'
-  const lifecycle = 'guards:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

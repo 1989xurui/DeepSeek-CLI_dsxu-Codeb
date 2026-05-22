@@ -1,4 +1,4 @@
-﻿import { readdirSync } from 'fs'
+import { readdirSync } from 'fs'
 import { stat } from 'fs/promises'
 import { homedir, platform, tmpdir, userInfo } from 'os'
 import { join } from 'path'
@@ -22,6 +22,29 @@ export function getBrowserMCPServerName(): string {
 
 export function toBrowserMCPToolName(toolName: string): string {
   return `mcp__${getBrowserMCPServerName()}__${toolName}`
+}
+
+export function getDsxuBrowserProviderRuntimeProfile(): {
+  runtime: 'DSXU Browser MCP Provider'
+  owner: 'DSXU MCP / Browser Adapter Boundary'
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Browser MCP Provider',
+    owner: 'DSXU MCP / Browser Adapter Boundary',
+    activationEvidence: [
+      'browser provider exposes tools through DSXU MCP server naming',
+      'browser native host discovery is platform-scoped and permission visible',
+      'browser profile paths are discovered per Chromium-family browser',
+      'MCP tool names are normalized through DSXU MCP naming helpers',
+    ],
+    releaseRiskControls: [
+      'browser provider is an MCP adapter, not a standalone browser automation runtime',
+      'browser provider must enter Tool Gate through MCP tools',
+      'external browser hosts are discovered/configured explicitly before use',
+    ],
+  }
 }
 
 // Re-export ChromiumBrowser type for setup.ts
@@ -504,7 +527,7 @@ export function getSecureSocketPath(): string {
 
 /**
  * Get all socket paths including PID-based sockets in the directory
- * and legacy fallback paths
+ * and historical fallback paths
  */
 export function getAllSocketPaths(): string[] {
   // Windows uses named pipes, not Unix sockets
@@ -528,16 +551,16 @@ export function getAllSocketPaths(): string[] {
     // Directory may not exist yet
   }
 
-  // Legacy fallback paths
-  const legacyName = `dsxu-mcp-browser-bridge-${getUsername()}`
-  const legacyTmpdir = join(tmpdir(), legacyName)
-  const legacyTmp = `/tmp/${legacyName}`
+  // Historical fallback paths
+  const fallbackName = `dsxu-mcp-browser-bridge-${getUsername()}`
+  const fallbackTmpdir = join(tmpdir(), fallbackName)
+  const fallbackTmp = `/tmp/${fallbackName}`
 
-  if (!paths.includes(legacyTmpdir)) {
-    paths.push(legacyTmpdir)
+  if (!paths.includes(fallbackTmpdir)) {
+    paths.push(fallbackTmpdir)
   }
-  if (legacyTmpdir !== legacyTmp && !paths.includes(legacyTmp)) {
-    paths.push(legacyTmp)
+  if (fallbackTmpdir !== fallbackTmp && !paths.includes(fallbackTmp)) {
+    paths.push(fallbackTmp)
   }
 
   return paths
@@ -554,21 +577,4 @@ function getUsername(): string {
   } catch {
     return process.env.USER || process.env.USERNAME || 'default'
   }
-}
-
-
-// V14 strict lifecycle shim: utils-DsxuBrowserProvider-common
-export function processUtilsDsxuBrowserProviderCommonStrictLifecycle(input) {
-  void input
-  const state = 'utils-DsxuBrowserProvider-common-state'
-  const lifecycle = 'utils-DsxuBrowserProvider-common:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runUtilsDsxuBrowserProviderCommonStrict(input) {
-  return processUtilsDsxuBrowserProviderCommonStrictLifecycle(input)
 }

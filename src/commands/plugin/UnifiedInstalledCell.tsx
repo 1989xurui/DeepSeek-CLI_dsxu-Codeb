@@ -562,11 +562,3 @@ export function UnifiedInstalledCell(t0) {
   }
   return t13;
 }
-
-// V14 lifecycle shim: unifiedinstalledcell
-export function processUnifiedinstalledcellLifecycle(input) {
-  void input
-  const state = 'unifiedinstalledcell-state'
-  const lifecycle = 'unifiedinstalledcell:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

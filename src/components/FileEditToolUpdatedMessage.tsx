@@ -121,11 +121,3 @@ function _temp2(acc, hunk) {
 function _temp(_) {
   return _.startsWith("+");
 }
-
-// V14 lifecycle shim: fileedittoolupdatedmessage
-export function processFileedittoolupdatedmessageLifecycle(input) {
-  void input
-  const state = 'fileedittoolupdatedmessage-state'
-  const lifecycle = 'fileedittoolupdatedmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

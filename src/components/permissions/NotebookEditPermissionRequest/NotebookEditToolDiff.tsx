@@ -232,11 +232,3 @@ function NotebookEditToolDiffInner(t0) {
 function _temp3(i) {
   return <NoSelect fromLeftEdge={true} key={`ellipsis-${i}`}><Text dimColor={true}>...</Text></NoSelect>;
 }
-
-// V14 lifecycle shim: notebookedittooldiff
-export function processNotebookedittooldiffLifecycle(input) {
-  void input
-  const state = 'notebookedittooldiff-state'
-  const lifecycle = 'notebookedittooldiff:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,0 +1,141 @@
+﻿{
+    "generatedAt":  "2026-05-14T21:17:23",
+    "total":  1824,
+    "statusSummary":  [
+                          {
+                              "statusCode":  "??",
+                              "count":  48
+                          },
+                          {
+                              "statusCode":  "D",
+                              "count":  146
+                          },
+                          {
+                              "statusCode":  "M",
+                              "count":  1630
+                          }
+                      ],
+    "packetSummary":  [
+                          {
+                              "ownerPacket":  "V20-OGR-01-docs-generated-plan",
+                              "count":  24,
+                              "modified":  2,
+                              "deleted":  0,
+                              "untracked":  22
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-evidence-review-runtime",
+                              "count":  45,
+                              "modified":  0,
+                              "deleted":  45,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-provider-legacy-harness",
+                              "count":  71,
+                              "modified":  0,
+                              "deleted":  71,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-state-owner-review",
+                              "count":  27,
+                              "modified":  0,
+                              "deleted":  27,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-delete-engine-builtin-tools-runtime",
+                              "count":  2,
+                              "modified":  0,
+                              "deleted":  2,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                              "count":  205,
+                              "modified":  201,
+                              "deleted":  0,
+                              "untracked":  4
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-delete-engine-mcp-client-runtime",
+                              "count":  1,
+                              "modified":  0,
+                              "deleted":  1,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                              "count":  142,
+                              "modified":  139,
+                              "deleted":  0,
+                              "untracked":  3
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                              "count":  170,
+                              "modified":  170,
+                              "deleted":  0,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-external-integration-adapter-boundary",
+                              "count":  27,
+                              "modified":  25,
+                              "deleted":  0,
+                              "untracked":  2
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                              "count":  437,
+                              "modified":  437,
+                              "deleted":  0,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                              "count":  101,
+                              "modified":  91,
+                              "deleted":  0,
+                              "untracked":  10
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                              "count":  178,
+                              "modified":  177,
+                              "deleted":  0,
+                              "untracked":  1
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-09-dsxu-engine-mainline",
+                              "count":  48,
+                              "modified":  44,
+                              "deleted":  0,
+                              "untracked":  4
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                              "count":  6,
+                              "modified":  6,
+                              "deleted":  0,
+                              "untracked":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                              "count":  249,
+                              "modified":  247,
+                              "deleted":  0,
+                              "untracked":  2
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-13-other-source-owner-review",
+                              "count":  91,
+                              "modified":  91,
+                              "deleted":  0,
+                              "untracked":  0
+                          }
+                      ],
+    "registerPath":  "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260514.csv",
+    "nextAction":  "continue owner/Git packet signoff; deleted engine built-in tools and legacy MCP runtime are replace/delete candidates, not restore candidates"
+}

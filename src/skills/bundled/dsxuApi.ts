@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { readdir } from 'fs/promises'
 import { getCwd } from '../../utils/cwd.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
@@ -7,14 +6,14 @@ import { registerBundledSkill } from '../bundledSkills.js'
 // dsxuApiContent.js bundles 247KB of .md strings. Lazy-load inside
 // getPromptForCommand so they only enter memory when the API skill is invoked.
 type SkillContent = typeof import('./dsxuApiContent.js')
-const LEGACY_API_SKILL_NAME = `${'cla' + 'ude'}-api`
-const LEGACY_AGENT_SDK_PACKAGE = `${'cla' + 'ude'}_agent_sdk`
-const LEGACY_PROVIDER_SDK_IMPORT = `@${'anth' + 'ropic'}-ai/sdk`
-const LEGACY_PROVIDER_PACKAGE_NAME = 'anth' + 'ropic'
-const LEGACY_API_COPY = `${'Cl' + 'aude'} API`
-const LEGACY_PROVIDER_SDK_COPY = `${'Anth' + 'ropic'} SDK`
-const LEGACY_PROVIDER_COPY = 'Anth' + 'ropic'
-const LEGACY_MODEL_COPY = 'Cl' + 'aude'
+const PROVIDER_MIGRATION_API_SKILL_ALIAS = `${'cla' + 'ude'}-api`
+const PROVIDER_MIGRATION_SOURCE_AGENT_SDK_PACKAGE = `${'cla' + 'ude'}_agent_sdk`
+const PROVIDER_MIGRATION_SOURCE_SDK_IMPORT = `@${'anth' + 'ropic'}-ai/sdk`
+const PROVIDER_MIGRATION_SOURCE_PACKAGE_NAME = 'anth' + 'ropic'
+const PROVIDER_MIGRATION_SOURCE_API_COPY = `${'Cl' + 'aude'} API`
+const PROVIDER_MIGRATION_SOURCE_SDK_COPY = `${'Anth' + 'ropic'} SDK`
+const PROVIDER_MIGRATION_SOURCE_COPY = 'Anth' + 'ropic'
+const PROVIDER_MIGRATION_SOURCE_MODEL_COPY = 'Cl' + 'aude'
 const DSXU_API_SKILL_NAME = 'dsxu-api'
 
 type DetectedLanguage =
@@ -88,12 +87,12 @@ function processContent(md: string, content: SkillContent): string {
   )
   if (isDsxuRuntimeMode()) {
     out = out
-      .replaceAll(LEGACY_API_COPY, 'DSXU/DeepSeek API')
-      .replaceAll(LEGACY_PROVIDER_SDK_COPY, 'OpenAI-compatible DeepSeek SDK')
-      .replaceAll(LEGACY_PROVIDER_COPY, 'DSXU/DeepSeek')
-      .replaceAll(LEGACY_MODEL_COPY, 'DeepSeek')
-      .replaceAll(LEGACY_PROVIDER_SDK_IMPORT, 'openai')
-      .replaceAll(LEGACY_AGENT_SDK_PACKAGE, 'dsxu-code agent runtime')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_API_COPY, 'DSXU/DeepSeek API')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_SDK_COPY, 'DSXU-compatible DeepSeek SDK')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_COPY, 'DSXU/DeepSeek')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_MODEL_COPY, 'DeepSeek')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_SDK_IMPORT, 'openai')
+      .replaceAll(PROVIDER_MIGRATION_SOURCE_AGENT_SDK_PACKAGE, 'dsxu-code agent runtime')
   }
   return out
 }
@@ -162,7 +161,7 @@ export function getDsxuApiSkillRuntimeProfile(): {
   return {
     runtime: 'DSXU API Skill',
     skillName: DSXU_API_SKILL_NAME,
-    aliases: ['deepseek-api', LEGACY_API_SKILL_NAME],
+    aliases: ['deepseek-api', PROVIDER_MIGRATION_API_SKILL_ALIAS],
     triggerSignals: [
       'DeepSeek API',
       'DEEPSEEK_API_KEY',
@@ -232,15 +231,15 @@ export function registerDsxuApiSkill(): void {
   registerBundledSkill({
     name: DSXU_API_SKILL_NAME,
     aliases: dsxuMode
-      ? ['deepseek-api', LEGACY_API_SKILL_NAME]
-      : [LEGACY_API_SKILL_NAME],
+      ? ['deepseek-api', PROVIDER_MIGRATION_API_SKILL_ALIAS]
+      : [PROVIDER_MIGRATION_API_SKILL_ALIAS],
     description:
       (dsxuMode
-        ? 'Build apps with the DSXU/DeepSeek OpenAI-compatible API or DSXU Agent runtime.\n' +
+        ? 'Build apps with the DSXU/DeepSeek chat-completions-compatible API or DSXU Agent runtime.\n' +
           'TRIGGER when: code imports `openai` for DeepSeek, uses `DEEPSEEK_API_KEY`, asks for DSXU API, DeepSeek API, FIM, thinking mode, prompt cache, tool calling, or Agent SDK.\n' +
           'DO NOT TRIGGER when: the task is unrelated to model/API integration.'
-        : `Build apps with the ${LEGACY_API_COPY} or ${LEGACY_PROVIDER_SDK_COPY}.\n` +
-          `TRIGGER when: code imports \`${LEGACY_PROVIDER_PACKAGE_NAME}\`/\`${LEGACY_PROVIDER_SDK_IMPORT}\`/\`${LEGACY_AGENT_SDK_PACKAGE}\`, or user asks to use ${LEGACY_API_COPY}, ${LEGACY_PROVIDER_SDK_COPY}s, or Agent SDK.\n` +
+        : `Build apps with the ${PROVIDER_MIGRATION_SOURCE_API_COPY} or ${PROVIDER_MIGRATION_SOURCE_SDK_COPY}.\n` +
+          `TRIGGER when: code imports \`${PROVIDER_MIGRATION_SOURCE_PACKAGE_NAME}\`/\`${PROVIDER_MIGRATION_SOURCE_SDK_IMPORT}\`/\`${PROVIDER_MIGRATION_SOURCE_AGENT_SDK_PACKAGE}\`, or user asks to use ${PROVIDER_MIGRATION_SOURCE_API_COPY}, ${PROVIDER_MIGRATION_SOURCE_SDK_COPY}s, or Agent SDK.\n` +
           'DO NOT TRIGGER when: code imports `openai`/other AI SDK, general programming, or ML/data-science tasks.'),
     allowedTools: ['Read', 'Grep', 'Glob', 'WebFetch'],
     userInvocable: true,

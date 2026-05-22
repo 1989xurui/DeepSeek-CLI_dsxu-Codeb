@@ -30,21 +30,3 @@ export function getDsxuStatusCommandRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 command lifecycle shim: status
-export function processStatusCommandLifecycle(input) {
-  void input
-  const state = 'status-command-state'
-  const lifecycle = 'status:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'status',
-  }
-}
-
-export function runStatusCommand(input) {
-  return processStatusCommandLifecycle(input)
-}

@@ -462,11 +462,3 @@ function _temp2(opt) {
 function _temp(s) {
   return s.toolPermissionContext.mode;
 }
-
-// V14 lifecycle shim: questionview
-export function processQuestionviewLifecycle(input) {
-  void input
-  const state = 'questionview-state'
-  const lifecycle = 'questionview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

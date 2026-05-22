@@ -210,12 +210,3 @@ export class TerminalQuerier {
     }
   }
 }
-
-
-// V14 lifecycle shim: terminal-querier
-export function processTerminalQuerierLifecycle(input) {
-  void input
-  const state = 'terminal-querier-state'
-  const lifecycle = 'terminal-querier:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

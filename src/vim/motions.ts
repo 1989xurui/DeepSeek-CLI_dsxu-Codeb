@@ -80,12 +80,3 @@ export function isInclusiveMotion(key: string): boolean {
 export function isLinewiseMotion(key: string): boolean {
   return 'jkG'.includes(key) || key === 'gg'
 }
-
-
-// V14 lifecycle shim: motions
-export function processMotionsLifecycle(input) {
-  void input
-  const state = 'motions-state'
-  const lifecycle = 'motions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

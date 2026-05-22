@@ -494,12 +494,3 @@ async function countTokensWithBedrock({
     return null
   }
 }
-
-
-// V14 lifecycle shim: tokenestimation
-export function processTokenestimationLifecycle(input) {
-  void input
-  const state = 'tokenestimation-state'
-  const lifecycle = 'tokenestimation:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

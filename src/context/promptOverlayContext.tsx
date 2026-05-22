@@ -122,11 +122,3 @@ export function useSetPromptOverlayDialog(node) {
   }
   useEffect(t0, t1);
 }
-
-// V14 lifecycle shim: promptoverlaycontext
-export function processPromptoverlaycontextLifecycle(input) {
-  void input
-  const state = 'promptoverlaycontext-state'
-  const lifecycle = 'promptoverlaycontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

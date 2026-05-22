@@ -1,0 +1,71 @@
+﻿{
+    "generatedAt":  "2026-05-14T22:43:04",
+    "total":  1902,
+    "actionSummary":  [
+                          {
+                              "action":  "absorb_into_dsxu_mainline",
+                              "count":  988
+                          },
+                          {
+                              "action":  "adapt_or_exclude_product_specific",
+                              "count":  594
+                          },
+                          {
+                              "action":  "review_absorb_as_shared_utility_only_if_imported",
+                              "count":  278
+                          },
+                          {
+                              "action":  "review_candidate",
+                              "count":  42
+                          }
+                      ],
+    "ownerSummary":  [
+                         {
+                             "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                             "count":  41
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                             "count":  22
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                             "count":  52
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                             "count":  1435
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                             "count":  90
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                             "count":  241
+                         },
+                         {
+                             "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                             "count":  21
+                         }
+                     ],
+    "decisionSummary":  [
+                            {
+                                "decision":  "absorb-into-named-dsxu-owner",
+                                "count":  988
+                            },
+                            {
+                                "decision":  "adapt-provider-neutral-or-exclude-product-specific",
+                                "count":  594
+                            },
+                            {
+                                "decision":  "mapped-review-candidate-to-owner-or-exclude",
+                                "count":  42
+                            },
+                            {
+                                "decision":  "retain-only-if-imported-by-named-owner-else-replace-delete",
+                                "count":  278
+                            }
+                        ],
+    "nextAction":  "owner signoff against current OGR packets; product-specific items must adapt/exclude, shared utilities must have real imports"
+}

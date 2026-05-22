@@ -1,5 +1,5 @@
 import { c as _c } from "react/compiler-runtime";
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import * as React from 'react';
 import { Suspense, useState } from 'react';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
@@ -133,20 +133,4 @@ function _temp2() {
 }
 function _temp() {
   return [];
-}
-
-// V14 strict lifecycle shim: components-Settings-Settings
-export function processComponentsSettingsSettingsStrictLifecycle(input) {
-  void input
-  const state = 'components-Settings-Settings-state'
-  const lifecycle = 'components-Settings-Settings:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsSettingsSettingsStrict(input) {
-  return processComponentsSettingsSettingsStrictLifecycle(input)
 }

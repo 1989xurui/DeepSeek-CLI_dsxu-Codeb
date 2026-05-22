@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execFile } from 'child_process'
 import { execa } from 'execa'
 import { mkdir, stat } from 'fs/promises'
@@ -25,7 +24,7 @@ import { subprocessEnv } from '../subprocessEnv.js'
 import { quote } from './shellQuote.js'
 const LITERAL_BACKSLASH = '\\'
 const SNAPSHOT_CREATION_TIMEOUT = 10000 // 10 seconds
-const LEGACY_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
+const PROVIDER_MIGRATION_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
 /**
  * Creates a shell function that invokes `binaryPath` with a specific argv[0].
  * This uses the bun-internal ARGV0 dispatch trick: the bun binary checks its
@@ -422,7 +421,7 @@ export const createAndSaveSnapshot = async (
             SHELL: binShell,
             GIT_EDITOR: 'true',
             DSXUCODE: '1',
-            [LEGACY_RUNTIME_MARKER_ENV]: '1',
+            [PROVIDER_MIGRATION_RUNTIME_MARKER_ENV]: '1',
           },
           timeout: SNAPSHOT_CREATION_TIMEOUT,
           maxBuffer: 1024 * 1024, // 1MB buffer

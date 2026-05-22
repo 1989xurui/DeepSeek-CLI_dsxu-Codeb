@@ -270,11 +270,3 @@ function AgentLine(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: coordinatoragentstatus
-export function processCoordinatoragentstatusLifecycle(input) {
-  void input
-  const state = 'coordinatoragentstatus-state'
-  const lifecycle = 'coordinatoragentstatus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

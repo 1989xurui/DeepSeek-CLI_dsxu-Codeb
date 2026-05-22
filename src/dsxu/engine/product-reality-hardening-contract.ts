@@ -126,7 +126,7 @@ const items: readonly ProductRealityHardeningItem[] = [
     objective:
       'Keep MCP on a real external-server-style chain with resource read, tool call, reconnect, stale-cache clearing, and redaction.',
     referenceBehavior: ['services/mcp', 'tools/MCPTool', 'tools/ReadMcpResourceTool'],
-    dsxuLanding: ['src/services/mcp', 'src/dsxu/engine/mcp-client.ts', 'src/dsxu/engine/engine-tool-adapter.ts'],
+    dsxuLanding: ['src/services/mcp', 'src/services/mcp/client.ts', 'src/dsxu/engine/engine-tool-adapter.ts'],
     requiredBehaviors: [
       'stdio server connect/list/read/call path is covered',
       'timeout and server error trigger replan',
@@ -191,7 +191,7 @@ const items: readonly ProductRealityHardeningItem[] = [
   {
     id: 'P8 Public Cross-Model Evaluation',
     objective:
-      'Prepare but do not fabricate same-task public comparison against reference coding workflow, GPT/Codex, Gemini, Aider, and Cline.',
+      'Prepare but do not fabricate same-task public comparison against external coding-model runners under identical constraints.',
     referenceBehavior: ['query.ts', 'tools/*/prompt.ts', 'services/compact', 'services/mcp'],
     dsxuLanding: ['.dsxu/eval/model-comparison-template.json', 'scripts/benchmark/dsxu-mainline-benchmark.ts'],
     requiredBehaviors: [

@@ -3,7 +3,7 @@ import { join } from 'path'
 import { getFsImplementation } from '../utils/fsOperations.js'
 import type { IdeType } from './ide.js'
 
-const LEGACY_JETBRAINS_PLUGIN_PREFIX = 'clau' + 'de-code-jetbrains-plugin'
+const PROVIDER_MIGRATION_JETBRAINS_PLUGIN_PREFIX = 'clau' + 'de-code-jetbrains-plugin'
 
 // Map of IDE names to their directory patterns
 const ideNameToDirMap: { [key: string]: string[] } = {
@@ -136,7 +136,7 @@ export async function isJetBrainsPluginInstalled(
 ): Promise<boolean> {
   const pluginDirs = await detectPluginDirectories(ideType)
   for (const dir of pluginDirs) {
-    const pluginPath = join(dir, LEGACY_JETBRAINS_PLUGIN_PREFIX)
+    const pluginPath = join(dir, PROVIDER_MIGRATION_JETBRAINS_PLUGIN_PREFIX)
     try {
       await getFsImplementation().stat(pluginPath)
       return true

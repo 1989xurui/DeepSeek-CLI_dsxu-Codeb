@@ -124,11 +124,3 @@ export function SelectEventMode(t0) {
   }
   return t9;
 }
-
-// V14 lifecycle shim: selecteventmode
-export function processSelecteventmodeLifecycle(input) {
-  void input
-  const state = 'selecteventmode-state'
-  const lifecycle = 'selecteventmode:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // ---------------------------------------------------------------------------
 // readFileInRange ...line-oriented file reader with two code paths
 // ---------------------------------------------------------------------------
@@ -32,7 +31,7 @@
 // mtime comes from fstat/stat on the already-open fd ...no extra open().
 //
 // maxBytes behavior depends on options.truncateOnByteLimit:
-//   false (default): legacy semantics ...throws FileTooLargeError if the FILE
+//   false (default): historical semantics ...throws FileTooLargeError if the FILE
 //     size (fast path) or total streamed bytes (streaming) exceed maxBytes.
 //   true: caps SELECTED OUTPUT at maxBytes.  Stops at the last complete line
 //     that fits; sets truncatedByBytes in the result.  Never throws.

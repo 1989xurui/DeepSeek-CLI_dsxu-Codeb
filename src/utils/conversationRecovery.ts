@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import { relative } from 'path'
@@ -49,7 +48,7 @@ import {
   removeExtraFields,
 } from './sessionStorage.js'
 import type { ContentReplacementRecord } from './toolResultStorage.js'
-// Dead code elimination: ant-only tool names are conditionally required so
+// Dead code elimination: dsxu internal tool names are conditionally required so
 // their strings don't leak into external builds. Static imports always bundle.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const BRIEF_TOOL_NAME: string | null =
@@ -58,11 +57,11 @@ const BRIEF_TOOL_NAME: string | null =
         require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')
       ).BRIEF_TOOL_NAME
     : null
-const LEGACY_BRIEF_TOOL_NAME: string | null =
+const BRIEF_TOOL_ALIAS_NAME: string | null =
   feature('KAIROS') || feature('KAIROS_BRIEF')
     ? (
         require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')
-      ).LEGACY_BRIEF_TOOL_NAME
+      ).BRIEF_TOOL_ALIAS_NAME
     : null
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
   ? (
@@ -71,17 +70,17 @@ const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS')
   : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 /**
- * Transforms legacy attachment types to current types for backward compatibility
+ * Transforms historical attachment types to current types during transcript recovery.
  */
-function migrateLegacyAttachmentTypes(message: Message): Message {
+function migrateHistoricalAttachmentTypes(message: Message): Message {
   if (message.type !== 'attachment') {
     return message
   }
   const attachment = message.attachment as {
     type: string
     [key: string]: unknown
-  } // Handle legacy types not in current type system
-  // Transform legacy attachment types
+  } // Handle historical types not in current type system
+  // Transform historical attachment types
   if (attachment.type === 'new_file') {
     return {
       ...message,
@@ -154,9 +153,9 @@ export function deserializeMessagesWithInterruptDetection(
   serializedMessages: Message[],
 ): DeserializeResult {
   try {
-    // Transform legacy attachment types before processing
+    // Transform historical attachment types before processing
     const migratedMessages = serializedMessages.map(
-      migrateLegacyAttachmentTypes,
+      migrateHistoricalAttachmentTypes,
     )
     // Strip invalid permissionMode values from deserialized user messages.
     // The field is unvalidated JSON from disk and may contain modes from a different build.
@@ -334,7 +333,7 @@ function isTerminalToolResult(
       if (b.type === 'tool_use' && b.id === toolUseId) {
         return (
           b.name === BRIEF_TOOL_NAME ||
-          b.name === LEGACY_BRIEF_TOOL_NAME ||
+          b.name === BRIEF_TOOL_ALIAS_NAME ||
           b.name === SEND_USER_FILE_TOOL_NAME
         )
       }

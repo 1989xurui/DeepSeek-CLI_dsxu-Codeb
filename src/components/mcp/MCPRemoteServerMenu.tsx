@@ -1,15 +1,14 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import figures from 'figures';
 import React, { useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import {
-  LEGACY_CLOUD_MCP_MENU_AUTH,
-  LEGACY_CLOUD_MCP_MENU_CLEAR_AUTH,
-  isLegacyCloudMcpTransport,
-  legacyCloudMcpEvent,
-} from '../../constants/legacyProviderProtocol.js';
-import { getLegacyCloudOrigin } from '../../constants/oauth.js';
+  PROVIDER_MIGRATION_MCP_MENU_AUTH,
+  PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH,
+  isProviderMigrationMcpTransport,
+  providerMigrationMcpEvent,
+} from '../../constants/providerMigrationProtocol.js';
+import { getProviderCloudOrigin } from '../../constants/oauth.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { setClipboard } from '../../ink/termio/osc.js';
@@ -35,10 +34,10 @@ import { Spinner } from '../Spinner.js';
 import TextInput from '../TextInput.js';
 import { CapabilitiesSection } from './CapabilitiesSection.js';
 import type { HTTPServerInfo, SSEServerInfo } from './types.js';
-type LegacyCloudServerInfo = HTTPServerInfo | SSEServerInfo;
+type ProviderMigrationServerInfo = HTTPServerInfo | SSEServerInfo;
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js';
 type Props = {
-  server: SSEServerInfo | HTTPServerInfo | LegacyCloudServerInfo;
+  server: SSEServerInfo | HTTPServerInfo | ProviderMigrationServerInfo;
   serverToolsCount: number;
   onViewTools: () => void;
   onCancel: () => void;
@@ -67,11 +66,11 @@ export function MCPRemoteServerMenu({
   const [authorizationUrl, setAuthorizationUrl] = React.useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const authAbortControllerRef = useRef<AbortController | null>(null);
-  const [isLegacyCloudAuthenticating, setIsLegacyCloudAuthenticating] = useState(false);
-  const [legacyCloudAuthUrl, setLegacyCloudAuthUrl] = useState<string | null>(null);
-  const [isLegacyCloudClearingAuth, setIsLegacyCloudClearingAuth] = useState(false);
-  const [legacyCloudClearAuthUrl, setLegacyCloudClearAuthUrl] = useState<string | null>(null);
-  const [legacyCloudClearAuthBrowserOpened, setLegacyCloudClearAuthBrowserOpened] = useState(false);
+  const [isProviderMigrationAuthenticating, setIsProviderMigrationAuthenticating] = useState(false);
+  const [providerMigrationAuthUrl, setProviderMigrationAuthUrl] = useState<string | null>(null);
+  const [isProviderMigrationClearingAuth, setIsProviderMigrationClearingAuth] = useState(false);
+  const [providerMigrationClearAuthUrl, setProviderMigrationClearAuthUrl] = useState<string | null>(null);
+  const [providerMigrationClearAuthBrowserOpened, setProviderMigrationClearAuthBrowserOpened] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const unmountedRef = useRef(false);
@@ -98,14 +97,14 @@ export function MCPRemoteServerMenu({
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
   const isEffectivelyAuthenticated = server.isAuthenticated || server.client.type === 'connected' && serverToolsCount > 0;
   const reconnectMcpServer = useMcpReconnect();
-  const handleLegacyCloudAuthComplete = React.useCallback(async () => {
-    setIsLegacyCloudAuthenticating(false);
-    setLegacyCloudAuthUrl(null);
+  const handleProviderMigrationAuthComplete = React.useCallback(async () => {
+    setIsProviderMigrationAuthenticating(false);
+    setProviderMigrationAuthUrl(null);
     setIsReconnecting(true);
     try {
       const result = await reconnectMcpServer(server.name);
       const success = result.client.type === 'connected';
-      logEvent(legacyCloudMcpEvent('auth_completed'), {
+      logEvent(providerMigrationMcpEvent('auth_completed'), {
         success
       });
       if (success) {
@@ -116,7 +115,7 @@ export function MCPRemoteServerMenu({
         onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart DSXU Code for the changes to take effect.');
       }
     } catch (err) {
-      logEvent(legacyCloudMcpEvent('auth_completed'), {
+      logEvent(providerMigrationMcpEvent('auth_completed'), {
         success: false
       });
       onComplete?.(handleReconnectError(err, server.name));
@@ -124,7 +123,7 @@ export function MCPRemoteServerMenu({
       setIsReconnecting(false);
     }
   }, [reconnectMcpServer, server.name, onComplete]);
-  const handleLegacyCloudClearAuthComplete = React.useCallback(async () => {
+  const handleProviderMigrationClearAuthComplete = React.useCallback(async () => {
     await clearServerCache(server.name, {
       ...server.config,
       scope: server.scope
@@ -148,11 +147,11 @@ export function MCPRemoteServerMenu({
         }
       };
     });
-    logEvent(legacyCloudMcpEvent('clear_auth_completed'), {});
+    logEvent(providerMigrationMcpEvent('clear_auth_completed'), {});
     onComplete?.(`Disconnected from ${server.name}.`);
-    setIsLegacyCloudClearingAuth(false);
-    setLegacyCloudClearAuthUrl(null);
-    setLegacyCloudClearAuthBrowserOpened(false);
+    setIsProviderMigrationClearingAuth(false);
+    setProviderMigrationClearAuthUrl(null);
+    setProviderMigrationClearAuthBrowserOpened(false);
   }, [server.name, server.config, server.scope, setAppState, onComplete]);
 
   // Escape to cancel authentication flow
@@ -166,44 +165,44 @@ export function MCPRemoteServerMenu({
     isActive: isAuthenticating
   });
 
-  // Escape cancels legacy connector authentication
+  // Escape cancels provider migration connector authentication
   useKeybinding('confirm:no', () => {
-    setIsLegacyCloudAuthenticating(false);
-    setLegacyCloudAuthUrl(null);
+    setIsProviderMigrationAuthenticating(false);
+    setProviderMigrationAuthUrl(null);
   }, {
     context: 'Confirmation',
-    isActive: isLegacyCloudAuthenticating
+    isActive: isProviderMigrationAuthenticating
   });
 
-  // Escape cancels isolated legacy connector clear auth
+  // Escape cancels isolated provider migration connector clear auth
   useKeybinding('confirm:no', () => {
-    setIsLegacyCloudClearingAuth(false);
-    setLegacyCloudClearAuthUrl(null);
-    setLegacyCloudClearAuthBrowserOpened(false);
+    setIsProviderMigrationClearingAuth(false);
+    setProviderMigrationClearAuthUrl(null);
+    setProviderMigrationClearAuthBrowserOpened(false);
   }, {
     context: 'Confirmation',
-    isActive: isLegacyCloudClearingAuth
+    isActive: isProviderMigrationClearingAuth
   });
 
   // Return key handling for authentication flows and 'c' to copy URL
   useInput((input, key) => {
-    if (key.return && isLegacyCloudAuthenticating) {
-      void handleLegacyCloudAuthComplete();
+    if (key.return && isProviderMigrationAuthenticating) {
+      void handleProviderMigrationAuthComplete();
     }
-    if (key.return && isLegacyCloudClearingAuth) {
+    if (key.return && isProviderMigrationClearingAuth) {
       if (isDsxuRuntimeMode()) return;
-      if (legacyCloudClearAuthBrowserOpened) {
-        void handleLegacyCloudClearAuthComplete();
+      if (providerMigrationClearAuthBrowserOpened) {
+        void handleProviderMigrationClearAuthComplete();
       } else {
         // First Enter: open the browser
-        const connectorsUrl = `${getLegacyCloudOrigin()}/settings/connectors`;
-        setLegacyCloudClearAuthUrl(connectorsUrl);
-        setLegacyCloudClearAuthBrowserOpened(true);
+        const connectorsUrl = `${getProviderCloudOrigin()}/settings/connectors`;
+        setProviderMigrationClearAuthUrl(connectorsUrl);
+        setProviderMigrationClearAuthBrowserOpened(true);
         void openBrowser(connectorsUrl);
       }
     }
     if (input === 'c' && !urlCopied) {
-      const urlToCopy = authorizationUrl || legacyCloudAuthUrl || legacyCloudClearAuthUrl;
+      const urlToCopy = authorizationUrl || providerMigrationAuthUrl || providerMigrationClearAuthUrl;
       if (urlToCopy) {
         void setClipboard(urlToCopy).then(raw => {
           if (unmountedRef.current) return;
@@ -222,44 +221,44 @@ export function MCPRemoteServerMenu({
   // Count MCP prompts for this server (skills are shown in /skills, not here)
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length;
   const toggleMcpServer = useMcpToggleEnabled();
-  const handleLegacyCloudAuth = React.useCallback(async () => {
+  const handleProviderMigrationAuth = React.useCallback(async () => {
     if (isDsxuRuntimeMode()) {
-      onComplete?.(`DSXU mode isolates legacy cloud connector auth for ${server.name}. Add this server through DSXU MCP Provider settings instead.`);
+      onComplete?.(`DSXU mode isolates provider migration connector auth for ${server.name}. Add this server through DSXU MCP Provider settings instead.`);
       return;
     }
-    const legacyCloudBaseUrl = getLegacyCloudOrigin();
+    const providerMigrationBaseUrl = getProviderCloudOrigin();
     const accountInfo = getOauthAccountInfo();
     const orgUuid = accountInfo?.organizationUuid;
     let authUrl: string;
-    if (orgUuid && isLegacyCloudMcpTransport(server.config.type) && server.config.id) {
+    if (orgUuid && isProviderMigrationMcpTransport(server.config.type) && server.config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
       const serverId = server.config.id.startsWith('mcprs') ? 'mcpsrv' + server.config.id.slice(5) : server.config.id;
       const productSurface = encodeURIComponent(getDsxuCodeEnv('ENTRYPOINT') || 'cli');
-      authUrl = `${legacyCloudBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
+      authUrl = `${providerMigrationBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
     } else {
       // Fall back to settings/connectors if we don't have the required IDs
-      authUrl = `${legacyCloudBaseUrl}/settings/connectors`;
+      authUrl = `${providerMigrationBaseUrl}/settings/connectors`;
     }
-    setLegacyCloudAuthUrl(authUrl);
-    setIsLegacyCloudAuthenticating(true);
-    logEvent(legacyCloudMcpEvent('auth_started'), {});
+    setProviderMigrationAuthUrl(authUrl);
+    setIsProviderMigrationAuthenticating(true);
+    logEvent(providerMigrationMcpEvent('auth_started'), {});
     await openBrowser(authUrl);
   }, [server.config, server.name, onComplete]);
-  const handleLegacyCloudClearAuth = React.useCallback(() => {
+  const handleProviderMigrationClearAuth = React.useCallback(() => {
     if (isDsxuRuntimeMode()) {
-      onComplete?.(`DSXU mode isolates legacy cloud connector auth for ${server.name}. Use DSXU MCP Provider settings to disconnect or rotate credentials.`);
+      onComplete?.(`DSXU mode isolates provider migration connector auth for ${server.name}. Use DSXU MCP Provider settings to disconnect or rotate credentials.`);
       return;
     }
-    setIsLegacyCloudClearingAuth(true);
-    logEvent(legacyCloudMcpEvent('clear_auth_started'), {});
+    setIsProviderMigrationClearingAuth(true);
+    logEvent(providerMigrationMcpEvent('clear_auth_started'), {});
   }, [server.name, onComplete]);
   const handleToggleEnabled = React.useCallback(async () => {
     const wasEnabled = server.client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
-      if (isLegacyCloudMcpTransport(server.config.type)) {
-        logEvent(legacyCloudMcpEvent('toggle'), {
+      if (isProviderMigrationMcpTransport(server.config.type)) {
+        logEvent(providerMigrationMcpEvent('toggle'), {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -272,7 +271,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
-    if (isLegacyCloudMcpTransport(server.config.type)) return;
+    if (isProviderMigrationMcpTransport(server.config.type)) return;
     setIsAuthenticating(true);
     setError(null);
     const controller = new AbortController();
@@ -319,7 +318,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.isAuthenticated, server.config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
   const handleClearAuth = async () => {
-    if (isLegacyCloudMcpTransport(server.config.type)) return;
+    if (isProviderMigrationMcpTransport(server.config.type)) return;
     if (server.config) {
       // First revoke the authentication tokens and clear all auth state
       await revokeServerTokens(server.name, server.config);
@@ -360,7 +359,7 @@ export function MCPRemoteServerMenu({
     // XAA: silent exchange (cached id_token 锟?no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = !isLegacyCloudMcpTransport(server.config.type) && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = !isProviderMigrationMcpTransport(server.config.type) && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Authenticating with {server.name}...</Text>
         <Box>
@@ -400,14 +399,14 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isLegacyCloudAuthenticating) {
+  if (isProviderMigrationAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Authenticating with {server.name}...</Text>
         <Box>
           <Spinner />
           <Text> A browser window will open for authentication</Text>
         </Box>
-        {legacyCloudAuthUrl && <Box flexDirection="column">
+        {providerMigrationAuthUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
                 If your browser doesn&apos;t open automatically, copy this URL
@@ -417,7 +416,7 @@ export function MCPRemoteServerMenu({
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
-            <Link url={legacyCloudAuthUrl} />
+            <Link url={providerMigrationAuthUrl} />
           </Box>}
         <Box marginLeft={3} flexDirection="column">
           <Text color="permission">
@@ -429,15 +428,15 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isLegacyCloudClearingAuth) {
+  if (isProviderMigrationClearingAuth) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Clear authentication for {server.name}</Text>
-        {legacyCloudClearAuthBrowserOpened ? <>
+        {providerMigrationClearAuthBrowserOpened ? <>
             <Text>
               Find the MCP server in the browser and click
               &quot;Disconnect&quot;.
             </Text>
-            {legacyCloudClearAuthUrl && <Box flexDirection="column">
+            {providerMigrationClearAuthUrl && <Box flexDirection="column">
                 <Box>
                   <Text dimColor>
                     If your browser didn&apos;t open automatically, copy this
@@ -447,7 +446,7 @@ export function MCPRemoteServerMenu({
                       <KeyboardShortcutHint shortcut="c" action="copy" parens />
                     </Text>}
                 </Box>
-                <Link url={legacyCloudClearAuthUrl} />
+                <Link url={providerMigrationClearAuthUrl} />
               </Box>}
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
@@ -459,7 +458,7 @@ export function MCPRemoteServerMenu({
             </Box>
           </> : <>
             <Text>
-              This legacy path opens the old cloud connector settings. In DSXU mode, use DSXU MCP Provider settings to disconnect credentials.
+              This provider migration path opens the source cloud connector settings. In DSXU mode, use DSXU MCP Provider settings to disconnect credentials.
             </Text>
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
@@ -498,16 +497,16 @@ export function MCPRemoteServerMenu({
       value: 'tools'
     });
   }
-  if (isLegacyCloudMcpTransport(server.config.type)) {
+  if (isProviderMigrationMcpTransport(server.config.type)) {
     if (server.client.type === 'connected') {
       menuOptions.push({
         label: 'Clear authentication',
-        value: LEGACY_CLOUD_MCP_MENU_CLEAR_AUTH
+        value: PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH
       });
     } else if (server.client.type !== 'disabled') {
       menuOptions.push({
         label: 'Authenticate',
-        value: LEGACY_CLOUD_MCP_MENU_AUTH
+        value: PROVIDER_MIGRATION_MCP_MENU_AUTH
       });
     }
   } else {
@@ -566,7 +565,7 @@ export function MCPRemoteServerMenu({
               </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
           </Box>
 
-          {!isLegacyCloudMcpTransport(server.transport) && <Box>
+          {!isProviderMigrationMcpTransport(server.transport) && <Box>
               <Text bold>Auth: </Text>
               {isEffectivelyAuthenticated ? <Text>
                   {color('success', theme)(figures.tick)} authenticated
@@ -610,18 +609,18 @@ export function MCPRemoteServerMenu({
             case 'clear-auth':
               await handleClearAuth();
               break;
-            case LEGACY_CLOUD_MCP_MENU_AUTH:
-              await handleLegacyCloudAuth();
+            case PROVIDER_MIGRATION_MCP_MENU_AUTH:
+              await handleProviderMigrationAuth();
               break;
-            case LEGACY_CLOUD_MCP_MENU_CLEAR_AUTH:
-              handleLegacyCloudClearAuth();
+            case PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH:
+              handleProviderMigrationClearAuth();
               break;
             case 'reconnectMcpServer':
               setIsReconnecting(true);
               try {
                 const result_1 = await reconnectMcpServer(server.name);
-                if (isLegacyCloudMcpTransport(server.config.type)) {
-                  logEvent(legacyCloudMcpEvent('reconnect'), {
+                if (isProviderMigrationMcpTransport(server.config.type)) {
+                  logEvent(providerMigrationMcpEvent('reconnect'), {
                     success: result_1.client.type === 'connected'
                   });
                 }
@@ -630,8 +629,8 @@ export function MCPRemoteServerMenu({
                 } = handleReconnectResult(result_1, server.name);
                 onComplete?.(message_0);
               } catch (err_2) {
-                if (isLegacyCloudMcpTransport(server.config.type)) {
-                  logEvent(legacyCloudMcpEvent('reconnect'), {
+                if (isProviderMigrationMcpTransport(server.config.type)) {
+                  logEvent(providerMigrationMcpEvent('reconnect'), {
                     success: false
                   });
                 }
@@ -666,10 +665,11 @@ export function getDsxuMcpRemoteServerMenuRuntimeProfile() {
   return {
     runtime: 'DSXU MCP Remote Server Menu',
     defaultProvider: 'DSXU MCP Provider settings',
-    isolatedLegacyShell: 'legacy cloud connector OAuth / settings-connectors browser flow',
+    isolatedProviderMigrationBoundary:
+      'provider migration connector OAuth / settings-connectors browser flow',
     activationEvidence: [
-      'DSXU_CODE_MODE blocks legacy connector auth browser launch',
-      'DSXU_CODE_MODE blocks legacy connector clear-auth browser launch',
+      'DSXU_CODE_MODE blocks provider migration connector auth browser launch',
+      'DSXU_CODE_MODE blocks provider migration connector clear-auth browser launch',
       'standard MCP OAuth remains available for DSXU and external providers',
     ],
   }

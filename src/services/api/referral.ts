@@ -3,10 +3,14 @@ import { getOauthConfig } from '../../constants/oauth.js'
 import {
   getOauthAccountInfo,
   getSubscriptionType,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
@@ -23,9 +27,22 @@ const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
 // Track in-flight fetch to prevent duplicate API calls
 let fetchInProgress: Promise<ReferralEligibilityResponse | null> | null = null
 
+function isProviderMigrationAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
+function assertProviderMigrationReferralApiAllowed(): void {
+  if (!isProviderMigrationAccountApiAllowed()) {
+    throw new Error(
+      'Provider-migration referral API is disabled on the DSXU default local mainline.',
+    )
+  }
+}
+
 export async function fetchReferralEligibility(
   campaign: ReferralCampaign = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralEligibilityResponse> {
+  assertProviderMigrationReferralApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -47,6 +64,7 @@ export async function fetchReferralEligibility(
 export async function fetchReferralRedemptions(
   campaign: string = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralRedemptionsResponse> {
+  assertProviderMigrationReferralApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -70,8 +88,9 @@ export async function fetchReferralRedemptions(
  */
 function shouldCheckForPasses(): boolean {
   return !!(
+    isProviderMigrationAccountApiAllowed() &&
     getOauthAccountInfo()?.organizationUuid &&
-    isLegacyCloudSubscriber() &&
+    isProviderSubscriptionAccount() &&
     getSubscriptionType() === 'max'
   )
 }
@@ -278,13 +297,4 @@ export async function prefetchPassesEligibility(): Promise<void> {
   }
 
   void getCachedOrFetchPassesEligibility()
-}
-
-
-// V14 lifecycle shim: referral
-export function processReferralLifecycle(input) {
-  void input
-  const state = 'referral-state'
-  const lifecycle = 'referral:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

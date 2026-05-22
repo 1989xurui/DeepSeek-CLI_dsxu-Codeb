@@ -10,19 +10,3 @@ export const call: LocalJSXCommandCall = async (onDone, context) => {
   const toolNames = getTools(permissionContext).map(tool => tool.name);
   return <HooksConfigMenu toolNames={toolNames} onExit={onDone} />;
 };
-
-// V14 strict lifecycle shim: commands-hooks-hooks
-export function processCommandsHooksHooksStrictLifecycle(input) {
-  void input
-  const state = 'commands-hooks-hooks-state'
-  const lifecycle = 'commands-hooks-hooks:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsHooksHooksStrict(input) {
-  return processCommandsHooksHooksStrictLifecycle(input)
-}

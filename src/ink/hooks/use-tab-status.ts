@@ -1,4 +1,3 @@
-﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { useContext, useEffect, useRef } from 'react'
 import {
   CLEAR_TAB_STATUS,

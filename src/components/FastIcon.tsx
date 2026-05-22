@@ -43,11 +43,3 @@ export function getFastIconString(applyColor = true, cooldown = false): string {
   }
   return color('fastMode', themeName)(LIGHTNING_BOLT);
 }
-
-// V14 lifecycle shim: fasticon
-export function processFasticonLifecycle(input) {
-  void input
-  const state = 'fasticon-state'
-  const lifecycle = 'fasticon:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

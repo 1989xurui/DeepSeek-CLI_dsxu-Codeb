@@ -1,7 +1,7 @@
-﻿import { formatTotalCost } from '../../cost-tracker.js'
+import { formatTotalCost } from '../../cost-tracker.js'
 import { currentLimits } from '../../services/dsxuLimits.js'
 import type { LocalCommandCall } from '../../types/command.js'
-import { isLegacyCloudSubscriber } from '../../utils/auth.js'
+import { isProviderSubscriptionAccount } from '../../utils/auth.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 export const call: LocalCommandCall = async () => {
@@ -12,7 +12,7 @@ export const call: LocalCommandCall = async () => {
     }
   }
 
-  if (isLegacyCloudSubscriber()) {
+  if (isProviderSubscriptionAccount()) {
     let value: string
 
     if (currentLimits.isUsingOverage) {
@@ -24,7 +24,7 @@ export const call: LocalCommandCall = async () => {
     }
 
     if (process.env.USER_TYPE === 'ant') {
-      value += `\n\n[ANT-ONLY] Showing cost anyway:\n ${formatTotalCost()}`
+      value += `\n\n[DSXU internal] Showing cost anyway:\n ${formatTotalCost()}`
     }
     return { type: 'text', value }
   }
@@ -36,28 +36,20 @@ export function getDsxuCostCommandRuntimeProfile(): {
   runtime: 'DSXU Cost Ledger'
   defaultProvider: 'DSXU/DeepSeek'
   activationEvidence: readonly string[]
-  legacyIsolation: readonly string[]
+  providerMigrationIsolation: readonly string[]
 } {
   return {
     command: '/cost',
     runtime: 'DSXU Cost Ledger',
     defaultProvider: 'DSXU/DeepSeek',
     activationEvidence: [
-      'DSXU_CODE_MODE returns local DSXU cost text before legacy subscription checks',
+      'DSXU_CODE_MODE returns local DSXU cost text before provider subscription checks',
       'formatTotalCost remains the single session cost source',
-      'Legacy cloud subscriber limit messaging is bypassed in DSXU runtime',
+      'Provider migration subscriber limit messaging is bypassed in DSXU runtime',
     ],
-    legacyIsolation: [
-      'DsxuLimits is read only in non-DSXU legacy command mode',
-      'legacy cloud subscriber state is not consulted for DSXU cost output',
+    providerMigrationIsolation: [
+      'DsxuLimits is read only in non-DSXU provider migration command mode',
+      'provider subscription state is not consulted for DSXU cost output',
     ],
   }
-}
-
-// V14 lifecycle shim: cost
-export function processCostLifecycle(input) {
-  void input
-  const state = 'cost-state'
-  const lifecycle = 'cost:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

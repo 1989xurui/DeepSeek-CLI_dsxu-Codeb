@@ -1,4 +1,4 @@
-﻿import figures from 'figures';
+import figures from 'figures';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
@@ -798,12 +798,4 @@ export function BrowseMarketplace({
 
       <PluginSelectionKeyHint hasSelection={selectedForInstall.size > 0} />
     </Box>;
-}
-
-// V14 lifecycle shim: browsemarketplace
-export function processBrowsemarketplaceLifecycle(input) {
-  void input
-  const state = 'browsemarketplace-state'
-  const lifecycle = 'browsemarketplace:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

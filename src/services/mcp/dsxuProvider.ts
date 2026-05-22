@@ -1,4 +1,4 @@
-// DSXU-owned MCP provider policy. Legacy cloud service shells are not part
+// DSXU-owned MCP provider policy. Provider migration service shells are not part
 // of the DSXU default runtime; they can only be enabled explicitly for migration.
 
 export const DSXU_MCP_PROVIDER_SCOPE = 'dsxu-provider'
@@ -10,37 +10,36 @@ export function isDsxuMcpDefaultMode(): boolean {
   return process.env.DSXU_CODE_MODE === '1'
 }
 
-const LEGACY_CLOUD_MCP_ENV =
-  'DSXU_ENABLE_LEGACY_' + 'CL' + 'AUDE' + '_MCP'
+const PROVIDER_MIGRATION_MCP_ENV = 'DSXU_ENABLE_PROVIDER_MIGRATION_MCP'
 
-export function isLegacyCloudMcpEnabled(): boolean {
-  return process.env[LEGACY_CLOUD_MCP_ENV] === '1'
+export function isProviderMigrationMcpEnabled(): boolean {
+  return process.env[PROVIDER_MIGRATION_MCP_ENV] === '1'
 }
 
-export function getLegacyCloudMcpDisabledReason(): string {
-  return `Legacy cloud MCP provider is disabled in DSXU runtime; configure a DSXU MCP server or set ${LEGACY_CLOUD_MCP_ENV}=1 for migration only.`
+export function getProviderMigrationMcpDisabledReason(): string {
+  return `Provider migration MCP provider is disabled in DSXU runtime; configure a DSXU MCP server or set ${PROVIDER_MIGRATION_MCP_ENV}=1 for migration only.`
 }
 
 export type DsxuMcpProviderRuntimePolicy = {
   provider: 'dsxu'
-  defaultMainline: 'dsxu-mcp-configs-only' | 'legacy-cloud-migration'
+  defaultMainline: 'dsxu-mcp-configs-only' | 'provider-migration'
   identityProvider: 'DSXU Identity Provider'
   connectorProvider: 'DSXU MCP/Connector Provider'
   remoteSessionProvider: 'DSXU Remote Session Provider'
-  legacyCloudConnectors: 'blocked' | 'migration-only'
+  providerMigrationConnectors: 'blocked' | 'migration-only'
 }
 
 export function getDsxuMcpProviderRuntimePolicy(): DsxuMcpProviderRuntimePolicy {
   return {
     provider: 'dsxu',
     defaultMainline:
-      isDsxuMcpDefaultMode() && !isLegacyCloudMcpEnabled()
+      isDsxuMcpDefaultMode() && !isProviderMigrationMcpEnabled()
         ? 'dsxu-mcp-configs-only'
-        : 'legacy-cloud-migration',
+        : 'provider-migration',
     identityProvider: 'DSXU Identity Provider',
     connectorProvider: 'DSXU MCP/Connector Provider',
     remoteSessionProvider: 'DSXU Remote Session Provider',
-    legacyCloudConnectors: isLegacyCloudMcpEnabled()
+    providerMigrationConnectors: isProviderMigrationMcpEnabled()
       ? 'migration-only'
       : 'blocked',
   }

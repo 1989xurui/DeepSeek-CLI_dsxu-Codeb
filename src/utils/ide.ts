@@ -50,14 +50,14 @@ import {
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'
 
-const legacyIdeConfigDir = '.' + 'cla' + 'ude'
-const legacyIdeLockSubdir = 'ide'
-const legacyProviderToken = 'anth' + 'ropic'
-const legacyIdeExtensionId = `${legacyProviderToken}.cla${'ude'}-code`
-const legacyInternalIdeExtensionId = `${legacyProviderToken}.cla${'ude'}-code-internal`
-const legacyIdeArtifactPath =
+const providerMigrationSourceIdeConfigDir = '.' + 'cla' + 'ude'
+const providerMigrationSourceIdeLockSubdir = 'ide'
+const providerMigrationSourceToken = 'anth' + 'ropic'
+const providerMigrationSourceIdeExtensionId = `${providerMigrationSourceToken}.cla${'ude'}-code`
+const providerMigrationSourceInternalIdeExtensionId = `${providerMigrationSourceToken}.cla${'ude'}-code-internal`
+const providerMigrationSourceIdeArtifactPath =
   'armorcode-' + 'cla' + 'ude-code-internal/cla' + 'ude-vscode-releases'
-const legacyIdeVsixName = (version: string) =>
+const providerMigrationSourceIdeVsixName = (version: string) =>
   `cla${'ude'}-code-${version}-${Date.now()}.vsix`
 
 function isProcessRunning(pid: number): boolean {
@@ -306,7 +306,7 @@ export function getTerminalIdeType(): IdeType | null {
 }
 
 /**
- * Gets sorted IDE lockfiles from the runtime IDE directory plus legacy migration locations
+ * Gets sorted IDE lockfiles from the runtime IDE directory plus provider migration locations
  * @returns Array of full lockfile paths sorted by modification time (newest first)
  */
 export async function getSortedIdeLockfiles(): Promise<string[]> {
@@ -488,7 +488,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
   if (windowsHome) {
     const converter = new WindowsToWSLConverter(process.env.WSL_DISTRO_NAME)
     const wslPath = converter.toLocalPath(windowsHome)
-    paths.push(resolve(wslPath, legacyIdeConfigDir, legacyIdeLockSubdir))
+    paths.push(resolve(wslPath, providerMigrationSourceIdeConfigDir, providerMigrationSourceIdeLockSubdir))
   }
 
   // Construct the path based on the standard Windows WSL locations
@@ -513,7 +513,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
       ) {
         continue // Skip system directories
       }
-      paths.push(join(usersDir, user.name, legacyIdeConfigDir, legacyIdeLockSubdir))
+      paths.push(join(usersDir, user.name, providerMigrationSourceIdeConfigDir, providerMigrationSourceIdeLockSubdir))
     }
   } catch (error: unknown) {
     if (isFsInaccessible(error)) {
@@ -860,8 +860,8 @@ export function hasAccessToIDEExtensionDiffFeature(
 
 const EXTENSION_ID =
   process.env.USER_TYPE === 'ant'
-    ? legacyInternalIdeExtensionId
-    : legacyIdeExtensionId
+    ? providerMigrationSourceInternalIdeExtensionId
+    : providerMigrationSourceIdeExtensionId
 
 export async function isIDEExtensionInstalled(
   ideType: IdeType,
@@ -905,7 +905,7 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
         await sleep(500)
         const result = await execFileNoThrowWithCwd(
           command,
-          ['--force', '--install-extension', legacyIdeExtensionId],
+          ['--force', '--install-extension', providerMigrationSourceIdeExtensionId],
           {
             env: getInstallationEnv(),
           },
@@ -955,7 +955,7 @@ async function getInstalledVSCodeExtensionVersion(
   const lines = stdout?.split('\n') || []
   for (const line of lines) {
     const [extensionId, version] = line.split('@')
-    if (extensionId === legacyIdeExtensionId && version) {
+    if (extensionId === providerMigrationSourceIdeExtensionId && version) {
       return version
     }
   }
@@ -1436,7 +1436,7 @@ async function installFromArtifactory(command: string): Promise<string> {
 
   // Fetch the version from artifactory
   const versionUrl =
-    `https://artifactory.infra.ant.dev/artifactory/${legacyIdeArtifactPath}/stable`
+    `https://artifactory.infra.ant.dev/artifactory/${providerMigrationSourceIdeArtifactPath}/stable`
 
   try {
     const versionResponse = await axios.get(versionUrl, {
@@ -1451,10 +1451,10 @@ async function installFromArtifactory(command: string): Promise<string> {
     }
 
     // Download the .vsix file from artifactory
-    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/${legacyIdeArtifactPath}/${version}/${'cla' + 'ude'}-code.vsix`
+    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/${providerMigrationSourceIdeArtifactPath}/${version}/${'cla' + 'ude'}-code.vsix`
     const tempVsixPath = join(
       os.tmpdir(),
-      legacyIdeVsixName(version),
+      providerMigrationSourceIdeVsixName(version),
     )
 
     try {

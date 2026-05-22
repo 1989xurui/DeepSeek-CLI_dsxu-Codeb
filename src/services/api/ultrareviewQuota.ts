@@ -1,7 +1,11 @@
 import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
-import { isLegacyCloudSubscriber } from '../../utils/auth.js'
+import { isProviderSubscriptionAccount } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
 
 export type UltrareviewQuotaResponse = {
@@ -11,13 +15,18 @@ export type UltrareviewQuotaResponse = {
   is_overage: boolean
 }
 
+function isProviderMigrationAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
 /**
  * Peek the ultrareview quota for display and nudge decisions. Consume
  * happens server-side at session creation. Null when not a subscriber or
  * the endpoint errors.
  */
 export async function fetchUltrareviewQuota(): Promise<UltrareviewQuotaResponse | null> {
-  if (!isLegacyCloudSubscriber()) return null
+  if (!isProviderMigrationAccountApiAllowed()) return null
+  if (!isProviderSubscriptionAccount()) return null
   try {
     const { accessToken, orgUUID } = await prepareApiRequest()
     const response = await axios.get<UltrareviewQuotaResponse>(
@@ -35,13 +44,4 @@ export async function fetchUltrareviewQuota(): Promise<UltrareviewQuotaResponse 
     logForDebugging(`fetchUltrareviewQuota failed: ${error}`)
     return null
   }
-}
-
-
-// V14 lifecycle shim: ultrareviewquota
-export function processUltrareviewquotaLifecycle(input) {
-  void input
-  const state = 'ultrareviewquota-state'
-  const lifecycle = 'ultrareviewquota:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

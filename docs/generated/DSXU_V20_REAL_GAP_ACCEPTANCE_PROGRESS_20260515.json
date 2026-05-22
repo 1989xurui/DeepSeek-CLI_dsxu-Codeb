@@ -1,0 +1,361 @@
+{
+  "schemaVersion": "dsxu.v20.real-gap-acceptance-progress.v1",
+  "generatedAt": "2026-05-15T10:25:00+08:00",
+  "status": "FOCUSED_ACCEPTANCE_PROGRESS_NOT_FINAL_PASS",
+  "ownerGitPacketSignoff": "DONE_SIGNOFF_EXECUTION_STATES",
+  "deletionGitMutationSignoff": "DONE_ACCEPT_KEEP_DELETED_NOT_STAGED",
+  "aclResidueSignoff": "DONE_EXTERNAL_RESIDUE_DELETE_WHEN_PERMISSION_ALLOWS",
+  "focusedAcceptance": [
+    {
+      "packet": "MCP/external/remote lifecycle",
+      "command": "bun test src/services/mcp/__tests__/doctor.test.ts src/dsxu/engine/__tests__/v8-real-mcp-server-v1.test.ts src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts src/dsxu/engine/__tests__/remote-lifecycle-v1.test.ts",
+      "result": "PASS",
+      "tests": 9,
+      "expects": 82
+    },
+    {
+      "packet": "browser/dev-server/cost evidence",
+      "command": "bun test src/dsxu/engine/__tests__/browser-dev-server-proof-v1.test.ts src/dsxu/engine/__tests__/frontend-project-dev-server-v1.test.ts src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts src/dsxu/engine/__tests__/v19-cost-cache-live-task-evidence-v1.test.ts",
+      "result": "PASS",
+      "tests": 8,
+      "expects": 164
+    },
+    {
+      "packet": "real-task replay/remote network/control plane",
+      "command": "bun test src/dsxu/engine/__tests__/real-task-replay-suite-v1.test.ts src/dsxu/engine/__tests__/remote-network-workflow-v1.test.ts",
+      "result": "PASS",
+      "tests": 3,
+      "expects": 46
+    },
+    {
+      "packet": "extension/control-plane stage",
+      "command": "bun test src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 2,
+      "expects": 19
+    },
+    {
+      "packet": "terminal/TUI reliability full group",
+      "command": "bun test src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+      "result": "PARTIAL_FAIL_THEN_FIXED",
+      "testsPassed": 9,
+      "testsFailed": 1,
+      "failure": "WSL $HOME probe hit SIGTERM during cold/busy startup"
+    },
+    {
+      "packet": "TUI WSL exit smoke fix",
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"starts the real WSL TUI\"",
+      "result": "PASS",
+      "tests": 1,
+      "expects": 15
+    },
+    {
+      "packet": "project intake / external host / chat API / operator dashboard owner contract",
+      "command": "bun test src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 3,
+      "expects": 26
+    },
+    {
+      "packet": "external extension visible owner regression",
+      "command": "bun test src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts src/dsxu/engine/__tests__/visible-shared-owner-v20.test.ts",
+      "result": "PASS",
+      "tests": 6,
+      "expects": 37
+    },
+    {
+      "packet": "provider/API fallback owner regression after chat API profile",
+      "command": "bun test src/dsxu/engine/__tests__/api-service.test.ts src/dsxu/engine/__tests__/llm-adapter-owner-v1.test.ts",
+      "result": "PASS",
+      "tests": 22,
+      "expects": 51
+    },
+    {
+      "packet": "P12 raw comparison / raw evidence readiness gate",
+      "command": "bun test src/dsxu/engine/__tests__/phase12-raw-comparison-v1.test.ts src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts",
+      "result": "PASS",
+      "tests": 17,
+      "expects": 203,
+      "durationSeconds": 123,
+      "meaning": "P12 targetReferenceManifestPath import, malformed/wrong-side/dry-plan blocking, family coverage and raw readiness remain enforced; no target logs fabricated"
+    },
+    {
+      "packet": "P12 raw-readiness CLI help",
+      "command": "bun run p12:raw-readiness --help",
+      "result": "PASS",
+      "meaning": "CLI import entry exists for targetReferenceManifestPath and does not run comparison unless invoked with evidence"
+    },
+    {
+      "packet": "control-plane export plus real-gap regression",
+      "command": "bun test src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts src/dsxu/engine/__tests__/control-plane-v1.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts",
+      "result": "PASS",
+      "tests": 14,
+      "expects": 74
+    },
+    {
+      "packet": "P12 raw-readiness CLI current evidence",
+      "command": "bun run p12:raw-readiness --evidenceDir .dsxu/trace/p12-raw-readiness-cli-v1",
+      "result": "BLOCKED_EVIDENCED",
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 14,
+      "nextAction": "collect-target-reference-raw-logs",
+      "evidencePath": ".dsxu/trace/p12-raw-readiness-cli-v1/raw-evidence-readiness-register.evidence.json"
+    },
+    {
+      "packet": "Owner/Git mutation preflight",
+      "command": "bun run owner-git:preflight",
+      "result": "PASS_ALIGNED_BLOCKED_EVIDENCED",
+      "registerRows": 1888,
+      "registerAlignedToGitStatus": true,
+      "canStageDeletionPackets": true,
+      "deletionMutationReadyPaths": 147,
+      "aclResidueRows": 4,
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "canRunFinalSixStageTests": false,
+      "canCreateCleanExport": false,
+      "ownerAcceptedOrConditionalPaths": 1741
+    },
+    {
+      "packet": "Owner/Git deletion stage plan",
+      "command": "bun run owner-git:stage-plan",
+      "result": "READY_PENDING_EXPLICIT_GIT_STAGE",
+      "totalDeletionPaths": 147,
+      "stageReadyPaths": 147,
+      "packetCount": 6,
+      "didMutateGit": false,
+      "evidencePath": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json"
+    },
+    {
+      "packet": "ACL residue preflight",
+      "command": "bun run acl:preflight",
+      "result": "BLOCKED_EXTERNAL_PERMISSION_OR_SIGNOFF",
+      "residueCount": 4,
+      "existingResidues": 4,
+      "writableResidues": 4,
+      "activeProductReferenceRows": 0,
+      "didMutateFilesystem": false,
+      "evidencePath": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json"
+    },
+    {
+      "packet": "V20 six-stage test plan",
+      "command": "bun run v20:six-stage-plan",
+      "result": "BLOCKED_UNTIL_UPSTREAM_GATES_PASS",
+      "stages": 6,
+      "p12PairedRawLogCount": 0,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 14,
+      "deletionStagePlanReady": true,
+      "aclResidues": 4,
+      "didRunFinalTests": false,
+      "evidencePath": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json"
+    },
+    {
+      "packet": "Owner/Git product stage plan",
+      "command": "bun run owner-git:product-stage-plan",
+      "result": "READY_PENDING_EXPLICIT_OWNER_GIT_STAGE",
+      "totalProductPaths": 1741,
+      "stageReadyPaths": 1741,
+      "packetCount": 11,
+      "didMutateGit": false,
+      "evidencePath": "docs/generated/DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json"
+    },
+    {
+      "packet": "P12 target manifest intake",
+      "command": "bun run p12:target-intake",
+      "result": "BLOCKED_MISSING_TARGET_REFERENCE_MANIFEST",
+      "acceptedLogCount": 0,
+      "rejectedLogCount": 0,
+      "rawLogExistsCount": 0,
+      "artifactExistsCount": 0,
+      "didFabricateTargetLogs": false,
+      "didRunComparison": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json"
+    },
+    {
+      "packet": "V20 final preflight",
+      "command": "bun run v20:final-preflight",
+      "result": "BLOCKED",
+      "gitStatusTotal": 1888,
+      "modified": 1648,
+      "deleted": 147,
+      "untracked": 93,
+      "gates": 7,
+      "canRunFinalSixStageTests": false,
+      "canCreateCleanExport": false,
+      "didRunFinalTests": false,
+      "didCreateExport": false,
+      "evidencePath": "docs/generated/DSXU_V20_FINAL_PREFLIGHT_20260515.json"
+    },
+    {
+      "packet": "Clean export preflight",
+      "command": "bun run clean-export:preflight",
+      "result": "BLOCKED",
+      "canCreateCleanExport": false,
+      "didCreateExport": false,
+      "blockers": 4,
+      "evidencePath": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json"
+    },
+    {
+      "packet": "P12 target collection pack",
+      "command": "bun run p12:target-collection",
+      "result": "READY_FOR_REAL_TARGET_REFERENCE_COLLECTION_NOT_EVIDENCE",
+      "workOrderCount": 14,
+      "targetManifestBacklogSlotCount": 0,
+      "pairedRawLogCount": 0,
+      "didFabricateTargetLogs": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json"
+    },
+    {
+      "packet": "Owner/Git mutation command plan",
+      "command": "bun run owner-git:mutation-command-plan",
+      "result": "READY_PENDING_EXPLICIT_AUTHORIZATION_NOT_EXECUTED",
+      "productPathCount": 1741,
+      "deletionPathCount": 147,
+      "commandCount": 57,
+      "didMutateGit": false,
+      "evidencePath": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json"
+    },
+    {
+      "packet": "ACL residue closure plan",
+      "command": "bun run acl:closure-plan",
+      "result": "READY_PENDING_EXPLICIT_OWNER_GIT_MUTATION_OR_EXTERNAL_PERMISSION",
+      "residueCount": 4,
+      "readyRows": 4,
+      "didMutateFilesystem": false,
+      "didStageGit": false,
+      "evidencePath": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json"
+    },
+    {
+      "packet": "Commercial/IP release preflight",
+      "command": "bun run commercial-ip:preflight",
+      "result": "ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING",
+      "activeReviewRequiredRows": 0,
+      "publicReleaseThirdPartyRows": 0,
+      "didRewriteSource": false,
+      "evidencePath": "docs/generated/DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json"
+    },
+    {
+      "packet": "V20 blocker action board",
+      "command": "bun run v20:blocker-board",
+      "result": "BLOCKED_FIXED_ACTION_ORDER",
+      "actionCount": 7,
+      "didMutateGit": false,
+      "didMutateFilesystem": false,
+      "didRunFinalTests": false,
+      "didCreateExport": false,
+      "evidencePath": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json"
+    },
+    {
+      "packet": "P12 target manifest contract board",
+      "command": "bun run p12:target-contract",
+      "result": "CONTRACT_READY_TARGET_MANIFEST_STILL_REQUIRED",
+      "workOrderCount": 14,
+      "currentAcceptedTargetLogs": 0,
+      "didFabricateTargetLogs": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.json"
+    },
+    {
+      "packet": "V20 post-authorization verification plan",
+      "command": "bun run v20:post-auth-plan",
+      "result": "READY_PLAN_NOT_EXECUTED",
+      "steps": 7,
+      "mutationCommandCount": 57,
+      "didMutateGit": false,
+      "didRunVerification": false,
+      "didCreateExport": false,
+      "evidencePath": "docs/generated/DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json"
+    },
+    {
+      "packet": "V20 closure batch runner",
+      "command": "bun run v20:closure-batch",
+      "result": "PASS_EVIDENCE_REFRESHED_BLOCKERS_REMAIN",
+      "commandCount": 14,
+      "passCount": 14,
+      "failCount": 0,
+      "mutationCommandCount": 57,
+      "p12WorkOrderCount": 14,
+      "didMutateGit": false,
+      "didCreateExport": false,
+      "evidencePath": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.json"
+    },
+    {
+      "packet": "Owner/Git authorization board",
+      "command": "bun run owner-git:authorization-board",
+      "result": "READY_FOR_EXPLICIT_OWNER_GIT_AUTHORIZATION_NOT_EXECUTED",
+      "ownerPacketCount": 17,
+      "productPathCount": 1745,
+      "deletionPathCount": 147,
+      "totalPlannedPaths": 1892,
+      "commandCount": 57,
+      "commandPathCount": 1892,
+      "canEnterAuthorizationExecution": true,
+      "didMutateGit": false,
+      "evidencePath": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json"
+    },
+    {
+      "packet": "P12 target manifest discovery",
+      "command": "bun run p12:target-discovery",
+      "result": "READY_TARGET_REFERENCE_MANIFEST_DISCOVERED",
+      "readyCandidateCount": 1,
+      "canonicalTargetReferenceManifestPath": "D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "canonicalAcceptedLogCount": 14,
+      "didFabricateTargetLogs": false,
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json"
+    },
+    {
+      "packet": "P12 target manifest intake with real manifest",
+      "command": "bun run p12:target-intake --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "result": "READY_FOR_RAW_READINESS_IMPORT",
+      "acceptedLogCount": 14,
+      "rawLogExistsCount": 14,
+      "artifactExistsCount": 56,
+      "blockers": [],
+      "evidencePath": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json"
+    },
+    {
+      "packet": "P12 raw readiness with real target manifest",
+      "command": "bun run p12:raw-readiness --targetReferenceManifestPath D:\\DSXU-code\\.dsxu\\trace\\p12-target-reference-codex-runner-v1\\target-reference-manifest.json",
+      "result": "PASS",
+      "p12PairedRawLogCount": 14,
+      "p12ReplayFamilyGapCount": 0,
+      "deltaStatus": "PASS",
+      "evidencePath": ".dsxu/trace/raw-evidence-readiness-register-v1/raw-evidence-readiness-register.evidence.json"
+    }
+  ],
+  "codeFix": {
+    "path": "src/dsxu/integration/harness/real-tui-harness.ts",
+    "change": "WSL home probe now retries 3 times with 15s timeout and returns structured spawn_failed evidence if WSL home discovery still fails.",
+    "owner": "V20-GAP-09 UI/TUI work-state plus terminal host acceptance harness"
+  },
+  "remainingRealGapAcceptance": [
+    "P12 target-reference manifest is now discovered/imported and raw readiness is PASS with 14/14 paired logs and zero family gap; delta review wording still must remain evidence-bound",
+    "Owner/Git authorization board is ready for 1746 product paths + 147 deletion paths across 17 owner packets and 57 commands; explicit execution remains required",
+    "git add changes index state only; git status count does not truly drop until a later explicit closeout/commit action",
+    "4 ACL residue paths are closure-ready but require external permission/ownership or explicit owner/Git mutation handling",
+    "Final six-stage acceptance and clean export remain blocked until Owner/Git, ACL, and release gates are PASS"
+  ],
+  "rule": "Focused acceptance proves gates and harnesses work; it does not replace final six-stage function/experience/recovery/performance/eval/release tests.",
+  "realGapAcceptanceContract": "docs/generated/DSXU_V20_REAL_GAP_ACCEPTANCE_SUMMARY_20260515.json",
+  "p12RawReadinessCli": "scripts/dsxu-p12-raw-readiness.ts",
+  "ownerGitMutationPreflight": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_PREFLIGHT_20260515.json",
+  "ownerGitStagePlan": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json",
+  "aclResiduePreflight": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json",
+  "sixStageTestPlan": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json",
+  "p12TargetManifestIntake": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json",
+  "ownerGitProductStagePlan": "docs/generated/DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json",
+  "finalPreflight": "docs/generated/DSXU_V20_FINAL_PREFLIGHT_20260515.json",
+  "cleanExportPreflight": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+  "p12TargetCollectionPack": "docs/generated/DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json",
+  "ownerGitMutationCommandPlan": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json",
+  "aclResidueClosurePlan": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json",
+  "commercialIpReleasePreflight": "docs/generated/DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json",
+  "blockerActionBoard": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json",
+  "p12TargetManifestContractBoard": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.json",
+  "postAuthorizationVerificationPlan": "docs/generated/DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json",
+  "closureBatchRun": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.json",
+  "ownerGitAuthorizationBoard": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json",
+  "p12TargetManifestDiscovery": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json",
+  "p12RawReadinessEvidence": ".dsxu/trace/raw-evidence-readiness-register-v1/raw-evidence-readiness-register.evidence.json"
+}

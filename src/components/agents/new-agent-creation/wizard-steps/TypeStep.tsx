@@ -100,11 +100,3 @@ export function TypeStep(_props) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: typestep
-export function processTypestepLifecycle(input) {
-  void input
-  const state = 'typestep-state'
-  const lifecycle = 'typestep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

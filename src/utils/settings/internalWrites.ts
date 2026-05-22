@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Tracks timestamps of in-process settings-file writes so the chokidar watcher
  * in changeDetector.ts can ignore its own echoes.

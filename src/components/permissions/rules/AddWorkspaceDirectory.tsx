@@ -337,11 +337,3 @@ export function AddWorkspaceDirectory(t0) {
 function _temp2(exitState) {
   return exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline><KeyboardShortcutHint shortcut="Tab" action="complete" /><KeyboardShortcutHint shortcut="Enter" action="add" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" /></Byline>;
 }
-
-// V14 lifecycle shim: addworkspacedirectory
-export function processAddworkspacedirectoryLifecycle(input) {
-  void input
-  const state = 'addworkspacedirectory-state'
-  const lifecycle = 'addworkspacedirectory:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

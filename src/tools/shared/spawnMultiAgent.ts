@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Shared spawn module for teammate creation.
  * Extracted from TeammateTool to allow reuse by AgentTool.
@@ -232,7 +231,7 @@ function buildInheritedCliFlags(options?: {
   } else if (permissionMode === 'auto') {
     // Teammates inherit auto mode so the classifier auto-approves their tool
     // calls too. The teammate's own startup (permissionSetup.ts) handles
-    // GrowthBook gate checks and setAutoModeActive(true) independently.
+    // feature flag provider gate checks and setAutoModeActive(true) independently.
     flags.push('--permission-mode auto')
   }
 
@@ -306,7 +305,7 @@ export async function generateUniqueTeammateName(
 /**
  * Handle spawn operation using split-pane view (default).
  * When inside tmux: Creates teammates in a shared window with leader on left, teammates on right.
- * When outside tmux: Creates a DSXU/legacy swarm session with all teammates in a tiled layout.
+ * When outside tmux: Creates a DSXU swarm session with all teammates in a tiled layout.
  */
 async function handleSpawnSplitPane(
   input: SpawnInput,
@@ -390,7 +389,7 @@ async function handleSpawnSplitPane(
   // Create a pane in the swarm view
   // - Inside tmux: splits current window (leader on left, teammates on right)
   // - In iTerm2 with it2: uses native iTerm2 split panes
-  // - Outside both: creates DSXU/legacy swarm session with tiled teammates
+  // - Outside both: creates a DSXU swarm session with tiled teammates
   const { paneId, isFirstTeammate } = await createTeammatePaneInSwarmView(
     sanitizedName,
     teammateColor,
@@ -406,7 +405,7 @@ async function handleSpawnSplitPane(
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args (replaces legacy provider env vars)
+  // Build teammate identity CLI args; provider-migration source env names are migration aliases only.
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -441,7 +440,7 @@ async function handleSpawnSplitPane(
 
   const flagsStr = inheritedFlags ? ` ${inheritedFlags}` : ''
   // Propagate env vars that teammates need but may not inherit from tmux split-window shells.
-  // Includes DSXU/legacy agent-team markers and API provider vars.
+  // Includes DSXU agent-team markers, migration aliases, and API provider vars.
   const envStr = buildInheritedEnvVars()
   const spawnCommand = `cd ${quote([workingDir])} && env ${envStr} ${quote([binaryPath])} ${teammateArgs}${flagsStr}`
 
@@ -545,7 +544,7 @@ async function handleSpawnSplitPane(
 }
 
 /**
- * Handle spawn operation using separate windows (legacy behavior).
+ * Handle spawn operation using separate windows.
  * Creates each teammate in its own tmux window.
  */
 async function handleSpawnSeparateWindow(
@@ -613,7 +612,7 @@ async function handleSpawnSeparateWindow(
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args (replaces legacy provider env vars)
+  // Build teammate identity CLI args; provider-migration source env names are migration aliases only.
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -648,7 +647,7 @@ async function handleSpawnSeparateWindow(
 
   const flagsStr = inheritedFlags ? ` ${inheritedFlags}` : ''
   // Propagate env vars that teammates need but may not inherit from tmux split-window shells.
-  // Includes DSXU/legacy agent-team markers and API provider vars.
+  // Includes DSXU agent-team markers, migration aliases, and API provider vars.
   const envStr = buildInheritedEnvVars()
   const spawnCommand = `cd ${quote([workingDir])} && env ${envStr} ${quote([binaryPath])} ${teammateArgs}${flagsStr}`
 
@@ -1108,7 +1107,7 @@ export function getDsxuSpawnMultiAgentRuntimeProfile(): {
     runtime: 'DSXU Spawn Multi-Agent',
     teammateCommandEnv: [
       DSXU_TEAMMATE_COMMAND_ENV_VAR,
-      `${TEAMMATE_COMMAND_ENV_VAR} legacy alias`,
+      `${TEAMMATE_COMMAND_ENV_VAR} provider-migration source alias`,
     ],
     backends: ['in-process', 'tmux', 'iTerm2/split-pane', 'separate-window'],
     activationEvidence: [

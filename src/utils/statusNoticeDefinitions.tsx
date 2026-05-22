@@ -1,4 +1,4 @@
-﻿// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { Box, Text } from '../ink.js';
 import * as React from 'react';
 import { getLargeMemoryFiles, MAX_MEMORY_CHARACTER_COUNT, type MemoryFileInfo } from './dsxuInstructions.js';
@@ -7,7 +7,7 @@ import { getCwd } from './cwd.js';
 import { relative } from 'path';
 import { formatNumber } from './format.js';
 import type { getGlobalConfig } from './config.js';
-import { getProviderApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource, isDSXUAISubscriber } from './auth.js';
+import { getProviderApiKeyWithSource, getApiKeyFromConfigOrMacOSKeychain, getAuthTokenSource, isProviderSubscriptionAccount } from './auth.js';
 import type { AgentDefinitionsResult } from '../tools/AgentTool/loadAgentsDir.js';
 import { getAgentDescriptionsTotalTokens, AGENT_DESCRIPTIONS_THRESHOLD } from './statusNoticeHelpers.js';
 import { isSupportedJetBrainsTerminal, toIDEDisplayName, getTerminalIdeType } from './ide.js';
@@ -27,7 +27,7 @@ export type StatusNoticeDefinition = {
   render: (context: StatusNoticeContext) => React.ReactNode;
 };
 
-const getLegacyCloudAuthSource = () => `${'cl' + 'aude'}.ai`;
+const getProviderMigrationAuthSource = () => `${'cl' + 'aude'}.ai`;
 
 // Individual notice definitions
 const largeMemoryFilesNotice: StatusNoticeDefinition = {
@@ -52,12 +52,12 @@ const largeMemoryFilesNotice: StatusNoticeDefinition = {
       </>;
   }
 };
-const legacyCloudSubscriberExternalTokenNotice: StatusNoticeDefinition = {
-  id: 'legacy-cloud-external-token',
+const providerMigrationSubscriberExternalTokenNotice: StatusNoticeDefinition = {
+  id: 'provider-migration-external-token',
   type: 'warning',
   isActive: () => {
     const authTokenInfo = getAuthTokenSource();
-    return isDSXUAISubscriber() && (authTokenInfo.source === 'PROVIDER_AUTH_TOKEN' || authTokenInfo.source === 'apiKeyHelper');
+    return isProviderSubscriptionAccount() && (authTokenInfo.source === 'PROVIDER_AUTH_TOKEN' || authTokenInfo.source === 'apiKeyHelper');
   },
   render: () => {
     const authTokenInfo = getAuthTokenSource();
@@ -127,13 +127,13 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
         <Box flexDirection="column" marginLeft={3}>
           <Text color="warning">
             路 Trying to use{' '}
-            {authTokenInfo.source === getLegacyCloudAuthSource() ? 'DSXU cloud' : authTokenInfo.source}
+            {authTokenInfo.source === getProviderMigrationAuthSource() ? 'DSXU cloud' : authTokenInfo.source}
             ?{' '}
             {apiKeySource === 'PROVIDER_API_KEY' ? 'Unset the provider API key environment variable, or dsxu /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'dsxu /logout'}
           </Text>
           <Text color="warning">
             路 Trying to use {apiKeySource}?{' '}
-            {authTokenInfo.source === getLegacyCloudAuthSource() ? 'dsxu /logout to sign out of DSXU cloud.' : `Unset the ${authTokenInfo.source} environment variable.`}
+            {authTokenInfo.source === getProviderMigrationAuthSource() ? 'dsxu /logout to sign out of DSXU cloud.' : `Unset the ${authTokenInfo.source} environment variable.`}
           </Text>
         </Box>
       </Box>;
@@ -191,17 +191,9 @@ const jetbrainsPluginNotice: StatusNoticeDefinition = {
 };
 
 // All notice definitions
-export const statusNoticeDefinitions: StatusNoticeDefinition[] = [largeMemoryFilesNotice, largeAgentDescriptionsNotice, legacyCloudSubscriberExternalTokenNotice, apiKeyConflictNotice, bothAuthMethodsNotice, jetbrainsPluginNotice];
+export const statusNoticeDefinitions: StatusNoticeDefinition[] = [largeMemoryFilesNotice, largeAgentDescriptionsNotice, providerMigrationSubscriberExternalTokenNotice, apiKeyConflictNotice, bothAuthMethodsNotice, jetbrainsPluginNotice];
 
 // Helper functions for external use
 export function getActiveNotices(context: StatusNoticeContext): StatusNoticeDefinition[] {
   return statusNoticeDefinitions.filter(notice => notice.isActive(context));
-}
-
-// V14 lifecycle shim: statusnoticedefinitions
-export function processStatusnoticedefinitionsLifecycle(input) {
-  void input
-  const state = 'statusnoticedefinitions-state'
-  const lifecycle = 'statusnoticedefinitions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

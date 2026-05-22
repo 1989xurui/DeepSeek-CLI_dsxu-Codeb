@@ -7,7 +7,7 @@ export class DSXUError extends Error {
   }
 }
 
-export const LegacyProviderError = DSXUError
+export const SourceProviderError = DSXUError
 
 export class MalformedCommandError extends Error {}
 

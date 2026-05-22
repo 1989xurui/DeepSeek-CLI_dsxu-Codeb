@@ -778,11 +778,3 @@ function EmptyStateMessage(t0) {
       }
   }
 }
-
-// V14 lifecycle shim: discoverplugins
-export function processDiscoverpluginsLifecycle(input) {
-  void input
-  const state = 'discoverplugins-state'
-  const lifecycle = 'discoverplugins:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

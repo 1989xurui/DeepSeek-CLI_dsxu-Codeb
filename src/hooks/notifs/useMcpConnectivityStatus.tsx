@@ -2,9 +2,9 @@ import { c as _c } from 'react/compiler-runtime'
 import { useEffect } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
-import { LEGACY_CLOUD_MCP_TRANSPORT } from '../../constants/legacyProviderProtocol.js'
+import { PROVIDER_MIGRATION_MCP_TRANSPORT } from '../../constants/providerMigrationProtocol.js'
 import { Text } from '../../ink.js'
-import { hasLegacyCloudMcpEverConnected } from '../../services/mcp/legacyRemoteMcpProvider.js'
+import { hasProviderMigrationMcpEverConnected } from '../../services/mcp/providerConnectorMigration.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
 
 type Props = {
@@ -25,17 +25,17 @@ export function useMcpConnectivityStatus({
       if (getIsRemoteMode()) return
 
       const failedLocalClients = mcpClients.filter(isFailedLocalClient)
-      const failedLegacyCloudClients = mcpClients.filter(isFailedLegacyCloudClient)
+      const failedProviderMigrationClients = mcpClients.filter(isFailedProviderMigrationClient)
       const needsAuthLocalServers = mcpClients.filter(isNeedsAuthLocalServer)
-      const needsAuthLegacyCloudServers = mcpClients.filter(
-        isNeedsAuthLegacyCloudServer,
+      const needsAuthProviderMigrationServers = mcpClients.filter(
+        isNeedsAuthProviderMigrationServer,
       )
 
       if (
         failedLocalClients.length === 0 &&
-        failedLegacyCloudClients.length === 0 &&
+        failedProviderMigrationClients.length === 0 &&
         needsAuthLocalServers.length === 0 &&
-        needsAuthLegacyCloudServers.length === 0
+        needsAuthProviderMigrationServers.length === 0
       ) {
         return
       }
@@ -56,14 +56,14 @@ export function useMcpConnectivityStatus({
         })
       }
 
-      if (failedLegacyCloudClients.length > 0) {
+      if (failedProviderMigrationClients.length > 0) {
         addNotification({
-          key: 'mcp-legacy-cloud-failed',
+          key: 'mcp-provider-migration-failed',
           jsx: (
             <>
               <Text color="error">
-                {failedLegacyCloudClients.length} legacy cloud{' '}
-                {failedLegacyCloudClients.length === 1
+                {failedProviderMigrationClients.length} provider migration{' '}
+                {failedProviderMigrationClients.length === 1
                   ? 'connector'
                   : 'connectors'}{' '}
                 unavailable
@@ -94,14 +94,14 @@ export function useMcpConnectivityStatus({
         })
       }
 
-      if (needsAuthLegacyCloudServers.length > 0) {
+      if (needsAuthProviderMigrationServers.length > 0) {
         addNotification({
-          key: 'mcp-legacy-cloud-needs-auth',
+          key: 'mcp-provider-migration-needs-auth',
           jsx: (
             <>
               <Text color="warning">
-                {needsAuthLegacyCloudServers.length} legacy cloud{' '}
-                {needsAuthLegacyCloudServers.length === 1
+                {needsAuthProviderMigrationServers.length} provider migration{' '}
+                {needsAuthProviderMigrationServers.length === 1
                   ? 'connector needs'
                   : 'connectors need'}{' '}
                 auth
@@ -125,26 +125,26 @@ export function useMcpConnectivityStatus({
   useEffect(effect, deps)
 }
 
-function isNeedsAuthLegacyCloudServer(client: MCPServerConnection): boolean {
+function isNeedsAuthProviderMigrationServer(client: MCPServerConnection): boolean {
   return (
     client.type === 'needs-auth' &&
-    client.config.type === LEGACY_CLOUD_MCP_TRANSPORT &&
-    hasLegacyCloudMcpEverConnected(client.name)
+    client.config.type === PROVIDER_MIGRATION_MCP_TRANSPORT &&
+    hasProviderMigrationMcpEverConnected(client.name)
   )
 }
 
 function isNeedsAuthLocalServer(client: MCPServerConnection): boolean {
   return (
     client.type === 'needs-auth' &&
-    client.config.type !== LEGACY_CLOUD_MCP_TRANSPORT
+    client.config.type !== PROVIDER_MIGRATION_MCP_TRANSPORT
   )
 }
 
-function isFailedLegacyCloudClient(client: MCPServerConnection): boolean {
+function isFailedProviderMigrationClient(client: MCPServerConnection): boolean {
   return (
     client.type === 'failed' &&
-    client.config.type === LEGACY_CLOUD_MCP_TRANSPORT &&
-    hasLegacyCloudMcpEverConnected(client.name)
+    client.config.type === PROVIDER_MIGRATION_MCP_TRANSPORT &&
+    hasProviderMigrationMcpEverConnected(client.name)
   )
 }
 
@@ -153,14 +153,6 @@ function isFailedLocalClient(client: MCPServerConnection): boolean {
     client.type === 'failed' &&
     client.config.type !== 'sse-ide' &&
     client.config.type !== 'ws-ide' &&
-    client.config.type !== LEGACY_CLOUD_MCP_TRANSPORT
+    client.config.type !== PROVIDER_MIGRATION_MCP_TRANSPORT
   )
-}
-
-// V14 lifecycle shim: usemcpconnectivitystatus
-export function processUsemcpconnectivitystatusLifecycle(input) {
-  void input
-  const state = 'usemcpconnectivitystatus-state'
-  const lifecycle = 'usemcpconnectivitystatus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

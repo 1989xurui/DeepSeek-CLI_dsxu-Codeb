@@ -42,12 +42,3 @@ const AGENT_ID_PATTERN = /^a(?:.+-)?[0-9a-f]{16}$/
 export function toAgentId(s: string): AgentId | null {
   return AGENT_ID_PATTERN.test(s) ? (s as AgentId) : null
 }
-
-
-// V14 lifecycle shim: ids
-export function processIdsLifecycle(input) {
-  void input
-  const state = 'ids-state'
-  const lifecycle = 'ids:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

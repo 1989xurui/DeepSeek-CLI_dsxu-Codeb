@@ -100,12 +100,3 @@ export function getDestructiveCommandWarning(command: string): string | null {
   }
   return null
 }
-
-
-// V14 lifecycle shim: destructivecommandwarning
-export function processDestructivecommandwarningLifecycle(input) {
-  void input
-  const state = 'destructivecommandwarning-state'
-  const lifecycle = 'destructivecommandwarning:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

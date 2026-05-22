@@ -5,7 +5,7 @@ import type {
   SDKControlPermissionRequest,
   StdoutMessage,
 } from '../entrypoints/sdk/controlTypes.js'
-import type { RemotePermissionResponse } from '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js'
+import type { RemotePermissionResponse } from '../services/bridge/dsxuRemoteSessionCoordinator.js'
 import { logForDebugging } from '../utils/debug.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 import type { RemoteMessageContent } from '../utils/teleport/api.js'
@@ -212,14 +212,6 @@ export class DirectConnectSessionManager {
   }
 }
 
-
-// V14 lifecycle shim: directconnectmanager
-export function processDirectconnectmanagerLifecycle(input) {
-  void input
-  const state = 'directconnectmanager-state'
-  const lifecycle = 'directconnectmanager:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
 
 export function getDsxuDirectConnectRuntimeProfile() {
   return {

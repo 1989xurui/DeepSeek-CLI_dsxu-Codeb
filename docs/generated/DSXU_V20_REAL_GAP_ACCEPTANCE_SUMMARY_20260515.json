@@ -1,0 +1,176 @@
+{
+  "schema": "dsxu.v20.real-gap-acceptance.v1",
+  "status": "FOCUSED_ACCEPTANCE_READY_TARGET_RAW_STILL_EXTERNAL",
+  "packetCount": 5,
+  "focusedReadyPackets": 4,
+  "liveInputRequiredPackets": 1,
+  "unknownProjectInputs": 0,
+  "noSecondRuntime": true,
+  "packets": [
+    {
+      "id": "V20-RG-01-project-intake",
+      "status": "FOCUSED_ACCEPTANCE_READY",
+      "owner": "DSXU Project Intake / Context Owner",
+      "surface": "external project files, .mcp.json, DSXU.md, commands, skills, hooks",
+      "sourceOwners": [
+        "DSXU MCP Config",
+        "DSXU Skills Loader",
+        "DSXU MCP / Plugin Adapter Boundary",
+        "DSXU Plugin Runtime"
+      ],
+      "mainlineRoute": [
+        "project instruction files enter context assembly",
+        ".mcp.json enters DSXU MCP Config and connection owner",
+        ".dsxu/commands and .dsxu/skills enter DSXU Skills Loader",
+        "plugin command/MCP components enter DSXU Plugin Runtime adapter boundary",
+        "settings and hooks enter DSXU Settings / Hooks Owner"
+      ],
+      "prohibitedRuntime": [
+        "no project-local query loop",
+        "no project-local MCP manager",
+        "no project-local skill runtime",
+        "no project-local shell runner"
+      ],
+      "evidence": [
+        "fixture/DSXU.md -> DSXU Context / Instruction Owner via src/utils/instructionFiles.ts -> Query Loop context assembly; activeRuntimeAdded=false",
+        "fixture/DSXU.local.md -> DSXU Context / Instruction Owner via src/utils/instructionFiles.ts -> Query Loop context assembly; activeRuntimeAdded=false",
+        "fixture/.mcp.json -> DSXU MCP Config via src/services/mcp/config.ts -> useManageMCPConnections Tool Gate; activeRuntimeAdded=false",
+        "fixture/.dsxu/commands/review.md -> DSXU Skills Loader via src/skills/loadSkillsDir.ts -> command parser -> Tool Gate; activeRuntimeAdded=false",
+        "fixture/.dsxu/skills/fix/SKILL.md -> DSXU Skills Loader via src/skills/loadSkillsDir.ts -> SkillTool dynamic registry; activeRuntimeAdded=false",
+        "fixture/.dsxu/settings.json -> DSXU Settings / Hooks Owner via src/utils/settings/types.ts -> src/utils/hooks.ts; activeRuntimeAdded=false",
+        "fixture/.dsxu/hooks.json -> DSXU Settings / Hooks Owner via src/utils/settings/types.ts -> src/utils/hooks.ts; activeRuntimeAdded=false",
+        "fixture/.dsxu/plugins/sample/commands/ship.md -> DSXU Plugin Runtime via src/utils/plugins/* -> plugin command/MCP adapter boundary; activeRuntimeAdded=false",
+        "fixture/src/app.ts -> DSXU Context / File Read Owner via read/edit tools must enter Tool Gate and context accounting; activeRuntimeAdded=false"
+      ],
+      "remainingLiveInput": []
+    },
+    {
+      "id": "V20-RG-02-external-agent-host",
+      "status": "FOCUSED_ACCEPTANCE_READY",
+      "owner": "DSXU Control Plane Adapter Boundary",
+      "surface": "external host / agent session ingress",
+      "sourceOwners": [
+        "DSXU Control Plane Adapter Boundary",
+        "DSXU Control Plane Adapter Boundary"
+      ],
+      "mainlineRoute": [
+        "external session is registered in DsxuControlSessionRegistry",
+        "agent messages are recorded as control-plane session messages",
+        "permission requests are surfaced through DsxuRemoteSessionCoordinator callbacks",
+        "tool execution still routes through DSXU Tool Gate and result evidence",
+        "model execution remains owned by Query Loop and Model Router"
+      ],
+      "prohibitedRuntime": [
+        "no standalone agent orchestrator",
+        "no standalone permission runtime",
+        "no standalone tool runner",
+        "no standalone transcript store"
+      ],
+      "evidence": [
+        "isBridgeEnabled requires DSXU remote session token/base URL/use-remote env",
+        "bridge status is projected as UI state instead of owning query execution",
+        "provider-migration bridge shell returns archived/disabled messages by default",
+        "control request/response types are forwarded to DSXU control-plane handlers",
+        "remote sessions are recorded in the DSXU control session registry",
+        "messages are projected to SDKMessage user/system events before entering the main loop",
+        "permission requests are tracked by request id and answered through control responses",
+        "createRemoteSession is delegated to DSXU provider backend instead of local hidden execution",
+        "remote session coordinator is an adapter around the control plane",
+        "remote permission responses do not bypass local Tool Gate semantics",
+        "remote reconnect/cancel/disconnect state is visible through callbacks and registry state"
+      ],
+      "remainingLiveInput": []
+    },
+    {
+      "id": "V20-RG-03-external-chat-agent-api",
+      "status": "FOCUSED_ACCEPTANCE_READY",
+      "owner": "DSXU Model Router / Cost Evidence Owner",
+      "surface": "chat-completions-compatible client and agent API boundary",
+      "sourceOwners": [
+        "DSXU API Service Provider Boundary"
+      ],
+      "mainlineRoute": [
+        "external client request is normalized into DSXU task/query input",
+        "model dispatch goes through DeepSeek-compatible provider control",
+        "tool calls enter DSXU Tool Gate instead of client-owned execution",
+        "usage output is normalized into DSXU cost/evidence accounting",
+        "fallback providers require explicit operator opt-in"
+      ],
+      "prohibitedRuntime": [
+        "no standalone provider runtime",
+        "no implicit external fallback from API key presence",
+        "no client-owned tool execution",
+        "no client-owned cost ledger"
+      ],
+      "evidence": [
+        "DeepSeek-compatible chat completions are the default provider route",
+        "external chat/agent API use requires explicit operator opt-in before non-DeepSeek fallback is enabled",
+        "external provider fallback requires allowProviderFallbacks or provider-specific opt-in",
+        "local provider fallback requires allowProviderFallbacks or local opt-in",
+        "usage tokens are normalized before cost evidence is attached to the response",
+        "external chat-completions-compatible clients do not create a second provider runtime",
+        "external fallback cannot activate from environment keys alone without the owner gate",
+        "circuit breaker state belongs to the provider boundary, not Query Loop orchestration",
+        "model names are normalized through DSXU DeepSeek V4 control before dispatch"
+      ],
+      "remainingLiveInput": []
+    },
+    {
+      "id": "V20-RG-04-operator-dashboard",
+      "status": "FOCUSED_ACCEPTANCE_READY",
+      "owner": "DSXU Control Plane Visible-State Owner",
+      "surface": "operator dashboard / UI / TUI visible state",
+      "sourceOwners": [
+        "DSXU Operator Visible-State Projection"
+      ],
+      "mainlineRoute": [
+        "dashboard reads DsxuControlSessionRegistry snapshots",
+        "pending permissions become visible prompts through permissionControlBridge",
+        "remote session status and messages remain read-side projection state",
+        "operator responses go back through control-plane permission bridge"
+      ],
+      "prohibitedRuntime": [
+        "no dashboard query loop",
+        "no dashboard model provider",
+        "no dashboard MCP client",
+        "no dashboard shell runner"
+      ],
+      "evidence": [
+        "operator dashboard reads DsxuControlSessionRegistry snapshots only",
+        "permission prompts are projected through permissionControlBridge visible prompts",
+        "remote session status, cwd, viewerOnly state, and message summaries remain read-side state",
+        "operator state is derived from registry data and does not execute tools or models",
+        "operator UI/TUI is a projection surface, not a Query Loop runtime",
+        "permission responses are written back through control-plane permission bridge",
+        "pending permission wait state is visible and cannot become hidden waiting",
+        "dashboard state does not create provider, MCP, shell, or tool execution clients"
+      ],
+      "remainingLiveInput": []
+    },
+    {
+      "id": "V20-RG-05-target-reference-raw-input",
+      "status": "LIVE_TARGET_INPUT_REQUIRED",
+      "owner": "P12 Target Reference Intake",
+      "surface": "real paired target-reference raw transcript manifest",
+      "sourceOwners": [
+        "external target-reference evidence owner"
+      ],
+      "mainlineRoute": [
+        "target manifest import",
+        "P12 raw comparison",
+        "raw readiness",
+        "owner board",
+        "final preflight"
+      ],
+      "prohibitedRuntime": [
+        "no template target logs",
+        "no generic logs counted as RT family coverage",
+        "no target-only PASS without paired DSXU raw output"
+      ],
+      "evidence": [],
+      "remainingLiveInput": [
+        "targetReferenceManifestPath still required for final P12 PASS"
+      ]
+    }
+  ]
+}

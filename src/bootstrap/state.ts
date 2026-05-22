@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream coding-agent capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 import type { Attributes, Meter, MetricOptions } from '@opentelemetry/api'
 import type { logs } from '@opentelemetry/api-logs'
 
@@ -117,7 +116,7 @@ type State = {
   agentColorIndex: number
   // Last API request for bug reports
   lastAPIRequest: Omit<DsxuMessageStreamParams, 'messages'> | null
-  // Messages from the last API request (ant-only; reference, not clone).
+  // Messages from the last API request (dsxu internal; reference, not clone).
   // Captures the exact post-compaction, DSXU instruction-injected message set sent
   // to the API so /share's serialized_conversation.json reflects reality.
   lastAPIRequestMessages: DsxuMessageStreamParams['messages'] | null
@@ -190,7 +189,7 @@ type State = {
       agentId: string | null
     }
   >
-  // Track slow operations for dev bar display (ant-only)
+  // Track slow operations for dev bar display (dsxu internal)
   slowOperations: Array<{
     operation: string
     durationMs: number
@@ -224,7 +223,7 @@ type State = {
   hasDevChannels: boolean
   // Dir containing the session's `.jsonl`; null = derive from originalCwd.
   sessionProjectDir: string | null
-  // Cached prompt cache 1h TTL allowlist from GrowthBook (session-stable)
+  // Cached prompt cache 1h TTL allowlist from feature flag provider (session-stable)
   promptCache1hAllowlist: string[] | null
   // Cached 1h TTL user eligibility (session-stable). Latched on first
   // evaluation so mid-session overage flips don't change the cache_control
@@ -240,7 +239,7 @@ type State = {
   fastModeHeaderLatched: boolean | null
   // Sticky-on latch for the cache-editing beta header. Once cached
   // microcompact is first enabled, keep sending the header so mid-session
-  // GrowthBook/settings toggles don't bust the prompt cache.
+  // feature flag provider/settings toggles don't bust the prompt cache.
   cacheEditingHeaderLatched: boolean | null
   // Sticky-on latch for clearing thinking from prior tool loops. Triggered
   // when >1h since last API call (confirmed cache miss — no cache-hit
@@ -409,7 +408,7 @@ function getInitialState(): State {
     hasDevChannels: false,
     // Session project dir (null = derive from originalCwd)
     sessionProjectDir: null,
-    // Prompt cache 1h allowlist (null = not yet fetched from GrowthBook)
+    // Prompt cache 1h allowlist (null = not yet fetched from feature flag provider)
     promptCache1hAllowlist: null,
     // Prompt cache 1h eligibility (null = not yet evaluated)
     promptCache1hEligible: null,

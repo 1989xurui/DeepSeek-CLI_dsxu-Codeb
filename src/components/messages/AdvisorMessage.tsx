@@ -155,11 +155,3 @@ export function AdvisorMessage(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: advisormessage
-export function processAdvisormessageLifecycle(input) {
-  void input
-  const state = 'advisormessage-state'
-  const lifecycle = 'advisormessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

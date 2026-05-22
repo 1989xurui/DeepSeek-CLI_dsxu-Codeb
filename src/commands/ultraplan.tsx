@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { readFileSync } from 'fs';
-import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../services/bridge/dsxuRemoteBridgeFacade.js';
 import type { Command } from '../commands.js';
 import { DIAMOND_OPEN } from '../constants/figures.js';
 import { getRemoteSessionUrl } from '../constants/product.js';
-import { getCompatUltraplanModel } from '../dsxu/legacy/model/legacyProviderUltraplanModel.js';
+import { getProviderMigrationUltraplanModel } from '../utils/model/providerMigration/providerMigrationUltraplanModel.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index.js';
 import type { AppState } from '../state/AppStateStore.js';
 import { checkRemoteAgentEligibility, formatPreconditionError, RemoteAgentTask, type RemoteAgentTaskState, registerRemoteAgentTask } from '../tasks/RemoteAgentTask/RemoteAgentTask.js';
@@ -27,10 +26,10 @@ export const CCR_TERMS_URL = 'https://docs.dsxu.local/dsxu-code-workflow';
 // CCR runs against the first-party API; use the canonical ID, not the
 // provider-specific string getModelStrings() would return (which may be a
 // Bedrock ARN or Vertex ID on the local CLI). Read at call time, not module
-// load: the GrowthBook cache is empty at import and `/config` Gates can flip
+// load: the feature flag provider cache is empty at import and `/config` Gates can flip
 // it between invocations.
 function getUltraplanModel(): string {
-  return getCompatUltraplanModel();
+  return getProviderMigrationUltraplanModel();
 }
 
 // prompt.txt is wrapped in <system-reminder> so the CCR browser hides
@@ -52,8 +51,8 @@ const DEFAULT_INSTRUCTIONS: string = (typeof _rawPrompt === 'string' ? _rawPromp
 // so the override path is DCE'd from external builds).
 // Shell-set env only, so top-level process.env read is fine
 // ; settings.env never injects this.
-/* eslint-disable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs -- ant-only dev override; eager top-level read is the point (crash at startup, not silently inside the slash-command try/catch) */
-const ULTRAPLAN_INSTRUCTIONS: string = "external" === 'ant' && process.env.ULTRAPLAN_PROMPT_FILE ? readFileSync(process.env.ULTRAPLAN_PROMPT_FILE, 'utf8').trimEnd() : DEFAULT_INSTRUCTIONS;
+/* eslint-disable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs -- dsxu internal dev override; eager top-level read is the point (crash at startup, not silently inside the slash-command try/catch) */
+const ULTRAPLAN_INSTRUCTIONS: string = false && process.env.ULTRAPLAN_PROMPT_FILE ? readFileSync(process.env.ULTRAPLAN_PROMPT_FILE, 'utf8').trimEnd() : DEFAULT_INSTRUCTIONS;
 /* eslint-enable custom-rules/no-process-env-top-level, custom-rules/no-sync-fs */
 
 /**
@@ -115,7 +114,7 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
           ultraplanSessionUrl: undefined
         } : prev);
         enqueuePendingNotification({
-          value: [`Ultraplan approved -> executing in DSXU Code on the web. Follow along at: ${url}`, '', 'Results will land as a pull request when the remote session finishes. There is nothing to do here.'].join('\n'),
+          value: [`Ultraplan approved -> executing in the DSXU remote planning workspace. Follow along at: ${url}`, '', 'Results will land as a pull request when the remote session finishes. There is nothing to do here.'].join('\n'),
           mode: 'task-notification'
         });
       } else {
@@ -184,10 +183,10 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
 // multi-second teleportToRemote round-trip.
 function buildLaunchMessage(disconnectedBridge?: boolean): string {
   const prefix = disconnectedBridge ? `${REMOTE_CONTROL_DISCONNECTED_MSG} ` : '';
-  return `${DIAMOND_OPEN} ultraplan\n${prefix}Starting DSXU Code on the web...`;
+  return `${DIAMOND_OPEN} ultraplan\n${prefix}Starting DSXU remote planning workspace...`;
 }
 function buildSessionReadyMessage(url: string): string {
-  return `${DIAMOND_OPEN} ultraplan -> Monitor progress in DSXU Code on the web ${url}\nYou can continue working -> when the ${DIAMOND_OPEN} fills, press Enter to view results`;
+  return `${DIAMOND_OPEN} ultraplan -> Monitor progress in the DSXU remote planning workspace ${url}\nYou can continue working -> when the ${DIAMOND_OPEN} fills, press Enter to view results`;
 }
 function buildAlreadyActiveMessage(url: string | undefined): string {
   return url ? `ultraplan: already polling. Open ${url} to check status, or wait for the plan to land here.` : 'ultraplan: already launching. Please wait for the session to start.';
@@ -272,7 +271,7 @@ export async function launchUltraplan(opts: {
     return [
     // Rendered via <Markdown>; raw <message> is tokenized as HTML
     // and dropped. Backslash-escape the brackets.
-    'Usage: /ultraplan \\<prompt\\>, or include "ultraplan" anywhere', 'in your prompt', '', 'Advanced multi-agent plan mode with the DSXU high-capacity planning route.', 'Runs in DSXU Code on the web. When the plan is ready,', 'you can execute it in the web session or send it back here.', 'Terminal stays free while the remote plans.', 'Requires /login.', '', `Terms: ${CCR_TERMS_URL}`].join('\n');
+    'Usage: /ultraplan \\<prompt\\>, or include "ultraplan" anywhere', 'in your prompt', '', 'Advanced multi-agent plan mode with the DSXU high-capacity planning route.', 'Runs in the DSXU remote planning workspace. When the plan is ready,', 'you can execute it remotely or send it back here.', 'Terminal stays free while the remote plans.', 'Requires /login.', '', `Terms: ${CCR_TERMS_URL}`].join('\n');
   }
 
   // Set synchronously before the detached flow to prevent duplicate launches
@@ -461,9 +460,9 @@ const call: LocalJSXCommandCall = async (onDone, context, args) => {
 export default {
   type: 'local-jsx',
   name: 'ultraplan',
-  description: `~10-30 min -> DSXU Code on the web drafts an advanced plan you can edit and approve. See ${CCR_TERMS_URL}`,
+  description: `~10-30 min -> DSXU remote planning workflow drafts an advanced plan you can edit and approve. See ${CCR_TERMS_URL}`,
   argumentHint: '<prompt>',
-  isEnabled: () => "external" === 'ant',
+  isEnabled: () => false,
   load: () => Promise.resolve({
     call
   })

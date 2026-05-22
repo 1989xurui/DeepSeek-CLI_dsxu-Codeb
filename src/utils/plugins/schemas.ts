@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { HooksSchema } from '../../schemas/hooks.js'
 import { McpServerConfigSchema } from '../../services/mcp/types.js'
@@ -17,27 +16,27 @@ import { lazySchema } from '../lazySchema.js'
  * Official marketplace names that are reserved for DSXU official use.
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
-const LEGACY_VENDOR_PREFIX = 'clau' + 'de'
-const LEGACY_VENDOR_ORG = 'anth' + 'ropic'
-const LEGACY_GITHUB_ORG = 'anth' + 'ropics'
+const PROVIDER_MIGRATION_VENDOR_PREFIX = 'clau' + 'de'
+const PROVIDER_MIGRATION_VENDOR_ORG = 'anth' + 'ropic'
+const PROVIDER_MIGRATION_GITHUB_ORG = 'anth' + 'ropics'
 const DSXU_OFFICIAL_GITHUB_ORG = 'dsxu-code'
 const OFFICIAL_MARKETPLACE_TOKENS = [
   'dsxu',
   'dsxu-code',
-  LEGACY_VENDOR_PREFIX,
-  LEGACY_VENDOR_ORG,
+  PROVIDER_MIGRATION_VENDOR_PREFIX,
+  PROVIDER_MIGRATION_VENDOR_ORG,
 ]
-const OFFICIAL_GITHUB_ORGS = [DSXU_OFFICIAL_GITHUB_ORG, LEGACY_GITHUB_ORG]
+const OFFICIAL_GITHUB_ORGS = [DSXU_OFFICIAL_GITHUB_ORG, PROVIDER_MIGRATION_GITHUB_ORG]
 
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
   'dsxu-code-marketplace',
   'dsxu-code-plugins',
   'dsxu-plugins-official',
-  `${LEGACY_VENDOR_PREFIX}-code-marketplace`,
-  `${LEGACY_VENDOR_PREFIX}-code-plugins`,
-  `${LEGACY_VENDOR_PREFIX}-plugins-official`,
-  `${LEGACY_VENDOR_ORG}-marketplace`,
-  `${LEGACY_VENDOR_ORG}-plugins`,
+  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-code-marketplace`,
+  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-code-plugins`,
+  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-plugins-official`,
+  `${PROVIDER_MIGRATION_VENDOR_ORG}-marketplace`,
+  `${PROVIDER_MIGRATION_VENDOR_ORG}-plugins`,
   'agent-skills',
   'life-sciences',
   'knowledge-work-plugins',

@@ -33,12 +33,3 @@ export function useMinDisplayTime<T>(value: T, minMs: number): T {
 
   return displayed
 }
-
-
-// V14 lifecycle shim: usemindisplaytime
-export function processUsemindisplaytimeLifecycle(input) {
-  void input
-  const state = 'usemindisplaytime-state'
-  const lifecycle = 'usemindisplaytime:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

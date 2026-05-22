@@ -278,11 +278,3 @@ export function DiffDetailView(t0) {
   }
   return t9;
 }
-
-// V14 lifecycle shim: diffdetailview
-export function processDiffdetailviewLifecycle(input) {
-  void input
-  const state = 'diffdetailview-state'
-  const lifecycle = 'diffdetailview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

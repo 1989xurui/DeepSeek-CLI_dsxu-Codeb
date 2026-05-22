@@ -63,11 +63,3 @@ export function PermissionRequestTitle(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: permissionrequesttitle
-export function processPermissionrequesttitleLifecycle(input) {
-  void input
-  const state = 'permissionrequesttitle-state'
-  const lifecycle = 'permissionrequesttitle:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

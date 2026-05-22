@@ -69,11 +69,3 @@ export function SearchBox(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: searchbox
-export function processSearchboxLifecycle(input) {
-  void input
-  const state = 'searchbox-state'
-  const lifecycle = 'searchbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

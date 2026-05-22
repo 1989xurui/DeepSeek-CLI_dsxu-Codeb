@@ -175,11 +175,3 @@ function _temp2(header_0) {
 function _temp(q_0, index_0) {
   return q_0?.header || `Q${index_0 + 1}`;
 }
-
-// V14 lifecycle shim: questionnavigationbar
-export function processQuestionnavigationbarLifecycle(input) {
-  void input
-  const state = 'questionnavigationbar-state'
-  const lifecycle = 'questionnavigationbar:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

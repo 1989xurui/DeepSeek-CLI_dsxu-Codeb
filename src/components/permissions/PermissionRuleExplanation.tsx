@@ -118,11 +118,3 @@ export function PermissionRuleExplanation(t0) {
 function _temp(s) {
   return s.toolPermissionContext.mode;
 }
-
-// V14 lifecycle shim: permissionruleexplanation
-export function processPermissionruleexplanationLifecycle(input) {
-  void input
-  const state = 'permissionruleexplanation-state'
-  const lifecycle = 'permissionruleexplanation:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

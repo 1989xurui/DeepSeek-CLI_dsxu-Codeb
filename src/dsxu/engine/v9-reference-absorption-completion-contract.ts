@@ -40,20 +40,20 @@ const providerShellFinal: DSXUV9Item = {
   dsxuLanding: [
     'src/dsxu/engine/provider-contract.ts',
     'src/dsxu/engine/provider-alias.ts',
-    'src/dsxu/engine/provider-backend/local-provider-backend.ts',
+    'src/services/bridge/dsxuLocalProviderBackend.ts',
     'src/entrypoints/cli.tsx',
     'src/main.tsx',
   ],
   absorptionRules: [
     'Absorb remote-session, event-stream, permission-callback, task-sync, and credential-vault semantics only.',
     'Do not import old control/session/proxy shells on default DSXU_CODE_MODE=1 CLI/TUI paths.',
-    'Archived old shells must remain outside the default source tree; compatibility aliases route through DSXU provider contract.',
+    'Archived old shells must remain outside the default source tree; provider-migration aliases route through DSXU provider contract.',
   ],
   acceptance: [
     'remote-control, rc, remote, sync, and legacy target aliases resolve through DSXU provider contract in default mode',
     'provider events include session, tool, permission, task sync, and remote blocked records',
     'provider credentials are redacted before model, tool summary, transcript, and logs',
-    'old shell directories are archived after explicit compatibility imports are gone and live smoke is green',
+    'old shell directories are archived after explicit provider-migration imports are gone and live smoke is green',
   ],
   state: 'evidence_green',
 }
@@ -221,7 +221,7 @@ export function getDsxuV9CompletionContract(): DSXUV9CompletionContract {
       'Complete the remaining DSXU single-mainline work by absorbing reference high-value behavior into DSXU provider replacement, recovery, memory resume, Agent synthesis, MCP process handling, permission usability, and 100+ benchmark gates.',
     rules: [
       'Reference D:/DSXU-code/original reference source read-only; absorb behavior semantics, not shells.',
-      'Do not move old provider shells until default and compatibility aliases are proven remapped or deleted.',
+      'Do not move provider-migration shells until default and provider-migration aliases are proven remapped or deleted.',
       'Do not mark Grep-only evidence as product live completion.',
       'Every weak-model live PASS must cite verification evidence.',
       'Memory and summaries are hints, never replacements for source files or command output.',

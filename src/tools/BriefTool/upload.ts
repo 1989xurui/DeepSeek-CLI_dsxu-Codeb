@@ -1,8 +1,8 @@
 /**
  * Upload BriefTool attachments to private_api so web viewers can preview them.
  *
- * When the legacy bridge is explicitly active, attachment paths may point to a
- * remote machine and cannot be opened directly by a web viewer. Upload to
+ * When the provider-migration bridge is explicitly active, attachment paths may
+ * point to a remote machine and cannot be opened directly by a web viewer. Upload to
  * /api/oauth/file_upload, then stash the returned file_uuid alongside the
  * path. Web resolves file_uuid to a preview; desktop/local try path first.
  *
@@ -56,7 +56,7 @@ function debug(msg: string): void {
  * Base URL for uploads. Must match the host the token is valid for.
  *
  * DSXU subprocess hosts can pass DSXU_BRIDGE_BASE_URL alongside their
- * bridge token. Legacy cowork hosts pass PROVIDER_BASE_URL alongside
+ * bridge token. Provider-migration source cowork hosts pass PROVIDER_BASE_URL alongside
  * DSXU_CODE_OAUTH_TOKEN. Prefer explicit DSXU bridge base URL first so staging
  * tokens do not hit the wrong provider API host and silently skip file_uuid
  * generation.
@@ -75,7 +75,7 @@ export function getDsxuBriefUploadRuntimeProfile(): {
   maxUploadBytes: number
   timeoutMs: number
   preferredBaseUrlEnv: readonly string[]
-  legacyBaseUrlEnv: readonly string[]
+  providerMigrationSourceBaseUrlEnv: readonly string[]
   endpoint: string
 } {
   return {
@@ -83,7 +83,7 @@ export function getDsxuBriefUploadRuntimeProfile(): {
     maxUploadBytes: MAX_UPLOAD_BYTES,
     timeoutMs: UPLOAD_TIMEOUT_MS,
     preferredBaseUrlEnv: ['DSXU_BRIDGE_BASE_URL'],
-    legacyBaseUrlEnv: ['PROVIDER_BASE_URL'],
+    providerMigrationSourceBaseUrlEnv: ['PROVIDER_BASE_URL'],
     endpoint: '/api/oauth/file_upload',
   }
 }
@@ -119,7 +119,7 @@ export async function uploadBriefAttachment(
     }
 
     const { getBridgeAccessToken, getBridgeBaseUrlOverride } = await import(
-      '../../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+      '../../services/bridge/dsxuRemoteBridgeFacade.js'
     )
     const token = getBridgeAccessToken()
     if (!token) {
@@ -188,13 +188,4 @@ export async function uploadBriefAttachment(
     }
   }
   return undefined
-}
-
-
-// V14 lifecycle shim: upload
-export function processUploadLifecycle(input) {
-  void input
-  const state = 'upload-state'
-  const lifecycle = 'upload:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

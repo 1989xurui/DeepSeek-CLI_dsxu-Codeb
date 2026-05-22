@@ -1,4 +1,3 @@
-﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   BetaTool,
   BetaToolUnion,
@@ -11,7 +10,7 @@ import { isAnalyticsDisabled } from 'src/services/analytics/config.js'
 import {
   checkStatsigFeatureGate_CACHED_MAY_BE_STALE,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from 'src/services/analytics/growthbook.js'
+} from 'src/services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -139,7 +138,7 @@ export async function toolToAPISchema(
 ): Promise<BetaToolUnion> {
   // Session-stable base schema: name, description, input_schema, strict,
   // eager_input_streaming. These are computed once per session and cached to
-  // prevent mid-session GrowthBook flips (tengu_tool_pear, tengu_fgts) or
+  // prevent mid-session feature flag provider flips (tengu_tool_pear, tengu_fgts) or
   // tool.prompt() drift from churning the serialized tool array bytes.
   // See toolSchemaCache.ts for rationale.
   //
@@ -199,7 +198,7 @@ export async function toolToAPISchema(
     // Without FGTS, the API buffers entire tool input parameters before sending
     // input_json_delta events, causing multi-minute hangs on large tool inputs.
     // Gated to direct the first-party provider API: proxies (LiteLLM etc.) and Bedrock/Vertex
-    // with legacy model families reject this field with 400. See GH#32742, PR #21729.
+    // with provider-migration source model families reject this field with 400. See GH#32742, PR #21729.
     if (
       getAPIProvider() === 'firstParty' &&
       isFirstPartyProviderBaseUrl() &&
@@ -280,7 +279,7 @@ function logStripOnce(stripped: string[]): void {
 
 /**
  * Log stats about first block for analyzing prefix matching config
- * (see https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/legacy_cli_system_prompt_prefixes)
+ * (Statsig prompt-prefix dynamic config; external key is provider-migration owned).
  */
 export function logAPIPrefix(systemPrompt: SystemPrompt): void {
   const [firstSyspromptBlock] = splitSysPromptPrefix(systemPrompt)
@@ -299,7 +298,7 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
 
 /**
  * Split system prompt blocks by content type for API matching and cache control.
- * See https://console.statsig.com/4aF3Ewatb6xPVpCwxb5nA3/dynamic_configs/legacy_cli_system_prompt_prefixes
+ * See the provider-migration prompt-prefix dynamic config in Statsig.
  *
  * Behavior depends on feature flags and options:
  *
@@ -663,19 +662,21 @@ export function normalizeToolInput<T extends Tool>(
       } as z.infer<T['inputSchema']>
     }
     case TASK_OUTPUT_TOOL_NAME: {
-      // Normalize legacy parameter names from AgentOutputTool/BashOutputTool
-      const legacyInput = input as Record<string, unknown>
+      // Normalize provider-migration parameter names from AgentOutputTool/BashOutputTool
+      const providerMigrationInput = input as Record<string, unknown>
       const taskId =
-        legacyInput.task_id ?? legacyInput.agentId ?? legacyInput.bash_id
+        providerMigrationInput.task_id ??
+        providerMigrationInput.agentId ??
+        providerMigrationInput.bash_id
       const timeout =
-        legacyInput.timeout ??
-        (typeof legacyInput.wait_up_to === 'number'
-          ? legacyInput.wait_up_to * 1000
+        providerMigrationInput.timeout ??
+        (typeof providerMigrationInput.wait_up_to === 'number'
+          ? providerMigrationInput.wait_up_to * 1000
           : undefined)
       // SAFETY: See comment in BashTool case above
       return {
         task_id: taskId ?? '',
-        block: legacyInput.block ?? true,
+        block: providerMigrationInput.block ?? true,
         timeout: timeout ?? 30000,
       } as z.infer<T['inputSchema']>
     }

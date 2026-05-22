@@ -517,8 +517,8 @@ export async function cleanupOldResolutions(
 }
 
 /**
- * Legacy response type for worker polling
- * Used for backward compatibility with worker integration code
+ * Historical response type for worker polling
+ * Used by historical worker integration code during permission migration.
  */
 export type PermissionResponse = {
   /** ID of the request this responds to */
@@ -565,7 +565,7 @@ export async function pollForResponse(
 
 /**
  * Remove a worker's response after processing
- * This is an alias for deleteResolvedPermission for backward compatibility
+ * This is a historical alias for deleteResolvedPermission.
  */
 export async function removeWorkerResponse(
   requestId: string,
@@ -636,7 +636,7 @@ export async function deleteResolvedPermission(
 
 /**
  * Submit a permission request (alias for writePermissionRequest)
- * Provided for backward compatibility with worker integration code
+ * Provided for historical worker integration code.
  */
 export const submitPermissionRequest = writePermissionRequest
 

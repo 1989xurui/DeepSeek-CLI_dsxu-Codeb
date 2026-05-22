@@ -1,6 +1,5 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 // Scheduled prompts, stored in <project>/.dsxu/scheduled_tasks.json in DSXU
-// runtime mode, with the legacy provider path retained outside DSXU mode.
+// runtime mode, with the provider-migration source path retained outside DSXU mode.
 //
 // Tasks come in two flavors:
 //   - One-shot (recurring: false/undefined) ...fire once, then auto-delete.
@@ -28,7 +27,7 @@ import { safeParseJSON } from './json.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
 import { isDsxuRuntimeMode } from './envUtils.js'
-const LEGACY_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 export type CronTask = {
   id: string
   /** 5-field cron string (local time) ...validated on write, re-validated on read. */
@@ -73,7 +72,7 @@ export type CronTask = {
 type CronFile = { tasks: CronTask[] }
 function getCronFileRel(): string {
   return join(
-    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_PROJECT_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR,
     'scheduled_tasks.json',
   )
 }
@@ -167,7 +166,7 @@ export async function writeCronTasks(
 ): Promise<void> {
   const root = dir ?? getProjectRoot()
   await mkdir(
-    join(root, isDsxuRuntimeMode() ? '.dsxu' : LEGACY_PROJECT_CONFIG_DIR),
+    join(root, isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR),
     { recursive: true },
   )
   // Strip the runtime-only `durable` flag ...everything on disk is durable
@@ -304,7 +303,7 @@ export function nextCronRunMs(cron: string, fromMs: number): number | null {
 }
 /**
  * Cron scheduler tuning knobs. Sourced at runtime from the
- * `tengu_kairos_cron_config` GrowthBook JSON config (see cronJitterConfig.ts)
+ * `tengu_kairos_cron_config` feature flag provider JSON config (see cronJitterConfig.ts)
  * so ops can adjust behavior fleet-wide without shipping a client build.
  * Defaults here preserve the pre-config behavior exactly.
  */

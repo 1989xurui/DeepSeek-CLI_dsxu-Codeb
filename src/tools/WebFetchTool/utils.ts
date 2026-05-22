@@ -4,7 +4,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../../services/analytics/index.js'
-import { queryCompatSmallModel } from '../../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
+import { queryProviderMigrationSmallModel } from '../../utils/model/providerMigration/providerMigrationSmallModelQuery.js'
 import { AbortError } from '../../utils/errors.js'
 import { getWebFetchUserAgent } from '../../utils/http.js'
 import { logError } from '../../utils/log.js'
@@ -503,7 +503,7 @@ export async function applyPromptToMarkdown(
     prompt,
     isPreapprovedDomain,
   )
-  const assistantMessage = await queryCompatSmallModel({
+  const assistantMessage = await queryProviderMigrationSmallModel({
     systemPrompt: asSystemPrompt([]),
     userPrompt: modelPrompt,
     signal,

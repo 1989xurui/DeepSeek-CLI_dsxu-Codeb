@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
 import {
@@ -65,6 +64,21 @@ export const ConfigTool = buildTool({
   name: CONFIG_TOOL_NAME,
   searchHint: 'get or set DSXU Code settings (theme, model)',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Settings Runtime',
+    sideEffects: [
+      'settings-read',
+      'settings-write-when-value-provided',
+      'global-config-write-when-supported',
+    ],
+    permission: 'read auto-allow; ask before setting mutation',
+    evidence: [
+      'inputSchema.setting/value',
+      'supported setting map',
+      'previousValue/newValue output',
+    ],
+    uiProjection: 'config get/set result and rejection message',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -111,10 +125,10 @@ export const ConfigTool = buildTool({
     // must also be gated at runtime. When the kill-switch is on, treat
     // voiceEnabled as an unknown setting so no voice-specific strings leak.
     if (feature('VOICE_MODE') && setting === 'voiceEnabled') {
-      const { isVoiceGrowthBookEnabled } = await import(
+      const { isVoiceFeatureFlagEnabled } = await import(
         '../../voice/voiceModeEnabled.js'
       )
-      if (!isVoiceGrowthBookEnabled()) {
+      if (!isVoiceFeatureFlagEnabled()) {
         return {
           data: { success: false, error: `Unknown setting: "${setting}"` },
         }
@@ -226,13 +240,13 @@ export const ConfigTool = buildTool({
         '../../voice/voiceModeEnabled.js'
       )
       if (!isVoiceModeEnabled()) {
-        const legacyAuthModule = await import('../../utils/auth.js')
-        const isLegacyCloudAuthEnabled =
-          legacyAuthModule['is' + 'Anth' + 'ropicAuthEnabled']
+        const providerMigrationAuthModule = await import('../../utils/auth.js')
+        const isProviderMigrationAuthEnabled =
+          providerMigrationAuthModule['is' + 'Anth' + 'ropicAuthEnabled']
         return {
           data: {
             success: false,
-            error: !isLegacyCloudAuthEnabled()
+            error: !isProviderMigrationAuthEnabled()
               ? 'Voice mode requires a DSXU voice-capable provider. Please configure provider credentials, then try again.'
               : 'Voice mode is not available.',
           },

@@ -1,0 +1,81 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.deletion-git-mutation-signoff.v1",
+    "generatedAt":  "2026-05-15T08:20:00+08:00",
+    "total":  147,
+    "acceptedRows":  147,
+    "activeProductReferenceRows":  0,
+    "testEvidenceReferenceRows":  1,
+    "packetSummary":  [
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-evidence-review-runtime",
+                              "count":  45,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  1,
+                              "acceptedRows":  45
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-provider-legacy-harness",
+                              "count":  71,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  0,
+                              "acceptedRows":  71
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-state-owner-review",
+                              "count":  27,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  0,
+                              "acceptedRows":  27
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-delete-engine-builtin-tools-runtime",
+                              "count":  2,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  0,
+                              "acceptedRows":  2
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-delete-engine-mcp-client-runtime",
+                              "count":  1,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  0,
+                              "acceptedRows":  1
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-12-delete-duplicate-desktop-deeplink-helper",
+                              "count":  1,
+                              "activeProductReferenceHits":  0,
+                              "testEvidenceReferenceHits":  0,
+                              "acceptedRows":  1
+                          }
+                      ],
+    "replacementOwnerSummary":  [
+                                    {
+                                        "replacementOwner":  "V20-OGR-03-tool-permission-lifecycle",
+                                        "count":  8
+                                    },
+                                    {
+                                        "replacementOwner":  "V20-OGR-04-mcp-skill-plugin-registry",
+                                        "count":  4
+                                    },
+                                    {
+                                        "replacementOwner":  "V20-OGR-05-agent-task-lifecycle",
+                                        "count":  7
+                                    },
+                                    {
+                                        "replacementOwner":  "V20-OGR-07-provider-migration-model-cost",
+                                        "count":  72
+                                    },
+                                    {
+                                        "replacementOwner":  "V20-OGR-09-dsxu-engine-mainline-or-evidence-owner",
+                                        "count":  55
+                                    },
+                                    {
+                                        "replacementOwner":  "V20-OGR-12-shared-platform-utilities",
+                                        "count":  1
+                                    }
+                                ],
+    "decision":  "GIT_MUTATION_REVIEW_ACCEPTED_KEEP_DELETED_NOT_STAGED",
+    "nextAction":  "When explicit Git mutation/stage permission is granted, stage accepted deletions; until then keep status D and continue ACL/real-gap closure.",
+    "rule":  "This signoff does not stage, commit, delete, reset, clean, restore old runtimes, or create export artifacts."
+}

@@ -29,20 +29,3 @@ export function cliOk(msg?: string): never {
   process.exit(0)
   return undefined as never
 }
-
-
-// V14 strict lifecycle shim: cli-exit
-export function processCliExitStrictLifecycle(input) {
-  void input
-  const state = 'cli-exit-state'
-  const lifecycle = 'cli-exit:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCliExitStrict(input) {
-  return processCliExitStrictLifecycle(input)
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { statSync } from 'fs'
 import { lstat, readdir, readFile, realpath, stat } from 'fs/promises'
@@ -13,7 +12,7 @@ import { getProjectRoot } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
 import {
   getDsxuConfigHomeDir,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
   isDsxuRuntimeMode,
   isEnvTruthy,
 } from './envUtils.js'
@@ -40,13 +39,13 @@ export const DSXU_CONFIG_DIRECTORIES = [
   ...(feature('TEMPLATES') ? (['templates'] as const) : []),
 ] as const
 
-export const DSXU_LEGACY_CONFIG_DIRECTORIES = DSXU_CONFIG_DIRECTORIES
+export const DSXU_PROVIDER_MIGRATION_CONFIG_DIRECTORIES = DSXU_CONFIG_DIRECTORIES
 
 export type DsxuConfigDirectory = (typeof DSXU_CONFIG_DIRECTORIES)[number]
 export type RuntimeConfigDirectory = DsxuConfigDirectory
 
 const DSXU_PROJECT_CONFIG_DIR = '.dsxu'
-const LEGACY_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
+const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
 
 export type MarkdownFile = {
   filePath: string
@@ -58,17 +57,17 @@ export type MarkdownFile = {
 
 function getRuntimeProjectConfigDirNames(): readonly string[] {
   return isDsxuRuntimeMode()
-    ? [DSXU_PROJECT_CONFIG_DIR, LEGACY_PROJECT_CONFIG_DIR]
-    : [LEGACY_PROJECT_CONFIG_DIR]
+    ? [DSXU_PROJECT_CONFIG_DIR, PROVIDER_MIGRATION_PROJECT_CONFIG_DIR]
+    : [PROVIDER_MIGRATION_PROJECT_CONFIG_DIR]
 }
 
 function getRuntimeUserConfigDirs(subdir: DsxuConfigDirectory): string[] {
   if (!isDsxuRuntimeMode()) {
-    return [join(getLegacyProviderConfigHomeDir(), subdir)]
+    return [join(getProviderMigrationHomeDir(), subdir)]
   }
   const dirs = [join(getDsxuConfigHomeDir(), subdir)]
-  const legacyDir = join(getLegacyProviderConfigHomeDir(), subdir)
-  if (legacyDir !== dirs[0]) dirs.push(legacyDir)
+  const providerMigrationDir = join(getProviderMigrationHomeDir(), subdir)
+  if (providerMigrationDir !== dirs[0]) dirs.push(providerMigrationDir)
   return dirs
 }
 

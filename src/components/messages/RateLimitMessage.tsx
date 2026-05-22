@@ -1,12 +1,12 @@
-﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import React, { useEffect, useMemo, useState } from 'react';
 import { extraUsage } from 'src/commands/extra-usage/index.js';
 import { Box, Text } from 'src/ink.js';
 import { useDsxuLimits } from 'src/services/dsxuLimitsHook.js';
 import { shouldProcessMockLimits } from 'src/services/rateLimitMocking.js'; // Used for /mock-limits command
-import { getRateLimitTier, getSubscriptionType, isDSXUAISubscriber } from 'src/utils/auth.js';
-import { hasDSXUAiBillingAccess } from 'src/utils/billing.js';
+import { getRateLimitTier, getSubscriptionType, isProviderSubscriptionAccount } from 'src/utils/auth.js';
+import { isDsxuRuntimeMode } from 'src/utils/envUtils.js';
+import { hasProviderSubscriptionBillingAccess } from 'src/services/auth/dsxuBillingAccess.js';
 import { MessageResponse } from '../MessageResponse.js';
 type UpsellParams = {
   shouldShowUpsell: boolean;
@@ -76,7 +76,7 @@ export function RateLimitMessage(t0) {
   const isMax20x = rateLimitTier === "default_dsxu_max_20x";
   let t3;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = shouldProcessMockLimits() || isDSXUAISubscriber();
+    t3 = !isDsxuRuntimeMode() && (shouldProcessMockLimits() || isProviderSubscriptionAccount());
     $[2] = t3;
   } else {
     t3 = $[2];
@@ -116,7 +116,7 @@ export function RateLimitMessage(t0) {
         isExtraUsageCommandEnabled: extraUsage.isEnabled(),
         shouldAutoOpenRateLimitOptionsMenu: !!shouldAutoOpenRateLimitOptionsMenu,
         isTeamOrEnterprise,
-        hasBillingAccess: hasDSXUAiBillingAccess()
+        hasBillingAccess: hasProviderSubscriptionBillingAccess()
       });
       $[7] = shouldAutoOpenRateLimitOptionsMenu;
       $[8] = t7;

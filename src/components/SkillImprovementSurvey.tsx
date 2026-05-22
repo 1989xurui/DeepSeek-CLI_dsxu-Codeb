@@ -149,11 +149,3 @@ function SkillImprovementSurveyView(t0) {
 function _temp(u, i) {
   return <Text key={i} dimColor={true}>{BULLET_OPERATOR} {u.change}</Text>;
 }
-
-// V14 lifecycle shim: skillimprovementsurvey
-export function processSkillimprovementsurveyLifecycle(input) {
-  void input
-  const state = 'skillimprovementsurvey-state'
-  const lifecycle = 'skillimprovementsurvey:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

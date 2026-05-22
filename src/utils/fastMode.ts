@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'
 import {
   getIsNonInteractiveSession,
   getKairosActive,
@@ -18,7 +17,11 @@ import {
 import { isInBundledMode } from './bundledMode.js'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { logForDebugging } from './debug.js'
-import { isDsxuCodeEnvTruthy } from './envUtils.js'
+import {
+  isDsxuCodeEnvTruthy,
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from './envUtils.js'
 import {
   getDefaultMainLoopModelSetting,
   type ModelSetting,
@@ -33,19 +36,23 @@ import {
 } from './settings/settings.js'
 import { createSignal } from './signal.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-  handleCompatProviderAuth401Error,
-} from '../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+  handleProviderControlAuth401Error,
+} from '../services/auth/dsxuProviderControlAuth.js'
 import {
-  COMPAT_FAST_MODE_BACKEND_PATH,
+  PROVIDER_MIGRATION_FAST_MODE_BACKEND_PATH,
   DSXU_FAST_MODE_MODEL_DISPLAY,
-  getCompatFastModeModelAlias,
-  isCompatFastModeSupportedModel,
-} from '../dsxu/legacy/model/legacyProviderFastMode.js'
+  getProviderMigrationFastModeModelAlias,
+  isProviderMigrationFastModeSupportedModel,
+} from './model/providerMigration/providerMigrationFastMode.js'
 
 export function isFastModeEnabled(): boolean {
   return !isDsxuCodeEnvTruthy('DISABLE_FAST_MODE')
+}
+
+function isProviderMigrationFastModeBackendAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
 }
 
 export function isFastModeAvailable(): boolean {
@@ -139,7 +146,7 @@ export function getFastModeUnavailableReason(): string | null {
       }
     }
     const authType: AuthType =
-      getCompatProviderAccessToken() !== undefined ? 'oauth' : 'api-key'
+      getProviderControlAccessToken() !== undefined ? 'oauth' : 'api-key'
     const reason = getDisabledReasonMessage(orgStatus.reason, authType)
     logForDebugging(`Fast mode unavailable: ${reason}`)
     return reason
@@ -152,7 +159,7 @@ export function getFastModeUnavailableReason(): string | null {
 export const FAST_MODE_MODEL_DISPLAY = DSXU_FAST_MODE_MODEL_DISPLAY
 
 export function getFastModeModel(): string {
-  return getCompatFastModeModelAlias()
+  return getProviderMigrationFastModeModelAlias()
 }
 
 export function getInitialFastModeSetting(model: ModelSetting): boolean {
@@ -181,7 +188,7 @@ export function isFastModeSupportedByModel(
   }
   const model = modelSetting ?? getDefaultMainLoopModelSetting()
   const parsedModel = parseUserSpecifiedModel(model)
-  return isCompatFastModeSupportedModel(model, parsedModel)
+  return isProviderMigrationFastModeSupportedModel(model, parsedModel)
 }
 
 // --- Fast mode runtime state ---
@@ -376,11 +383,11 @@ type FastModeResponse = {
 async function fetchFastModeStatus(
   auth: { accessToken: string } | { apiKey: string },
 ): Promise<FastModeResponse> {
-  const endpoint = `${getOauthConfig().BASE_API_URL}${COMPAT_FAST_MODE_BACKEND_PATH}`
+  const endpoint = `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_FAST_MODE_BACKEND_PATH}`
   const headers: Record<string, string> =
     'accessToken' in auth
       ? {
-          ...getCompatProviderBearerHeaders(auth.accessToken),
+          ...getProviderControlBearerHeaders(auth.accessToken),
         }
       : { 'x-api-key': auth.apiKey }
 
@@ -418,6 +425,10 @@ export async function prefetchFastModeStatus(): Promise<void> {
     return
   }
 
+  if (!isProviderMigrationFastModeBackendAllowed()) {
+    return
+  }
+
   if (!isFastModeEnabled()) {
     return
   }
@@ -434,7 +445,7 @@ export async function prefetchFastModeStatus(): Promise<void> {
   // API key auth is unaffected.
   const apiKey = getProviderApiKey()
   const hasUsableOAuth =
-    getCompatProviderAccessToken() && hasProfileScope()
+    getProviderControlAccessToken() && hasProfileScope()
   if (!hasUsableOAuth && !apiKey) {
     const isAnt = process.env.USER_TYPE === 'ant'
     const cachedEnabled = getGlobalConfig().penguinModeOrgEnabled === true
@@ -453,7 +464,7 @@ export async function prefetchFastModeStatus(): Promise<void> {
   lastPrefetchAt = now
 
   const fetchWithCurrentAuth = async (): Promise<FastModeResponse> => {
-    const currentAccessToken = getCompatProviderAccessToken()
+    const currentAccessToken = getProviderControlAccessToken()
     const auth =
       currentAccessToken && hasProfileScope()
         ? { accessToken: currentAccessToken }
@@ -479,9 +490,9 @@ export async function prefetchFastModeStatus(): Promise<void> {
               typeof err.response?.data === 'string' &&
               err.response.data.includes('OAuth token has been revoked')))
         if (isAuthError) {
-          const failedAccessToken = getCompatProviderAccessToken()
+          const failedAccessToken = getProviderControlAccessToken()
           if (failedAccessToken) {
-            await handleCompatProviderAuth401Error(failedAccessToken)
+            await handleProviderControlAuth401Error(failedAccessToken)
             status = await fetchWithCurrentAuth()
           } else {
             throw err

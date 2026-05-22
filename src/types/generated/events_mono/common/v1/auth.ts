@@ -98,20 +98,3 @@ interface MessageFns<T> {
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T
 }
-
-
-// V14 strict lifecycle shim: types-generated-events_mono-common-v1-auth
-export function processTypesGeneratedEventsMonoCommonV1AuthStrictLifecycle(input) {
-  void input
-  const state = 'types-generated-events_mono-common-v1-auth-state'
-  const lifecycle = 'types-generated-events_mono-common-v1-auth:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runTypesGeneratedEventsMonoCommonV1AuthStrict(input) {
-  return processTypesGeneratedEventsMonoCommonV1AuthStrictLifecycle(input)
-}

@@ -64,12 +64,3 @@ export function setAgentColor(
     agentColorMap.set(agentType, color)
   }
 }
-
-
-// V14 lifecycle shim: agentcolormanager
-export function processAgentcolormanagerLifecycle(input) {
-  void input
-  const state = 'agentcolormanager-state'
-  const lifecycle = 'agentcolormanager:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

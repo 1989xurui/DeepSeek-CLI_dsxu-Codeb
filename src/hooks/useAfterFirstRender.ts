@@ -15,12 +15,3 @@ export function useAfterFirstRender(): void {
     }
   }, [])
 }
-
-
-// V14 lifecycle shim: useafterfirstrender
-export function processUseafterfirstrenderLifecycle(input) {
-  void input
-  const state = 'useafterfirstrender-state'
-  const lifecycle = 'useafterfirstrender:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

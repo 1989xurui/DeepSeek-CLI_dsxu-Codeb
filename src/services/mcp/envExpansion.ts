@@ -36,12 +36,3 @@ export function expandEnvVarsInString(value: string): {
     missingVars,
   }
 }
-
-
-// V14 lifecycle shim: envexpansion
-export function processEnvexpansionLifecycle(input) {
-  void input
-  const state = 'envexpansion-state'
-  const lifecycle = 'envexpansion:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,4 @@
-import { feature } from 'bun:bundle'
+﻿import { feature } from 'bun:bundle'
 import { randomBytes } from 'crypto'
 import { unwatchFile, watchFile } from 'fs'
 import memoize from 'lodash-es/memoize.js'
@@ -36,15 +36,15 @@ import { getEssentialTrafficOnlyReason } from './privacyLevel.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import type { ThemeSetting } from './theme.js'
 import {
-  COMPAT_1M_MERGE_NOTICE_COUNT_KEY,
-  COMPAT_1M_MIGRATION_DONE_KEY,
-  COMPAT_EVERYDAY_MIGRATION_TIME_KEY,
-  COMPAT_HIGH_CAPACITY_MIGRATION_TIME_KEY,
-  COMPAT_PLAN_WELCOME_KEY,
-  COMPAT_PRO_MIGRATION_DONE_KEY,
-  COMPAT_PRO_MIGRATION_TIME_KEY,
-  getCompatLegacyMemoryFile,
-} from '../dsxu/legacy/config/legacyProviderConfig.js'
+  PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY,
+  PROVIDER_MIGRATION_1M_MIGRATION_DONE_KEY,
+  PROVIDER_MIGRATION_EVERYDAY_MIGRATION_TIME_KEY,
+  PROVIDER_MIGRATION_HIGH_CAPACITY_MIGRATION_TIME_KEY,
+  PROVIDER_MIGRATION_PLAN_WELCOME_KEY,
+  PROVIDER_MIGRATION_PRO_MIGRATION_DONE_KEY,
+  PROVIDER_MIGRATION_PRO_MIGRATION_TIME_KEY,
+  getProviderMigrationMemoryFile,
+} from './configProviderMigration.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const teamMemPaths = feature('TEAMMEM')
@@ -62,7 +62,7 @@ import { jsonParse, jsonStringify } from './slowOperations.js'
 
 // Re-entrancy guard: prevents getConfig ->logEvent ->getGlobalConfig ->getConfig
 // infinite recursion when the config file is corrupted. logEvent's sampling check
-// reads GrowthBook features from the global config, which calls getConfig again.
+// reads feature flag provider features from the global config, which calls getConfig again.
 let insideGetConfig = false
 
 // Image dimension info for coordinate mapping (only set when image was resized)
@@ -129,7 +129,7 @@ export type ProjectConfig = {
   projectOnboardingSeenCount: number
   hasDsxuInstructionExternalIncludesApproved?: boolean
   hasDsxuInstructionExternalIncludesWarningShown?: boolean
-  // MCP server approval fields - migrated to settings but kept for backward compatibility
+  // MCP server approval fields migrated to settings; kept for existing config files.
   enabledMcpjsonServers?: string[]
   disabledMcpjsonServers?: string[]
   enableAllProjectMcpServers?: boolean
@@ -188,7 +188,7 @@ export type AccountInfo = {
   subscriptionCreatedAt?: string
 }
 
-// TODO: 'emacs' is kept for backward compatibility - remove after a few releases
+// TODO: 'emacs' is kept as a historical mode alias - remove after a few releases.
 export type EditorMode = 'emacs' | (typeof EDITOR_MODES)[number]
 
 export type DiffTool = 'terminal' | 'auto'
@@ -238,11 +238,11 @@ export type GlobalConfig = {
   }
   primaryApiKey?: string // Primary API key for the user when no environment variable is set, set via oauth (TODO: rename)
   hasAcknowledgedCostThreshold?: boolean
-  hasSeenUndercoverAutoNotice?: boolean // ant-only: whether the one-time auto-undercover explainer has been shown
-  hasSeenUltraplanTerms?: boolean // ant-only: whether the one-time CCR terms notice has been shown in the ultraplan launch dialog
-  hasResetAutoModeOptInForDefaultOffer?: boolean // ant-only: one-shot migration guard, re-prompts churned auto-mode users
+  hasSeenUndercoverAutoNotice?: boolean // dsxu internal: whether the one-time auto-undercover explainer has been shown
+  hasSeenUltraplanTerms?: boolean // dsxu internal: whether the one-time CCR terms notice has been shown in the ultraplan launch dialog
+  hasResetAutoModeOptInForDefaultOffer?: boolean // dsxu internal: one-shot migration guard, re-prompts churned auto-mode users
   oauthAccount?: AccountInfo
-  iterm2KeyBindingInstalled?: boolean // Legacy - keeping for backward compatibility
+  iterm2KeyBindingInstalled?: boolean // Historical setting, kept for config compatibility
   editorMode?: EditorMode
   bypassPermissionsModeAccepted?: boolean
   hasUsedBackslashReturn?: boolean
@@ -296,16 +296,16 @@ export type GlobalConfig = {
   // Memory usage tracking
   memoryUsageCount: number // Number of times user has added to memory
 
-  // Legacy 1M context compatibility configs
-  hasShownS1MWelcomeV2?: Record<string, boolean> // Whether the legacy 1M welcome message has been shown per org
-  // Cache of legacy 1M subscriber access per org - key is org ID
+  // Provider-migration 1M context compatibility configs
+  hasShownS1MWelcomeV2?: Record<string, boolean> // Whether the provider-migration 1M welcome message has been shown per org
+  // Cache of provider-migration 1M subscriber access per org - key is org ID
   // hasAccess means "hasAccessAsDefault" but the old name is kept for backward
   // compatibility.
   s1mAccessCache?: Record<
     string,
     { hasAccess: boolean; hasAccessNotAsDefault?: boolean; timestamp: number }
   >
-  // Cache of legacy 1M PayG access per org - key is org ID
+  // Cache of provider-migration 1M PayG access per org - key is org ID
   // hasAccess means "hasAccessAsDefault" but the old name is kept for backward
   // compatibility.
   s1mNonSubscriberAccessCache?: Record<
@@ -355,14 +355,14 @@ export type GlobalConfig = {
   voiceLangHintLastLanguage?: string // Resolved STT language code when the hint was last shown -reset count when it changes
   voiceFooterHintSeenCount?: number // Number of sessions the "hold X to speak" footer hint has been shown
 
-  // Legacy 1M merge notice tracking
-  [COMPAT_1M_MERGE_NOTICE_COUNT_KEY]?: number // Number of times the legacy 1M merge notice has been shown
+  // Provider-migration 1M merge notice tracking
+  [PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY]?: number // Number of times the provider-migration 1M merge notice has been shown
 
   // Experiment enrollment notice tracking (keyed by experiment id)
   experimentNoticesSeenCount?: Record<string, number>
 
-  // Legacy plan-mode experiment config
-  [COMPAT_PLAN_WELCOME_KEY]?: Record<string, boolean> // Whether the legacy plan-mode welcome message has been shown per org
+  // Provider-migration plan-mode experiment config
+  [PROVIDER_MIGRATION_PLAN_WELCOME_KEY]?: Record<string, boolean> // Whether the provider-migration plan-mode welcome message has been shown per org
 
   // Queue usage tracking
   promptQueueUseCount: number // Number of times use has used the prompt queue
@@ -375,9 +375,6 @@ export type GlobalConfig = {
 
   // Subscription notice tracking
   subscriptionNoticeCount?: number // Number of times the subscription notice has been shown
-  hasAvailableSubscription?: boolean // Cached result of whether user has a subscription available
-  subscriptionUpsellShownCount?: number // Number of times the subscription upsell has been shown (deprecated)
-  recommendedSubscription?: string // Cached config value from Statsig (deprecated)
 
   // Todo feature configuration
   todoFeatureEnabled: boolean // Whether the todo feature is enabled
@@ -411,13 +408,13 @@ export type GlobalConfig = {
   // DSXU Code usage tracking
   dsxuCodeFirstTokenDate?: string // ISO timestamp of the user's first DSXU Code OAuth token
 
-  // Model switch callout tracking (ant-only)
+  // Model switch callout tracking (dsxu internal)
   modelSwitchCalloutDismissed?: boolean // Whether user chose "Don't show again"
   modelSwitchCalloutLastShown?: number // Timestamp of last shown (don't show for 24h)
   modelSwitchCalloutVersion?: string
 
   // Effort callout tracking - shown once for the compatibility default-effort cohort
-  effortCalloutDismissed?: boolean // v1 - legacy, read to suppress v2 for Pro users who already saw it
+  effortCalloutDismissed?: boolean // v1 persisted flag, read to suppress v2 for Pro users who already saw it
   effortCalloutV2Dismissed?: boolean
 
   // Remote callout tracking - shown once before first bridge enable
@@ -439,18 +436,18 @@ export type GlobalConfig = {
   // Idle-return dialog tracking
   idleReturnDismissed?: boolean // "Don't ask again" picked
 
-  // Legacy Pro model migration tracking
-  [COMPAT_PRO_MIGRATION_DONE_KEY]?: boolean
-  [COMPAT_PRO_MIGRATION_TIME_KEY]?: number
+  // Provider-migration Pro model tracking
+  [PROVIDER_MIGRATION_PRO_MIGRATION_DONE_KEY]?: boolean
+  [PROVIDER_MIGRATION_PRO_MIGRATION_TIME_KEY]?: number
 
-  // Legacy 1M model migration tracking
-  [COMPAT_1M_MIGRATION_DONE_KEY]?: boolean
+  // Provider-migration 1M model tracking
+  [PROVIDER_MIGRATION_1M_MIGRATION_DONE_KEY]?: boolean
 
-  // Legacy high-capability model migration (shows one-time notif)
-  [COMPAT_HIGH_CAPACITY_MIGRATION_TIME_KEY]?: number
+  // Provider-migration high-capability model tracking (shows one-time notif)
+  [PROVIDER_MIGRATION_HIGH_CAPACITY_MIGRATION_TIME_KEY]?: number
 
-  // Legacy everyday model migration (pro/max/team premium)
-  [COMPAT_EVERYDAY_MIGRATION_TIME_KEY]?: number
+  // Provider-migration everyday model tracking (pro/max/team premium)
+  [PROVIDER_MIGRATION_EVERYDAY_MIGRATION_TIME_KEY]?: number
 
   // Cached statsig gate values
   cachedStatsigGates: {
@@ -460,10 +457,10 @@ export type GlobalConfig = {
   // Cached statsig dynamic configs
   cachedDynamicConfigs?: { [configName: string]: unknown }
 
-  // Cached GrowthBook feature values
+  // Cached feature flag provider feature values
   cachedGrowthBookFeatures?: { [featureName: string]: unknown }
 
-  // Local GrowthBook overrides (ant-only, set via /config Gates tab).
+  // Local feature flag provider overrides (dsxu internal, set via /config Gates tab).
   // Checked after env-var overrides but before the real resolved value.
   growthBookOverrides?: { [featureName: string]: unknown }
 
@@ -543,10 +540,10 @@ export type GlobalConfig = {
   // undefined = compatibility default; null = leader's model; string = model alias/ID.
   teammateDefaultModel?: string | null
 
-  // PR status footer configuration (feature-flagged via GrowthBook)
+  // PR status footer configuration (feature-flagged via feature flag provider)
   prStatusFooterEnabled?: boolean // Show PR review status in footer (default: true)
 
-  // Tmux live panel visibility (ant-only, toggled via Enter on tmux pill)
+  // Tmux live panel visibility (dsxu internal, toggled via Enter on tmux pill)
   tungstenPanelVisible?: boolean
 
   // Cached org-level fast mode status from the API.
@@ -565,10 +562,10 @@ export type GlobalConfig = {
   // undefined = no cache, null = extra usage enabled, string = disabled reason.
   cachedExtraUsageDisabledReason?: string | null
 
-  // Auto permissions notification tracking (ant-only)
+  // Auto permissions notification tracking (dsxu internal)
   autoPermissionsNotificationCount?: number // Number of times the auto permissions notification has been shown
 
-  // Speculation configuration (ant-only)
+  // Speculation configuration (dsxu internal)
   speculationEnabled?: boolean // Whether speculation is enabled (default: true)
 
 
@@ -891,7 +888,7 @@ let lastReadFileStats: { mtime: number; size: number } | null = null
 let configCacheHits = 0
 let configCacheMisses = 0
 // Session-total count of actual disk writes to the global config file.
-// Exposed for ant-only dev diagnostics (see inc-4552) so anomalous write
+// Exposed for dsxu internal dev diagnostics (see inc-4552) so anomalous write
 // rates surface in the UI before they corrupt the runtime config file.
 let globalConfigWriteCount = 0
 
@@ -931,7 +928,7 @@ function migrateConfigFields(config: GlobalConfig): GlobalConfig {
   }
 
   // autoUpdaterStatus is removed from the type but may exist in old configs
-  const legacy = config as GlobalConfig & {
+  const oldConfig = config as GlobalConfig & {
     autoUpdaterStatus?:
       | 'migrated'
       | 'installed'
@@ -945,7 +942,7 @@ function migrateConfigFields(config: GlobalConfig): GlobalConfig {
   let installMethod: InstallMethod = 'unknown'
   let autoUpdates = config.autoUpdates ?? true // Default to enabled unless explicitly disabled
 
-  switch (legacy.autoUpdaterStatus) {
+  switch (oldConfig.autoUpdaterStatus) {
     case 'migrated':
       installMethod = 'local'
       break
@@ -990,10 +987,10 @@ function removeProjectHistory(
 
   for (const [path, projectConfig] of Object.entries(projects)) {
     // history is removed from the type but may exist in old configs
-    const legacy = projectConfig as ProjectConfig & { history?: unknown }
-    if (legacy.history !== undefined) {
+    const oldProjectConfig = projectConfig as ProjectConfig & { history?: unknown }
+    if (oldProjectConfig.history !== undefined) {
       needsCleaning = true
-      const { history, ...cleanedConfig } = legacy
+      const { history, ...cleanedConfig } = oldProjectConfig
       cleanedProjects[path] = cleanedConfig
     } else {
       cleanedProjects[path] = projectConfig
@@ -1103,7 +1100,7 @@ export function getGlobalConfig(): GlobalConfig {
 /**
  * Returns the effective value of remoteControlAtStartup. Precedence:
  *   1. User's explicit config value (always wins -honors opt-out)
- *   2. CCR auto-connect default (ant-only build, GrowthBook-gated)
+ *   2. CCR auto-connect default (dsxu internal build, feature flag provider-gated)
  *   3. false (Remote Control must be explicitly opted into)
  */
 export function getRemoteControlAtStartup(): boolean {
@@ -1380,8 +1377,8 @@ function getConfigBackupDir(): string {
 
 /**
  * Find the most recent backup file for a given config file.
- * Checks runtime backups/ first, then falls back to the legacy location
- * (next to the config file) for backwards compatibility.
+ * Checks runtime backups/ first, then falls back to the historical location
+ * (next to the config file) for historical config migration.
  * Returns the full path to the most recent backup, or null if none exist.
  */
 function findMostRecentBackup(file: string): string | null {
@@ -1404,7 +1401,7 @@ function findMostRecentBackup(file: string): string | null {
     // Backup dir doesn't exist yet
   }
 
-  // Fall back to legacy location (next to the config file)
+  // Fall back to historical location (next to the config file)
   const fileDir = dirname(file)
 
   try {
@@ -1418,13 +1415,13 @@ function findMostRecentBackup(file: string): string | null {
       return join(fileDir, mostRecent)
     }
 
-    // Check for legacy backup file (no timestamp)
-    const legacyBackup = `${file}.backup`
+    // Check for historical backup file (no timestamp)
+    const fallbackBackup = `${file}.backup`
     try {
-      fs.statSync(legacyBackup)
-      return legacyBackup
+      fs.statSync(fallbackBackup)
+      return fallbackBackup
     } catch {
-      // Legacy backup doesn't exist
+      // Historical backup doesn't exist
     }
   } catch {
     // Ignore errors reading directory
@@ -1491,7 +1488,7 @@ function getConfig<A>(
 
       // Guard: logEvent ->shouldSampleEvent ->getGlobalConfig ->getConfig
       // causes infinite recursion when the config file is corrupted, because
-      // the sampling check reads a GrowthBook feature from global config.
+      // the sampling check reads a feature flag provider feature from global config.
       // Only log analytics on the outermost call.
       if (!insideGetConfig) {
         insideGetConfig = true
@@ -1800,28 +1797,28 @@ export function getMemoryPath(memoryType: MemoryType): string {
         getRuntimeConfigHomeDir(),
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getCompatLegacyMemoryFile(memoryType)!,
+          : getProviderMigrationMemoryFile(memoryType)!,
       )
     case 'Local':
       return join(
         cwd,
         isDsxuRuntimeMode()
           ? DSXU_LOCAL_MEMORY_FILE
-          : getCompatLegacyMemoryFile(memoryType)!,
+          : getProviderMigrationMemoryFile(memoryType)!,
       )
     case 'Project':
       return join(
         cwd,
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getCompatLegacyMemoryFile(memoryType)!,
+          : getProviderMigrationMemoryFile(memoryType)!,
       )
     case 'Managed':
       return join(
         getManagedFilePath(),
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getCompatLegacyMemoryFile(memoryType)!,
+          : getProviderMigrationMemoryFile(memoryType)!,
       )
     case 'AutoMem':
       return getAutoMemEntrypoint()

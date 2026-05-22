@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import figures from 'figures'
 import sample from 'lodash-es/sample.js'
 import * as React from 'react'

@@ -31,12 +31,3 @@ export function useIdeConnectionStatus(
     return { status: 'disconnected', ideName }
   }, [mcpClients])
 }
-
-
-// V14 lifecycle shim: useideconnectionstatus
-export function processUseideconnectionstatusLifecycle(input) {
-  void input
-  const state = 'useideconnectionstatus-state'
-  const lifecycle = 'useideconnectionstatus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

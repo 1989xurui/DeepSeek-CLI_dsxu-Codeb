@@ -55,11 +55,3 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   await launchAndDone(args, context, onDone, gate.billingNote);
   return null;
 };
-
-// V14 lifecycle shim: ultrareviewcommand
-export function processUltrareviewcommandLifecycle(input) {
-  void input
-  const state = 'ultrareviewcommand-state'
-  const lifecycle = 'ultrareviewcommand:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

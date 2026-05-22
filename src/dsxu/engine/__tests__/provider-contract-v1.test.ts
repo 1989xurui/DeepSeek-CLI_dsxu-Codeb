@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 import {
   createLocalDSXUProviderContract,
@@ -12,16 +12,26 @@ import {
 import {
   createDsxuLocalProviderBackend,
   getDefaultDsxuLocalProviderBackend,
-} from '../provider-backend/local-provider-backend'
+} from '../../../services/bridge/dsxuLocalProviderBackend'
 import {
   createRemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../provider-backend/dsxu-remote-session-manager'
+} from '../../../services/bridge/dsxuRemoteSessionCoordinator'
 import { SendMessageTool } from '../../../tools/SendMessageTool/SendMessageTool'
 import { getPrompt as getSendMessagePrompt } from '../../../tools/SendMessageTool/prompt'
 
+function listSourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const fullPath = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      return listSourceFiles(fullPath)
+    }
+    return /\.(?:ts|tsx|js)$/.test(entry.name) ? [fullPath] : []
+  })
+}
+
 describe('DSXU provider contract V1', () => {
-  test('defaults to local identity and blocks legacy remote shells', async () => {
+  test('defaults to local identity and blocks provider-migration remote shells', async () => {
     const events: unknown[] = []
     const provider = createLocalDSXUProviderContract({
       emitEvent: event => events.push(event),
@@ -29,8 +39,8 @@ describe('DSXU provider contract V1', () => {
 
     expect(provider.identity.providerId).toBe('dsxu-local')
     expect(provider.identity.mode).toBe('local')
-    expect(provider.legacyBridge.enabled).toBe(false)
-    expect(provider.legacyBridge.flagName).toBe('DSXU_ENABLE_LEGACY_BRIDGE')
+    expect(provider.providerMigrationBridge.enabled).toBe(false)
+    expect(provider.providerMigrationBridge.flagName).toBe('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
 
     const remote = await provider.createRemoteSession({
       sessionId: 'session-provider-v1',
@@ -92,6 +102,210 @@ describe('DSXU provider contract V1', () => {
     const cli = readFileSync(join(root, 'src/entrypoints/cli.tsx'), 'utf8')
     const init = readFileSync(join(root, 'src/entrypoints/init.ts'), 'utf8')
     const print = readFileSync(join(root, 'src/cli/print.ts'), 'utf8')
+    const mainEntry = readFileSync(join(root, 'src/main.tsx'), 'utf8')
+    const remoteIO = readFileSync(join(root, 'src/cli/remoteIO.ts'), 'utf8')
+    const transportUtils = readFileSync(join(root, 'src/cli/transports/transportUtils.ts'), 'utf8')
+    const ccrClient = readFileSync(join(root, 'src/cli/transports/ccrClient.ts'), 'utf8')
+    const authHandler = readFileSync(join(root, 'src/cli/handlers/auth.ts'), 'utf8')
+    const utilHandler = readFileSync(join(root, 'src/cli/handlers/util.tsx'), 'utf8')
+    const installGithubCommand = readFileSync(join(root, 'src/commands/install-github-app/index.ts'), 'utf8')
+    const installSlackCommand = readFileSync(join(root, 'src/commands/install-slack-app/index.ts'), 'utf8')
+    const commandSources = listSourceFiles(join(root, 'src/commands')).map(file => [
+      file,
+      readFileSync(file, 'utf8'),
+    ] as const)
+    const visibleStateSources = [
+      ...listSourceFiles(join(root, 'src/components')),
+      ...listSourceFiles(join(root, 'src/screens')),
+      ...listSourceFiles(join(root, 'src/hooks')),
+    ].map(file => [file, readFileSync(file, 'utf8')] as const)
+    const agentPromptSources = listSourceFiles(join(root, 'src/tools/AgentTool')).map(file => [
+      file,
+      readFileSync(file, 'utf8'),
+    ] as const)
+    const providerBoundaryTextSources = [
+      'src/utils/agentSwarmsEnabled.ts',
+      'src/utils/nativeInstaller/installer.ts',
+      'src/utils/nativeInstaller/download.ts',
+      'src/utils/nativeInstaller/pidLock.ts',
+      'src/utils/shellConfig.ts',
+      'src/utils/managedEnvConstants.ts',
+      'src/utils/managedEnv.ts',
+      'src/utils/envCompat.ts',
+      'src/utils/env.ts',
+      'src/utils/autoUpdater.ts',
+      'src/utils/doctorDiagnostic.ts',
+      'src/utils/configProviderMigration.ts',
+      'src/utils/cleanup.ts',
+      'src/utils/bash/ShellSnapshot.ts',
+      'src/utils/Shell.ts',
+      'src/utils/desktopMcpImport.ts',
+      'src/utils/embeddedTools.ts',
+      'src/utils/cronTasksLock.ts',
+      'src/utils/cronTasks.ts',
+      'src/utils/localInstaller.ts',
+      'src/utils/jetbrains.ts',
+      'src/utils/markdownConfigLoader.ts',
+      'src/utils/user.ts',
+      'src/utils/http.ts',
+      'src/utils/worktree.ts',
+      'src/utils/releaseNotes.ts',
+      'src/utils/tmuxSocket.ts',
+      'src/utils/subprocessEnv.ts',
+      'src/utils/swarm/spawnUtils.ts',
+      'src/utils/settings/managedPath.ts',
+      'src/utils/settings/constants.ts',
+      'src/utils/settings/mdm/constants.ts',
+      'src/localRecoveryCli.ts',
+      'src/skills/bundled/scheduleRemoteAgents.ts',
+      'src/skills/bundled/dsxuApi.ts',
+      'src/utils/api.ts',
+      'src/utils/authFileDescriptor.ts',
+      'src/utils/ide.ts',
+      'src/utils/sessionIngressAuth.ts',
+      'src/utils/dsxuCodeHints.ts',
+      'src/utils/instructionFiles.ts',
+      'src/utils/teleport.tsx',
+      'src/utils/teammate.ts',
+      'src/utils/teleport/api.ts',
+      'src/utils/teleport/environments.ts',
+      'src/utils/telemetry/bigqueryExporter.ts',
+      'src/services/PromptSuggestion/promptSuggestion.ts',
+      'src/services/plugins/pluginOperations.ts',
+      'src/services/MagicDocs/prompts.ts',
+      'src/tools/PowerShellTool/prompt.ts',
+      'src/tools/PowerShellTool/powershellPermissions.ts',
+      'src/tools/PowerShellTool/pathValidation.ts',
+      'src/tools/FileReadTool/limits.ts',
+      'src/tools/ScheduleCronTool/prompt.ts',
+      'src/tools/REPLTool/constants.ts',
+      'src/tools/RemoteTriggerTool/RemoteTriggerTool.ts',
+      'src/utils/privacyLevel.ts',
+      'src/utils/pdfUtils.ts',
+      'src/utils/messages/systemInit.ts',
+      'src/utils/sessionStorage.ts',
+      'src/utils/tasks.ts',
+      'src/utils/teammateMailbox.ts',
+      'src/utils/attribution.ts',
+      'src/utils/concurrentSessions.ts',
+      'src/utils/memoryFileDetection.ts',
+      'src/utils/secureStorage/macOsKeychainHelpers.ts',
+      'src/utils/toolSearch.ts',
+      'src/tools/WebFetchTool/preapproved.ts',
+      'src/constants/system.ts',
+      'src/QueryEngine.ts',
+      'src/coordinator/coordinatorMode.ts',
+      'src/utils/hooks.ts',
+      'src/utils/sandbox/sandbox-adapter.ts',
+      'src/utils/permissions/filesystem.ts',
+      'src/utils/settings/types.ts',
+      'src/utils/permissions/permissions.ts',
+      'src/utils/permissions/permissionRuleParser.ts',
+      'src/utils/permissions/PermissionMode.ts',
+      'src/utils/permissions/PermissionResult.ts',
+      'src/utils/permissions/PermissionRule.ts',
+      'src/utils/permissions/PermissionUpdate.ts',
+      'src/utils/permissions/PermissionUpdateSchema.ts',
+      'src/utils/permissions/permissionsLoader.ts',
+      'src/utils/permissions/shellRuleMatching.ts',
+      'src/components/LogoV2/DsxuLongContextNotice.tsx',
+      'src/components/DiagnosticsDisplay.tsx',
+      'src/cli/update.ts',
+      'src/entrypoints/dsxu-code.tsx',
+      'src/entrypoints/init.ts',
+      'src/tools/BashTool/prompt.ts',
+      'src/tools/BashTool/bashPermissions.ts',
+      'src/tools/BashTool/readOnlyValidation.ts',
+      'src/tools/BriefTool/attachments.ts',
+      'src/tools/BriefTool/BriefTool.ts',
+      'src/tools/BriefTool/upload.ts',
+      'src/tools/McpAuthTool/McpAuthTool.ts',
+      'src/tools/WorkflowTool/prompt.ts',
+      'src/tools/FileWriteTool/FileWriteTool.ts',
+      'src/tools/FileEditTool/constants.ts',
+      'src/tools/ToolSearchTool/prompt.ts',
+      'src/tools/MCPTool/classifyForCollapse.ts',
+      'src/tools/shared/spawnMultiAgent.ts',
+      'src/utils/telemetry/perfettoTracing.ts',
+      'src/dsxu/engine/engine-tool-adapter.ts',
+      'src/dsxu/engine/tool-capability-pool.ts',
+      'src/dsxu/engine/extended-tools.ts',
+      'src/dsxu/engine/api-service.ts',
+      'src/dsxu/engine/llm-adapter.ts',
+      'src/dsxu/engine/config.ts',
+      'src/dsxu/engine/doctor.ts',
+      'src/dsxu/engine/adapters/bridge-adapter.ts',
+      'src/services/api/bootstrap.ts',
+      'src/services/api/adminRequests.ts',
+      'src/services/api/client.ts',
+      'src/services/api/filesApi.ts',
+      'src/services/api/grove.ts',
+      'src/services/api/logging.ts',
+      'src/services/api/metricsOptOut.ts',
+      'src/services/api/overageCreditGrant.ts',
+      'src/services/api/referral.ts',
+      'src/services/api/ultrareviewQuota.ts',
+      'src/services/api/usage.ts',
+      'src/services/api/withRetry.ts',
+      'src/services/api/dsxuTransport.ts',
+      'src/services/remoteManagedSettings/index.ts',
+      'src/services/remoteManagedSettings/syncCache.ts',
+      'src/services/remoteManagedSettings/syncCacheState.ts',
+      'src/services/dsxuLimits.ts',
+      'src/services/diagnosticTracking.ts',
+      'src/services/mcp/client.ts',
+      'src/services/mcp/config.ts',
+      'src/services/mcp/auth.ts',
+      'src/services/mcp/useManageMCPConnections.ts',
+      'src/services/mcp/xaaIdpLogin.ts',
+      'src/services/policyLimits/index.ts',
+      'src/services/settingsSync/index.ts',
+      'src/services/settingsSync/types.ts',
+      'src/services/teamMemorySync/index.ts',
+      'src/services/analytics/firstPartyEventLogger.ts',
+      'src/services/analytics/firstPartyEventLoggingExporter.ts',
+      'src/services/analytics/metadata.ts',
+      'src/services/tokenEstimation.ts',
+      'src/utils/apiPreconnect.ts',
+      'src/utils/fastMode.ts',
+      'src/utils/model/modelCapabilities.ts',
+      'src/utils/model/deprecation.ts',
+      'src/utils/model/modelSupportOverrides.ts',
+      'src/utils/model/providerMigration/providerMigrationModel.ts',
+      'src/utils/model/providerMigration/providerMigrationBetas.ts',
+      'src/utils/plugins/addDirPluginSettings.ts',
+      'src/utils/plugins/installedPluginsManager.ts',
+      'src/utils/plugins/loadPluginAgents.ts',
+      'src/utils/plugins/loadPluginCommands.ts',
+      'src/utils/plugins/marketplaceManager.ts',
+      'src/utils/plugins/mcpPluginIntegration.ts',
+      'src/utils/plugins/officialMarketplaceGcs.ts',
+      'src/utils/plugins/officialMarketplaceStartupCheck.ts',
+      'src/utils/plugins/pluginLoader.ts',
+      'src/utils/plugins/pluginOptionsStorage.ts',
+      'src/utils/plugins/schemas.ts',
+      'src/utils/plugins/validatePlugin.ts',
+      'src/utils/plugins/zipCacheAdapters.ts',
+      'src/skills/loadSkillsDir.ts',
+      'src/utils/sideQuery.ts',
+    ]
+      .filter(file => existsSync(join(root, file)))
+      .map(file => [file, readFileSync(join(root, file), 'utf8')] as const)
+    const providerMigrationOnlyCommandIndexes = [
+      'src/commands/desktop/index.ts',
+      'src/commands/extra-usage/index.ts',
+      'src/commands/install-github-app/index.ts',
+      'src/commands/install-slack-app/index.ts',
+      'src/commands/mobile/index.ts',
+      'src/commands/passes/index.ts',
+      'src/commands/remote-setup/index.ts',
+      'src/commands/stickers/index.ts',
+      'src/commands/thinkback/index.ts',
+      'src/commands/thinkback-play/index.ts',
+      'src/commands/upgrade/index.ts',
+      'src/commands/usage/index.ts',
+      'src/commands/voice/index.ts',
+    ]
 
     expect(launcher).toContain('export DSXU_CODE_MODE=1')
     expect(launcher).toContain('export DSXU_MODEL_PROVIDER="${DSXU_MODEL_PROVIDER:-deepseek}"')
@@ -105,30 +319,218 @@ describe('DSXU provider contract V1', () => {
     expect(cli).toContain('handleDsxuProviderAliasCommand')
     expect(cli).toContain("args[0] === 'remote-control'")
     expect(cli).toContain("args[0] === 'bridge'")
+    expect(cli).toContain('provider-migration browser MCP path')
+    expect(cli).toContain('--dsxu-browser-mcp')
+    expect(cli).not.toContain(['cli_DSXU_BROWSER_PROVIDER', 'mcp_path'].join('_'))
 
-    expect(init).toContain('shouldLoadLegacyProviderServiceShell')
-    expect(init).toContain('populateLegacyOAuthAccountInfoIfAllowed')
+    expect(init).toContain('shouldLoadProviderMigrationServiceShell')
+    expect(init).toContain('populateProviderMigrationOAuthAccountInfoIfAllowed')
     expect(init).toContain('initializeRemoteManagedSettingsIfAllowed')
     expect(init).toContain("isEnvTruthy(getDsxuCodeEnv('REMOTE'))")
     expect(init).toContain('DSXU_CODE_REMOTE ignored on the default DSXU local mainline')
-    expect(init).toContain('DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL=1')
-    expect(init).toContain('legacy upstream proxy shell is archived')
+    expect(init).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
+    expect(init).toContain('provider migration upstream proxy shell is archived')
     expect(init).not.toContain('../upstreamproxy/upstreamproxy.js')
+    expect(mainEntry).toContain('function resolveStartupFilesApiBaseUrl()')
+    expect(mainEntry).toContain("const dsxuBaseUrl = getDsxuCodeEnv('API_BASE_URL')")
+    expect(mainEntry).toContain('if (!shouldLoadProviderMigrationServiceShell()) return undefined')
+    expect(mainEntry).toContain('const PROVIDER_MIGRATION_CODE_ENV_PREFIX')
+    expect(mainEntry).toContain('const providerMigrationCodeEnv')
+    expect(mainEntry).not.toContain(['SOURCE', 'PROVIDER', 'CODE_ENV_PREFIX'].join('_'))
+    expect(mainEntry).not.toContain(['source', 'ProviderCodeEnv'].join(''))
+    expect(mainEntry).not.toContain('baseUrl: process.env[DSXU_PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL')
 
     expect(print).toContain("message.request.subtype === 'remote_control'")
-    expect(print).toContain('isDsxuRuntimeMode() && !isCompatProviderServiceShellAllowed()')
+    expect(print).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
     expect(print).toContain("handleDsxuProviderAliasCommand")
     expect(print).toContain(
-      "src/dsxu/engine/provider-backend/dsxu-provider-compat.js",
+      "../services/bridge/dsxuRemoteBridgeFacade.js",
     )
     expect(print).not.toContain('src/bridge/')
     expect(print).not.toContain('initReplBridge.js')
     expect(print).not.toContain('inboundMessages.js')
     expect(print).not.toContain('bridgeStatusUtil.js')
     expect(print).not.toContain('inboundAttachments.js')
+
+    for (const source of [remoteIO, transportUtils, ccrClient]) {
+      expect(source).toContain('PROVIDER_MIGRATION_CODE_ENV_PREFIX')
+      expect(source).not.toContain(['SOURCE', 'PROVIDER', 'CODE_ENV_PREFIX'].join('_'))
+      expect(source).not.toContain(['source', 'ProviderCodeEnv'].join(''))
+    }
+    expect(remoteIO).toContain('DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??')
+    expect(remoteIO).toContain("providerMigrationCodeEnv('ENVIRONMENT_RUNNER_VERSION')")
+    expect(remoteIO).toContain('provider-migration transport fallback')
+    expect(transportUtils).toContain('DSXU_CODE_USE_CCR_V2 ??')
+    expect(transportUtils).toContain("providerMigrationCodeEnv('USE_CCR_V2')")
+    expect(ccrClient).toContain('PROVIDER_MIGRATION_SOURCE_TOKEN')
+    expect(ccrClient).toContain('provider-migration worker epoch env accepted only for migration')
+    expect(ccrClient).toContain('DSXU_CODE_WORKER_EPOCH ??')
+    expect(authHandler).toContain('PROVIDER_MIGRATION_SOURCE_API_KEY_ENV')
+    expect(authHandler).toContain('provider-migration source API key env')
+    expect(authHandler).not.toContain(['SOURCE', 'PROVIDER', 'API_KEY_ENV'].join('_'))
+    expect(utilHandler).toContain('provider-migration setup-token flow is isolated')
+    expect(utilHandler).not.toContain(['leg', 'acy setup-token'].join(''))
+    expect(installGithubCommand).toContain('Provider-migration only: old GitHub App setup')
+    expect(installGithubCommand).toContain('!isDsxuRuntimeMode()')
+    expect(installSlackCommand).toContain('Provider-migration Slack app setup')
+    expect(installSlackCommand).toContain('!isDsxuRuntimeMode()')
+    for (const commandIndexPath of providerMigrationOnlyCommandIndexes) {
+      const source = readFileSync(join(root, commandIndexPath), 'utf8')
+      expect(source, commandIndexPath).toContain('isDsxuRuntimeMode')
+      expect(source, commandIndexPath).toMatch(
+        /!isDsxuRuntimeMode\(\)|if \(isDsxuRuntimeMode\(\)\) \{\s*return false\s*\}/,
+      )
+    }
+
+    for (const [file, source] of commandSources) {
+      expect(source, file).not.toContain('V14 command lifecycle shim')
+      expect(source, file).not.toMatch(/\bprocess[A-Za-z0-9]+CommandLifecycle\b/)
+      expect(source, file).not.toMatch(/\brun[A-Za-z0-9]+Command\b/)
+      expect(source, file).not.toContain(['source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'Provider'].join('-'))
+      expect(source, file).not.toContain('DSXU Code on the web')
+      expect(source, file).not.toContain(['Backward', 'compatible'].join('-'))
+      expect(source, file).not.toContain(['backwards', 'compatibility'].join(' '))
+    }
+
+    for (const [file, source] of visibleStateSources) {
+      expect(source, file).not.toContain(['source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'Provider'].join('-'))
+    }
+
+    for (const [file, source] of [
+      ...agentPromptSources,
+      ...providerBoundaryTextSources,
+    ]) {
+      expect(source, file).not.toContain(['source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'provider'].join('-'))
+      expect(source, file).not.toContain(['Source', 'Provider'].join('-'))
+      expect(source, file).not.toContain('V18 lifecycle shim')
+      expect(source, file).not.toContain('DSXU Code on the web')
+    }
+    const retiredBridgeAdapterPath = join(root, 'src/dsxu/engine/adapters/bridge-adapter.ts')
+    if (existsSync(retiredBridgeAdapterPath)) {
+      const retiredBridgeAdapter = readFileSync(retiredBridgeAdapterPath, 'utf8')
+      expect(retiredBridgeAdapter).toContain('Retired adapter tombstone')
+      expect(retiredBridgeAdapter).toContain('external-tool-adapter.ts')
+      expect(retiredBridgeAdapter).not.toContain('class BridgeAdapter')
+      expect(retiredBridgeAdapter).not.toContain('BridgeToolErrorType')
+    }
+    const retiredBuiltinsModule = ['builtin', 'tools'].join('-')
+    const retiredFallbackFields = [
+      ['allowMainlineTool', 'Fallback'].join(''),
+      ['execution', 'Fallback'].join(''),
+      ['fallback', 'Tool'].join(''),
+    ]
+    expect(existsSync(join(root, 'src/dsxu/engine', `${retiredBuiltinsModule}.ts`))).toBe(false)
+    expect(existsSync(join(root, 'src/dsxu/engine/__tests__', `${retiredBuiltinsModule}.test.ts`))).toBe(false)
+    const engineToolAdapter = readFileSync(
+      join(root, 'src/dsxu/engine/engine-tool-adapter.ts'),
+      'utf8',
+    )
+    for (const field of retiredFallbackFields) {
+      expect(engineToolAdapter).not.toContain(field)
+    }
+    expect(engineToolAdapter).not.toContain(`from './${retiredBuiltinsModule}'`)
+    expect(engineToolAdapter).not.toContain('isRecoverableRuntimeDependencyError')
+    expect(engineToolAdapter).not.toContain('command not found/i')
+    const toolCapabilityPool = readFileSync(
+      join(root, 'src/dsxu/engine/tool-capability-pool.ts'),
+      'utf8',
+    )
+    expect(toolCapabilityPool).not.toContain(retiredBuiltinsModule)
+    expect(toolCapabilityPool).not.toContain(['getCore', 'Tools'].join(''))
+    expect(toolCapabilityPool).not.toContain(['getReadOnly', 'Tools'].join(''))
+    const extendedTools = readFileSync(
+      join(root, 'src/dsxu/engine/extended-tools.ts'),
+      'utf8',
+    )
+    expect(extendedTools).not.toContain(`require('./${retiredBuiltinsModule}')`)
+    expect(extendedTools).not.toContain(`...${['getCore', 'Tools'].join('')}()`)
+    const engineIndex = readFileSync(join(root, 'src/dsxu/engine/index.ts'), 'utf8')
+    expect(engineIndex).toContain("this.registerCapabilityPools('full_absorb')")
+    expect(engineIndex).not.toContain('this.registerTools(getAllTools())')
+    expect(engineIndex).not.toContain(`from './${retiredBuiltinsModule}'`)
+    const apiService = readFileSync(join(root, 'src/dsxu/engine/api-service.ts'), 'utf8')
+    expect(apiService).toContain('External and local providers are explicit')
+    expect(apiService).toContain('oaiKey && isOpenAIFallbackAllowed(config)')
+    expect(apiService).toContain('if (isOllamaFallbackAllowed(config))')
+    expect(apiService).toContain('DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS')
+    expect(apiService).not.toContain('OpenAI backup -> Ollama local fallback')
+    const llmAdapter = readFileSync(join(root, 'src/dsxu/engine/llm-adapter.ts'), 'utf8')
+    expect(llmAdapter).toContain('const apiService = new APIService(options?.api)')
+    expect(llmAdapter).toContain('apiService.getStatus().length > 0')
+    expect(llmAdapter).toContain('options?.allowProxyFallback === true')
+    expect(llmAdapter).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_PROXY_FALLBACK')
+    expect(llmAdapter).toContain('createUnconfiguredLLMCall')
+    expect(llmAdapter).not.toContain('options?.allowProxyFallback ?? true')
+    expect(llmAdapter).not.toContain('OPENAI_API_KEY, or DSXU_OLLAMA_URL')
+    const apiClient = readFileSync(join(root, 'src/services/api/client.ts'), 'utf8')
+    expect(apiClient).toContain('function shouldUseDsxuDeepSeekClient()')
+    expect(apiClient).toContain('isDSXUCodeMode() || !isProviderMigrationServiceShellAllowed()')
+    expect(apiClient).toContain('if (shouldUseDsxuDeepSeekClient())')
+    expect(apiClient).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
+    expect(apiClient.indexOf('if (shouldUseDsxuDeepSeekClient())')).toBeLessThan(
+      apiClient.indexOf('return new ProviderClient'),
+    )
+    const retrySource = readFileSync(join(root, 'src/services/api/withRetry.ts'), 'utf8')
+    expect(retrySource).toContain('function isPrimaryModelFallbackAllowed(model: string)')
+    expect(retrySource).toContain('DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS')
+    expect(retrySource).toContain("isDsxuCodeEnvTruthy('ALLOW_PROVIDER_MODEL_FALLBACKS')")
+    expect(retrySource).toContain('if (!isProviderMigrationServiceShellAllowed())')
+    expect(retrySource).toContain('isPrimaryModelFallbackAllowed(options.model)')
+    const dsxuTransport = readFileSync(join(root, 'src/services/api/dsxuTransport.ts'), 'utf8')
+    expect(dsxuTransport).toContain('function hasStartedStreamingToolState')
+    expect(dsxuTransport).toContain('hasToolStateBeforeFallback')
+    expect(dsxuTransport).toContain('tool_state_started')
+    expect(dsxuTransport).toContain('hasToolStateBeforeFallback ||')
+    const filesApi = readFileSync(join(root, 'src/services/api/filesApi.ts'), 'utf8')
+    expect(filesApi).toContain('function isProviderMigrationFilesApiAllowed()')
+    expect(filesApi).toContain('function resolveFilesApiBaseUrl(config: FilesApiConfig)')
+    expect(filesApi).toContain('Configure DSXU_CODE_API_BASE_URL or pass FilesApiConfig.baseUrl')
+    expect(filesApi).not.toContain('DEFAULT_PROVIDER_FILES_API_BASE_URL')
+    expect(filesApi).not.toContain('Falls back to public API for standalone usage')
+    const metricsOptOut = readFileSync(join(root, 'src/services/api/metricsOptOut.ts'), 'utf8')
+    expect(metricsOptOut).toContain('function shouldUseProviderMigrationMetricsOptOut()')
+    expect(metricsOptOut).toContain('if (!shouldUseProviderMigrationMetricsOptOut())')
+    const apiLogging = readFileSync(join(root, 'src/services/api/logging.ts'), 'utf8')
+    expect(apiLogging).toContain('function getProviderMigrationEnvMetadata()')
+    expect(apiLogging).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
+    expect(apiLogging).not.toContain('function getProviderEnvMetadata()')
+    const apiPreconnect = readFileSync(join(root, 'src/utils/apiPreconnect.ts'), 'utf8')
+    expect(apiPreconnect).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
+    const remoteManagedSettingsSync = readFileSync(
+      join(root, 'src/services/remoteManagedSettings/syncCache.ts'),
+      'utf8',
+    )
+    expect(remoteManagedSettingsSync).toContain('DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_SETTINGS')
+    expect(remoteManagedSettingsSync).toContain('provider-migration remote managed settings are disabled in DSXU runtime')
+    const settingsSync = readFileSync(join(root, 'src/services/settingsSync/index.ts'), 'utf8')
+    expect(settingsSync).toContain('function isProviderMigrationSettingsSyncAllowed()')
+    expect(settingsSync).toContain('!isProviderMigrationSettingsSyncAllowed()')
+    const teamMemorySync = readFileSync(join(root, 'src/services/teamMemorySync/index.ts'), 'utf8')
+    expect(teamMemorySync).toContain('function isDsxuTeamMemorySyncConfigured()')
+    expect(teamMemorySync).toContain('!isProviderMigrationServiceShellAllowed()')
+    const fastMode = readFileSync(join(root, 'src/utils/fastMode.ts'), 'utf8')
+    expect(fastMode).toContain('function isProviderMigrationFastModeBackendAllowed()')
+    expect(fastMode).toContain('if (!isProviderMigrationFastModeBackendAllowed())')
+    for (const accountApiPath of [
+      'src/services/api/adminRequests.ts',
+      'src/services/api/grove.ts',
+      'src/services/api/overageCreditGrant.ts',
+      'src/services/api/referral.ts',
+      'src/services/api/ultrareviewQuota.ts',
+      'src/services/api/usage.ts',
+    ]) {
+      const accountApiSource = readFileSync(join(root, accountApiPath), 'utf8')
+      expect(accountApiSource, accountApiPath).toContain('isProviderMigrationServiceShellAllowed')
+      expect(accountApiSource, accountApiPath).toContain('isDsxuRuntimeMode')
+    }
   })
 
-  test('maps old provider shell aliases to the DSXU provider contract block result', async () => {
+  test('maps provider-migration shell aliases to the DSXU provider contract block result', async () => {
     expect(isDsxuProviderAliasCommand('remote-control')).toBe(true)
     expect(isDsxuProviderAliasCommand('bridge')).toBe(true)
     expect(isDsxuProviderAliasCommand('chat')).toBe(false)
@@ -155,38 +557,38 @@ describe('DSXU provider contract V1', () => {
       permissionCallback: async request => ({
         behavior: request.toolName === 'Read' ? 'allow' : 'deny',
         updatedInput: request.input,
-        message: 'DSXU provider backend permission callback',
+        message: 'DSXU remote service permission callback',
       }),
     })
 
     backend.provider.emitEvent({
       type: 'session_started',
-      sessionId: 'provider-backend-test',
+      sessionId: 'remote-service-test',
       timestamp: 1,
     })
     backend.provider.emitEvent({
       type: 'tool_started',
-      sessionId: 'provider-backend-test',
+      sessionId: 'remote-service-test',
       toolName: 'Read',
       timestamp: 2,
     })
     backend.provider.emitEvent({
       type: 'tool_finished',
-      sessionId: 'provider-backend-test',
+      sessionId: 'remote-service-test',
       toolName: 'Read',
       timestamp: 3,
       ok: true,
     })
     backend.synchronizeTask({
       type: 'task_synchronized',
-      sessionId: 'provider-backend-test',
+      sessionId: 'remote-service-test',
       taskId: 'task-v8-provider',
       status: 'completed',
       timestamp: 4,
     })
 
     const permission = await backend.provider.requestPermission({
-      sessionId: 'provider-backend-test',
+      sessionId: 'remote-service-test',
       toolName: 'Read',
       input: { file_path: 'README.md' },
       permission: { behavior: 'ask' },
@@ -201,12 +603,12 @@ describe('DSXU provider contract V1', () => {
     })
 
     expect(permission.behavior).toBe('allow')
-    expect(permission.message).toContain('DSXU provider backend permission callback')
+    expect(permission.message).toContain('DSXU remote service permission callback')
     expect(backend.events.readAll()).toEqual([
-      { type: 'session_started', sessionId: 'provider-backend-test', timestamp: 1 },
-      { type: 'tool_started', sessionId: 'provider-backend-test', toolName: 'Read', timestamp: 2 },
-      { type: 'tool_finished', sessionId: 'provider-backend-test', toolName: 'Read', timestamp: 3, ok: true },
-      { type: 'task_synchronized', sessionId: 'provider-backend-test', taskId: 'task-v8-provider', status: 'completed', timestamp: 4 },
+      { type: 'session_started', sessionId: 'remote-service-test', timestamp: 1 },
+      { type: 'tool_started', sessionId: 'remote-service-test', toolName: 'Read', timestamp: 2 },
+      { type: 'tool_finished', sessionId: 'remote-service-test', toolName: 'Read', timestamp: 3, ok: true },
+      { type: 'task_synchronized', sessionId: 'remote-service-test', taskId: 'task-v8-provider', status: 'completed', timestamp: 4 },
     ])
     expect(filtered).toEqual({
       authorization: '[REDACTED]',
@@ -372,16 +774,16 @@ describe('DSXU provider contract V1', () => {
       expect(source).not.toContain('./remote/DsxuRemoteSessionCoordinator.js')
     }
     expect(useRemoteSession).toContain(
-      '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js',
+      '../services/bridge/dsxuRemoteSessionCoordinator.js',
     )
     expect(repl).toContain(
-      '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js',
+      '../services/bridge/dsxuRemoteSessionCoordinator.js',
     )
     expect(main).toContain(
-      './dsxu/engine/provider-backend/dsxu-remote-session-manager.js',
+      './services/bridge/dsxuRemoteSessionCoordinator.js',
     )
     expect(directConnect).toContain(
-      '../dsxu/engine/provider-backend/dsxu-remote-session-manager.js',
+      '../services/bridge/dsxuRemoteSessionCoordinator.js',
     )
   })
 })

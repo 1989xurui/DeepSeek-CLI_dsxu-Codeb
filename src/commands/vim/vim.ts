@@ -9,7 +9,7 @@ export const call: LocalCommandCall = async () => {
   const config = getGlobalConfig()
   let currentMode = config.editorMode || 'normal'
 
-  // Handle backward compatibility - treat 'emacs' as 'normal'
+  // Treat historical 'emacs' option as 'normal'.
   if (currentMode === 'emacs') {
     currentMode = 'normal'
   }
@@ -35,13 +35,4 @@ export const call: LocalCommandCall = async () => {
         : 'Using standard (readline) keyboard bindings.'
     }`,
   }
-}
-
-
-// V14 lifecycle shim: vim
-export function processVimLifecycle(input) {
-  void input
-  const state = 'vim-state'
-  const lifecycle = 'vim:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "dsxu.v20.acl-residue-closure-plan.v1",
+  "generatedAt": "2026-05-15T03:39:43.375Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME",
+  "residueCount": 4,
+  "readyRows": 0,
+  "permissionDeniedRows": 0,
+  "signedExternalRows": 4,
+  "didMutateFilesystem": false,
+  "didStageGit": false,
+  "rows": [
+    {
+      "path": "src/dsxu/engine/retrieval/integration-example.ts",
+      "residueClass": "empty-module-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/engine/retrieval/integration-example.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/integration/harness/recovery-runtime-v3-harness.ts",
+      "residueClass": "empty-module-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/integration/harness/recovery-runtime-v3-harness.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts",
+      "residueClass": "empty-module-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/legacy/testing/legacyProviderMockRateLimits.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/engine/adapters/bridge-adapter.ts",
+      "residueClass": "retired-adapter-tombstone",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/engine/adapters/bridge-adapter.ts\"",
+      "requiresExplicitAuthorization": true
+    }
+  ],
+  "blockers": [],
+  "nextAction": "continue final preflight; release/export must continue excluding these physical ACL residues",
+  "rule": "ACL residues must not be restored as product runtime or compatibility holding paths."
+}

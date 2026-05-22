@@ -3,7 +3,7 @@ export const DESCRIPTION =
 
 export const PROMPT = `Use this tool when the user asks to run a named workflow or when a repeatable DSXU workflow clearly matches the task.
 
-Workflows are markdown files discovered from DSXU config locations, primarily .dsxu/workflows with legacy migration workflow directories as a compatibility source. The tool supports:
+Workflows are markdown files discovered from DSXU config locations, primarily .dsxu/workflows with provider migration workflow directories as a compatibility source. The tool supports:
 - action=list to discover available workflows.
 - action=plan to compile the selected workflow into a structured runtime plan with argument status, allowed tools, and extracted steps.
 - action=render to return the full executable workflow prompt.

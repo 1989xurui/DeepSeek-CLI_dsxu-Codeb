@@ -104,12 +104,3 @@ export async function getVoiceKeyterms(
 
   return [...terms].slice(0, MAX_KEYTERMS)
 }
-
-
-// V14 lifecycle shim: voicekeyterms
-export function processVoicekeytermsLifecycle(input) {
-  void input
-  const state = 'voicekeyterms-state'
-  const lifecycle = 'voicekeyterms:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

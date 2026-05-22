@@ -92,11 +92,3 @@ export function StatusIcon(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: statusicon
-export function processStatusiconLifecycle(input) {
-  void input
-  const state = 'statusicon-state'
-  const lifecycle = 'statusicon:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

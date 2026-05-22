@@ -197,20 +197,3 @@ export function createInitialPersistentState(): PersistentState {
     registerIsLinewise: false,
   }
 }
-
-
-// V14 strict lifecycle shim: vim-types
-export function processVimTypesStrictLifecycle(input) {
-  void input
-  const state = 'vim-types-state'
-  const lifecycle = 'vim-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runVimTypesStrict(input) {
-  return processVimTypesStrictLifecycle(input)
-}

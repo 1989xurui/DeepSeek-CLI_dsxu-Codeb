@@ -226,11 +226,3 @@ export function useArrowKeyHistory(onSetInput: (value: string, mode: HistoryMode
     dismissSearchHint
   };
 }
-
-// V14 lifecycle shim: usearrowkeyhistory
-export function processUsearrowkeyhistoryLifecycle(input) {
-  void input
-  const state = 'usearrowkeyhistory-state'
-  const lifecycle = 'usearrowkeyhistory:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

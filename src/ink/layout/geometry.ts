@@ -95,12 +95,3 @@ export function clamp(value: number, min?: number, max?: number): number {
   if (max !== undefined && value > max) return max
   return value
 }
-
-
-// V14 lifecycle shim: geometry
-export function processGeometryLifecycle(input) {
-  void input
-  const state = 'geometry-state'
-  const lifecycle = 'geometry:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

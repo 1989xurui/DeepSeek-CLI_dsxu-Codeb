@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import React, { useRef } from 'react';
 import stripAnsi from 'strip-ansi';
 import { Messages } from '../components/Messages.js';

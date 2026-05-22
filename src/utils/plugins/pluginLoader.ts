@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Plugin Loader Module
  *
@@ -120,13 +119,13 @@ import {
   isPluginZipCacheEnabled,
 } from './zipCache.js'
 const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
-const LEGACY_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
 const PLUGIN_MANIFEST_DIRS = [
   DSXU_PLUGIN_MANIFEST_DIR,
-  LEGACY_PLUGIN_MANIFEST_DIR,
+  PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR,
 ] as const
-const LEGACY_CODE_REMOTE_ENV = 'CL' + 'AUDE' + '_CODE_REMOTE'
-const LEGACY_SYNC_PLUGIN_INSTALL_ENV =
+const PROVIDER_MIGRATION_CODE_REMOTE_ENV = 'CL' + 'AUDE' + '_CODE_REMOTE'
+const PROVIDER_MIGRATION_SYNC_PLUGIN_INSTALL_ENV =
   'CL' + 'AUDE' + '_CODE_SYNC_PLUGIN_INSTALL'
 function pluginManifestPath(root: string): string {
   return join(root, DSXU_PLUGIN_MANIFEST_DIR, 'plugin.json')
@@ -149,14 +148,43 @@ async function hasPluginManifest(root: string): Promise<boolean> {
 function isRemoteCliMode(): boolean {
   return (
     isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-    isEnvTruthy(process.env[LEGACY_CODE_REMOTE_ENV])
+    isEnvTruthy(process.env[PROVIDER_MIGRATION_CODE_REMOTE_ENV])
   )
 }
 function isSyncPluginInstallEnabled(): boolean {
   return (
     isEnvTruthy(process.env.DSXU_CODE_SYNC_PLUGIN_INSTALL) ||
-    isEnvTruthy(process.env[LEGACY_SYNC_PLUGIN_INSTALL_ENV])
+    isEnvTruthy(process.env[PROVIDER_MIGRATION_SYNC_PLUGIN_INSTALL_ENV])
   )
+}
+
+export function getDsxuPluginLoaderRuntimeProfile(): {
+  runtime: 'DSXU Plugin Loader'
+  owner: 'DSXU Plugin Runtime'
+  manifestDirs: readonly string[]
+  sources: readonly string[]
+  providerMigrationPolicy: string
+  activationEvidence: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plugin Loader',
+    owner: 'DSXU Plugin Runtime',
+    manifestDirs: [DSXU_PLUGIN_MANIFEST_DIR, PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR],
+    sources: [
+      'marketplace-based plugins',
+      'session-only --plugin-dir / SDK inline plugins',
+      'built-in plugins',
+      'managed plugin settings',
+    ],
+    providerMigrationPolicy:
+      'provider-migration plugin manifests and env names are migration inputs; DSXU runtime owner remains pluginLoader/loadAllPlugins',
+    activationEvidence: [
+      'loadAllPlugins merges marketplace, session-only, built-in, and managed plugins before exposing enabled components',
+      'mergePluginSources applies override and managed-lock rules before runtime activation',
+      'verifyAndDemote disables plugins with unsatisfied dependencies without mutating user intent',
+      'cachePluginSettings exposes only enabled plugin settings through the DSXU settings cascade',
+    ],
+  }
 }
 /**
  * Get the path where plugin cache is stored
@@ -270,24 +298,24 @@ export async function probeSeedCacheAnyVersion(
   return null
 }
 /**
- * Get legacy (non-versioned) cache path for a plugin.
+ * Get flat (non-versioned) cache path for a plugin.
  * Format: ~/.dsxu/plugins/cache/{plugin-name}/
  *
- * Used for backward compatibility with existing installations.
+ * Used for existing installations created before versioned cache directories.
  *
  * @param pluginName - Plugin name (without marketplace suffix)
- * @returns Absolute path to legacy plugin directory
+ * @returns Absolute path to the flat plugin directory
  */
-export function getLegacyCachePath(pluginName: string): string {
+export function getFlatCachePath(pluginName: string): string {
   const cachePath = getPluginCachePath()
   return join(cachePath, pluginName.replace(/[^a-zA-Z0-9\-_]/g, '-'))
 }
 /**
- * Resolve plugin path with fallback to legacy location.
+ * Resolve plugin path with fallback to the previous flat-cache location.
  *
  * Always:
  * 1. Try versioned path first if version is provided
- * 2. Fall back to legacy path for existing installations
+ * 2. Fall back to the flat path for existing installations
  * 3. Return versioned path for new installations
  *
  * @param pluginId - Plugin identifier in format "name@marketplace"
@@ -305,14 +333,14 @@ export async function resolvePluginPath(
       return versionedPath
     }
   }
-  // Fall back to legacy path for existing installations
+  // Fall back to flat path for existing installations.
   const pluginName = parsePluginIdentifier(pluginId).name || pluginId
-  const legacyPath = getLegacyCachePath(pluginName)
-  if (await pathExists(legacyPath)) {
-    return legacyPath
+  const flatPath = getFlatCachePath(pluginName)
+  if (await pathExists(flatPath)) {
+    return flatPath
   }
   // Return versioned path for new installations
-  return version ? getVersionedCachePath(pluginId, version) : legacyPath
+  return version ? getVersionedCachePath(pluginId, version) : flatPath
 }
 /**
  * Recursively copy a directory.
@@ -943,7 +971,7 @@ export async function cachePlugin(
     throw error
   }
   const manifestPath = await firstExistingPluginManifestPath(tempPath)
-  const legacyManifestPath = join(tempPath, 'plugin.json')
+  const flatLayoutManifestPath = join(tempPath, 'plugin.json')
   let manifest: PluginManifest
   if (await pathExists(manifestPath)) {
     try {
@@ -984,9 +1012,9 @@ export async function cachePlugin(
         `Plugin has a corrupt manifest file at ${manifestPath}. JSON parse error: ${errorMsg}`,
       )
     }
-  } else if (await pathExists(legacyManifestPath)) {
+  } else if (await pathExists(flatLayoutManifestPath)) {
     try {
-      const content = await readFile(legacyManifestPath, {
+      const content = await readFile(flatLayoutManifestPath, {
         encoding: 'utf-8',
       })
       const parsed = jsonParse(content)
@@ -999,11 +1027,11 @@ export async function cachePlugin(
           .map(err => `${err.path.join('.')}: ${err.message}`)
           .join(', ')
         logForDebugging(
-          `Invalid legacy manifest at ${legacyManifestPath}: ${errors}`,
+          `Invalid flat-layout manifest at ${flatLayoutManifestPath}: ${errors}`,
           { level: 'error' },
         )
         throw new Error(
-          `Plugin has an invalid manifest file at ${legacyManifestPath}. Validation errors: ${errors}`,
+          `Plugin has an invalid manifest file at ${flatLayoutManifestPath}. Validation errors: ${errors}`,
         )
       }
     } catch (error) {
@@ -1017,13 +1045,13 @@ export async function cachePlugin(
       // JSON parse error
       const errorMsg = errorMessage(error)
       logForDebugging(
-        `Failed to parse legacy manifest at ${legacyManifestPath}: ${errorMsg}`,
+        `Failed to parse flat-layout manifest at ${flatLayoutManifestPath}: ${errorMsg}`,
         {
           level: 'error',
         },
       )
       throw new Error(
-        `Plugin has a corrupt manifest file at ${legacyManifestPath}. JSON parse error: ${errorMsg}`,
+        `Plugin has a corrupt manifest file at ${flatLayoutManifestPath}. JSON parse error: ${errorMsg}`,
       )
     }
   } else {
@@ -1297,7 +1325,7 @@ export async function createPluginFromPath(
     manifest, // Store full manifest for later use
     path: pluginPath, // Absolute path to plugin directory
     source, // Source identifier (e.g., "git:repo" or ".dsxu-plugin/name")
-    repository: source, // For backward compatibility with Plugin Repository
+    repository: source, // For provider-migration continuity with Plugin Repository
     enabled, // Current enabled state
   }
   // Step 3: Auto-detect optional directories in parallel

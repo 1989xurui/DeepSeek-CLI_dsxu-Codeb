@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type {
   ToolResultBlockParam,
   ToolUseBlockParam,
@@ -338,7 +337,7 @@ export function renderToolResultMessage(
     isTranscriptMode?: boolean
   },
 ): React.ReactNode {
-  // Remote-launched agents (ant-only) use a private output type not in the
+  // Remote-launched agents (dsxu-internal) use a private output type not in the
   // public schema. Narrow via the internal discriminant.
   const internal = data as Output | RemoteLaunchedOutput
   if (internal.status === 'remote_launched') {
@@ -418,10 +417,10 @@ export function renderToolResultMessage(
 
   return (
     <Box flexDirection="column">
-      {"external" === 'ant' && (
+      {false && (
         <MessageResponse>
           <Text color="warning">
-            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
+            [DSXU internal] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
           </Text>
         </MessageResponse>
       )}
@@ -746,10 +745,10 @@ export function renderToolUseRejectedMessage(
 
   return (
     <>
-      {"external" === 'ant' && agentId && (
+      {false && agentId && (
         <MessageResponse>
           <Text color="warning">
-            [ANT-ONLY] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
+            [DSXU internal] API calls: {getDisplayPath(getDumpPromptsPath(agentId))}
           </Text>
         </MessageResponse>
       )}

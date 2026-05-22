@@ -5,7 +5,7 @@ import { Box, Text } from 'src/ink.js';
 import { getPlatform } from 'src/utils/platform.js';
 import { isKeybindingCustomizationEnabled } from '../../keybindings/loadUserBindings.js';
 import { useShortcutDisplay } from '../../keybindings/useShortcutDisplay.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js';
 import { isFastModeAvailable, isFastModeEnabled } from '../../utils/fastMode.js';
 import { getNewlineInstructions } from './utils.js';
 
@@ -354,12 +354,4 @@ export function PromptInputHelpMenu(props) {
     t45 = $[98];
   }
   return t45;
-}
-
-// V14 lifecycle shim: promptinputhelpmenu
-export function processPromptinputhelpmenuLifecycle(input) {
-  void input
-  const state = 'promptinputhelpmenu-state'
-  const lifecycle = 'promptinputhelpmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

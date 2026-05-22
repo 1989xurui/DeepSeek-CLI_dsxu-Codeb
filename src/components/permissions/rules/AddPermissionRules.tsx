@@ -177,11 +177,3 @@ export function AddPermissionRules(t0) {
 function _temp(ruleValue_0) {
   return <Box flexDirection="column" key={permissionRuleValueToString(ruleValue_0)}><Text bold={true}>{permissionRuleValueToString(ruleValue_0)}</Text><PermissionRuleDescription ruleValue={ruleValue_0} /></Box>;
 }
-
-// V14 lifecycle shim: addpermissionrules
-export function processAddpermissionrulesLifecycle(input) {
-  void input
-  const state = 'addpermissionrules-state'
-  const lifecycle = 'addpermissionrules:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

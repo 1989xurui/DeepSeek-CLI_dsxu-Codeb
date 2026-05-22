@@ -112,11 +112,3 @@ export function MCPServerApprovalDialog(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: mcpserverapprovaldialog
-export function processMcpserverapprovaldialogLifecycle(input) {
-  void input
-  const state = 'mcpserverapprovaldialog-state'
-  const lifecycle = 'mcpserverapprovaldialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

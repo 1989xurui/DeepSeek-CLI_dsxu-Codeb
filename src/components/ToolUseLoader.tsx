@@ -39,11 +39,3 @@ export function ToolUseLoader(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: tooluseloader
-export function processTooluseloaderLifecycle(input) {
-  void input
-  const state = 'tooluseloader-state'
-  const lifecycle = 'tooluseloader:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

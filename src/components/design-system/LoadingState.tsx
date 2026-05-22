@@ -91,11 +91,3 @@ export function LoadingState(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: loadingstate
-export function processLoadingstateLifecycle(input) {
-  void input
-  const state = 'loadingstate-state'
-  const lifecycle = 'loadingstate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

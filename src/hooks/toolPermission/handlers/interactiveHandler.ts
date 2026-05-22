@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { randomUUID } from 'crypto'
 import { logForDebugging } from 'src/utils/debug.js'
 import { getAllowedChannels } from '../../../bootstrap/state.js'
-import type { BridgePermissionCallbacks } from '../../../dsxu/engine/provider-backend/dsxu-provider-compat.js'
+import type { BridgePermissionCallbacks } from '../../../services/bridge/dsxuRemoteBridgeFacade.js'
 import { getTerminalFocused } from '../../../ink/terminal-focus-state.js'
 import {
   CHANNEL_PERMISSION_REQUEST_METHOD,

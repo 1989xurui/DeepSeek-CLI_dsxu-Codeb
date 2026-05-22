@@ -29,7 +29,7 @@ describe('DSXU V9 reference high-value behavior completion contract', () => {
     ])
   })
 
-  test('marks provider shell archival green after compatibility imports are remapped', () => {
+  test('marks provider shell archival green after provider migration imports are remapped', () => {
     const provider = getDsxuV9Item('V9-1')
     const cli = read('src/entrypoints/cli.tsx')
     const main = read('src/main.tsx')
@@ -39,21 +39,21 @@ describe('DSXU V9 reference high-value behavior completion contract', () => {
     const useReplBridge = read('src/hooks/useReplBridge.tsx')
 
     expect(provider?.state).toBe('evidence_green')
-    expect(provider?.acceptance.join('\n')).toContain('old shell directories are archived after explicit compatibility imports are gone and live smoke is green')
+    expect(provider?.acceptance.join('\n')).toContain('old shell directories are archived after explicit provider-migration imports are gone and live smoke is green')
     expect(cli).toContain('handleDsxuProviderAliasCommand')
     expect(cli).not.toContain("await import('../bridge/bridgeMain.js')")
     expect(cli).toContain("args[0] === 'bridge'")
-    expect(main).toContain("./dsxu/engine/provider-backend/dsxu-remote-session-manager.js")
+    expect(main).toContain("./services/bridge/dsxuRemoteSessionCoordinator.js")
     expect(main).not.toContain("await import('./remote/DsxuRemoteSessionCoordinator.js')")
     expect(main).not.toContain("./bridge/bridgeEnabled.js")
     expect(main).not.toContain("./bridge/trustedDevice.js")
-    expect(useRemoteSession).toContain('../dsxu/engine/provider-backend/dsxu-remote-session-manager.js')
+    expect(useRemoteSession).toContain('../services/bridge/dsxuRemoteSessionCoordinator.js')
     expect(useRemoteSession).not.toContain('../remote/DsxuRemoteSessionCoordinator.js')
     expect(print).not.toContain("src/bridge/")
     expect(useReplBridge).not.toContain("../bridge/")
     expect(init).toContain('DSXU_CODE_REMOTE ignored on the default DSXU local mainline')
-    expect(init).toContain('DSXU_ALLOW_LEGACY_PROVIDER_SERVICE_SHELL=1')
-    expect(init).toContain('legacy upstream proxy shell is archived')
+    expect(init).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
+    expect(init).toContain('provider migration upstream proxy shell is archived')
     expect(init).not.toContain('../upstreamproxy/upstreamproxy.js')
   })
 

@@ -1,0 +1,7 @@
+"gate","count","status","canMutateNow","requiredAction"
+"owner-git-register-alignment","1893","PASS_POST_STAGE_INDEX_VERIFIED","false","pre-stage register superseded by staged Git index evidence"
+"deletion-mutation-stage-plan","147","PASS_STAGED","false","deletion packets already staged by Owner/Git execution report"
+"owner-accepted-product-packets","1746","PASS_STAGED","false","product packets already staged by Owner/Git execution report"
+"acl-residue","4","PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME","false","ACL residues are signed non-product runtime and excluded from release/export"
+"p12-target-reference-raw","14","READY_FOR_DELTA_REVIEW","false","import real targetReferenceManifestPath; do not use templates, generic logs, target-only logs, or DSXU-side logs"
+"final-six-stage-tests-and-clean-export","1","PASS_READY_FOR_RELEASE_CLOSURE","false","run release closure tests and clean-export preflight; create export only as explicit release action"

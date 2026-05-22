@@ -72,12 +72,3 @@ export async function generateAwaySummary(
     return null
   }
 }
-
-
-// V14 lifecycle shim: awaysummary
-export function processAwaysummaryLifecycle(input) {
-  void input
-  const state = 'awaysummary-state'
-  const lifecycle = 'awaysummary:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

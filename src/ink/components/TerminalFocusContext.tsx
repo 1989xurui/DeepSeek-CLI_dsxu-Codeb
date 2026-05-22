@@ -49,11 +49,3 @@ export function TerminalFocusProvider(t0) {
   return t2;
 }
 export default TerminalFocusContext;
-
-// V14 lifecycle shim: terminalfocuscontext
-export function processTerminalfocuscontextLifecycle(input) {
-  void input
-  const state = 'terminalfocuscontext-state'
-  const lifecycle = 'terminalfocuscontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

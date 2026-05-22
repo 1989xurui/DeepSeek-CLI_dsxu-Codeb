@@ -8,10 +8,10 @@ import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
 export type GroveDecision = 'accept_opt_in' | 'accept_opt_out' | 'defer' | 'escape' | 'skip_rendering';
-const LEGACY_ORG_TOKEN = 'anth' + 'ropic';
-const LEGACY_TERMS_UPDATE_URL = `https://www.${LEGACY_ORG_TOKEN}.com/news/updates-to-our-consumer-terms`;
-const LEGACY_TERMS_URL = `https://${LEGACY_ORG_TOKEN}.com/legal/terms`;
-const LEGACY_PRIVACY_URL = `https://${LEGACY_ORG_TOKEN}.com/legal/privacy`;
+const PROVIDER_MIGRATION_ORG_TOKEN = 'anth' + 'ropic';
+const PROVIDER_MIGRATION_TERMS_UPDATE_URL = `https://www.${PROVIDER_MIGRATION_ORG_TOKEN}.com/news/updates-to-our-consumer-terms`;
+const PROVIDER_MIGRATION_TERMS_URL = `https://${PROVIDER_MIGRATION_ORG_TOKEN}.com/legal/terms`;
+const PROVIDER_MIGRATION_PRIVACY_URL = `https://${PROVIDER_MIGRATION_ORG_TOKEN}.com/legal/privacy`;
 type Props = {
   showIfAlreadyViewed: boolean;
   location: 'settings' | 'policy_update_modal' | 'onboarding';
@@ -71,21 +71,21 @@ function GracePeriodContentBody() {
   }
   let t6;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Link url={LEGACY_TERMS_UPDATE_URL} />;
+    t6 = <Link url={PROVIDER_MIGRATION_TERMS_UPDATE_URL} />;
     $[6] = t6;
   } else {
     t6 = $[6];
   }
   let t7;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = <Link url={LEGACY_TERMS_URL} />;
+    t7 = <Link url={PROVIDER_MIGRATION_TERMS_URL} />;
     $[7] = t7;
   } else {
     t7 = $[7];
   }
   let t8;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <>{t0}{t5}<Text>Learn more ({t6}) or read the updated Consumer Terms ({t7}) and Privacy Policy (<Link url={LEGACY_PRIVACY_URL} />)</Text></>;
+    t8 = <>{t0}{t5}<Text>Learn more ({t6}) or read the updated Consumer Terms ({t7}) and Privacy Policy (<Link url={PROVIDER_MIGRATION_PRIVACY_URL} />)</Text></>;
     $[8] = t8;
   } else {
     t8 = $[8];
@@ -124,21 +124,21 @@ function PostGracePeriodContentBody() {
   }
   let t4;
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <Link url={LEGACY_TERMS_UPDATE_URL} />;
+    t4 = <Link url={PROVIDER_MIGRATION_TERMS_UPDATE_URL} />;
     $[4] = t4;
   } else {
     t4 = $[4];
   }
   let t5;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Link url={LEGACY_TERMS_URL} />;
+    t5 = <Link url={PROVIDER_MIGRATION_TERMS_URL} />;
     $[5] = t5;
   } else {
     t5 = $[5];
   }
   let t6;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <>{t0}{t3}<Text>Learn more ({t4}) or read the updated Consumer Terms ({t5}) and Privacy Policy (<Link url={LEGACY_PRIVACY_URL} />)</Text></>;
+    t6 = <>{t0}{t3}<Text>Learn more ({t4}) or read the updated Consumer Terms ({t5}) and Privacy Policy (<Link url={PROVIDER_MIGRATION_PRIVACY_URL} />)</Text></>;
     $[6] = t6;
   } else {
     t6 = $[6];
@@ -463,20 +463,4 @@ export function PrivacySettingsDialog(t0) {
 }
 function _temp2() {
   logEvent("tengu_grove_privacy_settings_viewed", {});
-}
-
-// V14 strict lifecycle shim: components-grove-Grove
-export function processComponentsGroveGroveStrictLifecycle(input) {
-  void input
-  const state = 'components-grove-Grove-state'
-  const lifecycle = 'components-grove-Grove:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsGroveGroveStrict(input) {
-  return processComponentsGroveGroveStrictLifecycle(input)
 }

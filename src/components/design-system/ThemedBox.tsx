@@ -153,11 +153,3 @@ function ThemedBox(t0) {
   return t2;
 }
 export default ThemedBox;
-
-// V14 lifecycle shim: themedbox
-export function processThemedboxLifecycle(input) {
-  void input
-  const state = 'themedbox-state'
-  const lifecycle = 'themedbox:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

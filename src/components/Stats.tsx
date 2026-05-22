@@ -379,7 +379,7 @@ function OverviewTab({
   // Calculate range days based on selected date range
   const rangeDays = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : stats.totalDays;
 
-  // Compute shot stats data (ant-only, gated by feature flag)
+  // Compute shot stats data (dsxu internal, gated by feature flag)
   let shotStatsData: {
     avgShots: string;
     buckets: {
@@ -511,8 +511,8 @@ function OverviewTab({
         </Box>
       </Box>
 
-      {/* Speculation time saved (ant-only) */}
-      {"external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0 && <Box flexDirection="row" gap={4}>
+      {/* Speculation time saved (dsxu internal) */}
+      {false && stats.totalSpeculationTimeSavedMs > 0 && <Box flexDirection="row" gap={4}>
             <Box flexDirection="column" width={28}>
               <Text wrap="truncate">
                 Speculation saved:{' '}
@@ -523,7 +523,7 @@ function OverviewTab({
             </Box>
           </Box>}
 
-      {/* Shot stats (ant-only) */}
+      {/* Shot stats (dsxu internal) */}
       {shotStatsData && <>
           <Box marginTop={1}>
             <Text>Shot distribution</Text>
@@ -1150,13 +1150,13 @@ function renderOverviewToAnsi(stats: DsxuCodeStats): string[] {
   const peakHourVal = stats.peakActivityHour !== null ? `${stats.peakActivityHour}:00-${stats.peakActivityHour + 1}:00` : 'N/A';
   lines.push(row('Active days', activeDaysVal, 'Peak hour', peakHourVal));
 
-  // Speculation time saved (ant-only)
-  if ("external" === 'ant' && stats.totalSpeculationTimeSavedMs > 0) {
+  // Speculation time saved (dsxu internal)
+  if (false && stats.totalSpeculationTimeSavedMs > 0) {
     const label = 'Speculation saved:'.padEnd(COL1_LABEL_WIDTH);
     lines.push(label + h(formatDuration(stats.totalSpeculationTimeSavedMs)));
   }
 
-  // Shot stats (ant-only)
+  // Shot stats (dsxu internal)
   if (feature('SHOT_STATS') && stats.shotDistribution) {
     const dist = stats.shotDistribution;
     const totalWithShots = Object.values(dist).reduce((s, n) => s + n, 0);
@@ -1224,20 +1224,4 @@ function renderModelsToAnsi(stats: DsxuCodeStats): string[] {
     lines.push(chalk.dim(`  In: ${formatNumber(usage.inputTokens)} 鐠?Out: ${formatNumber(usage.outputTokens)}`));
   }
   return lines;
-}
-
-// V14 strict lifecycle shim: components-Stats
-export function processComponentsStatsStrictLifecycle(input) {
-  void input
-  const state = 'components-Stats-state'
-  const lifecycle = 'components-Stats:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsStatsStrict(input) {
-  return processComponentsStatsStrictLifecycle(input)
 }

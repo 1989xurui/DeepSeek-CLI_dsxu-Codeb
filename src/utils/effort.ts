@@ -1,29 +1,29 @@
-// biome-ignore-all assist/source/organizeImports: compatibility import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: provider-migration import markers must not be reordered
 import { isUltrathinkEnabled } from './thinking.js'
 import { getInitialSettings } from './settings/settings.js'
 import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
 import type { EffortLevel } from 'src/entrypoints/sdk/runtimeTypes.js'
 import {
-  canPersistCompatMaxEffort,
-  convertCompatNumericEffortToLevel,
-  getCompatDefaultEffortConfig,
-  getCompatDefaultEffortForInternalModel,
-  getCompatDefaultEffortForKnownModel,
-  getCompatDefaultModelEffortSupport,
-  getCompatInternalNumericEffortDescription,
-  getCompatMaxEffortDescription,
-  getCompatModelEffortSupport,
-  getCompatModelMaxEffortSupport,
-  isCompatDefaultEffortCalloutModel,
-  isCompatInternalUser,
-  type CompatDefaultEffortConfig,
-} from '../dsxu/legacy/model/legacyProviderEffort.js'
+  canPersistProviderMigrationMaxEffort,
+  convertProviderMigrationNumericEffortToLevel,
+  getProviderMigrationDefaultEffortConfig,
+  getProviderMigrationDefaultEffortForInternalModel,
+  getProviderMigrationDefaultEffortForKnownModel,
+  getProviderMigrationDefaultModelEffortSupport,
+  getProviderMigrationInternalNumericEffortDescription,
+  getProviderMigrationMaxEffortDescription,
+  getProviderMigrationModelEffortSupport,
+  getProviderMigrationModelMaxEffortSupport,
+  isProviderMigrationDefaultEffortCalloutModel,
+  isProviderMigrationInternalUser,
+  type ProviderMigrationDefaultEffortConfig,
+} from './model/providerMigration/providerMigrationEffort.js'
 
 export type { EffortLevel }
 export {
-  getCompatDefaultEffortConfig,
-  isCompatDefaultEffortCalloutModel,
-  type CompatDefaultEffortConfig,
+  getProviderMigrationDefaultEffortConfig,
+  isProviderMigrationDefaultEffortCalloutModel,
+  type ProviderMigrationDefaultEffortConfig,
 }
 
 export const EFFORT_LEVELS = [
@@ -40,9 +40,9 @@ export function modelSupportsEffort(model: string): boolean {
   if (isEnvTruthy(getDsxuCodeEnv('ALWAYS_ENABLE_EFFORT'))) {
     return true
   }
-  const compatSupport = getCompatModelEffortSupport(model)
-  if (compatSupport !== undefined) {
-    return compatSupport
+  const providerMigrationSupport = getProviderMigrationModelEffortSupport(model)
+  if (providerMigrationSupport !== undefined) {
+    return providerMigrationSupport
   }
 
   // IMPORTANT: Do not change the default effort support without notifying
@@ -52,13 +52,13 @@ export function modelSupportsEffort(model: string): boolean {
   // Default to true for unknown model strings on 1P.
   // Do not default to true for 3P as they have different formats for their
   // model strings (see upstream provider issue tracker #30795)
-  return getCompatDefaultModelEffortSupport()
+  return getProviderMigrationDefaultModelEffortSupport()
 }
 
 // @[MODEL LAUNCH]: Add the new model to the allowlist if it supports 'max' effort.
 // Unsupported public models return an API error for max effort.
 export function modelSupportsMaxEffort(model: string): boolean {
-  return getCompatModelMaxEffortSupport(model) ?? false
+  return getProviderMigrationModelMaxEffortSupport(model) ?? false
 }
 
 export function isEffortLevel(value: string): value is EffortLevel {
@@ -95,7 +95,7 @@ export function toPersistableEffort(
   if (value === 'low' || value === 'medium' || value === 'high') {
     return value
   }
-  if (value === 'max' && canPersistCompatMaxEffort()) {
+  if (value === 'max' && canPersistProviderMigrationMaxEffort()) {
     return value
   }
   return undefined
@@ -198,13 +198,13 @@ export function isValidNumericEffort(value: number): boolean {
 
 export function convertEffortValueToLevel(value: EffortValue): EffortLevel {
   if (typeof value === 'string') {
-    // Runtime guard: value may come from remote config (GrowthBook) where
+    // Runtime guard: value may come from remote config (feature flag provider) where
     // TypeScript types can't help us. Coerce unknown strings to 'high'
     // rather than passing them through unchecked.
     return isEffortLevel(value) ? value : 'high'
   }
   if (typeof value === 'number') {
-    return convertCompatNumericEffortToLevel(value) ?? 'high'
+    return convertProviderMigrationNumericEffortToLevel(value) ?? 'high'
   }
   return 'high'
 }
@@ -224,7 +224,7 @@ export function getEffortLevelDescription(level: EffortLevel): string {
     case 'high':
       return 'Comprehensive implementation with extensive testing and documentation'
     case 'max':
-      return getCompatMaxEffortDescription()
+      return getProviderMigrationMaxEffortDescription()
   }
 }
 
@@ -236,9 +236,9 @@ export function getEffortLevelDescription(level: EffortLevel): string {
  */
 export function getEffortValueDescription(value: EffortValue): string {
   if (typeof value === 'number') {
-    const compatDescription = getCompatInternalNumericEffortDescription(value)
-    if (compatDescription) {
-      return compatDescription
+    const providerMigrationDescription = getProviderMigrationInternalNumericEffortDescription(value)
+    if (providerMigrationDescription) {
+      return providerMigrationDescription
     }
   }
 
@@ -252,17 +252,17 @@ export function getEffortValueDescription(value: EffortValue): string {
 export function getDefaultEffortForModel(
   model: string,
 ): EffortValue | undefined {
-  if (isCompatInternalUser()) {
-    return getCompatDefaultEffortForInternalModel(model)
+  if (isProviderMigrationInternalUser()) {
+    return getProviderMigrationDefaultEffortForInternalModel(model)
   }
 
   // IMPORTANT: Do not change the default effort level without notifying
   // the model launch DRI and research. Default effort is a sensitive setting
   // that can greatly affect model quality and bashing.
 
-  const compatDefaultEffort = getCompatDefaultEffortForKnownModel(model)
-  if (compatDefaultEffort !== undefined) {
-    return compatDefaultEffort
+  const providerMigrationDefaultEffort = getProviderMigrationDefaultEffortForKnownModel(model)
+  if (providerMigrationDefaultEffort !== undefined) {
+    return providerMigrationDefaultEffort
   }
 
   // When ultrathink feature is on, default effort to medium (ultrathink bumps to high)

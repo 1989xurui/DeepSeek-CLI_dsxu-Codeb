@@ -27,11 +27,3 @@ export function FpsMetricsProvider(t0) {
 export function useFpsMetrics() {
   return useContext(FpsMetricsContext);
 }
-
-// V14 lifecycle shim: fpsmetrics
-export function processFpsmetricsLifecycle(input) {
-  void input
-  const state = 'fpsmetrics-state'
-  const lifecycle = 'fpsmetrics:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

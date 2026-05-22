@@ -123,11 +123,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     onDone(`Did not add ${chalk.bold(result.absolutePath)} as a working directory.`);
   }} />;
 }
-
-// V14 lifecycle shim: add-dir
-export function processAddDirLifecycle(input) {
-  void input
-  const state = 'add-dir-state'
-  const lifecycle = 'add-dir:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

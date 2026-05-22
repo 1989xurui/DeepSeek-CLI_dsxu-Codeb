@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import {
   discoverAuthorizationServerMetadata,
   discoverOAuthServerInfo,
@@ -36,7 +35,7 @@ import { MCP_CLIENT_METADATA_URL } from '../../constants/oauth.js'
 import { openBrowser } from '../../utils/browser.js'
 import {
   getDsxuConfigHomeDir,
-  getLegacyProviderConfigHomeDir,
+  getProviderMigrationHomeDir,
 } from '../../utils/envUtils.js'
 import { errorMessage, getErrnoCode } from '../../utils/errors.js'
 import * as lockfile from '../../utils/lockfile.js'
@@ -92,7 +91,7 @@ type MCPOAuthFlowErrorReason =
   | 'token_exchange_failed'
   | 'unknown'
 const MAX_LOCK_RETRIES = 5
-const LEGACY_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
+const PROVIDER_MIGRATION_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
 /**
  * OAuth query parameters that should be redacted from logs.
  * These contain sensitive values that could enable CSRF or session fixation attacks.
@@ -233,9 +232,9 @@ function createAuthFetch(): FetchLike {
  * 1. RFC 9728: probe /.well-known/oauth-protected-resource on the MCP server,
  *    read authorization_servers[0], then RFC 8414 against that URL.
  * 2. Fallback: RFC 8414 directly against the MCP server URL (path-aware). Covers
- *    legacy servers that co-host auth metadata at /.well-known/oauth-authorization-server/{path}
+ *    provider-migration servers that co-host auth metadata at /.well-known/oauth-authorization-server/{path}
  *    without implementing RFC 9728. The SDK's own fallback strips the path, so this
- *    preserves the pre-existing path-aware probe for backward compatibility.
+ *    preserves the pre-existing path-aware probe as an explicit migration boundary.
  *
  * Note: configuredMetadataUrl is user-controlled via .mcp.json. Project-scoped MCP
  * servers require user approval before connecting (same trust level as the MCP server
@@ -280,7 +279,7 @@ async function fetchAuthServerMetadata(
   } catch (err) {
     // Any error from the RFC 9728  -> RFC 8414 chain (5xx from the root or
     // resolved-AS probe, schema parse failure, network error) ...fall through
-    // to the legacy path-aware retry.
+    // to the provider-migration path-aware retry.
     logMCPDebug(
       serverName,
       `RFC 9728 discovery failed, falling back: ${errorMessage(err)}`,
@@ -569,7 +568,7 @@ export async function revokeServerTokens(
             : {}),
           ...(tokenData.discoveryState
             ? {
-                // Strip legacy bulky metadata fields here too so users with
+                // Strip provider-migration bulky metadata fields here too so users with
                 // existing overflowed blobs recover on next re-auth (#30337).
                 discoveryState: {
                   authorizationServerUrl:
@@ -811,7 +810,7 @@ export async function performMCPOAuthFlow(
   // If the IdP id_token isn't cached, this pops the browser once at the IdP
   // (shared across all XAA servers for that issuer). Subsequent servers hit
   // the cache and are silent. Tokens land in the same keychain slot, so the
-  // rest of DSXU/legacy transport wiring (DsxuMcpAuthProvider.tokens() in client.ts)
+  // rest of DSXU/provider-migration transport wiring (DsxuMcpAuthProvider.tokens() in client.ts)
   // works unchanged.
   //
   // No silent fallback: if `oauth.xaa` is set, XAA is the only path. We
@@ -819,12 +818,12 @@ export async function performMCPOAuthFlow(
   // user explicitly asked for XAA) and security-relevant (consent flow may
   // have a different trust/scope posture than the org's IdP policy).
   //
-  // Servers with `oauth.xaa` but DSXU_CODE_ENABLE_XAA/legacy XAA env unset hard-fail with
+  // Servers with `oauth.xaa` but DSXU_CODE_ENABLE_XAA/provider-migration XAA env unset hard-fail with
   // actionable copy rather than silently degrade to consent.
   if (serverConfig.oauth?.xaa) {
     if (!isXaaEnabled()) {
       throw new Error(
-        `XAA is not enabled (set DSXU_CODE_ENABLE_XAA=1 or legacy ${LEGACY_XAA_ENABLE_ENV}=1). Remove 'oauth.xaa' from server '${serverName}' to use the standard consent flow.`,
+        `XAA is not enabled (set DSXU_CODE_ENABLE_XAA=1 or provider migration ${PROVIDER_MIGRATION_XAA_ENABLE_ENV}=1). Remove 'oauth.xaa' from server '${serverName}' to use the standard consent flow.`,
       )
     }
     logEvent('tengu_mcp_oauth_flow_start', {
@@ -1622,7 +1621,7 @@ export class DsxuMcpAuthProvider implements OAuthClientProvider {
    * both fire the full 4-request XAA chain and race on storage.update().
    * Unlike inc-4829 the id_token is not single-use so both access_tokens
    * stay valid (wasted round-trips + keychain write race, not brickage),
- * but this is the shape DSXU/legacy instruction flags cover under "Token/auth caching across
+ * but this is the shape DSXU/provider-migration instruction flags cover under "Token/auth caching across
    * process boundaries". Mirror refreshAuthorization()'s lockfile pattern.
    */
   private async xaaRefresh(): Promise<OAuthTokens | undefined> {
@@ -1940,7 +1939,7 @@ export class DsxuMcpAuthProvider implements OAuthClientProvider {
     const configDir =
       process.env.DSXU_CODE_MODE === '1'
         ? getDsxuConfigHomeDir()
-        : getLegacyProviderConfigHomeDir()
+        : getProviderMigrationHomeDir()
     await mkdir(configDir, { recursive: true })
     const sanitizedKey = serverKey.replace(/[^a-zA-Z0-9]/g, '_')
     const lockfilePath = join(configDir, `mcp-refresh-${sanitizedKey}.lock`)

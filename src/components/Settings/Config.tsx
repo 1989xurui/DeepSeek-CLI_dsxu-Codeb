@@ -1,6 +1,5 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { feature } from 'bun:bundle';
 import { Box, Text, useTheme, useThemeSetting, useTerminalFocus } from '../../ink.js';
 import type { KeyboardEvent } from '../../ink/events/keyboard-event.js';
@@ -16,13 +15,14 @@ import { permissionModeTitle, permissionModeFromString, toExternalPermissionMode
 import { getAutoModeEnabledState, hasAutoModeOptInAnySource, transitionPlanAutoMode } from '../../utils/permissions/permissionSetup.js';
 import { logError } from '../../utils/log.js';
 import { logEvent, type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS } from 'src/services/analytics/index.js';
-import { isBridgeEnabled } from '../../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { isBridgeEnabled } from '../../services/bridge/dsxuRemoteBridgeFacade.js';
 import { ThemePicker } from '../ThemePicker.js';
 import { useAppState, useSetAppState, useAppStateStore } from '../../state/AppState.js';
 import { ModelPicker } from '../ModelPicker.js';
-import { isOpus1mMergeEnabled } from '../../dsxu/legacy/model/legacyProviderModel.js';
+import { isOpus1mMergeEnabled } from '../../utils/model/providerMigration/providerMigrationModel.js';
 import { modelDisplayString } from '../../utils/model/model.js';
 import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js';
 import { DsxuInstructionExternalIncludesDialog } from '../DsxuInstructionExternalIncludesDialog.js';
 import { ChannelDowngradeDialog, type ChannelDowngradeChoice } from '../ChannelDowngradeDialog.js';
 import { Dialog } from '../design-system/Dialog.js';
@@ -42,7 +42,7 @@ import { getUserMsgOptIn, setUserMsgOptIn } from '../../bootstrap/state.js';
 import { DEFAULT_OUTPUT_STYLE_NAME } from 'src/constants/outputStyles.js';
 import { isEnvTruthy, isRunningOnHomespace } from 'src/utils/envUtils.js';
 import type { LocalJSXCommandContext, CommandResultDisplay } from '../../commands.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js';
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js';
 import { getCliTeammateModeOverride, clearCliTeammateModeOverride } from '../../utils/swarm/backends/teammateModeSnapshot.js';
 import { getHardcodedTeammateModelFallback } from '../../utils/swarm/teammateModel.js';
@@ -84,20 +84,20 @@ type Setting = (SettingBase & {
   type: 'managedEnum';
 });
 type SubMenu = 'Theme' | 'Model' | 'TeammateModel' | 'ExternalIncludes' | 'OutputStyle' | 'ChannelDowngrade' | 'Language' | 'EnableAutoUpdates';
-const LEGACY_PROVIDER_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY';
-const LEGACY_FILE_CHECKPOINTING_ENV = `CL${'AUDE'}_CODE_DISABLE_FILE_CHECKPOINTING`;
+const PROVIDER_MIGRATION_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY';
+const PROVIDER_MIGRATION_FILE_CHECKPOINTING_ENV = `CL${'AUDE'}_CODE_DISABLE_FILE_CHECKPOINTING`;
 function getSettingsPanelProviderApiKey(): string | undefined {
   return getUsableApiKey(
     process.env.DSXU_API_KEY,
     process.env.DSXU_DEEPSEEK_API_KEY,
     process.env.DEEPSEEK_API_KEY,
-    process.env[LEGACY_PROVIDER_API_KEY_ENV]
+    process.env[PROVIDER_MIGRATION_API_KEY_ENV]
   );
 }
 function isFileCheckpointingEnabledForSettings(): boolean {
   return (
     !isEnvTruthy(process.env.DSXU_CODE_DISABLE_FILE_CHECKPOINTING) &&
-    !isEnvTruthy(process.env[LEGACY_FILE_CHECKPOINTING_ENV])
+    !isEnvTruthy(process.env[PROVIDER_MIGRATION_FILE_CHECKPOINTING_ENV])
   );
 }
 export function Config({
@@ -229,7 +229,7 @@ export function Config({
       mainLoopModelForSession: null
     }));
     setChanges(prev_0 => {
-      const valStr = modelDisplayString(value) + (isBilledAsExtraUsage(value, false, isOpus1mMergeEnabled()) ? ' - Billed as extra usage' : '');
+      const valStr = modelDisplayString(value) + (!isDsxuRuntimeMode() && isBilledAsExtraUsage(value, false, isOpus1mMergeEnabled()) ? ' - Billed as extra usage' : '');
       if ('model' in prev_0) {
         const {
           model,
@@ -357,7 +357,7 @@ export function Config({
       });
     }
   },
-  // Fast mode toggle (ant-only, eliminated from external builds)
+  // Fast mode toggle (dsxu-internal, eliminated from external builds)
   ...(isFastModeEnabled() && isFastModeAvailable() ? [{
     id: 'fastMode',
     label: `Fast mode (${FAST_MODE_MODEL_DISPLAY} only)`,
@@ -406,8 +406,8 @@ export function Config({
       });
     }
   }] : []),
-  // Speculation toggle (ant-only)
-  ...("external" === 'ant' ? [{
+  // Speculation toggle (dsxu-internal)
+  ...(false ? [{
     id: 'speculationEnabled',
     label: 'Speculative execution',
     value: globalConfig.speculationEnabled ?? true,
@@ -782,7 +782,7 @@ export function Config({
   }, {
     id: 'editorMode',
     label: 'Editor mode',
-    // Convert 'emacs' to 'normal' for backward compatibility
+    // Convert historical 'emacs' setting to 'normal'.
     value: globalConfig.editorMode === 'emacs' ? 'normal' : globalConfig.editorMode || 'normal',
     options: ['normal', 'vim'],
     type: 'enum',
@@ -940,7 +940,7 @@ export function Config({
       onChange() {}
     }];
   })() : []),
-  // Remote at startup toggle - gated on build flag + GrowthBook + policy
+  // Remote at startup toggle - gated on build flag + feature flag provider + policy
   ...(feature('BRIDGE_MODE') && isBridgeEnabled() ? [{
     id: 'remoteControlAtStartup',
     label: 'Enable Remote Control for all sessions',
@@ -1111,7 +1111,7 @@ export function Config({
       return `Set ${key} to ${chalk.bold(value_2)}`;
     });
     // Check for API key changes
-    // On homespace, legacy provider keys are preserved in process.env for child
+    // On homespace, provider-migration source keys are preserved in process.env for child
     // processes but ignored by DSXU Code itself (see auth.ts).
     const effectiveApiKey = isRunningOnHomespace() ? undefined : getSettingsPanelProviderApiKey();
     const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));

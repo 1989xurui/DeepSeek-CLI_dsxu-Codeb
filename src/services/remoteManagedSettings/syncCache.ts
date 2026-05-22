@@ -9,7 +9,7 @@
 
 import { REMOTE_SESSION_INFERENCE_SCOPE } from '../../constants/oauth.js'
 import { getProviderApiKeyWithSource } from '../../utils/auth.js'
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import {
   getAPIProvider,
   isFirstPartyProviderBaseUrl,
@@ -22,6 +22,12 @@ import {
 } from './syncCacheState.js'
 
 let cached: boolean | undefined
+const PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG =
+  'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_SETTINGS'
+
+function isProviderMigrationRemoteSettingsOverrideEnabled(): boolean {
+  return process.env[PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG] === '1'
+}
 
 export function resetSyncCache(): void {
   cached = undefined
@@ -35,7 +41,7 @@ export function resetSyncCache(): void {
  * - Console users (API key): All eligible (must have actual key, not just apiKeyHelper)
  * - OAuth users with known subscriptionType: Only Enterprise/C4E and Team
  * - OAuth users with subscriptionType === null (externally-injected tokens via
- *   legacy provider OAuth token / FD, or keychain tokens missing metadata): Eligible -? *   the API returns empty settings for ineligible orgs, so the cost of a false
+ *   provider-migration source OAuth token / FD, or keychain tokens missing metadata): Eligible -? *   the API returns empty settings for ineligible orgs, so the cost of a false
  *   positive is one round-trip
  *
  * This is a pre-check to determine if we should query the API.
@@ -47,10 +53,7 @@ export function resetSyncCache(): void {
 export function isRemoteManagedSettingsEligible(): boolean {
   if (cached !== undefined) return cached
 
-  if (
-    isDsxuRuntimeMode() &&
-    process.env[`DSXU_ENABLE_LEGACY_${'CL' + 'AUDE'}_REMOTE_SETTINGS`] !== '1'
-  ) {
+  if (isDsxuRuntimeMode() && !isProviderMigrationRemoteSettingsOverrideEnabled()) {
     return (cached = setEligibility(false))
   }
 
@@ -79,11 +82,11 @@ export function isRemoteManagedSettingsEligible(): boolean {
   // The API key check spawns `security find-generic-password` (~20-50ms) which
   // returns null for OAuth-only users. Checking OAuth first short-circuits
   // that subprocess for the common case.
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
 
-  // Externally-injected tokens via legacy provider OAuth envs, CCR via
-  // legacy provider OAuth token file descriptor, Agent SDK, CI) carry no
-  // subscriptionType metadata -?getCompatProviderTokens() constructs them with
+  // Externally-injected tokens via provider-migration source OAuth envs, CCR via
+  // provider-migration source OAuth token file descriptor, Agent SDK, CI) carry no
+  // subscriptionType metadata -?getProviderControlTokens() constructs them with
   // subscriptionType: null. The token itself is valid; let the API decide.
   // fetchRemoteManagedSettings handles 204/404 gracefully (returns {}), and
   // settings.ts falls through to MDM/file when remote is empty, so ineligible
@@ -122,13 +125,14 @@ export function isRemoteManagedSettingsEligible(): boolean {
 export function getDsxuRemoteManagedSettingsRuntimeProfile() {
   return {
     runtime: 'DSXU Managed Settings Gate',
-    defaultBehavior: 'legacy provider remote managed settings are disabled in DSXU runtime',
-    legacyOverride: `DSXU_ENABLE_LEGACY_${'CL' + 'AUDE'}_REMOTE_SETTINGS=1`,
+    defaultBehavior: 'provider-migration remote managed settings are disabled in DSXU runtime',
+    providerMigrationOverride: `${PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG}=1`,
     providerTarget: 'DSXU Policy/Workspace Settings Provider',
     activationEvidence: [
-      'DSXU_CODE_MODE returns ineligible before legacy provider/OAuth checks',
+      'DSXU_CODE_MODE returns ineligible before provider-migration source/OAuth checks',
+      `${PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG}=1 remains accepted only as an explicit provider-migration override`,
       'local MDM/file settings remain available through the settings layer',
-      'remote policy sync must be reimplemented as DSXU Provider, not legacy provider shell',
+      'remote policy sync must be reimplemented as DSXU Provider, not provider migration source',
     ],
   }
 }

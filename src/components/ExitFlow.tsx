@@ -45,11 +45,3 @@ export function ExitFlow(t0) {
   }
   return null;
 }
-
-// V14 lifecycle shim: exitflow
-export function processExitflowLifecycle(input) {
-  void input
-  const state = 'exitflow-state'
-  const lifecycle = 'exitflow:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

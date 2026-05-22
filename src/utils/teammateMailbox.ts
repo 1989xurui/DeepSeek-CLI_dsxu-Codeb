@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Teammate Mailbox - File-based messaging system for agent swarms
  *
@@ -80,7 +79,7 @@ async function ensureInboxDir(teamName?: string): Promise<void> {
 /**
  * Read all messages from a teammate's inbox
  * @param agentName - The agent name (not UUID) to read inbox for
- * @param teamName - Optional team name (defaults to DSXU/legacy team env var or 'default')
+ * @param teamName - Optional team name (defaults to DSXU/provider-migration team env var or 'default')
  */
 export async function readMailbox(
   agentName: string,

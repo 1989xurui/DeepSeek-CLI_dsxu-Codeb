@@ -141,11 +141,3 @@ function _temp2() {
 function _temp(h) {
   return h.source;
 }
-
-// V14 lifecycle shim: selectmatchermode
-export function processSelectmatchermodeLifecycle(input) {
-  void input
-  const state = 'selectmatchermode-state'
-  const lifecycle = 'selectmatchermode:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -445,11 +445,3 @@ function getDefaultEffortLevelForOption(value?: string): EffortLevel {
   const defaultValue = getDefaultEffortForModel(resolved);
   return defaultValue !== undefined ? convertEffortValueToLevel(defaultValue) : 'high';
 }
-
-// V14 lifecycle shim: modelpicker
-export function processModelpickerLifecycle(input) {
-  void input
-  const state = 'modelpicker-state'
-  const lifecycle = 'modelpicker:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

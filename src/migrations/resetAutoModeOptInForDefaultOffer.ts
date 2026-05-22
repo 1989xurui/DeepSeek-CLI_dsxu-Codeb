@@ -49,12 +49,3 @@ export function resetAutoModeOptInForDefaultOffer(): void {
     }
   }
 }
-
-
-// V14 lifecycle shim: resetautomodeoptinfordefaultoffer
-export function processResetautomodeoptinfordefaultofferLifecycle(input) {
-  void input
-  const state = 'resetautomodeoptinfordefaultoffer-state'
-  const lifecycle = 'resetautomodeoptinfordefaultoffer:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (provider cloud): Only Enterprise/C4E and Team subscribers are eligible
+ * - OAuth users (provider migration cloud): Only Enterprise/C4E and Team subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without remote settings
  * - API returns empty settings for users without managed settings
  */
@@ -17,9 +17,9 @@ import { createHash } from 'crypto'
 import { open, unlink } from 'fs/promises'
 import { getOauthConfig } from '../../constants/oauth.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+} from '../auth/dsxuProviderControlAuth.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
   getProviderApiKeyWithSource,
@@ -55,8 +55,9 @@ import {
 const SETTINGS_TIMEOUT_MS = 10000 // 10 seconds for settings fetch
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
-const LEGACY_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
-const LEGACY_REMOTE_SETTINGS_PATH = `/api/${LEGACY_CODE_API_SEGMENT}/settings`
+const PROVIDER_MIGRATION_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const PROVIDER_MIGRATION_REMOTE_SETTINGS_PATH =
+  `/api/${PROVIDER_MIGRATION_CODE_API_SEGMENT}/settings`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
@@ -108,7 +109,7 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
  * Uses the OAuth config base API URL
  */
 function getRemoteManagedSettingsEndpoint() {
-  return `${getOauthConfig().BASE_API_URL}${LEGACY_REMOTE_SETTINGS_PATH}`
+  return `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_REMOTE_SETTINGS_PATH}`
 }
 
 /**
@@ -191,10 +192,10 @@ function getRemoteSettingsAuthHeaders(): {
   }
 
   // Fall back to OAuth tokens for provider-cloud users.
-  const accessToken = getCompatProviderAccessToken()
+  const accessToken = getProviderControlAccessToken()
   if (accessToken) {
     return {
-      headers: getCompatProviderBearerHeaders(accessToken),
+      headers: getProviderControlBearerHeaders(accessToken),
     }
   }
 
@@ -646,7 +647,7 @@ export function getDsxuRemoteManagedSettingsServiceProfile() {
       'service load/poll path is disabled by eligibility gate in DSXU runtime',
     providerTarget: 'DSXU Policy/Workspace Settings Provider',
     migrationBoundary: [
-      'legacy provider settings endpoint is not used by DSXU default runtime',
+      'provider-migration source settings endpoint is not used by DSXU default runtime',
       'checksum/cache/polling semantics are reusable for DSXU policy sync',
       'background polling remains guarded by isRemoteManagedSettingsEligible',
     ],
@@ -656,21 +657,4 @@ export function getDsxuRemoteManagedSettingsServiceProfile() {
       'clearRemoteManagedSettingsCache still clears local cache/session cache safely',
     ],
   }
-}
-
-
-// V14 strict lifecycle shim: services-remoteManagedSettings-index
-export function processServicesRemoteManagedSettingsIndexStrictLifecycle(input) {
-  void input
-  const state = 'services-remoteManagedSettings-index-state'
-  const lifecycle = 'services-remoteManagedSettings-index:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesRemoteManagedSettingsIndexStrict(input) {
-  return processServicesRemoteManagedSettingsIndexStrictLifecycle(input)
 }

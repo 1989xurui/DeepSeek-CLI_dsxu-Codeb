@@ -14,7 +14,12 @@ import {
   renderCompactRecoverySnapshot,
 } from '../compact'
 
-const referenceRoot = join(process.cwd(), '\u539f\u4ee3\u7801' + ['cl', 'aude'].join(''))
+const referenceRoot = [
+  process.env.DSXU_REFERENCE_SOURCE_ROOT,
+  join(process.cwd(), '\u539f\u4ee3\u7801' + ['cl', 'aude'].join('')),
+  join('D:\\', '\u6e90\u4ee3\u7801' + ['cl', 'aude'].join(''), 'src'),
+].find((candidate): candidate is string => typeof candidate === 'string' && existsSync(candidate)) ??
+  join('D:\\', '\u6e90\u4ee3\u7801' + ['cl', 'aude'].join(''), 'src')
 
 function referenceFile(...parts: string[]): string {
   const path = join(referenceRoot, ...parts)

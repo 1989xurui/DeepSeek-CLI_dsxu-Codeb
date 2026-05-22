@@ -60,19 +60,3 @@ export function getToolUseSummary(input: Partial<{
   }
   return truncate(input.pattern, TOOL_SUMMARY_MAX_LENGTH);
 }
-
-// V14 strict lifecycle shim: tools-GlobTool-UI
-export function processToolsGlobToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-GlobTool-UI-state'
-  const lifecycle = 'tools-GlobTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsGlobToolUIStrict(input) {
-  return processToolsGlobToolUIStrictLifecycle(input)
-}

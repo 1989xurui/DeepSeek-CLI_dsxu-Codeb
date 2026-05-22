@@ -109,11 +109,3 @@ export function ClockProvider(t0) {
 function _temp() {
   return createClock(FRAME_INTERVAL_MS);
 }
-
-// V14 lifecycle shim: clockcontext
-export function processClockcontextLifecycle(input) {
-  void input
-  const state = 'clockcontext-state'
-  const lifecycle = 'clockcontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

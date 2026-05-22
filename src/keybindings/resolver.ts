@@ -242,12 +242,3 @@ export function resolveKeyWithChordState(
 
   return { type: 'none' }
 }
-
-
-// V14 lifecycle shim: resolver
-export function processResolverLifecycle(input) {
-  void input
-  const state = 'resolver-state'
-  const lifecycle = 'resolver:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

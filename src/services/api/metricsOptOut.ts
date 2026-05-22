@@ -1,6 +1,5 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
-import { hasProfileScope, isLegacyCloudSubscriber } from '../../utils/auth.js'
+import { hasProfileScope, isProviderSubscriptionAccount } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -9,6 +8,10 @@ import { logError } from '../../utils/log.js'
 import { memoizeWithTTLAsync } from '../../utils/memoize.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 type MetricsEnabledResponse = {
   metrics_logging_enabled: boolean
 }
@@ -22,8 +25,13 @@ const CACHE_TTL_MS = 60 * 60 * 1000
 // we skip the network entirely (no background refresh). This is what collapses
 // N print-mode invocations into ~1 API call/day.
 const DISK_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const LEGACY_PROVIDER_API_HOST = `https://api.${'anth' + 'ropic'}.com`
+const PROVIDER_MIGRATION_API_HOST = `https://api.${'anth' + 'ropic'}.com`
 const METRICS_ENABLED_PATH = `/api/${'cl' + 'aude'}_code/organizations/metrics_enabled`
+
+function shouldUseProviderMigrationMetricsOptOut(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
 /**
  * Internal function to call the API and check if metrics are enabled
  * This is wrapped by memoizeWithTTLAsync to add caching behavior
@@ -38,7 +46,7 @@ async function _fetchMetricsEnabled(): Promise<MetricsEnabledResponse> {
     'User-Agent': getDSXUCodeUserAgent(),
     ...authResult.headers,
   }
-  const endpoint = `${LEGACY_PROVIDER_API_HOST}${METRICS_ENABLED_PATH}`
+  const endpoint = `${PROVIDER_MIGRATION_API_HOST}${METRICS_ENABLED_PATH}`
   const response = await axios.get<MetricsEnabledResponse>(endpoint, {
     headers,
     timeout: 5000,
@@ -113,12 +121,16 @@ async function refreshMetricsStatus(): Promise<MetricsStatus> {
  * an extra one during the 24h window is acceptable.
  */
 export async function checkMetricsEnabled(): Promise<MetricsStatus> {
+  if (!shouldUseProviderMigrationMetricsOptOut()) {
+    return { enabled: false, hasError: false }
+  }
+
   // Service key OAuth sessions lack user:profile scope  -> would 403.
   // API key users (non-subscribers) fall through and use x-api-key auth.
   // This check runs before the disk read so we never persist auth-state-derived
   // answers ...only real API responses go to disk. Otherwise a service-key
   // session would poison the cache for a later full-OAuth session.
-  if (isLegacyCloudSubscriber() && !hasProfileScope()) {
+  if (isProviderSubscriptionAccount() && !hasProfileScope()) {
     return { enabled: false, hasError: false }
   }
   const cached = getGlobalConfig().metricsStatusCache

@@ -1,17 +1,16 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Permission prompts over channels (Telegram, iMessage, Discord).
  *
- * Mirrors `BridgePermissionCallbacks` ...when CC hits a permission dialog,
+ * Mirrors the local permission callback flow ...when CC hits a permission dialog,
  * it ALSO sends the prompt via active channels and races the reply against
- * local UI / bridge / hooks / classifier. First resolver wins via claim().
+ * local UI / control hooks / classifier. First resolver wins via claim().
  *
  * Inbound is a structured event: the server parses the user's "yes tbxkq"
- * reply and emits the legacy provider channel permission notification with
+ * reply and emits the provider migration channel permission notification with
  * {request_id, behavior}. DSXU never sees the reply as text ...approval
  * requires the server to deliberately emit that specific event, not just
  * relay content. Servers opt in by declaring
- * the legacy provider permission capability.
+ * the provider migration permission capability.
  *
  * The approving party is the human via the channel, not the model. The trust boundary is not the
  * terminal ...it's the allowlist (tengu_harbor_ledger). A compromised
@@ -23,12 +22,16 @@
  * See PR discussion 2956440848.
  */
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
-const legacyChannelKey = (suffix = '') => `${LEGACY_PROVIDER_TOKEN}/channel${suffix}`
-const LEGACY_PERMISSION_NOTIFICATION = `notifications/${legacyChannelKey('/permission')}`
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
+import {
+  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY,
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD,
+} from '../../constants/providerMigrationProtocol.js'
+const PROVIDER_MIGRATION_PERMISSION_NOTIFICATION =
+  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD
 /**
- * GrowthBook runtime gate ...separate from the channels gate (tengu_harbor)
+ * feature flag provider runtime gate ...separate from the channels gate (tengu_harbor)
  * so channels can ship without permission-relay riding along (Kenneth: "no
  * bake time if it goes out tomorrow"). Default false; flip without a release.
  * Checked once at useManageMCPConnections mount ...mid-session flag changes
@@ -49,7 +52,7 @@ export type ChannelPermissionCallbacks = {
     handler: (response: ChannelPermissionResponse) => void,
   ): () => void
   /** Resolve a pending request from a structured channel event
-   *  (legacy provider channel permission notification). Returns true if the ID
+   *  (provider migration channel permission notification). Returns true if the ID
    *  was pending ...the server parsed the user's reply and emitted
    *  {request_id, behavior}; we just match against the map. */
   resolve(
@@ -66,7 +69,7 @@ export type ChannelPermissionCallbacks = {
  * autocorrect). No bare yes/no (conversational). No prefix/suffix chatter.
  *
  * DSXU generates the ID and sends the prompt. The SERVER parses the user's
- * reply and emits the legacy provider channel permission notification with {request_id,
+ * reply and emits the provider migration channel permission notification with {request_id,
  * behavior}; DSXU doesn't regex-match text anymore. Exported so plugins can
  * import the exact regex rather than hand-copying it.
  */
@@ -182,13 +185,14 @@ export function filterPermissionRelayClients<
       const hasDsxuChannel =
         experimental?.['dsxu/channel'] !== undefined &&
         experimental?.['dsxu/channel/permission'] !== undefined
-      const hasLegacyProviderChannel =
-        experimental?.[legacyChannelKey()] !== undefined &&
-        experimental?.[legacyChannelKey('/permission')] !== undefined
+      const hasProviderMigrationChannel =
+        experimental?.[PROVIDER_MIGRATION_CHANNEL_CAPABILITY] !== undefined &&
+        experimental?.[PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY] !==
+          undefined
       return (
         c.type === 'connected' &&
         isInAllowlist(c.name) &&
-        (hasDsxuChannel || hasLegacyProviderChannel)
+        (hasDsxuChannel || hasProviderMigrationChannel)
       )
     },
   )
@@ -197,11 +201,11 @@ export function filterPermissionRelayClients<
  * Factory for the callbacks object. The pending Map is closed over ...NOT
  * module-level (per DSXU instruction policy), NOT in AppState (functions-in-state
  * causes issues with equality/serialization). Same lifetime pattern as
- * `replBridgePermissionCallbacks`: constructed once per session inside
+ * the existing permission-callback reference: constructed once per session inside
  * a React hook, stable reference stored in AppState.
  *
  * resolve() is called from the dedicated notification handler
- * (${LEGACY_PERMISSION_NOTIFICATION}) with the structured payload.
+ * (${PROVIDER_MIGRATION_PERMISSION_NOTIFICATION}) with the structured payload.
  * The server already parsed "yes tbxkq"  -> {request_id, behavior}; we just
  * match against the pending map. No regex on CC's side ...text in the
  * general channel can't accidentally approve anything.

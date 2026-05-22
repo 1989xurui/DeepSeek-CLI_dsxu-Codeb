@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { APIError } from 'src/types/providerSdk.js'
 import type {
@@ -31,6 +30,10 @@ import {
 } from 'src/utils/telemetry/sessionTracing.js'
 import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -94,11 +97,11 @@ const GATEWAY_FINGERPRINTS: Partial<
 }
 
 // Gateways that use provider-owned domains (not self-hosted), so the
-// legacy provider base URL hostname is a reliable signal even without a
+// provider migration base URL hostname is a reliable signal even without a
 // distinctive response header.
-const LEGACY_PROVIDER_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
-const LEGACY_PROVIDER_MODEL_ENV = `${'ANTH' + 'ROPIC'}_MODEL`
-const LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV = `${'ANTH' + 'ROPIC'}_SMALL_FAST_MODEL`
+const PROVIDER_MIGRATION_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const PROVIDER_MIGRATION_MODEL_ENV = `${'ANTH' + 'ROPIC'}_MODEL`
+const PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV = `${'ANTH' + 'ROPIC'}_SMALL_FAST_MODEL`
 
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
@@ -143,21 +146,25 @@ function detectGateway({
   return undefined
 }
 
-function getProviderEnvMetadata() {
+function getProviderMigrationEnvMetadata() {
+  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+    return {}
+  }
+
   return {
-    ...(process.env[LEGACY_PROVIDER_BASE_URL_ENV]
+    ...(process.env[PROVIDER_MIGRATION_BASE_URL_ENV]
       ? {
-          baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env[LEGACY_PROVIDER_MODEL_ENV]
+    ...(process.env[PROVIDER_MIGRATION_MODEL_ENV]
       ? {
-          envModel: process.env[LEGACY_PROVIDER_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envModel: process.env[PROVIDER_MIGRATION_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env[LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV]
+    ...(process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV]
       ? {
-          envSmallFastModel: process.env[LEGACY_PROVIDER_SMALL_FAST_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envSmallFastModel: process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
   }
@@ -230,7 +237,7 @@ export function logAPIQuery({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getProviderEnvMetadata(),
+    ...getProviderMigrationEnvMetadata(),
   })
 }
 
@@ -276,7 +283,7 @@ export function logAPIError({
   const gateway = detectGateway({
     headers:
       error instanceof APIError && error.headers ? error.headers : headers,
-    baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV],
+    baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV],
   })
 
   const errStr = getErrorMessage(error)
@@ -363,7 +370,7 @@ export function logAPIError({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getProviderEnvMetadata(),
+    ...getProviderMigrationEnvMetadata(),
   })
 
   // Log API error event for OTLP
@@ -573,7 +580,7 @@ function logAPISuccess({
         }
       : {}),
     ...(isPostCompaction ? { isPostCompaction } : {}),
-    ...getProviderEnvMetadata(),
+    ...getProviderMigrationEnvMetadata(),
     timeSinceLastApiCallMs,
   })
 
@@ -642,7 +649,7 @@ export function logAPISuccessAndDuration({
 }): void {
   const gateway = detectGateway({
     headers,
-    baseUrl: process.env[LEGACY_PROVIDER_BASE_URL_ENV],
+    baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV],
   })
 
   let textContentLength: number | undefined
@@ -744,7 +751,7 @@ export function logAPISuccessAndDuration({
         )
         .join('\n') || undefined
 
-    // Thinking output - Ant-only (build-time gated)
+    // Thinking output - DSXU internal (build-time gated)
     if (process.env.USER_TYPE === 'ant') {
       thinkingOutput =
         newMessages

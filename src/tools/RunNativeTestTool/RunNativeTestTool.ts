@@ -1,3 +1,5 @@
+import { stat } from 'node:fs/promises'
+import { isAbsolute } from 'node:path'
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
@@ -88,6 +90,13 @@ async function runNativeCommand(args: string[], cwd: string): Promise<{
 export const RunNativeTestTool = buildTool({
   name: RUN_NATIVE_TEST_TOOL_NAME,
   searchHint: 'run the project native test command once',
+  runtimeMetadata: {
+    owner: 'DSXU Semantic Verification Tool',
+    sideEffects: ['native-process-execution', 'test-output-capture'],
+    permission: 'tool-specific checkPermissions plus DSXU Tool Gate visibility',
+    evidence: ['verification intent key', 'decision reason', 'exit code', 'stdout/stderr'],
+    uiProjection: 'RunNativeTest tool-use/result transcript',
+  },
   maxResultSizeChars: 100_000,
   async description() {
     return 'Run one native project test command with DSXU repeated-verification discipline'
@@ -135,7 +144,36 @@ export const RunNativeTestTool = buildTool({
         errorCode: 1,
       }
     }
+    if (!isAbsolute(input.cwd)) {
+      return {
+        result: false,
+        message: 'RunNativeTest requires an absolute cwd so execution cannot drift outside the reviewed project boundary.',
+        errorCode: 1,
+      }
+    }
+    try {
+      const cwdStats = await stat(input.cwd)
+      if (!cwdStats.isDirectory()) {
+        return {
+          result: false,
+          message: 'RunNativeTest cwd must point to an existing directory.',
+          errorCode: 1,
+        }
+      }
+    } catch {
+      return {
+        result: false,
+        message: 'RunNativeTest cwd must point to an existing directory.',
+        errorCode: 1,
+      }
+    }
     return { result: true }
+  },
+  async checkPermissions(input) {
+    return {
+      behavior: 'passthrough',
+      message: `RunNativeTest wants to execute '${input.command}' in '${input.cwd}'.`,
+    }
   },
   async call(input, context) {
     const previousAttempts = extractSemanticVerificationEventsFromMessages(

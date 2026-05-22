@@ -1070,11 +1070,3 @@ function _temp0(s) {
   }
   return count;
 }
-
-// V14 lifecycle shim: pluginsettings
-export function processPluginsettingsLifecycle(input) {
-  void input
-  const state = 'pluginsettings-state'
-  const lifecycle = 'pluginsettings:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

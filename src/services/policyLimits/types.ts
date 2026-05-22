@@ -25,20 +25,3 @@ export type PolicyLimitsFetchResult = {
   error?: string
   skipRetry?: boolean // If true, don't retry on failure (e.g., auth errors)
 }
-
-
-// V14 strict lifecycle shim: services-policyLimits-types
-export function processServicesPolicyLimitsTypesStrictLifecycle(input) {
-  void input
-  const state = 'services-policyLimits-types-state'
-  const lifecycle = 'services-policyLimits-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runServicesPolicyLimitsTypesStrict(input) {
-  return processServicesPolicyLimitsTypesStrictLifecycle(input)
-}

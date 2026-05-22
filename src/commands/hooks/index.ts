@@ -9,21 +9,3 @@ const hooks = {
 } satisfies Command
 
 export default hooks
-
-
-// V14 command lifecycle shim: hooks
-export function processHooksCommandLifecycle(input) {
-  void input
-  const state = 'hooks-command-state'
-  const lifecycle = 'hooks:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'hooks',
-  }
-}
-
-export function runHooksCommand(input) {
-  return processHooksCommandLifecycle(input)
-}

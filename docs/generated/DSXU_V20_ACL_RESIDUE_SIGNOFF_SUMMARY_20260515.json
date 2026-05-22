@@ -1,0 +1,20 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.acl-residue-signoff.v1",
+    "generatedAt":  "2026-05-15T08:24:00+08:00",
+    "total":  4,
+    "signedRows":  4,
+    "activeProductReferenceRows":  0,
+    "byResidueClass":  [
+                           {
+                               "residueClass":  "empty-module-residue",
+                               "count":  3
+                           },
+                           {
+                               "residueClass":  "retired-adapter-tombstone",
+                               "count":  1
+                           }
+                       ],
+    "decision":  "ACL_RESIDUE_SIGNED_EXTERNAL_DELETE_OR_KEEP_AS_NON_PRODUCT_RESIDUE",
+    "nextAction":  "Delete only when permissions/ownership allow; do not block real-gap acceptance or final tests as product runtime.",
+    "rule":  "No local force deletion, staging, commit, reset, clean, or runtime restoration was performed."
+}

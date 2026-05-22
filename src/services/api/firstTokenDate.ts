@@ -60,11 +60,3 @@ export async function fetchAndStoreDsxuCodeFirstTokenDate(): Promise<void> {
     logError(error)
   }
 }
-
-// V14 lifecycle shim: firsttokendate
-export function processFirsttokendateLifecycle(input) {
-  void input
-  const state = 'firsttokendate-state'
-  const lifecycle = 'firsttokendate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

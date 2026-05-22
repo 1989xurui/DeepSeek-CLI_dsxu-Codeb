@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { appendFile, mkdir, symlink, unlink } from 'fs/promises'
 import memoize from 'lodash-es/memoize.js'
 import { dirname, join } from 'path'
@@ -266,7 +265,7 @@ export function logAntError(context: string, error: unknown): void {
   }
 
   if (error instanceof Error && error.stack) {
-    logForDebugging(`[ANT-ONLY] ${context} stack trace:\n${error.stack}`, {
+    logForDebugging(`[DSXU internal] ${context} stack trace:\n${error.stack}`, {
       level: 'error',
     })
   }

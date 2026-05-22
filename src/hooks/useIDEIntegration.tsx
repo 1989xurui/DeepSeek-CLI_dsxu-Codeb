@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import { useEffect } from 'react';
 import type { ScopedMcpServerConfig } from '../services/mcp/types.js';

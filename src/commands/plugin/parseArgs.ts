@@ -101,12 +101,3 @@ export function parsePluginArgs(args?: string): ParsedCommand {
       return { type: 'menu' }
   }
 }
-
-
-// V14 lifecycle shim: parseargs
-export function processParseargsLifecycle(input) {
-  void input
-  const state = 'parseargs-state'
-  const lifecycle = 'parseargs:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

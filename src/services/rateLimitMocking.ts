@@ -12,8 +12,8 @@ import {
   isMockFastModeRateLimitScenario,
   shouldProcessMockLimits,
 } from './mockRateLimits.js'
-import { isCompatHighTierModelTarget } from '../dsxu/legacy/model/legacyProviderModel.js'
-import { isCompatHighTierRateLimitClaim } from '../dsxu/legacy/testing/legacyProviderRateLimitClaim.js'
+import { isProviderMigrationHighTierModelTarget } from '../utils/model/providerMigration/providerMigrationModel.js'
+import { isProviderMigrationHighTierRateLimitClaim } from './mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.js'
 
 /**
  * Process headers, applying mocks if /mock-limits command is active
@@ -69,21 +69,23 @@ export function checkMockRateLimitError(
   // Only throw if:
   // 1. Status is rejected AND
   // 2. Either no overage headers OR overage is also rejected
-  // 3. For high-tier compatibility limits, only throw when the current model
-  //    belongs to that hidden compatibility target.
+  // 3. For provider-migration high-tier limits, only throw when the current model
+  //    belongs to that hidden provider-migration target.
   const status = mockHeaders['provider-ratelimit-unified-status']
   const overageStatus =
     mockHeaders['provider-ratelimit-unified-overage-status']
   const rateLimitType =
     mockHeaders['provider-ratelimit-unified-representative-claim']
 
-  const isHighTierCompatLimit = isCompatHighTierRateLimitClaim(rateLimitType)
+  const isProviderMigrationHighTierLimit =
+    isProviderMigrationHighTierRateLimitClaim(rateLimitType)
 
-  const isUsingHighTierCompatModel = isCompatHighTierModelTarget(currentModel)
+  const isUsingProviderMigrationHighTierModel =
+    isProviderMigrationHighTierModelTarget(currentModel)
 
-  // For high-tier compatibility limits, only throw 429 if the request is
+  // For provider-migration high-tier limits, only throw 429 if the request is
   // actually using that model target. This simulates fallback success.
-  if (isHighTierCompatLimit && !isUsingHighTierCompatModel) {
+  if (isProviderMigrationHighTierLimit && !isUsingProviderMigrationHighTierModel) {
     return null
   }
 
@@ -143,12 +145,3 @@ export function isMockRateLimitError(error: APIError): boolean {
  * Check if /mock-limits command is currently active (for UI purposes)
  */
 export { shouldProcessMockLimits }
-
-
-// V14 lifecycle shim: ratelimitmocking
-export function processRatelimitmockingLifecycle(input) {
-  void input
-  const state = 'ratelimitmocking-state'
-  const lifecycle = 'ratelimitmocking:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

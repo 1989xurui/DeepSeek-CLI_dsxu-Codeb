@@ -164,11 +164,3 @@ function CloudLaunchContent(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: userlocalcommandoutputmessage
-export function processUserlocalcommandoutputmessageLifecycle(input) {
-  void input
-  const state = 'userlocalcommandoutputmessage-state'
-  const lifecycle = 'userlocalcommandoutputmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

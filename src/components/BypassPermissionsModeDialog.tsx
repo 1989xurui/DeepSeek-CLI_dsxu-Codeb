@@ -84,11 +84,3 @@ function _temp2() {
 function _temp() {
   logEvent("tengu_bypass_permissions_mode_dialog_shown", {});
 }
-
-// V14 lifecycle shim: bypasspermissionsmodedialog
-export function processBypasspermissionsmodedialogLifecycle(input) {
-  void input
-  const state = 'bypasspermissionsmodedialog-state'
-  const lifecycle = 'bypasspermissionsmodedialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

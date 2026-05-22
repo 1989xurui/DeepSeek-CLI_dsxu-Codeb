@@ -109,11 +109,3 @@ export function Feed(t0) {
 function _temp(line) {
   return line.timestamp ? stringWidth(line.timestamp) : 0;
 }
-
-// V14 lifecycle shim: feed
-export function processFeedLifecycle(input) {
-  void input
-  const state = 'feed-state'
-  const lifecycle = 'feed:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

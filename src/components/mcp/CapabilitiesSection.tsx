@@ -58,11 +58,3 @@ export function CapabilitiesSection(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: capabilitiessection
-export function processCapabilitiessectionLifecycle(input) {
-  void input
-  const state = 'capabilitiessection-state'
-  const lifecycle = 'capabilitiessection:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

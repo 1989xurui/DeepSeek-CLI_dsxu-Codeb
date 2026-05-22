@@ -48,6 +48,13 @@ export type Output = z.infer<OutputSchema>
 export const TaskCreateTool = buildTool({
   name: TASK_CREATE_TOOL_NAME,
   searchHint: 'create a task in the task list',
+  runtimeMetadata: {
+    owner: 'DSXU Task Lifecycle',
+    sideEffects: ['task-state-write', 'task-created-hooks'],
+    permission: 'tool-specific allow after Tool Gate; task-created hooks may block',
+    evidence: ['task id', 'task subject', 'task-created hook results'],
+    uiProjection: 'expanded task list visible state',
+  },
   maxResultSizeChars: 100_000,
   async description() {
     return DESCRIPTION
@@ -73,6 +80,9 @@ export const TaskCreateTool = buildTool({
   },
   toAutoClassifierInput(input) {
     return input.subject
+  },
+  async checkPermissions(input) {
+    return { behavior: 'allow', updatedInput: input }
   },
   renderToolUseMessage() {
     return null
@@ -136,12 +146,3 @@ export const TaskCreateTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: taskcreatetool
-export function processTaskcreatetoolLifecycle(input) {
-  void input
-  const state = 'taskcreatetool-state'
-  const lifecycle = 'taskcreatetool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -40,11 +40,3 @@ export function FilePathLink(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: filepathlink
-export function processFilepathlinkLifecycle(input) {
-  void input
-  const state = 'filepathlink-state'
-  const lifecycle = 'filepathlink:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

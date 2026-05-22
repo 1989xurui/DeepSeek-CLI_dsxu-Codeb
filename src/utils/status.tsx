@@ -1,10 +1,9 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import chalk from 'chalk';
 import figures from 'figures';
 import * as React from 'react';
 import { color, Text } from '../ink.js';
 import type { MCPServerConnection } from '../services/mcp/types.js';
-import { getAccountInformation, isLegacyCloudSubscriber } from './auth.js';
+import { getAccountInformation, isProviderSubscriptionAccount } from './auth.js';
 import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './dsxuInstructions.js';
 import { getDoctorDiagnostic } from './doctorDiagnostic.js';
 import {
@@ -16,7 +15,7 @@ import {
 import { getDisplayPath } from './file.js';
 import { formatNumber } from './format.js';
 import { getIdeClientName, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from './ide.js';
-import { getLegacyCloudUserDefaultModelDescription, modelDisplayString } from './model/model.js';
+import { getProviderMigrationUserDefaultModelDescription, modelDisplayString } from './model/model.js';
 import { getAPIProvider } from './model/providers.js';
 import { getMTLSConfig } from './mtls.js';
 import { checkInstall } from './nativeInstaller/index.js';
@@ -361,8 +360,8 @@ export function buildAPIProviderProperties(): Property[] {
 }
 export function getModelDisplayLabel(mainLoopModel: string | null): string {
   let modelLabel = modelDisplayString(mainLoopModel);
-  if (mainLoopModel === null && isLegacyCloudSubscriber()) {
-    const description = getLegacyCloudUserDefaultModelDescription();
+  if (mainLoopModel === null && isProviderSubscriptionAccount()) {
+    const description = getProviderMigrationUserDefaultModelDescription();
     modelLabel = `${chalk.bold('Default')} ${description}`;
   }
   return modelLabel;

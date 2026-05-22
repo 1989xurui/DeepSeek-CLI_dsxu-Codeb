@@ -189,11 +189,3 @@ function _temp(setter) {
 }
 export default Button;
 export type { ButtonState };
-
-// V14 lifecycle shim: button
-export function processButtonLifecycle(input) {
-  void input
-  const state = 'button-state'
-  const lifecycle = 'button:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

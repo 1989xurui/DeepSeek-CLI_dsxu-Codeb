@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "dsxu.v20.release-surface-owner-execution.v1",
+  "generatedAt": "2026-05-14T15:19:49.327Z",
+  "source": "runV18PublicSurfaceCleanGateHarness + runV18ProprietaryCodeRiskGateHarness",
+  "rows": [
+    {
+      "gate": "public-surface-clean",
+      "statusBefore": "BLOCKED_EVIDENCED",
+      "statusAfter": "DONE_EVIDENCED",
+      "blockersAfter": 0,
+      "reviewAfter": 0,
+      "publicSurfaceReviewAfter": 0,
+      "activeSrcAfter": 0,
+      "providerMigrationAfter": 421,
+      "docsAfter": 157,
+      "testsAfter": 15,
+      "decision": "provider-migration source paths remapped to provider_migration owner; V20 source-truth docs are release-excluded/rewrite source truth; no active public-source blocker remains"
+    },
+    {
+      "gate": "proprietary-code-risk",
+      "statusBefore": "BLOCKED_EVIDENCED",
+      "statusAfter": "DONE_EVIDENCED",
+      "blockersAfter": 0,
+      "reviewAfter": 0,
+      "publicSurfaceReviewAfter": 0,
+      "activeSrcAfter": 0,
+      "providerMigrationAfter": 437,
+      "docsAfter": 163,
+      "testsAfter": 46,
+      "decision": "Grove provider wire path centralized; DSXU mainline OAuth callers route through provider control wrapper; provider migration names stay hidden behind named owner"
+    }
+  ],
+  "releaseDecision": "source release-surface blockers closed; clean export remains blocked by V20 global owner/Git, deletion mutation, ACL residue, real-gap, final tests, and final preflight gates",
+  "safeguards": [
+    "no stage, commit, reset, clean, or export was performed",
+    "V20/V18/V19 audit docs remain source truth and must be excluded or rewritten in clean export",
+    "provider migration wire strings remain in named provider-migration/control owners only",
+    "tests are evidence only and do not replace owner/Git signoff"
+  ]
+}

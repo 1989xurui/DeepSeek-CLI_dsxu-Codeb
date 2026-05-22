@@ -22,11 +22,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   const initialDescription = args || '';
   return renderFeedbackComponent(onDone, context.abortController.signal, context.messages, initialDescription);
 }
-
-// V14 lifecycle shim: feedback
-export function processFeedbackLifecycle(input) {
-  void input
-  const state = 'feedback-state'
-  const lifecycle = 'feedback:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -71,11 +71,3 @@ export function ConfirmStepWrapper({
   const handleSaveAndEdit = useCallback(() => saveAgent(true), [saveAgent]);
   return <ConfirmStep tools={tools} existingAgents={existingAgents} onSave={handleSave} onSaveAndEdit={handleSaveAndEdit} error={saveError} />;
 }
-
-// V14 lifecycle shim: confirmstepwrapper
-export function processConfirmstepwrapperLifecycle(input) {
-  void input
-  const state = 'confirmstepwrapper-state'
-  const lifecycle = 'confirmstepwrapper:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

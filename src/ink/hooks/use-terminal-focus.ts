@@ -14,12 +14,3 @@ export function useTerminalFocus(): boolean {
   const { isTerminalFocused } = useContext(TerminalFocusContext)
   return isTerminalFocused
 }
-
-
-// V14 lifecycle shim: use-terminal-focus
-export function processUseTerminalFocusLifecycle(input) {
-  void input
-  const state = 'use-terminal-focus-state'
-  const lifecycle = 'use-terminal-focus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -366,11 +366,3 @@ function _temp(input) {
   }
   return result.data.skill;
 }
-
-// V14 lifecycle shim: skillpermissionrequest
-export function processSkillpermissionrequestLifecycle(input) {
-  void input
-  const state = 'skillpermissionrequest-state'
-  const lifecycle = 'skillpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

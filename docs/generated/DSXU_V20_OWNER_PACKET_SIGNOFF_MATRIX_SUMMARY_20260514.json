@@ -1,0 +1,75 @@
+﻿{
+    "generatedAt":  "2026-05-14T22:12:54",
+    "packetCount":  17,
+    "totalStatus":  1824,
+    "totalDeletedReady":  146,
+    "totalC2Priority":  320,
+    "decisionSummary":  [
+                            {
+                                "decision":  "conditional-signoff-shared-utility-only-if-imported",
+                                "packets":  1,
+                                "paths":  249
+                            },
+                            {
+                                "decision":  "deletion-mutation-ready-after-explicit-git-review",
+                                "packets":  5,
+                                "paths":  146
+                            },
+                            {
+                                "decision":  "docs-generated-owner-signoff-required",
+                                "packets":  1,
+                                "paths":  24
+                            },
+                            {
+                                "decision":  "owner-review-required-other-source",
+                                "packets":  1,
+                                "paths":  91
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-agent-task-single-orchestrator",
+                                "packets":  1,
+                                "paths":  170
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-deepseek-provider-cost-boundary",
+                                "packets":  1,
+                                "paths":  101
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-external-adapter-boundary",
+                                "packets":  1,
+                                "paths":  27
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-mcp-skill-plugin-single-runtime",
+                                "packets":  1,
+                                "paths":  142
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-tool-permission-single-runtime",
+                                "packets":  1,
+                                "paths":  205
+                            },
+                            {
+                                "decision":  "owner-signoff-ready-visible-state-projection",
+                                "packets":  1,
+                                "paths":  437
+                            },
+                            {
+                                "decision":  "owner-signoff-required-cli-transport-entry-boundary",
+                                "packets":  1,
+                                "paths":  178
+                            },
+                            {
+                                "decision":  "owner-signoff-required-dsxu-engine-mainline",
+                                "packets":  1,
+                                "paths":  48
+                            },
+                            {
+                                "decision":  "owner-signoff-required-entry-query-tool-composition",
+                                "packets":  1,
+                                "paths":  6
+                            }
+                        ],
+    "nextAction":  "process explicit owner signoff, then Git mutation review for deletion-ready packets, then ACL/real-gap/final tests"
+}

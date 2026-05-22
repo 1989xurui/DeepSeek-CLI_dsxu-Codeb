@@ -233,11 +233,3 @@ export function StreamingMarkdown({
       {unstableSuffix && <Markdown>{unstableSuffix}</Markdown>}
     </Box>;
 }
-
-// V14 lifecycle shim: markdown
-export function processMarkdownLifecycle(input) {
-  void input
-  const state = 'markdown-state'
-  const lifecycle = 'markdown:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

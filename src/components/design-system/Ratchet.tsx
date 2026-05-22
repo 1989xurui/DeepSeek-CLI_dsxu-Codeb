@@ -77,11 +77,3 @@ export function Ratchet(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: ratchet
-export function processRatchetLifecycle(input) {
-  void input
-  const state = 'ratchet-state'
-  const lifecycle = 'ratchet:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

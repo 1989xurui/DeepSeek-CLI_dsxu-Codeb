@@ -70,11 +70,3 @@ export function ClickableImageRef(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: clickableimageref
-export function processClickableimagerefLifecycle(input) {
-  void input
-  const state = 'clickableimageref-state'
-  const lifecycle = 'clickableimageref:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

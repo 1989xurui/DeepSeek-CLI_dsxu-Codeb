@@ -6,9 +6,9 @@ import {
 import {
   createRemoteSessionConfig,
   DsxuRemoteSessionCoordinator,
-} from '../provider-backend/dsxu-remote-session-manager'
-import { convertSDKMessage } from '../provider-backend/dsxu-sdk-message-adapter'
-import { createDsxuLocalProviderBackend } from '../provider-backend/local-provider-backend'
+} from '../../../services/bridge/dsxuRemoteSessionCoordinator'
+import { convertSDKMessage } from '../../../services/bridge/dsxuSdkMessageProjection'
+import { createDsxuLocalProviderBackend } from '../../../services/bridge/dsxuLocalProviderBackend'
 
 const waitTick = () => new Promise(resolve => setTimeout(resolve, 0))
 

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "dsxu.v24.deepseek-runtime-contract.v1",
+  "generatedAt": "2026-05-15T05:27:32.610Z",
+  "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+  "rows": [
+    {
+      "id": "deepseek-thinking-tool-trajectory",
+      "owner": "DeepSeek Runtime",
+      "mechanism": "thinking + tool-call trajectory pairing",
+      "evidenceFiles": "src/services/api/deepseek-adapter.ts",
+      "fileHitCount": 1,
+      "signalHitCount": 419,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "prove multi-turn DeepSeek thinking/tool result pair retention with raw trace"
+    },
+    {
+      "id": "deepseek-tool-subset-router",
+      "owner": "Tool Gate / Model Router",
+      "mechanism": "task-aware tool subset routing before provider request",
+      "evidenceFiles": "src/tools.ts; src/Tool.ts",
+      "fileHitCount": 2,
+      "signalHitCount": 641,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "productize a named subset router or prove existing owner path with focused evidence"
+    },
+    {
+      "id": "deepseek-strict-tool-schema",
+      "owner": "Tool Schema Gate",
+      "mechanism": "strict object schema validation before provider request",
+      "evidenceFiles": "src/Tool.ts; src/tools/schema-lint.ts",
+      "fileHitCount": 2,
+      "signalHitCount": 828,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "prove high-risk tools reject loose schemas before model request"
+    },
+    {
+      "id": "deepseek-cache-prefix-planner",
+      "owner": "DeepSeek Cache/Cost",
+      "mechanism": "stable prefix and cache hit/miss ROI tracking",
+      "evidenceFiles": "src/services/cache-stats.ts; src/services/api/deepseek-adapter.ts",
+      "fileHitCount": 2,
+      "signalHitCount": 1011,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "record stable-prefix/tail split and second-run cache ROI"
+    },
+    {
+      "id": "deepseek-fim-edit-lane",
+      "owner": "DeepSeek FIM Lane",
+      "mechanism": "small edit FIM lane that does not bypass query loop",
+      "evidenceFiles": "src/services/api/deepseek-fim.ts",
+      "fileHitCount": 1,
+      "signalHitCount": 535,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "prove FIM stays small-scope and returns through normal edit verification"
+    },
+    {
+      "id": "deepseek-cost-latency-meter",
+      "owner": "Model Router / Cost Evidence",
+      "mechanism": "per-turn token, usage, route reason, latency, and cost evidence",
+      "evidenceFiles": "src/utils/model/deepseekV4Control.ts; src/utils/model/deepseekV4CostRouter.ts",
+      "fileHitCount": 2,
+      "signalHitCount": 2257,
+      "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
+      "requiredNextAction": "emit task-level route/cost/latency report before public product claims"
+    }
+  ],
+  "rule": "This audit proves source signals only. Live provider/tool/cache/FIM behavior must be tested before public claims."
+}

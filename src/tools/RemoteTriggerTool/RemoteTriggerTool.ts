@@ -2,14 +2,14 @@ import { randomUUID } from 'crypto'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { getDsxuConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { callLegacyRemoteTriggerProvider } from './legacyRemoteTriggerProvider.js'
+import { callProviderMigrationRemoteTriggerProvider } from './providerMigrationRemoteTriggerProvider.js'
 import { DESCRIPTION, PROMPT, REMOTE_TRIGGER_TOOL_NAME } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 
@@ -55,8 +55,11 @@ function isDsxuRemoteTriggerProvider(): boolean {
   return isEnvTruthy(process.env.DSXU_CODE_MODE)
 }
 
-function isLegacyDSXURemoteTriggerMigrationEnabled(): boolean {
-  return isEnvTruthy(process.env.DSXU_ENABLE_LEGACY_DSXU_REMOTE_TRIGGER)
+const PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV =
+  'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER'
+
+function isProviderMigrationRemoteTriggerEnabled(): boolean {
+  return isEnvTruthy(process.env[PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV])
 }
 
 function getDsxuRemoteTriggerStorePath(): string {
@@ -203,6 +206,21 @@ export const RemoteTriggerTool = buildTool({
   name: REMOTE_TRIGGER_TOOL_NAME,
   searchHint: 'manage scheduled remote agent triggers',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Remote Trigger Boundary',
+    sideEffects: [
+      'remote-trigger-store-write',
+      'remote-trigger-run-queue',
+      'provider-migration-remote-call-when-enabled',
+    ],
+    permission: 'allow read actions; passthrough permission for create/update/run',
+    evidence: [
+      'inputSchema.action',
+      'DSXU remote trigger provider output',
+      'provider-migration remote trigger isolation gate',
+    ],
+    uiProjection: 'remote trigger result and provider boundary summary',
+  },
   shouldDefer: true,
   get inputSchema(): InputSchema {
     return inputSchema()
@@ -214,7 +232,7 @@ export const RemoteTriggerTool = buildTool({
     if (!isPolicyAllowed('allow_remote_sessions')) return false
     if (isDsxuRemoteTriggerProvider()) return true
     return (
-      isLegacyDSXURemoteTriggerMigrationEnabled() &&
+      isProviderMigrationRemoteTriggerEnabled() &&
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false)
     )
   },
@@ -223,6 +241,15 @@ export const RemoteTriggerTool = buildTool({
   },
   isReadOnly(input: Input) {
     return input.action === 'list' || input.action === 'get'
+  },
+  async checkPermissions(input) {
+    if (input.action === 'list' || input.action === 'get') {
+      return { behavior: 'allow', updatedInput: input }
+    }
+    return {
+      behavior: 'passthrough',
+      message: `RemoteTrigger ${input.action} requires DSXU permission before mutating or running remote trigger state.`,
+    }
   },
   toAutoClassifierInput(input: Input) {
     return `RemoteTrigger ${input.action}${input.trigger_id ? ` ${input.trigger_id}` : ''}`
@@ -240,14 +267,14 @@ export const RemoteTriggerTool = buildTool({
       }
     }
 
-    if (!isLegacyDSXURemoteTriggerMigrationEnabled()) {
+    if (!isProviderMigrationRemoteTriggerEnabled()) {
       throw new Error(
-        'Legacy remote trigger provider is physically isolated. Enable DSXU_ENABLE_LEGACY_DSXU_REMOTE_TRIGGER=1 only for one-time migration.',
+        'Provider migration remote trigger provider is physically isolated. Enable DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER=1 only for one-time migration.',
       )
     }
 
     return {
-        data: await callLegacyRemoteTriggerProvider(input, context),
+        data: await callProviderMigrationRemoteTriggerProvider(input, context),
     }
   },
   mapToolResultToToolResultBlockParam(output, toolUseID) {
@@ -266,7 +293,7 @@ export function getDsxuRemoteTriggerRuntimeProfile(): {
   runtime: 'DSXU Remote Session Provider'
   storePath: string
   activationEvidence: readonly string[]
-  legacyIsolation: readonly string[]
+  providerMigrationIsolation: readonly string[]
 } {
   return {
     tool: REMOTE_TRIGGER_TOOL_NAME,
@@ -275,20 +302,12 @@ export function getDsxuRemoteTriggerRuntimeProfile(): {
     activationEvidence: [
       'DSXU_CODE_MODE enables the local DSXU remote trigger provider',
       'create/update/run persist to DSXU config remote-triggers.json',
-      'legacy DSXU remote trigger provider requires explicit migration flag',
+      'provider migration DSXU remote trigger provider requires explicit migration flag',
     ],
-    legacyIsolation: [
-      'DSXU_ENABLE_LEGACY_DSXU_REMOTE_TRIGGER gates DSXU remote trigger calls',
-      'without DSXU mode or migration flag, legacy provider throws before use',
+    providerMigrationIsolation: [
+      'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER gates provider-migration remote trigger calls',
+      'old provider-migration remote trigger env spelling is accepted only as a migration alias',
+      'without DSXU mode or migration flag, provider migration provider throws before use',
     ],
   }
-}
-
-
-// V14 lifecycle shim: remotetriggertool
-export function processRemotetriggertoolLifecycle(input) {
-  void input
-  const state = 'remotetriggertool-state'
-  const lifecycle = 'remotetriggertool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

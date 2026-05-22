@@ -161,11 +161,3 @@ export function generateShellSuggestionsLabel(suggestions: PermissionUpdate[], s
   }
   return null;
 }
-
-// V14 lifecycle shim: shellpermissionhelpers
-export function processShellpermissionhelpersLifecycle(input) {
-  void input
-  const state = 'shellpermissionhelpers-state'
-  const lifecycle = 'shellpermissionhelpers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "dsxu.v20.ogr01.docs-release-evidence-signoff.v1",
+  "generatedAt": "2026-05-14T15:53:17.344Z",
+  "total": 24,
+  "byClass": {
+    "ship-open-source-doc": 10,
+    "release-excluded-source-truth-evidence": 13,
+    "benchmark-evidence-not-release-runtime": 1
+  },
+  "byDecision": {
+    "OWNER_ACCEPTED_SHIP_DOC_PENDING_GIT": 10,
+    "OWNER_ACCEPTED_RELEASE_EXCLUDED_EVIDENCE_PENDING_GIT": 13,
+    "OWNER_ACCEPTED_BENCH_EVIDENCE_PENDING_GIT": 1
+  },
+  "rule": "Docs/evidence are signed as ship docs only when they are public release docs. V20 source-truth and generated evidence stay repo evidence and must be excluded or rewritten for clean export."
+}

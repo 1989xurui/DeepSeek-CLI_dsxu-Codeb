@@ -2,12 +2,16 @@ import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import {
   hasProfileScope,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from '../../utils/auth.js'
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import { getAuthHeaders } from '../../utils/http.js'
 import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 
 export type RateLimit = {
   utilization: number | null // a percentage from 0 to 100
@@ -30,13 +34,21 @@ export type Utilization = {
   extra_usage?: ExtraUsage | null
 }
 
+function isProviderMigrationAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
 export async function fetchUtilization(): Promise<Utilization | null> {
-  if (!isLegacyCloudSubscriber() || !hasProfileScope()) {
+  if (!isProviderMigrationAccountApiAllowed()) {
+    return {}
+  }
+
+  if (!isProviderSubscriptionAccount() || !hasProfileScope()) {
     return {}
   }
 
   // Skip API call if OAuth token is expired to avoid 401 errors
-  const tokens = getCompatProviderTokens()
+  const tokens = getProviderControlTokens()
   if (tokens && isOAuthTokenExpired(tokens.expiresAt)) {
     return null
   }

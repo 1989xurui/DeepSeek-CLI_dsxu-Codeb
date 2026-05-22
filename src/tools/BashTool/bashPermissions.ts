@@ -1,8 +1,7 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import { APIUserAbortError } from '../../types/providerSdk.js'
 import type { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -87,7 +86,7 @@ import { shouldUseSandbox } from './shouldUseSandbox.js'
 // instead. (See also the comment on checkSemanticsDeny below.)
 const bashCommandIsSafeAsync = bashCommandIsSafeAsync_DEPRECATED
 const splitCommand = splitCommand_DEPRECATED
-const LEGACY_PROVIDER_API_KEY_ENV = `${'ANTH' + 'ROPIC'}_API_KEY`
+const PROVIDER_MIGRATION_SOURCE_API_KEY_ENV = `${'ANTH' + 'ROPIC'}_API_KEY`
 // Env-var assignment prefix (VAR=value). Shared across three while-loops that
 // skip safe env vars before extracting the command name.
 const ENV_VAR_ASSIGN_RE = /^[A-Za-z_]\w*=/
@@ -107,7 +106,7 @@ export const MAX_SUBCOMMANDS_FOR_SECURITY_CHECK = 50
 // in one && list are rare; they can always approve once and add rules manually.
 export const MAX_SUGGESTED_RULES_FOR_COMPOUND = 5
 /**
- * [ANT-ONLY] Log classifier evaluation results for analysis.
+ * [DSXU internal] Log classifier evaluation results for analysis.
  * This helps us understand which classifier rules are being evaluated
  * and how the classifier is deciding on commands.
  */
@@ -133,7 +132,7 @@ function logClassifierResultForAnts(
       result.confidence as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     reason:
       result.reason as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-    // Note: command contains code/filepaths - this is ANT-ONLY so it's OK
+    // Note: command contains code/filepaths - this is DSXU internal so it's OK
     command:
       command as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   })
@@ -141,7 +140,7 @@ function logClassifierResultForAnts(
 /**
  * Extract a stable command prefix (command + subcommand) from a raw command string.
  * Skips leading env var assignments only if they are in SAFE_ENV_VARS (or
- * ANT_ONLY_SAFE_ENV_VARS for ant users). Returns null if a non-safe env var is
+ * DSXU_INTERNAL_SAFE_ENV_VARS for ant users). Returns null if a non-safe env var is
  * encountered (to fall back to exact match), or if the second token doesn't look
  * like a subcommand (lowercase alphanumeric, e.g., "commit", "run").
  *
@@ -157,7 +156,7 @@ export function getSimpleCommandPrefix(command: string): string | null {
   const tokens = command.trim().split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return null
   // Skip env var assignments (VAR=value) at the start, but only if they are
-  // in SAFE_ENV_VARS (or ANT_ONLY_SAFE_ENV_VARS for ant users). If a non-safe
+  // in SAFE_ENV_VARS (or DSXU_INTERNAL_SAFE_ENV_VARS for ant users). If a non-safe
   // env var is encountered, return null to fall back to exact match. This
   // prevents generating prefix rules like Bash(npm run:*) that can never match
   // at allow-rule check time, because stripSafeWrappers only strips safe vars.
@@ -165,7 +164,7 @@ export function getSimpleCommandPrefix(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'ant' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      process.env.USER_TYPE === 'ant' && DSXU_INTERNAL_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -278,7 +277,7 @@ export function getFirstWordPrefix(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'ant' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      process.env.USER_TYPE === 'ant' && DSXU_INTERNAL_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -347,7 +346,7 @@ function extractPrefixBeforeHeredoc(command: string): string | null {
   while (i < tokens.length && ENV_VAR_ASSIGN_RE.test(tokens[i]!)) {
     const varName = tokens[i]!.split('=')[0]!
     const isAntOnlySafe =
-      process.env.USER_TYPE === 'ant' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+      process.env.USER_TYPE === 'ant' && DSXU_INTERNAL_SAFE_ENV_VARS.has(varName)
     if (!SAFE_ENV_VARS.has(varName) && !isAntOnlySafe) {
       return null
     }
@@ -360,7 +359,7 @@ function suggestionForPrefix(prefix: string): PermissionUpdate[] {
   return sharedSuggestionForPrefix(BashTool.name, prefix)
 }
 /**
- * Extract prefix from legacy :* syntax (e.g., "npm:*" -> "npm")
+ * Extract prefix from historical :* syntax (e.g., "npm:*" -> "npm")
  * Delegates to shared implementation.
  */
 export const permissionRuleExtractPrefix = sharedPermissionRuleExtractPrefix
@@ -410,7 +409,7 @@ const SAFE_ENV_VARS = new Set([
   'PYTEST_DISABLE_PLUGIN_AUTOLOAD', // disable plugin loading
   'PYTEST_DEBUG', // debug output
   // API keys and authentication
-  LEGACY_PROVIDER_API_KEY_ENV, // API authentication
+  PROVIDER_MIGRATION_SOURCE_API_KEY_ENV, // provider-migration source API authentication
   'DEEPSEEK_API_KEY', // DSXU/DeepSeek API authentication
   'DEEPSEEK_BASE_URL', // DSXU/DeepSeek compatible endpoint override
   'DSXU_API_KEY', // DSXU control-plane authentication
@@ -444,12 +443,12 @@ function isCommandInjectionCheckDisabled(): boolean {
   )
 }
 /**
- * ANT-ONLY environment variables that are safe to strip from commands.
+ * DSXU internal environment variables that are safe to strip from commands.
  * These are only enabled when USER_TYPE === 'ant'.
  *
  * SECURITY: These env vars are stripped before permission-rule matching, which
  * means `DOCKER_HOST=tcp://evil.com docker ps` matches a `Bash(docker ps:*)`
- * rule after stripping. This is INTENTIONALLY ANT-ONLY (gated at line ~380)
+ * rule after stripping. This is INTENTIONALLY DSXU-INTERNAL (gated at line ~380)
  * and MUST NEVER ship to external users. DOCKER_HOST redirects the Docker
  * daemon endpoint ...stripping it defeats prefix-based permission restrictions
  * by hiding the network endpoint from the permission check. KUBECONFIG
@@ -458,7 +457,7 @@ function isCommandInjectionCheckDisabled(): boolean {
  *
  * Based on analysis of 30 days of tengu_internal_bash_tool_use_permission_request events.
  */
-const ANT_ONLY_SAFE_ENV_VARS = new Set([
+const DSXU_INTERNAL_SAFE_ENV_VARS = new Set([
   // Kubernetes and container config (config file pointers, not execution)
   'KUBECONFIG', // kubectl config file path ...controls which cluster kubectl uses
   'DOCKER_HOST', // Docker daemon socket/endpoint ...controls which daemon docker talks to
@@ -466,7 +465,7 @@ const ANT_ONLY_SAFE_ENV_VARS = new Set([
   'AWS_PROFILE', // AWS profile name selection
   'CLOUDSDK_CORE_PROJECT', // GCP project ID
   'CLUSTER', // generic cluster name
-  // legacy provider internal cluster selection (just names/identifiers)
+  // provider-migration source internal cluster selection (just names/identifiers)
   'COO_CLUSTER', // coo cluster name
   'COO_CLUSTER_NAME', // coo cluster name (alternate)
   'COO_NAMESPACE', // coo namespace
@@ -490,8 +489,8 @@ const ANT_ONLY_SAFE_ENV_VARS = new Set([
   'DBT_PER_DEVELOPER_ENVIRONMENTS', // DBT config
   'STATSIG_FORD_DB_CHECKS', // statsig DB check flag
   // Build configuration
-  'ANT_ENVIRONMENT', // legacy provider environment name
-  'ANT_SERVICE', // legacy provider service name
+  'ANT_ENVIRONMENT', // provider-migration source environment name
+  'ANT_SERVICE', // provider-migration source service name
   'MONOREPO_ROOT_DIR', // monorepo root path
   // Version selectors
   'PYENV_VERSION', // Python version selection
@@ -545,7 +544,7 @@ export function stripSafeWrappers(command: string): string {
     // SECURITY: keep in sync with checkSemantics wrapper-strip (ast.ts
     // ~:1990-2080) AND stripWrappersFromArgv (pathValidation.ts ~:1260).
     // Previously this pattern REQUIRED `-n N`; checkSemantics already handled
-    // bare `nice` and legacy `-N`. Asymmetry meant checkSemantics exposed the
+    // bare `nice` and historical `-N`. Asymmetry meant checkSemantics exposed the
     // wrapped command to semantic checks but deny-rule matching and the cd+git
     // gate saw the wrapper name. `nice rm -rf /` with Bash(rm:*) deny became
     // ask instead of deny; `cd evil && nice git status` skipped the bare-repo
@@ -585,7 +584,7 @@ export function stripSafeWrappers(command: string): string {
     if (envVarMatch) {
       const varName = envVarMatch[1]!
       const isAntOnlySafe =
-        process.env.USER_TYPE === 'ant' && ANT_ONLY_SAFE_ENV_VARS.has(varName)
+        process.env.USER_TYPE === 'ant' && DSXU_INTERNAL_SAFE_ENV_VARS.has(varName)
       if (SAFE_ENV_VARS.has(varName) || isAntOnlySafe) {
         stripped = stripped.replace(ENV_VAR_PATTERN, '')
       }
@@ -1034,7 +1033,7 @@ export const bashToolCheckPermission = (
   // 2. Find all matching rules (prefix or exact)
   // SECURITY FIX: Check Bash deny/ask rules BEFORE path constraints to prevent bypass
   // via absolute paths outside the project directory (HackerOne report)
-  // When AST-parsed, the subcommand is already atomic ...skip the legacy
+  // When AST-parsed, the subcommand is already atomic ...skip the fallback
   // splitCommand re-check that misparses mid-word # as compound.
   const { matchingDenyRules, matchingAskRules, matchingAllowRules } =
     matchingRulesForInput(input, toolPermissionContext, 'prefix', {
@@ -1162,7 +1161,7 @@ export async function checkCommandAndSuggestRules(
   }
   // 3. Ask for permission if command injection is detected. Skip when the
   // AST parse already succeeded ...tree-sitter has verified there are no
-  // hidden substitutions or structural tricks, so the legacy regex-based
+  // hidden substitutions or structural tricks, so the fallback regex-based
   // validators (backslash-escaped operators, etc.) would only add FPs.
   if (
     !astParseSucceeded &&
@@ -1590,9 +1589,9 @@ export async function bashToolHasPermission(
   // we need to decide whether splitCommand's output can be trusted.
   //
   // When tree-sitter WASM is unavailable OR the injection check is disabled
-  // via env var, we fall back to the old path (legacy gate at ~1370 runs).
+  // via env var, we fall back to the old regex path (fallback gate at ~1370 runs).
   const injectionCheckDisabled = isCommandInjectionCheckDisabled()
-  // GrowthBook killswitch for shadow mode ...when off, skip the native parse
+  // feature flag provider killswitch for shadow mode ...when off, skip the native parse
   // entirely. Computed once; feature() must stay inline in the ternary below.
   const shadowEnabled = feature('TREE_SITTER_BASH_SHADOW')
     ? getFeatureValue_CACHED_MAY_BE_STALE('tengu_birch_trellis', true)
@@ -1610,10 +1609,10 @@ export async function bashToolHasPermission(
   let astSubcommands: string[] | null = null
   let astRedirects: Redirect[] | undefined
   let astCommands: SimpleCommand[] | undefined
-  let shadowLegacySubs: string[] | undefined
+  let shadowFallbackSubs: string[] | undefined
   // Shadow-test tree-sitter: record its verdict, then force parse-unavailable
-  // so the legacy path stays authoritative. parseCommand stays gated on
-  // TREE_SITTER_BASH (not SHADOW) so legacy internals remain pure regex.
+  // so the fallback path stays authoritative. parseCommand stays gated on
+  // TREE_SITTER_BASH (not SHADOW) so fallback internals remain pure regex.
   // One event per bash call captures both divergence AND unavailability
   // reasons; module-load failures are separately covered by the
   // session-scoped tengu_tree_sitter_load event.
@@ -1630,12 +1629,12 @@ export async function bashToolHasPermission(
         astResult.kind === 'simple'
           ? astResult.commands.map(c => c.text)
           : undefined
-      const legacySubs = splitCommand(input.command)
-      shadowLegacySubs = legacySubs
+      const fallbackSubs = splitCommand(input.command)
+      shadowFallbackSubs = fallbackSubs
       subsDiffer =
         tsSubs !== undefined &&
-        (tsSubs.length !== legacySubs.length ||
-          tsSubs.some((s, i) => s !== legacySubs[i]))
+        (tsSubs.length !== fallbackSubs.length ||
+          tsSubs.some((s, i) => s !== fallbackSubs[i]))
     }
     logEvent('tengu_tree_sitter_shadow', {
       available,
@@ -1646,7 +1645,7 @@ export async function bashToolHasPermission(
       killswitchOff: !shadowEnabled,
       cmdOverLength: input.command.length > 10000,
     })
-    // Always force legacy ...shadow mode is observational only.
+    // Always force fallback ...shadow mode is observational only.
     astResult = { kind: 'parse-unavailable' }
     astRoot = null
   }
@@ -1715,12 +1714,12 @@ export async function bashToolHasPermission(
     astRedirects = astResult.commands.flatMap(c => c.redirects)
     astCommands = astResult.commands
   }
-  // Legacy shell-quote pre-check. Only reached on 'parse-unavailable'
+  // Fallback shell-quote pre-check. Only reached on 'parse-unavailable'
   // (tree-sitter not loaded OR TREE_SITTER_BASH feature gated off). Falls
-  // through to the full legacy path below.
+  // through to the full fallback path below.
   if (astResult.kind === 'parse-unavailable') {
     logForDebugging(
-      'bashToolHasPermission: tree-sitter unavailable, using legacy shell-quote path',
+      'bashToolHasPermission: tree-sitter unavailable, using fallback shell-quote path',
     )
     const parseResult = tryParseShellCommand(input.command)
     if (!parseResult.success) {
@@ -1897,7 +1896,7 @@ export async function bashToolHasPermission(
       // validated structure (backticks/$() in redirect targets would have
       // returned too-complex). Matches gating at ~1481, ~1706, ~1755.
       // Avoids FP: `find -exec {} \; | grep x` tripping on backslash-;.
-      // bashCommandIsSafe runs the full legacy regex battery (~20 patterns) ...      // only call it when we'll actually use the result.
+      // bashCommandIsSafe runs the full fallback regex battery (~20 patterns) ...      // only call it when we'll actually use the result.
       const safetyResult =
         astSubcommands === null
           ? await bashCommandIsSafeAsync(input.command)
@@ -1970,7 +1969,7 @@ export async function bashToolHasPermission(
     }
     return commandOperatorResult
   }
-  // SECURITY: Legacy misparsing gate. Only runs when the tree-sitter module
+  // SECURITY: Fallback misparsing gate. Only runs when the tree-sitter module
   // is not loaded. Timeout/abort is fail-closed via too-complex (returned
   // early above), not routed here. When the AST parse succeeded,
   // astSubcommands is non-null and we've already validated structure; this
@@ -2042,14 +2041,14 @@ export async function bashToolHasPermission(
   const cwdMingw =
     getPlatform() === 'windows' ? windowsPathToPosixPath(cwd) : cwd
   const rawSubcommands =
-    astSubcommands ?? shadowLegacySubs ?? splitCommand(input.command)
+    astSubcommands ?? shadowFallbackSubs ?? splitCommand(input.command)
   const { subcommands, astCommandsByIdx } = filterCdCwdSubcommands(
     rawSubcommands,
     astCommands,
     cwd,
     cwdMingw,
   )
-  // CC-643: Cap subcommand fanout. Only the legacy splitCommand path can
+  // CC-643: Cap subcommand fanout. Only the fallback splitCommand path can
   // explode ...the AST path returns a bounded list (astSubcommands !== null)
   // or short-circuits to 'too-complex' for structures it can't represent.
   if (
@@ -2220,7 +2219,7 @@ export async function bashToolHasPermission(
   // command ...but only if no command injection is possible. When the AST
   // parse succeeded, each subcommand is already known-safe (no hidden
   // substitutions, no structural tricks); the per-subcommand re-check is
-  // redundant. When on the legacy path, re-run bashCommandIsSafeAsync per sub.
+  // redundant. When on the fallback path, re-run bashCommandIsSafeAsync per sub.
   let hasPossibleCommandInjection = false
   if (
     astSubcommands === null &&

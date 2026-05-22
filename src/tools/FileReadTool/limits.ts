@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Read tool output limits.  Two caps apply to text reads:
  *
@@ -14,7 +13,7 @@
  * tool-result while truncation yields ~25K tokens of content at the cap.
  */
 import memoize from 'lodash-es/memoize.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'
 import { MAX_OUTPUT_SIZE } from 'src/utils/file.js'
 import { getDsxuCodeEnv } from '../../utils/envUtils.js'
 export const DEFAULT_MAX_OUTPUT_TOKENS = 25000
@@ -43,10 +42,10 @@ export type FileReadingLimits = {
 
 /**
  * Default limits for Read tool when the ToolUseContext doesn't supply an
- * override. Memoized so the GrowthBook value is fixed at first call ...avoids
+ * override. Memoized so the feature flag provider value is fixed at first call ...avoids
  * the cap changing mid-session as the flag refreshes in the background.
  *
- * Precedence for maxTokens: env var > GrowthBook > DEFAULT_MAX_OUTPUT_TOKENS.
+ * Precedence for maxTokens: env var > feature flag provider > DEFAULT_MAX_OUTPUT_TOKENS.
  * (Env var is a user-set override, should beat experiment infrastructure.)
  *
  * Defensive: each field is individually validated; invalid values fall
@@ -105,12 +104,12 @@ export function getDsxuFileReadLimitsRuntimeProfile(): {
     defaultMaxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
     envOverrides: [
       'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS',
-      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS (legacy migration alias)',
+      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS (provider migration alias)',
     ],
     maxSizeSource: 'MAX_OUTPUT_SIZE gates total file size before reading',
     activationEvidence: [
-      'DSXU env override has priority over legacy DSXU env override',
-      'GrowthBook/file-limit override is validated field-by-field',
+      'DSXU env override has priority over provider-migration env override',
+      'feature flag provider/file-limit override is validated field-by-field',
       'invalid/zero caps fall back to hardcoded safe defaults',
     ],
   }

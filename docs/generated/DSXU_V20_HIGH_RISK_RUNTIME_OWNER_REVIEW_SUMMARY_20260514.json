@@ -1,0 +1,52 @@
+﻿{
+    "generatedAt":  "2026-05-14T21:17:24",
+    "highRiskPackets":  [
+                            {
+                                "ownerPacket":  "V20-OGR-03-delete-engine-builtin-tools-runtime",
+                                "count":  2,
+                                "decision":  "replace/delete candidate; do not restore as product runtime"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                                "count":  205,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-04-delete-engine-mcp-client-runtime",
+                                "count":  1,
+                                "decision":  "replace/delete candidate; do not restore as product runtime"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                                "count":  142,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                                "count":  170,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-05-external-integration-adapter-boundary",
+                                "count":  27,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                                "count":  101,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                                "count":  6,
+                                "decision":  "owner review required with import/use evidence"
+                            },
+                            {
+                                "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                                "count":  249,
+                                "decision":  "owner review required with import/use evidence"
+                            }
+                        ],
+    "staticScanDecision":  "product old fallback/MCP/provider tokens are expected to stay out of product runtime; test-only guard strings may remain",
+    "nextAction":  "continue packet signoff and focused verification before final tests/export"
+}

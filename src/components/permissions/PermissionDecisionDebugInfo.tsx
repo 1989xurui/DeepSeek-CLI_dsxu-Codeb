@@ -457,11 +457,3 @@ function _temp5(u_1, i) {
 function _temp4(s) {
   return s.toolPermissionContext;
 }
-
-// V14 lifecycle shim: permissiondecisiondebuginfo
-export function processPermissiondecisiondebuginfoLifecycle(input) {
-  void input
-  const state = 'permissiondecisiondebuginfo-state'
-  const lifecycle = 'permissiondecisiondebuginfo:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

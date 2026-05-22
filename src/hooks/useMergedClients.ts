@@ -21,12 +21,3 @@ export function useMergedClients(
     [initialClients, mcpClients],
   )
 }
-
-
-// V14 lifecycle shim: usemergedclients
-export function processUsemergedclientsLifecycle(input) {
-  void input
-  const state = 'usemergedclients-state'
-  const lifecycle = 'usemergedclients:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

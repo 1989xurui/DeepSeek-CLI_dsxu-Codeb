@@ -289,19 +289,3 @@ function StyledText(t0) {
   }
   return t1;
 }
-
-// V14 strict lifecycle shim: ink-Ansi
-export function processInkAnsiStrictLifecycle(input) {
-  void input
-  const state = 'ink-Ansi-state'
-  const lifecycle = 'ink-Ansi:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runInkAnsiStrict(input) {
-  return processInkAnsiStrictLifecycle(input)
-}

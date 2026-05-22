@@ -32,11 +32,3 @@ export function DsxuMascot({
   const variant = selectDsxuMascotVariant(maxWidth ?? columns - 4);
   return <RawAnsi lines={variant.lines} width={variant.width} />;
 }
-
-// V14 lifecycle shim: dsxumascot
-export function processDsxuMascotLifecycle(input) {
-  void input
-  const state = 'dsxumascot-state'
-  const lifecycle = 'dsxumascot:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

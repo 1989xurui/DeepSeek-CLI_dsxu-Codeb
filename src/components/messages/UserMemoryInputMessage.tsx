@@ -72,11 +72,3 @@ export function UserMemoryInputMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: usermemoryinputmessage
-export function processUsermemoryinputmessageLifecycle(input) {
-  void input
-  const state = 'usermemoryinputmessage-state'
-  const lifecycle = 'usermemoryinputmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

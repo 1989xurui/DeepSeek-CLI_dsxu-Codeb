@@ -42,12 +42,3 @@ export function checkTeamMemSecrets(
   }
   return null
 }
-
-
-// V14 lifecycle shim: teammemsecretguard
-export function processTeammemsecretguardLifecycle(input) {
-  void input
-  const state = 'teammemsecretguard-state'
-  const lifecycle = 'teammemsecretguard:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -121,11 +121,3 @@ export function getErrorGuidance(error: PluginError): string | null {
   const _exhaustive: never = error;
   return null;
 }
-
-// V14 lifecycle shim: pluginerrors
-export function processPluginerrorsLifecycle(input) {
-  void input
-  const state = 'pluginerrors-state'
-  const lifecycle = 'pluginerrors:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

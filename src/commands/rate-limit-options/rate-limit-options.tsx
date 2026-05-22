@@ -1,15 +1,15 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React, { useMemo, useState } from 'react';
 import type { CommandResultDisplay, LocalJSXCommandContext } from '../../commands.js';
 import { type OptionWithDescription, Select } from '../../components/CustomSelect/select.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js';
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { useDsxuLimits } from '../../services/dsxuLimitsHook.js';
 import type { ToolUseContext } from '../../Tool.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
 import { getOauthAccountInfo, getRateLimitTier, getSubscriptionType } from '../../utils/auth.js';
-import { hasDsxuBillingAccess } from '../../utils/billing.js';
+import { hasDsxuProviderBillingAccess } from '../../services/auth/dsxuBillingAccess.js';
 import { call as extraUsageCall } from '../extra-usage/extra-usage.js';
 import { extraUsage } from '../extra-usage/index.js';
 import upgrade from '../upgrade/index.js';
@@ -56,7 +56,7 @@ function RateLimitOptionsMenu(t0) {
     if ($[2] !== DsxuLimits.overageDisabledReason || $[3] !== DsxuLimits.overageStatus) {
       actionOptions = [];
       if (extraUsage.isEnabled()) {
-        const hasBillingAccess = hasDsxuBillingAccess();
+        const hasBillingAccess = hasDsxuProviderBillingAccess();
         const needsToRequestFromAdmin = isTeamOrEnterprise && !hasBillingAccess;
         const isOrgSpendCapDepleted = DsxuLimits.overageDisabledReason === "out_of_credits" || DsxuLimits.overageDisabledReason === "org_level_disabled_until" || DsxuLimits.overageDisabledReason === "org_service_zero_credit_limit";
         if (needsToRequestFromAdmin && isOrgSpendCapDepleted) {} else {
@@ -206,12 +206,4 @@ function RateLimitOptionsMenu(t0) {
 }
 export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContext & LocalJSXCommandContext): Promise<React.ReactNode> {
   return <RateLimitOptionsMenu onDone={onDone} context={context} />;
-}
-
-// V14 lifecycle shim: rate-limit-options
-export function processRateLimitOptionsLifecycle(input) {
-  void input
-  const state = 'rate-limit-options-state'
-  const lifecycle = 'rate-limit-options:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

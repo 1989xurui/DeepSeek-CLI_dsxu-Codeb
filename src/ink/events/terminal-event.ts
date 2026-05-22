@@ -105,12 +105,3 @@ export type EventTarget = {
   parentNode: EventTarget | undefined
   _eventHandlers?: Record<string, unknown>
 }
-
-
-// V14 lifecycle shim: terminal-event
-export function processTerminalEventLifecycle(input) {
-  void input
-  const state = 'terminal-event-state'
-  const lifecycle = 'terminal-event:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

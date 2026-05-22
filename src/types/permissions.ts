@@ -441,21 +441,6 @@ export type ToolPermissionContext = {
 }
 
 
-// V14 strict lifecycle shim: types-permissions
-export function processTypesPermissionsStrictLifecycle(input) {
-  void input
-  const state = 'types-permissions-state'
-  const lifecycle = 'types-permissions:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runTypesPermissionsStrict(input) {
-  return processTypesPermissionsStrictLifecycle(input)
-}
 
 export function getDsxuPermissionTypesRuntimeProfile() {
   return {

@@ -496,12 +496,3 @@ export function formatWarnings(warnings: KeybindingWarning[]): string {
 
   return lines.join('\n')
 }
-
-
-// V14 lifecycle shim: validate
-export function processValidateLifecycle(input) {
-  void input
-  const state = 'validate-state'
-  const lifecycle = 'validate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

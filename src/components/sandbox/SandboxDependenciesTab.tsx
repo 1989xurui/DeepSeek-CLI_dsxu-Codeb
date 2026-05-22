@@ -117,11 +117,3 @@ function _temp2(e_0) {
 function _temp(e) {
   return e.includes("ripgrep");
 }
-
-// V14 lifecycle shim: sandboxdependenciestab
-export function processSandboxdependenciestabLifecycle(input) {
-  void input
-  const state = 'sandboxdependenciestab-state'
-  const lifecycle = 'sandboxdependenciestab:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

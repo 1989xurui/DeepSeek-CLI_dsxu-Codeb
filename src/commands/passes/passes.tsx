@@ -21,19 +21,3 @@ export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNo
   });
   return <Passes onDone={onDone} />;
 }
-
-// V14 strict lifecycle shim: commands-passes-passes
-export function processCommandsPassesPassesStrictLifecycle(input) {
-  void input
-  const state = 'commands-passes-passes-state'
-  const lifecycle = 'commands-passes-passes:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsPassesPassesStrict(input) {
-  return processCommandsPassesPassesStrictLifecycle(input)
-}

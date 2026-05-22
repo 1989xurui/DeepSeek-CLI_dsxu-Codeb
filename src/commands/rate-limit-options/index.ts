@@ -31,21 +31,3 @@ const rateLimitOptions = {
 } satisfies Command
 
 export default rateLimitOptions
-
-
-// V14 command lifecycle shim: rate-limit-options
-export function processRateLimitOptionsCommandLifecycle(input) {
-  void input
-  const state = 'rate-limit-options-command-state'
-  const lifecycle = 'rate-limit-options:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'rate-limit-options',
-  }
-}
-
-export function runRateLimitOptionsCommand(input) {
-  return processRateLimitOptionsCommandLifecycle(input)
-}

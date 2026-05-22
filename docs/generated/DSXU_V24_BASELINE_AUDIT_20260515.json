@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "dsxu.v24.baseline-audit.v1",
+  "generatedAt": "2026-05-15T05:27:01.026Z",
+  "repoRoot": "D:\\DSXU-code",
+  "claudeSourceRoot": "D:\\源代码claude\\src",
+  "claudeSourceExists": true,
+  "sourceCounts": {
+    "publishSurfaceFiles": 2891,
+    "dsxuSourceFiles": 2650,
+    "claudeSourceFiles": 1902
+  },
+  "topDirs": {
+    "dsxu": [
+      "utils:604",
+      "dsxu:598",
+      "components:391",
+      "services:216",
+      "commands:208",
+      "tools:202",
+      "hooks:104",
+      "ink:96"
+    ],
+    "claude": [
+      "utils:564",
+      "components:389",
+      "commands:207",
+      "tools:184",
+      "services:130",
+      "hooks:104",
+      "ink:96",
+      "bridge:31"
+    ]
+  },
+  "gitStatusShort": {
+    "total": 2024,
+    "staged": 2024,
+    "unstaged": 12,
+    "untracked": 0,
+    "modified": 1780,
+    "deleted": 420,
+    "renamed": 326
+  },
+  "v20Evidence": {
+    "finalPreflight": {
+      "status": "PASS",
+      "canCreateCleanExport": true,
+      "canRunFinalSixStageTests": true
+    },
+    "blockerBoard": {
+      "status": "PASS_RELEASE_PREFLIGHT_READY_CLEAN_EXPORT_READY"
+    },
+    "cleanExportPreflight": {
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "canCreateCleanExport": true
+    },
+    "c2FinalSignoff": {
+      "total": 1902
+    },
+    "c2FunctionLoss": {
+      "totalRows": 1902,
+      "ownerDispositionComplete": true,
+      "implementedFeatureAcceptanceComplete": false
+    }
+  },
+  "v24GateStatus": [
+    {
+      "gate": "v20-final-preflight",
+      "status": "PASS",
+      "count": 2005,
+      "requiredNextAction": "keep as inherited release baseline; V24 cannot claim 95 from this alone"
+    },
+    {
+      "gate": "c2-owner-disposition",
+      "status": "PRESENT",
+      "count": 1902,
+      "requiredNextAction": "convert owner disposition into experience-loop-density acceptance"
+    },
+    {
+      "gate": "c2-behavior-acceptance",
+      "status": "OPEN_REQUIRED_FOR_V24",
+      "count": 0,
+      "requiredNextAction": "run C2 density and behavior matrix; do not call C2 fully absorbed yet"
+    },
+    {
+      "gate": "clean-export-artifact",
+      "status": "READY_NOT_CREATED",
+      "count": 1,
+      "requiredNextAction": "create export only after V24 evidence and explicit release action"
+    }
+  ],
+  "status": "PASS_BASELINE_FIXED_WITH_OPEN_GATES",
+  "nextAction": "run runtime/stub redline and C2 experience density rebaseline before DeepSeek runtime contract work",
+  "rule": "Baseline only fixes facts. It does not claim V24 feature acceptance, run final tests, delete files, clean workspace, or create exports."
+}

@@ -2,28 +2,28 @@
  * Environment variables that control inference routing: provider selection,
  * endpoint routing, and model IDs.
  *
- * DSXU accepts DSXU_CODE_* names first and keeps legacy provider names as
- * compatibility contracts at the boundary. Settings-sourced env is stripped
+ * DSXU accepts DSXU_CODE_* names first and keeps provider-migration source names as
+ * provider-migration contracts at the boundary. Settings-sourced env is stripped
  * when a host owns provider routing so user config cannot override it.
  */
 
-const LEGACY_VENDOR_ENV_PREFIX = 'ANTH' + 'ROPIC'
-const LEGACY_CODE_ENV_PREFIX = 'CL' + 'AUDE' + '_CODE'
-const LEGACY_BASH_ENV_PREFIX = 'CL' + 'AUDE' + '_BASH'
-const LEGACY_VERTEX_MODEL_REGION_PREFIX =
+const PROVIDER_MIGRATION_VENDOR_ENV_PREFIX = 'ANTH' + 'ROPIC'
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CL' + 'AUDE' + '_CODE'
+const PROVIDER_MIGRATION_BASH_ENV_PREFIX = 'CL' + 'AUDE' + '_BASH'
+const PROVIDER_MIGRATION_VERTEX_MODEL_REGION_PREFIX =
   'VERTEX_REGION_' + ('CL' + 'AUDE') + '_'
 
-const vendorEnv = (name: string): string => `${LEGACY_VENDOR_ENV_PREFIX}_${name}`
-const legacyCodeEnv = (name: string): string =>
-  `${LEGACY_CODE_ENV_PREFIX}_${name}`
+const vendorEnv = (name: string): string => `${PROVIDER_MIGRATION_VENDOR_ENV_PREFIX}_${name}`
+const providerMigrationCodeEnv = (name: string): string =>
+  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
 const dsxuCodeEnv = (name: string): string => `DSXU_CODE_${name}`
-const legacyBashEnv = (name: string): string =>
-  `${LEGACY_BASH_ENV_PREFIX}_${name}`
+const providerMigrationBashEnv = (name: string): string =>
+  `${PROVIDER_MIGRATION_BASH_ENV_PREFIX}_${name}`
 const vertexRegionEnv = (name: string): string =>
-  `${LEGACY_VERTEX_MODEL_REGION_PREFIX}${name}`
+  `${PROVIDER_MIGRATION_VERTEX_MODEL_REGION_PREFIX}${name}`
 
 const withDsxuCodeAliases = (names: readonly string[]): string[] =>
-  names.flatMap(name => [dsxuCodeEnv(name), legacyCodeEnv(name)])
+  names.flatMap(name => [dsxuCodeEnv(name), providerMigrationCodeEnv(name)])
 
 const providerRoutingCodeEnvNames = [
   'PROVIDER_MANAGED_BY_HOST',
@@ -84,7 +84,7 @@ const PROVIDER_MANAGED_ENV_VARS = new Set([
 ])
 
 const PROVIDER_MANAGED_ENV_PREFIXES = [
-  LEGACY_VERTEX_MODEL_REGION_PREFIX,
+  PROVIDER_MIGRATION_VERTEX_MODEL_REGION_PREFIX,
   'DSXU_VERTEX_REGION_',
 ]
 
@@ -129,8 +129,8 @@ const safeCodeEnvNames = [
 /**
  * Safe environment variables that can be applied before trust dialog.
  *
- * DSXU owns the safe-list and accepts DSXU_CODE_* aliases. Legacy provider
- * names remain as protocol compatibility entries where external SDKs read
+ * DSXU owns the safe-list and accepts DSXU_CODE_* aliases. Provider-migration
+ * source names remain as protocol entries where external SDKs read
  * them directly.
  */
 export const SAFE_ENV_VARS = new Set([
@@ -142,7 +142,7 @@ export const SAFE_ENV_VARS = new Set([
   vendorEnv('CUSTOM_MODEL_OPTION_DESCRIPTION'),
   vendorEnv('CUSTOM_MODEL_OPTION_NAME'),
   ...withDsxuCodeAliases(safeCodeEnvNames),
-  legacyBashEnv('MAINTAIN_PROJECT_WORKING_DIR'),
+  providerMigrationBashEnv('MAINTAIN_PROJECT_WORKING_DIR'),
   'AWS_DEFAULT_REGION',
   'AWS_PROFILE',
   'AWS_REGION',

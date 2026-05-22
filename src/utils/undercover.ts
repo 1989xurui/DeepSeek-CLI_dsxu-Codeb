@@ -7,7 +7,7 @@
  * model it is.
  *
  * Activation:
- *   - DSXU_CODE_UNDERCOVER=1 — force ON (legacy alias honored)
+ *   - DSXU_CODE_UNDERCOVER=1 — force ON (provider-migration alias honored)
  *   - Otherwise AUTO: active UNLESS the repo remote matches the internal
  *     allowlist (INTERNAL_MODEL_REPOS in commitAttribution.ts). Safe default
  *     is ON — DSXU may push to public remotes from a CWD that isn't itself
@@ -17,7 +17,7 @@
  *
  * All code paths are gated on process.env.USER_TYPE === 'ant'. Since USER_TYPE is
  * a build-time --define, the bundler constant-folds these checks and dead-code-
- * eliminates the ant-only branches from external builds. In external builds every
+ * eliminates the dsxu internal branches from external builds. In external builds every
  * function in this file reduces to a trivial return.
  */
 

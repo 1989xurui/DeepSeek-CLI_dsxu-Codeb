@@ -136,11 +136,3 @@ export function TagTabs({
         </Text> : <Text dimColor>{RIGHT_HINT_NO_COUNT}</Text>}
     </Box>;
 }
-
-// V14 lifecycle shim: tagtabs
-export function processTagtabsLifecycle(input) {
-  void input
-  const state = 'tagtabs-state'
-  const lifecycle = 'tagtabs:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

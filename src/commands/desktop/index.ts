@@ -1,4 +1,5 @@
-import { LEGACY_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
+import { PROVIDER_MIGRATION_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
+import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 function isSupportedPlatform(): boolean {
   if (process.platform === 'darwin') {
@@ -14,9 +15,10 @@ const desktop = {
   type: 'local-jsx',
   name: 'desktop',
   aliases: ['app'],
-  description: 'Open the legacy desktop handoff for this session (DSXU Workbench provider preferred)',
-  availability: [LEGACY_CLOUD_AVAILABILITY],
-  isEnabled: isSupportedPlatform,
+  description:
+    'Open the provider-migration desktop handoff for this session (DSXU Workbench provider preferred)',
+  availability: [PROVIDER_MIGRATION_CLOUD_AVAILABILITY],
+  isEnabled: () => !isDsxuRuntimeMode() && isSupportedPlatform(),
   isHidden: true,
   load: () => import('./desktop.js'),
 } satisfies Command

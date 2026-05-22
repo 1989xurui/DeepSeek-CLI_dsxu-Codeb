@@ -41,20 +41,3 @@ export function getEnterWorktreeToolPrompt(): string {
 - Verification / evidence: cite the created worktree path/branch and confirm the session cwd changed before editing inside it.
 `
 }
-
-
-// V14 strict lifecycle shim: tools-EnterWorktreeTool-prompt
-export function processToolsEnterWorktreeToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-EnterWorktreeTool-prompt-state'
-  const lifecycle = 'tools-EnterWorktreeTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsEnterWorktreeToolPromptStrict(input) {
-  return processToolsEnterWorktreeToolPromptStrictLifecycle(input)
-}

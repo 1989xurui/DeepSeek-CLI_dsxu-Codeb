@@ -17,19 +17,3 @@ export function renderToolResultMessage(output: Output, _progressMessagesForMess
       <Text dimColor>{output.worktreePath}</Text>
     </Box>;
 }
-
-// V14 strict lifecycle shim: tools-EnterWorktreeTool-UI
-export function processToolsEnterWorktreeToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-EnterWorktreeTool-UI-state'
-  const lifecycle = 'tools-EnterWorktreeTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsEnterWorktreeToolUIStrict(input) {
-  return processToolsEnterWorktreeToolUIStrictLifecycle(input)
-}

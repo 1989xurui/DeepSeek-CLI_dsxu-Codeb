@@ -1,8 +1,7 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { dirname, sep } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/LSPDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
@@ -96,6 +95,23 @@ export const FileWriteTool = buildTool({
   name: FILE_WRITE_TOOL_NAME,
   searchHint: 'create or overwrite files',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU File Mutation Tool',
+    sideEffects: [
+      'filesystem-write',
+      'lsp-diagnostic-refresh',
+      'skill-directory-activation',
+      'git-diff-evidence',
+    ],
+    permission: 'filesystem write permission via checkWritePermissionForTool',
+    evidence: [
+      'inputSchema.file_path',
+      'checkWritePermissionForTool',
+      'file modification time guard',
+      'structuredPatch/gitDiff output',
+    ],
+    uiProjection: 'file write progress, rejected message, result diff',
+  },
   strict: true,
   async description() {
     return 'Write a file to the local filesystem.'
@@ -337,11 +353,11 @@ export const FileWriteTool = buildTool({
       limit: undefined,
     })
 
-    // Log when writing to DSXU.md / legacy instruction files.
+    // Log when writing to DSXU.md / provider-migration source instruction files.
     if (fullFilePath.endsWith(`${sep}DSXU.md`)) {
       logEvent('tengu_write_dsxu_instruction', {})
     } else if (fullFilePath.endsWith(`${sep}${'CL' + 'AUDE'}.md`)) {
-      logEvent('tengu_write_legacy_instruction', {})
+      logEvent('tengu_write_source_provider_instruction', {})
     }
 
     let gitDiff: ToolUseDiff | undefined

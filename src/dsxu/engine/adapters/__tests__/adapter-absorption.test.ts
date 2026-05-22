@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { FileEditAdapter, createFileEditSpec, FileEditErrorType } from '../file-edit-adapter'
 import { BashAdapter, createBashSpec } from '../bash-adapter'
-import { BridgeAdapter, BridgeToolErrorType, BridgeToolEventType } from '../bridge-adapter'
+import { ExternalToolAdapter, ExternalToolErrorType } from '../external-tool-adapter'
 import type { ToolCallRequest, ToolExecutionContext } from '../../tool-protocol'
 import { mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs'
 import { join } from 'path'
@@ -95,7 +95,7 @@ describe('FileEditAdapter - 从 DSXU 吸收的成熟内容', () => {
 
     expect(result.ok).toBe(false)
     expect(result.error?.type).toBe(FileEditErrorType.PERMISSION_DENIED)
-    expect(result.outputText).toContain('敏感文件')
+    expect(result.outputText).toContain('Editing sensitive file is blocked')
   })
 
   it('应该处理多匹配和 replace_all（从 DSXU 吸收）', async () => {
@@ -137,7 +137,7 @@ describe('FileEditAdapter - 从 DSXU 吸收的成熟内容', () => {
 
   it('应该验证工具规格（从 DSXU 吸收）', () => {
     expect(spec.name).toBe('FileEdit')
-    expect(spec.description).toContain('引号规范化')
+    expect(spec.description).toContain('quote normalization')
     expect(spec.inputSchema.properties.replace_all).toBeDefined()
     expect(spec.constraints?.maxFileSize).toBe('1GB')
     expect(spec.constraints?.quoteNormalization).toBe(true)
@@ -167,15 +167,15 @@ describe('BashAdapter - 从 DSXU 吸收的成熟内容', () => {
       callId: 'test-5',
       toolName: 'Bash',
       arguments: {
-        command: 'echo "Hello from test"'
+        command: 'echo "test output"'
       }
     }
 
     const result = await adapter.execute(request, createTestContext())
 
     expect(result.ok).toBe(true)
-    expect(result.outputText).toContain('Hello from test')
-    expect(result.structuredData?.stdout).toContain('Hello from test')
+    expect(result.outputText).toContain('test output')
+    expect(result.structuredData?.stdout).toContain('test output')
   })
 
   it('应该阻止危险命令（从 DSXU 吸收）', async () => {
@@ -190,7 +190,7 @@ describe('BashAdapter - 从 DSXU 吸收的成熟内容', () => {
     const result = await adapter.execute(request, createTestContext())
 
     expect(result.ok).toBe(false)
-    expect(result.outputText).toContain('危险命令')
+    expect(result.outputText).toContain('blocking safety issue')
   })
 
   it('应该格式化输出（从 DSXU 吸收）', async () => {
@@ -198,7 +198,7 @@ describe('BashAdapter - 从 DSXU 吸收的成熟内容', () => {
       callId: 'test-7',
       toolName: 'Bash',
       arguments: {
-        command: 'echo "Line 1"; echo "Line 2"; echo "Line 3"'
+        command: 'for i in 1 2 3 4 5 6 7 8 9 10; do echo "iteration $i"; done'
       }
     }
 
@@ -230,7 +230,7 @@ describe('BashAdapter - 从 DSXU 吸收的成熟内容', () => {
 
   it('应该验证工具规格（从 DSXU 吸收）', () => {
     expect(spec.name).toBe('Bash')
-    expect(spec.description).toContain('输出格式化')
+    expect(spec.description).toContain('formatted output')
     expect(spec.inputSchema.properties.timeout.minimum).toBe(1000)
     expect(spec.inputSchema.properties.timeout.maximum).toBe(300000)
     expect(spec.constraints?.dangerousPatterns).toContain('rm -rf /')
@@ -238,7 +238,7 @@ describe('BashAdapter - 从 DSXU 吸收的成熟内容', () => {
   })
 })
 
-describe('BridgeAdapter - 从 DSXU 吸收的成熟内容', () => {
+describe('ExternalToolAdapter - DSXU external capability owner', () => {
   beforeEach(() => {
     mkdirSync(TEST_DIR, { recursive: true })
   })
@@ -247,67 +247,50 @@ describe('BridgeAdapter - 从 DSXU 吸收的成熟内容', () => {
     try { rmSync(TEST_DIR, { recursive: true, force: true }) } catch {}
   })
 
-  it('应该创建带门禁的适配器', () => {
-    const gateConfig = BridgeAdapter.createDefaultGateConfig()
-    const adapter = new BridgeAdapter(new Map(), gateConfig)
+  it('routes external tool calls through the configured DSXU gate', async () => {
+    const gateCalls: Array<{ toolName: string; input: unknown }> = []
+    const adapter = new ExternalToolAdapter(new Map([
+      ['Tool1', { execute: async () => ({ content: 'plain string result', isError: false }) }],
+    ]), {
+      enabled: true,
+      gatedTools: ['Tool1'],
+      gateCheck: async (toolName, input) => {
+        gateCalls.push({ toolName, input })
+        return { allowed: true }
+      },
+    })
 
-    expect(adapter.getGateConfig().enabled).toBe(true)
-    expect(adapter.getGateConfig().gatedTools).toContain('FileEdit')
-    expect(adapter.getGateConfig().gatedTools).toContain('Bash')
-  })
-
-  it('应该归一化桥接结果（从 DSXU 吸收）', async () => {
-    const context = createTestContext()
-
-    // 测试不同的桥接结果格式
-    const mockTool1 = {
-      execute: async () => 'plain string result'
-    }
-
-    const mockTool2 = {
-      execute: async () => ({ content: 'object result', isError: false, meta: { test: true } })
-    }
-
-    const mockTool3 = {
-      execute: async () => ({ output: 'output field', error: null })
-    }
-
-    const adapter = new BridgeAdapter(new Map([
-      ['Tool1', mockTool1],
-      ['Tool2', mockTool2],
-      ['Tool3', mockTool3]
-    ]))
-
-    // 测试格式1: 纯字符串
-    const result1 = await adapter.execute({
+    const result = await adapter.execute({
       callId: 'test-9a',
       toolName: 'Tool1',
-      arguments: {}
-    }, context)
+      arguments: { value: 1 },
+    }, createTestContext())
 
-    expect(result1.ok).toBe(true)
-    expect(result1.outputText).toBe('plain string result')
+    expect(result.ok).toBe(true)
+    expect(result.outputText).toBe('plain string result')
+    expect(result.metadata?.usedBridge).toBe(false)
+    expect(gateCalls).toEqual([{ toolName: 'Tool1', input: { value: 1 } }])
+  })
 
-    // 测试格式2: 标准对象格式
-    const result2 = await adapter.execute({
+  it('blocks denied external tools at the DSXU gate', async () => {
+    const adapter = new ExternalToolAdapter(new Map([
+      ['Tool1', { execute: async () => ({ content: 'should not run', isError: false }) }],
+    ]), {
+      enabled: true,
+      gatedTools: ['Tool1'],
+      gateCheck: async () => ({ allowed: false, reason: 'blocked by owner gate' }),
+    })
+
+    const result = await adapter.execute({
       callId: 'test-9b',
-      toolName: 'Tool2',
-      arguments: {}
-    }, context)
+      toolName: 'Tool1',
+      arguments: {},
+    }, createTestContext())
 
-    expect(result2.ok).toBe(true)
-    expect(result2.outputText).toBe('object result')
-    expect(result2.structuredData?.test).toBe(true)
-
-    // 测试格式3: output/error 格式
-    const result3 = await adapter.execute({
-      callId: 'test-9c',
-      toolName: 'Tool3',
-      arguments: {}
-    }, context)
-
-    expect(result3.ok).toBe(true)
-    expect(result3.outputText).toBe('output field')
+    expect(result.ok).toBe(false)
+    expect(result.error?.type).toBe(ExternalToolErrorType.PERMISSION_DENIED)
+    expect(result.outputText).toContain('blocked by owner gate')
+    expect(result.metadata?.usedBridge).toBe(false)
   })
 })
 
@@ -322,14 +305,14 @@ describe('集成测试 - 原生路径与桥接路径一致性', () => {
   })
 
   it('应该保持错误类型的一致性', () => {
-    // FileEdit 错误类型应该与 BridgeTool 错误类型兼容
+    // FileEdit 错误类型应该与 ExternalTool 错误类型兼容
     expect(FileEditErrorType.PERMISSION_DENIED).toBe('PERMISSION_DENIED')
-    expect(BridgeToolErrorType.PERMISSION_DENIED).toBe('PERMISSION_DENIED')
+    expect(ExternalToolErrorType.PERMISSION_DENIED).toBe('PERMISSION_DENIED')
 
     expect(FileEditErrorType.VALIDATION_FAILED).toBe('VALIDATION_FAILED')
-    expect(BridgeToolErrorType.VALIDATION_FAILED).toBe('VALIDATION_FAILED')
+    expect(ExternalToolErrorType.VALIDATION_FAILED).toBe('VALIDATION_FAILED')
 
     expect(FileEditErrorType.EXECUTION_FAILED).toBe('EXECUTION_FAILED')
-    expect(BridgeToolErrorType.EXECUTION_FAILED).toBe('EXECUTION_FAILED')
+    expect(ExternalToolErrorType.EXECUTION_FAILED).toBe('EXECUTION_FAILED')
   })
 })

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { Base64ImageSource } from 'src/types/providerSdk.js'
 import { readdir, readFile as readFileAsync } from 'fs/promises'
 import * as path from 'path'
@@ -10,9 +9,9 @@ import {
   PDF_MAX_PAGES_PER_READ,
 } from '../../constants/apiLimits.js'
 import { hasBinaryExtension } from '../../constants/files.js'
-import { getCompatHighTierModelId } from '../../dsxu/legacy/model/legacyProviderModelRuntimeCompat.js'
+import { getProviderMigrationHighTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import { memoryFreshnessNote } from '../../memdir/memoryAge.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logEvent } from '../../services/analytics/index.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -342,6 +341,22 @@ export const FileReadTool = buildTool({
   // Output is bounded by maxTokens (validateContentTokens). Persisting to a
   // file the model reads back with Read is circular ...never persist.
   maxResultSizeChars: Infinity,
+  runtimeMetadata: {
+    owner: 'DSXU File Read Tool',
+    sideEffects: [
+      'filesystem-read',
+      'image-pdf-notebook-decoding',
+      'read-state-observation',
+    ],
+    permission: 'filesystem read permission via checkReadPermissionForTool',
+    evidence: [
+      'inputSchema.file_path',
+      'checkReadPermissionForTool',
+      'readFileState observation',
+      'line/page range validation',
+    ],
+    uiProjection: 'read summary chrome; content is model-facing only',
+  },
   strict: true,
   async description() {
     return DESCRIPTION
@@ -827,7 +842,7 @@ export const CYBER_RISK_MITIGATION_REMINDER =
   '\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n'
 
 // Models where cyber risk mitigation should be skipped
-const MITIGATION_EXEMPT_MODELS = new Set([getCompatHighTierModelId()])
+const MITIGATION_EXEMPT_MODELS = new Set([getProviderMigrationHighTierModelId()])
 
 function shouldIncludeFileReadMitigation(): boolean {
   const shortName = getCanonicalName(getMainLoopModel())

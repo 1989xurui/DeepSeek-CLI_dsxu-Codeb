@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Lightweight helpers shared between keychainPrefetch.ts and
  * macOsKeychainStorage.ts.
@@ -19,7 +18,7 @@ import { userInfo } from 'os'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getRuntimeConfigHomeDir } from '../envUtils.js'
 import type { SecureStorageData } from './types.js'
-// Suffix distinguishing the OAuth credentials keychain entry from the legacy
+// Suffix distinguishing the OAuth credentials keychain entry from the provider-migration source
 // API key entry (which uses no suffix). Both share the service name base.
 // DO NOT change this value - it's part of the keychain lookup key and would
 // orphan existing stored credentials.
@@ -30,7 +29,7 @@ export function getMacOsKeychainStorageServiceName(
   const configDir = getRuntimeConfigHomeDir()
   const isDefaultDir = !process.env.DSXU_CONFIG_DIR && !process.env.DSXU_CONFIG_DIR
   // Use a hash of the config dir path to create a unique but stable suffix
-  // Only add suffix for non-default directories to maintain backwards compatibility
+  // Only add suffix for non-default directories to keep existing keychain entries reachable.
   const dirHash = isDefaultDir
     ? ''
     : `-${createHash('sha256').update(configDir).digest('hex').substring(0, 8)}`

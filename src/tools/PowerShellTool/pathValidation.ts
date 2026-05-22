@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * PowerShell-specific path validation for command arguments.
  *
@@ -1387,7 +1386,7 @@ function extractPathsFromCommand(cmd: ParsedCommandElement): {
       } else if (matchesParam(paramLower, valueParams)) {
         // Known value-taking non-path parameter (e.g., -Encoding UTF8, -Filter *.txt).
         // Consume its value; do NOT validate as path, but DO check elementType.
-  // SECURITY: A Variable elementType (e.g., $env:DEEPSEEK_API_KEY or legacy
+  // SECURITY: A Variable elementType (e.g., $env:DEEPSEEK_API_KEY or provider-migration
   // $env:PROVIDER_API_KEY) in any
         // argument position means the runtime value is not statically knowable.
         // Without this check, `-Value $env:SECRET` would be silently auto-allowed

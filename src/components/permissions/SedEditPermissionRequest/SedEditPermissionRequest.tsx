@@ -227,11 +227,3 @@ function SedEditPermissionRequestInner(t0) {
   }
   return t13;
 }
-
-// V14 lifecycle shim: sededitpermissionrequest
-export function processSededitpermissionrequestLifecycle(input) {
-  void input
-  const state = 'sededitpermissionrequest-state'
-  const lifecycle = 'sededitpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

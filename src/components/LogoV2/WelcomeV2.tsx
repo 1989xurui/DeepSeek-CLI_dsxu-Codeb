@@ -431,11 +431,3 @@ function AppleTerminalWelcomeV2(t0) {
   }
   return t19;
 }
-
-// V14 lifecycle shim: welcomev2
-export function processWelcomev2Lifecycle(input) {
-  void input
-  const state = 'welcomev2-state'
-  const lifecycle = 'welcomev2:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

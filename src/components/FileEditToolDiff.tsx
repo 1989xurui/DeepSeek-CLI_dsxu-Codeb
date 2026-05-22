@@ -178,11 +178,3 @@ function normalizeEdit(fileContent: string, edit: FileEdit): FileEdit {
     new_string: actualNew
   };
 }
-
-// V14 lifecycle shim: fileedittooldiff
-export function processFileedittooldiffLifecycle(input) {
-  void input
-  const state = 'fileedittooldiff-state'
-  const lifecycle = 'fileedittooldiff:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -20,10 +20,7 @@ function isFilesystemCommand(command: string): command is FilesystemCommand {
   return ACCEPT_EDITS_ALLOWED_COMMANDS.includes(command as FilesystemCommand)
 }
 
-function validateCommandForMode(
-  cmd: string,
-  toolPermissionContext: ToolPermissionContext,
-): PermissionResult {
+function validateCommandForMode(cmd: string): PermissionResult {
   const trimmedCmd = cmd.trim()
   const [baseCmd] = trimmedCmd.split(/\s+/)
 
@@ -34,11 +31,8 @@ function validateCommandForMode(
     }
   }
 
-  // In Accept Edits mode, auto-allow filesystem operations
-  if (
-    toolPermissionContext.mode === 'acceptEdits' &&
-    isFilesystemCommand(baseCmd)
-  ) {
+  // In Accept Edits mode, auto-allow filesystem operations.
+  if (isFilesystemCommand(baseCmd)) {
     return {
       behavior: 'allow',
       updatedInput: { command: cmd },
@@ -51,7 +45,7 @@ function validateCommandForMode(
 
   return {
     behavior: 'passthrough',
-    message: `No mode-specific handling for '${baseCmd}' in ${toolPermissionContext.mode} mode`,
+    message: `No mode-specific handling for '${baseCmd}' in acceptEdits mode`,
   }
 }
 
@@ -89,22 +83,38 @@ export function checkPermissionMode(
     }
   }
 
+  if (toolPermissionContext.mode !== 'acceptEdits') {
+    return {
+      behavior: 'passthrough',
+      message: 'No mode-specific validation required',
+    }
+  }
+
   const commands = splitCommand_DEPRECATED(input.command)
+  if (commands.length === 0) {
+    return {
+      behavior: 'passthrough',
+      message: 'No commands found to validate for acceptEdits mode',
+    }
+  }
 
-  // Check each subcommand
+  // AcceptEdits can only fast-path a compound command when every subcommand is
+  // one of the narrow filesystem operations. A single matching subcommand must
+  // not allow unrelated shell work to bypass the classifier.
   for (const cmd of commands) {
-    const result = validateCommandForMode(cmd, toolPermissionContext)
-
-    // If any command triggers mode-specific behavior, return that result
-    if (result.behavior !== 'passthrough') {
+    const result = validateCommandForMode(cmd)
+    if (result.behavior !== 'allow') {
       return result
     }
   }
 
-  // No mode-specific handling needed
   return {
-    behavior: 'passthrough',
-    message: 'No mode-specific validation required',
+    behavior: 'allow',
+    updatedInput: input,
+    decisionReason: {
+      type: 'mode',
+      mode: 'acceptEdits',
+    },
   }
 }
 
@@ -112,21 +122,4 @@ export function getAutoAllowedCommands(
   mode: ToolPermissionContext['mode'],
 ): readonly string[] {
   return mode === 'acceptEdits' ? ACCEPT_EDITS_ALLOWED_COMMANDS : []
-}
-
-
-// V14 strict lifecycle shim: tools-BashTool-modeValidation
-export function processToolsBashToolModeValidationStrictLifecycle(input) {
-  void input
-  const state = 'tools-BashTool-modeValidation-state'
-  const lifecycle = 'tools-BashTool-modeValidation:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsBashToolModeValidationStrict(input) {
-  return processToolsBashToolModeValidationStrictLifecycle(input)
 }

@@ -1,6 +1,5 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { SDKMessage } from 'src/entrypoints/agentSdkTypes.js'
-import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/growthbook.js'
+import { checkGate_CACHED_OR_BLOCKING } from '../../../services/analytics/featureFlags.js'
 import { isPolicyAllowed } from '../../../services/policyLimits/index.js'
 import { detectCurrentRepositoryWithHost } from '../../detectRepository.js'
 import { isEnvTruthy } from '../../envUtils.js'
@@ -9,7 +8,7 @@ import {
   checkGithubAppInstalled,
   checkHasRemoteEnvironment,
   checkIsInGitRepo,
-  checkNeedsLegacyCloudLogin,
+  checkNeedsProviderMigrationLogin,
 } from './preconditions.js'
 
 /**
@@ -57,7 +56,7 @@ export async function checkBackgroundRemoteSessionEligibility({
   }
 
   const [needsLogin, hasRemoteEnv, repository] = await Promise.all([
-    checkNeedsLegacyCloudLogin(),
+    checkNeedsProviderMigrationLogin(),
     checkHasRemoteEnvironment(),
     detectCurrentRepositoryWithHost(),
   ])

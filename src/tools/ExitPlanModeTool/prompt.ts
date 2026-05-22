@@ -1,4 +1,4 @@
-// External stub for ExitPlanModeTool prompt - excludes Ant-only allowedPrompts section
+// External stub for ExitPlanModeTool prompt - excludes DSXU internal allowedPrompts section
 
 // Hardcoded to avoid relative import issues in stub
 const ASK_USER_QUESTION_TOOL_NAME = 'AskUserQuestion'
@@ -46,20 +46,3 @@ ExitPlanMode is the approval gate for implementation. Do not call it if the plan
 2. Initial task: "Help me implement yank mode for vim" - Use the exit plan mode tool after you have finished planning the implementation steps of the task.
 3. Initial task: "Add a new feature to handle user authentication" - If unsure about auth method (OAuth, JWT, etc.), use ${ASK_USER_QUESTION_TOOL_NAME} first, then use exit plan mode tool after clarifying the approach.
 `
-
-
-// V14 strict lifecycle shim: tools-ExitPlanModeTool-prompt
-export function processToolsExitPlanModeToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-ExitPlanModeTool-prompt-state'
-  const lifecycle = 'tools-ExitPlanModeTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsExitPlanModeToolPromptStrict(input) {
-  return processToolsExitPlanModeToolPromptStrictLifecycle(input)
-}

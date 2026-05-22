@@ -173,7 +173,7 @@ const items: readonly HighPressureAbsorptionItem[] = [
     referenceBehavior: ['services/mcp', 'tools/MCPTool', 'tools/ReadMcpResourceTool'],
     dsxuLanding: [
       'src/services/mcp',
-      'src/dsxu/engine/mcp-client.ts',
+      'src/services/mcp/client.ts',
       'src/dsxu/engine/engine-tool-adapter.ts',
     ],
     stressBehaviors: [
@@ -277,7 +277,7 @@ const items: readonly HighPressureAbsorptionItem[] = [
     ],
     stressBehaviors: [
       'default CLI/TUI import scan proves old shell unreachable',
-      'default tool pool and prompt do not advertise old provider shell',
+      'default tool pool and prompt do not advertise provider-migration shell',
       'legacy aliases remain explicit legacy flags',
       'five smoke classes stay green after cleanup',
     ],
@@ -298,7 +298,7 @@ const items: readonly HighPressureAbsorptionItem[] = [
   {
     id: '9 Public Cross-Model Evaluation',
     objective:
-      'Prepare public DSXU vs reference coding workflow/GPT/Codex/Gemini/Aider/Cline evaluation with raw logs and identical constraints.',
+      'Prepare public DSXU vs external coding-model runner evaluation with raw logs and identical constraints.',
     referenceBehavior: ['query.ts', 'tools/*/prompt.ts', 'services/compact', 'services/mcp'],
     dsxuLanding: [
       '.dsxu/eval/model-comparison-template.json',
@@ -307,7 +307,7 @@ const items: readonly HighPressureAbsorptionItem[] = [
     ],
     stressBehaviors: [
       '30-50 fixed same-task live benchmark set',
-      'DSXU DeepSeek V4, reference coding workflow, GPT/Codex, Gemini, Aider, and Cline raw logs',
+      'DSXU DeepSeek V4 and reference coding workflow-class external coding-model runner raw logs under identical constraints',
       'pass rate, turns, cost, wall clock, repeated edit, tool misuse, fake PASS, permission violation, recovery, compact resume, and Agent success',
     ],
     acceptance: [

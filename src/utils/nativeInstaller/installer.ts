@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Native Installer Implementation
  *
@@ -50,7 +49,7 @@ import * as lockfile from '../lockfile.js'
 import { logError } from '../log.js'
 import { gt, gte } from '../semver.js'
 import {
-  filterLegacyProviderAliases,
+  filterProviderMigrationSourceAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
@@ -79,11 +78,11 @@ export const VERSION_RETENTION_COUNT = 2
 // allowing cleanup of abandoned locks from crashed processes within a reasonable time.
 const LOCK_STALE_MS = 7 * 24 * 60 * 60 * 1000
 const DSXU_NATIVE_STATE_NAME = 'dsxu'
-const LEGACY_NATIVE_PRODUCT = 'cl' + 'aude'
-const LEGACY_NATIVE_CONFIG_DIR = `.${LEGACY_NATIVE_PRODUCT}`
-const LEGACY_PROVIDER_SCOPE = '@' + 'anth' + 'ropic-ai'
-const LEGACY_CODE_PACKAGE = `${LEGACY_PROVIDER_SCOPE}/${LEGACY_NATIVE_PRODUCT}-code`
-const LEGACY_NATIVE_PACKAGE_PREFIX = `${LEGACY_NATIVE_PRODUCT}-cli-native-`
+const PROVIDER_MIGRATION_NATIVE_PRODUCT = 'cl' + 'aude'
+const PROVIDER_MIGRATION_NATIVE_CONFIG_DIR = `.${PROVIDER_MIGRATION_NATIVE_PRODUCT}`
+const PROVIDER_MIGRATION_SOURCE_SCOPE = '@' + 'anth' + 'ropic-ai'
+const PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE = `${PROVIDER_MIGRATION_SOURCE_SCOPE}/${PROVIDER_MIGRATION_NATIVE_PRODUCT}-code`
+const PROVIDER_MIGRATION_NATIVE_PACKAGE_PREFIX = `${PROVIDER_MIGRATION_NATIVE_PRODUCT}-cli-native-`
 
 export type SetupMessage = {
   message: string
@@ -117,8 +116,8 @@ export function getPlatform(): string {
 
 export function getBinaryName(platform: string): string {
   return platform.startsWith('win32')
-    ? `${LEGACY_NATIVE_PRODUCT}.exe`
-    : LEGACY_NATIVE_PRODUCT
+    ? `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.exe`
+    : PROVIDER_MIGRATION_NATIVE_PRODUCT
 }
 
 function getBaseDirectories() {
@@ -126,7 +125,7 @@ function getBaseDirectories() {
   const executableName = getBinaryName(platform)
   const stateDirName = isDsxuRuntimeMode()
     ? DSXU_NATIVE_STATE_NAME
-    : LEGACY_NATIVE_PRODUCT
+    : PROVIDER_MIGRATION_NATIVE_PRODUCT
 
   return {
     // Data directories (permanent storage)
@@ -343,10 +342,10 @@ async function installVersionFromPackage(
 ) {
   try {
     // Extract binary from npm package structure in staging
-    const nodeModulesDir = join(stagingPath, 'node_modules', LEGACY_PROVIDER_SCOPE)
+    const nodeModulesDir = join(stagingPath, 'node_modules', PROVIDER_MIGRATION_SOURCE_SCOPE)
     const entries = await readdir(nodeModulesDir)
     const nativePackage = entries.find((entry: string) =>
-      entry.startsWith(LEGACY_NATIVE_PACKAGE_PREFIX),
+      entry.startsWith(PROVIDER_MIGRATION_NATIVE_PACKAGE_PREFIX),
     )
 
     if (!nativePackage) {
@@ -399,7 +398,7 @@ async function installVersionFromBinary(
   installPath: string,
 ) {
   try {
-    // For direct binary downloads (GCS, generic bucket), the binary is directly in staging
+    // For direct binary downloads, the binary is directly in staging.
     const platform = getPlatform()
     const binaryName = getBinaryName(platform)
     const stagedBinaryPath = join(stagingPath, binaryName)
@@ -1001,20 +1000,20 @@ async function installLatestImpl(
   }
 
   // Installation succeeded (early return above covers failure). Mark as native
-  // and disable legacy auto-updater to protect symlinks.
+  // and disable provider-migration source auto-updater to protect symlinks.
   const config = getGlobalConfig()
   if (config.installMethod !== 'native') {
     saveGlobalConfig(current => ({
       ...current,
       installMethod: 'native',
-      // Disable legacy auto-updater to prevent npm sessions from deleting native symlinks.
+      // Disable provider-migration source auto-updater to prevent npm sessions from deleting native symlinks.
       // Native installations use NativeAutoUpdater instead, which respects native installation.
       autoUpdates: false,
       // Mark this as protection-based, not user preference
       autoUpdatesProtectedForNative: true,
     }))
     logForDebugging(
-      'Native installer: Set installMethod to "native" and disabled legacy auto-updater for protection',
+      'Native installer: Set installMethod to "native" and disabled provider-migration source auto-updater for protection',
     )
   }
 
@@ -1208,7 +1207,7 @@ export async function cleanupOldVersions(): Promise<void> {
       let cleanedCount = 0
       for (const file of files) {
         const oldExePattern = new RegExp(
-          `^${LEGACY_NATIVE_PRODUCT}\\.exe\\.old\\.\\d+$`,
+          `^${PROVIDER_MIGRATION_NATIVE_PRODUCT}\\.exe\\.old\\.\\d+$`,
         )
         if (!oldExePattern.test(file)) continue
         try {
@@ -1500,7 +1499,7 @@ export async function removeInstalledSymlink(): Promise<void> {
 }
 
 /**
- * Clean up old legacy provider aliases from shell configuration files.
+ * Clean up old provider-migration source aliases from shell configuration files.
  * Only handles alias removal, not PATH setup
  */
 export async function cleanupShellAliases(): Promise<SetupMessage[]> {
@@ -1512,16 +1511,16 @@ export async function cleanupShellAliases(): Promise<SetupMessage[]> {
       const lines = await readFileLines(configFile)
       if (!lines) continue
 
-      const { filtered, hadAlias } = filterLegacyProviderAliases(lines)
+      const { filtered, hadAlias } = filterProviderMigrationSourceAliases(lines)
 
       if (hadAlias) {
         await writeFileLines(configFile, filtered)
         messages.push({
-          message: `Removed legacy provider alias from ${configFile}. Run: unalias ${LEGACY_NATIVE_PRODUCT}`,
+          message: `Removed provider-migration source alias from ${configFile}. Run: unalias ${PROVIDER_MIGRATION_NATIVE_PRODUCT}`,
           userActionRequired: true,
           type: 'alias',
         })
-        logForDebugging(`Cleaned up legacy provider alias from ${shellType} config`)
+        logForDebugging(`Cleaned up provider-migration source alias from ${shellType} config`)
       }
     } catch (error) {
       logError(error)
@@ -1572,9 +1571,9 @@ async function manualRemoveNpmPackage(
 
     if (getPlatform().startsWith('win32')) {
       // Windows - only remove executables, not the package directory
-      const binCmd = join(globalPrefix, `${LEGACY_NATIVE_PRODUCT}.cmd`)
-      const binPs1 = join(globalPrefix, `${LEGACY_NATIVE_PRODUCT}.ps1`)
-      const binExe = join(globalPrefix, LEGACY_NATIVE_PRODUCT)
+      const binCmd = join(globalPrefix, `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.cmd`)
+      const binPs1 = join(globalPrefix, `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.ps1`)
+      const binExe = join(globalPrefix, PROVIDER_MIGRATION_NATIVE_PRODUCT)
 
       if (await tryRemove(binCmd, 'bin script')) {
         manuallyRemoved = true
@@ -1589,7 +1588,7 @@ async function manualRemoveNpmPackage(
       }
     } else {
       // Unix/Mac - only remove symlink, not the package directory
-      const binSymlink = join(globalPrefix, 'bin', LEGACY_NATIVE_PRODUCT)
+      const binSymlink = join(globalPrefix, 'bin', PROVIDER_MIGRATION_NATIVE_PRODUCT)
 
       if (await tryRemove(binSymlink, 'bin symlink')) {
         manuallyRemoved = true
@@ -1676,8 +1675,8 @@ export async function cleanupNpmInstallations(): Promise<{
   const warnings: string[] = []
   let removed = 0
 
-  // Always attempt to remove the legacy provider package.
-  const codePackageResult = await attemptNpmUninstall(LEGACY_CODE_PACKAGE)
+  // Always attempt to remove the provider-migration source package.
+  const codePackageResult = await attemptNpmUninstall(PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE)
   if (codePackageResult.success) {
     removed++
     if (codePackageResult.warning) {
@@ -1688,7 +1687,7 @@ export async function cleanupNpmInstallations(): Promise<{
   }
 
   // Also attempt to remove MACRO.PACKAGE_URL if it's defined and different
-  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== LEGACY_CODE_PACKAGE) {
+  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE) {
     const macroPackageResult = await attemptNpmUninstall(MACRO.PACKAGE_URL)
     if (macroPackageResult.success) {
       removed++
@@ -1703,7 +1702,7 @@ export async function cleanupNpmInstallations(): Promise<{
   // Check for local installation at the runtime config location.
   const localInstallDir = join(
     homedir(),
-    isDsxuRuntimeMode() ? '.dsxu' : LEGACY_NATIVE_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_NATIVE_CONFIG_DIR,
     'local',
   )
 

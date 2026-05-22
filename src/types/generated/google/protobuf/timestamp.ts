@@ -185,12 +185,3 @@ interface MessageFns<T> {
   create<I extends Exact<DeepPartial<T>, I>>(base?: I): T
   fromPartial<I extends Exact<DeepPartial<T>, I>>(object: I): T
 }
-
-
-// V14 lifecycle shim: timestamp
-export function processTimestampLifecycle(input) {
-  void input
-  const state = 'timestamp-state'
-  const lifecycle = 'timestamp:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

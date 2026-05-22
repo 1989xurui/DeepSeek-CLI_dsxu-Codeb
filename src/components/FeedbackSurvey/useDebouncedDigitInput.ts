@@ -80,12 +80,3 @@ export function useDebouncedDigitInput<T extends string = string>({
     }
   }, [inputValue, enabled, once, debounceMs])
 }
-
-
-// V14 lifecycle shim: usedebounceddigitinput
-export function processUsedebounceddigitinputLifecycle(input) {
-  void input
-  const state = 'usedebounceddigitinput-state'
-  const lifecycle = 'usedebounceddigitinput:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

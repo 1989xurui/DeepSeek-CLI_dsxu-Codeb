@@ -79,11 +79,3 @@ export function TeammateViewHeader() {
 function _temp(s) {
   return getViewedTeammateTask(s);
 }
-
-// V14 lifecycle shim: teammateviewheader
-export function processTeammateviewheaderLifecycle(input) {
-  void input
-  const state = 'teammateviewheader-state'
-  const lifecycle = 'teammateviewheader:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

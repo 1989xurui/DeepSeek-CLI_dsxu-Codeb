@@ -273,7 +273,7 @@ export function getSearchOrReadFromContent(
 }
 
 /**
- * Checks if a tool is a search/read operation (for backwards compatibility).
+ * Checks if a tool is a search/read operation for the older collapse API.
  */
 function isToolSearchOrRead(
   toolName: string,

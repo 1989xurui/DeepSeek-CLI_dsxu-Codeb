@@ -22,11 +22,3 @@ async function _temp() {
     priority: "high"
   };
 }
-
-// V14 lifecycle shim: usenpmdeprecationnotification
-export function processUsenpmdeprecationnotificationLifecycle(input) {
-  void input
-  const state = 'usenpmdeprecationnotification-state'
-  const lifecycle = 'usenpmdeprecationnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

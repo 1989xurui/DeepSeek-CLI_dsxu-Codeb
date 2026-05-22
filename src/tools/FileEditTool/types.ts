@@ -91,20 +91,3 @@ type OutputSchema = ReturnType<typeof outputSchema>
 export type FileEditOutput = z.infer<OutputSchema>
 
 export { inputSchema, outputSchema }
-
-
-// V14 strict lifecycle shim: tools-FileEditTool-types
-export function processToolsFileEditToolTypesStrictLifecycle(input) {
-  void input
-  const state = 'tools-FileEditTool-types-state'
-  const lifecycle = 'tools-FileEditTool-types:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsFileEditToolTypesStrict(input) {
-  return processToolsFileEditToolTypesStrictLifecycle(input)
-}

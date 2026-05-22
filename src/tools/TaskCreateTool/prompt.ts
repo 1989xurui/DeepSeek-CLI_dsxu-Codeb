@@ -62,20 +62,3 @@ ${teammateTips}- Check TaskList first to avoid creating duplicate tasks
 - Verification / evidence: each task should have a concrete completion signal such as file evidence, command output, PASS marker, or explicit PARTIAL/FAIL condition.
 `
 }
-
-
-// V14 strict lifecycle shim: tools-TaskCreateTool-prompt
-export function processToolsTaskCreateToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-TaskCreateTool-prompt-state'
-  const lifecycle = 'tools-TaskCreateTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsTaskCreateToolPromptStrict(input) {
-  return processToolsTaskCreateToolPromptStrictLifecycle(input)
-}

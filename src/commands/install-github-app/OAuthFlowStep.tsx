@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { KeyboardShortcutHint } from '../../components/design-system/KeyboardShortcutHint.js';
@@ -113,7 +112,7 @@ export function OAuthFlowStep({
         timersRef.current.add(timer_0);
       }, {
         loginWithDSXUAi: true,
-        // Legacy migration token path only
+        // Provider-migration token path only
         inferenceOnly: true,
         expiresIn: 365 * 24 * 60 * 60 // 1 year
       });

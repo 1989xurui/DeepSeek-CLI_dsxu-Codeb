@@ -115,11 +115,3 @@ function formatIdleDuration(minutes: number): string {
   }
   return `${hours}h ${remainingMinutes}m`;
 }
-
-// V14 lifecycle shim: idlereturndialog
-export function processIdlereturndialogLifecycle(input) {
-  void input
-  const state = 'idlereturndialog-state'
-  const lifecycle = 'idlereturndialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { randomBytes } from 'crypto'
 import type { ControlOperator, ParseEntry } from 'shell-quote'
 import {
@@ -239,7 +238,7 @@ export function filterControlOperators(
   )
 }
 /**
- * @deprecated Legacy regex/shell-quote path. Only used when tree-sitter is
+ * @deprecated Fallback regex/shell-quote path. Only used when tree-sitter is
  * unavailable. The primary gate is parseForSecurity (ast.ts).
  *
  * Splits a command string into individual commands based on shell operators
@@ -571,7 +570,7 @@ function isCommandList(command: string): boolean {
   return true
 }
 /**
- * @deprecated Legacy regex/shell-quote path. Only used when tree-sitter is
+ * @deprecated Fallback regex/shell-quote path. Only used when tree-sitter is
  * unavailable. The primary gate is parseForSecurity (ast.ts).
  */
 export function isUnsafeCompoundCommand_DEPRECATED(command: string): boolean {

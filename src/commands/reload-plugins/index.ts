@@ -16,21 +16,3 @@ const reloadPlugins = {
 } satisfies Command
 
 export default reloadPlugins
-
-
-// V14 command lifecycle shim: reload-plugins
-export function processReloadPluginsCommandLifecycle(input) {
-  void input
-  const state = 'reload-plugins-command-state'
-  const lifecycle = 'reload-plugins:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'reload-plugins',
-  }
-}
-
-export function runReloadPluginsCommand(input) {
-  return processReloadPluginsCommandLifecycle(input)
-}

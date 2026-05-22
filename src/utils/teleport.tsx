@@ -1,15 +1,14 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios';
 import chalk from 'chalk';
 import { randomUUID } from 'crypto';
 import React from 'react';
 import { getOriginalCwd, getSessionId } from 'src/bootstrap/state.js';
-import { checkGate_CACHED_OR_BLOCKING } from 'src/services/analytics/growthbook.js';
+import { checkGate_CACHED_OR_BLOCKING } from 'src/services/analytics/featureFlags.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js';
 import { z } from 'zod/v4';
-import { getCompatProviderAccessToken } from '../dsxu/legacy/auth/legacyProviderControlAuth.js';
-import { queryCompatSmallModel } from '../dsxu/legacy/model/legacyProviderSmallModelQuery.js';
+import { getProviderControlAccessToken } from '../services/auth/dsxuProviderControlAuth.js';
+import { queryProviderMigrationSmallModel } from './model/providerMigration/providerMigrationSmallModelQuery.js';
 import { getTeleportErrors, TeleportError, type TeleportLocalErrorType } from '../components/TeleportError.js';
 import { getOauthConfig } from '../constants/oauth.js';
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js';
@@ -93,11 +92,34 @@ Example 3: {"title": "Improve performance of data processing script", "branch": 
 Here is the session description:
 <description>{description}</description>
 Please generate a title and branch name for this session.`;
-const LEGACY_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
+const PROVIDER_MIGRATION_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
 type TitleAndBranch = {
   title: string;
   branchName: string;
 };
+
+export function getDsxuTeleportRuntimeProfile(): {
+  runtime: 'DSXU Teleport Remote Session'
+  owner: 'DSXU Remote Session Adapter Boundary'
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Teleport Remote Session',
+    owner: 'DSXU Remote Session Adapter Boundary',
+    activationEvidence: [
+      'teleportToRemote requires allow_remote_sessions policy',
+      'remote session creation uses DSXU provider control access token and Sessions API',
+      'git source or bundle upload is selected before remote session creation',
+      'teleport resume deserializes remote logs into DSXU messages',
+    ],
+    releaseRiskControls: [
+      'teleport is a remote session adapter, not a second local Agent orchestrator',
+      'remote execution must still surface session logs, permission state, and archive behavior',
+      'provider-migration OAuth token env remains migration-only input',
+    ],
+  }
+}
 
 /**
  * Generates a title and branch name for a coding session using the DSXU compact-title model.
@@ -109,7 +131,7 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
   const fallbackBranch = 'dsxu/task';
   try {
     const userPrompt = SESSION_TITLE_AND_BRANCH_PROMPT.replace('{description}', description);
-    const response = await queryCompatSmallModel({
+    const response = await queryProviderMigrationSmallModel({
       systemPrompt: asSystemPrompt([]),
       userPrompt,
       outputFormat: {
@@ -438,7 +460,7 @@ export async function teleportResumeCodeSession(sessionId: string, onProgress?: 
   }
   logForDebugging(`Resuming code session ID: ${sessionId}`);
   try {
-    const accessToken = getCompatProviderAccessToken();
+    const accessToken = getProviderControlAccessToken();
     if (!accessToken) {
       logEvent('tengu_teleport_resume_error', {
         error_type: 'no_access_token' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -638,7 +660,7 @@ export type PollRemoteSessionResponse = {
 export async function pollRemoteSessionEvents(sessionId: string, afterId: string | null = null, opts?: {
   skipMetadata?: boolean;
 }): Promise<PollRemoteSessionResponse> {
-  const accessToken = getCompatProviderAccessToken();
+  const accessToken = getProviderControlAccessToken();
   if (!accessToken) {
     throw new Error('No access token for polling');
   }
@@ -756,7 +778,7 @@ export async function teleportToRemote(options: {
   /**
    * Per-session env vars merged into session_context.environment_variables.
    * Write-only at the API layer (stripped from Get/List responses). When
-   * environmentId is set, the legacy provider OAuth token is auto-injected from the
+   * environmentId is set, the provider-migration OAuth token is auto-injected from the
    * caller's accessToken so the container's hook can hit inference (the
    * server only passes through what the caller sends; bughunter.go mints
    * its own, user sessions don't get one automatically).
@@ -805,7 +827,7 @@ export async function teleportToRemote(options: {
   try {
     // Check authentication
     await checkAndRefreshOAuthTokenIfNeeded();
-    const accessToken = getCompatProviderAccessToken();
+    const accessToken = getProviderControlAccessToken();
     if (!accessToken) {
       logError(new Error('No access token found for remote session creation'));
       return null;
@@ -832,7 +854,7 @@ export async function teleportToRemote(options: {
       };
       const envVars = {
         DSXU_CODE_OAUTH_TOKEN: accessToken,
-        [LEGACY_OAUTH_TOKEN_ENV]: accessToken,
+        [PROVIDER_MIGRATION_OAUTH_TOKEN_ENV]: accessToken,
         ...(options.environmentVariables ?? {})
       };
 
@@ -944,7 +966,7 @@ export async function teleportToRemote(options: {
     let sourceReason: 'github_preflight_ok' | 'ghes_optimistic' | 'github_preflight_failed' | 'no_github_remote' | 'forced_bundle' | 'no_git_at_all' = 'no_git_at_all';
 
     // gitRoot gates both bundle creation and the gate check itself - no
-    // point awaiting GrowthBook when there's nothing to bundle.
+    // point awaiting feature flag provider when there's nothing to bundle.
     const gitRoot = findGitRoot(getCwd());
     const forceBundle = !options.skipBundle && isEnvTruthy(process.env.CCR_FORCE_BUNDLE);
     const bundleSeedGateOn = !options.skipBundle && gitRoot !== null && (isEnvTruthy(process.env.CCR_ENABLE_BUNDLE) || (await checkGate_CACHED_OR_BLOCKING('tengu_ccr_bundle_seed_enabled')));
@@ -1206,7 +1228,7 @@ export async function teleportToRemote(options: {
  * reaper collects it.
  */
 export async function archiveRemoteSession(sessionId: string): Promise<void> {
-  const accessToken = getCompatProviderAccessToken();
+  const accessToken = getProviderControlAccessToken();
   if (!accessToken) return;
   const orgUUID = await getOrganizationUUID();
   if (!orgUUID) return;

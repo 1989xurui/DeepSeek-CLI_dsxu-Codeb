@@ -13,11 +13,3 @@ export function FallbackToolUseRejectedMessage() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: fallbacktooluserejectedmessage
-export function processFallbacktooluserejectedmessageLifecycle(input) {
-  void input
-  const state = 'fallbacktooluserejectedmessage-state'
-  const lifecycle = 'fallbacktooluserejectedmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

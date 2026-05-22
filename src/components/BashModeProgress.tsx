@@ -53,11 +53,3 @@ export function BashModeProgress(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: bashmodeprogress
-export function processBashmodeprogressLifecycle(input) {
-  void input
-  const state = 'bashmodeprogress-state'
-  const lifecycle = 'bashmodeprogress:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

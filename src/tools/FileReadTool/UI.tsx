@@ -182,19 +182,3 @@ export function getToolUseSummary(input: Partial<Input> | undefined): string | n
   }
   return getDisplayPath(input.file_path);
 }
-
-// V14 strict lifecycle shim: tools-FileReadTool-UI
-export function processToolsFileReadToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-FileReadTool-UI-state'
-  const lifecycle = 'tools-FileReadTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsFileReadToolUIStrict(input) {
-  return processToolsFileReadToolUIStrictLifecycle(input)
-}

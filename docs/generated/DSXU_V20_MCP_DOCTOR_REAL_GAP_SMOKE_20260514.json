@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "dsxu.v20.mcp-doctor-real-gap-smoke.v1",
+  "generatedAt": "2026-05-14T16:45:00+08:00",
+  "command": "bun --env-file=.env ./src/entrypoints/dsxu-code.tsx mcp doctor --json",
+  "result": {
+    "releaseGateStatus": "WARN",
+    "totalServers": 0,
+    "registryConfigured": false,
+    "configErrors": 0,
+    "warnings": [
+      "DSXU_MCP_REGISTRY_URL is not configured; official registry lookup is fail-closed",
+      "No MCP servers configured; install/status UX can only be smoke-tested"
+    ]
+  },
+  "focusedVerification": {
+    "command": "bun test src/services/mcp/__tests__/doctor.test.ts",
+    "result": "PASS",
+    "tests": 2,
+    "failures": 0,
+    "expects": 13
+  },
+  "decision": "MCP doctor is productized enough to report honest WARN state, but V20 MCP real-gap remains blocked until a real MCP server manifest and tool-call evidence are supplied.",
+  "rule": "WARN is not PASS. Do not count smoke-only MCP doctor output as real server acceptance."
+}

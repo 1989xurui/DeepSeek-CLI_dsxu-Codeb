@@ -30,21 +30,3 @@ export function getDsxuDoctorCommandRuntimeProfile(): {
     ],
   }
 }
-
-
-// V14 command lifecycle shim: doctor
-export function processDoctorCommandLifecycle(input) {
-  void input
-  const state = 'doctor-command-state'
-  const lifecycle = 'doctor:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'doctor',
-  }
-}
-
-export function runDoctorCommand(input) {
-  return processDoctorCommandLifecycle(input)
-}

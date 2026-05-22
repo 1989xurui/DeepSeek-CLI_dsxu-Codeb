@@ -12,10 +12,10 @@ import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 import { clearFastModeCooldown, isFastModeAvailable, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
 import {
-  isCompatCoding1mUnavailable,
-  isCompatExtraUsageMergeEnabled,
-  isCompatHighCapacity1mUnavailable,
-} from '../../dsxu/legacy/model/legacyProvider1mAccess.js';
+  isProviderMigrationCoding1mUnavailable,
+  isProviderMigrationExtraUsageMergeEnabled,
+  isProviderMigrationHighCapacity1mUnavailable,
+} from '../../utils/model/providerMigration/providerMigration1mAccess.js';
 import { getDefaultMainLoopModelSetting, renderDefaultModelSetting } from '../../utils/model/model.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
 import { validateModel } from '../../utils/model/validateModel.js';
@@ -76,7 +76,7 @@ function ModelPickerWrapper(t0) {
           }
         }
       }
-      if (isBilledAsExtraUsage(model, wasFastModeToggledOn === true, isCompatExtraUsageMergeEnabled())) {
+      if (isBilledAsExtraUsage(model, wasFastModeToggledOn === true, isProviderMigrationExtraUsageMergeEnabled())) {
         message = message + " - Billed as extra usage";
       }
       if (wasFastModeToggledOn === false) {
@@ -221,7 +221,7 @@ function SetModelAndClose({
           wasFastModeToggledOn = true;
         }
       }
-      if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isCompatExtraUsageMergeEnabled())) {
+      if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isProviderMigrationExtraUsageMergeEnabled())) {
         message += ` - Billed as extra usage`;
       }
       if (wasFastModeToggledOn === false) {
@@ -238,10 +238,10 @@ function isKnownAlias(model: string): boolean {
   return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim());
 }
 function isHighCapacity1mUnavailable(model: string): boolean {
-  return isCompatHighCapacity1mUnavailable(model);
+  return isProviderMigrationHighCapacity1mUnavailable(model);
 }
 function isCoding1mUnavailable(model: string): boolean {
-  return isCompatCoding1mUnavailable(model);
+  return isProviderMigrationCoding1mUnavailable(model);
 }
 function ShowModelAndClose(t0) {
   const {

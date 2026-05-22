@@ -330,11 +330,3 @@ export function FallbackPermissionRequest(t0) {
   }
   return t20;
 }
-
-// V14 lifecycle shim: fallbackpermissionrequest
-export function processFallbackpermissionrequestLifecycle(input) {
-  void input
-  const state = 'fallbackpermissionrequest-state'
-  const lifecycle = 'fallbackpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

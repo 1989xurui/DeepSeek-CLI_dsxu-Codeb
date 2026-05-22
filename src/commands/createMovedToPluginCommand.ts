@@ -55,7 +55,7 @@ export function createMovedToPluginCommand({
 
 3. If the DSXU plugin marketplace is not configured in this environment, use the built-in fallback flow only when it is explicitly available.
 
-Do not attempt to run the command through the legacy provider marketplace.`,
+Do not attempt to run the command through the provider-migration source marketplace.`,
           },
         ]
       }
@@ -71,7 +71,7 @@ Do not attempt to run the command through the legacy provider marketplace.`,
 
 2. After installation, use /${pluginName}:${pluginCommand} to run this command
 
-3. For more information, see the legacy provider marketplace README for ${pluginName}.
+3. For more information, see the provider-migration source marketplace README for ${pluginName}.
 
 Do not attempt to run the command. Simply inform the user about the plugin installation.`,
           },
@@ -86,28 +86,19 @@ Do not attempt to run the command. Simply inform the user about the plugin insta
 export function getDsxuMovedToPluginCommandRuntimeProfile(): {
   runtime: 'DSXU Plugin Command Migration'
   dsxuInstallTemplate: string
-  legacyPolicy: string
+  providerMigrationPolicy: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Plugin Command Migration',
     dsxuInstallTemplate:
       'dsxu plugin install <plugin>@dsxu-code-marketplace then /<plugin>:<command>',
-    legacyPolicy:
-      'Legacy provider marketplace prompt is kept only outside DSXU runtime for historical compatibility',
+    providerMigrationPolicy:
+      'Provider-migration source marketplace prompt is kept only outside DSXU runtime for historical migration projection',
     activationEvidence: [
       'DSXU_CODE_MODE=1 forces DSXU plugin instructions',
-      'legacy provider plugin install is not emitted in DSXU runtime mode',
+      'provider-migration source plugin install is not emitted in DSXU runtime mode',
       'private-marketplace fallback remains available for non-DSXU builds',
     ],
   }
-}
-
-
-// V14 lifecycle shim: createmovedtoplugincommand
-export function processCreatemovedtoplugincommandLifecycle(input) {
-  void input
-  const state = 'createmovedtoplugincommand-state'
-  const lifecycle = 'createmovedtoplugincommand:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

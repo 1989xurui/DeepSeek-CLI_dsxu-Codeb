@@ -1,4 +1,3 @@
-﻿// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Main entrypoint for DSXU Code Agent SDK types.
  *
@@ -99,7 +98,7 @@ type CreateSdkMcpServerOptions = {
  * Creates an MCP server instance that can be used with the SDK transport.
  * This allows SDK users to define custom tools that run in the same process.
  *
- * If your SDK MCP calls will run longer than 60s, override DSXU_CODE_STREAM_CLOSE_TIMEOUT. The old stream-close env remains a legacy migration alias.
+ * If your SDK MCP calls will run longer than 60s, override DSXU_CODE_STREAM_CLOSE_TIMEOUT. The old stream-close env remains a provider migration alias.
  */
 export function createSdkMcpServer(
   _options: CreateSdkMcpServerOptions,
@@ -291,7 +290,7 @@ export type CronTask = {
 
 /**
  * Cron scheduler tuning knobs (jitter + expiry). Sourced at runtime from the
- * `tengu_kairos_cron_config` GrowthBook config in CLI sessions; daemon hosts
+ * `tengu_kairos_cron_config` feature flag provider config in CLI sessions; daemon hosts
  * pass this through `watchScheduledTasks({ getJitterConfig })` to get the
  * same tuning.
  * @internal

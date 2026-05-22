@@ -1,0 +1,695 @@
+{
+  "schemaVersion": "dsxu.v20.owner-git-mutation-preflight.v1",
+  "generatedAt": "2026-05-15T03:39:41.691Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_READY_FOR_RELEASE_CLOSURE",
+  "gitStatusShort": {
+    "total": 2005,
+    "modified": 1650,
+    "deleted": 116,
+    "untracked": 0
+  },
+  "registerRows": 1893,
+  "registerAlignedToGitStatus": false,
+  "postStageIndexVerified": true,
+  "stageExecutionStatus": "STAGED_OWNER_GIT_PACKETS",
+  "stagedCommandCount": 58,
+  "failedCommandCount": 0,
+  "totalPlannedPathCount": 1893,
+  "unregisteredPathCount": 154,
+  "unregisteredPaths": [
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_REVIEW_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_REVIEW_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_SIGNOFF_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_ACL_RESIDUE_SIGNOFF_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_BATCH_CLOSURE_BOARD_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_BATCH_CLOSURE_BOARD_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_FULL_OWNER_EXECUTION_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_FULL_OWNER_EXECUTION_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_FUNCTION_LOSS_REVIEW_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_OGR_CROSS_SIGNOFF_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_OGR_CROSS_SIGNOFF_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_OGR_CROSS_SIGNOFF_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_C2_OGR_CROSS_SIGNOFF_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_CLAUDE_SRC_FILE_AUDIT_20260514.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_CLOSURE_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_BRAND_ADJUDICATION_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_BRAND_ADJUDICATION_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_BRAND_SCAN_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_BRAND_SCAN_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_COMMERCIAL_IP_RELEASE_PREFLIGHT_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETE_STATE_OWNER_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETE_STATE_OWNER_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETION_GIT_MUTATION_SIGNOFF_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETION_GIT_MUTATION_SIGNOFF_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETION_MUTATION_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETION_MUTATION_REVIEW_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_DELETION_MUTATION_REVIEW_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_EXTERNAL_VISIBLE_STATE_OWNER_REVIEW_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_FINAL_PREFLIGHT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_FINAL_PREFLIGHT_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_HIGH_RISK_RUNTIME_OWNER_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_LIVE_CACHE_PREFIX_SMOKE_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_LIVE_PROVIDER_GATE_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_MCP_DOCTOR_REAL_GAP_SMOKE_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR01_DOCS_RELEASE_EVIDENCE_SIGNOFF_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR01_DOCS_RELEASE_EVIDENCE_SIGNOFF_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR01_DOCS_RELEASE_EVIDENCE_SIGNOFF_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR01_DOCS_RELEASE_EVIDENCE_SIGNOFF_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR12_REPLACE_DELETE_MUTATION_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR12_REPLACE_DELETE_MUTATION_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR12_SHARED_UTILITY_IMPORT_USE_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR12_SHARED_UTILITY_IMPORT_USE_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR13_OWNER_REMAP_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OGR13_OWNER_REMAP_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_PREFLIGHT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_PREFLIGHT_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_PRODUCT_STAGE_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_ADJUDICATION_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_ADJUDICATION_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_RUNTIME_REDLINE_REVIEW_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_UPDATE_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_EXECUTION_UPDATE_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_OWNER_PACKET_SIGNOFF_MATRIX_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_COLLECTION_PACK_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_COLLECTION_WORK_ORDERS_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_DISCOVERY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_INTAKE_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_POST_AUTHORIZATION_VERIFICATION_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_PROJECT_INTAKE_OWNER_REVIEW_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_REAL_GAP_ACCEPTANCE_PACKETS_20260515.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_REAL_GAP_ACCEPTANCE_PROGRESS_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_REAL_GAP_ACCEPTANCE_SUMMARY_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_REAL_GAP_PRODUCTIZATION_REVIEW_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_REAL_GAP_PRODUCTIZATION_REVIEW_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_SUMMARY_20260514.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json"
+    },
+    {
+      "statusCode": "A",
+      "path": "docs/generated/DSXU_V20_SOURCE_CLEANUP_REGISTER_20260514.csv"
+    },
+    {
+      "statusCode": "A",
+      "path": "scripts/dsxu-live-cache-prefix-smoke.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "scripts/dsxu-live-provider-gate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/phase12-reference-semantic-exam-v1.test.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/__tests__/legacy-provider-model-migration-boundary-v1.test.ts -> src/dsxu/engine/__tests__/provider-migration-model-migration-boundary-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/query-loop.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/migrations/dsxuLegacyModelMigrations.ts -> src/migrations/providerMigrationModelMigrations.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/services/analytics/growthbook.ts -> src/services/analytics/featureFlags.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/utils/billing.ts -> src/services/auth/dsxuBillingAccess.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/auth/legacyProviderAuth.ts -> src/services/auth/dsxuProviderAuth.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/services/auth/dsxuProviderControlAuth.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/bounded-uuid-set.ts -> src/services/bridge/boundedUuidSet.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/local-provider-backend.ts -> src/services/bridge/dsxuLocalProviderBackend.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/dsxu-provider-compat.ts -> src/services/bridge/dsxuRemoteBridgeFacade.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/dsxu-remote-session-manager.ts -> src/services/bridge/dsxuRemoteSessionCoordinator.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/dsxu-sdk-message-adapter.ts -> src/services/bridge/dsxuSdkMessageProjection.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/engine/provider-backend/dsxu-remote-permission-bridge.ts -> src/services/bridge/remotePermissionProjection.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/services/mcp/__tests__/doctor.test.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/services/mcp/legacyRemoteMcpProvider.ts -> src/services/mcp/providerConnectorMigration.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/services/mockRateLimitsProviderMigration/providerMigrationMockRateLimits.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/testing/legacyProviderRateLimitClaim.ts -> src/services/mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/tools/RemoteTriggerTool/legacyRemoteTriggerProvider.ts -> src/tools/RemoteTriggerTool/providerMigrationRemoteTriggerProvider.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProvider1mAccess.ts -> src/utils/model/providerMigration/providerMigration1mAccess.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderAdvisorModel.ts -> src/utils/model/providerMigration/providerMigrationAdvisorModel.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderAgentModel.ts -> src/utils/model/providerMigration/providerMigrationAgentModel.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderAliases.ts -> src/utils/model/providerMigration/providerMigrationAliases.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderBetas.ts -> src/utils/model/providerMigration/providerMigrationBetas.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderContext.ts -> src/utils/model/providerMigration/providerMigrationContext.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderContextWindowManager.ts -> src/utils/model/providerMigration/providerMigrationContextWindowManager.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderDeprecation.ts -> src/utils/model/providerMigration/providerMigrationDeprecation.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderEffort.ts -> src/utils/model/providerMigration/providerMigrationEffort.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderFastMode.ts -> src/utils/model/providerMigration/providerMigrationFastMode.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationInsightsModel.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderModel.ts -> src/utils/model/providerMigration/providerMigrationModel.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationModelAllowlist.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationModelCompat.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderModelConfigs.ts -> src/utils/model/providerMigration/providerMigrationModelConfigs.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderModelOptions.ts -> src/utils/model/providerMigration/providerMigrationModelOptions.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationPromptCacheEnv.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderSmallModelQuery.ts -> src/utils/model/providerMigration/providerMigrationSmallModelQuery.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderThinking.ts -> src/utils/model/providerMigration/providerMigrationThinking.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationToolSearchModel.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderUltraplanModel.ts -> src/utils/model/providerMigration/providerMigrationUltraplanModel.ts"
+    },
+    {
+      "statusCode": "R",
+      "path": "src/dsxu/legacy/model/legacyProviderUsageLimit.ts -> src/utils/model/providerMigration/providerMigrationUsageLimit.ts"
+    },
+    {
+      "statusCode": "A",
+      "path": "src/utils/model/providerMigration/providerMigrationWebSearchModel.ts"
+    }
+  ],
+  "ownerAcceptedOrConditionalPaths": 1746,
+  "deletionMutationReadyPaths": 147,
+  "deletionActiveProductReferenceRows": 0,
+  "aclResidueRows": 4,
+  "p12PairedRawLogCount": 14,
+  "p12MinimumPairedRawLogsForPass": 14,
+  "p12ReplayFamilyGapCount": 0,
+  "canStageDeletionPackets": false,
+  "canRunFinalSixStageTests": true,
+  "canCreateCleanExport": true,
+  "packets": [
+    {
+      "gate": "owner-git-register-alignment",
+      "count": 1893,
+      "status": "PASS_POST_STAGE_INDEX_VERIFIED",
+      "canMutateNow": false,
+      "requiredAction": "pre-stage register superseded by staged Git index evidence"
+    },
+    {
+      "gate": "deletion-mutation-stage-plan",
+      "count": 147,
+      "status": "PASS_STAGED",
+      "canMutateNow": false,
+      "requiredAction": "deletion packets already staged by Owner/Git execution report"
+    },
+    {
+      "gate": "owner-accepted-product-packets",
+      "count": 1746,
+      "status": "PASS_STAGED",
+      "canMutateNow": false,
+      "requiredAction": "product packets already staged by Owner/Git execution report"
+    },
+    {
+      "gate": "acl-residue",
+      "count": 4,
+      "status": "PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME",
+      "canMutateNow": false,
+      "requiredAction": "ACL residues are signed non-product runtime and excluded from release/export"
+    },
+    {
+      "gate": "p12-target-reference-raw",
+      "count": 14,
+      "status": "READY_FOR_DELTA_REVIEW",
+      "canMutateNow": false,
+      "requiredAction": "import real targetReferenceManifestPath; do not use templates, generic logs, target-only logs, or DSXU-side logs"
+    },
+    {
+      "gate": "final-six-stage-tests-and-clean-export",
+      "count": 1,
+      "status": "PASS_READY_FOR_RELEASE_CLOSURE",
+      "canMutateNow": false,
+      "requiredAction": "run release closure tests and clean-export preflight; create export only as explicit release action"
+    }
+  ],
+  "blockers": [],
+  "nextAction": "run final preflight, release closure tests, and clean-export preflight; create export only as explicit release action",
+  "rule": "Preflight is evidence-only. It does not stage, commit, delete, reset, clean, force ACL residue deletion, fabricate target logs, run final tests, or create export artifacts."
+}

@@ -1,11 +1,10 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
- * Perfetto Tracing for DSXU Code (Ant-only)
+ * Perfetto Tracing for DSXU Code (DSXU internal)
  *
  * This module generates traces in the Chrome Trace Event format that can be
  * viewed in ui.perfetto.dev or Chrome's chrome://tracing.
  *
- * NOTE: This feature is ant-only and eliminated from external builds.
+ * NOTE: This feature is dsxu internal and eliminated from external builds.
  *
  * The trace file includes:
  * - Agent hierarchy (parent-child relationships in a swarm)
@@ -15,7 +14,7 @@
  *
  * Usage:
  * 1. Enable via DSXU_CODE_PERFETTO_TRACE=1 or DSXU_CODE_PERFETTO_TRACE=<path>
- *    (legacy DSXU_CODE_PERFETTO_... aliases are also honored)
+ *    (provider-migration source DSXU_CODE_PERFETTO_... aliases are also honored)
  * 2. Optionally set DSXU_CODE_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
  *    trace file periodically (default: write only on exit).
  * 3. Run DSXU Code normally

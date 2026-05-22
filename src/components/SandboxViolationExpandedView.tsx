@@ -96,11 +96,3 @@ export function SandboxViolationExpandedView() {
 function _temp(v, i) {
   return <Box key={`${v.timestamp.getTime()}-${i}`} paddingLeft={2}><Text dimColor={true}>{formatTime(v.timestamp)}{v.command ? ` ${v.command}:` : ""} {v.line}</Text></Box>;
 }
-
-// V14 lifecycle shim: sandboxviolationexpandedview
-export function processSandboxviolationexpandedviewLifecycle(input) {
-  void input
-  const state = 'sandboxviolationexpandedview-state'
-  const lifecycle = 'sandboxviolationexpandedview:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

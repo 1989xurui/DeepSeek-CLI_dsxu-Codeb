@@ -167,11 +167,3 @@ export function FileEditToolUseRejectedMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: fileedittooluserejectedmessage
-export function processFileedittooluserejectedmessageLifecycle(input) {
-  void input
-  const state = 'fileedittooluserejectedmessage-state'
-  const lifecycle = 'fileedittooluserejectedmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

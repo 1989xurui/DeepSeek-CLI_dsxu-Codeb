@@ -174,11 +174,3 @@ export function getFilePermissionOptions({
   }
   return options;
 }
-
-// V14 lifecycle shim: permissionoptions
-export function processPermissionoptionsLifecycle(input) {
-  void input
-  const state = 'permissionoptions-state'
-  const lifecycle = 'permissionoptions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

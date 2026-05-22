@@ -769,12 +769,3 @@ const styles = (
 }
 
 export default styles
-
-
-// V14 lifecycle shim: styles
-export function processStylesLifecycle(input) {
-  void input
-  const state = 'styles-state'
-  const lifecycle = 'styles:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

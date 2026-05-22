@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Box } from '../../ink.js';
@@ -104,12 +104,4 @@ function useDsxuMascotAnimation(): {
     bounceOffset: current.offset,
     onClick
   };
-}
-
-// V14 lifecycle shim: animateddsxumascot
-export function processAnimatedDsxuMascotLifecycle(input) {
-  void input
-  const state = 'animateddsxumascot-state'
-  const lifecycle = 'animateddsxumascot:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

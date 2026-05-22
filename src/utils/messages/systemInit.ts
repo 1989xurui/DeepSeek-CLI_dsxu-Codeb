@@ -9,19 +9,17 @@ import type {
 } from 'src/entrypoints/agentSdkTypes.js'
 import {
   AGENT_TOOL_NAME,
-  LEGACY_AGENT_TOOL_NAME,
+  SOURCE_AGENT_TOOL_ALIAS_NAME,
 } from 'src/tools/AgentTool/constants.js'
 import { getProviderApiKeyWithSource } from '../auth.js'
 import { getCwd } from '../cwd.js'
 import { getFastModeState } from '../fastMode.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 
-// TODO(next-minor): remove this translation once SDK consumers have migrated
-// to the 'Agent' tool name. The wire name was renamed Task ->Agent in #19647,
-// but emitting the new name in init/result events broke SDK consumers on a
-// patch-level release. Keep emitting 'Task' until the next minor.
-export function sdkCompatToolName(name: string): string {
-  return name === AGENT_TOOL_NAME ? LEGACY_AGENT_TOOL_NAME : name
+// Provider-migration wire projection retained until SDK consumers migrate to the
+// DSXU Agent tool name. Product runtime still owns the tool as Agent.
+export function sdkSourceWireToolName(name: string): string {
+  return name === AGENT_TOOL_NAME ? SOURCE_AGENT_TOOL_ALIAS_NAME : name
 }
 
 type CommandLike = { name: string; userInvocable?: boolean }
@@ -59,7 +57,7 @@ export function buildSystemInitMessage(inputs: SystemInitInputs): SDKMessage {
     subtype: 'init',
     cwd: getCwd(),
     session_id: getSessionId(),
-    tools: inputs.tools.map(tool => sdkCompatToolName(tool.name)),
+    tools: inputs.tools.map(tool => sdkSourceWireToolName(tool.name)),
     mcp_servers: inputs.mcpClients.map(client => ({
       name: client.name,
       status: client.type,
@@ -84,7 +82,7 @@ export function buildSystemInitMessage(inputs: SystemInitInputs): SDKMessage {
     })),
     uuid: randomUUID(),
   }
-  // Hidden from public SDK types -ant-only UDS messaging socket path
+  // Hidden from public SDK types -dsxu internal UDS messaging socket path
   if (feature('UDS_INBOX')) {
     /* eslint-disable @typescript-eslint/no-require-imports */
     ;(initMessage as Record<string, unknown>).messaging_socket_path =

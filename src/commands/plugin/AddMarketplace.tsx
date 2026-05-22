@@ -159,11 +159,3 @@ export function AddMarketplace({
       </Box>
     </Box>;
 }
-
-// V14 lifecycle shim: addmarketplace
-export function processAddmarketplaceLifecycle(input) {
-  void input
-  const state = 'addmarketplace-state'
-  const lifecycle = 'addmarketplace:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

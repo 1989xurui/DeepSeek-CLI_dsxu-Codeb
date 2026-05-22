@@ -101,11 +101,3 @@ export function PackageManagerAutoUpdater(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: packagemanagerautoupdater
-export function processPackagemanagerautoupdaterLifecycle(input) {
-  void input
-  const state = 'packagemanagerautoupdater-state'
-  const lifecycle = 'packagemanagerautoupdater:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

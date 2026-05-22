@@ -7,9 +7,9 @@ import {
 import { z } from 'zod'
 import { getOauthConfig } from '../../constants/oauth.js'
 import {
-  getCompatProviderAccessToken,
-  getCompatProviderBearerHeaders,
-} from '../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+  getProviderControlAccessToken,
+  getProviderControlBearerHeaders,
+} from '../auth/dsxuProviderControlAuth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { withOAuth401Retry } from '../../utils/http.js'
@@ -63,7 +63,7 @@ async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
   // lack it and would 403). Fall back to API key auth for console users.
   const apiKey = getProviderApiKey()
   const hasUsableOAuth =
-    getCompatProviderAccessToken() && hasProfileScope()
+    getProviderControlAccessToken() && hasProfileScope()
   if (!hasUsableOAuth && !apiKey) {
     logForDebugging('[Bootstrap] Skipped: no usable OAuth or API key')
     return null
@@ -76,10 +76,10 @@ async function fetchBootstrapAPI(): Promise<BootstrapResponse | null> {
   try {
     return await withOAuth401Retry(async () => {
       // Re-read OAuth each call so the retry picks up the refreshed token.
-      const token = getCompatProviderAccessToken()
+      const token = getProviderControlAccessToken()
       let authHeaders: Record<string, string>
       if (token && hasProfileScope()) {
-        authHeaders = getCompatProviderBearerHeaders(token)
+        authHeaders = getProviderControlBearerHeaders(token)
       } else if (apiKey) {
         authHeaders = { 'x-api-key': apiKey }
       } else {
@@ -147,24 +147,16 @@ export async function fetchBootstrapData(): Promise<void> {
 }
 
 
-// V14 lifecycle shim: bootstrap
-export function processBootstrapLifecycle(input) {
-  void input
-  const state = 'bootstrap-state'
-  const lifecycle = 'bootstrap:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuBootstrapRuntimeProfile() {
   return {
     runtime: 'DSXU Bootstrap Provider',
     defaultMode: 'local-provider-bootstrap',
-    isolatedLegacyShell: `/api/${'cl' + 'aude'}_cli/bootstrap`,
+    isolatedProviderMigrationBoundary: `/api/${'cl' + 'aude'}_cli/bootstrap`,
     persistedFields: ['clientDataCache', 'additionalModelOptionsCache'],
     activationEvidence: [
-      'DSXU_CODE_MODE skips legacy first-party bootstrap API',
+      'DSXU_CODE_MODE skips the provider-migration bootstrap API',
       'local provider/model bootstrap is resolved by DSXU settings and DeepSeek adapter',
-      'legacy provider bootstrap remains unreachable from DSXU default runtime',
+      'provider migration bootstrap remains unreachable from DSXU default runtime',
     ],
   }
 }

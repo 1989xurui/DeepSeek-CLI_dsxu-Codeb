@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * OSC (Operating System Command) Types and Parser
  */
@@ -417,7 +416,7 @@ export const CLEAR_TAB_STATUS = osc(
   'indicator=;status=;status-color=',
 )
 /**
- * Gate for emitting OSC 21337 (tab-status indicator). Ant-only while the
+ * Gate for emitting OSC 21337 (tab-status indicator). DSXU internal while the
  * spec is unstable. Terminals that don't recognize it discard silently, so
  * emission is safe unconditionally ...we don't gate on terminal detection
  * since support is expected across several terminals.

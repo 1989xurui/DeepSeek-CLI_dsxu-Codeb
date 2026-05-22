@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "dsxu.v20.project-intake-owner-review.v1",
+  "generatedAt": "2026-05-14T16:55:00+08:00",
+  "surfaces": [
+    {
+      "surface": "DSXU.md / DSXU.local.md project instructions",
+      "owner": "Context / Memory / Init",
+      "evidence": "src/commands/init.ts",
+      "decision": "DSXU-native instruction surface; keep as mainline project memory intake."
+    },
+    {
+      "surface": ".mcp.json",
+      "owner": "MCP / Skill / Plugin",
+      "evidence": "src/services/mcp/config.ts",
+      "decision": "Project MCP config is parsed by services/mcp and policy-filtered; not an engine MCP runtime."
+    },
+    {
+      "surface": ".dsxu/skills and .dsxu/commands",
+      "owner": "MCP / Skill / Plugin + Commands",
+      "evidence": "src/skills/loadSkillsDir.ts",
+      "decision": "Skills and legacy commands load through DSXU Skills Loader; commands_DEPRECATED remains intake label, not runtime owner."
+    },
+    {
+      "surface": "settings hooks",
+      "owner": "Tool Lifecycle + Permission / Hooks",
+      "evidence": "src/utils/settings/types.ts; src/utils/hooks.ts; src/utils/sessionStart.ts",
+      "decision": "Hooks are settings-driven lifecycle inputs with managed-policy gates; not a second tool runner."
+    },
+    {
+      "surface": "plugin commands / skills / hooks / MCP",
+      "owner": "DSXU Plugin Runtime + MCP Adapter Boundary",
+      "evidence": "src/utils/plugins/pluginLoader.ts; src/utils/plugins/loadPluginCommands.ts; src/utils/plugins/loadPluginHooks.ts; src/utils/plugins/mcpPluginIntegration.ts",
+      "decision": "Plugin customizations load into DSXU plugin/runtime owners; plugin MCP remains adapter input."
+    }
+  ],
+  "focusedVerification": {
+    "command": "bun test src/dsxu/engine/__tests__/extension-runtime-owner-v20.test.ts",
+    "result": "PASS",
+    "tests": 1,
+    "failures": 0,
+    "expects": 12
+  },
+  "decision": "Project intake has named owner coverage, but V20-GAP-03 remains partial until one real external-code-compatible project intake task proves instructions, MCP, commands, skills and hooks all land in DSXU owners.",
+  "rule": "Do not create a compatibility holding runtime. Existing config, skill, plugin, hook and MCP owners carry intake."
+}

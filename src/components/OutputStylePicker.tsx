@@ -109,11 +109,3 @@ export function OutputStylePicker(t0) {
   }
   return t9;
 }
-
-// V14 lifecycle shim: outputstylepicker
-export function processOutputstylepickerLifecycle(input) {
-  void input
-  const state = 'outputstylepicker-state'
-  const lifecycle = 'outputstylepicker:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

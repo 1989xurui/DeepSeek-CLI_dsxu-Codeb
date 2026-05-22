@@ -1,0 +1,73 @@
+﻿{
+    "generatedAt":  "2026-05-14T22:18:45",
+    "total":  91,
+    "targetSummary":  [
+                          {
+                              "targetOwnerPacket":  "V20-OGR-05-external-integration-adapter-boundary",
+                              "count":  2
+                          },
+                          {
+                              "targetOwnerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                              "count":  30
+                          },
+                          {
+                              "targetOwnerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                              "count":  5
+                          },
+                          {
+                              "targetOwnerPacket":  "V20-OGR-09-dsxu-engine-mainline",
+                              "count":  3
+                          },
+                          {
+                              "targetOwnerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                              "count":  14
+                          },
+                          {
+                              "targetOwnerPacket":  "V20-OGR-12-shared-platform-utilities",
+                              "count":  37
+                          }
+                      ],
+    "decisionSummary":  [
+                            {
+                                "decision":  "remap-conditional-shared-utility-only-if-imported",
+                                "count":  20
+                            },
+                            {
+                                "decision":  "remap-default-shared-utility-review",
+                                "count":  7
+                            },
+                            {
+                                "decision":  "remap-entry-query-tool-composition",
+                                "count":  14
+                            },
+                            {
+                                "decision":  "remap-external-or-recovery-adapter-boundary",
+                                "count":  2
+                            },
+                            {
+                                "decision":  "remap-owner-accepted-visible-state-input-and-projection",
+                                "count":  29
+                            },
+                            {
+                                "decision":  "remap-provider-migration-adapt-or-exclude",
+                                "count":  5
+                            },
+                            {
+                                "decision":  "remap-settings-migration-shared-utility",
+                                "count":  4
+                            },
+                            {
+                                "decision":  "remap-shared-constant-utility",
+                                "count":  6
+                            },
+                            {
+                                "decision":  "remap-test-evidence-only-no-product-runtime",
+                                "count":  3
+                            },
+                            {
+                                "decision":  "remap-voice-visible-interaction-boundary",
+                                "count":  1
+                            }
+                        ],
+    "nextAction":  "merge OGR-13 into named owner packet signoff; do not keep other-source as a runtime bucket"
+}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execFileSync } from 'child_process'
 import { diffLines } from 'diff'
 import { constants as fsConstants } from 'fs'
@@ -18,15 +17,15 @@ import type { Command } from '../commands.js'
 import { queryWithModel as queryWithDsxuModel } from '../services/api/dsxu.js'
 import {
   AGENT_TOOL_NAME,
-  LEGACY_AGENT_TOOL_NAME,
+  SOURCE_AGENT_TOOL_ALIAS_NAME,
 } from '../tools/AgentTool/constants.js'
 import type { LogOption } from '../types/logs.js'
-import { getLegacyProviderConfigHomeDir, getDsxuConfigHomeDir, isDsxuRuntimeMode } from '../utils/envUtils.js'
+import { getProviderMigrationHomeDir, getDsxuConfigHomeDir, isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { execFileNoThrow } from '../utils/execFileNoThrow.js'
 import { logError } from '../utils/log.js'
 import { extractTextContent } from '../utils/messages.js'
-import { getCompatProviderInsightsAnalysisModel } from '../dsxu/legacy/model/legacyProviderInsightsModel.js'
+import { getProviderMigrationInsightsAnalysisModel } from '../utils/model/providerMigration/providerMigrationInsightsModel.js'
 import {
   getProjectsDir,
   getSessionFilesWithMtime,
@@ -40,12 +39,12 @@ import { escapeXmlAttr as escapeHtml } from '../utils/xml.js'
 
 // Model for facet extraction and summarization (DSXU high-quality analysis route)
 function getAnalysisModel(): string {
-  return getCompatProviderInsightsAnalysisModel()
+  return getProviderMigrationInsightsAnalysisModel()
 }
 
 // Model for narrative insights (DSXU high-quality analysis route)
 function getInsightsModel(): string {
-  return getCompatProviderInsightsAnalysisModel()
+  return getProviderMigrationInsightsAnalysisModel()
 }
 
 
@@ -54,7 +53,7 @@ function getInsightsProductName(): string {
 }
 
 function getInsightsConfigHomeDir(): string {
-  return isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getLegacyProviderConfigHomeDir()
+  return isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getProviderMigrationHomeDir()
 }
 
 function getInsightsInstructionFileName(): string {
@@ -142,7 +141,7 @@ const collectFromRemoteHost: (
         const result = { copied: 0, skipped: 0 }
 
         // Create temp directory
-        const tempDir = await mkdtemp(join(tmpdir(), isDsxuRuntimeMode() ? 'dsxu-hs-' : 'legacy-hs-'))
+        const tempDir = await mkdtemp(join(tmpdir(), isDsxuRuntimeMode() ? 'dsxu-hs-' : 'provider-hs-'))
 
         try {
           // SCP the projects folder
@@ -454,9 +453,9 @@ const LABEL_MAP: Record<string, string> = {
   essential: 'Essential',
 }
 
-// Lazy getters: getLegacyProviderConfigHomeDir() is memoized and reads process.env.
+// Lazy getters: getProviderMigrationHomeDir() is memoized and reads process.env.
 // Calling it at module scope would populate the memoize cache before
-// entrypoints can set legacy config dir, breaking all 150+ other callers.
+// entrypoints can set provider-migration source config dir, breaking all 150+ other callers.
 function getDataDir(): string {
   return join(getInsightsConfigHomeDir(), 'usage-data')
 }
@@ -582,7 +581,7 @@ function extractToolStats(log: LogOption): {
             // Check for special tool usage
             if (
               toolName === AGENT_TOOL_NAME ||
-              toolName === LEGACY_AGENT_TOOL_NAME
+              toolName === SOURCE_AGENT_TOOL_ALIAS_NAME
             )
               usesTaskAgent = true
             if (toolName.startsWith('mcp__')) usesMcp = true
@@ -2227,7 +2226,7 @@ function generateHtmlReport(
     `
       : ''
 
-  // Build Team Feedback section (collapsible, ant-only)
+  // Build Team Feedback section (collapsible, dsxu internal)
   const ccImprovements =
     process.env.USER_TYPE === 'ant'
       ? insights.cc_team_improvements?.improvements || []
@@ -2844,7 +2843,7 @@ export async function generateUsageReport(options?: {
 }> {
   let remoteStats: { hosts: RemoteHostInfo[]; totalCopied: number } | undefined
 
-  // Optionally collect data from remote hosts first (ant-only)
+  // Optionally collect data from remote hosts first (dsxu internal)
   if (process.env.USER_TYPE === 'ant' && options?.collectRemote) {
     const destDir = join(getInsightsConfigHomeDir(), 'projects')
     const { hosts, totalCopied } = await collectAllRemoteHostData(destDir)
@@ -3121,9 +3120,9 @@ const usageReport: Command = {
         .slice(0, 15)
       const username = process.env.SAFEUSER || process.env.USER || 'unknown'
       const filename = `${username}_insights_${timestamp}.html`
-      const legacyReportBucket = `${'anth' + 'ropic'}-serve`
-      const s3Path = `s3://${legacyReportBucket}/atamkin/cc-user-reports/${filename}`
-      const s3Url = `https://s3-frontend.infra.ant.dev/${legacyReportBucket}/atamkin/cc-user-reports/${filename}`
+      const providerMigrationReportBucket = `${'anth' + 'ropic'}-serve`
+      const s3Path = `s3://${providerMigrationReportBucket}/atamkin/cc-user-reports/${filename}`
+      const s3Url = `https://s3-frontend.infra.ant.dev/${providerMigrationReportBucket}/atamkin/cc-user-reports/${filename}`
 
       reportUrl = s3Url
       try {
@@ -3153,7 +3152,7 @@ Then access at: ${s3Url}`
       `${data.git_commits} commits`,
     ].join(' -> ')
 
-    // Build remote host info (ant-only)
+    // Build remote host info (dsxu internal)
     let remoteInfo = ''
     if (process.env.USER_TYPE === 'ant') {
       if (remoteStats && remoteStats.totalCopied > 0) {

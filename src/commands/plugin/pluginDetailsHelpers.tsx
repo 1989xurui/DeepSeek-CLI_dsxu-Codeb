@@ -114,11 +114,3 @@ export function PluginSelectionKeyHint(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: plugindetailshelpers
-export function processPlugindetailshelpersLifecycle(input) {
-  void input
-  const state = 'plugindetailshelpers-state'
-  const lifecycle = 'plugindetailshelpers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

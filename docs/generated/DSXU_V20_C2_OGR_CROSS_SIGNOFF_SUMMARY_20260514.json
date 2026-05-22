@@ -1,0 +1,79 @@
+﻿{
+    "generatedAt":  "2026-05-14T22:03:52",
+    "total":  320,
+    "reviewCandidate":  42,
+    "sharedUtility":  278,
+    "byActionOwnerPacket":  [
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-03-tool-permission-lifecycle",
+                                    "count":  12
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-04-mcp-skill-plugin-registry",
+                                    "count":  11
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-05-agent-task-lifecycle",
+                                    "count":  5
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-06-ui-tui-visible-state",
+                                    "count":  104
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-07-provider-migration-model-cost",
+                                    "count":  32
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-08-cli-command-transport",
+                                    "count":  3
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-12-shared-platform-utilities",
+                                    "count":  76
+                                },
+                                {
+                                    "key":  "review_absorb_as_shared_utility_only_if_imported, V20-OGR-13-other-source-owner-review",
+                                    "count":  35
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-05-agent-task-lifecycle",
+                                    "count":  11
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-06-ui-tui-visible-state",
+                                    "count":  2
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-07-provider-migration-model-cost",
+                                    "count":  3
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-08-cli-command-transport",
+                                    "count":  9
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-12-shared-platform-utilities",
+                                    "count":  10
+                                },
+                                {
+                                    "key":  "review_candidate, V20-OGR-13-other-source-owner-review",
+                                    "count":  7
+                                }
+                            ],
+    "byDecision":  [
+                       {
+                           "decision":  "adapt_or_exclude_product_specific_after_owner_review",
+                           "count":  7
+                       },
+                       {
+                           "decision":  "map_to_named_dsxu_owner_for_absorption_review",
+                           "count":  35
+                       },
+                       {
+                           "decision":  "retain_only_if_dsxu_mainline_imported_else_replace_delete_candidate",
+                           "count":  278
+                       }
+                   ],
+    "nextAction":  "review OGR-06/12, OGR-05, OGR-07 packets against this cross-signoff map before deletion mutation review"
+}

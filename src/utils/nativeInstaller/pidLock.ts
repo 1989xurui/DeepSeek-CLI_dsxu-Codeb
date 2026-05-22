@@ -10,7 +10,7 @@
  */
 
 import { basename, join } from 'path'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logForDebugging } from '../debug.js'
 import { isEnvDefinedFalsy, isEnvTruthy } from '../envUtils.js'
 import { isENOENT, toError } from '../errors.js'
@@ -27,10 +27,10 @@ import {
  * Check if PID-based version locking is enabled.
  * When disabled, falls back to mtime-based locking (30-day timeout).
  *
- * Controlled by GrowthBook gate with local override:
+ * Controlled by feature flag provider gate with local override:
  * - Set ENABLE_PID_BASED_VERSION_LOCKING=true to force-enable
  * - Set ENABLE_PID_BASED_VERSION_LOCKING=false to force-disable
- * - If unset, GrowthBook gate (tengu_pid_based_version_locking) controls rollout
+ * - If unset, feature flag provider gate (tengu_pid_based_version_locking) controls rollout
  */
 export function isPidBasedLockingEnabled(): boolean {
   const envVar = process.env.ENABLE_PID_BASED_VERSION_LOCKING
@@ -41,7 +41,7 @@ export function isPidBasedLockingEnabled(): boolean {
   if (isEnvDefinedFalsy(envVar)) {
     return false
   }
-  // GrowthBook controls gradual rollout (returns false for external users)
+  // feature flag provider controls gradual rollout (returns false for external users)
   return getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_pid_based_version_locking',
     false,
@@ -74,7 +74,7 @@ export type LockInfo = {
 // This is much shorter than the previous 30-day timeout but still allows
 // for edge cases like network filesystems where PID check might fail
 const FALLBACK_STALE_MS = 2 * 60 * 60 * 1000
-const LEGACY_NATIVE_PROCESS_NAME = 'cl' + 'aude'
+const PROVIDER_MIGRATION_NATIVE_PROCESS_NAME = 'cl' + 'aude'
 
 /**
  * Check if a process with the given PID is currently running
@@ -106,7 +106,7 @@ function isNativeCliProcess(pid: number, expectedExecPath: string): boolean {
 
   // If the PID matches our current process, we know it's valid
   // This handles test environments where the command might not contain the
-  // legacy executable basename.
+  // provider-migration source executable basename.
   if (pid === process.pid) {
     return true
   }
@@ -119,13 +119,13 @@ function isNativeCliProcess(pid: number, expectedExecPath: string): boolean {
       return true
     }
 
-    // Check if the command contains the legacy executable basename or the
+    // Check if the command contains the provider-migration source executable basename or the
     // expected exec path.
     const normalizedCommand = command.toLowerCase()
     const normalizedExecPath = expectedExecPath.toLowerCase()
 
     return (
-      normalizedCommand.includes(LEGACY_NATIVE_PROCESS_NAME) ||
+      normalizedCommand.includes(PROVIDER_MIGRATION_NATIVE_PROCESS_NAME) ||
       normalizedCommand.includes(normalizedExecPath)
     )
   } catch {
@@ -392,7 +392,7 @@ export function getAllLockInfo(locksDir: string): LockInfo[] {
  *
  * Handles both:
  * - PID-based locks (files containing JSON with PID)
- * - Legacy proper-lockfile locks (directories created by mtime-based locking)
+ * - Historical proper-lockfile locks (directories created by mtime-based locking)
  */
 export function cleanupStaleLocks(locksDir: string): number {
   const fs = getFsImplementation()
@@ -410,11 +410,11 @@ export function cleanupStaleLocks(locksDir: string): number {
         const stats = fs.lstatSync(lockFilePath)
 
         if (stats.isDirectory()) {
-          // Legacy proper-lockfile directory lock - always remove when PID-based
+          // Historical proper-lockfile directory lock - always remove when PID-based
           // locking is enabled since these are from a different locking mechanism
           fs.rmSync(lockFilePath, { recursive: true, force: true })
           cleanedCount++
-          logForDebugging(`Cleaned up legacy directory lock: ${lockEntry}`)
+          logForDebugging(`Cleaned up historical directory lock: ${lockEntry}`)
         } else if (!isLockActive(lockFilePath)) {
           // PID-based file lock with no running process
           fs.unlinkSync(lockFilePath)

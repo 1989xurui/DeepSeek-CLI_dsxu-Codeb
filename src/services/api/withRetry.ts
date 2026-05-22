@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle'
 import type { ProviderSDK } from 'src/types/providerSdk.js'
 import {
@@ -17,14 +16,16 @@ import {
   clearApiKeyHelperCache,
   clearAwsCredentialsCache,
   clearGcpCredentialsCache,
-  getCompatOAuthTokens as getDsxuControlOAuthTokens,
   handleOAuth401Error,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
   isEnterpriseSubscriber,
 } from '../../utils/auth.js'
+import { getProviderControlTokens } from '../auth/dsxuProviderControlAuth.js'
 import {
   getDsxuCodeEnv,
   isDsxuCodeEnvTruthy,
+  isEnvTruthy,
+  isProviderMigrationServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
@@ -35,11 +36,11 @@ import {
   isFastModeEnabled,
   triggerFastModeCooldown,
 } from '../../utils/fastMode.js'
-import { isCompatHighTierModelTarget } from '../../utils/model/model.js'
+import { isProviderMigrationHighTierModelTarget } from '../../utils/model/model.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
 import { sleep } from '../../utils/sleep.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -76,7 +77,7 @@ const FOREGROUND_529_RETRY_SOURCES = new Set<QuerySource>([
   'side_question',
   // Security classifiers - must complete for auto-mode correctness.
   // yoloClassifier.ts uses 'auto_mode' (not 'yolo_classifier' - that's
-  // type-only). bash_classifier is ant-only; feature-gate so the string
+  // type-only). bash_classifier is dsxu internal; feature-gate so the string
   // tree-shakes out of external builds (excluded-strings.txt).
   'auto_mode',
   ...(feature('BASH_CLASSIFIER') ? (['bash_classifier'] as const) : []),
@@ -87,7 +88,23 @@ function shouldRetry529(querySource: QuerySource | undefined): boolean {
     querySource === undefined || FOREGROUND_529_RETRY_SOURCES.has(querySource)
   )
 }
-// DSXU unattended retry: for unattended sessions (ant-only). Retries 429/529
+
+function isPrimaryModelFallbackAllowed(model: string): boolean {
+  if (
+    isEnvTruthy(process.env.DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS) ||
+    isDsxuCodeEnvTruthy('ALLOW_PROVIDER_MODEL_FALLBACKS')
+  ) {
+    return true
+  }
+  if (!isProviderMigrationServiceShellAllowed()) {
+    return false
+  }
+  return Boolean(process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS) ||
+    (!isProviderSubscriptionAccount() &&
+      isProviderMigrationHighTierModelTarget(model))
+}
+
+// DSXU unattended retry: for unattended sessions (dsxu internal). Retries 429/529
 // indefinitely with higher backoff and periodic keep-alive yields so the host
 // environment does not mark the session idle mid-wait.
 // TODO(ANT-344): the keep-alive via SystemAPIErrorMessage yields is a stopgap
@@ -228,7 +245,7 @@ export async function* withRetry<T>(
           (lastError instanceof APIError && lastError.status === 401) ||
           isOAuthTokenRevokedError(lastError)
         ) {
-          const failedAccessToken = getDsxuControlOAuthTokens()?.accessToken
+          const failedAccessToken = getProviderControlTokens()?.accessToken
           if (failedAccessToken) {
             await handleOAuth401Error(failedAccessToken)
           }
@@ -306,11 +323,7 @@ export async function* withRetry<T>(
       // Track consecutive 529 errors
       if (
         is529Error(error) &&
-        // If FALLBACK_FOR_ALL_PRIMARY_MODELS is not set, fall through only if the primary model is a non-custom high-capability legacy model.
-        // TODO: Revisit if the legacy high-capability model check should still exist, or if it is a stale artifact of the old primary-model fallback.
-        (process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS ||
-          (!isLegacyCloudSubscriber() &&
-            isCompatHighTierModelTarget(options.model)))
+        isPrimaryModelFallbackAllowed(options.model)
       ) {
         consecutive529Errors++
         if (consecutive529Errors >= MAX_529_RETRIES) {
@@ -360,7 +373,7 @@ export async function* withRetry<T>(
       // Handle max tokens context overflow errors by adjusting max_tokens for the next attempt
       // NOTE: With extended-context-window beta, this 400 error should not occur.
       // The API now returns 'model_context_window_exceeded' stop_reason instead.
-      // Keeping for backward compatibility.
+      // Keep the context-window overflow retry as an explicit provider-migration boundary.
       if (error instanceof APIError) {
         const overflowData = parseMaxTokensContextOverflowError(error)
         if (overflowData) {
@@ -679,7 +692,7 @@ function shouldRetry(error: APIError): boolean {
   // Enterprise users can retry because they typically use PAYG instead of rate limits.
   if (
     shouldRetryHeader === 'true' &&
-    (!isLegacyCloudSubscriber() || isEnterpriseSubscriber())
+    (!isProviderSubscriptionAccount() || isEnterpriseSubscriber())
   ) {
     return true
   }
@@ -699,10 +712,10 @@ function shouldRetry(error: APIError): boolean {
   if (error.status === 408) return true
   // Retry on lock timeouts.
   if (error.status === 409) return true
-  // Retry on rate limits, but not for legacy cloud subscription users
+  // Retry on rate limits, but not for provider subscription users
   // Enterprise users can retry because they typically use PAYG instead of rate limits
   if (error.status === 429) {
-    return !isLegacyCloudSubscriber() || isEnterpriseSubscriber()
+    return !isProviderSubscriptionAccount() || isEnterpriseSubscriber()
   }
   // Clear API key cache on 401 and allow retry.
   // OAuth token handling is done in the main retry loop via handleOAuth401Error.

@@ -1,7 +1,7 @@
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 
 /**
- * GrowthBook config for time-based microcompact.
+ * feature flag provider config for time-based microcompact.
  *
  * Triggers content-clearing microcompact when the gap since the last main-loop
  * assistant message exceeds a threshold — the server-side prompt cache has
@@ -40,13 +40,4 @@ export function getTimeBasedMCConfig(): TimeBasedMCConfig {
     'tengu_slate_heron',
     TIME_BASED_MC_CONFIG_DEFAULTS,
   )
-}
-
-
-// V14 lifecycle shim: timebasedmcconfig
-export function processTimebasedmcconfigLifecycle(input) {
-  void input
-  const state = 'timebasedmcconfig-state'
-  const lifecycle = 'timebasedmcconfig:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

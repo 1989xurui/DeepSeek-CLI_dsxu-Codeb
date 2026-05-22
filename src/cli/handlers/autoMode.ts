@@ -168,12 +168,3 @@ function formatRulesForCritique(
     '\n\n'
   )
 }
-
-
-// V14 lifecycle shim: automode
-export function processAutomodeLifecycle(input) {
-  void input
-  const state = 'automode-state'
-  const lifecycle = 'automode:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,4 @@
-import { getCompatContextUpgradeSuggestion } from '../../dsxu/legacy/model/legacyProvider1mAccess.js'
+import { getProviderMigrationContextUpgradeSuggestion } from './providerMigration/providerMigration1mAccess.js'
 import { getUserSpecifiedModelSetting } from './model.js'
 
 // @[MODEL LAUNCH]: Add a branch for the new model if it supports a 1M context upgrade path.
@@ -12,7 +12,7 @@ function getAvailableUpgrade(): {
   multiplier: number
 } | null {
   const currentModelSetting = getUserSpecifiedModelSetting()
-  return getCompatContextUpgradeSuggestion(currentModelSetting)
+  return getProviderMigrationContextUpgradeSuggestion(currentModelSetting)
 }
 
 /**
@@ -30,13 +30,4 @@ export function getUpgradeMessage(context: 'warning' | 'tip'): string | null {
     default:
       return null
   }
-}
-
-
-// V14 lifecycle shim: contextwindowupgradecheck
-export function processContextwindowupgradecheckLifecycle(input) {
-  void input
-  const state = 'contextwindowupgradecheck-state'
-  const lifecycle = 'contextwindowupgradecheck:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

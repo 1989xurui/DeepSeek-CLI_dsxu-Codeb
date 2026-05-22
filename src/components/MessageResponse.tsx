@@ -75,11 +75,3 @@ function MessageResponseProvider(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: messageresponse
-export function processMessageresponseLifecycle(input) {
-  void input
-  const state = 'messageresponse-state'
-  const lifecycle = 'messageresponse:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

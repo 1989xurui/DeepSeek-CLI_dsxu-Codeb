@@ -270,12 +270,3 @@ After writing the skill file(s), inform the user:
 } satisfies Command
 
 export default command
-
-
-// V14 lifecycle shim: init-verifiers
-export function processInitVerifiersLifecycle(input) {
-  void input
-  const state = 'init-verifiers-state'
-  const lifecycle = 'init-verifiers:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -687,11 +687,3 @@ function TwoColumnRow(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: select
-export function processSelectLifecycle(input) {
-  void input
-  const state = 'select-state'
-  const lifecycle = 'select:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

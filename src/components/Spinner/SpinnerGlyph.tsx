@@ -77,11 +77,3 @@ export function SpinnerGlyph(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: spinnerglyph
-export function processSpinnerglyphLifecycle(input) {
-  void input
-  const state = 'spinnerglyph-state'
-  const lifecycle = 'spinnerglyph:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

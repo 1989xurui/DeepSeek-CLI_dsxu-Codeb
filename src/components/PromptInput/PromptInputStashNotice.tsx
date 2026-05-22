@@ -22,11 +22,3 @@ export function PromptInputStashNotice(t0) {
   }
   return t1;
 }
-
-// V14 lifecycle shim: promptinputstashnotice
-export function processPromptinputstashnoticeLifecycle(input) {
-  void input
-  const state = 'promptinputstashnotice-state'
-  const lifecycle = 'promptinputstashnotice:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -21,21 +21,3 @@ const terminalSetup = {
 } satisfies Command
 
 export default terminalSetup
-
-
-// V14 command lifecycle shim: terminalSetup
-export function processTerminalSetupCommandLifecycle(input) {
-  void input
-  const state = 'terminalSetup-command-state'
-  const lifecycle = 'terminalSetup:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'terminalSetup',
-  }
-}
-
-export function runTerminalSetupCommand(input) {
-  return processTerminalSetupCommandLifecycle(input)
-}

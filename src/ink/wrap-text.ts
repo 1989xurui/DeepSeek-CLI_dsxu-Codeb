@@ -72,12 +72,3 @@ export default function wrapText(
 
   return text
 }
-
-
-// V14 lifecycle shim: wrap-text
-export function processWrapTextLifecycle(input) {
-  void input
-  const state = 'wrap-text-state'
-  const lifecycle = 'wrap-text:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -27,6 +27,36 @@ import {
   substituteUserConfigVariables,
 } from './pluginOptionsStorage.js'
 
+export function getDsxuPluginMcpRuntimeProfile(): {
+  runtime: 'DSXU Plugin MCP Integration'
+  owner: 'DSXU MCP / Plugin Adapter Boundary'
+  sources: readonly string[]
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plugin MCP Integration',
+    owner: 'DSXU MCP / Plugin Adapter Boundary',
+    sources: [
+      '.mcp.json inside plugin directory',
+      'plugin manifest MCP server entries',
+      'MCPB/DXT packages',
+      'plugin user configuration',
+    ],
+    activationEvidence: [
+      'loadPluginMcpServers returns MCP server configs only; useManageMCPConnections owns actual connection lifecycle',
+      'MCPB packages requiring user config return null until configured by the user',
+      'addPluginScopeToServers marks plugin-origin servers with plugin scope before merge',
+      'resolvePluginMcpEnvironment expands plugin options and DSXU environment variables before launch',
+    ],
+    releaseRiskControls: [
+      'plugin MCP is adapter input, not a standalone MCP runtime',
+      'provider-migration connector types pass through as explicit migration boundary only',
+      'plugin MCP errors are recorded on plugin errors instead of silently enabling servers',
+    ],
+  }
+}
+
 /**
  * Load MCP servers from an MCPB file
  * Handles downloading, extracting, and converting DXT manifest to MCP config
@@ -547,7 +577,7 @@ export function resolvePluginMcpEnvironment(
       break
     }
 
-    // For other types (sse-ide, ws-ide, sdk, legacy remote connector), pass through unchanged
+    // For other types (sse-ide, ws-ide, sdk, provider-migration remote connector), pass through unchanged.
     case 'sse-ide':
     case 'ws-ide':
     case 'sdk':

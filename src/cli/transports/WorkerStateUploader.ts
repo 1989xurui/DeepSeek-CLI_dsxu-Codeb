@@ -129,12 +129,3 @@ function coalescePatches(
 
   return merged
 }
-
-
-// V14 lifecycle shim: workerstateuploader
-export function processWorkerstateuploaderLifecycle(input) {
-  void input
-  const state = 'workerstateuploader-state'
-  const lifecycle = 'workerstateuploader:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -124,12 +124,3 @@ export function useTerminalNotification(): TerminalNotification {
     [notifyITerm2, notifyKitty, notifyGhostty, notifyBell, progress],
   )
 }
-
-
-// V14 lifecycle shim: useterminalnotification
-export function processUseterminalnotificationLifecycle(input) {
-  void input
-  const state = 'useterminalnotification-state'
-  const lifecycle = 'useterminalnotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

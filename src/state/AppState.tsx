@@ -9,7 +9,7 @@ import { applySettingsChange } from '../utils/settings/applySettingsChange.js';
 import type { SettingSource } from '../utils/settings/constants.js';
 import { createStore } from './store.js';
 
-// DCE: voice context is ant-only. External builds get a passthrough.
+// DCE: voice context is dsxu internal. External builds get a passthrough.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const VoiceProvider: (props: {
   children: React.ReactNode;
@@ -196,12 +196,4 @@ export function useAppStateMaybeOutsideOfProvider(selector) {
     t0 = $[2];
   }
   return useSyncExternalStore(store ? store.subscribe : NOOP_SUBSCRIBE, t0);
-}
-
-// V14 lifecycle shim: appstate
-export function processAppstateLifecycle(input) {
-  void input
-  const state = 'appstate-state'
-  const lifecycle = 'appstate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

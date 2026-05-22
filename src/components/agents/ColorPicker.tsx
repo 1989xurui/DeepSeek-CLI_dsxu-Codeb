@@ -109,11 +109,3 @@ function _temp2(prev_0) {
 function _temp(prev) {
   return prev > 0 ? prev - 1 : COLOR_OPTIONS.length - 1;
 }
-
-// V14 lifecycle shim: colorpicker
-export function processColorpickerLifecycle(input) {
-  void input
-  const state = 'colorpicker-state'
-  const lifecycle = 'colorpicker:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

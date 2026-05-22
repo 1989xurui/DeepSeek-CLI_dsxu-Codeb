@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import type { ToolUseBlock } from 'src/types/providerSdk.js';
 import { getRemoteSessionUrl } from '../../constants/product.js';
 import { OUTPUT_FILE_TAG, REMOTE_REVIEW_PROGRESS_TAG, REMOTE_REVIEW_TAG, STATUS_TAG, SUMMARY_TAG, TASK_ID_TAG, TASK_NOTIFICATION_TAG, TASK_TYPE_TAG, TOOL_USE_ID_TAG, ULTRAPLAN_TAG } from '../../constants/xml.js';
@@ -254,7 +253,7 @@ The remote Ultraplan session did not produce a plan (${reason}). Inspect the ses
  *
  * Two producers, two event shapes:
  * - bughunter mode: run_hunt.sh is a SessionStart hook; its echo lands as
- *   {type:'system', subtype:'hook_progress', stdout:'...'}. The legacy cloud assistant never
+ *   {type:'system', subtype:'hook_progress', stdout:'...'}. The provider migration assistant never
  *   takes a turn so there are zero assistant messages.
  * - prompt mode: a real assistant turn wraps the review in the tag.
  *

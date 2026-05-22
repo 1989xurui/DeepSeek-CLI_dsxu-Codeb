@@ -191,12 +191,3 @@ export const StructuredDiff = memo(function StructuredDiff(t0) {
   }
   return t3;
 });
-
-
-// V14 lifecycle shim: structureddiff
-export function processStructureddiffLifecycle(input) {
-  void input
-  const state = 'structureddiff-state'
-  const lifecycle = 'structureddiff:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

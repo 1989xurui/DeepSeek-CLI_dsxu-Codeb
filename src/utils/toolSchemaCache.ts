@@ -2,13 +2,13 @@ import type { BetaTool } from 'src/types/providerSdk.js'
 
 // Session-scoped cache of rendered tool schemas. Tool schemas render at server
 // position 2 (before system prompt), so any byte-level change busts the entire
-// ~11K-token tool block AND everything downstream. GrowthBook gate flips
+// ~11K-token tool block AND everything downstream. feature flag provider gate flips
 // (tengu_tool_pear, tengu_fgts), MCP reconnects, or dynamic content in
 // tool.prompt() all cause this churn. Memoizing per-session locks the schema
 // bytes at first render — mid-session GB refreshes no longer bust the cache.
 //
 // Lives in a leaf module so auth.ts can clear it without importing api.ts
-// (which would create a cycle via plans→settings→file→growthbook→config→
+// (which would create a cycle via plans→settings→file→featureFlags→config→
 // bridgeEnabled→auth).
 type CachedSchema = BetaTool & {
   strict?: boolean

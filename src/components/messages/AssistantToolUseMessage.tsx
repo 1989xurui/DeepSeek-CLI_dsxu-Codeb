@@ -365,11 +365,3 @@ function renderToolUseQueuedMessage(tool: Tool): React.ReactNode {
     return null;
   }
 }
-
-// V14 lifecycle shim: assistanttoolusemessage
-export function processAssistanttoolusemessageLifecycle(input) {
-  void input
-  const state = 'assistanttoolusemessage-state'
-  const lifecycle = 'assistanttoolusemessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

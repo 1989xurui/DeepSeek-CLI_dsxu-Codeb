@@ -270,12 +270,3 @@ async function writeFileAndFlush(
     await handle.close()
   }
 }
-
-
-// V14 lifecycle shim: agentfileutils
-export function processAgentfileutilsLifecycle(input) {
-  void input
-  const state = 'agentfileutils-state'
-  const lifecycle = 'agentfileutils:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

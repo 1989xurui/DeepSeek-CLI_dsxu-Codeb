@@ -1,4 +1,4 @@
-﻿// biome-ignore-all lint/suspicious/noConsole: file uses console intentionally
+// biome-ignore-all lint/suspicious/noConsole: file uses console intentionally
 /**
  * Chrome Native Host - Pure TypeScript Implementation
  *
@@ -117,7 +117,7 @@ class ChromeNativeHost {
     if (platform() !== 'win32') {
       const socketDir = getSocketDir()
 
-      // Migrate legacy socket: if socket dir path exists as a file/socket, remove it
+      // Migrate historical socket: if socket dir path exists as a file/socket, remove it
       try {
         const dirStats = await stat(socketDir)
         if (!dirStats.isDirectory()) {
@@ -524,13 +524,4 @@ class ChromeMessageReader {
       this.tryProcessMessage()
     })
   }
-}
-
-
-// V14 lifecycle shim: chromenativehost
-export function processChromenativehostLifecycle(input) {
-  void input
-  const state = 'chromenativehost-state'
-  const lifecycle = 'chromenativehost:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

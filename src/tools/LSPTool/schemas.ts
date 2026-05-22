@@ -213,20 +213,3 @@ export function isValidLSPOperation(
     'outgoingCalls',
   ].includes(operation)
 }
-
-
-// V14 strict lifecycle shim: tools-LSPTool-schemas
-export function processToolsLSPToolSchemasStrictLifecycle(input) {
-  void input
-  const state = 'tools-LSPTool-schemas-state'
-  const lifecycle = 'tools-LSPTool-schemas:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsLSPToolSchemasStrict(input) {
-  return processToolsLSPToolSchemasStrictLifecycle(input)
-}

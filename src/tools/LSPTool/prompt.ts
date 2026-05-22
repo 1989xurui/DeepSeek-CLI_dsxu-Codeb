@@ -38,20 +38,3 @@ DSXU weak-model discipline:
 export const PROMPT = `${DESCRIPTION}
 
 ${DSXU_LSP_TOOL_DISCIPLINE}`
-
-
-// V14 strict lifecycle shim: tools-LSPTool-prompt
-export function processToolsLSPToolPromptStrictLifecycle(input) {
-  void input
-  const state = 'tools-LSPTool-prompt-state'
-  const lifecycle = 'tools-LSPTool-prompt:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsLSPToolPromptStrict(input) {
-  return processToolsLSPToolPromptStrictLifecycle(input)
-}

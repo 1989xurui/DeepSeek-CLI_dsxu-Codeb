@@ -4,7 +4,7 @@ import {
   isDeepSeekV4ModelLike,
   normalizeDeepSeekV4Model,
 } from './deepseekV4Control.js'
-import { resolveLegacyModelCompat } from './legacyModelCompat.js'
+import { resolveProviderMigrationModelAlias } from './providerMigration/providerMigrationModelCompat.js'
 
 export const DSXU_DEEPSEEK_FLASH_MODEL = DEEPSEEK_V4_FLASH_MODEL
 export const DSXU_DEEPSEEK_PRO_MODEL = DEEPSEEK_V4_PRO_MODEL
@@ -24,18 +24,18 @@ export function getDSXUReasoningModel(): string {
 
 export function parseDSXUModelAlias(modelInput: string): string {
   const normalized = modelInput.trim().toLowerCase()
-  const legacyCompat = resolveLegacyModelCompat(normalized)
-  if (legacyCompat) return legacyCompat.model
+  const providerMigrationCompat = resolveProviderMigrationModelAlias(normalized)
+  if (providerMigrationCompat) return providerMigrationCompat.model
   if (normalized === 'deepseek') return DSXU_DEEPSEEK_FLASH_MODEL
   if (normalized === DSXU_DEEPSEEK_FLASH_MAX_ALIAS) return DSXU_DEEPSEEK_FLASH_MODEL
   return isDeepSeekV4ModelLike(normalized) ? normalizeDeepSeekV4Model(normalized) : modelInput
 }
 
 export function renderDSXUModelName(model: string): string | null {
-  const legacyCompat = resolveLegacyModelCompat(model)
+  const providerMigrationCompat = resolveProviderMigrationModelAlias(model)
   if (
     model.trim().toLowerCase() === DSXU_DEEPSEEK_FLASH_MAX_ALIAS ||
-    legacyCompat?.publicAlias === DSXU_DEEPSEEK_FLASH_MAX_ALIAS
+    providerMigrationCompat?.publicAlias === DSXU_DEEPSEEK_FLASH_MAX_ALIAS
   ) {
     return 'DeepSeek V4 Flash-MAX'
   }

@@ -137,11 +137,3 @@ function _temp(s) {
 export const call: LocalJSXCommandCall = async onDone => {
   return <SessionInfo onDone={onDone} />;
 };
-
-// V14 lifecycle shim: session
-export function processSessionLifecycle(input) {
-  void input
-  const state = 'session-state'
-  const lifecycle = 'session:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

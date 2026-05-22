@@ -108,20 +108,3 @@ export function addDirHelpMessage(result: AddDirectoryResult): string {
       return `Added ${chalk.bold(result.absolutePath)} as a working directory.`
   }
 }
-
-
-// V14 strict lifecycle shim: commands-add-dir-validation
-export function processCommandsAddDirValidationStrictLifecycle(input) {
-  void input
-  const state = 'commands-add-dir-validation-state'
-  const lifecycle = 'commands-add-dir-validation:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runCommandsAddDirValidationStrict(input) {
-  return processCommandsAddDirValidationStrictLifecycle(input)
-}

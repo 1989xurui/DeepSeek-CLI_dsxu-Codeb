@@ -23,11 +23,3 @@ function _temp(message, index) {
     color: message.type === "error" ? "error" : "warning"
   };
 }
-
-// V14 lifecycle shim: useinstallmessages
-export function processUseinstallmessagesLifecycle(input) {
-  void input
-  const state = 'useinstallmessages-state'
-  const lifecycle = 'useinstallmessages:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

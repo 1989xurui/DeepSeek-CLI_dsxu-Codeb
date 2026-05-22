@@ -286,19 +286,3 @@ async function loadRejectionDiff(filePath: string, oldString: string, newString:
     };
   }
 }
-
-// V14 strict lifecycle shim: tools-FileEditTool-UI
-export function processToolsFileEditToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-FileEditTool-UI-state'
-  const lifecycle = 'tools-FileEditTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsFileEditToolUIStrict(input) {
-  return processToolsFileEditToolUIStrictLifecycle(input)
-}

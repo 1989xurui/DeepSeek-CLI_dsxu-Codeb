@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { c as _c } from "react/compiler-runtime";
 import * as React from 'react';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
@@ -39,14 +38,14 @@ function setEffortValue(effortValue: EffortValue): EffortCommandResult {
     const envRaw = getDsxuCodeEnv('EFFORT_LEVEL') || '<unset>';
     if (persistable === undefined) {
       return {
-        message: `Not applied: DSXU_CODE_EFFORT_LEVEL=${envRaw} (legacy DSXU_CODE_EFFORT_LEVEL) overrides effort this session, and ${effortValue} is session-only (nothing saved)`,
+        message: `Not applied: DSXU_CODE_EFFORT_LEVEL=${envRaw} (provider-migration effort env alias) overrides effort this session, and ${effortValue} is session-only (nothing saved)`,
         effortUpdate: {
           value: effortValue
         }
       };
     }
     return {
-      message: `DSXU_CODE_EFFORT_LEVEL=${envRaw} (legacy DSXU_CODE_EFFORT_LEVEL) overrides this session ...clear it and ${effortValue} takes over`,
+      message: `DSXU_CODE_EFFORT_LEVEL=${envRaw} (provider-migration effort env alias) overrides this session ...clear it and ${effortValue} takes over`,
       effortUpdate: {
         value: effortValue
       }
@@ -93,7 +92,7 @@ function unsetEffortLevel(): EffortCommandResult {
   if (envOverride !== undefined && envOverride !== null) {
     const envRaw = getDsxuCodeEnv('EFFORT_LEVEL') || '<unset>';
     return {
-      message: `Cleared effort from settings, but DSXU_CODE_EFFORT_LEVEL=${envRaw} (legacy DSXU_CODE_EFFORT_LEVEL) still controls this session`,
+      message: `Cleared effort from settings, but DSXU_CODE_EFFORT_LEVEL=${envRaw} (provider-migration effort env alias) still controls this session`,
       effortUpdate: {
         value: undefined
       }

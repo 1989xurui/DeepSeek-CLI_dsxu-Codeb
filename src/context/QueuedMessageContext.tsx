@@ -60,11 +60,3 @@ export function QueuedMessageProvider(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: queuedmessagecontext
-export function processQueuedmessagecontextLifecycle(input) {
-  void input
-  const state = 'queuedmessagecontext-state'
-  const lifecycle = 'queuedmessagecontext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

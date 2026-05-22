@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { feature } from 'bun:bundle';
 import type { ToolResultBlockParam } from 'src/types/providerSdk.js';
 import { copyFile, stat as fsStat, truncate as fsTruncate, link } from 'fs/promises';
@@ -441,6 +440,13 @@ async function applySedEdit(simulatedEdit: {
 export const BashTool = buildTool({
   name: BASH_TOOL_NAME,
   searchHint: 'execute shell commands',
+  runtimeMetadata: {
+    owner: 'DSXU Bash Tool / Permission Engine',
+    sideEffects: ['shell-process-execution', 'filesystem-and-network-by-command'],
+    permission: 'bash permission classifier and Tool Gate checkPermissions',
+    evidence: ['command', 'cwd', 'exit code', 'stdout/stderr', 'permission decision'],
+    uiProjection: 'Bash progress, output, and task state',
+  },
   // 30K chars - tool result persistence threshold
   maxResultSizeChars: 30_000,
   strict: true,

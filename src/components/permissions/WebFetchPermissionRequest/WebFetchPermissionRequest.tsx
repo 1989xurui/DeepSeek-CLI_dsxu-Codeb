@@ -255,11 +255,3 @@ export function WebFetchPermissionRequest(t0) {
   }
   return t15;
 }
-
-// V14 lifecycle shim: webfetchpermissionrequest
-export function processWebfetchpermissionrequestLifecycle(input) {
-  void input
-  const state = 'webfetchpermissionrequest-state'
-  const lifecycle = 'webfetchpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

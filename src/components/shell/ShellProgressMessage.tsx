@@ -147,11 +147,3 @@ export function ShellProgressMessage(t0) {
 function _temp(line) {
   return line;
 }
-
-// V14 lifecycle shim: shellprogressmessage
-export function processShellprogressmessageLifecycle(input) {
-  void input
-  const state = 'shellprogressmessage-state'
-  const lifecycle = 'shellprogressmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

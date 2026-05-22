@@ -95,11 +95,3 @@ export function ValidatePlugin(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: validateplugin
-export function processValidatepluginLifecycle(input) {
-  void input
-  const state = 'validateplugin-state'
-  const lifecycle = 'validateplugin:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

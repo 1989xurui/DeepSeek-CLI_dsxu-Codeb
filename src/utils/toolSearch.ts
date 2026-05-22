@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Tool Search utilities for dynamically discovering deferred tools.
  *
@@ -8,7 +7,7 @@
  */
 
 import memoize from 'lodash-es/memoize.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -46,7 +45,7 @@ import {
 } from './model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
-import { getCompatUnsupportedToolReferencePatterns } from '../dsxu/legacy/model/legacyProviderToolSearchModel.js'
+import { getProviderMigrationUnsupportedToolReferencePatterns } from './model/providerMigration/providerMigrationToolSearchModel.js'
 
 /**
  * Default percentage of context window at which to auto-enable tool search.
@@ -209,15 +208,15 @@ export function getToolSearchMode(): ToolSearchMode {
  * New models are assumed to support tool_reference unless explicitly listed here.
  */
 const DEFAULT_UNSUPPORTED_MODEL_PATTERNS =
-  getCompatUnsupportedToolReferencePatterns()
+  getProviderMigrationUnsupportedToolReferencePatterns()
 
 /**
  * Get the list of model patterns that do NOT support tool_reference.
- * Can be configured via GrowthBook for live updates without code changes.
+ * Can be configured via feature flag provider for live updates without code changes.
  */
 function getUnsupportedToolReferencePatterns(): string[] {
   try {
-    // Try to get from GrowthBook for live configuration
+    // Try to get from feature flag provider for live configuration
     const patterns = getFeatureValue_CACHED_MAY_BE_STALE<string[] | null>(
       'tengu_tool_search_unsupported_models',
       null,
@@ -226,7 +225,7 @@ function getUnsupportedToolReferencePatterns(): string[] {
       return patterns
     }
   } catch {
-    // GrowthBook not ready, use defaults
+    // feature flag provider not ready, use defaults
   }
   return DEFAULT_UNSUPPORTED_MODEL_PATTERNS
 }
@@ -238,8 +237,8 @@ function getUnsupportedToolReferencePatterns(): string[] {
  * UNLESS they match a pattern in the unsupported list. This ensures new
  * models work by default without code changes.
  *
- * Currently, some lightweight compatibility models do not support tool_reference. This can be
- * updated via GrowthBook feature 'tengu_tool_search_unsupported_models'.
+ * Currently, some lightweight provider-migration models do not support tool_reference. This can be
+ * updated via feature flag provider feature 'tengu_tool_search_unsupported_models'.
  *
  * @param model The model name to check
  * @returns true if the model supports tool_reference, false otherwise
@@ -291,7 +290,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
   }
 
   // tool_reference is a beta content type that third-party API gateways
-  // (legacy provider base URL proxies) typically don't support. When the provider
+  // (provider migration base URL proxies) typically don't support. When the provider
   // is 'firstParty' but the base URL points elsewhere, the proxy will reject
   // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected ...  // they have their own endpoints and beta headers.
   // Upstream provider issue tracker #30912
@@ -313,7 +312,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
     if (!loggedOptimistic) {
       loggedOptimistic = true
       logForDebugging(
-        `[ToolSearch:optimistic] disabled: provider base URL is not a first-party legacy host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
+        `[ToolSearch:optimistic] disabled: provider base URL is not a first-party provider-migration host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
       )
     }
     return false
@@ -378,7 +377,7 @@ async function calculateDeferredToolDescriptionChars(
  *
  * This is the definitive check that includes:
  * - MCP mode (Tst, TstAuto, McpCli, Standard)
- * - Model compatibility (some lightweight routes do not support tool_reference)
+ * - Model capability (some lightweight routes do not support tool_reference)
  * - ToolSearchTool availability (must be in tools list)
  * - Threshold check for TstAuto mode
  *

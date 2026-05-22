@@ -184,17 +184,9 @@ export function NativeAutoUpdater({
       {autoUpdaterResult?.status === 'install_failed' && <Text color="error" wrap="truncate">
           ✗ Auto-update failed &middot; Try <Text bold>/status</Text>
         </Text>}
-      {maxVersionIssue && "external" === 'ant' && <Text color="warning">
+      {maxVersionIssue && false && <Text color="warning">
           ⚠ Known issue: {maxVersionIssue} &middot; Run{' '}
           <Text bold>dsxu-code rollback --safe</Text> to downgrade
         </Text>}
     </Box>;
-}
-
-// V14 lifecycle shim: nativeautoupdater
-export function processNativeautoupdaterLifecycle(input) {
-  void input
-  const state = 'nativeautoupdater-state'
-  const lifecycle = 'nativeautoupdater:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

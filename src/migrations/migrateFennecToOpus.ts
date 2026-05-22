@@ -47,18 +47,10 @@ export function migrateFennecToOpus(): void {
 }
 
 
-// V14 lifecycle shim: migratefennectoopus
-export function processMigratefennectoopusLifecycle(input) {
-  void input
-  const state = 'migratefennectoopus-state'
-  const lifecycle = 'migratefennectoopus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuFennecMigrationRuntimeProfile() {
   return {
     runtime: 'DSXU Fennec/Opus Migration Boundary',
-    defaultBehavior: 'legacy provider alias migration is disabled in DSXU runtime so DeepSeek defaults are preserved',
+    defaultBehavior: 'provider-migration alias intake is disabled in DSXU runtime so DeepSeek defaults are preserved',
     providerTarget: 'DSXU DeepSeek Model Policy',
     activationEvidence: [
       'migrateFennecToOpus returns immediately in DSXU mode',

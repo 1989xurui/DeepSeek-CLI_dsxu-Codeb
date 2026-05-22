@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DSXU Code hints protocol.
  *
  * CLIs and SDKs running under DSXU Code can emit a self-closing
@@ -44,7 +44,7 @@ const SUPPORTED_VERSIONS = new Set([1])
 /** Hint types this harness understands at the supported versions. */
 const SUPPORTED_TYPES = new Set<string>(['plugin'])
 const DSXU_HINT_TAG = 'dsxu-code-hint'
-const LEGACY_HINT_TAG = 'cl' + 'aude-code-hint'
+const PROVIDER_MIGRATION_SOURCE_HINT_TAG = 'cl' + 'aude-code-hint'
 
 /**
  * Outer tag match. Anchored to whole lines (multiline mode) so that a
@@ -54,7 +54,7 @@ const LEGACY_HINT_TAG = 'cl' + 'aude-code-hint'
  */
 const HINT_TAG_RE =
   new RegExp(
-    `^[ \\t]*<(?:${DSXU_HINT_TAG}|${LEGACY_HINT_TAG})\\s+([^>]*?)\\s*\\/>[ \\t]*$`,
+    `^[ \\t]*<(?:${DSXU_HINT_TAG}|${PROVIDER_MIGRATION_SOURCE_HINT_TAG})\\s+([^>]*?)\\s*\\/>[ \\t]*$`,
     'gm',
   )
 
@@ -82,7 +82,7 @@ export function extractDsxuCodeHints(
   // Fast path: no tag open sequence → no work, no allocation.
   if (
     !output.includes('<dsxu-code-hint') &&
-    !output.includes(`<${LEGACY_HINT_TAG}`)
+    !output.includes(`<${PROVIDER_MIGRATION_SOURCE_HINT_TAG}`)
   ) {
     return { hints: [], stripped: output }
   }
@@ -199,12 +199,4 @@ export function _resetDsxuCodeHintStore(): void {
 export const _test = {
   parseAttrs,
   firstCommandToken,
-}
-
-// V14 lifecycle shim: dsxuCodeHints
-export function processDsxuCodeHintsLifecycle(input) {
-  void input
-  const state = 'dsxuCodeHints-state'
-  const lifecycle = 'dsxuCodeHints:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

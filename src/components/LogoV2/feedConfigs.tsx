@@ -26,7 +26,7 @@ export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
 }
 export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
   const lines: FeedLine[] = releaseNotes.map(note => {
-    if ("external" === 'ant') {
+    if (false) {
       const match = note.match(/^(\d+\s+\w+\s+ago)\s+(.+)$/);
       if (match) {
         return {
@@ -40,9 +40,9 @@ export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
     };
   });
   const productName = 'DSXU Code';
-  const emptyMessage = "external" === 'ant' ? 'Unable to fetch latest DSXU internal commits' : `Check the ${productName} changelog for updates`;
+  const emptyMessage = false ? 'Unable to fetch latest DSXU internal commits' : `Check the ${productName} changelog for updates`;
   return {
-    title: "external" === 'ant' ? "What's new [ANT-ONLY: Latest CC commits]" : "What's new",
+    title: false ? "What's new [DSXU internal commits]" : "What's new",
     lines,
     footer: lines.length > 0 ? '/release-notes for more' : undefined,
     emptyMessage
@@ -75,8 +75,8 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
 }
 export function createGuestPassesFeed(): FeedConfig {
   const reward = getCachedReferrerReward();
-  const productName = 'DSXU Code';
-  const subtitle = reward ? `Share ${productName} and earn ${formatCreditAmount(reward)} of extra usage` : `Share ${productName} with friends`;
+  const productName = 'DSXU provider workspace';
+  const subtitle = reward ? `Share a ${productName} and earn ${formatCreditAmount(reward)} of extra usage` : `Share a ${productName} with friends`;
   return {
     title: '3 guest passes',
     lines: [],

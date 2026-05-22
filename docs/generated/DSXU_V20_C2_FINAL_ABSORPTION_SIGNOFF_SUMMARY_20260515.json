@@ -1,0 +1,127 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.c2-final-absorption-signoff.v1",
+    "generatedAt":  "2026-05-15T00:33:23+08:00",
+    "total":  1902,
+    "byC2Action":  [
+                       {
+                           "action":  "absorb_into_dsxu_mainline",
+                           "count":  988
+                       },
+                       {
+                           "action":  "adapt_or_exclude_product_specific",
+                           "count":  594
+                       },
+                       {
+                           "action":  "review_absorb_as_shared_utility_only_if_imported",
+                           "count":  278
+                       },
+                       {
+                           "action":  "review_candidate",
+                           "count":  42
+                       }
+                   ],
+    "byFinalDecision":  [
+                            {
+                                "decision":  "C2_MAINLINE_ABSORPTION_SIGNED_BY_NAMED_OWNER",
+                                "count":  988
+                            },
+                            {
+                                "decision":  "C2_PRODUCT_SPECIFIC_REFERENCE_EXCLUDED_OR_ADAPTED",
+                                "count":  594
+                            },
+                            {
+                                "decision":  "C2_REVIEW_CANDIDATE_EXCLUDED_OR_ADAPTED_BY_OWNER",
+                                "count":  7
+                            },
+                            {
+                                "decision":  "C2_REVIEW_CANDIDATE_MAPPED_TO_NAMED_OWNER",
+                                "count":  35
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_BASELINE_PRESENT_NO_NEW_ABSORPTION",
+                                "count":  201
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_KEEP_WITH_IMPORT_USE_EVIDENCE",
+                                "count":  73
+                            },
+                            {
+                                "decision":  "C2_SHARED_UTILITY_NOT_IMPORTED_TO_DSXU_NO_ABSORPTION",
+                                "count":  4
+                            }
+                        ],
+    "byOwnerPacket":  [
+                          {
+                              "ownerPacket":  "V20-OGR-03-tool-permission-lifecycle",
+                              "count":  310
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-mcp-skill-plugin-registry",
+                              "count":  185
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-05-agent-task-lifecycle",
+                              "count":  111
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-06-ui-tui-visible-state",
+                              "count":  682
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-07-provider-migration-model-cost",
+                              "count":  141
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-08-cli-command-transport",
+                              "count":  176
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-09-dsxu-engine-mainline",
+                              "count":  21
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-10-entry-query-tool-composition",
+                              "count":  34
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-12-shared-platform-utilities",
+                              "count":  242
+                          }
+                      ],
+    "byClosureState":  [
+                           {
+                               "closureState":  "SIGNED_BASELINE_HELPER_OR_NOOP",
+                               "count":  201
+                           },
+                           {
+                               "closureState":  "SIGNED_IMPORTED_HELPER_NO_RUNTIME",
+                               "count":  73
+                           },
+                           {
+                               "closureState":  "SIGNED_NO_REVIEW_BUCKET_LEFT",
+                               "count":  35
+                           },
+                           {
+                               "closureState":  "SIGNED_NO_SECOND_RUNTIME",
+                               "count":  988
+                           },
+                           {
+                               "closureState":  "SIGNED_REFERENCE_ONLY_NOT_PRESENT",
+                               "count":  4
+                           },
+                           {
+                               "closureState":  "SIGNED_REFERENCE_ONLY_OR_DSXU_ADAPTATION",
+                               "count":  601
+                           }
+                       ],
+    "unresolvedRows":  0,
+    "remainingReviewCandidateBuckets":  0,
+    "sharedUtilityRows":  278,
+    "sharedUtilityImportedKeep":  73,
+    "sharedUtilityDuplicateDelete":  0,
+    "sharedUtilityReferenceOnlyOrBaseline":  205,
+    "reviewCandidateRows":  42,
+    "reviewCandidateMappedToNamedOwner":  42,
+    "rule":  "C2 final signoff closes Claude 1902 mapping as owner-disposition evidence only. It does not stage, commit, delete ACL residues, run final tests, or create clean export.",
+    "nextAction":  "proceed to Owner/Git packets, then 147 deletion mutation review, 4 ACL residues, real-gap acceptance, six-stage tests, and clean export"
+}

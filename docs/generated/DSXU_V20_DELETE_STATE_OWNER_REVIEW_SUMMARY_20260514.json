@@ -1,0 +1,40 @@
+﻿{
+    "generatedAt":  "2026-05-14T21:17:24",
+    "totalDeleted":  146,
+    "activeImportReferenceStatus":  "PASS: refreshed targeted scan leaves no active product imports for deleted engine built-in tools, deleted dirty-review runtime, or deleted engine MCP runtime; remaining hits are test guard strings or named mainline owners",
+    "decisionSummary":  [
+                            {
+                                "decision":  "ready-for-delete-signoff-after-owner-review",
+                                "count":  146
+                            }
+                        ],
+    "packetSummary":  [
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-evidence-review-runtime",
+                              "count":  45,
+                              "needsOwnerReview":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-old-provider-legacy-harness",
+                              "count":  71,
+                              "needsOwnerReview":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-02-delete-state-owner-review",
+                              "count":  27,
+                              "needsOwnerReview":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-03-delete-engine-builtin-tools-runtime",
+                              "count":  2,
+                              "needsOwnerReview":  0
+                          },
+                          {
+                              "ownerPacket":  "V20-OGR-04-delete-engine-mcp-client-runtime",
+                              "count":  1,
+                              "needsOwnerReview":  0
+                          }
+                      ],
+    "csv":  "docs/generated/DSXU_V20_DELETE_STATE_OWNER_REVIEW_20260514.csv",
+    "nextAction":  "packet signoff before staging deletions; deleted engine built-in tools, dirty-review runtime test, and engine MCP runtime are replace/delete candidates"
+}

@@ -45,11 +45,3 @@ async function _temp() {
   }
   return notifs;
 }
-
-// V14 lifecycle shim: useofficialmarketplacenotification
-export function processUseofficialmarketplacenotificationLifecycle(input) {
-  void input
-  const state = 'useofficialmarketplacenotification-state'
-  const lifecycle = 'useofficialmarketplacenotification:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

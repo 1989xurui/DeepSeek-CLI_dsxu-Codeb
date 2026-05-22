@@ -1,7 +1,6 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import reject from 'lodash-es/reject.js'
 import { z } from 'zod/v4'
-import { isLegacyCloudMcpTransport } from '../../constants/legacyProviderProtocol.js'
+import { isProviderMigrationMcpTransport } from '../../constants/providerMigrationProtocol.js'
 import { performMCPOAuthFlow } from '../../services/mcp/auth.js'
 import {
   clearMcpAuthCache,
@@ -63,6 +62,23 @@ export function createMcpAuthTool(
 
   return {
     name: buildMcpToolName(serverName, 'authenticate'),
+    runtimeMetadata: {
+      owner: 'DSXU MCP Auth Adapter',
+      sideEffects: [
+        'mcp-oauth-url-generation',
+        'mcp-auth-cache-clear',
+        'mcp-server-reconnect',
+        'mcp-tool-resource-swap',
+      ],
+      permission: 'allow only for DSXU MCP auth pseudo-tool; provider-migration transport is unsupported',
+      evidence: [
+        'serverName/config input',
+        'OAuth URL output',
+        'provider-migration transport guard',
+        'reconnect result updates appState.mcp',
+      ],
+      uiProjection: 'MCP authentication URL and status message',
+    },
     isMcp: true,
     mcpInfo: { serverName, toolName: 'authenticate' },
     isEnabled: () => true,
@@ -85,13 +101,13 @@ export function createMcpAuthTool(
       return { behavior: 'allow', updatedInput: input }
     },
     async call(_input, context) {
-      if (isLegacyCloudMcpTransport(config.type)) {
+      if (isProviderMigrationMcpTransport(config.type)) {
         return {
           data: {
             status: 'unsupported' as const,
             message:
-              `Server "${serverName}" uses a legacy remote MCP connector shell that DSXU isolates from tool-triggered OAuth. ` +
-              `Use the DSXU MCP provider path, or enable the explicit legacy migration flag and authenticate from /mcp.`,
+              `Server "${serverName}" uses a provider-migration remote MCP connector shell that DSXU isolates from tool-triggered OAuth. ` +
+              `Use the DSXU MCP provider path, or enable the explicit provider migration flag and authenticate from /mcp.`,
           },
         }
       }
@@ -233,7 +249,7 @@ export function getDsxuMcpAuthToolRuntimeProfile(): {
       'createMcpAuthTool builds an MCP-prefixed authenticate tool for the target server',
       'call starts performMCPOAuthFlow with skipBrowserOpen and returns the authorization URL to the user',
       'background continuation reconnects the MCP server and replaces pseudo tools with real runtime tools',
-      'unsupported transports and legacy connector shells return structured tool results instead of throwing raw errors',
+      'unsupported transports and provider-migration source connector shells return structured tool results instead of throwing raw errors',
     ],
   }
 }

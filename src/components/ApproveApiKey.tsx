@@ -120,11 +120,3 @@ export function ApproveApiKey(t0) {
   }
   return t9;
 }
-
-// V14 lifecycle shim: approveapikey
-export function processApproveapikeyLifecycle(input) {
-  void input
-  const state = 'approveapikey-state'
-  const lifecycle = 'approveapikey:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

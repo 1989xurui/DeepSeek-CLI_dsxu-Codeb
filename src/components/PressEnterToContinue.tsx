@@ -12,11 +12,3 @@ export function PressEnterToContinue() {
   }
   return t0;
 }
-
-// V14 lifecycle shim: pressentertocontinue
-export function processPressentertocontinueLifecycle(input) {
-  void input
-  const state = 'pressentertocontinue-state'
-  const lifecycle = 'pressentertocontinue:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

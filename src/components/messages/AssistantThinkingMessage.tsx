@@ -83,11 +83,3 @@ export function AssistantThinkingMessage(t0) {
   }
   return t7;
 }
-
-// V14 lifecycle shim: assistantthinkingmessage
-export function processAssistantthinkingmessageLifecycle(input) {
-  void input
-  const state = 'assistantthinkingmessage-state'
-  const lifecycle = 'assistantthinkingmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

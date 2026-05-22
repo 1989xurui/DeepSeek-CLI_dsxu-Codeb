@@ -41,8 +41,8 @@ const providerBackend: DSXUV8Item = {
   dsxuLanding: [
     'src/dsxu/engine/provider-contract.ts',
     'src/dsxu/engine/provider-alias.ts',
-    'src/dsxu/engine/provider-backend/local-provider-backend.ts',
-    'src/dsxu/engine/provider-backend/*',
+    'src/services/bridge/dsxuLocalProviderBackend.ts',
+    'src/services/bridge/*',
     'src/entrypoints/cli.tsx',
     'src/main.tsx',
     'src/tools/SendMessageTool/SendMessageTool.ts',
@@ -51,7 +51,7 @@ const providerBackend: DSXUV8Item = {
     'Add DSXU local provider backend with durable event stream.',
     'Add DSXU disabled remote backend that returns typed blocked results.',
     'Add provider credential vault facade for MCP/provider secrets.',
-    'Route --remote, remote-control, and legacy target selectors through DSXU provider contract or legacy-flag-only shims.',
+    'Route --remote, remote-control, and legacy target selectors through DSXU provider contract or provider-migration-flag-only shims.',
     'Keep old shell directories archived after dynamic imports are remapped to DSXU provider facades.',
   ],
   acceptance: [
@@ -253,7 +253,7 @@ const permissionUsability: DSXUV8Item = {
 const docsCleanup: DSXUV8Item = {
   id: 'V8-8 Encoding and Docs Cleanup',
   objective:
-    'Clean V3-V7 documents, ledger mojibake, and default-visible text without breaking compatibility aliases.',
+    'Clean V3-V7 documents, ledger mojibake, and default-visible text without breaking provider-migration aliases.',
   referenceBehavior: [
     'not applicable',
   ],
@@ -272,7 +272,7 @@ const docsCleanup: DSXUV8Item = {
   acceptance: [
     'V8 docs render readable Chinese and ASCII paths',
     'default-visible strings contain DSXU-owned wording',
-    'compatibility aliases are not broken by wording cleanup',
+    'provider-migration aliases are not broken by wording cleanup',
   ],
   state: 'ready_to_build',
 }
@@ -284,7 +284,7 @@ export function getDsxuV8ProductBuildContract(): DSXUV8ProductBuildContract {
       'Turn DSXU from evidence-green into product-grade DeepSeek coding agent behavior by building provider replacement, mutation live suites, real hooks, memory resume, Agent long-run, real MCP, permission usability, and documentation cleanup.',
     rules: [
       'Do not mark a real product capability complete from Grep-only evidence.',
-      'Do not move old provider shells until compatibility imports are removed or remapped.',
+      'Do not move provider-migration shells until provider-migration imports are removed or remapped.',
       'Every mutation live case must edit/write inside an explicit fixture scope.',
       'Every PASS marker must follow verification evidence.',
       'Memory and summaries are hints, never substitutes for source evidence.',

@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Text } from '../../ink.js';
 export function CheckGitHubStep() {
@@ -11,12 +11,4 @@ export function CheckGitHubStep() {
     t0 = $[0];
   }
   return t0;
-}
-
-// V14 lifecycle shim: checkgithubstep
-export function processCheckgithubstepLifecycle(input) {
-  void input
-  const state = 'checkgithubstep-state'
-  const lifecycle = 'checkgithubstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

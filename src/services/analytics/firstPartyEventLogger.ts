@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
-import type { AnyValueMap, Logger, logs } from '@opentelemetry/api-logs'
+﻿import type { AnyValueMap, Logger, logs } from '@opentelemetry/api-logs'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
   BatchLogRecordProcessor,
@@ -20,8 +19,8 @@ import { profileCheckpoint } from '../../utils/startupProfiler.js'
 import { getCoreUserData } from '../../utils/user.js'
 import { isAnalyticsDisabled } from './config.js'
 import { FirstPartyEventLoggingExporter } from './firstPartyEventLoggingExporter.js'
-import type { GrowthBookUserAttributes } from './growthbook.js'
-import { getDynamicConfig_CACHED_MAY_BE_STALE } from './growthbook.js'
+import type { FeatureFlagUserAttributes } from './featureFlags.js'
+import { getDynamicConfig_CACHED_MAY_BE_STALE } from './featureFlags.js'
 import { getEventMetadata } from './metadata.js'
 import { isSinkKilled } from './sinkKillswitch.js'
 
@@ -187,7 +186,7 @@ async function logEventTo1PAsync(
     // Debug logging when debug mode is enabled
     if (process.env.USER_TYPE === 'ant') {
       logForDebugging(
-        `[ANT-ONLY] 1P event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
+        `[DSXU internal] 1P event: ${eventName} ${jsonStringify(metadata, null, 0)}`,
       )
     }
 
@@ -233,14 +232,14 @@ export function logEventTo1P(
 /**
  * GrowthBook experiment event data for logging
  */
-export type GrowthBookExperimentData = {
+export type FeatureFlagExperimentData = {
   experimentId: string
   variationId: number
-  userAttributes?: GrowthBookUserAttributes
+  userAttributes?: FeatureFlagUserAttributes
   experimentMetadata?: Record<string, unknown>
 }
 
-// Legacy provider production API only serves the "production" GrowthBook environment
+// Provider-migration production API only serves the "production" GrowthBook environment
 // (see starling/starling/cli/cli.py DEFAULT_ENVIRONMENTS). Staging and
 // development environments are not exported to the prod API.
 function getEnvironmentForGrowthBook(): string {
@@ -253,8 +252,8 @@ function getEnvironmentForGrowthBook(): string {
  *
  * @param data - GrowthBook experiment assignment data
  */
-export function logGrowthBookExperimentTo1P(
-  data: GrowthBookExperimentData,
+export function logFeatureFlagExperimentTo1P(
+  data: FeatureFlagExperimentData,
 ): void {
   if (!is1PEventLoggingEnabled()) {
     return
@@ -288,7 +287,7 @@ export function logGrowthBookExperimentTo1P(
 
   if (process.env.USER_TYPE === 'ant') {
     logForDebugging(
-      `[ANT-ONLY] 1P GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
+      `[DSXU internal] 1P GrowthBook experiment: ${data.experimentId} variation=${data.variationId}`,
     )
   }
 
@@ -391,7 +390,7 @@ export function initialize1PEventLogging(): void {
 
 /**
  * Rebuild the 1P event logging pipeline if the batch config changed.
- * Register this with onGrowthBookRefresh so long-running sessions pick up
+ * Register this with onFeatureFlagsRefresh so long-running sessions pick up
  * changes to batch size, delay, endpoint, etc.
  *
  * Event-loss safety:
@@ -402,7 +401,7 @@ export function initialize1PEventLogging(): void {
  *    exporter. Export failures go to disk at getCurrentBatchFilePath() which
  *    is keyed by module-level BATCH_UUID + sessionId ...unchanged across
  *    reinit ...so the NEW exporter's disk-backed retry picks them up.
- * 3. Swap to new provider/logger; old provider shutdown runs in background
+ * 3. Swap to new provider/logger; provider-migration shutdown runs in background
  *    (buffer already drained, just cleanup).
  */
 export async function reinitialize1PEventLoggingIfConfigChanged(): Promise<void> {

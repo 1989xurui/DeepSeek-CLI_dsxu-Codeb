@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execFileSync, spawn } from 'child_process'
 import { constants as fsConstants, readFileSync, unlinkSync } from 'fs'
 import { type FileHandle, mkdir, open, realpath } from 'fs/promises'
@@ -44,8 +43,8 @@ import {
   windowsPathToWslPath,
 } from './windowsPaths.js'
 const DEFAULT_TIMEOUT = 30 * 60 * 1000 // 30 minutes
-const LEGACY_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
-const LEGACY_SESSION_ID_ENV = `CL${'AUDE'}_CODE_SESSION_ID`
+const PROVIDER_MIGRATION_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
+const PROVIDER_MIGRATION_SESSION_ID_ENV = `CL${'AUDE'}_CODE_SESSION_ID`
 export type ShellConfig = {
   provider: ShellProvider
 }
@@ -289,12 +288,12 @@ export async function exec(
         SHELL: shellType === 'bash' ? binShell : undefined,
         GIT_EDITOR: 'true',
         DSXUCODE: '1',
-        [LEGACY_RUNTIME_MARKER_ENV]: '1',
+        [PROVIDER_MIGRATION_RUNTIME_MARKER_ENV]: '1',
         ...envOverrides,
         ...(process.env.USER_TYPE === 'ant'
           ? {
               DSXU_CODE_SESSION_ID: getSessionId(),
-              [LEGACY_SESSION_ID_ENV]: getSessionId(),
+              [PROVIDER_MIGRATION_SESSION_ID_ENV]: getSessionId(),
             }
           : {}),
       },

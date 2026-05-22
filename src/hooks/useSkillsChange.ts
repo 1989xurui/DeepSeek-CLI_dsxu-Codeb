@@ -5,7 +5,7 @@ import {
   clearCommandsCache,
   getCommands,
 } from '../commands.js'
-import { onGrowthBookRefresh } from '../services/analytics/growthbook.js'
+import { onFeatureFlagsRefresh } from '../services/analytics/featureFlags.js'
 import { logError } from '../utils/log.js'
 import { skillChangeDetector } from '../utils/skills/skillChangeDetector.js'
 
@@ -14,7 +14,7 @@ import { skillChangeDetector } from '../utils/skills/skillChangeDetector.js'
  *
  * 1. Skill file changes (watcher) — full cache clear + disk re-scan, since
  *    skill content changed on disk.
- * 2. GrowthBook init/refresh — memo-only clear, since only `isEnabled()`
+ * 2. feature flag provider init/refresh — memo-only clear, since only `isEnabled()`
  *    predicates may have changed. Handles commands like /btw whose gate
  *    reads a flag that isn't in the disk cache yet on first session after
  *    a flag rename: getCommands() runs before GB init (main.tsx:2855 vs
@@ -42,7 +42,7 @@ export function useSkillsChange(
 
   useEffect(() => skillChangeDetector.subscribe(handleChange), [handleChange])
 
-  const handleGrowthBookRefresh = useCallback(async () => {
+  const handleFeatureFlagsRefresh = useCallback(async () => {
     if (!cwd) return
     try {
       clearCommandMemoizationCaches()
@@ -56,16 +56,7 @@ export function useSkillsChange(
   }, [cwd, onCommandsChange])
 
   useEffect(
-    () => onGrowthBookRefresh(handleGrowthBookRefresh),
-    [handleGrowthBookRefresh],
+    () => onFeatureFlagsRefresh(handleFeatureFlagsRefresh),
+    [handleFeatureFlagsRefresh],
   )
-}
-
-
-// V14 lifecycle shim: useskillschange
-export function processUseskillschangeLifecycle(input) {
-  void input
-  const state = 'useskillschange-state'
-  const lifecycle = 'useskillschange:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

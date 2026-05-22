@@ -96,18 +96,10 @@ export function getRemoteManagedSettingsSyncFromCache(): SettingsJson | null {
 }
 
 
-// V14 lifecycle shim: synccachestate
-export function processSynccachestateLifecycle(input) {
-  void input
-  const state = 'synccachestate-state'
-  const lifecycle = 'synccachestate:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
-
 export function getDsxuRemoteManagedSettingsCacheProfile() {
   return {
     runtime: 'DSXU Remote Managed Settings Cache',
-    defaultBehavior: 'cache only becomes visible after DSXU/legacy eligibility gate sets eligible=true',
+    defaultBehavior: 'cache only becomes visible after the DSXU remote settings eligibility gate sets eligible=true',
     providerTarget: 'DSXU Policy/Workspace Settings Provider',
     activationEvidence: [
       'tri-state eligibility prevents accidental remote settings reads before provider decision',

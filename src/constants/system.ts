@@ -1,20 +1,20 @@
-﻿// Critical system constants extracted to break circular dependencies
+// Critical system constants extracted to break circular dependencies
 
 import { feature } from 'bun:bundle'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featureFlags.js'
 import { logForDebugging } from '../utils/debug.js'
 import { isEnvDefinedFalsy } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import { getWorkload } from '../utils/workloadContext.js'
 
 const DEFAULT_PREFIX = `You are DSXU Code, a DeepSeek-powered coding CLI.`
-const AGENT_SDK_DSXU_CODE_PRESET_PREFIX = `You are DSXU Code, a DeepSeek-powered coding CLI, running within the DSXU Agent SDK compatibility runtime.`
-const AGENT_SDK_PREFIX = `You are a DSXU agent running within the DSXU Agent SDK compatibility runtime.`
-const LEGACY_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
-const LEGACY_VENDOR_HEADER_PREFIX = 'anth' + 'ropic'
-const LEGACY_ATTRIBUTION_HEADER_ENV = `${LEGACY_CODE_ENV_PREFIX}_ATTRIBUTION_HEADER`
-const LEGACY_ENTRYPOINT_ENV = `${LEGACY_CODE_ENV_PREFIX}_ENTRYPOINT`
-export const PROVIDER_BILLING_HEADER_NAME = `x-${LEGACY_VENDOR_HEADER_PREFIX}-billing-header`
+const AGENT_SDK_DSXU_CODE_PRESET_PREFIX = `You are DSXU Code, a DeepSeek-powered coding CLI, running within the DSXU Agent SDK runtime.`
+const AGENT_SDK_PREFIX = `You are a DSXU agent running within the DSXU Agent SDK runtime.`
+const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
+const PROVIDER_MIGRATION_VENDOR_HEADER_PREFIX = 'anth' + 'ropic'
+const PROVIDER_MIGRATION_ATTRIBUTION_HEADER_ENV = `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_ATTRIBUTION_HEADER`
+const PROVIDER_MIGRATION_ENTRYPOINT_ENV = `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_ENTRYPOINT`
+export const PROVIDER_BILLING_HEADER_NAME = `x-${PROVIDER_MIGRATION_VENDOR_HEADER_PREFIX}-billing-header`
 
 const CLI_SYSPROMPT_PREFIX_VALUES = [
   DEFAULT_PREFIX,
@@ -52,10 +52,10 @@ export function getCLISyspromptPrefix(options?: {
 
 /**
  * Check if attribution header is enabled.
- * Enabled by default, can be disabled via env var or GrowthBook killswitch.
+ * Enabled by default, can be disabled via env var or feature flag provider killswitch.
  */
 function isAttributionHeaderEnabled(): boolean {
-  if (isEnvDefinedFalsy(process.env[LEGACY_ATTRIBUTION_HEADER_ENV])) {
+  if (isEnvDefinedFalsy(process.env[PROVIDER_MIGRATION_ATTRIBUTION_HEADER_ENV])) {
     return false
   }
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_attribution_header', true)
@@ -64,13 +64,13 @@ function isAttributionHeaderEnabled(): boolean {
 /**
  * Get attribution header for API requests.
  * Returns a header string with cc_version (including fingerprint) and cc_entrypoint.
- * Enabled by default, can be disabled via env var or GrowthBook killswitch.
+ * Enabled by default, can be disabled via env var or feature flag provider killswitch.
  *
  * When NATIVE_CLIENT_ATTESTATION is enabled, includes a `cch=00000` placeholder.
  * Before the request is sent, Bun's native HTTP stack finds this placeholder
  * in the request body and overwrites the zeros with a computed hash. The
  * server verifies this token to confirm the request came from the expected
- * compatibility client. See the native HTTP attestation implementation.
+ * provider-migration client. See the native HTTP attestation implementation.
  *
  * We use a placeholder (instead of injecting from Zig) because same-length
  * replacement avoids Content-Length changes and buffer reallocation.
@@ -81,7 +81,7 @@ export function getAttributionHeader(fingerprint: string): string {
   }
 
   const version = `${MACRO.VERSION}.${fingerprint}`
-  const entrypoint = process.env[LEGACY_ENTRYPOINT_ENV] ?? 'unknown'
+  const entrypoint = process.env[PROVIDER_MIGRATION_ENTRYPOINT_ENV] ?? 'unknown'
 
   // cch=00000 placeholder is overwritten by Bun's HTTP stack with attestation token
   const cch = feature('NATIVE_CLIENT_ATTESTATION') ? ' cch=00000;' : ''
@@ -97,13 +97,4 @@ export function getAttributionHeader(fingerprint: string): string {
 
   logForDebugging(`attribution header ${header}`)
   return header
-}
-
-
-// V14 lifecycle shim: system
-export function processSystemLifecycle(input) {
-  void input
-  const state = 'system-state'
-  const lifecycle = 'system:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

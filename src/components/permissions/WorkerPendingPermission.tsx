@@ -102,11 +102,3 @@ export function WorkerPendingPermission(t0) {
   }
   return t11;
 }
-
-// V14 lifecycle shim: workerpendingpermission
-export function processWorkerpendingpermissionLifecycle(input) {
-  void input
-  const state = 'workerpendingpermission-state'
-  const lifecycle = 'workerpendingpermission:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

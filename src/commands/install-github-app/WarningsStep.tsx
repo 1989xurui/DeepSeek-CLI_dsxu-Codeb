@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React from 'react';
 import { GITHUB_ACTION_SETUP_DOCS_URL } from '../../constants/github-app.js';
@@ -69,12 +69,4 @@ function _temp2(warning, index) {
 }
 function _temp(instruction, i) {
   return <Text key={i} dimColor={true}>- {instruction}</Text>;
-}
-
-// V14 lifecycle shim: warningsstep
-export function processWarningsstepLifecycle(input) {
-  void input
-  const state = 'warningsstep-state'
-  const lifecycle = 'warningsstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

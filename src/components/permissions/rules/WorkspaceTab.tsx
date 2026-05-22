@@ -147,11 +147,3 @@ function _temp(path) {
     isDeletable: true
   };
 }
-
-// V14 lifecycle shim: workspacetab
-export function processWorkspacetabLifecycle(input) {
-  void input
-  const state = 'workspacetab-state'
-  const lifecycle = 'workspacetab:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

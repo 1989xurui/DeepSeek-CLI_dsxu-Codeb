@@ -6,9 +6,9 @@ import { dirname, join, parse } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
 import {
-  LEGACY_CLOUD_CONFIG_SCOPE,
-  LEGACY_CLOUD_MCP_TRANSPORT,
-} from '../../constants/legacyProviderProtocol.js'
+  PROVIDER_MIGRATION_CONFIG_SCOPE,
+  PROVIDER_MIGRATION_MCP_TRANSPORT,
+} from '../../constants/providerMigrationProtocol.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
 import { isDsxuBrowserProviderMCPServer } from '../../utils/dsxuBrowserProvider/common.js'
 import {
@@ -44,11 +44,11 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { fetchLegacyCloudMcpConfigsIfEligible } from './legacyRemoteMcpProvider.js'
+import { fetchProviderMigrationMcpConfigsIfEligible } from './providerConnectorMigration.js'
 import {
   getDsxuMcpProviderRuntimePolicy,
   isDsxuMcpDefaultMode,
-  isLegacyCloudMcpEnabled,
+  isProviderMigrationMcpEnabled,
 } from './dsxuProvider.js'
 import { expandEnvVarsInString } from './envExpansion.js'
 import {
@@ -65,12 +65,12 @@ import {
 } from './types.js'
 import { getProjectMcpServerStatus } from './utils.js'
 
-const LEGACY_VSCODE_SDK_SERVER_NAME = 'cl' + 'aude-vscode'
+const PROVIDER_MIGRATION_VSCODE_SDK_SERVER_NAME = 'cl' + 'aude-vscode'
 
 export function getDsxuMcpConfigRuntimeProfile(): {
   runtime: 'DSXU MCP Config'
   defaultProviderMode: boolean
-  legacyCloudMcpEnabled: boolean
+  providerMigrationMcpEnabled: boolean
   providerPolicy: ReturnType<typeof getDsxuMcpProviderRuntimePolicy>
   configLayers?: readonly string[]
   activationEvidence?: readonly string[]
@@ -78,7 +78,7 @@ export function getDsxuMcpConfigRuntimeProfile(): {
   return {
     runtime: 'DSXU MCP Config',
     defaultProviderMode: isDsxuMcpDefaultMode(),
-    legacyCloudMcpEnabled: isLegacyCloudMcpEnabled(),
+    providerMigrationMcpEnabled: isProviderMigrationMcpEnabled(),
     providerPolicy: getDsxuMcpProviderRuntimePolicy(),
     configLayers: [
       '.mcp.json project config',
@@ -89,7 +89,7 @@ export function getDsxuMcpConfigRuntimeProfile(): {
       'DSXU provider defaults',
     ],
     activationEvidence: [
-      'DSXU default mode returns getDsxuCodeMcpConfigs without loading legacy cloud discovery',
+      'DSXU default mode returns getDsxuCodeMcpConfigs without loading provider migration discovery',
       'enterprise MCP config takes exclusive control over managed server loading',
       'writeMcpjsonFile uses atomic temp file, fsync, chmod preservation, and rename',
       'dedup signatures normalize command/url configs before plugin/server merge',
@@ -203,7 +203,7 @@ function getServerUrl(config: McpServerConfig): string | null {
 }
 
 /**
- * CCR proxy URL path markers. In remote sessions, legacy cloud connectors arrive
+ * CCR proxy URL path markers. In remote sessions, provider migration connectors arrive
  * via --mcp-config with URLs rewritten to route through the CCR/session-ingress
  * SHTTP proxy. The original vendor URL is preserved in the mcp_url query param
  * so the proxy knows where to forward. See api-go/ccr/internal/ccrshared/
@@ -307,11 +307,11 @@ export function dedupPluginMcpServers(
 }
 
 /**
- * Filter legacy cloud connectors, dropping any whose signature matches an enabled
+ * Filter provider migration connectors, dropping any whose signature matches an enabled
  * manually-configured server. Manual wins: a user who wrote .mcp.json or ran
  * a DSXU MCP add command expressed higher intent than a connector toggled in a web UI.
  *
- * Connector keys are legacy-cloud prefixed so they never key-collide with
+ * Connector keys are provider-migration prefixed so they never key-collide with
  * manual servers in the merge — this content-based check catches the case where
  * both point at the same underlying URL (e.g. `mcp__slack__*` and
  * another hosted connector hitting the same upstream URL.
@@ -319,8 +319,8 @@ export function dedupPluginMcpServers(
  * Only enabled manual servers count as dedup targets — a disabled manual server
  * mustn't suppress its connector twin, or neither runs.
  */
-export function dedupLegacyCloudMcpServers(
-  legacyCloudServers: Record<string, ScopedMcpServerConfig>,
+export function dedupProviderMigrationMcpServers(
+  providerMigrationServers: Record<string, ScopedMcpServerConfig>,
   manualServers: Record<string, ScopedMcpServerConfig>,
 ): {
   servers: Record<string, ScopedMcpServerConfig>
@@ -335,12 +335,12 @@ export function dedupLegacyCloudMcpServers(
 
   const servers: Record<string, ScopedMcpServerConfig> = {}
   const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  for (const [name, config] of Object.entries(legacyCloudServers)) {
+  for (const [name, config] of Object.entries(providerMigrationServers)) {
     const sig = getMcpServerSignature(config)
     const manualDup = sig !== null ? manualSigs.get(sig) : undefined
     if (manualDup !== undefined) {
       logForDebugging(
-        `Suppressing legacy cloud connector "${name}": duplicates manually-configured "${manualDup}"`,
+        `Suppressing provider migration connector "${name}": duplicates manually-configured "${manualDup}"`,
       )
       suppressed.push({ name, duplicateOf: manualDup })
       continue
@@ -645,7 +645,7 @@ function expandEnvVars(config: McpServerConfig): {
     case 'sdk':
       expanded = config
       break
-    case LEGACY_CLOUD_MCP_TRANSPORT:
+    case PROVIDER_MIGRATION_MCP_TRANSPORT:
       expanded = config
       break
   }
@@ -746,8 +746,8 @@ export async function addMcpConfig(
       throw new Error('Cannot add MCP server to scope: dynamic')
     case 'enterprise':
       throw new Error('Cannot add MCP server to scope: enterprise')
-    case LEGACY_CLOUD_CONFIG_SCOPE:
-      throw new Error('Cannot add MCP server to legacy cloud scope')
+    case PROVIDER_MIGRATION_CONFIG_SCOPE:
+      throw new Error('Cannot add MCP server to provider migration scope')
   }
 
   // Add based on scope
@@ -1101,11 +1101,11 @@ export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
 }
 
 /**
- * Get DSXU/DSXU Code MCP configurations (excludes legacy cloud servers from the
+ * Get DSXU/DSXU Code MCP configurations (excludes provider migration servers from the
  * returned set — they're fetched separately and merged by callers).
  * This is fast: only local file reads; no awaited network calls on the
  * critical path. The optional extraDedupTargets promise (e.g. the in-flight
- * legacy cloud connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
+ * provider migration connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
  * so the two overlap rather than serialize.
  * @returns DSXU Code server configurations with appropriate scopes
  */
@@ -1294,7 +1294,7 @@ export async function getDsxuCodeMcpConfigsCore(
 /**
  * DSXU-named MCP config entrypoint. It intentionally reuses the mature local
  * MCP merge/dedup/policy implementation above, but exposes the DSXU provider
- * semantics so new code does not have to call a legacy-named API.
+ * semantics so new code does not have to call a provider-migration-named API.
  */
 export async function getDsxuCodeMcpConfigs(
   dynamicServers: Record<string, ScopedMcpServerConfig> = {},
@@ -1309,7 +1309,7 @@ export async function getDsxuCodeMcpConfigs(
 }
 
 /**
- * Get all MCP configurations across all scopes, including legacy cloud servers.
+ * Get all MCP configurations across all scopes, including provider migration servers.
  * This may be slow due to network calls - use getDsxuCodeMcpConfigs() for fast startup.
  * @returns All server configurations with appropriate scopes
  */
@@ -1317,39 +1317,39 @@ export async function getAllMcpConfigs(): Promise<{
   servers: Record<string, ScopedMcpServerConfig>
   errors: PluginError[]
 }> {
-  if (isDsxuMcpDefaultMode() && !isLegacyCloudMcpEnabled()) {
+  if (isDsxuMcpDefaultMode() && !isProviderMigrationMcpEnabled()) {
     logForDebugging(
       `DSXU MCP default mode active: ${JSON.stringify(getDsxuMcpProviderRuntimePolicy())}`,
     )
     return getDsxuCodeMcpConfigs()
   }
 
-  // In enterprise mode, don't load legacy cloud servers (enterprise has exclusive control)
+  // In enterprise mode, don't load provider migration servers (enterprise has exclusive control)
   if (doesEnterpriseMcpConfigExist()) {
     return getDsxuCodeMcpConfigs()
   }
 
-  // Kick off the legacy cloud fetch before getDsxuCodeMcpConfigs so it overlaps
+  // Kick off the provider migration fetch before getDsxuCodeMcpConfigs so it overlaps
   // with loadAllPluginsCacheOnly() inside. Memoized — the awaited call below is a cache hit.
-  const legacyCloudPromise = fetchLegacyCloudMcpConfigsIfEligible()
+  const providerMigrationPromise = fetchProviderMigrationMcpConfigsIfEligible()
   const { servers: dsxuCodeServers, errors } = await getDsxuCodeMcpConfigsCore(
     {},
-    legacyCloudPromise,
+    providerMigrationPromise,
   )
-  const { allowed: legacyCloudMcpServers } = filterMcpServersByPolicy(
-    await legacyCloudPromise,
+  const { allowed: providerMigrationMcpServers } = filterMcpServersByPolicy(
+    await providerMigrationPromise,
   )
 
-  // Suppress legacy cloud connectors that duplicate an enabled manual server.
-  // Keys never collide (`slack` vs legacy cloud Slack) so the merge below
+  // Suppress provider migration connectors that duplicate an enabled manual server.
+  // Keys never collide (`slack` vs provider migration Slack) so the merge below
   // won't catch this — need content-based dedup by URL signature.
-  const { servers: dedupedLegacyCloud } = dedupLegacyCloudMcpServers(
-    legacyCloudMcpServers,
+  const { servers: dedupedProviderMigration } = dedupProviderMigrationMcpServers(
+    providerMigrationMcpServers,
     dsxuCodeServers,
   )
 
-  // Merge with legacy cloud having lowest precedence
-  const servers = Object.assign({}, dedupedLegacyCloud, dsxuCodeServers)
+  // Merge with provider migration having lowest precedence
+  const servers = Object.assign({}, dedupedProviderMigration, dsxuCodeServers)
 
   return { servers, errors }
 }
@@ -1560,9 +1560,11 @@ export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
   configs: Record<string, ScopedMcpServerConfig>,
 ): boolean {
   // NOTE: While all SDK MCP servers should be safe from a security perspective,
-  // enterprise MCP config currently allows only the legacy VS Code SDK server.
+  // enterprise MCP config currently allows only the provider migration VS Code SDK server.
   return Object.values(configs).every(
-    c => c.type === 'sdk' && c.name === LEGACY_VSCODE_SDK_SERVER_NAME,
+    c =>
+      c.type === 'sdk' &&
+      c.name === PROVIDER_MIGRATION_VSCODE_SDK_SERVER_NAME,
   )
 }
 

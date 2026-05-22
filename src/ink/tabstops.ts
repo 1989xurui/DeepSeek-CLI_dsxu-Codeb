@@ -44,12 +44,3 @@ export function expandTabs(
 
   return result
 }
-
-
-// V14 lifecycle shim: tabstops
-export function processTabstopsLifecycle(input) {
-  void input
-  const state = 'tabstops-state'
-  const lifecycle = 'tabstops:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

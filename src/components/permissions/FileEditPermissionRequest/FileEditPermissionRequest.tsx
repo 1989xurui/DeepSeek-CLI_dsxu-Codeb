@@ -179,11 +179,3 @@ export function FileEditPermissionRequest(props) {
 function _temp(input) {
   return FileEditTool.inputSchema.parse(input);
 }
-
-// V14 lifecycle shim: fileeditpermissionrequest
-export function processFileeditpermissionrequestLifecycle(input) {
-  void input
-  const state = 'fileeditpermissionrequest-state'
-  const lifecycle = 'fileeditpermissionrequest:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * Auto-install logic for the official DSXU marketplace.
  *
@@ -10,7 +9,7 @@
  */
 
 import { join } from 'path'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logEvent } from '../../services/analytics/index.js'
 import { getGlobalConfig, saveGlobalConfig } from '../config.js'
 import { logForDebugging } from '../debug.js'
@@ -109,7 +108,7 @@ function shouldRetryInstallation(
   }
 
   // Retry for temporary failures (unknown), semi-permanent (git_unavailable),
-  // and legacy state (undefined failReason from before retry logic existed)
+  // and historical state (undefined failReason from before retry logic existed)
   return (
     failReason === 'unknown' ||
     failReason === 'git_unavailable' ||
@@ -216,7 +215,7 @@ export async function checkAndInstallOfficialMarketplace(): Promise<OfficialMark
     }
 
     // inc-5046: try GCS mirror first ...doesn't need git, doesn't hit GitHub.
-    // Legacy backend publishes a marketplace zip to the same
+    // Provider-migration backend publishes a marketplace zip to the same
     // bucket as the native binary. If GCS succeeds, register the marketplace
     // with source:'github' (still true ...GCS is a mirror) and skip git
     // entirely.

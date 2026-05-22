@@ -1,5 +1,4 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream service runtime dependency.
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: DSXU import-order markers must not be reordered
 import { type as osType, version as osVersion, release as osRelease } from 'os'
 import { env } from '../utils/env.js'
 import { getIsGit } from '../utils/git.js'
@@ -628,7 +627,7 @@ ${CYBER_RISK_INSTRUCTION}`,
       () => SUMMARIZE_TOOL_RESULTS_SECTION,
     ),
     // Numeric length anchors — research shows ~1.2% output token reduction vs
-    // qualitative "be concise". Ant-only to measure quality impact first.
+    // qualitative "be concise". DSXU internal to measure quality impact first.
     ...(isAntOrDsxuCode()
       ? [
           systemPromptSection(

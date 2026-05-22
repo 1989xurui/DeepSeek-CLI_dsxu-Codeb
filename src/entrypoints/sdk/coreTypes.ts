@@ -60,12 +60,3 @@ export const EXIT_REASONS = [
   'other',
   'bypass_permissions_disabled',
 ] as const
-
-
-// V14 lifecycle shim: coretypes
-export function processCoretypesLifecycle(input) {
-  void input
-  const state = 'coretypes-state'
-  const lifecycle = 'coretypes:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

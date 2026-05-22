@@ -42,11 +42,3 @@ export function SandboxConfigTab() {
 function _temp(w, i) {
   return <Text key={i} dimColor={true}>{w}</Text>;
 }
-
-// V14 lifecycle shim: sandboxconfigtab
-export function processSandboxconfigtabLifecycle(input) {
-  void input
-  const state = 'sandboxconfigtab-state'
-  const lifecycle = 'sandboxconfigtab:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

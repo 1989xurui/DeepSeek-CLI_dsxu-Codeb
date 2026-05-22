@@ -14,11 +14,3 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     onDone(success ? 'Login successful' : 'Login interrupted');
   }} />;
 }
-
-// V14 lifecycle shim: extra-usage
-export function processExtraUsageLifecycle(input) {
-  void input
-  const state = 'extra-usage-state'
-  const lifecycle = 'extra-usage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

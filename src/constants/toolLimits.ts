@@ -43,7 +43,7 @@ export const MAX_TOOL_RESULT_BYTES = MAX_TOOL_RESULT_TOKENS * BYTES_PER_TOKEN
  * This prevents N parallel tools from each hitting the per-tool max and
  * collectively producing e.g. 10 × 40K = 400K in one turn's user message.
  *
- * Overridable at runtime via GrowthBook flag tengu_hawthorn_window — see
+ * Overridable at runtime via feature flag provider flag tengu_hawthorn_window — see
  * getPerMessageBudgetLimit() in toolResultStorage.ts.
  */
 export const MAX_TOOL_RESULTS_PER_MESSAGE_CHARS = 200_000
@@ -54,12 +54,3 @@ export const MAX_TOOL_RESULTS_PER_MESSAGE_CHARS = 200_000
  * for display in grouped agent rendering.
  */
 export const TOOL_SUMMARY_MAX_LENGTH = 50
-
-
-// V14 lifecycle shim: toollimits
-export function processToollimitsLifecycle(input) {
-  void input
-  const state = 'toollimits-state'
-  const lifecycle = 'toollimits:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

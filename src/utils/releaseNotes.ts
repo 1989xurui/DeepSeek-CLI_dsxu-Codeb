@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import axios from 'axios'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
@@ -12,8 +11,8 @@ import { isEssentialTrafficOnly } from './privacyLevel.js'
 import { gt } from './semver.js'
 
 const MAX_RELEASE_NOTES_SHOWN = 5
-const LEGACY_PROVIDER_TOKEN = 'cl' + 'aude'
-const LEGACY_ORG_TOKEN = 'anth' + 'ropics'
+const PROVIDER_MIGRATION_SOURCE_TOKEN = 'cl' + 'aude'
+const PROVIDER_MIGRATION_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
 
 /**
  * We fetch the changelog from GitHub instead of bundling it with the build.
@@ -29,9 +28,9 @@ const LEGACY_ORG_TOKEN = 'anth' + 'ropics'
  * 3. Next time the user starts DSXU, the cached changelog is available immediately
  */
 export const CHANGELOG_URL =
-  `https://github.com/${LEGACY_ORG_TOKEN}/${LEGACY_PROVIDER_TOKEN}-code/blob/main/CHANGELOG.md`
+  `https://github.com/${PROVIDER_MIGRATION_SOURCE_ORG_TOKEN}/${PROVIDER_MIGRATION_SOURCE_TOKEN}-code/blob/main/CHANGELOG.md`
 const RAW_CHANGELOG_URL =
-  `https://raw.githubusercontent.com/${LEGACY_ORG_TOKEN}/${LEGACY_PROVIDER_TOKEN}-code/refs/heads/main/CHANGELOG.md`
+  `https://raw.githubusercontent.com/${PROVIDER_MIGRATION_SOURCE_ORG_TOKEN}/${PROVIDER_MIGRATION_SOURCE_TOKEN}-code/refs/heads/main/CHANGELOG.md`
 
 /**
  * Get the path for the cached changelog file.

@@ -113,11 +113,3 @@ export function HookProgressMessage(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: hookprogressmessage
-export function processHookprogressmessageLifecycle(input) {
-  void input
-  const state = 'hookprogressmessage-state'
-  const lifecycle = 'hookprogressmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

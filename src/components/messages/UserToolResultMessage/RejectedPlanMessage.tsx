@@ -28,11 +28,3 @@ export function RejectedPlanMessage(t0) {
   }
   return t2;
 }
-
-// V14 lifecycle shim: rejectedplanmessage
-export function processRejectedplanmessageLifecycle(input) {
-  void input
-  const state = 'rejectedplanmessage-state'
-  const lifecycle = 'rejectedplanmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

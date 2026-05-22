@@ -380,11 +380,3 @@ function _temp(turn) {
     turn
   };
 }
-
-// V14 lifecycle shim: diffdialog
-export function processDiffdialogLifecycle(input) {
-  void input
-  const state = 'diffdialog-state'
-  const lifecycle = 'diffdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

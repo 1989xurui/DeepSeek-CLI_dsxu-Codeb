@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * XAA IdP Login ...acquires an OIDC id_token from an enterprise IdP via the
  * standard authorization_code + PKCE flow, then caches it by IdP issuer.
@@ -29,27 +28,27 @@ import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { buildRedirectUri, findAvailablePort } from './oauthPort.js'
 const DSXU_XAA_ENABLE_ENV = 'DSXU_CODE_ENABLE_XAA'
-const LEGACY_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
+const PROVIDER_MIGRATION_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
 export function isXaaEnabled(): boolean {
   return (
     isEnvTruthy(process.env[DSXU_XAA_ENABLE_ENV]) ||
-    isEnvTruthy(process.env[LEGACY_XAA_ENABLE_ENV])
+    isEnvTruthy(process.env[PROVIDER_MIGRATION_XAA_ENABLE_ENV])
   )
 }
 export function getDsxuXaaRuntimeProfile(): {
   runtime: 'DSXU MCP XAA Identity'
   enabled: boolean
   primaryEnv: typeof DSXU_XAA_ENABLE_ENV
-  legacyEnv: string
+  providerMigrationEnv: string
   cachePolicy: string
 } {
   return {
     runtime: 'DSXU MCP XAA Identity',
     enabled: isXaaEnabled(),
     primaryEnv: DSXU_XAA_ENABLE_ENV,
-    legacyEnv: LEGACY_XAA_ENABLE_ENV,
+    providerMigrationEnv: PROVIDER_MIGRATION_XAA_ENABLE_ENV,
     cachePolicy:
-      `DSXU uses the same OIDC/XAA token-exchange semantics, but the default activation switch is ${DSXU_XAA_ENABLE_ENV}; legacy provider env remains migration-only.`,
+      `DSXU uses the same OIDC/XAA token-exchange semantics, but the default activation switch is ${DSXU_XAA_ENABLE_ENV}; provider-migration env remains migration-only.`,
   }
 }
 export type XaaIdpSettings = {

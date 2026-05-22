@@ -1,4 +1,4 @@
-﻿import * as React from 'react';
+import * as React from 'react';
 import { type ReactNode, useEffect } from 'react';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
@@ -91,12 +91,4 @@ export function CondensedLogo(): ReactNode {
       </Box>
     </OffscreenFreeze>
   );
-}
-
-// V14 lifecycle shim: condensedlogo
-export function processCondensedlogoLifecycle(input) {
-  void input
-  const state = 'condensedlogo-state'
-  const lifecycle = 'condensedlogo:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'crypto'
+import { randomUUID } from 'crypto'
 import { LRUCache } from 'lru-cache'
 import { logForDebugging } from '../../utils/debug.js'
 import { toError } from '../../utils/errors.js'
@@ -383,13 +383,4 @@ export function clearDeliveredDiagnosticsForFile(fileUri: string): void {
  */
 export function getPendingLSPDiagnosticCount(): number {
   return pendingDiagnostics.size
-}
-
-
-// V14 lifecycle shim: lspdiagnosticregistry
-export function processLspdiagnosticregistryLifecycle(input) {
-  void input
-  const state = 'lspdiagnosticregistry-state'
-  const lifecycle = 'lspdiagnosticregistry:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

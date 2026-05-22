@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "dsxu.v20.owner-git-product-stage-plan.v1",
+  "generatedAt": "2026-05-15T03:39:41.986Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "STAGED_BY_OWNER_GIT_EXECUTION",
+  "totalProductPaths": 1746,
+  "stageReadyPaths": 1746,
+  "packetCount": 11,
+  "didMutateGit": false,
+  "didStageGitInPriorExecution": true,
+  "packets": [
+    {
+      "ownerPacket": "V20-OGR-01-docs-generated-plan",
+      "pathCount": 52,
+      "modified": 2,
+      "untracked": 50,
+      "stageReady": true,
+      "reviewStates": [
+        "owner-review-required",
+        "owner-review-required-release-evidence"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-03-tool-permission-lifecycle",
+      "pathCount": 192,
+      "modified": 188,
+      "untracked": 4,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-04-mcp-skill-plugin-registry",
+      "pathCount": 141,
+      "modified": 138,
+      "untracked": 3,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-05-agent-task-lifecycle",
+      "pathCount": 202,
+      "modified": 202,
+      "untracked": 0,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-05-external-integration-adapter-boundary",
+      "pathCount": 32,
+      "modified": 30,
+      "untracked": 2,
+      "stageReady": true,
+      "reviewStates": [
+        "owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-06-ui-tui-visible-state",
+      "pathCount": 476,
+      "modified": 475,
+      "untracked": 1,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required",
+        "owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-07-provider-migration-model-cost",
+      "pathCount": 107,
+      "modified": 97,
+      "untracked": 10,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-08-cli-command-transport",
+      "pathCount": 181,
+      "modified": 180,
+      "untracked": 1,
+      "stageReady": true,
+      "reviewStates": [
+        "owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-09-dsxu-engine-mainline",
+      "pathCount": 89,
+      "modified": 64,
+      "untracked": 25,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required",
+        "owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-10-entry-query-tool-composition",
+      "pathCount": 20,
+      "modified": 20,
+      "untracked": 0,
+      "stageReady": true,
+      "reviewStates": [
+        "high-risk-owner-review-required"
+      ]
+    },
+    {
+      "ownerPacket": "V20-OGR-12-shared-platform-utilities",
+      "pathCount": 254,
+      "modified": 252,
+      "untracked": 2,
+      "stageReady": true,
+      "reviewStates": [
+        "remapped-to-named-owner-pending-owner-git-signoff"
+      ]
+    }
+  ],
+  "blockers": [
+    "product paths already staged by Owner/Git execution report",
+    "this plan did not stage, commit, delete, reset, clean, or export"
+  ],
+  "nextAction": "run post-authorization verification and final preflight; do not regenerate a second owner path",
+  "rule": "This product stage plan groups non-deletion M/?? paths only. It never mutates Git and never hides owner review behind a generic bucket."
+}

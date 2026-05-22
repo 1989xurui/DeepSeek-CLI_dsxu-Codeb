@@ -14,21 +14,3 @@ const session = {
 } satisfies Command
 
 export default session
-
-
-// V14 command lifecycle shim: session
-export function processSessionCommandLifecycle(input) {
-  void input
-  const state = 'session-command-state'
-  const lifecycle = 'session:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'session',
-  }
-}
-
-export function runSessionCommand(input) {
-  return processSessionCommandLifecycle(input)
-}

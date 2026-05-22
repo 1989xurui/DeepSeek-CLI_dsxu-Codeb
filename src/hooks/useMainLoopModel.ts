@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import { onGrowthBookRefresh } from '../services/analytics/growthbook.js'
+import { onFeatureFlagsRefresh } from '../services/analytics/featureFlags.js'
 import { useAppState } from '../state/AppState.js'
 import {
   getDefaultMainLoopModelSetting,
@@ -23,7 +23,7 @@ export function useMainLoopModel(): ModelName {
   // happens to re-render the component — the API would sample one model
   // while /model (which also re-resolves) displays another.
   const [, forceRerender] = useReducer(x => x + 1, 0)
-  useEffect(() => onGrowthBookRefresh(forceRerender), [])
+  useEffect(() => onFeatureFlagsRefresh(forceRerender), [])
 
   const model = parseUserSpecifiedModel(
     mainLoopModelForSession ??
@@ -31,13 +31,4 @@ export function useMainLoopModel(): ModelName {
       getDefaultMainLoopModelSetting(),
   )
   return model
-}
-
-
-// V14 lifecycle shim: usemainloopmodel
-export function processUsemainloopmodelLifecycle(input) {
-  void input
-  const state = 'usemainloopmodel-state'
-  const lifecycle = 'usemainloopmodel:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

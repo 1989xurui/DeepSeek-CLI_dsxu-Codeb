@@ -91,6 +91,22 @@ export const NotebookEditTool = buildTool({
   name: NOTEBOOK_EDIT_TOOL_NAME,
   searchHint: 'edit Jupyter notebook cells (.ipynb)',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Notebook Mutation Tool',
+    sideEffects: [
+      'notebook-filesystem-write',
+      'notebook-cell-insert-replace-delete',
+      'file-history-evidence',
+    ],
+    permission: 'filesystem write permission via checkWritePermissionForTool',
+    evidence: [
+      'inputSchema.notebook_path',
+      'checkWritePermissionForTool',
+      'original_file/updated_file output',
+      'cell_id/edit_mode output',
+    ],
+    uiProjection: 'notebook edit progress, rejected message, result summary',
+  },
   shouldDefer: true,
   async description() {
     return DESCRIPTION
@@ -488,12 +504,3 @@ export const NotebookEditTool = buildTool({
     }
   },
 } satisfies ToolDef<InputSchema, Output>)
-
-
-// V14 lifecycle shim: notebookedittool
-export function processNotebookedittoolLifecycle(input) {
-  void input
-  const state = 'notebookedittool-state'
-  const lifecycle = 'notebookedittool:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

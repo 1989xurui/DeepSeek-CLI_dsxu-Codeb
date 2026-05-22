@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "dsxu.v20.owner-packet-signoff-execution-update.v1",
+  "generatedAt": "2026-05-14T15:53:46.811Z",
+  "originalBaseline": {
+    "generatedAt": "2026-05-14T22:19:10",
+    "ownerPacketCount": 17,
+    "statusTotal": 1824,
+    "ownerAcceptedOrRemappedPaths": 1678,
+    "deletionMutationReadyPaths": 146,
+    "ogr13Remapped": 91,
+    "signoffStateSummary": [
+      {
+        "signoffState": "CONDITIONAL_OWNER_ACCEPTED_IMPORT_REQUIRED",
+        "packets": 1,
+        "paths": 249
+      },
+      {
+        "signoffState": "DELETE_READY_PENDING_GIT_MUTATION_REVIEW",
+        "packets": 5,
+        "paths": 146
+      },
+      {
+        "signoffState": "OWNER_ACCEPTED_PENDING_GIT_REVIEW",
+        "packets": 9,
+        "paths": 1314
+      },
+      {
+        "signoffState": "OWNER_ACCEPTED_RELEASE_EVIDENCE_PENDING_GIT_REVIEW",
+        "packets": 1,
+        "paths": 24
+      },
+      {
+        "signoffState": "REMAPPED_TO_NAMED_OWNER_PACKET",
+        "packets": 1,
+        "paths": 91
+      }
+    ],
+    "deletionPacketSummary": [
+      {
+        "ownerPacket": "V20-OGR-02-delete-old-evidence-review-runtime",
+        "count": 45
+      },
+      {
+        "ownerPacket": "V20-OGR-02-delete-old-provider-legacy-harness",
+        "count": 71
+      },
+      {
+        "ownerPacket": "V20-OGR-02-delete-state-owner-review",
+        "count": 27
+      },
+      {
+        "ownerPacket": "V20-OGR-03-delete-engine-builtin-tools-runtime",
+        "count": 2
+      },
+      {
+        "ownerPacket": "V20-OGR-04-delete-engine-mcp-client-runtime",
+        "count": 1
+      }
+    ],
+    "nextAction": "perform explicit Git mutation review for 146 ready deletion paths; then ACL residues and real-gap productization; tests remain last"
+  },
+  "updatedClosureRows": [
+    {
+      "closureGroup": "OGR-01 docs/release evidence",
+      "count": 24,
+      "state": "OWNER_ACCEPTED_DOCS_EVIDENCE_PENDING_GIT",
+      "rule": "10 ship docs, 13 release-excluded source-truth evidence, 1 benchmark evidence"
+    },
+    {
+      "closureGroup": "High-risk runtime redline packets OGR-05/06/07/08/10",
+      "count": 919,
+      "state": "RUNTIME_REDLINE_CLEAR_PENDING_OWNER_GIT",
+      "rule": "0 second runtime redlines after comment-stripped scan"
+    },
+    {
+      "closureGroup": "OGR-12 imported shared utilities",
+      "count": 248,
+      "state": "OWNER_ACCEPTED_IMPORTED_UTILITY_PENDING_GIT",
+      "rule": "keep only as helpers with import/use evidence"
+    },
+    {
+      "closureGroup": "OGR-12 duplicate desktop deep-link helper",
+      "count": 1,
+      "state": "DELETE_READY_PENDING_GIT_MUTATION_REVIEW",
+      "rule": "removed from source; existing src/utils/deepLink/* is mainline"
+    },
+    {
+      "closureGroup": "Existing deletion mutation queue",
+      "count": 146,
+      "state": "DELETE_READY_PENDING_GIT_MUTATION_REVIEW",
+      "rule": "keep deleted; do not restore old runtime"
+    },
+    {
+      "closureGroup": "ACL residues",
+      "count": 4,
+      "state": "EXTERNAL_PERMISSION_BLOCKED_DELETE_WHEN_ALLOWED",
+      "rule": "not product runtime; delete when ACL permits"
+    }
+  ],
+  "ownerAcceptedOrRedlineClear": 1191,
+  "deletionReadyTotal": 147,
+  "aclResidueTotal": 4,
+  "gitStatusShortCount": 1835,
+  "rule": "This update supersedes the stale conditional OGR-12 interpretation. It does not stage, commit, reset, clean, or export."
+}

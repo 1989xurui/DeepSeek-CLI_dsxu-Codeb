@@ -13,7 +13,7 @@ import { isChannelsEnabled } from '../../services/mcp/channelAllowlist.js';
 import { getEffectiveChannelAllowlist } from '../../services/mcp/channelNotification.js';
 import { getMcpConfigsByScope } from '../../services/mcp/config.js';
 import { getSubscriptionType } from '../../utils/auth.js';
-import { getCompatProviderTokens } from '../../dsxu/legacy/auth/legacyProviderControlAuth.js';
+import { getProviderControlTokens } from '../../services/auth/dsxuProviderControlAuth.js';
 import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsManager.js';
 import { getSettingsForSource } from '../../utils/settings/settings.js';
 export function ChannelsNotice() {
@@ -71,7 +71,7 @@ export function ChannelsNotice() {
     }
     let t2;
     if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
-      t2 = <Text dimColor={true}>Channels require provider authentication   run /login, then restart</Text>;
+      t2 = <Text dimColor={true}>Channels require DSXU provider authentication   run /login, then restart</Text>;
       $[9] = t2;
     } else {
       t2 = $[9];
@@ -191,7 +191,7 @@ function _temp() {
   return {
     channels: ch,
     disabled: !isChannelsEnabled(),
-    noAuth: !getCompatProviderTokens()?.accessToken,
+    noAuth: !getProviderControlTokens()?.accessToken,
     policyBlocked: managed && policy?.channelsEnabled !== true,
     list: l,
     unmatched: findUnmatched(ch, allowlist)
@@ -223,7 +223,7 @@ function findUnmatched(entries: readonly ChannelEntry[], allowlist: ReturnType<t
   // Plugin-kind allowlist check: same {marketplace, plugin} test as the
   // gate at channelNotification.ts. entry.dev bypasses (dev flag opts out
   // of the allowlist). Org list replaces ledger when set (team/enterprise).
-  // GrowthBook _CACHED_MAY_BE_STALE   cold cache yields [] so every plugin
+  // feature flag provider _CACHED_MAY_BE_STALE   cold cache yields [] so every plugin
   // entry warns; same tradeoff the gate already accepts.
   const {
     entries: allowed,
@@ -263,12 +263,4 @@ function findUnmatched(entries: readonly ChannelEntry[], allowlist: ReturnType<t
     }
   }
   return out;
-}
-
-// V14 lifecycle shim: channelsnotice
-export function processChannelsnoticeLifecycle(input) {
-  void input
-  const state = 'channelsnotice-state'
-  const lifecycle = 'channelsnotice:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -1,6 +1,5 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import React from 'react'
-import { getDynamicConfig_BLOCKS_ON_INIT } from '../services/analytics/growthbook.js'
+import { getDynamicConfig_BLOCKS_ON_INIT } from '../services/analytics/featureFlags.js'
 
 /**
  * React hook for dynamic config values.

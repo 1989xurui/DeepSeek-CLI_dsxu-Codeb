@@ -80,7 +80,7 @@ describe('V18 toolchain selfcheck', () => {
       expect(result.inventory.filter(item => item.status === 'gap')).toEqual([])
       expect(result.forbiddenRuntimeSources).toEqual([
         {
-          pattern: 'Codex app resource path',
+          pattern: 'external app resource path',
           status: 'not-found',
           scope: 'src/utils/vendorToolPaths.ts, src/utils/ripgrep.ts, launchers',
         },

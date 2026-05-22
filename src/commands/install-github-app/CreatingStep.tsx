@@ -1,4 +1,4 @@
-﻿import { c as _c } from "react/compiler-runtime";
+import { c as _c } from "react/compiler-runtime";
 import React from 'react';
 import { Box, Text } from '../../ink.js';
 import type { Workflow } from './types.js';
@@ -61,12 +61,4 @@ export function CreatingStep(t0) {
     t4 = $[9];
   }
   return t4;
-}
-
-// V14 lifecycle shim: creatingstep
-export function processCreatingstepLifecycle(input) {
-  void input
-  const state = 'creatingstep-state'
-  const lifecycle = 'creatingstep:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

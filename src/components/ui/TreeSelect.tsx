@@ -394,11 +394,3 @@ function _temp2(_depth) {
 function _temp(isExpanded_0) {
   return isExpanded_0 ? "\u25BC " : "\u25B6 ";
 }
-
-// V14 lifecycle shim: treeselect
-export function processTreeselectLifecycle(input) {
-  void input
-  const state = 'treeselect-state'
-  const lifecycle = 'treeselect:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

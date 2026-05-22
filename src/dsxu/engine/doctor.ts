@@ -149,7 +149,7 @@ export async function runDoctor(cwd: string): Promise<DoctorReport> {
 
   // API keys
   checks.push(checkApiKey('DEEPSEEK_API_KEY', 'DeepSeek API Key'))
-  checks.push(checkApiKey('OPENAI_API_KEY', 'OpenAI API Key (optional)'))
+  checks.push(checkApiKey('OPENAI_API_KEY', 'External fallback API key (explicit fallback only)'))
 
   // Project
   checks.push(checkProjectConfig(cwd))

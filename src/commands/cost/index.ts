@@ -3,7 +3,7 @@
  * Implementation is lazy-loaded from cost.ts to reduce startup time.
  */
 import type { Command } from '../../commands.js'
-import { isLegacyCloudSubscriber } from '../../utils/auth.js'
+import { isProviderSubscriptionAccount } from '../../utils/auth.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 
 const cost = {
@@ -18,7 +18,7 @@ const cost = {
     if (process.env.USER_TYPE === 'ant') {
       return false
     }
-    return isLegacyCloudSubscriber()
+    return isProviderSubscriptionAccount()
   },
   supportsNonInteractive: true,
   load: () => import('./cost.js'),

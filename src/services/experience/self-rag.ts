@@ -1,5 +1,5 @@
 /**
- * Legacy ExperienceStore self-RAG compatibility.
+ * Historical ExperienceStore self-RAG compatibility.
  *
  * This path is not the DSXU query-loop mainline. Keep it safe if older
  * callers use it: bounded, read-only, and explicit about source truth.

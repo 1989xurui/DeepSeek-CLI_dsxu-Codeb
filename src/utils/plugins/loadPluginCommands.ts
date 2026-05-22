@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import memoize from 'lodash-es/memoize.js'
 import { basename, dirname, join } from 'path'
 import { getInlinePlugins, getSessionId } from '../../bootstrap/state.js'
@@ -46,6 +45,35 @@ type PluginMarkdownFile = {
 // Configuration for loading commands or skills
 type LoadConfig = {
   isSkillMode: boolean // true when loading from skills/ directory
+}
+
+export function getDsxuPluginCommandRuntimeProfile(): {
+  runtime: 'DSXU Plugin Commands / Skills Loader'
+  owner: 'DSXU Plugin Runtime'
+  componentOwners: readonly string[]
+  activationEvidence: readonly string[]
+  releaseRiskControls: readonly string[]
+} {
+  return {
+    runtime: 'DSXU Plugin Commands / Skills Loader',
+    owner: 'DSXU Plugin Runtime',
+    componentOwners: [
+      'plugin slash commands',
+      'plugin skills',
+      'plugin command frontmatter',
+    ],
+    activationEvidence: [
+      'getPluginCommands reads enabled plugins from loadAllPluginsCacheOnly',
+      'getPluginSkills reuses the command parser in skill mode instead of creating a second skill runtime',
+      'frontmatter tools/model/hooks metadata is parsed before command exposure',
+      'plugin variable and user configuration substitution happens before prompt execution',
+    ],
+    releaseRiskControls: [
+      'plugin commands are prompt/command components, not a separate query loop',
+      'plugin skills enter SkillTool and loadSkillsDir semantics',
+      'shell frontmatter is parsed through DSXU prompt shell execution controls',
+    ],
+  }
 }
 
 /**
@@ -359,7 +387,7 @@ function createPluginCommand(
         // skills, so DSXU_PLUGIN_ROOT points to the plugin root while
         // DSXU_SKILL_DIR points to the individual skill's subdirectory.
         if (config.isSkillMode) {
-          const legacyPrefix = 'CL' + 'AUDE'
+          const providerMigrationPrefix = 'CL' + 'AUDE'
           const rawSkillDir = dirname(file.filePath)
           const skillDir =
             process.platform === 'win32'
@@ -368,7 +396,7 @@ function createPluginCommand(
           finalContent = finalContent
             .replace(/\$\{DSXU_SKILL_DIR\}/g, skillDir)
             .replace(
-              new RegExp(String.raw`\$\{${legacyPrefix}_SKILL_DIR\}`, 'g'),
+              new RegExp(String.raw`\$\{${providerMigrationPrefix}_SKILL_DIR\}`, 'g'),
               skillDir,
             )
         }

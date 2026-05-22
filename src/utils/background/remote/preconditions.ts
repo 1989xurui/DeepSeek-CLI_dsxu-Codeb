@@ -1,12 +1,12 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getOrganizationUUID } from 'src/services/oauth/client.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/featureFlags.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
-  isLegacyCloudSubscriber,
+  isProviderSubscriptionAccount,
 } from '../../auth.js'
-import { getCompatProviderAccessToken } from '../../../dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlAccessToken } from '../../../services/auth/dsxuProviderControlAuth.js'
 import { getCwd } from '../../cwd.js'
 import { logForDebugging } from '../../debug.js'
 import { detectCurrentRepository } from '../../detectRepository.js'
@@ -17,13 +17,13 @@ import { getOAuthHeaders } from '../../teleport/api.js'
 import { fetchEnvironments } from '../../teleport/environments.js'
 
 /**
- * Checks if user needs to log in with the legacy cloud provider
+ * Checks if user needs to log in with the provider migration provider
  * Extracted from getTeleportErrors() in TeleportError.tsx
  * @returns true if login is required, false otherwise
  */
-export async function checkNeedsLegacyCloudLogin(): Promise<boolean> {
+export async function checkNeedsProviderMigrationLogin(): Promise<boolean> {
   if (isDsxuRuntimeMode()) return false
-  if (!isLegacyCloudSubscriber()) {
+  if (!isProviderSubscriptionAccount()) {
     return false
   }
   return checkAndRefreshOAuthTokenIfNeeded()
@@ -90,7 +90,7 @@ export async function checkGithubAppInstalled(
     return false
   }
   try {
-    const accessToken = getCompatProviderAccessToken()
+    const accessToken = getProviderControlAccessToken()
     if (!accessToken) {
       logForDebugging(
         'checkGithubAppInstalled: No access token found, assuming app not installed',
@@ -173,7 +173,7 @@ export async function checkGithubAppInstalled(
 export async function checkGithubTokenSynced(): Promise<boolean> {
   if (isDsxuRuntimeMode()) return false
   try {
-    const accessToken = getCompatProviderAccessToken()
+    const accessToken = getProviderControlAccessToken()
     if (!accessToken) {
       logForDebugging('checkGithubTokenSynced: No access token found')
       return false
@@ -248,12 +248,12 @@ export async function checkRepoForRemoteAccess(
 export function getDsxuRemotePreconditionsRuntimeProfile() {
   return {
     runtime: 'DSXU Remote Preconditions',
-    defaultBehavior: 'Legacy cloud OAuth/GitHub preconditions are bypassed in DSXU mode and replaced by DSXU provider/workspace readiness checks',
+    defaultBehavior: 'Provider migration OAuth/GitHub preconditions are bypassed in DSXU mode and replaced by DSXU provider/workspace readiness checks',
     providerTarget: 'DSXU Remote Session Provider',
     activationEvidence: [
-      'checkNeedsLegacyCloudLogin returns false in DSXU mode',
+      'checkNeedsProviderMigrationLogin returns false in DSXU mode',
       'checkHasRemoteEnvironment returns true for local/provider-backed DSXU mode',
-      'GitHub app/token sync probes do not call legacy cloud OAuth endpoints in DSXU mode',
+      'GitHub app/token sync probes do not call provider migration OAuth endpoints in DSXU mode',
       'git cleanliness, repo detection, and remote access semantics remain reusable for DSXU workflows',
     ],
   }

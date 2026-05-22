@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import figures from 'figures'
 import * as React from 'react'
 import { Box, Text, type TextProps } from '../../ink.js'

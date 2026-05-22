@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import type { AppState } from '../../state/AppState.js'
 import type { Message } from '../../types/message.js'
@@ -23,7 +22,7 @@ import {
 } from '../../utils/messages.js'
 import { getInitialSettings } from '../../utils/settings/settings.js'
 import { isTeammate } from '../../utils/teammate.js'
-import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
+import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
@@ -64,7 +63,7 @@ export function shouldEnablePromptSuggestion(): boolean {
     logEvent('tengu_prompt_suggestion_init', {
       enabled: false,
       source:
-        'growthbook' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        'feature_flags' as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
     return false
   }
@@ -115,7 +114,7 @@ export function getDsxuPromptSuggestionRuntimeProfile(): {
     runtime: 'DSXU Prompt Suggestion',
     env: [
       'DSXU_CODE_ENABLE_PROMPT_SUGGESTION',
-      'legacy provider prompt-suggestion alias',
+      'provider-migration prompt-suggestion alias',
     ],
     suppressReasons: [
       'disabled',
@@ -128,7 +127,7 @@ export function getDsxuPromptSuggestionRuntimeProfile(): {
       'aborted',
     ],
     activationEvidence: [
-      'DSXU env override is checked before legacy alias',
+      'DSXU env override is checked before provider-migration alias',
       'suggestions are disabled in non-interactive sessions and swarm teammates',
       'pending permissions, elicitations, and plan mode suppress generation',
       'tryGenerateSuggestion uses forked-agent cache-safe params before writing promptSuggestion into AppState',

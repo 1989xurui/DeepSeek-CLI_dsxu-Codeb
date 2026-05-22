@@ -306,12 +306,3 @@ export function applySGR(paramStr: string, style: TextStyle): TextStyle {
   }
   return s
 }
-
-
-// V14 lifecycle shim: sgr
-export function processSgrLifecycle(input) {
-  void input
-  const state = 'sgr-state'
-  const lifecycle = 'sgr:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

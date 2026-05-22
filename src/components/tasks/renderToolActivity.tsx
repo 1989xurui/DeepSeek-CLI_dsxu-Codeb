@@ -30,11 +30,3 @@ export function renderToolActivity(activity: ToolActivity, tools: Tools, theme: 
     return activity.toolName;
   }
 }
-
-// V14 lifecycle shim: rendertoolactivity
-export function processRendertoolactivityLifecycle(input) {
-  void input
-  const state = 'rendertoolactivity-state'
-  const lifecycle = 'rendertoolactivity:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

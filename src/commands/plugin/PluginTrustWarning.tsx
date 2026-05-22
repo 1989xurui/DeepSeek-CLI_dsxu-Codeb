@@ -29,10 +29,3 @@ export function PluginTrustWarning() {
   }
   return t2;
 }
-// V14 lifecycle shim: plugintrustwarning
-export function processPlugintrustwarningLifecycle(input) {
-  void input
-  const state = 'plugintrustwarning-state'
-  const lifecycle = 'plugintrustwarning:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

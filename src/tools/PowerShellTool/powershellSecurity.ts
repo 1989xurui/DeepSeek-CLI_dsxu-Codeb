@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 /**
  * PowerShell-specific security analysis for command validation.
  *
@@ -254,7 +253,7 @@ function checkDownloadCradles(
  * Start-BitsTransfer: always a file transfer (MITRE T1197).
  * certutil -urlcache: classic LOLBAS download. Only flagged with -urlcache;
  * bare `certutil` has many legitimate cert-management uses.
- * bitsadmin /transfer: legacy BITS download (pre-PowerShell).
+ * bitsadmin /transfer: historical BITS download (pre-PowerShell).
  */
 function checkDownloadUtilities(
   parsed: ParsedPowerShellCommand,
@@ -284,7 +283,7 @@ function checkDownloadUtilities(
         }
       }
     }
-    // bitsadmin /transfer ...legacy BITS CLI, same threat as Start-BitsTransfer.
+    // bitsadmin /transfer ...historical BITS CLI, same threat as Start-BitsTransfer.
     if (lower === 'bitsadmin' || lower === 'bitsadmin.exe') {
       if (cmd.args.some(a => a.toLowerCase() === '/transfer')) {
         return {
@@ -800,7 +799,7 @@ function checkInvokeItem(
 /**
  * Scheduled-task persistence primitives. Register-ScheduledJob was blocked
  * (DANGEROUS_SCRIPT_BLOCK_CMDLETS); the newer Register-ScheduledTask cmdlet
- * and legacy schtasks.exe /create were not. Persistence that survives the
+ * and historical schtasks.exe /create were not. Persistence that survives the
  * session with no explanatory prompt.
  */
 const SCHEDULED_TASK_CMDLETS = new Set([

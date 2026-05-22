@@ -238,19 +238,3 @@ function Diagnostics(t0) {
 function _temp5(diagnostic, i) {
   return <Box key={i} flexDirection="row" gap={1} paddingX={1}><Text color="error">{figures.warning}</Text>{typeof diagnostic === "string" ? <Text wrap="wrap">{diagnostic}</Text> : diagnostic}</Box>;
 }
-
-// V14 strict lifecycle shim: components-Settings-Status
-export function processComponentsSettingsStatusStrictLifecycle(input) {
-  void input
-  const state = 'components-Settings-Status-state'
-  const lifecycle = 'components-Settings-Status:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runComponentsSettingsStatusStrict(input) {
-  return processComponentsSettingsStatusStrictLifecycle(input)
-}

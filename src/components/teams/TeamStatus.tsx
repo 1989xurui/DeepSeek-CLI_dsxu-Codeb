@@ -77,11 +77,3 @@ function _temp2(t) {
 function _temp(s) {
   return s.teamContext;
 }
-
-// V14 lifecycle shim: teamstatus
-export function processTeamstatusLifecycle(input) {
-  void input
-  const state = 'teamstatus-state'
-  const lifecycle = 'teamstatus:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

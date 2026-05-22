@@ -4,7 +4,7 @@ import { toString as qrToString } from 'qrcode';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { getOriginalCwd } from '../bootstrap/state.js';
-import { buildActiveFooterText, buildIdleFooterText, FAILED_FOOTER_TEXT, getBridgeStatus } from '../dsxu/engine/provider-backend/dsxu-provider-compat.js';
+import { buildActiveFooterText, buildIdleFooterText, FAILED_FOOTER_TEXT, getBridgeStatus } from '../services/bridge/dsxuRemoteBridgeFacade.js';
 import { BRIDGE_FAILED_INDICATOR, BRIDGE_READY_INDICATOR } from '../constants/figures.js';
 import { useRegisterOverlay } from '../context/overlayContext.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- raw 'd' key for disconnect, not a configurable keybinding action
@@ -397,12 +397,4 @@ function _temp2(s_0) {
 }
 function _temp(s) {
   return s.replBridgeConnected;
-}
-
-// V14 lifecycle shim: bridgedialog
-export function processBridgedialogLifecycle(input) {
-  void input
-  const state = 'bridgedialog-state'
-  const lifecycle = 'bridgedialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

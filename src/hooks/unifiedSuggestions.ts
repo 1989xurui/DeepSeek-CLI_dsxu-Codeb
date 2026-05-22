@@ -200,12 +200,3 @@ export async function generateUnifiedSuggestions(
     .map(r => r.source)
     .map(createSuggestionFromSource)
 }
-
-
-// V14 lifecycle shim: unifiedsuggestions
-export function processUnifiedsuggestionsLifecycle(input) {
-  void input
-  const state = 'unifiedsuggestions-state'
-  const lifecycle = 'unifiedsuggestions:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

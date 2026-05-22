@@ -1,0 +1,23 @@
+﻿{
+    "schemaVersion":  "dsxu.v20.ogr01-docs-release-evidence-signoff.v2",
+    "generatedAt":  "2026-05-15T06:48:27+08:00",
+    "total":  46,
+    "byEvidenceClass":  [
+                            {
+                                "evidenceClass":  "benchmark-evidence-not-release-runtime",
+                                "count":  1
+                            },
+                            {
+                                "evidenceClass":  "release-excluded-source-truth-evidence",
+                                "count":  35
+                            },
+                            {
+                                "evidenceClass":  "ship-open-source-doc",
+                                "count":  10
+                            }
+                        ],
+    "shipDocs":  10,
+    "releaseExcludedSourceTruth":  35,
+    "benchmarkEvidence":  1,
+    "rule":  "OGR-01 docs/release evidence signoff classifies ship docs separately from source-truth/generated evidence. Source-truth evidence must remain release-excluded or be rewritten for clean export."
+}

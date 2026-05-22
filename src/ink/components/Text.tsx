@@ -251,11 +251,3 @@ export default function Text(t0) {
   }
   return t16;
 }
-
-// V14 lifecycle shim: text
-export function processTextLifecycle(input) {
-  void input
-  const state = 'text-state'
-  const lifecycle = 'text:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

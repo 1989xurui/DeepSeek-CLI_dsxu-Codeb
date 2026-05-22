@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { isAgentSwarmsEnabled } from '../../utils/agentSwarmsEnabled.js'
@@ -91,6 +90,23 @@ export const TaskUpdateTool = buildTool({
   name: TASK_UPDATE_TOOL_NAME,
   searchHint: 'update a task',
   maxResultSizeChars: 100_000,
+  runtimeMetadata: {
+    owner: 'DSXU Task Lifecycle',
+    sideEffects: [
+      'task-state-write',
+      'task-delete-when-requested',
+      'task-completed-hooks',
+      'teammate-mailbox-write',
+    ],
+    permission: 'allow task update; explicit passthrough permission for delete',
+    evidence: [
+      'inputSchema.taskId',
+      'statusChange output',
+      'updatedFields output',
+      'verificationNudgeNeeded output',
+    ],
+    uiProjection: 'expanded task list visible state',
+  },
   async description() {
     return DESCRIPTION
   },
@@ -118,6 +134,15 @@ export const TaskUpdateTool = buildTool({
     if (input.status) parts.push(input.status)
     if (input.subject) parts.push(input.subject)
     return parts.join(' ')
+  },
+  async checkPermissions(input) {
+    if (input.status === 'deleted') {
+      return {
+        behavior: 'passthrough',
+        message: `TaskUpdate wants to delete task '${input.taskId}'.`,
+      }
+    }
+    return { behavior: 'allow', updatedInput: input }
   },
   renderToolUseMessage() {
     return null

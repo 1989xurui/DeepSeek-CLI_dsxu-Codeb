@@ -354,11 +354,3 @@ function _temp2(prev_1) {
 function _temp(prev_0) {
   return prev_0 + 1;
 }
-
-// V14 lifecycle shim: pluginoptionsdialog
-export function processPluginoptionsdialogLifecycle(input) {
-  void input
-  const state = 'pluginoptionsdialog-state'
-  const lifecycle = 'pluginoptionsdialog:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

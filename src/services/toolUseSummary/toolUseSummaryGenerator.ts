@@ -10,7 +10,7 @@ import { toError } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { asSystemPrompt } from '../../utils/systemPromptType.js'
-import { queryCompatSmallModel } from '../../dsxu/legacy/model/legacyProviderSmallModelQuery.js'
+import { queryProviderMigrationSmallModel } from '../../utils/model/providerMigration/providerMigrationSmallModelQuery.js'
 
 const TOOL_USE_SUMMARY_SYSTEM_PROMPT = `Write a short summary label describing what these tool calls accomplished. It appears as a single-line row in a mobile app and truncates around 30 characters, so think git-commit-subject, not sentence.
 
@@ -69,7 +69,7 @@ export async function generateToolUseSummary({
       ? `User's intent (from assistant's last message): ${lastAssistantText.slice(0, 200)}\n\n`
       : ''
 
-    const response = await queryCompatSmallModel({
+    const response = await queryProviderMigrationSmallModel({
       systemPrompt: asSystemPrompt([TOOL_USE_SUMMARY_SYSTEM_PROMPT]),
       userPrompt: `${contextPrefix}Tools completed:\n\n${toolSummaries}\n\nLabel:`,
       signal,
@@ -149,13 +149,4 @@ function truncateJson(value: unknown, maxLength: number): string {
   } catch {
     return '[unable to serialize]'
   }
-}
-
-
-// V14 lifecycle shim: toolusesummarygenerator
-export function processToolusesummarygeneratorLifecycle(input) {
-  void input
-  const state = 'toolusesummarygenerator-state'
-  const lifecycle = 'toolusesummarygenerator:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

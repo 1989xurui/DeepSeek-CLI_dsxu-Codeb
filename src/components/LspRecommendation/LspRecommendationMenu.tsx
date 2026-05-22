@@ -85,11 +85,3 @@ export function LspRecommendationMenu({
       </Box>
     </PermissionDialog>;
 }
-
-// V14 lifecycle shim: lsprecommendationmenu
-export function processLsprecommendationmenuLifecycle(input) {
-  void input
-  const state = 'lsprecommendationmenu-state'
-  const lifecycle = 'lsprecommendationmenu:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

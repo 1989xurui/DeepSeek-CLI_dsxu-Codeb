@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "dsxu.v20.live-cache-prefix-smoke.v1",
+  "generatedAt": "2026-05-15T03:07:46.410Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "DONE_EVIDENCED",
+  "didCallProvider": false,
+  "didFabricateLiveResult": false,
+  "sourceEvidencePath": "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-cache-prefix-payload-smoke.json",
+  "summaryPath": "D:\\DSXU-code\\.dsxu\\trace\\v19-cost-cache-live-provider\\live-provider-cache-prefix-summary.json",
+  "sourceEvidenceExists": true,
+  "summary": {
+    "ok": true,
+    "status": "DONE_EVIDENCED",
+    "generatedAt": "2026-05-15T03:07:46.404Z",
+    "taskId": "v19_phase5_live_provider_cache_prefix_billing",
+    "evidencePath": ".dsxu/trace/v19-cost-cache-live-provider/live-provider-cache-prefix-summary.json",
+    "sourceEvidencePath": "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-cache-prefix-payload-smoke.json",
+    "routeTracePath": "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-cache-prefix-payload-smoke.route.jsonl",
+    "providerMigrationSourceStatus": "DONE-EVIDENCED",
+    "liveProviderUsage": true,
+    "non22LiveTask": true,
+    "broad22Run": false,
+    "policy": "flash_only_deepseek_native_prefix_cache",
+    "normalizedSystemHash": "a7877914289073d4",
+    "stablePrefixChars": 9359,
+    "dynamicTailChanges": true,
+    "cacheHitLiftObserved": true,
+    "steps": [
+      {
+        "name": "warm_cache",
+        "ok": true,
+        "text": "DSXU_CACHE_PREFIX_OK_warm_cache",
+        "cacheHitInputTokens": 1920,
+        "cacheMissInputTokens": 25,
+        "outputTokens": 11,
+        "model": "deepseek-v4-flash",
+        "routeReason": "verification_flash_non_thinking",
+        "publicRoute": "flash",
+        "sourceTruthReread": false
+      },
+      {
+        "name": "reuse_cache",
+        "ok": true,
+        "text": "DSXU_CACHE_PREFIX_OK_reuse_cache",
+        "cacheHitInputTokens": 1920,
+        "cacheMissInputTokens": 25,
+        "outputTokens": 11,
+        "model": "deepseek-v4-flash",
+        "routeReason": "verification_flash_non_thinking",
+        "publicRoute": "flash",
+        "sourceTruthReread": false
+      }
+    ],
+    "aggregate": {
+      "stepCount": 2,
+      "allStepsOk": true,
+      "allFlash": true,
+      "allVerificationFlash": true,
+      "proUsed": false,
+      "cacheHitInputTokens": 3840,
+      "cacheMissInputTokens": 50,
+      "outputTokens": 22,
+      "cacheHitRatePct": 98.7,
+      "contextWindow": 1048576,
+      "contextPolicy": "route-aware/context-window-aware/cache-aware"
+    },
+    "modelCostEvidence": {
+      "scenario": "v19_phase5_live_provider_cache_prefix_billing",
+      "totalCostUsd": 0.000023912000000000004,
+      "proOnlyCostUsd": 0.00005481,
+      "costPerSolvedUsd": 0.000023912000000000004,
+      "savingsVsProOnlyPct": 56.4,
+      "proNodeRatio": 0,
+      "cacheHitInputTokens": 3840,
+      "cacheMissInputTokens": 50,
+      "outputTokens": 22,
+      "cacheHitRatePct": 98.7,
+      "cacheByModel": [
+        {
+          "model": "deepseek-v4-flash",
+          "cacheHitInputTokens": 3840,
+          "cacheMissInputTokens": 50,
+          "outputTokens": 22,
+          "cacheHitRatePct": 98.7
+        }
+      ],
+      "cacheByRouteReason": [
+        {
+          "routeReason": "verification_flash_non_thinking",
+          "cacheHitInputTokens": 3840,
+          "cacheMissInputTokens": 50,
+          "outputTokens": 22,
+          "cacheHitRatePct": 98.7
+        }
+      ],
+      "proRoi": {
+        "proNodeCount": 0,
+        "proNodesWithPriorFlashAttempt": 0,
+        "proNodesWithAdmissionReason": 0,
+        "proNodesMarkedSavedTask": 0,
+        "proRoiRatePct": 0,
+        "entries": []
+      },
+      "routeReasons": [
+        "live-provider-warm_cache:verification_flash_non_thinking",
+        "live-provider-reuse_cache:verification_flash_non_thinking"
+      ],
+      "modelEvidence": "live-provider-warm_cache: Live DeepSeek provider usage: model=deepseek-v4-flash; route=verification_flash_non_thinking; policy=flash_only_deepseek_native_prefix_cache.\nlive-provider-reuse_cache: Live DeepSeek provider usage: model=deepseek-v4-flash; route=verification_flash_non_thinking; policy=flash_only_deepseek_native_prefix_cache.",
+      "costComplete": true
+    },
+    "risks": [],
+    "next": "Phase 5 has local Pro-rescue, local Flash-only success, and live provider cache/billing evidence; continue to Phase 6 gate classification unless a broader repeated live-task mix is required."
+  },
+  "nextAction": "use this live cache prefix evidence in performance review",
+  "rule": "This smoke ingests real provider payload evidence when present. It does not fabricate cache-hit usage or call a model."
+}

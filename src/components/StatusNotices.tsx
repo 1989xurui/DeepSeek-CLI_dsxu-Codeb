@@ -52,11 +52,3 @@ export function StatusNotices(t0) {
   }
   return t6;
 }
-
-// V14 lifecycle shim: statusnotices
-export function processStatusnoticesLifecycle(input) {
-  void input
-  const state = 'statusnotices-state'
-  const lifecycle = 'statusnotices:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

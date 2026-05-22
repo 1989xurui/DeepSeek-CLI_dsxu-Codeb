@@ -28,11 +28,3 @@ export function AssistantRedactedThinkingMessage(t0) {
   }
   return t4;
 }
-
-// V14 lifecycle shim: assistantredactedthinkingmessage
-export function processAssistantredactedthinkingmessageLifecycle(input) {
-  void input
-  const state = 'assistantredactedthinkingmessage-state'
-  const lifecycle = 'assistantredactedthinkingmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

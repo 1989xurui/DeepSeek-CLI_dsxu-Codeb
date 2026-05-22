@@ -159,11 +159,3 @@ export function HighlightedThinkingText(t0) {
   }
   return t3;
 }
-
-// V14 lifecycle shim: highlightedthinkingtext
-export function processHighlightedthinkingtextLifecycle(input) {
-  void input
-  const state = 'highlightedthinkingtext-state'
-  const lifecycle = 'highlightedthinkingtext:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

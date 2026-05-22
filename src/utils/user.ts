@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import { execa } from 'execa'
 import memoize from 'lodash-es/memoize.js'
 import { getSessionId } from '../bootstrap/state.js'
@@ -15,7 +14,7 @@ import { isEnvTruthy } from './envUtils.js'
 // Cache for email fetched asynchronously at startup
 let cachedEmail: string | undefined | null = null // null means not fetched yet
 let emailFetchPromise: Promise<string | undefined> | null = null
-const LEGACY_INTERNAL_EMAIL_DOMAIN = 'anth' + 'ropic.com'
+const PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN = 'anth' + 'ropic.com'
 
 /**
  * GitHub Actions metadata when running in CI
@@ -31,7 +30,7 @@ export type GitHubActionsMetadata = {
 
 /**
  * Core user data used as base for all analytics providers.
- * This is also the format used by GrowthBook.
+ * This is also the format used by feature flag provider.
  */
 export type CoreUserData = {
   deviceId: string
@@ -130,9 +129,9 @@ export const getCoreUserData = memoize(
 )
 
 /**
- * Get user data for GrowthBook (same as core data with analytics metadata).
+ * Get user data for feature flag provider (same as core data with analytics metadata).
  */
-export function getUserForGrowthBook(): CoreUserData {
+export function getUserForFeatureFlags(): CoreUserData {
   return getCoreUserData(true)
 }
 
@@ -148,13 +147,13 @@ function getEmail(): string | undefined {
     return oauthAccount.emailAddress
   }
 
-  // Ant-only fallbacks below (no execSync)
+  // DSXU internal fallbacks below (no execSync)
   if (process.env.USER_TYPE !== 'ant') {
     return undefined
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@${LEGACY_INTERNAL_EMAIL_DOMAIN}`
+    return `${process.env.COO_CREATOR}@${PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN}`
   }
 
   // If initUser() wasn't called, we return undefined instead of blocking
@@ -168,13 +167,13 @@ async function getEmailAsync(): Promise<string | undefined> {
     return oauthAccount.emailAddress
   }
 
-  // Ant-only fallbacks below
+  // DSXU internal fallbacks below
   if (process.env.USER_TYPE !== 'ant') {
     return undefined
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@${LEGACY_INTERNAL_EMAIL_DOMAIN}`
+    return `${process.env.COO_CREATOR}@${PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN}`
   }
 
   return getGitEmail()

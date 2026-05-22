@@ -105,11 +105,3 @@ export function UserCommandMessage(t0) {
   }
   return t8;
 }
-
-// V14 lifecycle shim: usercommandmessage
-export function processUsercommandmessageLifecycle(input) {
-  void input
-  const state = 'usercommandmessage-state'
-  const lifecycle = 'usercommandmessage:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

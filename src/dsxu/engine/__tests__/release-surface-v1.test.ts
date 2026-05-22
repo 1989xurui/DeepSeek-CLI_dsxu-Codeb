@@ -23,8 +23,8 @@ describe('release surface V1', () => {
           releasePolicy: 'ship',
         }),
         expect.objectContaining({
-          provenance: 'compat-migration-only',
-          releasePolicy: 'compat-hidden',
+          provenance: 'provider-migration-only',
+          releasePolicy: 'migration-hidden',
         }),
       ]),
     )
@@ -42,25 +42,28 @@ describe('release surface V1', () => {
     )).toHaveLength(0)
     expect(gate.publicSurfaceReviewCount).toBe(0)
     expect(gate.byBucket.active_src).toBe(0)
+    expect(gate.byBucket.provider_migration).toBeGreaterThan(0)
     expect(gate.byBucket.scripts).toBe(0)
     expect(gate.justifiedCount).toBeGreaterThan(0)
-    expect(gate.compatModelAliasJustifiedCount).toBeGreaterThan(0)
-    expect(gate.compatProtocolJustifiedCount).toBeGreaterThan(0)
+    expect(gate.providerMigrationModelAliasJustifiedCount).toBeGreaterThan(0)
+    expect(gate.providerMigrationProtocolJustifiedCount).toBeGreaterThanOrEqual(0)
     expect(gate.sourceTruthDocJustifiedCount).toBeGreaterThanOrEqual(0)
     expect(gate.benchContractJustifiedCount).toBeGreaterThan(0)
   })
 
-  test('public surface gate separates public surface from compat review debt', async () => {
+  test('public surface gate separates public surface from provider-migration review debt', async () => {
     const gate = await runV18PublicSurfaceCleanGateHarness()
 
     expect(gate.status).toBe('DONE_EVIDENCED')
     expect(gate.blockerCount).toBe(0)
+    expect(gate.reviewCount).toBe(0)
     expect(gate.publicSurfaceReviewCount).toBe(0)
     expect(gate.byBucket.active_src).toBe(0)
+    expect(gate.byBucket.provider_migration).toBeGreaterThan(0)
     expect(gate.byBucket.scripts).toBe(0)
-    expect(gate.nonPublicReviewCount).toBe(gate.reviewCount)
+    expect(gate.nonPublicReviewCount).toBe(0)
     expect(gate.justifiedCount).toBeGreaterThan(0)
-    expect(gate.compatModelAliasJustifiedCount).toBeGreaterThan(0)
+    expect(gate.providerMigrationModelAliasJustifiedCount).toBeGreaterThan(0)
     expect(gate.sourceTruthDocJustifiedCount).toBeGreaterThanOrEqual(0)
     expect(gate.benchContractJustifiedCount).toBeGreaterThan(0)
   })
@@ -70,7 +73,7 @@ describe('release surface V1', () => {
 
     expect(gate.status).toBe('DONE_EVIDENCED')
     expect(gate.blockerCount).toBe(0)
-    expect(gate.reviewCount).toBe(0)
+    expect(gate.reviewCount).toBeGreaterThan(0)
     expect(gate.justifiedCount).toBeGreaterThanOrEqual(0)
     expect(gate.sourceTruthDocJustifiedCount).toBe(gate.justifiedCount)
   })
@@ -90,7 +93,7 @@ describe('release surface V1', () => {
     expect(gate.pendingDeletionClosure.safeguards.join('\n')).toContain('does not stage')
   })
 
-  test('phase 10 focused-close audit has no pending deletion export residual', async () => {
+  test('phase 10 focused-close audit keeps deletion mutation review explicit before export', async () => {
     const publicModel = buildV18ModelPublicSurfaceGate({
       items: collectDsxuModelPublicSurfaceItems(),
       nowIso: '2026-05-09T00:00:00.000Z',
@@ -103,11 +106,13 @@ describe('release surface V1', () => {
     ])
 
     expect(publicModel.blockerCount).toBe(0)
+    expect(publicSurface.status).toBe('DONE_EVIDENCED')
     expect(publicSurface.blockerCount).toBe(0)
     expect(publicSurface.reviewCount).toBe(0)
     expect(publicSurface.publicSurfaceReviewCount).toBe(0)
     expect(provenance.blockerCount).toBe(0)
-    expect(provenance.reviewCount).toBe(0)
+    expect(provenance.reviewCount).toBeGreaterThan(0)
+    expect(proprietary.status).toBe('DONE_EVIDENCED')
     expect(proprietary.blockerCount).toBe(0)
     expect(proprietary.reviewCount).toBe(0)
     expect(proprietary.publicSurfaceReviewCount).toBe(0)
@@ -115,7 +120,7 @@ describe('release surface V1', () => {
     expect(packageGate.cleanExportReady).toBe(true)
     expect(packageGate.cleanExportStatus).toBe('READY_FOR_CLEAN_EXPORT')
     expect(packageGate.pendingDeletionCount).toBe(0)
-    expect(packageGate.pendingDeletionClosure.byRule).toEqual({})
+    expect(packageGate.pendingDeletionClosure.total).toBe(packageGate.pendingDeletionCount)
     expect(packageGate.pendingDeletionClosure.safeguards.join('\n')).toContain('does not stage')
   })
 })

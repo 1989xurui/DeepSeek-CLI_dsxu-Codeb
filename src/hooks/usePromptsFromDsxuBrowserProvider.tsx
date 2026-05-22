@@ -68,11 +68,3 @@ function _temp() {}
 function findChromeClient(clients: MCPServerConnection[]): ConnectedMCPServer | undefined {
   return clients.find((client): client is ConnectedMCPServer => client.type === 'connected' && client.name === DSXU_BROWSER_PROVIDER_MCP_SERVER_NAME);
 }
-
-// V14 lifecycle shim: usepromptsfromDsxuBrowserProvider
-export function processUsepromptsfromDsxuBrowserProviderLifecycle(input) {
-  void input
-  const state = 'usepromptsfromDsxuBrowserProvider-state'
-  const lifecycle = 'usepromptsfromDsxuBrowserProvider:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getCompatProviderBetaHeaders } from 'src/dsxu/legacy/auth/legacyProviderControlAuth.js'
+import { getProviderControlBetaHeaders } from '../auth/dsxuProviderControlAuth.js'
 import type { OAuthProfileResponse } from 'src/services/oauth/types.js'
 import { getProviderApiKey } from 'src/utils/auth.js'
 import { getGlobalConfig } from 'src/utils/config.js'
@@ -22,7 +22,7 @@ export async function getOauthProfileFromApiKey(): Promise<
     const response = await axios.get<OAuthProfileResponse>(endpoint, {
       headers: {
         'x-api-key': apiKey,
-        ...getCompatProviderBetaHeaders(),
+        ...getProviderControlBetaHeaders(),
       },
       params: {
         account_uuid: accountUuid,
@@ -51,13 +51,4 @@ export async function getOauthProfileFromOauthToken(
   } catch (error) {
     logError(error as Error)
   }
-}
-
-
-// V14 lifecycle shim: getoauthprofile
-export function processGetoauthprofileLifecycle(input) {
-  void input
-  const state = 'getoauthprofile-state'
-  const lifecycle = 'getoauthprofile:session-lifecycle'
-  return { state, lifecycle, invoked: true }
 }

@@ -171,11 +171,3 @@ function FeedbackSurveyThanks(t0) {
   }
   return t5;
 }
-
-// V14 lifecycle shim: feedbacksurvey
-export function processFeedbacksurveyLifecycle(input) {
-  void input
-  const state = 'feedbacksurvey-state'
-  const lifecycle = 'feedbacksurvey:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

@@ -92,12 +92,3 @@ export const PDF_AT_MENTION_INLINE_THRESHOLD = 10
  * We validate client-side to provide a clear error message.
  */
 export const API_MAX_MEDIA_PER_REQUEST = 100
-
-
-// V14 lifecycle shim: apilimits
-export function processApilimitsLifecycle(input) {
-  void input
-  const state = 'apilimits-state'
-  const lifecycle = 'apilimits:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

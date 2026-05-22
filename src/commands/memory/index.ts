@@ -8,21 +8,3 @@ const memory: Command = {
 }
 
 export default memory
-
-
-// V14 command lifecycle shim: memory
-export function processMemoryCommandLifecycle(input) {
-  void input
-  const state = 'memory-command-state'
-  const lifecycle = 'memory:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-    commandId: 'memory',
-  }
-}
-
-export function runMemoryCommand(input) {
-  return processMemoryCommandLifecycle(input)
-}

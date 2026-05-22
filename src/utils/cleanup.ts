@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream vendor runtime dependency.
 import * as fs from 'fs/promises'
 import { homedir } from 'os'
 import { join } from 'path'
@@ -22,9 +21,9 @@ import { TOOL_RESULTS_SUBDIR } from './toolResultStorage.js'
 import { cleanupStaleAgentWorktrees } from './worktree.js'
 
 const DEFAULT_CLEANUP_PERIOD_DAYS = 30
-const LEGACY_NPM_ORG = '@' + ('anth' + 'ropic') + '-ai'
-const LEGACY_NPM_PRODUCT_PREFIX = 'cl' + 'aude' + '-'
-const LEGACY_NPM_PACKAGE_PREFIX = `${LEGACY_NPM_ORG}/${LEGACY_NPM_PRODUCT_PREFIX}`
+const PROVIDER_MIGRATION_SOURCE_NPM_ORG = '@' + ('anth' + 'ropic') + '-ai'
+const PROVIDER_MIGRATION_SOURCE_NPM_PRODUCT_PREFIX = 'cl' + 'aude' + '-'
+const PROVIDER_MIGRATION_SOURCE_NPM_PACKAGE_PREFIX = `${PROVIDER_MIGRATION_SOURCE_NPM_ORG}/${PROVIDER_MIGRATION_SOURCE_NPM_PRODUCT_PREFIX}`
 
 function getCutoffDate(): Date {
   const settings = getSettings_DEPRECATED() || {}
@@ -480,7 +479,7 @@ export async function cleanupNpmCacheForproviderPackages(): Promise<void> {
       key: string
       time: number
     }>) {
-      if (entry.key.includes(LEGACY_NPM_PACKAGE_PREFIX)) {
+      if (entry.key.includes(PROVIDER_MIGRATION_SOURCE_NPM_PACKAGE_PREFIX)) {
         providerEntries.push({ key: entry.key, time: entry.time })
       }
     }
@@ -517,7 +516,7 @@ export async function cleanupNpmCacheForproviderPackages(): Promise<void> {
     const durationMs = Date.now() - startTime
     if (keysToRemove.length > 0) {
       logForDebugging(
-        `npm cache cleanup: Removed ${keysToRemove.length} old legacy provider entries in ${durationMs}ms`,
+        `npm cache cleanup: Removed ${keysToRemove.length} old provider-migration source entries in ${durationMs}ms`,
       )
     } else {
       logForDebugging(`npm cache cleanup: completed in ${durationMs}ms`)

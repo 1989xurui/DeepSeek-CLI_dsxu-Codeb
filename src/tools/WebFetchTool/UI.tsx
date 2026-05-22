@@ -69,19 +69,3 @@ export function getToolUseSummary(input: Partial<{
   }
   return truncate(input.url, TOOL_SUMMARY_MAX_LENGTH);
 }
-
-// V14 strict lifecycle shim: tools-WebFetchTool-UI
-export function processToolsWebFetchToolUIStrictLifecycle(input) {
-  void input
-  const state = 'tools-WebFetchTool-UI-state'
-  const lifecycle = 'tools-WebFetchTool-UI:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runToolsWebFetchToolUIStrict(input) {
-  return processToolsWebFetchToolUIStrictLifecycle(input)
-}

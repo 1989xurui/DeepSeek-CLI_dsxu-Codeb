@@ -1,4 +1,3 @@
-// DSXU V15 ownership marker: upstream-derived capability is absorbed into DSXU mainline; no upstream service runtime dependency.
 /**
  * EXPERIMENT: Session memory compaction
  */
@@ -22,7 +21,7 @@ import { extractDiscoveredToolNames } from '../../utils/toolSearch.js'
 import {
   getDynamicConfig_BLOCKS_ON_INIT,
   getFeatureValue_CACHED_MAY_BE_STALE,
-} from '../analytics/growthbook.js'
+} from '../analytics/featureFlags.js'
 import { logEvent } from '../analytics/index.js'
 import {
   isSessionMemoryEmpty,
@@ -97,7 +96,7 @@ export function resetSessionMemoryCompactConfig(): void {
 }
 
 /**
- * Initialize configuration from remote config (GrowthBook).
+ * Initialize configuration from remote config (feature flag provider).
  * Only fetches once per session - subsequent calls return immediately.
  */
 async function initSessionMemoryCompactConfig(): Promise<void> {
@@ -106,7 +105,7 @@ async function initSessionMemoryCompactConfig(): Promise<void> {
   }
   configInitialized = true
 
-  // Load config from GrowthBook, merging with defaults
+  // Load config from feature flag provider, merging with defaults
   const remoteConfig = await getDynamicConfig_BLOCKS_ON_INIT<
     Partial<SessionMemoryCompactConfig>
   >('tengu_sm_compact_config', {})
@@ -420,7 +419,7 @@ export function shouldUseSessionMemoryCompaction(): boolean {
   )
   const shouldUse = sessionMemoryFlag && smCompactFlag
 
-  // Log flag states for debugging (ant-only to avoid noise in external logs)
+  // Log flag states for debugging (dsxu internal to avoid noise in external logs)
   if (process.env.USER_TYPE === 'ant') {
     logEvent('tengu_sm_compact_flag_check', {
       tengu_session_memory: sessionMemoryFlag,
@@ -536,8 +535,8 @@ export async function trySessionMemoryCompaction(
     return null
   }
 
-  // Session memory exists but matches the template (no actual content extracted)
-  // Fall back to legacy compact behavior
+  // Session memory exists but matches the template (no actual content extracted).
+  // Fall back to the main conversation compaction path.
   if (await isSessionMemoryEmpty(sessionMemory)) {
     logEvent('tengu_sm_compact_empty_template', {})
     return null
@@ -554,8 +553,9 @@ export async function trySessionMemoryCompaction(
 
       if (lastSummarizedIndex === -1) {
         // The summarized message ID doesn't exist in current messages
-        // This can happen if messages were modified - fall back to legacy compact
-        // since we can't determine the boundary between summarized and unsummarized messages
+        // This can happen if messages were modified; use the main conversation
+        // compaction path since we can't determine the boundary between
+        // summarized and unsummarized messages.
         logEvent('tengu_sm_compact_summarized_id_not_found', {})
         return null
       }

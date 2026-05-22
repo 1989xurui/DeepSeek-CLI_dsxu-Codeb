@@ -35,19 +35,3 @@ export function useMailbox() {
   }
   return mailbox;
 }
-
-// V14 strict lifecycle shim: context-mailbox
-export function processContextMailboxStrictLifecycle(input) {
-  void input
-  const state = 'context-mailbox-state'
-  const lifecycle = 'context-mailbox:session-lifecycle'
-  return {
-    state,
-    lifecycle,
-    invoked: true,
-  }
-}
-
-export function runContextMailboxStrict(input) {
-  return processContextMailboxStrictLifecycle(input)
-}

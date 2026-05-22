@@ -52,12 +52,3 @@ export function resetProToOpusDefault(): void {
     })
   }
 }
-
-
-// V14 lifecycle shim: resetprotoopusdefault
-export function processResetprotoopusdefaultLifecycle(input) {
-  void input
-  const state = 'resetprotoopusdefault-state'
-  const lifecycle = 'resetprotoopusdefault:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}

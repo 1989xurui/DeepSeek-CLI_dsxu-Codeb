@@ -2,6 +2,10 @@ import axios from 'axios'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { getOauthAccountInfo } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
+import {
+  isDsxuRuntimeMode,
+  isProviderMigrationServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
@@ -21,12 +25,17 @@ type CachedGrantEntry = {
 
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
 
+function isProviderMigrationAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+}
+
 /**
  * Fetch the current user's overage credit grant eligibility from the backend.
  * The backend resolves tier-specific amounts and role-based claim permission,
  * so the CLI just reads the response without replicating that logic.
  */
 async function fetchOverageCreditGrant(): Promise<OverageCreditGrantInfo | null> {
+  if (!isProviderMigrationAccountApiAllowed()) return null
   try {
     const { accessToken, orgUUID } = await prepareApiRequest()
     const url = `${getOauthConfig().BASE_API_URL}/api/oauth/organizations/${orgUUID}/overage_credit_grant`
@@ -75,6 +84,7 @@ export function invalidateOverageCreditGrantCache(): void {
  * is about to render and the cache is empty.
  */
 export async function refreshOverageCreditGrantCache(): Promise<void> {
+  if (!isProviderMigrationAccountApiAllowed()) return
   if (isEssentialTrafficOnly()) return
   const orgId = getOauthAccountInfo()?.organizationUuid
   if (!orgId) return
@@ -135,12 +145,3 @@ export function formatGrantAmount(info: OverageCreditGrantInfo): string | null {
 }
 
 export type { CachedGrantEntry as OverageCreditGrantCacheEntry }
-
-
-// V14 lifecycle shim: overagecreditgrant
-export function processOveragecreditgrantLifecycle(input) {
-  void input
-  const state = 'overagecreditgrant-state'
-  const lifecycle = 'overagecreditgrant:session-lifecycle'
-  return { state, lifecycle, invoked: true }
-}
