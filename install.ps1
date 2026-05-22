@@ -4,7 +4,10 @@ param(
   [switch]$NoDependencies,
   [switch]$NoDesktopShortcut,
   [switch]$NoWslShortcut,
-  [switch]$NoPathShim
+  [switch]$CreateWslShortcut,
+  [switch]$NoPathShim,
+  [switch]$NoLaunch,
+  [switch]$InstallVsCodeExtension
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,7 +34,10 @@ if ($InstallWsl) { $installParams.InstallWsl = $true }
 if ($NoDependencies) { $installParams.NoDependencies = $true }
 if ($NoDesktopShortcut) { $installParams.NoDesktopShortcut = $true }
 if ($NoWslShortcut) { $installParams.NoWslShortcut = $true }
+if ($CreateWslShortcut) { $installParams.CreateWslShortcut = $true }
 if ($NoPathShim) { $installParams.NoPathShim = $true }
+if ($NoLaunch) { $installParams.NoLaunch = $true }
+if ($InstallVsCodeExtension) { $installParams.InstallVsCodeExtension = $true }
 
 & $installer @installParams
 exit $LASTEXITCODE

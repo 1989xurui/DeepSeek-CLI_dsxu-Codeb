@@ -152,9 +152,11 @@ async function staticChecks(): Promise<StaticCheck[]> {
     rootInstall.includes('scripts\\install-windows.ps1') &&
       rootInstall.includes('bash ./scripts/install.sh') &&
       rootInstall.includes('$installParams') &&
-      rootInstall.includes('InstallWsl')
-      ? pass('root-install-dispatcher', 'root install.ps1 dispatches Windows install and points non-Windows users to install.sh')
-      : fail('root-install-dispatcher', 'root install.ps1 is missing Windows/Unix dispatch or WSL option'),
+      rootInstall.includes('InstallWsl') &&
+      rootInstall.includes('CreateWslShortcut') &&
+      rootInstall.includes('NoLaunch')
+      ? pass('root-install-dispatcher', 'root install.ps1 dispatches Windows install, optional WSL, and no-launch smoke mode')
+      : fail('root-install-dispatcher', 'root install.ps1 is missing Windows/Unix dispatch, optional WSL, or no-launch mode'),
   )
   checks.push(
     rootShellInstall.includes('scripts/install.sh') &&
@@ -197,9 +199,21 @@ async function staticChecks(): Promise<StaticCheck[]> {
     winInstall.includes('Desktop shortcut created') &&
       winInstall.includes('DSXU Code\\bin') &&
       winInstall.includes('InstallWsl') &&
+      winInstall.includes('CreateWslShortcut') &&
+      winInstall.includes('NoLaunch') &&
+      winInstall.includes('Start-DsxuCliWindow') &&
       winInstall.includes('wsl.exe --install -d')
-      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates desktop shortcut, WSL option, and user PATH shim')
-      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create desktop shortcut, WSL option, or PATH shim'),
+      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, and auto-opens CLI')
+      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, optional WSL path, PATH shim, or auto-open CLI path'),
+  )
+  checks.push(
+    winInstall.includes('WSL shortcut skipped') &&
+      winInstall.includes('$shouldCreateWslShortcut') &&
+      winInstall.includes('Get-DsxuWslDistro') &&
+      wslCmd.includes('Falling back to the Windows native DSXU launcher') &&
+      wslCmd.includes(':fallback_native')
+      ? pass('windows-wsl-optional-fallback', 'WSL shortcut is optional by default and WSL launcher falls back to native DSXU when WSL is unavailable')
+      : fail('windows-wsl-optional-fallback', 'WSL optional/fallback behavior is missing'),
   )
   checks.push(
     shInstall.includes('~/.local/bin') && shInstall.includes('DSXU Code WSL.cmd')
@@ -214,14 +228,16 @@ async function staticChecks(): Promise<StaticCheck[]> {
       installDoc.includes('bash ./install.sh') &&
       installDoc.includes('bash ./install.sh --help') &&
       includesIgnoreCase(installDoc, 'Windows one-command install') &&
-      installDoc.includes('Windows 一键安装') &&
       installDoc.includes('-InstallWsl') &&
+      installDoc.includes('-CreateWslShortcut') &&
+      installDoc.includes('-NoLaunch') &&
+      installDoc.includes('opens the DSXU CLI') &&
       installDoc.includes('does not force every Windows user into WSL') &&
-      installDoc.includes('不会强迫所有用户默认进 WSL') &&
-      installDoc.includes('乱码') &&
+      installDoc.includes('DeepSeek key setup') &&
+      installDoc.includes('UTF-8') &&
       includesIgnoreCase(installDoc, 'First-run DeepSeek key setup')
-      ? pass('install-doc-bilingual-first-run', 'INSTALL.md covers bilingual install, encoding, and first-run key setup')
-      : fail('install-doc-bilingual-first-run', 'INSTALL.md is missing bilingual first-run or encoding guidance'),
+      ? pass('install-doc-bilingual-first-run', 'INSTALL.md covers bilingual install, auto-open, optional WSL, encoding, and first-run key setup')
+      : fail('install-doc-bilingual-first-run', 'INSTALL.md is missing bilingual install, auto-open, optional WSL, first-run, or encoding guidance'),
   )
   checks.push(
     includesIgnoreCase(readme, 'Windows one-command install') &&
@@ -230,15 +246,20 @@ async function staticChecks(): Promise<StaticCheck[]> {
       readme.includes('bash ./install.sh --help') &&
       includesIgnoreCase(readme, 'First-run DeepSeek key setup') &&
       readme.includes('-InstallWsl') &&
-      readme.includes('does not force-install WSL by default') &&
-      readmeCn.includes('Windows 一键安装') &&
+      readme.includes('-CreateWslShortcut') &&
+      readme.includes('-NoLaunch') &&
+      readme.includes('opens the DSXU CLI') &&
+      readme.includes('does not force-install WSL') &&
+      readmeCn.includes('DSXU CLI') &&
       readmeCn.includes('.\\install.ps1') &&
       readmeCn.includes('bash ./install.sh') &&
       readmeCn.includes('bash ./install.sh --help') &&
       readmeCn.includes('-InstallWsl') &&
-      readmeCn.includes('WSL 不会被默认强装') &&
-      readmeCn.includes('首次配置 DeepSeek key')
-      ? pass('readme-install-surface', 'README files expose install, first-run, desktop, and encoding guidance')
+      readmeCn.includes('-CreateWslShortcut') &&
+      readmeCn.includes('-NoLaunch') &&
+      readmeCn.includes('DeepSeek key') &&
+      readmeCn.includes('UTF-8')
+      ? pass('readme-install-surface', 'README files expose install, auto-open, first-run, desktop, and encoding guidance')
       : fail('readme-install-surface', 'README install surface is incomplete'),
   )
   checks.push(

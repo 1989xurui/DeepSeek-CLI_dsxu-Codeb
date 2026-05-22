@@ -5,7 +5,10 @@ param(
   [switch]$NoDependencies,
   [switch]$NoDesktopShortcut,
   [switch]$NoWslShortcut,
-  [switch]$NoPathShim
+  [switch]$CreateWslShortcut,
+  [switch]$NoPathShim,
+  [switch]$NoLaunch,
+  [switch]$InstallVsCodeExtension
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,15 +34,22 @@ function Add-UserPathIfMissing([string]$PathToAdd) {
   }
   if ($parts -notcontains $PathToAdd) {
     $newPath = if ($current) { "$current;$PathToAdd" } else { $PathToAdd }
-    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
-    Write-Host "[DSXU] Added to user PATH: $PathToAdd"
+    try {
+      [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+      Write-Host "[DSXU] Added to user PATH: $PathToAdd"
+    } catch {
+      Write-Warning "[DSXU] Could not update user PATH: $($_.Exception.Message)"
+      Write-Warning "[DSXU] The dsxu-code.cmd shim was still created at: $PathToAdd"
+      Write-Warning "[DSXU] You can use the desktop shortcut or Start-DSXU-Code.cmd without PATH."
+    }
   }
 }
 
 function Get-DsxuWslDistro {
   $preferred = $env:DSXU_WSL_DISTRO
   if ($preferred) { return $preferred }
-  $distros = @(wsl.exe -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return $null }
+  $distros = @(wsl.exe -l -q 2>$null | ForEach-Object { ($_ -replace "`0", "").Trim() } | Where-Object { $_ })
   if ($distros.Count -gt 0) { return $distros[0] }
   return $null
 }
@@ -89,15 +99,15 @@ function New-DsxuShortcut(
 }
 
 function New-DsxuDesktopShortcut([string]$ResolvedRepoRoot) {
-  $launcher = Join-Path $ResolvedRepoRoot "scripts\start-dsxu-windows.ps1"
+  $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
   $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
 
   if ($wt) {
     $target = $wt.Source
-    $arguments = "-w 0 nt --title `"DSXU Code`" -d `"$ResolvedRepoRoot`" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$launcher`""
+    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
   } else {
-    $target = "powershell.exe"
-    $arguments = "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$launcher`""
+    $target = "cmd.exe"
+    $arguments = "/k `"$launcher`""
   }
 
   New-DsxuShortcut "DSXU Code.lnk" $ResolvedRepoRoot $target $arguments "Launch DSXU Code with UTF-8 terminal setup"
@@ -137,6 +147,35 @@ exit /b %ERRORLEVEL%
   Write-Host "[DSXU] Command shim created: $shimPath"
 }
 
+function Install-DsxuVsCodeExtension([string]$ResolvedRepoRoot) {
+  $installer = Join-Path $ResolvedRepoRoot "scripts\install-vscode-extension.ps1"
+  if (-not (Test-Path -LiteralPath $installer)) {
+    throw "[DSXU] Missing VS Code extension installer: $installer"
+  }
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer -RepoRoot $ResolvedRepoRoot
+  if ($LASTEXITCODE -ne 0) {
+    throw "[DSXU] VS Code extension install failed with exit code $LASTEXITCODE"
+  }
+}
+
+function Start-DsxuCliWindow([string]$ResolvedRepoRoot) {
+  $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
+  if (-not (Test-Path -LiteralPath $launcher)) {
+    Write-Warning "[DSXU] CLI launcher not found; auto-open skipped: $launcher"
+    return
+  }
+
+  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+  if ($wt) {
+    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+    Start-Process -FilePath $wt.Source -ArgumentList $arguments | Out-Null
+  } else {
+    Start-Process -FilePath "cmd.exe" -WorkingDirectory $ResolvedRepoRoot -ArgumentList @("/k", $launcher) | Out-Null
+  }
+
+  Write-Host "[DSXU] DSXU Code CLI window opened. First launch without a key shows the DeepSeek key setup flow."
+}
+
 Set-DsxuUtf8Console
 $resolvedRepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 Set-Location -LiteralPath $resolvedRepoRoot
@@ -163,12 +202,28 @@ if (-not $NoPathShim) {
 
 if (-not $NoDesktopShortcut) {
   New-DsxuDesktopShortcut $resolvedRepoRoot
-  if (-not $NoWslShortcut) {
+  $wslDistroForShortcut = Get-DsxuWslDistro
+  $shouldCreateWslShortcut = (-not $NoWslShortcut) -and ($CreateWslShortcut -or $InstallWsl -or [bool]$wslDistroForShortcut)
+  if ($shouldCreateWslShortcut) {
     New-DsxuWslDesktopShortcut $resolvedRepoRoot
+  } else {
+    Write-Host "[DSXU] WSL shortcut skipped: no WSL distro was requested or detected. Use -CreateWslShortcut or -InstallWsl if you want the optional WSL entry."
   }
+}
+
+if ($InstallVsCodeExtension) {
+  Install-DsxuVsCodeExtension $resolvedRepoRoot
+}
+
+if (-not $NoLaunch) {
+  Start-DsxuCliWindow $resolvedRepoRoot
+} else {
+  Write-Host "[DSXU] Auto-open skipped because -NoLaunch was specified."
 }
 
 Write-Host ""
 Write-Host "[DSXU] Install complete."
 Write-Host "[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code"
+Write-Host "[DSXU] Windows default is the native DSXU Code shortcut. WSL is optional and never required for first launch."
 Write-Host "[DSXU] First launch without a key opens the DeepSeek key setup flow."
+Write-Host "[DSXU] Optional VS Code adapter: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-vscode-extension.ps1"

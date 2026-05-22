@@ -57,11 +57,12 @@ The installer:
 - verifies Bun is available;
 - runs `bun install --frozen-lockfile`;
 - creates `DSXU Code.lnk` on the desktop for the native Windows launch path;
-- creates `DSXU Code WSL.lnk` on the desktop as a ready WSL launch path for users who prefer Linux tooling;
+- creates the optional `DSXU Code WSL.lnk` desktop shortcut only when WSL is explicitly requested or a WSL distro is already detected;
 - creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`;
-- adds that shim directory to the user PATH if missing.
+- adds that shim directory to the user PATH if missing;
+- opens the DSXU CLI in a UTF-8 terminal so first-time users immediately see the welcome and DeepSeek key setup flow.
 
-For most Windows users, this is the recommended default: install once on Windows, then launch from the desktop. WSL is prepared as an optional entrypoint, but DSXU does not force every Windows user into WSL.
+For most Windows users, this is the recommended default: install once on Windows, then launch `DSXU Code` from the desktop. DSXU does not force every Windows user into WSL and does not create a WSL desktop shortcut on machines without a ready distro unless the user explicitly asks for it.
 
 Optional WSL bootstrap:
 
@@ -71,17 +72,30 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps
 
 This checks for an existing WSL distro. If none exists, it runs `wsl --install -d Ubuntu`. WSL install may require administrator approval, Microsoft Store access, a reboot, or first-run Linux user setup, so DSXU does not silently force it by default.
 
+If WSL is already configured and you only want to add the optional WSL shortcut:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoDependencies -CreateWslShortcut
+```
+
+For CI or smoke tests that must not open an interactive terminal:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoLaunch
+```
+
 安装脚本会：
 
 - 切换 UTF-8，避免中文和边框乱码；
 - 检查 Bun；
 - 执行 `bun install --frozen-lockfile`；
 - 创建 Windows 原生桌面快捷方式 `DSXU Code.lnk`；
-- 创建可选 WSL 桌面快捷方式 `DSXU Code WSL.lnk`，方便习惯 Linux 工具链的用户直接进入；
+- 只有在用户明确要求或已经检测到 WSL distro 时，才创建可选 WSL 桌面快捷方式 `DSXU Code WSL.lnk`；
 - 创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`；
-- 如果 PATH 缺失，会把该 shim 目录加入用户 PATH。
+- 如果 PATH 缺失，会把该 shim 目录加入用户 PATH；
+- 安装完成后自动打开 DSXU CLI 界面，让首次用户直接看到欢迎页和 DeepSeek key 配置流程。
 
-对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。WSL 入口会准备好，但不会强迫所有用户默认进 WSL。
+对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。没有 WSL distro 的机器不会默认创建 WSL 桌面入口，避免用户误点后停在 WSL 配置提示。
 
 如果希望安装器顺手检查或安装 WSL：
 
@@ -90,6 +104,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps
 ```
 
 该开关会先检测已有 WSL distro；如果没有，就执行 `wsl --install -d Ubuntu`。WSL 安装可能需要管理员权限、Microsoft Store、重启或首次 Linux 用户初始化，所以 DSXU 不会默认静默强装。
+
+如果 WSL 已经配置好，只想补一个可选 WSL 桌面入口：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoDependencies -CreateWslShortcut
+```
+
+如果是 CI 或安装 smoke 测试，不希望安装后弹出交互终端：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoLaunch
+```
 
 If Bun is not installed, install it first:
 
@@ -110,6 +136,50 @@ Recommended:
 or click `DSXU Code` on the desktop after installation.
 
 This launcher resolves the current repository path automatically. It no longer hardcodes `D:\DSXU-code`.
+
+## VS Code Adapter / VS Code 插件适配层
+
+DSXU ships a source-installable VS Code adapter in `integrations/vscode`. It is intentionally an adapter: VS Code owns editor commands, selected-text handoff, status-bar UX, and terminal launch; DSXU still owns the single CLI mainline, DeepSeek routing, Tool Gate, Permission Gate, recovery, cost/cache evidence, and final reports.
+
+Windows install:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-vscode-extension.ps1
+```
+
+or during source install:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -InstallVsCodeExtension
+```
+
+macOS / Linux / WSL install:
+
+```bash
+bash ./scripts/install-vscode-extension.sh
+```
+
+or:
+
+```bash
+bash ./install.sh --install-vscode-extension
+```
+
+After reloading VS Code, open the command palette and run:
+
+- `DSXU Code: Open`
+- `DSXU Code: Ask About Selection`
+- `DSXU Code: Explain Current File`
+- `DSXU Code: Configure DeepSeek Key`
+- `DSXU Code: Run Doctor`
+
+If your opened workspace is not the DSXU checkout, set `dsxuCode.repoPath` to the DSXU repository path. Selection prompts are written to `.dsxu/vscode-prompts/*.md` and then handed to DSXU CLI so normal source-truth, permission, and evidence rules still apply.
+
+Smoke check:
+
+```bash
+bun run ide:vscode-smoke
+```
 
 ### WSL launcher / WSL 启动
 

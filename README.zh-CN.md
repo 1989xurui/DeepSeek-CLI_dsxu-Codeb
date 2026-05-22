@@ -142,9 +142,9 @@ DSXU 有同题 before/after 证据，显示 source capsule、默认 no-Read、ro
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建 Windows 原生桌面快捷方式 `DSXU Code`、创建可选 WSL 快捷方式 `DSXU Code WSL`，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。启动器会自动设置 UTF-8，避免中文和边框乱码。
+根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建 Windows 原生桌面快捷方式 `DSXU Code`，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。安装完成后会自动打开 DSXU CLI 界面，让首次用户直接看到欢迎页和 DeepSeek key 配置流程。启动器会自动设置 UTF-8，避免中文和边框乱码。
 
-默认推荐路径是 Windows 一键安装后直接从桌面 `DSXU Code` 进入；如果用户习惯 Linux 工具链，可以点 `DSXU Code WSL`。WSL 不会被默认强装，需要时使用下面的 `-InstallWsl` 开关。
+默认推荐路径是 Windows 一键安装后直接从桌面 `DSXU Code` 进入。DSXU 不会默认强装 WSL，也不会在没有可用 WSL distro 的机器上默认创建 WSL 桌面入口；如果用户习惯 Linux 工具链，可以用 `-InstallWsl` 或 `-CreateWslShortcut` 显式开启。
 
 如果还没有 Bun：
 
@@ -161,6 +161,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -InstallWsl
 ```
 
 这个开关会检测已有 WSL distro；没有时执行 `wsl --install -d Ubuntu`。因为 WSL 可能需要管理员权限、Microsoft Store、重启和首次 Linux 用户初始化，所以不会默认静默强装。
+
+如果 WSL 已经配置好，只想补一个可选 WSL 桌面入口：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoDependencies -CreateWslShortcut
+```
+
+如果是 CI 或安装 smoke 测试，不希望安装后弹出交互终端：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoLaunch
+```
 
 ### macOS / Linux / WSL
 
@@ -226,7 +238,43 @@ bun run dsxu-code
 桌面快捷方式：
 
 - `DSXU Code`：Windows 原生 PowerShell/Windows Terminal 启动。
-- `DSXU Code WSL`：通过 WSL 启动，适合习惯 Linux 工具链的用户。
+- `DSXU Code WSL`：可选 WSL 启动，适合习惯 Linux 工具链的用户；如果误点但本机没有 WSL，会自动回退到 Windows 原生启动，不会停在 WSL 配置提示。
+
+### VS Code 插件适配层
+
+DSXU 现在提供 `integrations/vscode` 适配层。它不是第二套 AI runtime：VS Code 只负责命令面板、选区上下文、状态栏和集成终端启动；DeepSeek 路由、Tool Gate、Permission Gate、恢复、成本/缓存证据和最终报告仍然全部由 DSXU CLI 主链负责。
+
+从源码安装：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-vscode-extension.ps1
+```
+
+也可以在 Windows 一键安装时一起安装：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -InstallVsCodeExtension
+```
+
+macOS / Linux / WSL：
+
+```bash
+bash ./scripts/install-vscode-extension.sh
+```
+
+重启或 Reload VS Code 后，在命令面板使用：
+
+- `DSXU Code: Open`
+- `DSXU Code: Ask About Selection`
+- `DSXU Code: Explain Current File`
+- `DSXU Code: Configure DeepSeek Key`
+- `DSXU Code: Run Doctor`
+
+验证：
+
+```bash
+bun run ide:vscode-smoke
+```
 
 ### 乱码修复
 
