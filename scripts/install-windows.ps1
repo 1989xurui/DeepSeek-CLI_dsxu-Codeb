@@ -46,12 +46,35 @@ function Add-UserPathIfMissing([string]$PathToAdd) {
   }
 }
 
+function Test-DsxuWslListLine([string]$Line) {
+  if (-not $Line) { return $false }
+  if ($Line -match '^(Usage:|Settings:|Launches or configures|Print usage|Install the|Run the provided|Configure settings|Sets the default|Do not create|<no args>|install \[|run <|config \[|help$)') {
+    return $false
+  }
+  if ($Line -match 'Windows Subsystem for Linux|distributions|distribution|usage information') {
+    return $false
+  }
+  return $true
+}
+
+function Test-DsxuWslDistroCandidate([string]$Distro) {
+  if (-not $Distro) { return $false }
+  & wsl.exe -d $Distro -- true > $null 2>&1
+  return $LASTEXITCODE -eq 0
+}
+
 function Get-DsxuWslDistro {
   $preferred = $env:DSXU_WSL_DISTRO
   if ($preferred) { return $preferred }
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return $null }
-  $distros = @(wsl.exe -l -q 2>$null | ForEach-Object { ($_ -replace "`0", "").Trim() } | Where-Object { $_ })
-  if ($distros.Count -gt 0) { return $distros[0] }
+  $rawList = @(wsl.exe -l -q 2>$null)
+  if ($LASTEXITCODE -ne 0) { return $null }
+  $distros = @($rawList | ForEach-Object { ($_ -replace "`0", "").Trim() } | Where-Object { Test-DsxuWslListLine $_ })
+  foreach ($candidate in $distros) {
+    if (Test-DsxuWslDistroCandidate $candidate) {
+      return $candidate
+    }
+  }
   return $null
 }
 
@@ -79,19 +102,19 @@ function Get-DsxuWindowsTerminal {
 function Install-DsxuWindowsTerminalIfMissing {
   if (Get-DsxuWindowsTerminal) { return }
   if ($NoWindowsTerminalInstall) {
-    Write-Warning "[DSXU] Windows Terminal was not found. The launcher will use ASCII fallback mode in classic console."
+    Write-Warning "[DSXU] Windows Terminal was not found. Interactive DSXU Code requires Windows Terminal or VS Code terminal; classic console is only for non-interactive or explicit ASCII emergency mode."
     return
   }
   $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
   if (-not $winget) {
-    Write-Warning "[DSXU] Windows Terminal was not found and winget is unavailable. The launcher will use ASCII fallback mode in classic console."
+    Write-Warning "[DSXU] Windows Terminal was not found and winget is unavailable. Interactive DSXU Code requires Windows Terminal or VS Code terminal; classic console is only for non-interactive or explicit ASCII emergency mode."
     return
   }
 
   Write-Host "[DSXU] Windows Terminal was not found. Installing Microsoft Windows Terminal with winget..."
   & $winget.Source install --id Microsoft.WindowsTerminal -e --accept-package-agreements --accept-source-agreements --disable-interactivity
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "[DSXU] Windows Terminal install failed with exit code $LASTEXITCODE. The launcher will use ASCII fallback mode in classic console."
+    Write-Warning "[DSXU] Windows Terminal install failed with exit code $LASTEXITCODE. Interactive DSXU Code requires Windows Terminal or VS Code terminal; classic console is only for non-interactive or explicit ASCII emergency mode."
     return
   }
   Write-Host "[DSXU] Windows Terminal install finished. If Windows does not expose wt.exe immediately, reopen PowerShell and launch DSXU Code again."

@@ -94,14 +94,8 @@ elif grep -qi microsoft /proc/version 2>/dev/null; then
 @echo off
 setlocal
 chcp 65001 >nul
-for /f "usebackq delims=" %%D in (\`powershell -NoProfile -Command "\$d=(wsl.exe -l -q 2>\$null | Where-Object { \$_.Trim() } | Select-Object -First 1); if(\$d){\$d.Trim()}"\`) do set "DSXU_WSL_DISTRO=%%D"
-if "%DSXU_WSL_DISTRO%"=="" (
-  echo [DSXU] No WSL distro found.
-  pause
-  exit /b 1
-)
-wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "$ROOT_DIR" -- bash -lc "exec bash ./bin/dsxu-code-wsl-launch"
-pause
+call "$WSL_REPO\\Start-DSXU-Code-WSL.cmd" %*
+exit /b %ERRORLEVEL%
 EOF
       echo "[DSXU] WSL desktop command created: $CMD_PATH"
       echo "[DSXU] Windows repo path: $WSL_REPO"

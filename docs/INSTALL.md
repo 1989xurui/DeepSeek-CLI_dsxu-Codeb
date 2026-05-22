@@ -62,7 +62,7 @@ The installer:
 - adds that shim directory to the user PATH if missing;
 - opens the DSXU CLI in a UTF-8 terminal so first-time users immediately see the welcome and DeepSeek key setup flow.
 
-For most Windows users, this is the recommended default: install once on Windows, then launch `DSXU Code` from the desktop. The installer prefers Windows Terminal and, when it is missing, tries to install Microsoft Windows Terminal with `winget`. If Windows Terminal still cannot be used, launchers force `DSXU_ASCII_TUI=1` so classic console output stays readable instead of showing broken Unicode/CJK glyphs. DSXU does not force every Windows user into WSL and does not create a WSL desktop shortcut on machines without a ready distro unless the user explicitly asks for it.
+For most Windows users, this is the recommended default: install once on Windows, then launch `DSXU Code` from the desktop. The installer prefers Windows Terminal and, when it is missing, tries to install Microsoft Windows Terminal with `winget`. Interactive Chinese/Unicode sessions are allowed only in Windows Terminal or the VS Code terminal; classic cmd/PowerShell is limited to non-interactive commands or explicit English/ASCII emergency mode. DSXU does not force every Windows user into WSL and does not create a WSL desktop shortcut on machines without a ready distro unless the user explicitly asks for it.
 
 Optional WSL bootstrap:
 
@@ -90,7 +90,7 @@ If an enterprise image blocks automatic Windows Terminal installation:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoWindowsTerminalInstall
 ```
 
-This keeps install deterministic and uses ASCII TUI fallback in old console windows. For the best Chinese/Unicode UI, install Windows Terminal and rerun the desktop shortcut.
+This keeps install deterministic. For interactive Chinese/Unicode UI, install Windows Terminal and rerun the desktop shortcut. Classic console is only for non-interactive commands or explicit English/ASCII emergency sessions.
 
 安装脚本会：
 
@@ -103,7 +103,7 @@ This keeps install deterministic and uses ASCII TUI fallback in old console wind
 - 如果 PATH 缺失，会把该 shim 目录加入用户 PATH；
 - 安装完成后自动打开 DSXU CLI 界面，让首次用户直接看到欢迎页和 DeepSeek key 配置流程。
 
-对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。安装器会优先使用 Windows Terminal；如果缺失，会尝试通过 `winget` 安装 Microsoft Windows Terminal。仍不可用时，启动器会强制 `DSXU_ASCII_TUI=1`，让老控制台保持可读，避免中文/Unicode 边框变方块。没有 WSL distro 的机器不会默认创建 WSL 桌面入口，避免用户误点后停在 WSL 配置提示。
+对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。安装器会优先使用 Windows Terminal；如果缺失，会尝试通过 `winget` 安装 Microsoft Windows Terminal。中文/Unicode 交互只允许在 Windows Terminal 或 VS Code terminal 中运行；旧 cmd/PowerShell 只用于非交互命令或显式英文/ASCII 应急模式。没有 WSL distro 的机器不会默认创建 WSL 桌面入口，避免用户误点后停在 WSL 配置提示。
 
 如果希望安装器顺手检查或安装 WSL：
 
@@ -131,7 +131,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoWindowsTerminalInstall
 ```
 
-此时仍可运行，但老控制台会进入 ASCII TUI 降级模式；中文/Unicode 最佳体验仍建议安装 Windows Terminal 后重新打开桌面快捷方式。
+安装仍可完成，但中文/Unicode 交互需要 Windows Terminal 或 VS Code terminal。旧控制台只用于非交互命令或显式英文/ASCII 应急模式。
 
 If Bun is not installed, install it first:
 
@@ -207,9 +207,10 @@ The WSL launcher:
 
 - detects `wsl.exe`;
 - detects the first configured distro or uses `DSXU_WSL_DISTRO`;
-- converts the current Windows checkout path with `wslpath`;
+- converts the current Windows checkout path into a WSL `/mnt/...` path;
+- verifies that this downloaded checkout is reachable inside WSL before starting DSXU;
 - opens Windows Terminal when available;
-- falls back to the current console if Windows Terminal is missing.
+- falls back to the Windows native launcher if WSL is missing, not initialized, or cannot reach the checkout.
 
 If WSL is not installed, run:
 
@@ -291,7 +292,7 @@ The Windows launcher sets:
 - `LANG=zh_CN.UTF-8`;
 - `LC_ALL=zh_CN.UTF-8`;
 - color-capable terminal defaults.
-- `DSXU_ASCII_TUI=1` when Windows Terminal is unavailable, so old console windows stay readable.
+- classic console blocking for interactive Chinese/Unicode sessions unless the user explicitly chooses an English/ASCII emergency path.
 
 If an old terminal still renders poorly, open Windows Terminal and launch DSXU from there.
 

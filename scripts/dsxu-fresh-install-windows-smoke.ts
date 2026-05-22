@@ -155,6 +155,7 @@ async function staticChecks(): Promise<StaticCheck[]> {
   const wslCmd = await readText('Start-DSXU-Code-WSL.cmd')
   const wslLaunch = await readText('bin/dsxu-code-wsl-launch')
   const winStart = await readText('scripts/start-dsxu-windows.ps1')
+  const wslWinStart = await readText('scripts/start-dsxu-wsl-windows.ps1')
   const productEntrypoint = await readText('src/entrypoints/dsxu-code.tsx')
   const rootInstall = await readText('install.ps1')
   const rootShellInstall = await readText('install.sh')
@@ -171,6 +172,7 @@ async function staticChecks(): Promise<StaticCheck[]> {
     wslCmd,
     wslLaunch,
     winStart,
+    wslWinStart,
     rootInstall,
     rootShellInstall,
     winInstall,
@@ -239,11 +241,18 @@ async function staticChecks(): Promise<StaticCheck[]> {
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
       !wslCmd.includes('wsl.exe -d Ubuntu') &&
-      wslCmd.includes('ToLowerInvariant') &&
-      wslCmd.includes('if defined WT_SESSION goto run_wsl_inline') &&
-      wslCmd.includes('wsl.exe --cd "%DSXU_WSL_REPO%"')
-      ? pass('wsl-launcher-default-distro-current-path', 'WSL launcher uses the default distro, converts the current repo path on Windows, and avoids nested Windows Terminal launches')
-      : fail('wsl-launcher-default-distro-current-path', 'WSL launcher still hardcodes distro/path or can double-launch Windows Terminal'),
+      !wslCmd.includes('wsl.exe --cd') &&
+      !wslCmd.includes('bash ./bin/dsxu-code-wsl-launch') &&
+      wslCmd.includes('scripts\\start-dsxu-wsl-windows.ps1') &&
+      wslWinStart.includes('Test-DsxuWslListLine') &&
+      wslWinStart.includes('Test-DsxuWslDistroCandidate') &&
+      wslWinStart.includes('ConvertTo-DsxuWslPath') &&
+      wslWinStart.includes('Test-DsxuWslRepo') &&
+      wslWinStart.includes('Start-DsxuNativeFallback') &&
+      wslWinStart.includes('DSXU_TEST_DISABLE_WSL') &&
+      wslWinStart.includes('Start-DsxuWslInWindowsTerminal')
+      ? pass('wsl-launcher-default-distro-current-path', 'WSL launcher delegates to PowerShell for repo truth, distro probing, WT relaunch, and native fallback')
+      : fail('wsl-launcher-default-distro-current-path', 'WSL launcher still hardcodes distro/path, embeds fragile WSL command lines, or lacks native fallback'),
   )
   checks.push(
     !wslLaunch.includes('ROOT_DIR="/mnt/d/DSXU-code"')
@@ -276,8 +285,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
     winInstall.includes('WSL shortcut skipped') &&
       winInstall.includes('$shouldCreateWslShortcut') &&
       winInstall.includes('Get-DsxuWslDistro') &&
-      wslCmd.includes('Falling back to the Windows native DSXU launcher') &&
-      wslCmd.includes(':fallback_native')
+      wslWinStart.includes('Falling back to the Windows native DSXU launcher') &&
+      wslWinStart.includes('Start-DsxuNativeFallback')
       ? pass('windows-wsl-optional-fallback', 'WSL shortcut is optional by default and WSL launcher falls back to native DSXU when WSL is unavailable')
       : fail('windows-wsl-optional-fallback', 'WSL optional/fallback behavior is missing'),
   )
@@ -285,6 +294,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
     shInstall.includes('~/.local/bin') && shInstall.includes('DSXU Code WSL.cmd')
       && shInstall.includes('--no-dependencies')
       && shInstall.includes('--no-desktop-shortcut')
+      && shInstall.includes('Start-DSXU-Code-WSL.cmd')
+      && !shInstall.includes('wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "$ROOT_DIR"')
       ? pass('unix-installer-shims', 'Unix/WSL installer creates command shim and WSL desktop command when available')
       : fail('unix-installer-shims', 'Unix/WSL installer is missing command shim or WSL desktop command'),
   )
@@ -386,6 +397,19 @@ async function main(): Promise<void> {
   const commandResults: CommandCheck[] = []
 
   if (process.platform === 'win32') {
+    commandResults.push(
+      await runCommand('windows-wsl-launcher-disabled-falls-back-to-native-version', [
+        'powershell.exe',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        'scripts/start-dsxu-wsl-windows.ps1',
+        '--version',
+      ], [0], undefined, {
+        DSXU_TEST_DISABLE_WSL: '1',
+      }),
+    )
     commandResults.push(
       await runCommand('windows-launcher-classic-interactive-blocks-without-wt', [
         'powershell.exe',
