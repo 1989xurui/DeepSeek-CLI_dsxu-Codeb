@@ -99,13 +99,17 @@ async function runCommand(
     proc.stdin.write(stdin)
     proc.stdin.end()
   }
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<number>(resolve => {
-    setTimeout(() => {
+    timeoutHandle = setTimeout(() => {
       proc.kill()
       resolve(124)
     }, 120_000)
   })
   const exitCode = await Promise.race([proc.exited, timeout])
+  if (timeoutHandle) {
+    clearTimeout(timeoutHandle)
+  }
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
@@ -179,9 +183,11 @@ async function staticChecks(): Promise<StaticCheck[]> {
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
       !wslCmd.includes('wsl.exe -d Ubuntu') &&
-      wslCmd.includes('wslpath')
-      ? pass('wsl-launcher-autodetect', 'WSL launcher auto-detects distro and converts the current repo path')
-      : fail('wsl-launcher-autodetect', 'WSL launcher still hardcodes distro or path'),
+      wslCmd.includes('ToLowerInvariant') &&
+      wslCmd.includes('if defined WT_SESSION goto run_wsl_inline') &&
+      wslCmd.includes('wsl.exe --cd "%DSXU_WSL_REPO%"')
+      ? pass('wsl-launcher-default-distro-current-path', 'WSL launcher uses the default distro, converts the current repo path on Windows, and avoids nested Windows Terminal launches')
+      : fail('wsl-launcher-default-distro-current-path', 'WSL launcher still hardcodes distro/path or can double-launch Windows Terminal'),
   )
   checks.push(
     !wslLaunch.includes('ROOT_DIR="/mnt/d/DSXU-code"')

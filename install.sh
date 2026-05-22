@@ -16,6 +16,7 @@ Options:
   --no-dependencies          Skip bun install.
   --no-desktop-shortcut      Skip desktop launcher creation.
   --no-path-shim             Skip ~/.local/bin/dsxu-code creation.
+  --install-vscode-extension Copy the DSXU VS Code adapter into the user VS Code extensions folder.
 
 Windows users should prefer:
   powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1

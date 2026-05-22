@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 INSTALL_DEPENDENCIES=1
 CREATE_DESKTOP_SHORTCUT=1
 CREATE_PATH_SHIM=1
+INSTALL_VSCODE_EXTENSION=0
 
 for arg in "$@"; do
   case "$arg" in
@@ -22,6 +23,7 @@ Options:
   --no-dependencies          Skip bun install.
   --no-desktop-shortcut      Skip desktop launcher creation.
   --no-path-shim             Skip ~/.local/bin/dsxu-code creation.
+  --install-vscode-extension Copy the DSXU VS Code adapter into ~/.vscode/extensions.
 EOF
       exit 0
       ;;
@@ -33,6 +35,9 @@ EOF
       ;;
     --no-path-shim)
       CREATE_PATH_SHIM=0
+      ;;
+    --install-vscode-extension)
+      INSTALL_VSCODE_EXTENSION=1
       ;;
     *)
       echo "[DSXU] Unknown install option: $arg" >&2
@@ -118,6 +123,10 @@ EOF
     chmod +x "$DESKTOP_FILE"
     echo "[DSXU] Desktop launcher created: $DESKTOP_FILE"
   fi
+fi
+
+if [ "$INSTALL_VSCODE_EXTENSION" = "1" ]; then
+  bash "$ROOT_DIR/scripts/install-vscode-extension.sh"
 fi
 
 echo

@@ -15,42 +15,53 @@ if %ERRORLEVEL% NEQ 0 (
   exit /b %ERRORLEVEL%
 )
 
-for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "$preferred=$env:DSXU_WSL_DISTRO; if($preferred){$preferred; exit}; $d=(wsl.exe -l -q 2>$null | ForEach-Object { ($_ -replace [char]0, '').Trim() } | Where-Object { $_ } | Select-Object -First 1); if($d){$d}"`) do set "DSXU_WSL_DISTRO=%%D"
-
-if "%DSXU_WSL_DISTRO%"=="" (
-  echo [DSXU] This is the optional WSL launcher, but no WSL distro is configured yet.
-  echo [DSXU] Falling back to the Windows native DSXU launcher.
-  echo [DSXU] To enable WSL later, install one from PowerShell:
-  echo        wsl --install -d Ubuntu
-  echo [DSXU] Reopen Windows Terminal after the distro first-run setup.
-  call :fallback_native %*
-  exit /b %ERRORLEVEL%
-)
-
-for /f "delims=" %%P in ('wsl.exe -d "%DSXU_WSL_DISTRO%" wslpath -a "%DSXU_REPO_ROOT%"') do set "DSXU_WSL_REPO=%%P"
+for /f "usebackq delims=" %%P in (`powershell -NoProfile -Command "$p='%DSXU_REPO_ROOT%'.TrimEnd('\'); if($p -match '^([A-Za-z]):\\(.*)$'){ '/mnt/' + $matches[1].ToLowerInvariant() + '/' + (($matches[2]) -replace '\\','/') }"`) do set "DSXU_WSL_REPO=%%P"
 
 if "%DSXU_WSL_REPO%"=="" (
   echo [DSXU] Could not convert repo path to WSL path:
   echo        %DSXU_REPO_ROOT%
-  pause
-  exit /b 1
+  echo [DSXU] Falling back to the Windows native DSXU launcher.
+  call :fallback_native %*
+  exit /b %ERRORLEVEL%
 )
+
+if "%DSXU_WSL_NO_WT%"=="1" goto run_wsl_inline
+if defined WT_SESSION goto run_wsl_inline
 
 where wt.exe >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-  wt.exe -w new new-tab --title "DSXU Code WSL" -- wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "%DSXU_WSL_REPO%" -- bash -lc "exec bash ./bin/dsxu-code-wsl-launch"
+  if "%DSXU_WSL_DISTRO%"=="" (
+    wt.exe -w new new-tab --title "DSXU Code WSL" -- wsl.exe --cd "%DSXU_WSL_REPO%" -- bash ./bin/dsxu-code-wsl-launch %*
+  ) else (
+    wt.exe -w new new-tab --title "DSXU Code WSL" -- wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "%DSXU_WSL_REPO%" -- bash ./bin/dsxu-code-wsl-launch %*
+  )
   if %ERRORLEVEL% NEQ 0 (
     echo [DSXU] Windows Terminal failed to open. Falling back to this window.
-    wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "%DSXU_WSL_REPO%" -- bash -lc "exec bash ./bin/dsxu-code-wsl-launch"
+    call :run_wsl_inline %*
     pause
   )
 ) else (
   echo [DSXU] Windows Terminal not found, falling back to wsl.exe in this window.
-  wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "%DSXU_WSL_REPO%" -- bash -lc "exec bash ./bin/dsxu-code-wsl-launch"
+  call :run_wsl_inline %*
   pause
 )
 
 exit /b %ERRORLEVEL%
+
+:run_wsl_inline
+if "%DSXU_WSL_DISTRO%"=="" (
+  wsl.exe --cd "%DSXU_WSL_REPO%" -- bash ./bin/dsxu-code-wsl-launch %*
+) else (
+  wsl.exe -d "%DSXU_WSL_DISTRO%" --cd "%DSXU_WSL_REPO%" -- bash ./bin/dsxu-code-wsl-launch %*
+)
+if %ERRORLEVEL% NEQ 0 (
+  echo [DSXU] WSL launch failed with status %ERRORLEVEL%.
+  echo [DSXU] If WSL was just installed, finish its first-run Linux setup or set DSXU_WSL_DISTRO.
+  echo [DSXU] Falling back to the Windows native DSXU launcher.
+  call :fallback_native %*
+  exit /b %ERRORLEVEL%
+)
+exit /b 0
 
 :fallback_native
 if exist "%DSXU_REPO_ROOT%Start-DSXU-Code.cmd" (

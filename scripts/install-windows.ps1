@@ -123,7 +123,7 @@ function New-DsxuWslDesktopShortcut([string]$ResolvedRepoRoot) {
   $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
   if ($wt) {
     $target = $wt.Source
-    $arguments = "-w 0 nt --title `"DSXU Code WSL`" -d `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+    $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
   } else {
     $target = "cmd.exe"
     $arguments = "/k `"$launcher`""
