@@ -82,6 +82,10 @@ function includesIgnoreCase(text: string, needle: string): boolean {
   return text.toLowerCase().includes(needle.toLowerCase())
 }
 
+function hasHardFailureSentinel(text: string): boolean {
+  return /\b(?:UNEXPECTED_REACH|SHOULD_NOT_REACH(?:_HERE)?)\b/i.test(text)
+}
+
 async function runCommand(
   id: string,
   command: string[],
@@ -135,7 +139,9 @@ async function runCommand(
     passed:
       expectedExitCodes.includes(exitCode) &&
       !stdout.includes('dsxu-test-windows-smoke-token') &&
-      !stderr.includes('dsxu-test-windows-smoke-token'),
+      !stderr.includes('dsxu-test-windows-smoke-token') &&
+      !hasHardFailureSentinel(stdout) &&
+      !hasHardFailureSentinel(stderr),
     durationMs: Date.now() - startedAt,
     stdoutPath,
     stderrPath,
@@ -160,8 +166,31 @@ async function staticChecks(): Promise<StaticCheck[]> {
   const packageJson = await readText('package.json')
   const wechatPayQr = await readBinary('docs/assets/wechat-pay.jpg')
   const wechatFriendQr = await readBinary('docs/assets/wechat-friend.jpg')
+  const launcherSurface = [
+    startCmd,
+    wslCmd,
+    wslLaunch,
+    winStart,
+    rootInstall,
+    rootShellInstall,
+    winInstall,
+    shInstall,
+  ].join('\n')
 
   const checks: StaticCheck[] = []
+  checks.push(
+    packageJson.includes('"name"') &&
+      startCmd.length > 0 &&
+      winStart.length > 0 &&
+      productEntrypoint.length > 0
+      ? pass('workspace-identity-root-files', `smoke root has package.json, Windows launchers, and DSXU product entrypoint: ${ROOT}`)
+      : fail('workspace-identity-root-files', `smoke root is missing package.json, launchers, or product entrypoint: ${ROOT}`),
+  )
+  checks.push(
+    !/(?:[A-Z]:[\\/]+DSXU-Code\d?|[A-Z]:[\\/]+DSXU-code\d?|\/mnt\/d\/DSXU-Code\d?|\/mnt\/d\/DSXU-code\d?)/i.test(launcherSurface)
+      ? pass('launcher-path-drift-no-hardcoded-repo', 'launchers and installers derive repo root from their own location instead of hard-coded D:/DSXU paths')
+      : fail('launcher-path-drift-no-hardcoded-repo', 'launcher or installer still contains hard-coded D:/DSXU path that can read one checkout and launch another'),
+  )
   checks.push(
     rootInstall.includes('scripts\\install-windows.ps1') &&
       rootInstall.includes('bash ./scripts/install.sh') &&

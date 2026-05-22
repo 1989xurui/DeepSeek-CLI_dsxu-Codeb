@@ -2444,6 +2444,7 @@ type DsxuRecoverySignals = {
   sawEditPreflightRequired: string[]
   sawEditPreflightFailed: string[]
   sawVerificationFailed: string[]
+  sawHardFailureEvidence: string[]
   sawPostMutationVerificationResult: string[]
   sawIncompleteAgentEvidence: string[]
   sawPermissionDenied: string[]
@@ -2510,6 +2511,7 @@ function collectDsxuRecoverySignals(
   const sawEditPreflightRequired: string[] = []
   const sawEditPreflightFailed: string[] = []
   const sawVerificationFailed: string[] = []
+  const sawHardFailureEvidence: string[] = []
   const sawPostMutationVerificationResult: string[] = []
   const sawIncompleteAgentEvidence: string[] = []
   const sawPermissionDenied: string[] = []
@@ -2543,6 +2545,9 @@ function collectDsxuRecoverySignals(
       sawEditPreflightRequired.push(result.toolName)
     } else if (/DSXU tool state:\s*edit_preflight_failed/i.test(result.text)) {
       sawEditPreflightFailed.push(result.toolName)
+    }
+    if (/\b(?:UNEXPECTED_REACH|SHOULD_NOT_REACH(?:_HERE)?)\b/i.test(result.text)) {
+      sawHardFailureEvidence.push(result.toolName)
     }
     if ((result.toolName === 'Agent' || result.toolName === 'Task') && hasIncompleteAgentEvidence(result.text)) {
       sawIncompleteAgentEvidence.push(result.toolName)
@@ -2613,6 +2618,7 @@ function collectDsxuRecoverySignals(
     sawEditPreflightRequired,
     sawEditPreflightFailed,
     sawVerificationFailed,
+    sawHardFailureEvidence,
     sawPostMutationVerificationResult,
     sawIncompleteAgentEvidence,
     sawPermissionDenied,
@@ -2628,6 +2634,16 @@ function collectDsxuRecoverySignals(
 }
 
 function classifyDsxuRecoveryState(signals: DsxuRecoverySignals): DsxuRecoveryState {
+  if (signals.sawHardFailureEvidence.length > 0) {
+    return {
+      state: 'verification_failed_needs_repair',
+      requiredAction: 'source_repair',
+      canClaimComplete: false,
+      sourceTruthRequired: true,
+      verificationRequired: false,
+      reason: 'latest output contains hard failure sentinel such as UNEXPECTED_REACH or SHOULD_NOT_REACH',
+    }
+  }
   if (signals.baselinePassPendingRequiredEdit) {
     return {
       state: 'baseline_pass_pending_required_edit',
@@ -2830,6 +2846,7 @@ export function buildDsxuToolStateCursorNudge(
     sawEditPreflightRequired,
     sawEditPreflightFailed,
     sawVerificationFailed,
+    sawHardFailureEvidence,
     sawPostMutationVerificationResult,
     sawIncompleteAgentEvidence,
     sawPermissionDenied,
@@ -2849,6 +2866,7 @@ export function buildDsxuToolStateCursorNudge(
     sawVerificationPassed.length === 0 &&
     sawVerificationBlockedUnsafeBatch.length === 0 &&
     sawVerificationFailed.length === 0 &&
+    sawHardFailureEvidence.length === 0 &&
     sawPostMutationVerificationResult.length === 0 &&
     sawEditPreflightRequired.length === 0 &&
     sawEditPreflightFailed.length === 0 &&
@@ -2907,7 +2925,12 @@ export function buildDsxuToolStateCursorNudge(
       '- verification_failed: do not rerun the same verification command unchanged. Extract the concrete failing assertion from the latest output, then perform one precise source Edit that changes that behavior, or report PARTIAL/FAIL with the exact blocker.',
     )
   }
-  if (sawPostMutationVerificationResult.length > 0) {
+  if (sawHardFailureEvidence.length > 0) {
+    lines.push(
+      '- hard_failure_evidence: the latest output contains UNEXPECTED_REACH or SHOULD_NOT_REACH. This is a failed negative-path assertion, not PASS evidence. Do not claim complete; fix the entry/path/gate that allowed the forbidden branch, then run a fresh verification.',
+    )
+  }
+  if (sawPostMutationVerificationResult.length > 0 && sawHardFailureEvidence.length === 0) {
     lines.push(
       '- post_mutation_verification_result: the latest verification command completed after source mutation. Stop calling tools now. Produce the requested PASS/final answer if the latest output satisfies acceptance criteria; otherwise report PARTIAL/FAIL with the exact mismatch. Do not repeat this verification command unchanged.',
     )

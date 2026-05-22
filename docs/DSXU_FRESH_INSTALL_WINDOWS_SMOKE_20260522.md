@@ -8,6 +8,8 @@ This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL p
 
 | id | passed | detail |
 |---|---:|---|
+| workspace-identity-root-files | true | smoke root has package.json, Windows launchers, and DSXU product entrypoint: D:\DSXU-code |
+| launcher-path-drift-no-hardcoded-repo | true | launchers and installers derive repo root from their own location instead of hard-coded D:/DSXU paths |
 | root-install-dispatcher | true | root install.ps1 dispatches Windows install, optional WSL, Windows Terminal policy, and no-launch smoke mode |
 | root-shell-install-dispatcher | true | root install.sh dispatches Unix install and points Windows Git Bash users to install.ps1 |
 | root-start-cmd-current-dir | true | root Windows launcher delegates to repo-local PowerShell script |
@@ -29,8 +31,8 @@ This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL p
 
 | id | passed | exitCode | durationMs | stdout | stderr |
 |---|---:|---:|---:|---|---|
-| windows-launcher-classic-interactive-blocks-without-wt | true | 2 | 659 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-03-24-871Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-03-24-871Z.stderr.log |
-| windows-product-entrypoint-classic-interactive-blocks | true | 2 | 99 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-03-25-531Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-03-25-531Z.stderr.log |
-| windows-launcher-version | true | 0 | 695 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-version-2026-05-22T10-03-25-631Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-version-2026-05-22T10-03-25-631Z.stderr.log |
-| windows-launcher-missing-key-status | true | 1 | 2078 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-missing-key-status-2026-05-22T10-03-26-326Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-missing-key-status-2026-05-22T10-03-26-326Z.stderr.log |
-| windows-launcher-key-stdin | true | 0 | 2062 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-key-stdin-2026-05-22T10-03-28-404Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-key-stdin-2026-05-22T10-03-28-404Z.stderr.log |
+| windows-launcher-classic-interactive-blocks-without-wt | true | 2 | 1046 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-20-58-712Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-20-58-712Z.stderr.log |
+| windows-product-entrypoint-classic-interactive-blocks | true | 2 | 142 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-20-59-758Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-20-59-758Z.stderr.log |
+| windows-launcher-version | true | 0 | 1283 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-version-2026-05-22T10-20-59-901Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-version-2026-05-22T10-20-59-901Z.stderr.log |
+| windows-launcher-missing-key-status | true | 1 | 2433 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-missing-key-status-2026-05-22T10-21-01-184Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-missing-key-status-2026-05-22T10-21-01-184Z.stderr.log |
+| windows-launcher-key-stdin | true | 0 | 2906 | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-key-stdin-2026-05-22T10-21-03-617Z.stdout.log | D:\DSXU-code\.dsxu\trace\fresh-install-windows-smoke\windows-launcher-key-stdin-2026-05-22T10-21-03-617Z.stderr.log |

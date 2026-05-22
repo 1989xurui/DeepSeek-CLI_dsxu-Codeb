@@ -301,6 +301,67 @@ describe('DSXU prompt governance contracts', () => {
     expect(nudge).toContain('Do not repeat this verification command')
   })
 
+  test('hard failure sentinel blocks final PASS even after source mutation', () => {
+    const editResultMessage = {
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'edit-entry-chain',
+            content: 'DSXU tool state: edit_applied; file=scripts/start-dsxu-windows.ps1',
+            is_error: false,
+          },
+        ],
+      },
+    } as any
+    const verifyBlock = {
+      type: 'tool_use',
+      id: 'verify-entry-chain',
+      name: 'Bash',
+      input: {
+        command: 'powershell -NoProfile -Command "simulate blocked branch"',
+      },
+    } as any
+    const verifyResultMessage = {
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'verify-entry-chain',
+            content: [
+              '--- simulate no Windows Terminal environment ---',
+              'SHOULD_NOT_REACH_HERE',
+              'Exit code: 0',
+            ].join('\n'),
+            is_error: false,
+          },
+        ],
+      },
+    } as any
+
+    const state = buildDsxuRecoveryState({
+      toolResults: [verifyResultMessage],
+      toolUseBlocks: [verifyBlock],
+      conversationMessages: [editResultMessage],
+    })
+    const nudge = buildDsxuToolStateCursorNudge(
+      [verifyResultMessage],
+      [verifyBlock],
+      [editResultMessage],
+    )
+
+    expect(state.state).toBe('verification_failed_needs_repair')
+    expect(state.canClaimComplete).toBe(false)
+    expect(state.requiredAction).toBe('source_repair')
+    expect(nudge).toContain('hard_failure_evidence')
+    expect(nudge).toContain('SHOULD_NOT_REACH')
+    expect(nudge).not.toContain('Produce the requested PASS/final answer')
+  })
+
   test('pre-execution gate blocks all drift-prone tools after latest verified PASS', () => {
     const verificationBlock = {
       type: 'tool_use',
