@@ -23,10 +23,10 @@ import { sleep } from '../sleep.js'
 import { jsonStringify, writeFileSync_DEPRECATED } from '../slowOperations.js'
 import { getBinaryName, getPlatform } from './installer.js'
 
-const PROVIDER_MIGRATION_SOURCE_PRODUCT = 'cl' + 'aude'
-const PROVIDER_MIGRATION_CODE_SLUG = `${PROVIDER_MIGRATION_SOURCE_PRODUCT}-code`
-const PROVIDER_RELEASE_BUCKET = `${PROVIDER_MIGRATION_CODE_SLUG}-dist-86c565f3-f756-42ad-8dfa-d59b1c096819`
-const GCS_BUCKET_URL = `https://storage.googleapis.com/${PROVIDER_RELEASE_BUCKET}/${PROVIDER_MIGRATION_CODE_SLUG}-releases`
+const ARCHIVED_SOURCE_PRODUCT = 'cl' + 'aude'
+const ARCHIVED_CODE_SLUG = `${ARCHIVED_SOURCE_PRODUCT}-code`
+const ARCHIVED_RELEASE_BUCKET = `${ARCHIVED_CODE_SLUG}-dist-86c565f3-f756-42ad-8dfa-d59b1c096819`
+const GCS_BUCKET_URL = `https://storage.googleapis.com/${ARCHIVED_RELEASE_BUCKET}/${ARCHIVED_CODE_SLUG}-releases`
 const INSTALLER_PROJECT_NAME = 'dsxu-native-installer'
 export const ARTIFACTORY_REGISTRY_URL =
   'https://artifactory.infra.ant.dev/artifactory/api/npm/npm-all/'
@@ -505,7 +505,7 @@ export async function downloadVersion(
     await downloadVersionFromBinaryRepo(
       version,
       stagingPath,
-      `https://storage.googleapis.com/${PROVIDER_MIGRATION_CODE_SLUG}-ci-sentinel`,
+      `https://storage.googleapis.com/${ARCHIVED_CODE_SLUG}-ci-sentinel`,
       { headers: { Authorization: `Bearer ${stdout.trim()}` } },
     )
     return 'binary'

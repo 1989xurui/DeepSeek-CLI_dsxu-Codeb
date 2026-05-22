@@ -11,19 +11,19 @@
 // See test/utils/sandbox/webfetch-preapproved-separation.test.ts for verification
 // that sandbox network restrictions require explicit user permission rules.
 
-const PROVIDER_MIGRATION_SOURCE_PRODUCT_TOKEN = 'cl' + 'aude'
-const PROVIDER_MIGRATION_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
-const providerMigrationSourceHost = (value: string): string =>
+const ARCHIVED_SOURCE_PRODUCT_TOKEN = 'cl' + 'aude'
+const ARCHIVED_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
+const archivedSourceHost = (value: string): string =>
   value
-    .replaceAll('{providerMigrationSource}', PROVIDER_MIGRATION_SOURCE_PRODUCT_TOKEN)
-    .replaceAll('{sourceOrg}', PROVIDER_MIGRATION_SOURCE_ORG_TOKEN)
+    .replaceAll('{archivedSource}', ARCHIVED_SOURCE_PRODUCT_TOKEN)
+    .replaceAll('{sourceOrg}', ARCHIVED_SOURCE_ORG_TOKEN)
 
 export const PREAPPROVED_HOSTS = new Set([
-  // Provider migration source documentation and repositories
-  providerMigrationSourceHost('platform.{providerMigrationSource}.com'),
-  providerMigrationSourceHost('code.{providerMigrationSource}.com'),
+  // Archived source documentation and repositories
+  archivedSourceHost('platform.{archivedSource}.com'),
+  archivedSourceHost('code.{archivedSource}.com'),
   'modelcontextprotocol.io',
-  providerMigrationSourceHost('github.com/{sourceOrg}'),
+  archivedSourceHost('github.com/{sourceOrg}'),
   'agentskills.io',
 
   // Top Programming Languages

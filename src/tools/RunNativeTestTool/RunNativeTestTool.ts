@@ -5,12 +5,15 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 import {
+  analyzeVerificationFailure,
   buildRunNativeTestDecision,
   getVerificationIntentKey,
-} from '../../dsxu/engine/v18-semantic-tools.js'
+  stripNoisyVerificationShellSyntax,
+  type VerificationFailureOracle,
+} from '../../dsxu/engine/semantic-tools.js'
 import {
   extractSemanticVerificationEventsFromMessages,
-  hasSourceMutationAfterLatestSameFailedVerification,
+  hasSourceMutationAfterLatestSameVerification,
 } from './semanticVerificationMessages.js'
 
 export const RUN_NATIVE_TEST_TOOL_NAME = 'RunNativeTest'
@@ -40,6 +43,16 @@ const outputSchema = lazySchema(() =>
     stdout: z.string(),
     stderr: z.string(),
     decisionReason: z.string(),
+    failureOracle: z
+      .object({
+        kind: z.string(),
+        confidence: z.string(),
+        summary: z.string(),
+        targetFiles: z.array(z.string()),
+        symbols: z.array(z.string()),
+        nextAction: z.string(),
+      })
+      .optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -136,7 +149,8 @@ export const RunNativeTestTool = buildTool({
     return command ? `RunNativeTest(${command})` : 'RunNativeTest'
   },
   async validateInput(input) {
-    if (!parseNativeTestCommand(input.command)) {
+    const normalizedCommand = stripNoisyVerificationShellSyntax(input.command)
+    if (!parseNativeTestCommand(normalizedCommand)) {
       return {
         result: false,
         message:
@@ -170,23 +184,25 @@ export const RunNativeTestTool = buildTool({
     return { result: true }
   },
   async checkPermissions(input) {
+    const normalizedCommand = stripNoisyVerificationShellSyntax(input.command)
     return {
       behavior: 'passthrough',
-      message: `RunNativeTest wants to execute '${input.command}' in '${input.cwd}'.`,
+      message: `RunNativeTest wants to execute '${normalizedCommand}' in '${input.cwd}'.`,
     }
   },
   async call(input, context) {
+    const command = stripNoisyVerificationShellSyntax(input.command)
     const previousAttempts = extractSemanticVerificationEventsFromMessages(
       context.messages,
     )
-    const currentIntent = getVerificationIntentKey(input)
+    const currentIntent = getVerificationIntentKey({ command, cwd: input.cwd })
     const sourceChangedSinceLastAttempt =
-      hasSourceMutationAfterLatestSameFailedVerification(
+      hasSourceMutationAfterLatestSameVerification(
         context.messages,
         event => getVerificationIntentKey(event) === currentIntent,
       )
     const decision = buildRunNativeTestDecision({
-      command: input.command,
+      command,
       cwd: input.cwd,
       previousAttempts,
       sourceChangedSinceLastAttempt,
@@ -196,7 +212,7 @@ export const RunNativeTestTool = buildTool({
       return {
         data: {
           status: 'blocked',
-          command: input.command,
+          command,
           cwd: input.cwd,
           exitCode: decision.latestExitCode ?? null,
           stdout: '',
@@ -209,7 +225,7 @@ export const RunNativeTestTool = buildTool({
       return {
         data: {
           status: 'already_passed',
-          command: input.command,
+          command,
           cwd: input.cwd,
           exitCode: 0,
           stdout: '',
@@ -219,17 +235,23 @@ export const RunNativeTestTool = buildTool({
       }
     }
 
-    const args = parseNativeTestCommand(input.command)!
+    const args = parseNativeTestCommand(command)!
     const result = await runNativeCommand(args, input.cwd)
+    const status = result.exitCode === 0 ? 'pass' : 'fail'
+    const failureOracle: VerificationFailureOracle | undefined =
+      status === 'fail'
+        ? analyzeVerificationFailure(`${result.stderr}\n${result.stdout}`)
+        : undefined
     return {
       data: {
-        status: result.exitCode === 0 ? 'pass' : 'fail',
-        command: input.command,
+        status,
+        command,
         cwd: input.cwd,
         exitCode: result.exitCode,
         stdout: truncateOutput(result.stdout),
         stderr: truncateOutput(result.stderr),
         decisionReason: decision.reason,
+        failureOracle,
       },
     }
   },
@@ -247,6 +269,15 @@ export const RunNativeTestTool = buildTool({
       `cwd=${out.cwd}`,
       `exitCode=${out.exitCode ?? 'null'}`,
       `decision=${out.decisionReason}`,
+      out.failureOracle
+        ? `FailureOracle kind=${out.failureOracle.kind}; confidence=${out.failureOracle.confidence}; next=${out.failureOracle.nextAction}; summary=${out.failureOracle.summary}`
+        : '',
+      out.failureOracle?.targetFiles?.length
+        ? `FailureOracle targetFiles=${out.failureOracle.targetFiles.join(', ')}`
+        : '',
+      out.failureOracle?.symbols?.length
+        ? `FailureOracle symbols=${out.failureOracle.symbols.join(', ')}`
+        : '',
       out.stdout ? `stdout:\n${out.stdout}` : '',
       out.stderr ? `stderr:\n${out.stderr}` : '',
       `DSXU tool state: ${state}; semanticTool=RunNativeTest; next=${out.status === 'pass' || out.status === 'already_passed' ? 'collect_evidence_before_final_or_final_now' : out.status === 'blocked' ? 'change_source_or_strategy' : 'repair_or_report_partial'}.`,

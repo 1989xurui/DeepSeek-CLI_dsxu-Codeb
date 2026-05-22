@@ -40,6 +40,7 @@ export interface TDDGateResult {
 
 export interface TDDGateConfig {
   testCommand: string;
+  cwd: string;
   redTimeoutMs: number;
   greenTimeoutMs: number;
   mockTestRunner?: (testFilePath: string) => Promise<{ passed: boolean; output: string }>;

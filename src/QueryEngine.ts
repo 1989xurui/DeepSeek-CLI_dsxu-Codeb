@@ -77,6 +77,7 @@ import {
 } from './utils/sessionStorage.js'
 import { asSystemPrompt } from './utils/systemPromptType.js'
 import { resolveThemeSetting } from './utils/systemTheme.js'
+import { createDSXURecoveryMainlineBundle } from './dsxu/engine/recovery/index.js'
 import {
   shouldEnableThinkingByDefault,
   type ThinkingConfig,
@@ -104,9 +105,41 @@ import {
   isResultSuccessful,
   normalizeMessage,
 } from './utils/queryHelpers.js'
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const providerMigrationCodeEnv = (name: string): string =>
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const archivedCodeEnv = (name: string): string =>
+  `${ARCHIVED_CODE_ENV_PREFIX}_${name}`
+function buildQueryEngineRecoveryEvidence(input: {
+  subtype: string
+  failureCount: number
+  lastError: string
+  verificationErrors?: string[]
+  toolClass?: 'transient' | 'deterministic' | 'permission' | 'conflict' | 'unknown'
+}): string {
+  const bundle = createDSXURecoveryMainlineBundle({
+    sessionId: getSessionId(),
+    taskId: 'query-engine-mainline',
+    bugDescription: input.subtype,
+    failureCount: Math.max(1, input.failureCount),
+    lastError: input.lastError,
+    verification: input.verificationErrors
+      ? { passed: false, errors: input.verificationErrors }
+      : undefined,
+    toolFailures: [{
+      toolId: 'query-loop',
+      class: input.toolClass ?? 'unknown',
+      summary: input.lastError,
+    }],
+  })
+  return [
+    '[dsxu_recovery_mainline]',
+    `planner_action=${bundle.plannerDecision.action}`,
+    `planner_reason=${bundle.plannerDecision.reason}`,
+    `planner_confidence=${bundle.plannerDecision.confidence}`,
+    `tool_action=${bundle.toolDecision.action}`,
+    `tool_severity=${bundle.toolDecision.severity}`,
+    `evidence=${bundle.evidence.detail}`,
+  ].join(' ')
+}
 // Dead code elimination: conditional import for coordinator mode
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getCoordinatorUserContext: (
@@ -295,7 +328,7 @@ export class QueryEngine {
       ),
     }
     // When an SDK caller provides a custom system prompt AND has set
-        // provider-migration cowork memory path override; inject the memory-mechanics prompt.
+        // Archived cowork memory path override; inject the memory-mechanics prompt.
     // The env var is an explicit opt-in signal - the caller has wired up
     // a memory directory and needs DSXU to know how to use it (which
     // Write/Edit tools to call, MEMORY.md filename, loading semantics).
@@ -433,8 +466,8 @@ export class QueryEngine {
       } else {
         await transcriptPromise
         if (
-          isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-          isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+          isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
@@ -502,8 +535,8 @@ export class QueryEngine {
     }
     headlessProfilerCheckpoint('before_skills_plugins')
     // Cache-only: headless/SDK/CCR startup must not block on network for
-    // ref-tracked plugins. CCR populates the cache via provider-migration sync plugin install env
-    // (headlessPluginInstall) or provider-migration plugin seed dir env before this runs;
+    // ref-tracked plugins. CCR populates the cache via archived sync plugin install env
+    // (headlessPluginInstall) or archived plugin seed dir env before this runs;
     // SDK callers that need fresh source can call /reload-plugins.
     const [skills, { enabled: enabledPlugins }] = await Promise.all([
       getSlashCommandToolSkills(getCwd()),
@@ -576,8 +609,8 @@ export class QueryEngine {
       if (persistSession) {
         await recordTranscript(messages)
         if (
-          isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-          isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+          isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+          isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
         ) {
           await flushSessionStorage()
         }
@@ -658,7 +691,7 @@ export class QueryEngine {
         // messages up through the preservedSegment tail. Attachments and
         // progress are now recorded inline (their switch cases below), but
         // this flush still matters for the preservedSegment tail walk.
-        // If the SDK subprocess restarts before then (provider-migration desktop kills
+        // If the SDK subprocess restarts before then (archived desktop kills
         // between turns), tailUuid points to a never-written message  -
         // applyPreservedSegmentRelinks fails its tail - head walk - returns
         // without pruning - resume loads full pre-compact history.
@@ -800,8 +833,8 @@ export class QueryEngine {
           else if (message.attachment.type === 'max_turns_reached') {
             if (persistSession) {
               if (
-                isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-                isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+                isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+                isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
               ) {
                 await flushSessionStorage()
               }
@@ -826,6 +859,12 @@ export class QueryEngine {
               uuid: randomUUID(),
               errors: [
                 `Reached maximum number of turns (${message.attachment.maxTurns})`,
+                buildQueryEngineRecoveryEvidence({
+                  subtype: 'error_max_turns',
+                  failureCount: message.attachment.turnCount,
+                  lastError: `Reached maximum number of turns (${message.attachment.maxTurns})`,
+                  toolClass: 'deterministic',
+                }),
               ],
             }
             return
@@ -928,8 +967,8 @@ export class QueryEngine {
       if (maxBudgetUsd !== undefined && getTotalCost() >= maxBudgetUsd) {
         if (persistSession) {
           if (
-            isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-            isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+            isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+            isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
           ) {
             await flushSessionStorage()
           }
@@ -952,7 +991,15 @@ export class QueryEngine {
             initialAppState.fastMode,
           ),
           uuid: randomUUID(),
-          errors: [`Reached maximum budget ($${maxBudgetUsd})`],
+          errors: [
+            `Reached maximum budget ($${maxBudgetUsd})`,
+            buildQueryEngineRecoveryEvidence({
+              subtype: 'error_max_budget_usd',
+              failureCount: turnCount,
+              lastError: `Reached maximum budget ($${maxBudgetUsd})`,
+              toolClass: 'deterministic',
+            }),
+          ],
         }
         return
       }
@@ -970,8 +1017,8 @@ export class QueryEngine {
         if (callsThisQuery >= maxRetries) {
           if (persistSession) {
             if (
-              isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-              isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+              isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+              isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
             ) {
               await flushSessionStorage()
             }
@@ -996,6 +1043,15 @@ export class QueryEngine {
             uuid: randomUUID(),
             errors: [
               `Failed to provide valid structured output after ${maxRetries} attempts`,
+              buildQueryEngineRecoveryEvidence({
+                subtype: 'error_max_structured_output_retries',
+                failureCount: callsThisQuery,
+                lastError: `Failed to provide valid structured output after ${maxRetries} attempts`,
+                verificationErrors: [
+                  `Structured output retry limit reached: ${callsThisQuery}/${maxRetries}`,
+                ],
+                toolClass: 'deterministic',
+              }),
             ],
           }
           return
@@ -1025,8 +1081,8 @@ export class QueryEngine {
     // result message, so any unflushed writes would be lost.
     if (persistSession) {
       if (
-        isEnvTruthy(process.env[providerMigrationCodeEnv('EAGER_FLUSH')]) ||
-        isEnvTruthy(process.env[providerMigrationCodeEnv('IS_COWORK')])
+        isEnvTruthy(process.env[archivedCodeEnv('EAGER_FLUSH')]) ||
+        isEnvTruthy(process.env[archivedCodeEnv('IS_COWORK')])
       ) {
         await flushSessionStorage()
       }
@@ -1060,9 +1116,17 @@ export class QueryEngine {
           const start = errorLogWatermark
             ? all.lastIndexOf(errorLogWatermark) + 1
             : 0
+          const scopedErrors = all.slice(start).map(_ => _.error)
+          const diagnostic = `[ede_diagnostic] result_type=${edeResultType} last_content_type=${edeLastContentType} stop_reason=${lastStopReason}`
           return [
-            `[ede_diagnostic] result_type=${edeResultType} last_content_type=${edeLastContentType} stop_reason=${lastStopReason}`,
-            ...all.slice(start).map(_ => _.error),
+            diagnostic,
+            ...scopedErrors,
+            buildQueryEngineRecoveryEvidence({
+              subtype: 'error_during_execution',
+              failureCount: Math.max(1, scopedErrors.length),
+              lastError: scopedErrors.at(-1) ?? diagnostic,
+              verificationErrors: scopedErrors.length > 0 ? scopedErrors : [diagnostic],
+            }),
           ]
         })(),
       }

@@ -129,7 +129,7 @@ export function MCPServerDesktopImportDialog(t0) {
   } else {
     t9 = $[15];
   }
-  const t10 = `Found ${t8} MCP ${t9} in DSXU desktop config or provider-migration source desktop config.`;
+  const t10 = `Found ${t8} MCP ${t9} in DSXU desktop config or archived source desktop config.`;
   let t11;
   if ($[16] !== collisions.length) {
     t11 = collisions.length > 0 && <Text color="warning">Note: Some servers already exist with the same name. If selected, they will be imported with a numbered suffix.</Text>;

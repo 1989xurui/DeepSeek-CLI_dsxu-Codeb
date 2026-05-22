@@ -38,7 +38,7 @@ interface ExtendedMemoryFileInfo extends MemoryFileInfo {
 let lastSelectedPath: string | undefined;
 const OPEN_FOLDER_PREFIX = '__open_folder__';
 const DSXU_INSTRUCTION_FILE = 'DSXU.md';
-const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE = `CL${'AUDE'}.md`;
+const ARCHIVED_SOURCE_INSTRUCTION_FILE = `CL${'AUDE'}.md`;
 type Props = {
   onSelect: (path: string) => void;
   onCancel: () => void;
@@ -50,7 +50,7 @@ export function MemoryFileSelector(t0) {
     onCancel
   } = t0;
   const existingMemoryFiles = use(getMemoryFiles());
-  const instructionFileName = isDsxuRuntimeMode() ? DSXU_INSTRUCTION_FILE : PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE;
+  const instructionFileName = isDsxuRuntimeMode() ? DSXU_INSTRUCTION_FILE : ARCHIVED_SOURCE_INSTRUCTION_FILE;
   const userMemoryPath = join(getRuntimeConfigHomeDir(), instructionFileName);
   const projectMemoryPath = join(getOriginalCwd(), instructionFileName);
   const hasUserMemory = existingMemoryFiles.some(f => f.path === userMemoryPath);

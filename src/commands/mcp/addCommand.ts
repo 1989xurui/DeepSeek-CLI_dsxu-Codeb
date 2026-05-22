@@ -27,7 +27,7 @@ import {
 import { parseEnvVars } from '../../utils/envUtils.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 
-const PROVIDER_MIGRATION_XAA_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
+const ARCHIVED_XAA_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
 
 /**
  * Registers the `mcp add` subcommand on the given Commander command.
@@ -105,7 +105,7 @@ export function registerMcpAddCommand(mcp: Command): void {
         // XAA fail-fast: validate at add-time, not auth-time.
         if (options.xaa && !isXaaEnabled()) {
           cliError(
-            `Error: --xaa requires DSXU_CODE_ENABLE_XAA=1 (or provider migration ${PROVIDER_MIGRATION_XAA_ENV}=1 during migration) in your environment`,
+            `Error: --xaa requires DSXU_CODE_ENABLE_XAA=1 (or archived ${ARCHIVED_XAA_ENV}=1 during archived override work) in your environment`,
           )
         }
         const xaa = Boolean(options.xaa)
@@ -295,7 +295,7 @@ export function getDsxuMcpAddCommandRuntimeProfile(): {
     transports: ['stdio', 'sse', 'http'],
     configScopes: ['local', 'user', 'project'],
     identityPolicy:
-      `XAA is gated by DSXU_CODE_ENABLE_XAA with ${PROVIDER_MIGRATION_XAA_ENV} retained only as a provider migration alias`,
+      `XAA is gated by DSXU_CODE_ENABLE_XAA with ${ARCHIVED_XAA_ENV} retained only as an archived alias`,
     activationEvidence: [
       'registers MCP add subcommand on the DSXU CLI command tree',
       'validates scope and transport before writing MCP config',

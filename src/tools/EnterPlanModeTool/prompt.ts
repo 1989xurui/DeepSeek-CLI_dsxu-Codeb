@@ -61,7 +61,7 @@ Before calling ExitPlanMode, the plan must contain these sections:
 
 Weak-model rule: PlanMode is a scope limiter. Do not use it to brainstorm endlessly. If the task scope expands beyond the scope fence, stop and update the plan instead of improvising.`
 
-const DSXU_COMPLEX_TASK_DECOMPOSE_GATE = `## DSXU V12 Complex Task Decompose Gate
+const DSXU_COMPLEX_TASK_DECOMPOSE_GATE = `## DSXU Complex Task Decompose Gate
 
 Complex tasks must be decomposed before implementation. Use EnterPlanMode when ANY condition applies:
 - The work is expected to change more than one file.
@@ -196,7 +196,7 @@ function getEnterPlanModeToolPromptAnt(): string {
 
 ## When to Use This Tool
 
-Plan mode is valuable when the implementation approach is genuinely unclear or when DSXU V12 governance marks the task complex. Use it when:
+Plan mode is valuable when the implementation approach is genuinely unclear or when DSXU complex-task governance marks the task complex. Use it when:
 
 1. **Significant Architectural Ambiguity**: Multiple reasonable approaches exist and the choice meaningfully affects the codebase
    - Example: "Add caching to the API" - Redis vs in-memory vs file-based
@@ -210,7 +210,7 @@ Plan mode is valuable when the implementation approach is genuinely unclear or w
    - Example: "Redesign the authentication system"
    - Example: "Migrate from one state management approach to another"
 
-4. **DSXU V12 Complex Task**: The work likely changes more than one file, changes tests, involves Agent/MCP/Workflow/permission/compact/resume, or starts from an open goal such as "fix this failure" or "review and fix"
+4. **DSXU Complex Task**: The work likely changes more than one file, changes tests, involves Agent/MCP/Workflow/permission/compact/resume, or starts from an open goal such as "fix this failure" or "review and fix"
 
 ## When NOT to Use This Tool
 
@@ -222,7 +222,7 @@ Skip plan mode when you can reasonably infer the right approach:
 - Research/exploration tasks (use the Agent tool instead)
 - The user says something like "can we work on X" or "let's do X" - just get started
 
-When the task is complex under DSXU V12, prefer PlanMode. Use ${ASK_USER_QUESTION_TOOL_NAME} only for concrete missing requirements, not to ask whether the plan is okay.
+When the task is complex under DSXU complex-task governance, prefer PlanMode. Use ${ASK_USER_QUESTION_TOOL_NAME} only for concrete missing requirements, not to ask whether the plan is okay.
 
 ${whatHappens}${DSXU_COMPLEX_TASK_DECOMPOSE_GATE}
 

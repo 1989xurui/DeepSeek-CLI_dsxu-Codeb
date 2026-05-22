@@ -2,7 +2,7 @@ import type { Message } from '../../types/message.js'
 import type { ToolUseBlock } from '../../types/providerSdk.js'
 import {
   type SemanticVerificationEvent,
-} from '../../dsxu/engine/v18-semantic-tools.js'
+} from '../../dsxu/engine/semantic-tools.js'
 
 function contentArray(message: Message): unknown[] {
   if (!('message' in message) || !message.message) return []
@@ -99,8 +99,15 @@ export function hasSourceMutationAfterLatestSameFailedVerification(
   messages: readonly Message[] | undefined,
   sameIntent: (event: SemanticVerificationEvent) => boolean,
 ): boolean {
+  return hasSourceMutationAfterLatestSameVerification(messages, sameIntent)
+}
+
+export function hasSourceMutationAfterLatestSameVerification(
+  messages: readonly Message[] | undefined,
+  sameIntent: (event: SemanticVerificationEvent) => boolean,
+): boolean {
   let sourceVersion = 0
-  let latestSameFailedSourceVersion: number | null = null
+  let latestSameSourceVersion: number | null = null
   const pending = new Map<string, { event: SemanticVerificationEvent; sourceVersion: number }>()
 
   for (const message of messages ?? []) {
@@ -141,9 +148,8 @@ export function hasSourceMutationAfterLatestSameFailedVerification(
       if (candidate.type === 'tool_result' && typeof candidate.tool_use_id === 'string') {
         const pendingRun = pending.get(candidate.tool_use_id)
         if (pendingRun) {
-          const exitCode = exitCodeFromResult(text, candidate.is_error)
-          if (exitCode !== 0 && sameIntent(pendingRun.event)) {
-            latestSameFailedSourceVersion = pendingRun.sourceVersion
+          if (sameIntent(pendingRun.event)) {
+            latestSameSourceVersion = pendingRun.sourceVersion
           }
           pending.delete(candidate.tool_use_id)
         }
@@ -152,5 +158,5 @@ export function hasSourceMutationAfterLatestSameFailedVerification(
     }
   }
 
-  return latestSameFailedSourceVersion !== null && sourceVersion > latestSameFailedSourceVersion
+  return latestSameSourceVersion !== null && sourceVersion > latestSameSourceVersion
 }

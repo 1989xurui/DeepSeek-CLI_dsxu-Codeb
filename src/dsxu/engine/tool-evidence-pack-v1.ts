@@ -11,6 +11,15 @@ import type {
   ToolPermissionDecision,
   ToolPermissionEvaluation,
 } from './tool-gate-v1';
+import {
+  buildToolResultContractEvidence,
+  normalizeFromLegacyResult,
+  type DsxuRuntimeEventSchemaVersion,
+  type ToolCallResult,
+  type ToolCallResultSchemaVersion,
+  type ToolResultBoundaryKind,
+  type ToolResultContractEvidence,
+} from './tool-protocol';
 
 export type DsxuToolVisibleState =
   | 'running'
@@ -64,6 +73,11 @@ export interface DsxuToolEvidencePack {
   executionDecision: ToolExecutionDecision;
   visibleState: DsxuToolVisibleState;
   resultStatus: DsxuToolResultStatus;
+  canonicalResultSchema?: ToolCallResultSchemaVersion;
+  runtimeEventSchema?: DsxuRuntimeEventSchemaVersion;
+  toolResultBoundaryKind?: ToolResultBoundaryKind;
+  toolResultOutputChars?: number;
+  toolResultContractEvidence?: ToolResultContractEvidence;
   failureClass: ToolFailureClass;
   recoveryHint: string;
   artifactPaths: string[];
@@ -83,6 +97,8 @@ export interface DsxuToolEvidenceBuildInput {
   permission: ToolPermissionEvaluation;
   gate: ToolGateEvaluation;
   result?: ToolRuntimeExecutionResult;
+  canonicalResult?: ToolCallResult;
+  toolResultBoundaryKind?: ToolResultBoundaryKind;
   artifactPaths?: readonly string[];
   costUsage?: DsxuToolEvidenceCostUsage;
   now?: number;
@@ -105,11 +121,19 @@ const knownFailureClasses = new Set<ToolFailureClass>([
 export function buildDsxuToolEvidencePack(input: DsxuToolEvidenceBuildInput): DsxuToolEvidencePack {
   const now = input.now ?? Date.now();
   const toolUseId = input.toolUseId || input.result?.toolUseId || `tool-unstarted-${now}`;
+  const canonicalResult = input.canonicalResult
+    ? input.canonicalResult
+    : input.result
+      ? normalizeFromLegacyResult(input.result, input.resolvedToolId, now)
+      : undefined;
+  const toolResultContractEvidence = canonicalResult
+    ? buildToolResultContractEvidence(canonicalResult, input.toolResultBoundaryKind ?? 'legacy')
+    : undefined;
   const permissionDecision = resolvePermissionDecision(input.permission, input.gate);
-  const resultStatus = resolveResultStatus(input.permission, input.gate, input.result);
-  const visibleState = resolveVisibleState(input.permission, input.gate, input.result, resultStatus);
-  const failureClass = resolveFailureClass(input.permission, input.gate, input.result, resultStatus);
-  const recoveryHint = resolveRecoveryHint(input.gate, input.result, resultStatus);
+  const resultStatus = resolveResultStatus(input.permission, input.gate, input.result, canonicalResult);
+  const visibleState = resolveVisibleState(input.permission, input.gate, input.result, resultStatus, canonicalResult);
+  const failureClass = resolveFailureClass(input.permission, input.gate, input.result, resultStatus, canonicalResult);
+  const recoveryHint = resolveRecoveryHint(input.gate, input.result, resultStatus, canonicalResult);
 
   return {
     schemaVersion: 'dsxu.tool-evidence-pack.v1',
@@ -126,6 +150,11 @@ export function buildDsxuToolEvidencePack(input: DsxuToolEvidenceBuildInput): Ds
     executionDecision: input.gate.executionDecision,
     visibleState,
     resultStatus,
+    canonicalResultSchema: toolResultContractEvidence?.canonicalResultSchema,
+    runtimeEventSchema: toolResultContractEvidence?.runtimeEventSchema,
+    toolResultBoundaryKind: toolResultContractEvidence?.boundaryKind,
+    toolResultOutputChars: canonicalResult?.outputText.length,
+    toolResultContractEvidence,
     failureClass,
     recoveryHint,
     artifactPaths: [...(input.artifactPaths || [])],
@@ -199,6 +228,15 @@ export function validateDsxuToolEvidencePack(pack: DsxuToolEvidencePack): DsxuTo
   if (pack.originalToolId !== pack.resolvedToolId && pack.resolvedToolId.length === 0) {
     violations.push('alias evidence must preserve resolvedToolId');
   }
+  if ((pack.resultStatus === 'success' || pack.resultStatus === 'error') && !pack.canonicalResultSchema) {
+    violations.push('executed tool evidence must include canonicalResultSchema');
+  }
+  if (
+    pack.toolResultContractEvidence &&
+    pack.toolResultContractEvidence.canonicalResultSchema !== pack.canonicalResultSchema
+  ) {
+    violations.push('toolResultContractEvidence must match canonicalResultSchema');
+  }
 
   return {
     valid: missingFields.length === 0 && violations.length === 0,
@@ -231,6 +269,10 @@ export function projectToolEvidenceForFinalReport(pack: DsxuToolEvidencePack) {
     gate: pack.gateDecision,
     traceId: pack.traceId,
     artifacts: pack.artifactPaths,
+    canonicalResultSchema: pack.canonicalResultSchema,
+    runtimeEventSchema: pack.runtimeEventSchema,
+    toolResultBoundaryKind: pack.toolResultBoundaryKind,
+    toolResultOutputChars: pack.toolResultOutputChars,
   };
 }
 
@@ -246,9 +288,11 @@ function resolveResultStatus(
   permission: ToolPermissionEvaluation,
   gate: ToolGateEvaluation,
   result?: ToolRuntimeExecutionResult,
+  canonicalResult?: ToolCallResult,
 ): DsxuToolResultStatus {
   if (!permission.allowed || gate.gateDecision === 'block' || gate.executionDecision === 'deny') return 'blocked';
-  if (!result) return 'skipped';
+  if (!result && !canonicalResult) return 'skipped';
+  if (canonicalResult) return canonicalResult.ok ? 'success' : 'error';
   if (result.isError) return 'error';
   return 'success';
 }
@@ -258,12 +302,13 @@ function resolveVisibleState(
   gate: ToolGateEvaluation,
   result: ToolRuntimeExecutionResult | undefined,
   resultStatus: DsxuToolResultStatus,
+  canonicalResult?: ToolCallResult,
 ): DsxuToolVisibleState {
   if (resultStatus === 'blocked') return gate.gateDecision === 'require_confirmation' ? 'waiting_permission' : 'denied';
   if (resultStatus === 'error') return 'failed';
   if (resultStatus === 'success') return 'completed';
   if (!permission.allowed || gate.permissionDecision === 'needs-escalation') return 'waiting_permission';
-  if (result?.isError) return 'failed';
+  if (result?.isError || (canonicalResult && !canonicalResult.ok)) return 'failed';
   return 'running';
 }
 
@@ -272,7 +317,12 @@ function resolveFailureClass(
   gate: ToolGateEvaluation,
   result: ToolRuntimeExecutionResult | undefined,
   resultStatus: DsxuToolResultStatus,
+  canonicalResult?: ToolCallResult,
 ): ToolFailureClass {
+  const canonicalFailureClass = canonicalResult?.structuredData?.failureClass;
+  if (typeof canonicalFailureClass === 'string' && knownFailureClasses.has(canonicalFailureClass as ToolFailureClass)) {
+    return canonicalFailureClass as ToolFailureClass;
+  }
   const metaFailureClass = result?.meta?.failureClass;
   if (typeof metaFailureClass === 'string' && knownFailureClasses.has(metaFailureClass as ToolFailureClass)) {
     return metaFailureClass as ToolFailureClass;
@@ -288,7 +338,13 @@ function resolveRecoveryHint(
   gate: ToolGateEvaluation,
   result: ToolRuntimeExecutionResult | undefined,
   resultStatus: DsxuToolResultStatus,
+  canonicalResult?: ToolCallResult,
 ): string {
+  if (canonicalResult && !canonicalResult.ok) {
+    return canonicalResult.error?.retryable
+      ? 'retry with bounded backoff'
+      : gate.failureHint.recommendedAction;
+  }
   if (typeof result?.meta?.recoveryHint === 'string' && result.meta.recoveryHint.trim().length > 0) {
     return result.meta.recoveryHint;
   }
@@ -322,16 +378,17 @@ function buildLifecycle(
     });
   }
 
-  if (input.result) {
+  if (input.result || input.canonicalResult) {
     events.push({
       event: 'tool_execution_started',
       at: now,
       summary: `execute ${input.resolvedToolId}`,
     });
+    const isError = input.canonicalResult ? !input.canonicalResult.ok : Boolean(input.result?.isError);
     events.push({
-      event: input.result.isError ? 'tool_execution_failed' : 'tool_execution_completed',
+      event: isError ? 'tool_execution_failed' : 'tool_execution_completed',
       at: now,
-      summary: input.result.isError ? 'tool returned error' : 'tool returned success',
+      summary: isError ? 'tool returned error' : 'tool returned success',
     });
   }
 
@@ -339,7 +396,7 @@ function buildLifecycle(
     events.push({
       event: 'tool_recovery_planned',
       at: now,
-      summary: resolveRecoveryHint(input.gate, input.result, resultStatus),
+      summary: resolveRecoveryHint(input.gate, input.result, resultStatus, input.canonicalResult),
     });
   }
 

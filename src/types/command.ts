@@ -163,18 +163,18 @@ type LocalJSXCommand = {
  * of the listed auth types. See meetsAvailabilityRequirement() in commands.ts.
  *
  * Example: `availability: ['dsxu', 'console']` shows the command in DSXU
- * runtime mode and direct Console API key users, while still allowing provider
- * migration-gated commands to declare `dsxu-ai` during migration.
+ * runtime mode and direct Console API key users, while archived cloud commands
+ * declare `dsxu-ai` only behind explicit gates.
  */
 export type CommandAvailability =
-  // DSXU runtime mode (DeepSeek/DSXU provider, not provider migration OAuth)
+  // DSXU runtime mode (DeepSeek/DSXU provider, not archived OAuth)
   | 'dsxu'
-  // Provider migration OAuth subscriber (Pro/Max/Team/Enterprise)
+  // Archived OAuth subscriber (Pro/Max/Team/Enterprise)
   | 'dsxu-ai'
-  // Console API key user (direct provider API, not via provider migration OAuth)
+  // Console API key user (direct provider API, not via archived OAuth)
   | 'console'
 
-export const PROVIDER_MIGRATION_CLOUD_AVAILABILITY =
+export const ARCHIVED_CLOUD_AVAILABILITY =
   ('clau' + 'de-ai') as CommandAvailability
 
 export type CommandBase = {
@@ -225,7 +225,7 @@ export function getDsxuCommandRuntimeProfile(): {
   commandKinds: readonly string[]
   availability: readonly CommandAvailability[]
   availabilityModes: readonly CommandAvailability[]
-  providerMigrationPolicy: string
+  archivedSourcePolicy: string
   activationEvidence: readonly string[]
 } {
   return {
@@ -233,12 +233,12 @@ export function getDsxuCommandRuntimeProfile(): {
     commandKinds: ['prompt', 'local', 'local-jsx'],
     availability: ['dsxu', 'console', 'dsxu-ai'],
     availabilityModes: ['dsxu', 'console', 'dsxu-ai'],
-    providerMigrationPolicy:
+    archivedSourcePolicy:
       'commands may declare dsxu-ai during migration, but DSXU runtime mode has its own first-class availability gate',
     activationEvidence: [
       'PromptCommand carries tool/model/hook/skill metadata for model-visible command execution',
       'LocalCommand and LocalJSXCommand keep shell/UI command execution behind typed call contracts',
-      'availability separates DSXU runtime commands from provider migration and console-only commands',
+      'availability separates DSXU runtime commands from archived cloud and console-only commands',
       'LocalJSXCommandContext carries resume, MCP config, IDE install, and API key change hooks into slash commands',
     ],
   }

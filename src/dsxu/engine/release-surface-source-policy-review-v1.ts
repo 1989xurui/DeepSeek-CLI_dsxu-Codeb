@@ -1,4 +1,4 @@
-import type { V18OpenSourceCleanExportManifestEntry } from './v18-open-source-package-gate'
+import type { V18OpenSourceCleanExportManifestEntry } from './open-source-package-gate'
 
 export type ReleaseSurfaceSourcePolicyReviewStatus = 'PASS' | 'PARTIAL' | 'BLOCKED' | 'NOT_PROVIDED'
 

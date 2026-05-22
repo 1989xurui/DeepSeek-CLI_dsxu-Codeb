@@ -27,7 +27,7 @@ type FeedbackSurveyConfig = {
 type TranscriptAskConfig = {
   probability: number;
 };
-const PROVIDER_MIGRATION_FORCE_DISPLAY_SURVEY_ENV = 'CL' + 'AUDE_FORCE_DISPLAY_SURVEY';
+const ARCHIVED_FORCE_DISPLAY_SURVEY_ENV = 'CL' + 'AUDE_FORCE_DISPLAY_SURVEY';
 const DEFAULT_FEEDBACK_SURVEY_CONFIG: FeedbackSurveyConfig = {
   minTimeBeforeFeedbackMs: 600000,
   minTimeBetweenFeedbackMs: 3600000,
@@ -221,7 +221,7 @@ export function useFeedbackSurvey(messages: Message[], isLoading: boolean, submi
     }
 
     // Force display for testing
-    if ((isDsxuCodeEnvTruthy('FORCE_DISPLAY_SURVEY') || isEnvTruthy(process.env[PROVIDER_MIGRATION_FORCE_DISPLAY_SURVEY_ENV])) && !feedbackSurvey.timeLastShown) {
+    if ((isDsxuCodeEnvTruthy('FORCE_DISPLAY_SURVEY') || isEnvTruthy(process.env[ARCHIVED_FORCE_DISPLAY_SURVEY_ENV])) && !feedbackSurvey.timeLastShown) {
       return true;
     }
     if (!isModelAllowed) {

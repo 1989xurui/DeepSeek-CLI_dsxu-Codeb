@@ -51,7 +51,7 @@ describe('DeepSeek V4 unified control layer', () => {
     expect(normalizeDeepSeekV4Model('deepseek-chat')).toBe('deepseek-v4-flash')
     expect(normalizeDeepSeekV4Model('deepseek-reasoner')).toBe('deepseek-v4-flash')
     expect(recommendModelForTask('planning').name).toBe('deepseek-v4-flash')
-    expect(recommendModelForTask('fim').name).toBe('deepseek-v4-pro')
+    expect(recommendModelForTask('fim').name).toBe('deepseek-v4-flash')
   })
 
   test('routes planning, review, and light recovery to Flash max before Pro admission', () => {
@@ -61,7 +61,7 @@ describe('DeepSeek V4 unified control layer', () => {
     expect(decideDeepSeekV4Route({ workflowKind: 'review' }).reason).toBe('review_flash_thinking_max')
     expect(decideDeepSeekV4Route({ workflowKind: 'recovery' }).model).toBe('deepseek-v4-flash')
     expect(decideDeepSeekV4Route({ workflowKind: 'recovery' }).reason).toBe('recovery_flash_thinking_max')
-    expect(decideDeepSeekV4Route({ workflowKind: 'feature', failedVerification: true }).reason).toBe('failed_verification_pro_thinking_max')
+    expect(decideDeepSeekV4Route({ workflowKind: 'feature', failedVerification: true }).reason).toBe('failed_verification_flash_thinking_max')
   })
 
   test('keeps ordinary verification on Flash first and upgrades only after failure evidence', () => {
@@ -87,8 +87,32 @@ describe('DeepSeek V4 unified control layer', () => {
       role: 'verifier',
       failedVerification: true,
     })
-    expect(failedVerification.model).toBe('deepseek-v4-pro')
-    expect(failedVerification.reason).toBe('failed_verification_pro_thinking_max')
+    expect(failedVerification.model).toBe('deepseek-v4-flash')
+    expect(failedVerification.reason).toBe('failed_verification_flash_thinking_max')
+
+    const repeatedFailedVerificationRecovery = decideDeepSeekV4Route({
+      workflowKind: 'recovery',
+      role: 'recovery',
+      failedVerification: true,
+      retryAfterFailure: true,
+    })
+    expect(repeatedFailedVerificationRecovery.model).toBe('deepseek-v4-flash')
+    expect(repeatedFailedVerificationRecovery.reason).toBe('failed_verification_flash_thinking_max')
+    expect(repeatedFailedVerificationRecovery.proAdmission?.state).toBe('blocked_missing_evidence')
+
+    const admittedFailedVerificationRecovery = decideDeepSeekV4Route({
+      workflowKind: 'recovery',
+      role: 'recovery',
+      failedVerification: true,
+      retryAfterFailure: true,
+      priorFlashAttempted: true,
+      savedTaskEvidence: true,
+      allowProAdmission: true,
+    })
+    expect(admittedFailedVerificationRecovery.model).toBe('deepseek-v4-pro')
+    expect(admittedFailedVerificationRecovery.reason).toBe('failed_verification_pro_thinking_max')
+    expect(admittedFailedVerificationRecovery.approvalRequired).toBe(true)
+    expect(admittedFailedVerificationRecovery.proAdmission?.state).toBe('admitted')
   })
 
   test('does not confuse ordinary verify/check wording with review, and routes ordinary review to Flash max', () => {
@@ -164,18 +188,18 @@ describe('DeepSeek V4 unified control layer', () => {
   })
 
   test('can disable route model upgrades for model-forced baseline runs while preserving route thinking', () => {
-    const failedVerification = decideDeepSeekV4Route({
+    const highRiskPermissionReview = decideDeepSeekV4Route({
       workflowKind: 'review',
       role: 'reviewer',
-      failedVerification: true,
+      riskLevel: 'high',
     })
     const override = decideDeepSeekV4RuntimeModelOverride({
       currentModel: 'deepseek-v4-flash',
-      routeDecision: failedVerification,
+      routeDecision: highRiskPermissionReview,
       disableModelUpgrade: true,
     })
 
-    expect(failedVerification.model).toBe('deepseek-v4-pro')
+    expect(highRiskPermissionReview.model).toBe('deepseek-v4-pro')
     expect(override.action).toBe('keep')
     expect(override.model).toBe('deepseek-v4-flash')
     expect(override.thinkingConfig).toEqual({
@@ -191,7 +215,7 @@ describe('DeepSeek V4 unified control layer', () => {
       routeInput: {
         workflowKind: 'review',
         role: 'reviewer',
-        failedVerification: true,
+        riskLevel: 'high',
       },
       env: {
         DSXU_ROUTE_MODEL_UPGRADE_DISABLED: '1',
@@ -206,12 +230,12 @@ describe('DeepSeek V4 unified control layer', () => {
 
   test('formats request evidence from the shared V4 control layer', () => {
     expect(formatDeepSeekV4RequestEvidence({
-      model: 'deepseek-v4-pro',
+      model: 'deepseek-v4-flash',
       apiMode: 'thinking',
       reasoningEffort: 'max',
-      reason: 'failed_verification_pro_thinking_max',
-      maxTokens: 65_536,
-    })).toBe('DSXU model evidence: deepseek-v4-pro thinking max; reason=failed_verification_pro_thinking_max; max_tokens=65536; cost_basis=cache_hit/cache_miss/output.')
+      reason: 'failed_verification_flash_thinking_max',
+      maxTokens: 32_768,
+    })).toBe('DSXU model evidence: deepseek-v4-flash thinking max; reason=failed_verification_flash_thinking_max; max_tokens=32768; cost_basis=cache_hit/cache_miss/output.')
   })
 
   test('adapter request plan applies query-loop route input without a second router', () => {
@@ -279,7 +303,7 @@ describe('DeepSeek V4 unified control layer', () => {
     expect(plan.modelEvidence).toContain('reason=adapter_actual_request')
   })
 
-  test('query-loop route input overrides default thinking for Flash coding', () => {
+  test('query-loop route input enables Flash thinking high for normal coding', () => {
     const plan = DeepSeekAdapter.resolveRequestPlanForBaseUrl({
       model: 'deepseek-v4-flash',
       thinking: { type: 'enabled' },
@@ -289,10 +313,10 @@ describe('DeepSeek V4 unified control layer', () => {
 
     expect(plan.requestedModel).toBe('deepseek-v4-flash')
     expect(plan.modelName).toBe('deepseek-v4-flash')
-    expect(plan.thinkingEnabled).toBe(false)
-    expect(plan.reasoningEffort).toBeUndefined()
+    expect(plan.thinkingEnabled).toBe(true)
+    expect(plan.reasoningEffort).toBe('high')
     expect(plan.maxTokens).toBe(16_384)
-    expect(plan.routeReason).toBe('coding_flash_non_thinking')
+    expect(plan.routeReason).toBe('coding_flash_thinking_high')
   })
 
   test('does not let safety guardrail wording turn a feature task into recovery', () => {
@@ -310,7 +334,7 @@ describe('DeepSeek V4 unified control layer', () => {
 
     expect(routeInput.workflowKind).toBe('feature')
     expect(decision.model).toBe('deepseek-v4-flash')
-    expect(decision.reason).toBe('coding_flash_non_thinking')
+    expect(decision.reason).toBe('coding_flash_thinking_high')
   })
 
   test('still treats explicit failed verification as recovery', () => {
@@ -320,7 +344,7 @@ describe('DeepSeek V4 unified control layer', () => {
     )
 
     expect(routeInput.workflowKind).toBe('recovery')
-    expect(decideDeepSeekV4Route(routeInput).reason).toBe('failed_verification_pro_thinking_max')
+    expect(decideDeepSeekV4Route(routeInput).reason).toBe('failed_verification_flash_thinking_max')
   })
 
   test('usage records adapter model evidence for final audit trails', () => {
@@ -392,7 +416,7 @@ describe('DeepSeek V4 unified control layer', () => {
 
     expect(bugfixRoute).toEqual({ workflowKind: 'bugfix', role: 'coder' })
     expect(bugfixDecision.model).toBe('deepseek-v4-flash')
-    expect(bugfixDecision.reason).toBe('coding_flash_non_thinking')
+    expect(bugfixDecision.reason).toBe('coding_flash_thinking_high')
 
     const safetyWrappedFeature = [
       'Fixture path: .dsxu/runs/example/fixture',
@@ -409,7 +433,7 @@ describe('DeepSeek V4 unified control layer', () => {
 
     expect(featureRoute).toEqual({ workflowKind: 'feature', role: 'coder' })
     expect(featureDecision.model).toBe('deepseek-v4-flash')
-    expect(featureDecision.reason).toBe('coding_flash_non_thinking')
+    expect(featureDecision.reason).toBe('coding_flash_thinking_high')
   })
 
   test('generalizes first-turn Flash max planning across DSXU, remote, and memory complex work', () => {
@@ -514,8 +538,8 @@ describe('DeepSeek V4 unified control layer', () => {
       'Production verification failed after deploy; recover the task, classify failure, change strategy, and rerun evidence.',
       { initialPlanningTurn: true },
     ))
-    expect(productionRecovery.model).toBe('deepseek-v4-pro')
-    expect(productionRecovery.reason).toBe('failed_verification_pro_thinking_max')
+    expect(productionRecovery.model).toBe('deepseek-v4-flash')
+    expect(productionRecovery.reason).toBe('failed_verification_flash_thinking_max')
 
     const smallFollowup = inferDeepSeekV4RouteInput('Add one unit test for parsePort()', {
       initialPlanningTurn: true,
@@ -523,15 +547,46 @@ describe('DeepSeek V4 unified control layer', () => {
     expect(decideDeepSeekV4Route(smallFollowup).model).toBe('deepseek-v4-flash')
   })
 
-  test('keeps normal coding on Flash while giving FIM the Pro beta cap', () => {
+  test('keeps normal coding on Flash thinking while keeping FIM explicit and Flash-only', () => {
     const coding = decideDeepSeekV4Route({ workflowKind: 'feature' })
     expect(coding.model).toBe('deepseek-v4-flash')
-    expect(coding.apiMode).toBe('non_thinking')
-    expect(coding.reason).toBe('coding_flash_non_thinking')
+    expect(coding.apiMode).toBe('thinking')
+    expect(coding.reason).toBe('coding_flash_thinking_high')
     expect(coding.maxTokens).toBe(16_384)
 
+    const ordinaryCompletionReport = inferDeepSeekV4RouteInput(
+      'Review the public challenge completion report and release evidence.',
+      { initialPlanningTurn: false },
+    )
+    expect(ordinaryCompletionReport.workflowKind).toBe('review')
+    expect(decideDeepSeekV4Route(ordinaryCompletionReport).model).toBe('deepseek-v4-flash')
+
+    const evidencePackWithFimText = inferDeepSeekV4RouteInput(
+      [
+        'Stable evidence payload:',
+        '{"capability":"FIM edit lane","note":"FIM only for non-thinking completion"}',
+        '',
+        'Task-specific review packet:',
+        'Review the public challenge completion report and release evidence.',
+      ].join('\n'),
+      { initialPlanningTurn: false },
+    )
+    expect(evidencePackWithFimText.workflowKind).toBe('review')
+    expect(decideDeepSeekV4Route(evidencePackWithFimText).reason).toBe('review_flash_thinking_max')
+
+    const explicitCodeCompletion = inferDeepSeekV4RouteInput(
+      'Run a code completion/FIM request for this prefix.',
+      { initialPlanningTurn: false },
+    )
+    expect(explicitCodeCompletion.workflowKind).not.toBe('fim')
+    const explicitFimLane = inferDeepSeekV4RouteInput(
+      'Run a code completion/FIM request for this prefix.',
+      { initialPlanningTurn: false, allowTextFimInference: true },
+    )
+    expect(explicitFimLane.workflowKind).toBe('fim')
+
     const fim = decideDeepSeekV4Route({ workflowKind: 'fim', requestedMaxTokens: 99_999 })
-    expect(fim.model).toBe('deepseek-v4-pro')
+    expect(fim.model).toBe('deepseek-v4-flash')
     expect(fim.endpointKind).toBe('fim_completion')
     expect(fim.apiMode).toBe('non_thinking')
     expect(fim.maxTokens).toBe(DEEPSEEK_V4_MAX_FIM_OUTPUT_TOKENS)
@@ -586,7 +641,7 @@ describe('DeepSeek V4 unified control layer', () => {
     const all = Object.values(policy.getAllStrategies())
 
     expect(code.model).toBe('deepseek-v4-flash')
-    expect(code.routeReason).toBe('coding_flash_non_thinking')
+    expect(code.routeReason).toBe('coding_flash_thinking_high')
     expect(code.maxTokens).toBe(16_384)
     expect(planning.model).toBe('deepseek-v4-flash')
     expect(planning.routeReason).toBe('planning_flash_thinking_max')

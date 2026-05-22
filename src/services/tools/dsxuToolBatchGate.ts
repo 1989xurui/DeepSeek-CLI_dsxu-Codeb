@@ -149,6 +149,13 @@ export function getLatestDsxuToolState(messages: readonly Message[]): string | n
   return latest
 }
 
+function looksLikeDsxuEvidenceCollectedPass(text: string): boolean {
+  return (
+    /DSXU tool state:\s*evidence_collected\b/i.test(text) &&
+    /\b(?:CollectEvidence\s+status|status)\s*:\s*PASS\b/i.test(text)
+  )
+}
+
 function getDsxuMessageText(message: Message): string[] {
   if (!('message' in message) || !message.message) return []
   const content = message.message.content
@@ -247,9 +254,15 @@ export function shouldBlockVerificationAfterVerifiedPass(
 ): boolean {
   const conversation = messages ?? []
   if (hasDsxuPendingRequiredEditAfterBaselinePass(conversation)) return false
+  const latestToolResultText = getLatestDsxuToolResultText(conversation)
+  const latestIsVerifiedFinal =
+    getLatestDsxuToolState(conversation) === 'verification_passed' ||
+    (latestToolResultText
+      ? looksLikeDsxuEvidenceCollectedPass(latestToolResultText)
+      : false)
   return (
     DSXU_POST_PASS_BLOCKED_TOOL_NAMES.has(block.name) &&
-    getLatestDsxuToolState(conversation) === 'verification_passed'
+    latestIsVerifiedFinal
   )
 }
 
@@ -629,6 +642,10 @@ function getPendingEditGate(messages: readonly Message[]): PendingEditGate | nul
         pending = null
         continue
       }
+      if (looksLikeDsxuEvidenceCollectedPass(text)) {
+        pending = null
+        continue
+      }
       if (pending && looksLikeFailedVerification(text)) {
         pending.failedVerificationAfterEdit = true
       }
@@ -697,6 +714,10 @@ export function getFailedVerificationStreakSinceProgress(
         continue
       }
       if (/DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_passed|edit_preflight_required|edit_preflight_failed)/i.test(block.content)) {
+        streak = 0
+        continue
+      }
+      if (looksLikeDsxuEvidenceCollectedPass(block.content)) {
         streak = 0
         continue
       }

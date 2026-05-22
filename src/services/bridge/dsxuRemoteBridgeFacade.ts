@@ -109,13 +109,13 @@ export function getDsxuRemoteBridgeFacadeRuntimeProfile(): {
     activationEvidence: [
       'isBridgeEnabled requires DSXU remote session token/base URL/use-remote env',
       'bridge status is projected as UI state instead of owning query execution',
-      'provider-migration bridge shell returns archived/disabled messages by default',
+      'archived bridge shell returns disabled messages by default',
       'control request/response types are forwarded to DSXU control-plane handlers',
     ],
     releaseRiskControls: [
       'remote bridge facade is not a second Query Loop',
       'remote bridge facade is not a second Tool Gate',
-      'provider-migration bridge peer sessions remain archived unless explicitly replaced by DSXU provider routing',
+      'archived bridge peer sessions remain disabled unless explicitly replaced by DSXU provider routing',
     ],
   }
 }
@@ -180,7 +180,7 @@ export async function checkEnvLessBridgeMinVersion(): Promise<string | null> {
 }
 
 export async function getBridgeDisabledReason(): Promise<string | null> {
-  return 'Provider-migration bridge shell is archived; DSXU provider contract owns remote routing.'
+  return 'Archived bridge shell is disabled; DSXU provider contract owns remote routing.'
 }
 
 export function getBridgeAccessToken(): string | undefined {
@@ -211,7 +211,7 @@ export async function postInterDSXUMessage(
 ): Promise<{ ok: boolean; error?: string }> {
   return {
     ok: false,
-    error: 'Provider-migration bridge peer sessions are archived; use provider: routing.',
+    error: 'Archived bridge peer sessions are disabled; use provider: routing.',
   }
 }
 
@@ -380,7 +380,7 @@ export function buildCCRv2SdkUrl(baseUrl: string, sessionId: string): string {
 }
 
 export async function registerWorker(): Promise<{ ok: false; reason: string }> {
-  return { ok: false, reason: 'archived provider migration source' }
+  return { ok: false, reason: 'archived source boundary' }
 }
 
 export function createCapacityWake(_signal?: AbortSignal) {

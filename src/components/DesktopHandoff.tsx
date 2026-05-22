@@ -8,12 +8,12 @@ type Props = {
 
 export function DesktopHandoff({ onDone }: Props): React.ReactNode {
   useInput(() => {
-    onDone('DSXU desktop handoff is provider-migration-isolated. Use dsxu-code CLI or the DSXU workbench entrypoint.', { display: 'system' })
+    onDone('DSXU desktop handoff is archived-isolated. Use dsxu-code CLI or the DSXU workbench entrypoint.', { display: 'system' })
   })
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      <Text color="warning">DSXU desktop handoff is provider-migration-isolated.</Text>
+      <Text color="warning">DSXU desktop handoff is archived-isolated.</Text>
       <Text>
         Use <Text bold>dsxu-code</Text> for the active DSXU Code CLI, or start the DSXU workbench entrypoint when available.
       </Text>

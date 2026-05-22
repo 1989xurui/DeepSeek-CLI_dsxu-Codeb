@@ -33,7 +33,7 @@ import { getPlatform } from './platform.js'
 const TMUX_COMMAND = 'tmux'
 const DSXU_SOCKET_PREFIX = 'dsxu'
 const DSXU_SKIP_PROMPT_HISTORY_ENV = 'DSXU_CODE_SKIP_PROMPT_HISTORY'
-const PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV = `CL${'AUDE'}_CODE_SKIP_PROMPT_HISTORY`
+const ARCHIVED_SKIP_PROMPT_HISTORY_ENV = `CL${'AUDE'}_CODE_SKIP_PROMPT_HISTORY`
 /**
  * Executes a tmux command, routing through WSL on Windows.
  * On Windows, tmux only exists inside WSL - WSL interop lets the tmux session
@@ -49,7 +49,7 @@ async function execTmux(
     // command line to bash which eats `#` as a comment: `display-message -p
     // #{socket_path},#{pid}` below becomes `display-message -p ` - exit 1  -
     // we silently fall back to the guessed path and never learn the real
-    // server PID. Same root cause as TungstenTool/utils.ts:execTmuxCommand.
+    // server PID. Same root cause as DSXU terminal-session command execution.
     const result = await execFileNoThrow('wsl', ['-e', TMUX_COMMAND, ...args], {
       env: { ...process.env, WSL_UTF8: '1' },
       ...opts,
@@ -134,7 +134,7 @@ export function getDsxuTmuxEnv(): string | null {
  * This is checked once and cached for the lifetime of the process.
  *
  * When tmux is not available:
- * - TungstenTool (Tmux) will not work
+ * - DSXU-managed terminal sessions will not work
  * - TeammateTool will not work (it uses tmux for pane management)
  * - Bash commands will run without tmux isolation
  */
@@ -168,15 +168,15 @@ export function isTmuxAvailable(): boolean {
   return tmuxAvailabilityChecked && tmuxAvailable
 }
 /**
- * Marks that the Tmux tool has been used at least once.
- * Called by TungstenTool before initialization.
+ * Marks that DSXU terminal session support has been requested at least once.
+ * Called before terminal session initialization.
  * After this is called, Shell.ts will initialize the socket for subsequent Bash commands.
  */
 export function markTmuxToolUsed(): void {
   tmuxToolUsed = true
 }
 /**
- * Returns whether the Tmux tool has been used at least once.
+ * Returns whether DSXU terminal session support has been requested at least once.
  * Used by Shell.ts to decide whether to initialize the socket.
  */
 export function hasTmuxToolBeenUsed(): boolean {
@@ -184,7 +184,7 @@ export function hasTmuxToolBeenUsed(): boolean {
 }
 /**
  * Ensures the socket is initialized with a tmux session.
- * Called by Shell.ts when the Tmux tool has been used or the command includes "tmux".
+ * Called by Shell.ts when terminal session support has been requested or the command includes "tmux".
  * Safe to call multiple times; will only initialize once.
  *
  * If tmux is not installed, this function returns gracefully without
@@ -246,7 +246,7 @@ async function killTmuxServer(): Promise<void> {
 async function doInitialize(): Promise<void> {
   const socket = getDsxuSocketName()
   // Create a new session with our custom socket
-  // Pass DSXU and provider-migration skip-history env through tmux so nested sessions do
+  // Pass DSXU and archived skip-history env through tmux so nested sessions do
   // not pollute the user's prompt history.
   //
   // On Windows, the tmux server inherits WSL_INTEROP from the short-lived
@@ -267,7 +267,7 @@ async function doInitialize(): Promise<void> {
     '-e',
     `${DSXU_SKIP_PROMPT_HISTORY_ENV}=true`,
     '-e',
-    `${PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV}=true`,
+    `${ARCHIVED_SKIP_PROMPT_HISTORY_ENV}=true`,
     ...(getPlatform() === 'windows'
       ? ['-e', 'WSL_INTEROP=/run/WSL/1_interop']
       : []),
@@ -292,7 +292,7 @@ async function doInitialize(): Promise<void> {
   registerCleanup(killTmuxServer)
   // Set skip-history env in the tmux GLOBAL environment (-g).
   // Without -g this would only apply to the 'base' session, and new sessions
-  // created by TungstenTool (e.g. 'test', 'verify') would not inherit it.
+  // created by DSXU terminal sessions (e.g. 'test', 'verify') would not inherit it.
   // Any DSXU Code instance spawned on this socket will inherit these env vars,
   // preventing test/verification sessions from polluting the user's real
   // command history and --resume session list.
@@ -309,11 +309,11 @@ async function doInitialize(): Promise<void> {
     socket,
     'set-environment',
     '-g',
-    PROVIDER_MIGRATION_SKIP_PROMPT_HISTORY_ENV,
+    ARCHIVED_SKIP_PROMPT_HISTORY_ENV,
     'true',
   ])
   // Same WSL_INTEROP pin as the new-session -e above, but in the GLOBAL env
-  // so sessions created by TungstenTool inherit it too. The -e on new-session
+  // so DSXU terminal sessions inherit it too. The -e on new-session
   // only covers the base session's initial shell; a later `new-session -s cc`
   // inherits the SERVER's env, which still holds the stale socket from the
   // wsl.exe that spawned it.

@@ -1,4 +1,4 @@
-export function getProviderMigrationContextWindowOverride(model: string): number | null {
+export function getArchivedContextWindowOverride(model: string): number | null {
   const m = model.toLowerCase()
   if (m.includes('[1m]') || m.includes('sonnet-4-6') || m.includes('opus-4-6')) {
     return 1_000_000
@@ -6,7 +6,7 @@ export function getProviderMigrationContextWindowOverride(model: string): number
   return null
 }
 
-export function getProviderMigrationMaxOutputTokensOverride(
+export function getArchivedMaxOutputTokensOverride(
   model: string,
 ): { default: number; upperLimit: number } | null {
   const m = model.toLowerCase()
@@ -15,3 +15,6 @@ export function getProviderMigrationMaxOutputTokensOverride(
   if (m.includes('3-7-sonnet')) return { default: 32_000, upperLimit: 64_000 }
   return null
 }
+
+export const getProviderMigrationContextWindowOverride = getArchivedContextWindowOverride
+export const getProviderMigrationMaxOutputTokensOverride = getArchivedMaxOutputTokensOverride

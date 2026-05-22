@@ -178,7 +178,7 @@ describe('A-2A: KAIROS Session Snapshot 测试', () => {
 
     expect(checkpoint.metadata).toBeDefined()
     expect(typeof checkpoint.metadata).toBe('object')
-    expect(checkpoint.metadata.generatedBy).toBe('kairos-v1')
+    expect(checkpoint.metadata.generatedBy).toBe('dsxu-session-os')
   })
 
   test('4. 至少一条快照结果可被 session 持有', () => {

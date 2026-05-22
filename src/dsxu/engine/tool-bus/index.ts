@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: tool-bus experiment entry retained only because Windows ACL
+ * Legacy tool-bus experiment entry retained only because Windows ACL
  * blocked physical removal after copying to _deleted_files.
  *
  * Tool Bus 洋葱圈架构 - 核心实现
@@ -45,6 +45,7 @@ export class ToolBus {
       timeoutMs: config?.timeoutMs ?? 30000,
       enablePerformanceMonitoring: config?.enablePerformanceMonitoring ?? true,
       enableErrorRecovery: config?.enableErrorRecovery ?? true,
+      enableDefaultMiddlewares: config?.enableDefaultMiddlewares ?? false,
     }
 
     // 装配默认中间件（按洋葱圈顺序）
@@ -59,6 +60,7 @@ export class ToolBus {
    * 装配默认中间件（按洋葱圈顺序）
    */
   private assembleDefaultMiddlewares(): void {
+    if (!this.config.enableDefaultMiddlewares) return
     // 1. Metrics + Error Boundary 中间件（最外层，优先级100）
     this.assembleMetricsErrorMiddleware()
 
@@ -352,10 +354,11 @@ export class ToolBus {
 
     try {
       // 执行中间件洋葱圈
-      await this.executeMiddlewareChain(context, middlewareResults)
-
-      // 执行事件处理器
-      await this.executeEventHandlers(event, context)
+      await this.executeMiddlewareChain(
+        context,
+        middlewareResults,
+        () => this.executeEventHandlers(event, context),
+      )
 
       // 更新统计信息
       this.recordSuccessfulExecution(startTime)
@@ -373,7 +376,11 @@ export class ToolBus {
       }
 
       // 如果启用错误恢复，尝试恢复
-      if (this.config.enableErrorRecovery) {
+      if (
+        this.config.enableErrorRecovery &&
+        event !== 'tool-bus:error' &&
+        context.metadata.source !== 'error-recovery'
+      ) {
         await this.handleExecutionError(event, context, error)
       }
     }
@@ -401,7 +408,8 @@ export class ToolBus {
    */
   private async executeMiddlewareChain(
     context: ToolBusContext,
-    results: MiddlewareExecutionResult[]
+    results: MiddlewareExecutionResult[],
+    terminal?: () => Promise<void>
   ): Promise<void> {
     // 获取匹配的中间件并按优先级排序
     const matchedMiddlewares = this.getMatchedMiddlewares(context.event)
@@ -412,12 +420,16 @@ export class ToolBus {
       if (this.config.debug) {
         console.log(`[ToolBus] No middlewares matched for event: ${context.event}`)
       }
+      await terminal?.()
       return
     }
 
     // 创建洋葱圈执行链
     const executeChain = async (index: number): Promise<void> => {
       if (index >= matchedMiddlewares.length || !context.continue) {
+        if (context.continue) {
+          await terminal?.()
+        }
         return
       }
 
@@ -430,7 +442,7 @@ export class ToolBus {
         await middleware.execute(context, () => executeChain(index + 1))
 
         // 记录中间件执行结果
-        const duration = Date.now() - middlewareStartTime
+        const duration = Math.max(1, Date.now() - middlewareStartTime)
         results.push({
           success: true,
           duration,
@@ -442,7 +454,7 @@ export class ToolBus {
 
       } catch (error: any) {
         middlewareError = error
-        const duration = Date.now() - middlewareStartTime
+        const duration = Math.max(1, Date.now() - middlewareStartTime)
         
         results.push({
           success: false,
@@ -556,7 +568,7 @@ export class ToolBus {
    * 记录成功执行
    */
   private recordSuccessfulExecution(startTime: number): void {
-    const duration = Date.now() - startTime
+    const duration = Math.max(1, Date.now() - startTime)
     
     this.stats.totalExecutions++
     this.stats.successCount++
@@ -575,7 +587,7 @@ export class ToolBus {
    * 记录失败执行
    */
   private recordFailedExecution(startTime: number): void {
-    const duration = Date.now() - startTime
+    const duration = Math.max(1, Date.now() - startTime)
     
     this.stats.totalExecutions++
     this.stats.failureCount++

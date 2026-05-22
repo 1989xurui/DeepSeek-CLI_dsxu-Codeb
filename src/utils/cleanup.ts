@@ -21,9 +21,9 @@ import { TOOL_RESULTS_SUBDIR } from './toolResultStorage.js'
 import { cleanupStaleAgentWorktrees } from './worktree.js'
 
 const DEFAULT_CLEANUP_PERIOD_DAYS = 30
-const PROVIDER_MIGRATION_SOURCE_NPM_ORG = '@' + ('anth' + 'ropic') + '-ai'
-const PROVIDER_MIGRATION_SOURCE_NPM_PRODUCT_PREFIX = 'cl' + 'aude' + '-'
-const PROVIDER_MIGRATION_SOURCE_NPM_PACKAGE_PREFIX = `${PROVIDER_MIGRATION_SOURCE_NPM_ORG}/${PROVIDER_MIGRATION_SOURCE_NPM_PRODUCT_PREFIX}`
+const ARCHIVED_SOURCE_NPM_ORG = '@' + ('anth' + 'ropic') + '-ai'
+const ARCHIVED_SOURCE_NPM_PRODUCT_PREFIX = 'cl' + 'aude' + '-'
+const ARCHIVED_SOURCE_NPM_PACKAGE_PREFIX = `${ARCHIVED_SOURCE_NPM_ORG}/${ARCHIVED_SOURCE_NPM_PRODUCT_PREFIX}`
 
 function getCutoffDate(): Date {
   const settings = getSettings_DEPRECATED() || {}
@@ -479,7 +479,7 @@ export async function cleanupNpmCacheForproviderPackages(): Promise<void> {
       key: string
       time: number
     }>) {
-      if (entry.key.includes(PROVIDER_MIGRATION_SOURCE_NPM_PACKAGE_PREFIX)) {
+      if (entry.key.includes(ARCHIVED_SOURCE_NPM_PACKAGE_PREFIX)) {
         providerEntries.push({ key: entry.key, time: entry.time })
       }
     }
@@ -516,7 +516,7 @@ export async function cleanupNpmCacheForproviderPackages(): Promise<void> {
     const durationMs = Date.now() - startTime
     if (keysToRemove.length > 0) {
       logForDebugging(
-        `npm cache cleanup: Removed ${keysToRemove.length} old provider-migration source entries in ${durationMs}ms`,
+        `npm cache cleanup: Removed ${keysToRemove.length} old archived source entries in ${durationMs}ms`,
       )
     } else {
       logForDebugging(`npm cache cleanup: completed in ${durationMs}ms`)

@@ -10,5 +10,4 @@ export {
 } from '../../dsxu/engine/dsxu-session-cache-control.js'
 export type {
   DSXUSessionCacheControlResult,
-  V15SessionCacheControlResult,
 } from '../../dsxu/engine/dsxu-session-cache-control.js'

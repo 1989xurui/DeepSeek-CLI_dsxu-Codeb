@@ -31,7 +31,7 @@ export const LogEventNotificationSchema = lazySchema(() =>
 
 // Store the VSCode MCP client reference for sending notifications
 let vscodeMcpClient: ConnectedMCPServer | null = null
-const PROVIDER_MIGRATION_VSCODE_SDK_CLIENT_NAME = 'clau' + 'de-vscode'
+const ARCHIVED_VSCODE_SDK_CLIENT_NAME = 'clau' + 'de-vscode'
 
 /**
  * Sends a file_updated notification to the VSCode MCP server. This is used to
@@ -64,7 +64,7 @@ export function notifyVscodeFileUpdated(
  */
 export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
   const client = sdkClients.find(
-    client => client.name === PROVIDER_MIGRATION_VSCODE_SDK_CLIENT_NAME,
+    client => client.name === ARCHIVED_VSCODE_SDK_CLIENT_NAME,
   )
 
   if (client && client.type === 'connected') {
@@ -95,7 +95,7 @@ export function setupVscodeSdkMcp(sdkClients: MCPServerConnection[]): void {
         'tengu_quiet_fern',
         false,
       ),
-      // In-band OAuth via the provider migration authenticate subtype (vs. extension-native PKCE).
+      // In-band OAuth via the archived authenticate subtype (vs. extension-native PKCE).
       tengu_vscode_cc_auth: getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_vscode_cc_auth',
         false,

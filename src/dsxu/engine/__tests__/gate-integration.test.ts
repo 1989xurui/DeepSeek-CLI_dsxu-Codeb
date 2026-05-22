@@ -27,6 +27,16 @@ describe('GateIntegration', () => {
           isError: false,
         },
       },
+      {
+        type: 'tool_result',
+        toolName: 'Bash',
+        toolUseId: 'verify-1',
+        result: {
+          toolUseId: 'verify-1',
+          content: 'bun test src/index.test.ts\n1 pass\n0 fail',
+          isError: false,
+        },
+      },
     ]
 
     const { result: verifiedResult, verification } = await runVerifyGate(

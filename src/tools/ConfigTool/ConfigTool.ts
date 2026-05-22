@@ -240,13 +240,13 @@ export const ConfigTool = buildTool({
         '../../voice/voiceModeEnabled.js'
       )
       if (!isVoiceModeEnabled()) {
-        const providerMigrationAuthModule = await import('../../utils/auth.js')
-        const isProviderMigrationAuthEnabled =
-          providerMigrationAuthModule['is' + 'Anth' + 'ropicAuthEnabled']
+        const archivedAuthModule = await import('../../utils/auth.js')
+        const isArchivedAuthEnabled =
+          archivedAuthModule['is' + 'Anth' + 'ropicAuthEnabled']
         return {
           data: {
             success: false,
-            error: !isProviderMigrationAuthEnabled()
+            error: !isArchivedAuthEnabled()
               ? 'Voice mode requires a DSXU voice-capable provider. Please configure provider credentials, then try again.'
               : 'Voice mode is not available.',
           },

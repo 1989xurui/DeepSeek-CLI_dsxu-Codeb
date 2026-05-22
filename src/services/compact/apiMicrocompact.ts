@@ -68,6 +68,29 @@ export type APIContextManagementTokenPolicy = {
   clearAtLeastTokens: number
 }
 
+export function apiMicrocompact(value: unknown): string {
+  if (value === undefined) return 'undefined'
+  if (value === null) return 'null'
+  return microcompactValue(value)
+}
+
+function microcompactValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(microcompactValue).join(',')}]`
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+    if (entries.length === 0) return '{}'
+    return `{${entries
+      .map(([key, entryValue]) => `${key}:${microcompactValue(entryValue)}`)
+      .join(',')}}`
+  }
+
+  if (typeof value === 'string') return value
+  return String(value)
+}
+
 function parsePositiveEnvInt(value: string | undefined): number | undefined {
   if (!value) return undefined
   const parsed = Number.parseInt(value, 10)

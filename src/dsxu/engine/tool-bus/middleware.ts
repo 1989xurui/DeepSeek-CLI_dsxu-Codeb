@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: tool-bus experiment file retained only because Windows ACL
+ * Legacy tool-bus experiment file retained only because Windows ACL
  * blocked physical removal after copying to _deleted_files.
  *
  * Tool Bus 中间件工具和常用中间件
@@ -187,7 +187,7 @@ export function createErrorHandlingMiddleware(options?: {
       }
     },
     {
-      priority: 800,
+      priority: 50,
       description: 'Provides unified error handling and error transformation',
     }
   )
@@ -282,7 +282,7 @@ export function createCachingMiddleware(options?: {
       }
     },
     {
-      priority: 500,
+      priority: 50,
       description: 'Caches execution results to improve performance',
     }
   )
@@ -365,6 +365,8 @@ export function createRetryMiddleware(options?: {
       
       while (attempt < maxAttempts) {
         attempt++
+        context.retry = context.retry || {}
+        context.retry.attempt = attempt
         
         try {
           await next()
@@ -381,8 +383,6 @@ export function createRetryMiddleware(options?: {
           const delayMs = initialDelayMs * Math.pow(backoffFactor, attempt - 1)
           
           // 记录重试信息
-          context.retry = context.retry || {}
-          context.retry.attempt = attempt
           context.retry.delayMs = delayMs
           context.retry.lastError = error.message
           
@@ -398,7 +398,7 @@ export function createRetryMiddleware(options?: {
       throw lastError!
     },
     {
-      priority: 300,
+      priority: 50,
       description: 'Automatically retries failed operations with exponential backoff',
     }
   )
@@ -426,7 +426,7 @@ export function createTimeoutMiddleware(timeoutMs: number): Middleware {
       }
     },
     {
-      priority: 200,
+      priority: 50,
       description: `Sets a ${timeoutMs}ms timeout for event execution`,
     }
   )

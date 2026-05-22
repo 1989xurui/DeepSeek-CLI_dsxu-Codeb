@@ -17,7 +17,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import {
   getDsxuCodeEnv,
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { logError } from '../../utils/log.js'
@@ -30,24 +30,24 @@ import {
 // on public-api routes (auth.py: "oauth_auth" not in beta_versions - 404).
 const FILES_API_BETA_HEADER = 'files-api-2025-04-14,oauth-2025-04-20'
 const PROVIDER_API_VERSION = '2023-06-01'
-const PROVIDER_MIGRATION_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const ARCHIVED_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
 const PROVIDER_VERSION_HEADER = `${'anth' + 'ropic'}-version`
 const PROVIDER_BETA_HEADER = `${'anth' + 'ropic'}-beta`
-const DEFAULT_PROVIDER_MIGRATION_FILES_API_BASE_URL = `https://api.${'anth' + 'ropic'}.com`
+const DEFAULT_ARCHIVED_FILES_API_BASE_URL = `https://api.${'anth' + 'ropic'}.com`
 
-function isProviderMigrationFilesApiAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedFilesApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 function getDefaultApiBaseUrl(): string | undefined {
-  if (!isProviderMigrationFilesApiAllowed()) {
+  if (!isArchivedFilesApiAllowed()) {
     return getDsxuCodeEnv('API_BASE_URL')
   }
 
   return (
     getDsxuCodeEnv('API_BASE_URL') ||
-    process.env[PROVIDER_MIGRATION_BASE_URL_ENV] ||
-    DEFAULT_PROVIDER_MIGRATION_FILES_API_BASE_URL
+    process.env[ARCHIVED_BASE_URL_ENV] ||
+    DEFAULT_ARCHIVED_FILES_API_BASE_URL
   )
 }
 

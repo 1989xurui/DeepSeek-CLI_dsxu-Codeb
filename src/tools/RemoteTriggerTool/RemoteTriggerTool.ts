@@ -9,7 +9,7 @@ import { buildTool, type ToolDef } from '../../Tool.js'
 import { getDsxuConfigHomeDir, isEnvTruthy } from '../../utils/envUtils.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
-import { callProviderMigrationRemoteTriggerProvider } from './providerMigrationRemoteTriggerProvider.js'
+import { callArchivedRemoteTriggerProvider } from './providerMigrationRemoteTriggerProvider.js'
 import { DESCRIPTION, PROMPT, REMOTE_TRIGGER_TOOL_NAME } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
 
@@ -55,11 +55,11 @@ function isDsxuRemoteTriggerProvider(): boolean {
   return isEnvTruthy(process.env.DSXU_CODE_MODE)
 }
 
-const PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV =
+const ARCHIVED_REMOTE_TRIGGER_ENV =
   'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER'
 
-function isProviderMigrationRemoteTriggerEnabled(): boolean {
-  return isEnvTruthy(process.env[PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV])
+function isArchivedRemoteTriggerEnabled(): boolean {
+  return isEnvTruthy(process.env[ARCHIVED_REMOTE_TRIGGER_ENV])
 }
 
 function getDsxuRemoteTriggerStorePath(): string {
@@ -211,13 +211,13 @@ export const RemoteTriggerTool = buildTool({
     sideEffects: [
       'remote-trigger-store-write',
       'remote-trigger-run-queue',
-      'provider-migration-remote-call-when-enabled',
+      'archived-remote-call-when-enabled',
     ],
     permission: 'allow read actions; passthrough permission for create/update/run',
     evidence: [
       'inputSchema.action',
       'DSXU remote trigger provider output',
-      'provider-migration remote trigger isolation gate',
+      'archived remote trigger isolation gate',
     ],
     uiProjection: 'remote trigger result and provider boundary summary',
   },
@@ -232,7 +232,7 @@ export const RemoteTriggerTool = buildTool({
     if (!isPolicyAllowed('allow_remote_sessions')) return false
     if (isDsxuRemoteTriggerProvider()) return true
     return (
-      isProviderMigrationRemoteTriggerEnabled() &&
+      isArchivedRemoteTriggerEnabled() &&
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false)
     )
   },
@@ -267,14 +267,14 @@ export const RemoteTriggerTool = buildTool({
       }
     }
 
-    if (!isProviderMigrationRemoteTriggerEnabled()) {
+    if (!isArchivedRemoteTriggerEnabled()) {
       throw new Error(
-        'Provider migration remote trigger provider is physically isolated. Enable DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER=1 only for one-time migration.',
+        'Archived remote trigger provider is physically isolated. Enable DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER=1 only for one-time archived override work.',
       )
     }
 
     return {
-        data: await callProviderMigrationRemoteTriggerProvider(input, context),
+        data: await callArchivedRemoteTriggerProvider(input, context),
     }
   },
   mapToolResultToToolResultBlockParam(output, toolUseID) {
@@ -293,7 +293,7 @@ export function getDsxuRemoteTriggerRuntimeProfile(): {
   runtime: 'DSXU Remote Session Provider'
   storePath: string
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     tool: REMOTE_TRIGGER_TOOL_NAME,
@@ -302,12 +302,12 @@ export function getDsxuRemoteTriggerRuntimeProfile(): {
     activationEvidence: [
       'DSXU_CODE_MODE enables the local DSXU remote trigger provider',
       'create/update/run persist to DSXU config remote-triggers.json',
-      'provider migration DSXU remote trigger provider requires explicit migration flag',
+      'archived DSXU remote trigger provider requires explicit archived override flag',
     ],
-    providerMigrationIsolation: [
-      'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER gates provider-migration remote trigger calls',
-      'old provider-migration remote trigger env spelling is accepted only as a migration alias',
-      'without DSXU mode or migration flag, provider migration provider throws before use',
+    archivedIsolation: [
+      'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER gates archived remote trigger calls',
+      'old archived remote trigger env spelling is accepted only as an archived alias',
+      'without DSXU mode or archived override flag, archived provider throws before use',
     ],
   }
 }

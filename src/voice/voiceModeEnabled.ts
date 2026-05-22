@@ -28,8 +28,8 @@ export function isVoiceFeatureFlagEnabled(): boolean {
  * cold spawn per refresh is expected. Cheap enough for usage-time checks.
  */
 export function hasVoiceAuth(): boolean {
-  // Voice mode requires provider migration OAuth ; it uses the voice_stream
-  // endpoint on the provider migration which is not available with API keys,
+  // Voice mode requires archived OAuth; it uses the voice_stream
+  // endpoint on the archived service which is not available with API keys,
   // Bedrock, Vertex, or Foundry.
   if (!isProviderAuthEnabled()) {
     return false

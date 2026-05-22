@@ -1,8 +1,8 @@
-import { c as _c } from "react/compiler-runtime";
+﻿import { c as _c } from "react/compiler-runtime";
 import figures from 'figures';
 import React, { useCallback, useState } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
-import { isProviderMigrationMcpTransport } from '../../constants/providerMigrationProtocol.js';
+import { isArchivedMcpTransport } from '../../constants/providerMigrationProtocol.js';
 import { Box, color, Link, Text, useTheme } from '../../ink.js';
 import { useKeybindings } from '../../keybindings/useKeybinding.js';
 import type { ConfigScope } from '../../services/mcp/types.js';
@@ -128,7 +128,7 @@ export function MCPListPanel(t0) {
   } else {
     t4 = $[5];
   }
-  const providerMigrationServers = t4;
+  const archivedConnectorServers = t4;
   let t5;
   if ($[6] !== serversByScope) {
     t5 = (serversByScope.get("dynamic") ?? []).sort(_temp4);
@@ -147,7 +147,7 @@ export function MCPListPanel(t0) {
   }
   const dynamicHeading = t6;
   let items;
-  if ($[9] !== agentServers || $[10] !== providerMigrationServers || $[11] !== dynamicServers || $[12] !== serversByScope) {
+  if ($[9] !== agentServers || $[10] !== archivedConnectorServers || $[11] !== dynamicServers || $[12] !== serversByScope) {
     items = [];
     for (const scope of SCOPE_ORDER) {
       const scopeServers = serversByScope.get(scope) ?? [];
@@ -158,7 +158,7 @@ export function MCPListPanel(t0) {
         });
       }
     }
-    for (const server_0 of providerMigrationServers) {
+    for (const server_0 of archivedConnectorServers) {
       items.push({
         type: "server",
         server: server_0
@@ -177,7 +177,7 @@ export function MCPListPanel(t0) {
       });
     }
     $[9] = agentServers;
-    $[10] = providerMigrationServers;
+    $[10] = archivedConnectorServers;
     $[11] = dynamicServers;
     $[12] = serversByScope;
     $[13] = items;
@@ -320,7 +320,7 @@ export function MCPListPanel(t0) {
               maxReconnectAttempts
             } = server_3.client;
             if (reconnectAttempt && maxReconnectAttempts) {
-              statusText = `reconnecting (${reconnectAttempt}/${maxReconnectAttempts})…`;
+              statusText = `reconnecting (${reconnectAttempt}/${maxReconnectAttempts})鈥;
             } else {
               statusText = "connecting\u2026";
             }
@@ -335,7 +335,7 @@ export function MCPListPanel(t0) {
           }
         }
       }
-      return <Box key={`${server_3.name}-${index}`}><Text color={isSelected ? "suggestion" : undefined}>{isSelected ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected ? "suggestion" : undefined}>{server_3.name}</Text><Text dimColor={!isSelected}> · {statusIcon} </Text><Text dimColor={!isSelected}>{statusText}</Text></Box>;
+      return <Box key={`${server_3.name}-${index}`}><Text color={isSelected ? "suggestion" : undefined}>{isSelected ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected ? "suggestion" : undefined}>{server_3.name}</Text><Text dimColor={!isSelected}> 路 {statusIcon} </Text><Text dimColor={!isSelected}>{statusText}</Text></Box>;
     };
     $[37] = getServerIndex;
     $[38] = selectedIndex;
@@ -352,7 +352,7 @@ export function MCPListPanel(t0) {
       const isSelected_0 = selectedIndex === index_0;
       const statusIcon_0 = agentServer_1.needsAuth ? color("warning", theme)(figures.triangleUpOutline) : color("inactive", theme)(figures.radioOff);
       const statusText_0 = agentServer_1.needsAuth ? "may need auth" : "agent-only";
-      return <Box key={`agent-${agentServer_1.name}-${index_0}`}><Text color={isSelected_0 ? "suggestion" : undefined}>{isSelected_0 ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected_0 ? "suggestion" : undefined}>{agentServer_1.name}</Text><Text dimColor={!isSelected_0}> · {statusIcon_0} </Text><Text dimColor={!isSelected_0}>{statusText_0}</Text></Box>;
+      return <Box key={`agent-${agentServer_1.name}-${index_0}`}><Text color={isSelected_0 ? "suggestion" : undefined}>{isSelected_0 ? `${figures.pointer} ` : "  "}</Text><Text color={isSelected_0 ? "suggestion" : undefined}>{agentServer_1.name}</Text><Text dimColor={!isSelected_0}> 路 {statusIcon_0} </Text><Text dimColor={!isSelected_0}>{statusText_0}</Text></Box>;
     };
     $[41] = getAgentServerIndex;
     $[42] = selectedIndex;
@@ -396,9 +396,9 @@ export function MCPListPanel(t0) {
     t22 = $[50];
   }
   let t23;
-  if ($[51] !== providerMigrationServers || $[52] !== renderServerItem) {
-    t23 = providerMigrationServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Provider connector migration</Text></Box>{providerMigrationServers.map(server_5 => renderServerItem(server_5))}</Box>;
-    $[51] = providerMigrationServers;
+  if ($[51] !== archivedConnectorServers || $[52] !== renderServerItem) {
+    t23 = archivedConnectorServers.length > 0 && <Box flexDirection="column" marginBottom={1}><Box paddingLeft={2}><Text bold={true}>Archived connectors</Text></Box>{archivedConnectorServers.map(server_5 => renderServerItem(server_5))}</Box>;
+    $[51] = archivedConnectorServers;
     $[52] = renderServerItem;
     $[53] = t23;
   } else {
@@ -497,8 +497,8 @@ function _temp3(a, b) {
   return a.name.localeCompare(b.name);
 }
 function _temp2(s_0) {
-  return isProviderMigrationMcpTransport(s_0.client.config.type);
+  return isArchivedMcpTransport(s_0.client.config.type);
 }
 function _temp(s) {
-  return !isProviderMigrationMcpTransport(s.client.config.type);
+  return !isArchivedMcpTransport(s.client.config.type);
 }

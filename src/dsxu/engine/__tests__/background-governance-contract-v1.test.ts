@@ -57,7 +57,7 @@ describe('DSXU background governance V5 contract', () => {
     expect(profile.sourceSemantics).toContain('MCP credential filtering before model re-entry')
     expect(profile.sourceSemantics).toContain('task synchronization status events')
     expect(profile.defaultPathRules.join('\n')).toContain('local provider mode')
-    expect(profile.providerMigrationOptInRules.join('\n')).toContain('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
+    expect(profile.archivedBridgeOptInRules.join('\n')).toContain('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
     expect(profile.archivalRequirements.join('\n')).toContain('provider-shell-default-unreachable')
 
     const blocked = await provider.createRemoteSession({

@@ -31,7 +31,7 @@ import {
 } from '../utils/effort.js'
 import {
   getDsxuConfigHomeDir,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir as getArchivedSourceHomeDir,
   isDsxuRuntimeMode,
   isBareMode,
   isEnvTruthy,
@@ -80,7 +80,7 @@ export type LoadedFrom =
 /**
  * Returns the active config directory path for a given source. DSXU runtime
  * resolves user/project/managed skill locations under DSXU paths; legacy
- * Provider-migration paths are retained only outside DSXU mode or explicit migration.
+ * Archived paths are retained only outside DSXU mode or explicit migration.
  */
 export function getSkillsPath(
   source: SettingSource | 'plugin',
@@ -97,7 +97,7 @@ export function getSkillsPath(
       return join(
         isDsxuRuntimeMode()
           ? getDsxuConfigHomeDir()
-          : getProviderMigrationHomeDir(),
+          : getArchivedSourceHomeDir(),
         dir,
       )
     case 'projectSettings':
@@ -118,7 +118,7 @@ export function getDsxuSkillsLoaderRuntimeProfile(): {
     runtime: 'DSXU Skills Loader',
     activeConfigHome: isDsxuRuntimeMode()
       ? getDsxuConfigHomeDir()
-      : getProviderMigrationHomeDir(),
+      : getArchivedSourceHomeDir(),
     loadedFrom: [
       'commands_DEPRECATED',
       'skills',
@@ -140,11 +140,11 @@ function uniqDirs(dirs: string[]): string[] {
 }
 function getSkillConfigDirs(dir: 'skills' | 'commands'): string[] {
   if (!isDsxuRuntimeMode()) {
-    return [join(getProviderMigrationHomeDir(), dir)]
+    return [join(getArchivedSourceHomeDir(), dir)]
   }
   return uniqDirs([
     join(getDsxuConfigHomeDir(), dir),
-    join(getProviderMigrationHomeDir(), dir),
+    join(getArchivedSourceHomeDir(), dir),
   ])
 }
 function getManagedSkillConfigDirs(dir: 'skills' | 'commands'): string[] {

@@ -5,7 +5,7 @@
  *
  *
  *
- * 策略（V13 轻量版）：
+ * Strategy: lightweight on-demand diagnostics.
  *   - 不启动常驻 LSP server（太重）
  *   - 用 tsc --noEmit / eslint 单次调用获取诊断（够用）
  *   - 诊断结果注入 query loop 的消息历史
@@ -13,7 +13,7 @@
  *
  * 与 DSXU 的区别：
  *   - DSXU: 常驻 LSP server + JSON-RPC + 多 server 路由
- *   - DSxu V13: 按需调用 tsc/eslint + 结果解析（零常驻进程）
+ *   - DSXU: on-demand tsc/eslint plus result parsing, with no resident process.
  */
 
 import type { ToolDefinition, ToolContext, Message } from './types'

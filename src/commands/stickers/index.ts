@@ -21,16 +21,16 @@ export default stickers
 
 export function getDsxuStickersCommandRuntimeProfile(): {
   command: '/stickers'
-  runtime: 'DSXU Provider-Migration Merch Isolation'
+  runtime: 'DSXU Archived Merch Isolation'
   activationEvidence: readonly string[]
 } {
   return {
     command: '/stickers',
-    runtime: 'DSXU Provider-Migration Merch Isolation',
+    runtime: 'DSXU Archived Merch Isolation',
     activationEvidence: [
       'DSXU_CODE_MODE hides DSXU Code merchandise from the command surface',
       'description no longer invites DSXU users to order DSXU Code stickers',
-      'command remains available only in provider-migration non-DSXU runtime',
+      'command remains available only in archived non-DSXU runtime',
     ],
   }
 }

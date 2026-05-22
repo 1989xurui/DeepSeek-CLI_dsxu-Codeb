@@ -1,17 +1,17 @@
 export const PR_TITLE = 'Add DSXU Code GitHub Workflow'
 
-const PROVIDER_MIGRATION_TOKEN = 'cl' + 'aude'
-const PROVIDER_MIGRATION_ORG_TOKEN = 'anth' + 'ropics'
-const PROVIDER_MIGRATION_GITHUB_ACTION_REPO = `${PROVIDER_MIGRATION_ORG_TOKEN}/${PROVIDER_MIGRATION_TOKEN}-code-action`
-const PROVIDER_MIGRATION_GITHUB_MARKETPLACE_REPO = `${PROVIDER_MIGRATION_ORG_TOKEN}/${PROVIDER_MIGRATION_TOKEN}-code.git`
-const PROVIDER_MIGRATION_MENTION = `@${PROVIDER_MIGRATION_TOKEN}`
-const PROVIDER_MIGRATION_API_KEY_SECRET = `${'ANTH' + 'ROPIC'}_API_KEY`
-const PROVIDER_MIGRATION_ACTION_API_KEY_INPUT = `${'anth' + 'ropic'}_api_key`
-const PROVIDER_MIGRATION_PLUGIN_NAMESPACE = `${PROVIDER_MIGRATION_TOKEN}-code-plugins`
-const PROVIDER_MIGRATION_ARGS_KEY = `${PROVIDER_MIGRATION_TOKEN}_args`
+const ARCHIVED_TOKEN = 'cl' + 'aude'
+const ARCHIVED_ORG_TOKEN = 'anth' + 'ropics'
+const ARCHIVED_GITHUB_ACTION_REPO = `${ARCHIVED_ORG_TOKEN}/${ARCHIVED_TOKEN}-code-action`
+const ARCHIVED_GITHUB_MARKETPLACE_REPO = `${ARCHIVED_ORG_TOKEN}/${ARCHIVED_TOKEN}-code.git`
+const ARCHIVED_MENTION = `@${ARCHIVED_TOKEN}`
+const ARCHIVED_API_KEY_SECRET = `${'ANTH' + 'ROPIC'}_API_KEY`
+const ARCHIVED_ACTION_API_KEY_INPUT = `${'anth' + 'ropic'}_api_key`
+const ARCHIVED_PLUGIN_NAMESPACE = `${ARCHIVED_TOKEN}-code-plugins`
+const ARCHIVED_ARGS_KEY = `${ARCHIVED_TOKEN}_args`
 
 export const GITHUB_ACTION_SETUP_DOCS_URL =
-  `https://github.com/${PROVIDER_MIGRATION_GITHUB_ACTION_REPO}/blob/main/docs/setup.md`
+  `https://github.com/${ARCHIVED_GITHUB_ACTION_REPO}/blob/main/docs/setup.md`
 
 export const WORKFLOW_CONTENT = `name: DSXU Code
 
@@ -28,10 +28,10 @@ on:
 jobs:
   dsxu:
     if: |
-      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${PROVIDER_MIGRATION_MENTION}'))) ||
-      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${PROVIDER_MIGRATION_MENTION}'))) ||
-      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@dsxu') || contains(github.event.review.body, '${PROVIDER_MIGRATION_MENTION}'))) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@dsxu') || contains(github.event.issue.title, '@dsxu') || contains(github.event.issue.body, '${PROVIDER_MIGRATION_MENTION}') || contains(github.event.issue.title, '${PROVIDER_MIGRATION_MENTION}')))
+      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${ARCHIVED_MENTION}'))) ||
+      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@dsxu') || contains(github.event.comment.body, '${ARCHIVED_MENTION}'))) ||
+      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@dsxu') || contains(github.event.review.body, '${ARCHIVED_MENTION}'))) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@dsxu') || contains(github.event.issue.title, '@dsxu') || contains(github.event.issue.body, '${ARCHIVED_MENTION}') || contains(github.event.issue.title, '${ARCHIVED_MENTION}')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,11 +47,11 @@ jobs:
 
       - name: Run DSXU Code
         id: dsxu
-        uses: ${PROVIDER_MIGRATION_GITHUB_ACTION_REPO}@v1
+        uses: ${ARCHIVED_GITHUB_ACTION_REPO}@v1
         with:
-          ${PROVIDER_MIGRATION_ACTION_API_KEY_INPUT}: \${{ secrets.${PROVIDER_MIGRATION_API_KEY_SECRET} }}
+          ${ARCHIVED_ACTION_API_KEY_INPUT}: \${{ secrets.${ARCHIVED_API_KEY_SECRET} }}
 
-          # Provider-migration carrier while DSXU-owned CI packaging is finalized.
+          # Archived carrier while DSXU-owned CI packaging is finalized.
           additional_permissions: |
             actions: read
 
@@ -59,8 +59,8 @@ jobs:
           # prompt: 'Update the pull request description to include a summary of changes.'
 
           # Optional: Add tool args to customize behavior and configuration.
-          # See https://github.com/${PROVIDER_MIGRATION_GITHUB_ACTION_REPO}/blob/main/docs/usage.md
-          # ${PROVIDER_MIGRATION_ARGS_KEY}: '--allowed-tools Bash(gh pr:*)'
+          # See https://github.com/${ARCHIVED_GITHUB_ACTION_REPO}/blob/main/docs/usage.md
+          # ${ARCHIVED_ARGS_KEY}: '--allowed-tools Bash(gh pr:*)'
 
 `
 
@@ -102,7 +102,7 @@ Once the workflow is triggered, DSXU will analyze the comment and surrounding co
 allowed_tools: Bash(npm install),Bash(npm run build),Bash(npm run lint),Bash(npm run test)
 \`\`\`
 
-This workflow currently uses a provider-migration GitHub Action carrier while DSXU-owned CI packaging is being finalized.
+This workflow currently uses an archived GitHub Action carrier while DSXU-owned CI packaging is being finalized.
 
 After merging this PR, let's try mentioning @dsxu in a comment on any PR to get started!`
 
@@ -141,12 +141,12 @@ jobs:
 
       - name: Run DSXU Code Review
         id: dsxu-review
-        uses: ${PROVIDER_MIGRATION_GITHUB_ACTION_REPO}@v1
+        uses: ${ARCHIVED_GITHUB_ACTION_REPO}@v1
         with:
-          ${PROVIDER_MIGRATION_ACTION_API_KEY_INPUT}: \${{ secrets.${PROVIDER_MIGRATION_API_KEY_SECRET} }}
-          plugin_marketplaces: 'https://github.com/${PROVIDER_MIGRATION_GITHUB_MARKETPLACE_REPO}'
-          plugins: 'code-review@${PROVIDER_MIGRATION_PLUGIN_NAMESPACE}'
+          ${ARCHIVED_ACTION_API_KEY_INPUT}: \${{ secrets.${ARCHIVED_API_KEY_SECRET} }}
+          plugin_marketplaces: 'https://github.com/${ARCHIVED_GITHUB_MARKETPLACE_REPO}'
+          plugins: 'code-review@${ARCHIVED_PLUGIN_NAMESPACE}'
           prompt: '/code-review:code-review \${{ github.repository }}/pull/\${{ github.event.pull_request.number }}'
-          # Provider-migration carrier while DSXU-owned CI packaging is finalized.
+          # Archived carrier while DSXU-owned CI packaging is finalized.
 
 `

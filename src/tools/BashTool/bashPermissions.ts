@@ -86,7 +86,7 @@ import { shouldUseSandbox } from './shouldUseSandbox.js'
 // instead. (See also the comment on checkSemanticsDeny below.)
 const bashCommandIsSafeAsync = bashCommandIsSafeAsync_DEPRECATED
 const splitCommand = splitCommand_DEPRECATED
-const PROVIDER_MIGRATION_SOURCE_API_KEY_ENV = `${'ANTH' + 'ROPIC'}_API_KEY`
+const ARCHIVED_SOURCE_API_KEY_ENV = `${'ANTH' + 'ROPIC'}_API_KEY`
 // Env-var assignment prefix (VAR=value). Shared across three while-loops that
 // skip safe env vars before extracting the command name.
 const ENV_VAR_ASSIGN_RE = /^[A-Za-z_]\w*=/
@@ -409,7 +409,7 @@ const SAFE_ENV_VARS = new Set([
   'PYTEST_DISABLE_PLUGIN_AUTOLOAD', // disable plugin loading
   'PYTEST_DEBUG', // debug output
   // API keys and authentication
-  PROVIDER_MIGRATION_SOURCE_API_KEY_ENV, // provider-migration source API authentication
+  ARCHIVED_SOURCE_API_KEY_ENV, // archived source API authentication
   'DEEPSEEK_API_KEY', // DSXU/DeepSeek API authentication
   'DEEPSEEK_BASE_URL', // DSXU/DeepSeek compatible endpoint override
   'DSXU_API_KEY', // DSXU control-plane authentication
@@ -465,7 +465,7 @@ const DSXU_INTERNAL_SAFE_ENV_VARS = new Set([
   'AWS_PROFILE', // AWS profile name selection
   'CLOUDSDK_CORE_PROJECT', // GCP project ID
   'CLUSTER', // generic cluster name
-  // provider-migration source internal cluster selection (just names/identifiers)
+  // archived source internal cluster selection (just names/identifiers)
   'COO_CLUSTER', // coo cluster name
   'COO_CLUSTER_NAME', // coo cluster name (alternate)
   'COO_NAMESPACE', // coo namespace
@@ -489,8 +489,8 @@ const DSXU_INTERNAL_SAFE_ENV_VARS = new Set([
   'DBT_PER_DEVELOPER_ENVIRONMENTS', // DBT config
   'STATSIG_FORD_DB_CHECKS', // statsig DB check flag
   // Build configuration
-  'ANT_ENVIRONMENT', // provider-migration source environment name
-  'ANT_SERVICE', // provider-migration source service name
+  'ANT_ENVIRONMENT', // archived source environment name
+  'ANT_SERVICE', // archived source service name
   'MONOREPO_ROOT_DIR', // monorepo root path
   // Version selectors
   'PYENV_VERSION', // Python version selection

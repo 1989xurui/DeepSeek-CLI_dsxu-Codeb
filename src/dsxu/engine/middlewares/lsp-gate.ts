@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: zero-mainline LSP gate experiment retained only because Windows
+ * Legacy zero-mainline LSP gate experiment retained only because Windows
  * ACL blocked physical removal after copying to _deleted_files.
  *
  * LSP门禁中间件 - 静态拓扑感知

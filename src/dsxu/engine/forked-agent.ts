@@ -7,14 +7,14 @@
  *   3. 运行子任务 query loop
  *   4. 返回结果给父
  *
- * V13 护栏：
+ * Fork guardrail:
  *   - 单 fork，不并行 fan-out（稳定优先）
  *   - 文件写操作自动排队（append-only transcript）
  *   - AbortController 父子联动
  *   - 超时 + 最大轮次双保险
  *
  * 与 DSXU 的区别：
- *   - DSXU 支持多 fork 并行（fan-out）→ DSxu V13 只允许单 fork
+ *   - DSXU supports multi-fork fan-out conceptually; this runtime allows one active fork.
  *   - DSXU 有复杂的 CacheSafeParams → DSxu 直接复制消息
  *   - DSXU 用 sidechain transcript → DSxu 用内存 + 可选 JSONL 归档
  */
@@ -122,10 +122,10 @@ function drainWriteQueue(): void {
   for (const resolve of resolvers) resolve()
 }
 
-// ── Fork 活跃计数器（V13 单 fork 限制） ──
+// ── Fork active counter: one active fork limit ──
 
 let activeForkCount = 0
-const MAX_CONCURRENT_FORKS = 1  // V13 限制
+const MAX_CONCURRENT_FORKS = 1
 
 // ── 核心：创建并运行 Fork ──
 
@@ -146,7 +146,7 @@ export async function createFork(
   toolRegistry: ToolRegistry,
   config?: ForkConfig,
 ): Promise<ForkResult> {
-  // ── V13 护栏：单 fork 限制 ──
+  // ── Fork guardrail: one active fork limit ──
   if (activeForkCount >= MAX_CONCURRENT_FORKS) {
     return {
       finalMessage: `[Fork] 已有活跃的子任务在执行（当前 ${activeForkCount}/${MAX_CONCURRENT_FORKS}）。等待完成后重试。`,

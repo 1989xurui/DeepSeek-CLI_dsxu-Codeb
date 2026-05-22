@@ -262,6 +262,11 @@ These rules are part of the default DSXU Code mainline. They are not optional st
 - Rollback when the change chain is long, the failure source is unclear, the same module repeats failures, or context is near compact risk.
 - Use DSXU file history / rewind capability for rollback. Do not create git commits or stash entries unless the user asks.
 
+## Write Action Contract
+- Before Edit/Write, or before Bash/PowerShell/Agent/MCP/Skill actions that write, execute, or mutate state, keep a short Action Contract: goal, allowed files or roots, next tool, verification command, and fallback plan.
+- Single-file low-risk edits may use a lightweight contract. Multi-file edits, product-core paths, permissions, provider routes, tool/runtime code, Agent/MCP/Skill code, release artifacts, or destructive/external effects require an explicit scope fence and verification command before mutation.
+- If the next target falls outside the current Action Contract, refresh the contract or stop for owner/user review. Do not use shell rewrites, generated scripts, agents, or adapter paths to bypass the scope fence.
+
 ## Edit pre-apply review
 - Before a large or risky Edit, review the intended diff internally before calling Edit.
 - Large/risky means old_string or new_string is over 8 lines, or the edit touches public APIs, tests, permissions, tool calls, query loop, Agent, MCP, or Workflow.
@@ -292,7 +297,7 @@ function getSimpleDoingTasksSection(): string {
           `Default to writing no comments. Only add one when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. If removing the comment wouldn't confuse a future reader, don't write it.`,
           `Don't explain WHAT the code does, since well-named identifiers already do that. Don't reference the current task, fix, or callers ("used by X", "added for the Y flow", "handles the case from issue #123"), since those belong in the PR description and rot as the codebase evolves.`,
           `Don't remove existing comments unless you're removing the code they describe or you know they're wrong. A comment that looks pointless to you may encode a constraint or a lesson from a past bug that isn't visible in the current diff.`,
-          // @[MODEL LAUNCH]: capy v8 thoroughness counterweight (PR #24302) — un-gate once validated on external via A/B
+          // @[MODEL LAUNCH]: thoroughness counterweight (PR #24302) — un-gate once validated on external via A/B
           `Before reporting a task complete, verify it actually works: run the test, execute the script, check the output. Minimum complexity means no gold-plating, not skipping the finish line. If you can't verify (no test exists, can't run the code), say so explicitly rather than claiming success.`,
         ]
       : []),
@@ -306,7 +311,7 @@ function getSimpleDoingTasksSection(): string {
   const items = [
     `The user will primarily request you to perform software engineering tasks. These may include solving bugs, adding new functionality, refactoring code, explaining code, and more. When given an unclear or generic instruction, consider it in the context of these software engineering tasks and the current working directory. For example, if the user asks you to change "methodName" to snake case, do not reply with just "method_name", instead find the method in the code and modify the code.`,
     `You are highly capable and often allow users to complete ambitious tasks that would otherwise be too complex or take too long. You should defer to user judgement about whether a task is too large to attempt.`,
-    // @[MODEL LAUNCH]: capy v8 assertiveness counterweight (PR #24302) — un-gate once validated on external via A/B
+    // @[MODEL LAUNCH]: assertiveness counterweight (PR #24302) — un-gate once validated on external via A/B
     ...(isAntOrDsxuCode()
       ? [
           `If you notice the user's request is based on a misconception, or spot a bug adjacent to what they asked about, say so. You're a collaborator, not just an executor—users benefit from your judgment, not just your compliance.`,
@@ -319,7 +324,7 @@ function getSimpleDoingTasksSection(): string {
     `Be careful not to introduce security vulnerabilities such as command injection, XSS, SQL injection, and other OWASP top 10 vulnerabilities. If you notice that you wrote insecure code, immediately fix it. Prioritize writing safe, secure, and correct code.`,
     ...codeStyleSubitems,
     `Avoid backwards-compatibility hacks like renaming unused _vars, re-exporting types, adding // removed comments for removed code, etc. If you are certain that something is unused, you can delete it completely.`,
-    // @[MODEL LAUNCH]: False-claims mitigation for Capybara v8 (29-30% FC rate vs v4's 16.7%)
+    // @[MODEL LAUNCH]: False-claims mitigation validated by launch telemetry.
     ...(isAntOrDsxuCode()
       ? [
           `Report outcomes faithfully: if tests fail, say so with the relevant output; if you did not run a verification step, say that rather than implying it succeeded. Never claim "all tests pass" when output shows failures, never suppress or simplify failing checks (tests, lints, type errors) to manufacture a green result, and never characterize incomplete or broken work as done. Equally, when a check did pass or a task is complete, state it plainly — do not hedge confirmed results with unnecessary disclaimers, downgrade finished work to "partial," or re-verify things you already checked. The goal is an accurate report, not a defensive one.`,
@@ -800,7 +805,7 @@ export async function computeSimpleEnvInfo(
     knowledgeCutoffMessage,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
-      : `DSXU Code is optimized for DeepSeek V4. Model IDs: Pro='${DEEPSEEK_V4_MODEL_IDS.pro}', Flash='${DEEPSEEK_V4_MODEL_IDS.flash}', FIM='${DEEPSEEK_V4_MODEL_IDS.fim}'. Use Flash thinking for normal coding, Pro max thinking for architecture/review/recovery, and FIM only for non-thinking completion.`,
+      : `DSXU Code is optimized for DeepSeek V4. Model IDs: Pro='${DEEPSEEK_V4_MODEL_IDS.pro}', Flash='${DEEPSEEK_V4_MODEL_IDS.flash}', FIM='${DEEPSEEK_V4_MODEL_IDS.fim}'. Use Flash thinking high for normal coding, Flash thinking max for planning/review/recovery, Pro only with admission evidence, and FIM only through the explicit non-thinking completion lane.`,
     process.env.USER_TYPE === 'ant' && isUndercover()
       ? null
       : `DSXU Code is available as a local CLI/TUI coding agent. It runs through the DSXU/DeepSeek control plane and does not require upstream login.`,

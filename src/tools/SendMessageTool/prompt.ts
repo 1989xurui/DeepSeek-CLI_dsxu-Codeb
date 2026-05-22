@@ -2,26 +2,26 @@ import { feature } from 'bun:bundle'
 import { isEnvTruthy } from '../../utils/envUtils.js'
 
 export const DESCRIPTION = 'Send a message to another agent'
-const PROVIDER_MIGRATION_BRIDGE_FLAG = 'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
+const ARCHIVED_BRIDGE_FLAG = 'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
 
-function isProviderMigrationBridgeMessagingEnabled(): boolean {
-  return isEnvTruthy(process.env[PROVIDER_MIGRATION_BRIDGE_FLAG])
+function isArchivedBridgeMessagingEnabled(): boolean {
+  return isEnvTruthy(process.env[ARCHIVED_BRIDGE_FLAG])
 }
 
 export function getPrompt(): string {
-  const bridgeEnabled = isProviderMigrationBridgeMessagingEnabled()
+  const bridgeEnabled = isArchivedBridgeMessagingEnabled()
   const providerRow = `\n| \`"provider:session_..."\` | DSXU provider peer session; preferred cross-session route for DSXU-owned remote/session backend |`
   const udsRow = feature('UDS_INBOX')
     ? `\n| \`"uds:/path/to.sock"\` | Local DSXU session socket (same machine; use \`ListPeers\`) |`
     : ''
   const bridgeRow = bridgeEnabled
-    ? '\n| `"bridge:session_..."` | Provider-migration bridge peer session; only available when DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 |'
+    ? '\n| `"bridge:session_..."` | Archived bridge peer session; only available when DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 |'
     : ''
   const bridgeExample = bridgeEnabled
     ? '\n{"to": "bridge:session_01AbCd...", "message": "what branch are you on?"}'
     : ''
   const bridgeNote = bridgeEnabled
-    ? '\n\nProvider-migration bridge targets are migration-only. Prefer local Agent/SendMessage continuation for DSXU mainline work.'
+    ? '\n\nArchived bridge targets are migration-only. Prefer local Agent/SendMessage continuation for DSXU mainline work.'
     : ''
   const crossSessionExample = `${feature('UDS_INBOX') ? '{"to": "uds:/tmp/cc-socks/1234.sock", "message": "check if tests pass over there"}\n' : ''}{"to": "provider:session_01AbCd...", "summary": "verifier correction", "message": "The previous PASS was not verified. Re-read src/foo.ts, run bun test, and report PASS/PARTIAL/FAIL with command evidence."}${bridgeExample}`
   const crossSessionSection =
@@ -34,8 +34,8 @@ Use \`ListPeers\` to discover targets, then:
 ${crossSessionExample}
 \`\`\`
 
-A listed peer is alive and will process your message; there is no "busy" state. Messages enqueue and drain at the receiver's next tool round. Use \`provider:\` for DSXU-owned cross-session routing; use \`bridge:\` only for isolated provider migration. Your message arrives wrapped as \`<cross-session-message from="...">\`. **To reply to an incoming message, copy its \`from\` attribute as your \`to\`.**${bridgeNote}`
-    : `\n\n## Cross-session\n\nUse \`provider:\` for DSXU-owned cross-session routing:\n\n\`\`\`json\n${crossSessionExample}\n\`\`\`\n\nUse \`bridge:\` only for isolated provider migration with explicit opt-in.`
+A listed peer is alive and will process your message; there is no "busy" state. Messages enqueue and drain at the receiver's next tool round. Use \`provider:\` for DSXU-owned cross-session routing; use \`bridge:\` only for isolated archived migration. Your message arrives wrapped as \`<cross-session-message from="...">\`. **To reply to an incoming message, copy its \`from\` attribute as your \`to\`.**${bridgeNote}`
+    : `\n\n## Cross-session\n\nUse \`provider:\` for DSXU-owned cross-session routing:\n\n\`\`\`json\n${crossSessionExample}\n\`\`\`\n\nUse \`bridge:\` only for isolated archived migration with explicit opt-in.`
   return `
 # SendMessage
 

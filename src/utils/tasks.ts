@@ -150,7 +150,7 @@ export function isTodoV2Enabled(): boolean {
  * Resets the task list for a new swarm - clears any existing tasks.
  * Writes a high water mark file to prevent ID reuse after reset.
  * Should be called when a new swarm is created to ensure task numbering starts at 1.
- * Uses file locking to prevent race conditions when multiple DSXU/provider-migration agents run in parallel.
+ * Uses file locking to prevent race conditions when multiple DSXU/archived agents run in parallel.
  */
 export async function resetTaskList(taskListId: string): Promise<void> {
   const dir = getTasksDir(taskListId)
@@ -200,7 +200,7 @@ export async function resetTaskList(taskListId: string): Promise<void> {
  * Priority:
  * 1. DSXU_CODE_TASK_LIST_ID - explicit task list ID
  * 2. In-process teammate: leader's team name (so teammates share the leader's task list)
- * 3. DSXU/provider-migration team env - set when running as a process-based teammate
+ * 3. DSXU/archived team env - set when running as a process-based teammate
  * 4. Leader team name - set when the leader creates a team via TeamCreate
  * 5. Session ID - fallback for standalone sessions
  */

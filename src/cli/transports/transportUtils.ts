@@ -5,9 +5,9 @@ import { SSETransport } from './SSETransport.js'
 import type { Transport } from './Transport.js'
 import { WebSocketTransport } from './WebSocketTransport.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const providerMigrationCodeEnv = (name: string): string =>
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const archivedCodeEnv = (name: string): string =>
+  `${ARCHIVED_CODE_ENV_PREFIX}_${name}`
 
 /**
  * Helper function to get the appropriate transport for a URL.
@@ -26,7 +26,7 @@ export function getTransportForUrl(
   if (
     isEnvTruthy(
       process.env.DSXU_CODE_USE_CCR_V2 ??
-        process.env[providerMigrationCodeEnv('USE_CCR_V2')],
+        process.env[archivedCodeEnv('USE_CCR_V2')],
     )
   ) {
     // v2: SSE for reads, HTTP POST for writes
@@ -47,7 +47,7 @@ export function getTransportForUrl(
     if (
       isEnvTruthy(
         process.env.DSXU_CODE_POST_FOR_SESSION_INGRESS_V2 ??
-          process.env[providerMigrationCodeEnv('POST_FOR_SESSION_INGRESS_V2')],
+          process.env[archivedCodeEnv('POST_FOR_SESSION_INGRESS_V2')],
       )
     ) {
       return new HybridTransport(url, headers, sessionId, refreshHeaders)

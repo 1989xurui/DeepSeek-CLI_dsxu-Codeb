@@ -3,6 +3,7 @@ import type { Memory } from './memory-extractor'
 import type { AppState } from '../../state/AppStateStore'
 import type { ToolPermissionContext } from '../../Tool'
 import type { MCPServerConnection } from '../../services/mcp/types'
+import type { RecoveryDecision } from './recovery/recovery-types-v3'
 
 /**
  *
@@ -20,6 +21,20 @@ export interface ToolSchema {
   name: string
   description: string
   inputSchema: Record<string, any>  // JSON Schema
+}
+
+export type ToolRegistryProviderKind = 'mainline' | 'mcp' | 'agent' | 'skill' | 'fallback'
+
+export interface ToolOwnershipMetadata {
+  ownerId: string
+  providerId: string
+  providerKind: ToolRegistryProviderKind
+  registryOwner: 'DSXU Tool Registry'
+  adapterBoundary: string
+  permissionBoundary: string
+  runtimeBoundary: string
+  evidenceIds: string[]
+  registeredAt?: string
 }
 
 /** 工具执行结果 */
@@ -43,6 +58,7 @@ export interface ToolDefinition {
   name: string
   description: string
   inputSchema: Record<string, any>
+  ownership?: Partial<ToolOwnershipMetadata>
   /** 执行函数 */
   execute: (input: Record<string, any>, context: ToolContext) => Promise<ToolOutput>
   /** 是否可以并发执行（默认 false） */
@@ -372,6 +388,8 @@ export interface QueryEngineConfig {
     enabled?: boolean
     maxTools?: number
     minTools?: number
+    /** Default-mainline visible tool hard cap. GearBox may change ranking, not exceed this cap. */
+    visibleToolHardCap?: number
     alwaysInclude?: string[]
     /** Always include by wildcard patterns, e.g. "mcp__github__*" */
     alwaysIncludePatterns?: string[]
@@ -600,12 +618,13 @@ export interface QueryEngineConfig {
 
 /** 单轮事件（async generator yield） */
 export type QueryEvent =
-  | { type: 'loop_started'; loopId: string; requestId: string; timestamp: number }
-  | { type: 'model_called'; loopId: string; callId: string; model: string; timestamp: number }
+  | { type: 'loop_started'; loopId: string; requestId: string; timestamp: number; metadata?: Record<string, any> }
+  | { type: 'model_called'; loopId: string; callId: string; model: string; timestamp: number; metadata?: Record<string, any> }
   | { type: 'tool_dispatch_started'; loopId: string; callId: string; toolName: string; toolUseId: string; timestamp: number }
   | { type: 'tool_dispatch_completed'; loopId: string; callId: string; toolName: string; toolUseId: string; success: boolean; timestamp: number }
-  | { type: 'loop_finished'; loopId: string; requestId: string; success: boolean; reason: string; timestamp: number }
-  | { type: 'loop_aborted'; loopId: string; requestId: string; reason: string; timestamp: number }
+  | { type: 'loop_finished'; loopId: string; requestId: string; success: boolean; reason: string; timestamp: number; result?: QueryResult; metadata?: Record<string, any> }
+  | { type: 'loop_aborted'; loopId: string; requestId: string; reason: string; timestamp: number; failureType?: string; result?: QueryResult; metadata?: Record<string, any> }
+  | { type: 'state_transition'; from: RuntimeState | string; to: RuntimeState | string; reason: string; timestamp: number; metadata?: Record<string, any> }
   | { type: 'tool_failure'; loopId: string; callId: string; toolName: string; toolUseId: string; error: string; errorType: string; timestamp: number }
   | { type: 'validation_failure'; loopId: string; requestId: string; score: number; findings: any[]; timestamp: number }
   | { type: 'budget_failure'; loopId: string; requestId: string; budgetType: string; limit: number; actual: number; timestamp: number }
@@ -627,6 +646,11 @@ export type QueryEvent =
       droppedByMinScore?: number
       mcpToolsSelected?: number
       writeToolsSelected?: number
+      visibleToolHardCap?: number
+      withinVisibleToolHardCap?: boolean
+      hardCapEnforced?: boolean
+      toolWindowOwner?: string
+      evidence?: string[]
     }
   | { type: 'llm_response'; response: LLMResponse }
   | {
@@ -636,6 +660,14 @@ export type QueryEvent =
       prevCacheReadTokens: number
       cacheReadTokens: number
       tokenDrop: number
+      warmupRecommendation?: {
+        owner: 'DeepSeek route/cost/cache'
+        mode: 'dry-run-only'
+        command: string
+        debounceMs: number
+        reason: string
+        claimBoundary: string
+      }
     }
   | { type: 'tool_start'; toolName: string; toolUseId: string; input: Record<string, any> }
   | {
@@ -649,7 +681,7 @@ export type QueryEvent =
   | { type: 'transaction_started'; txId: string; trackedFiles: string[] }
   | { type: 'transaction_rolled_back'; txId: string; filesChanged: string[]; reason: string }
   | { type: 'transaction_committed'; txId: string; trackedFiles: string[] }
-  | { type: 'tool_result'; toolName: string; toolUseId: string; result: ToolResult }
+  | { type: 'tool_result'; toolName: string; toolUseId: string; result: ToolResult; metadata?: Record<string, any> }
   | { type: 'test_detected'; passed: boolean; output: string }
   | { type: 'gear_shift'; from: 1 | 2 | 3; to: 1 | 2 | 3; reason: string }
   | { type: 'context_snapshot_reset'; reason: string; failedTurns: number; messagesKept: number; messagesDiscarded: number }
@@ -740,6 +772,8 @@ export interface QueryResult {
   review?: ReviewResult
   /** 所有消息历史 */
   messages: Message[]
+  /** Visible-state and owner evidence metadata. */
+  metadata?: Record<string, any>
   /** 提取的记忆 */
   extractedMemories?: Memory[]
   /** 智能体摘要 */
@@ -904,7 +938,7 @@ export interface FullAbsorbExecutionReport {
   importedTools: number
   totalTools: number
   waves: FullAbsorbWaveResult[]
-  providerMigrationBridges?: Array<{
+  archivedBridges?: Array<{
     name: string
     connected: boolean
     detail: string
@@ -919,11 +953,29 @@ export interface GearState {
   gear: 1 | 2 | 3
   consecutiveErrors: number
   lastErrorTs: number
+  lastRecoveryDecision?: RecoveryDecision
   /** 测试结果历史（最近 5 条） */
   testHistory: Array<{ passed: boolean; ts: number }>
 }
 
 /** 步骤级变速器接口 */
+export interface GearVerificationSummary {
+  passed: boolean
+  score: number
+  findings?: Array<{
+    severity: 'P1' | 'P2' | 'P3'
+    title: string
+    detail: string
+    suggestion?: string
+  }>
+}
+
+export interface GearVerificationContext {
+  policy?: 'warn' | 'block' | 'continue'
+  failedAttemptsSinceProgress?: number
+  command?: string
+}
+
 export interface StepGearBox {
   /** 获取当前档位 */
   getGear(): 1 | 2 | 3
@@ -933,8 +985,12 @@ export interface StepGearBox {
   reportToolResult(result: ToolResult, toolName: string): void
   /** 报告测试结果（S.1 物理证据，优先级最高） */
   reportTestResult(passed: boolean): void
+  /** Consume VerifyGate's canonical summary and return the GearBox recovery decision, if any. */
+  reportVerificationSummary(summary: GearVerificationSummary, context?: GearVerificationContext): RecoveryDecision | null
   /** 报告 LLM 错误 */
   reportLLMError(error: Error, callId?: string): void
+  /** Apply a canonical Recovery / GearBox decision. */
+  applyRecoveryDecision(decision: RecoveryDecision): void
   /** 报告成功（降档） */
   reportSuccess(): void
   /** 获取状态快照 */

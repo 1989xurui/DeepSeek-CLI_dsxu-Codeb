@@ -254,7 +254,7 @@ async function getTranscriptStats(): Promise<{
 /**
  * Get enhanced PR attribution text with DSXU contribution stats.
  *
- * Format: "Generated with DSXU Code (93% 3-shotted by a provider-migration model alias)"
+ * Format: "Generated with DSXU Code (93% 3-shotted by an archived model alias)"
  *
  * Rules:
  * - Shows DSXU contribution percentage from commit attribution

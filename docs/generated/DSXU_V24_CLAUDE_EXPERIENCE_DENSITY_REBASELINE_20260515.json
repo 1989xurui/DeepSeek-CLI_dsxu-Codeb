@@ -1,19 +1,19 @@
 {
   "schemaVersion": "dsxu.v24.claude-experience-density-rebaseline.v1",
-  "generatedAt": "2026-05-15T05:27:29.303Z",
+  "generatedAt": "2026-05-15T05:59:20.728Z",
   "claudeSourceRoot": "D:\\源代码claude\\src",
   "dsxuSourceRoot": "D:\\DSXU-code\\src",
   "claudeSourceExists": true,
   "dsxuSourceExists": true,
   "sourceCounts": {
     "claude": 1902,
-    "dsxu": 2650
+    "dsxu": 2651
   },
   "categorySignalSummary": {
     "claudeCategoryHits": 12786,
-    "dsxuCategoryHits": 18211,
+    "dsxuCategoryHits": 18217,
     "claudeMultiSignal4": 1576,
-    "dsxuMultiSignal4": 2191,
+    "dsxuMultiSignal4": 2192,
     "claudeMultiSignal6": 1228,
     "dsxuMultiSignal6": 1740
   },
@@ -21,17 +21,17 @@
     {
       "category": "query_loop_state",
       "claudeFileHits": 1772,
-      "dsxuFileHits": 2413
+      "dsxuFileHits": 2414
     },
     {
       "category": "visible_work_state",
       "claudeFileHits": 1505,
-      "dsxuFileHits": 1875
+      "dsxuFileHits": 1876
     },
     {
       "category": "tool_lifecycle",
       "claudeFileHits": 1274,
-      "dsxuFileHits": 1881
+      "dsxuFileHits": 1882
     },
     {
       "category": "permission_safety",
@@ -46,7 +46,7 @@
     {
       "category": "agent_task_lifecycle",
       "claudeFileHits": 745,
-      "dsxuFileHits": 1202
+      "dsxuFileHits": 1201
     },
     {
       "category": "mcp_plugin_skill",
@@ -61,22 +61,22 @@
     {
       "category": "recovery_failure",
       "claudeFileHits": 1039,
-      "dsxuFileHits": 1586
+      "dsxuFileHits": 1587
     },
     {
       "category": "coding_workflow",
       "claudeFileHits": 1343,
-      "dsxuFileHits": 1839
+      "dsxuFileHits": 1840
     },
     {
       "category": "remote_ide_api",
       "claudeFileHits": 1324,
-      "dsxuFileHits": 1810
+      "dsxuFileHits": 1811
     },
     {
       "category": "telemetry_evidence",
       "claudeFileHits": 272,
-      "dsxuFileHits": 759
+      "dsxuFileHits": 760
     }
   ],
   "primaryLoops": [
@@ -97,7 +97,7 @@
       "pattern": "status|progress|timeline|visible|render|screen|repl|tui",
       "requiredEvidence": "TUI/CLI/stream-json timeline with goal, tool, permission, failure, cost, next action",
       "claudeFileHits": 1079,
-      "dsxuFileHits": 1490,
+      "dsxuFileHits": 1491,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -107,7 +107,7 @@
       "pattern": "tool|schema|execute|progress|result|posthook|hook|adapter",
       "requiredEvidence": "strict schema, permission, execution, result pairing evidence pack",
       "claudeFileHits": 1292,
-      "dsxuFileHits": 1900,
+      "dsxuFileHits": 1901,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -127,7 +127,7 @@
       "pattern": "read|edit|diff|patch|file|git|test|source",
       "requiredEvidence": "real read/patch/diff/test/final report task trace",
       "claudeFileHits": 1597,
-      "dsxuFileHits": 2042,
+      "dsxuFileHits": 2043,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -137,7 +137,7 @@
       "pattern": "plan|todo|task|step|active|complete|verify",
       "requiredEvidence": "task timeline proving completion only after tool/test evidence",
       "claudeFileHits": 914,
-      "dsxuFileHits": 1434,
+      "dsxuFileHits": 1433,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -157,7 +157,7 @@
       "pattern": "context|memory|compact|resume|summary|restore|session",
       "requiredEvidence": "45-minute resume replay with source-truth reread",
       "claudeFileHits": 1118,
-      "dsxuFileHits": 1612,
+      "dsxuFileHits": 1613,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -167,7 +167,7 @@
       "pattern": "error|fail|recover|retry|fallback|abort|exception",
       "requiredEvidence": "named failure taxonomy and recovery transcript",
       "claudeFileHits": 1042,
-      "dsxuFileHits": 1589,
+      "dsxuFileHits": 1590,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -197,7 +197,7 @@
       "pattern": "ide|vscode|remote|bridge|api|sdk|stream-json",
       "requiredEvidence": "IDE bridge smoke with diff, permission, timeline",
       "claudeFileHits": 1324,
-      "dsxuFileHits": 1810,
+      "dsxuFileHits": 1811,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -217,7 +217,7 @@
       "pattern": "telemetry|evidence|metric|trace|report|audit|raw",
       "requiredEvidence": "PASS/PARTIAL/FAIL metrics, trace, risk, cost",
       "claudeFileHits": 577,
-      "dsxuFileHits": 978,
+      "dsxuFileHits": 979,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     },
     {
@@ -227,7 +227,7 @@
       "pattern": "release|doctor|install|export|package|preflight|smoke",
       "requiredEvidence": "clean export and fresh install smoke",
       "claudeFileHits": 1902,
-      "dsxuFileHits": 2411,
+      "dsxuFileHits": 2412,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE"
     }
   ],
@@ -248,7 +248,7 @@
       "owner": "Source Truth",
       "pattern": "repository|workspace|tree|directory|entrypoint|owner",
       "claudeFileHits": 552,
-      "dsxuFileHits": 793,
+      "dsxuFileHits": 795,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -258,7 +258,7 @@
       "owner": "Owner/Git Evidence",
       "pattern": "import|export|require|reference|use|dependency",
       "claudeFileHits": 1902,
-      "dsxuFileHits": 2650,
+      "dsxuFileHits": 2651,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -268,7 +268,7 @@
       "owner": "Task State",
       "pattern": "plan|todo|step|active|pending|complete",
       "claudeFileHits": 906,
-      "dsxuFileHits": 1329,
+      "dsxuFileHits": 1328,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -288,7 +288,7 @@
       "owner": "Coding Workflow",
       "pattern": "locate|read|range|edit|patch|diff",
       "claudeFileHits": 1120,
-      "dsxuFileHits": 1584,
+      "dsxuFileHits": 1586,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -328,7 +328,7 @@
       "owner": "Shell Adapter",
       "pattern": "bash|powershell|shell|exit code|cwd|stdout|stderr",
       "claudeFileHits": 625,
-      "dsxuFileHits": 981,
+      "dsxuFileHits": 988,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -338,7 +338,7 @@
       "owner": "Permission Gate",
       "pattern": "write|edit|delete|move|permission|approve",
       "claudeFileHits": 1016,
-      "dsxuFileHits": 1457,
+      "dsxuFileHits": 1460,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -368,7 +368,7 @@
       "owner": "Skill Registry",
       "pattern": "skill|command|registry|project|load",
       "claudeFileHits": 1039,
-      "dsxuFileHits": 1421,
+      "dsxuFileHits": 1426,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -388,7 +388,7 @@
       "owner": "IDE/API Bridge",
       "pattern": "vscode|ide|api|bridge|sdk|remote",
       "claudeFileHits": 1324,
-      "dsxuFileHits": 1810,
+      "dsxuFileHits": 1811,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -408,7 +408,7 @@
       "owner": "Agent Lifecycle",
       "pattern": "synthesis|worker|evidence|result|parent",
       "claudeFileHits": 864,
-      "dsxuFileHits": 1451,
+      "dsxuFileHits": 1452,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -418,7 +418,7 @@
       "owner": "Agent Lifecycle",
       "pattern": "cancel|timeout|stop|recover|parallel",
       "claudeFileHits": 709,
-      "dsxuFileHits": 1120,
+      "dsxuFileHits": 1125,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -448,7 +448,7 @@
       "owner": "Recovery",
       "pattern": "failure|error|classify|taxonomy|reason",
       "claudeFileHits": 919,
-      "dsxuFileHits": 1457,
+      "dsxuFileHits": 1458,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -458,7 +458,7 @@
       "owner": "Coding Workflow",
       "pattern": "test|fail|repair|fix|diagnostic",
       "claudeFileHits": 988,
-      "dsxuFileHits": 1600,
+      "dsxuFileHits": 1601,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -468,7 +468,7 @@
       "owner": "Model Router",
       "pattern": "retry|fallback|escalate|pro|flash|provider",
       "claudeFileHits": 1582,
-      "dsxuFileHits": 2253,
+      "dsxuFileHits": 2254,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -528,7 +528,7 @@
       "owner": "UI/TUI",
       "pattern": "prompt|input|permission|diff|error|continue",
       "claudeFileHits": 1389,
-      "dsxuFileHits": 1990,
+      "dsxuFileHits": 1991,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -538,7 +538,7 @@
       "owner": "Evidence",
       "pattern": "final|answer|evidence|risk|verified",
       "claudeFileHits": 441,
-      "dsxuFileHits": 922,
+      "dsxuFileHits": 927,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -548,7 +548,7 @@
       "owner": "Evidence",
       "pattern": "telemetry|metric|trace|report|audit",
       "claudeFileHits": 267,
-      "dsxuFileHits": 583,
+      "dsxuFileHits": 584,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     },
@@ -588,7 +588,7 @@
       "owner": "Release",
       "pattern": "release|install|doctor|export|smoke|package",
       "claudeFileHits": 1902,
-      "dsxuFileHits": 2410,
+      "dsxuFileHits": 2411,
       "status": "SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE",
       "requiredEvidence": "real DSXU behavior evidence, not owner-disposition or signal count"
     }

@@ -2,6 +2,7 @@ import { feature } from 'bun:bundle';
 import * as React from 'react';
 import type { LocalJSXCommandContext } from '../../commands.js';
 import { ContextVisualization } from '../../components/ContextVisualization.js';
+import { isContextAdvancedArgs } from './context-noninteractive.js';
 import { microcompactMessages } from '../../services/compact/microCompact.js';
 import type { LocalJSXCommandOnDone } from '../../types/command.js';
 import type { Message } from '../../types/message.js';
@@ -27,7 +28,7 @@ function toApiView(messages: Message[]): Message[] {
   }
   return view;
 }
-export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
+export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext, args?: string): Promise<React.ReactNode> {
   const {
     messages,
     getAppState,
@@ -57,7 +58,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
   );
 
   // Render to ANSI string to preserve colors and pass to onDone like local commands do
-  const output = await renderToAnsiString(<ContextVisualization data={data} />);
+  const output = await renderToAnsiString(<ContextVisualization data={data} advanced={isContextAdvancedArgs(args)} />);
   onDone(output);
   return null;
 }

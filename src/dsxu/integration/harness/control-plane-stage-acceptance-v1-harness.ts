@@ -127,7 +127,7 @@ function checkProviderCompatFacade(root: string): DsxuControlPlaneStageCheck {
     .map(pattern => pattern.source)
 
   return {
-    name: 'provider-migration-facade-thin',
+    name: 'archived-facade-thin',
     ok: offenders.length === 0,
     evidence: {
       path: compatPath,
@@ -204,7 +204,7 @@ function checkSdkControlAdapter(): DsxuControlPlaneStageCheck {
   const unsupported = handleDsxuUnknownInboundControlMessage(
     registry,
     'cp12-sdk-1',
-    { type: 'provider_migration_bridge_reconnect', request_id: 'provider-migration' },
+    { type: 'archived_bridge_reconnect', request_id: 'archived' },
   )
   const supported = handleDsxuUnknownInboundControlMessage(
     registry,
@@ -411,7 +411,7 @@ async function checkProviderContract(): Promise<DsxuControlPlaneStageCheck> {
   return {
     name: 'provider-contract-defaults',
     ok:
-      provider.providerMigrationBridge.enabled === false &&
+      provider.archivedBridge.enabled === false &&
       blockedRemote.status === 'blocked' &&
       events.includes('remote_blocked') &&
       deniedPermission.behavior === 'deny' &&
@@ -419,7 +419,7 @@ async function checkProviderContract(): Promise<DsxuControlPlaneStageCheck> {
       !JSON.stringify(redacted).includes('should_not_leak'),
     evidence: {
       identity: provider.identity,
-      providerMigrationBridge: provider.providerMigrationBridge,
+      archivedBridge: provider.archivedBridge,
       blockedRemote,
       deniedPermission,
       events,

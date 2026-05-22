@@ -560,7 +560,7 @@ export function getDsxuUseRemoteSessionRuntimeProfile() {
   return {
     runtime: 'DSXU Remote Session Hook',
     defaultBehavior:
-      'remote session lifecycle is reusable through DSXU coordinator config, not implicit provider migration login',
+      'remote session lifecycle is reusable through DSXU coordinator config, not implicit archived cloud login',
     providerTarget: 'DSXU Remote Session Provider',
     activationEvidence: [
       'config-driven session activation controls remote mode',

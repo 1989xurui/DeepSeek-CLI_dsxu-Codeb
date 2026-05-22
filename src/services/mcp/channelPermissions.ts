@@ -6,11 +6,11 @@
  * local UI / control hooks / classifier. First resolver wins via claim().
  *
  * Inbound is a structured event: the server parses the user's "yes tbxkq"
- * reply and emits the provider migration channel permission notification with
+ * reply and emits the archived channel permission notification with
  * {request_id, behavior}. DSXU never sees the reply as text ...approval
  * requires the server to deliberately emit that specific event, not just
  * relay content. Servers opt in by declaring
- * the provider migration permission capability.
+ * the archived permission capability.
  *
  * The approving party is the human via the channel, not the model. The trust boundary is not the
  * terminal ...it's the allowlist (tengu_harbor_ledger). A compromised
@@ -24,12 +24,12 @@
 import { jsonStringify } from '../../utils/slowOperations.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/featureFlags.js'
 import {
-  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
-  PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY,
-  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD,
+  ARCHIVED_CHANNEL_CAPABILITY,
+  ARCHIVED_CHANNEL_PERMISSION_CAPABILITY,
+  ARCHIVED_CHANNEL_PERMISSION_METHOD,
 } from '../../constants/providerMigrationProtocol.js'
-const PROVIDER_MIGRATION_PERMISSION_NOTIFICATION =
-  PROVIDER_MIGRATION_CHANNEL_PERMISSION_METHOD
+const ARCHIVED_PERMISSION_NOTIFICATION =
+  ARCHIVED_CHANNEL_PERMISSION_METHOD
 /**
  * feature flag provider runtime gate ...separate from the channels gate (tengu_harbor)
  * so channels can ship without permission-relay riding along (Kenneth: "no
@@ -52,7 +52,7 @@ export type ChannelPermissionCallbacks = {
     handler: (response: ChannelPermissionResponse) => void,
   ): () => void
   /** Resolve a pending request from a structured channel event
-   *  (provider migration channel permission notification). Returns true if the ID
+   *  (archived channel permission notification). Returns true if the ID
    *  was pending ...the server parsed the user's reply and emitted
    *  {request_id, behavior}; we just match against the map. */
   resolve(
@@ -69,7 +69,7 @@ export type ChannelPermissionCallbacks = {
  * autocorrect). No bare yes/no (conversational). No prefix/suffix chatter.
  *
  * DSXU generates the ID and sends the prompt. The SERVER parses the user's
- * reply and emits the provider migration channel permission notification with {request_id,
+ * reply and emits the archived channel permission notification with {request_id,
  * behavior}; DSXU doesn't regex-match text anymore. Exported so plugins can
  * import the exact regex rather than hand-copying it.
  */
@@ -185,14 +185,14 @@ export function filterPermissionRelayClients<
       const hasDsxuChannel =
         experimental?.['dsxu/channel'] !== undefined &&
         experimental?.['dsxu/channel/permission'] !== undefined
-      const hasProviderMigrationChannel =
-        experimental?.[PROVIDER_MIGRATION_CHANNEL_CAPABILITY] !== undefined &&
-        experimental?.[PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY] !==
+      const hasArchivedChannel =
+        experimental?.[ARCHIVED_CHANNEL_CAPABILITY] !== undefined &&
+        experimental?.[ARCHIVED_CHANNEL_PERMISSION_CAPABILITY] !==
           undefined
       return (
         c.type === 'connected' &&
         isInAllowlist(c.name) &&
-        (hasDsxuChannel || hasProviderMigrationChannel)
+        (hasDsxuChannel || hasArchivedChannel)
       )
     },
   )
@@ -205,7 +205,7 @@ export function filterPermissionRelayClients<
  * a React hook, stable reference stored in AppState.
  *
  * resolve() is called from the dedicated notification handler
- * (${PROVIDER_MIGRATION_PERMISSION_NOTIFICATION}) with the structured payload.
+ * (${ARCHIVED_PERMISSION_NOTIFICATION}) with the structured payload.
  * The server already parsed "yes tbxkq"  -> {request_id, behavior}; we just
  * match against the pending map. No regex on CC's side ...text in the
  * general channel can't accidentally approve anything.

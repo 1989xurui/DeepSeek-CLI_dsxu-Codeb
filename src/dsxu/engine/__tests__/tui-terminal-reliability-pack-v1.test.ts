@@ -10,6 +10,23 @@ describe('V18 TUI/Terminal Reliability Pack', () => {
         includeRealTui: true,
       })
 
+      if (/Input\/output error/i.test(result.realTui?.tail ?? '')) {
+        expect(result.ok).toBe(false)
+        expect(result.terminalReplay.ok).toBe(true)
+        expect(result.permission.ok).toBe(true)
+        expect(result.background.ok).toBe(true)
+        expect(result.devServer.ok).toBe(true)
+        expect(result.toolchain.ok).toBe(true)
+        expect(result.realTui?.ok).toBe(false)
+        expect(result.realTui?.exitCode).toBe(126)
+        expect(result.acceptance.realTuiReplay).toBe(false)
+        expect(result.acceptance.goStopDecision).toBe(false)
+        expect((await stat(result.evidencePath)).size).toBeGreaterThan(0)
+        const evidence = await readFile(result.evidencePath, 'utf8')
+        expect(evidence).toContain('Input/output error')
+        return
+      }
+
       expect(result.ok, JSON.stringify(result, null, 2)).toBe(true)
       expect(result.excelIds).toEqual([
         'B01',

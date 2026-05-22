@@ -276,7 +276,7 @@ export interface CoordinationLifecycleProtocol {
   summary: CoordinationLifecycleSummary;
 }
 
-// ===== V10-2D Mainline Compatibility & Integration Types =====
+// ===== Mainline Compatibility & Integration Types =====
 
 export interface AgentRoleConfig {
   role: AgentRole;
@@ -294,6 +294,11 @@ export interface ValidationRequirement {
   checks: string[];
 }
 
+export type TaskRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type VerificationRequirement = ValidationRequirement;
+export type ContextOverlapType = 'fresh' | 'partial' | 'high-overlap' | 'stale' | 'isolated';
+export type WorkflowPhaseType = 'research' | 'implementation' | 'verification' | 'coordination' | 'planning' | 'synthesis';
+export type TaskExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'blocked' | 'aborted';
 export type SubtaskType = 'research' | 'implementation' | 'verification' | 'coordination';
 
 export interface SubtaskPlan {
@@ -375,9 +380,15 @@ export const AGENT_ROLE_CONFIGS: Record<AgentRole, AgentRoleConfig> = {
   specialist: { role: 'specialist', description: 'domain specialist', capabilities: ['domain-review'] },
 };
 
-export const DSXU_PARITY_RULES: RoleSelectionRule[] = [];
-export const RISK_BASED_RULES: RoleSelectionRule[] = [];
-export const VERIFICATION_BASED_RULES: RoleSelectionRule[] = [];
+export const DSXU_PARITY_RULES: RoleSelectionRule[] = [
+  { id: 'dsxu-mainline-owner', type: 'task-type', condition: 'all', recommendedRoles: ['coordinator'], priority: 100 },
+];
+export const RISK_BASED_RULES: RoleSelectionRule[] = [
+  { id: 'risk-high-review', type: 'risk', condition: 'high', recommendedRoles: ['specialist', 'verifier'], priority: 90 },
+];
+export const VERIFICATION_BASED_RULES: RoleSelectionRule[] = [
+  { id: 'independent-verification', type: 'verification', condition: 'independent', recommendedRoles: ['verifier'], priority: 80 },
+];
 
 export function recommendRoleForTask(taskType: SubtaskType): AgentRole {
   if (taskType === 'research') return 'researcher';
@@ -449,4 +460,253 @@ export interface CoordinatorMainlineEnvelope {
   protocol: CoordinationLifecycleProtocol;
   signals: CoordinatorLifecycleSignal[];
   createdAt: number;
+}
+
+export interface TaskAssignment {
+  taskId: string;
+  subtaskId?: string;
+  assignedRole: AgentRole;
+  assignmentTime: number;
+  assignmentRationale: string;
+  priority: 'low' | 'medium' | 'high';
+  resourceRequirements: Record<string, any>;
+  constraints: Record<string, any>;
+  status: 'pending' | 'assigned' | 'completed' | 'failed';
+}
+
+export interface WorkflowStage {
+  stageId: string;
+  name: string;
+  description: string;
+  phase: WorkflowPhaseType;
+  entryCriteria: string[];
+  exitCriteria: string[];
+  tasks: string[];
+  roles: AgentRole[];
+  status: 'pending' | 'active' | 'completed' | 'blocked';
+  metrics: Record<string, number>;
+}
+
+export interface TaskDependencyGraph {
+  taskId: string;
+  nodes: string[];
+  edges: Array<{ from: string; to: string; reason: string }>;
+}
+
+export interface CoordinationPlan {
+  planId: string;
+  taskId: string;
+  strategy: string;
+  phases: WorkflowStage[];
+  roleAllocations: Record<string, number>;
+  resourceAllocations: Record<string, any>;
+  constraints: Record<string, any>;
+  successCriteria?: string[];
+}
+
+export interface AgentExecutionContext {
+  agentId: string;
+  role: AgentRole;
+  taskId: string;
+  availableTools?: string[];
+  contextSlices?: string[];
+  constraints?: Record<string, any>;
+}
+
+export interface AgentCapabilityProfile {
+  role: AgentRole;
+  capabilities: string[];
+  preferredTools?: string[];
+  constraints?: Record<string, any>;
+}
+
+export interface RoleExecutionConstraint {
+  role: AgentRole;
+  allowedActions: string[];
+  blockedActions?: string[];
+  maxParallel?: number;
+}
+
+export interface ContextDecisionState {
+  decisionId: string;
+  taskId: string;
+  decisionType: string;
+  rationale: string;
+  factors?: Record<string, any>;
+}
+
+export interface ContextOverlapState {
+  sourceTaskId: string;
+  targetTaskId: string;
+  overlapScore: number;
+  recommendation: 'reuse' | 'refresh' | 'isolate';
+}
+
+export interface SharedContextSlice {
+  sliceId: string;
+  sourceTaskId: string;
+  content: string;
+  ownerRole?: AgentRole;
+  freshness?: number;
+}
+
+export interface IntermediateResult {
+  id: string;
+  branchId: string;
+  type: string;
+  summary: string;
+  confidence: number;
+}
+
+export interface IntermediateResultEnvelope {
+  result: IntermediateResult;
+  evidenceRefs: string[];
+  createdAt: number;
+}
+
+export interface AssignmentTrace {
+  traceId: string;
+  subtaskId: string;
+  role: AgentRole;
+  rationale: string;
+}
+
+export interface DecisionTrace {
+  decisionId: string;
+  reason: string;
+  evidence: string[];
+}
+
+export interface StateTransitionRecord {
+  transitionId: string;
+  from: string;
+  to: string;
+  reason: string;
+}
+
+export interface CoordinationHealthState {
+  taskId: string;
+  status: 'healthy' | 'warning' | 'critical';
+  issues: string[];
+  updatedAt: number;
+}
+
+export interface BranchComparison {
+  branchA: string;
+  branchB: string;
+  similarityScore: number;
+  differences: string[];
+  recommendation: 'keep-a' | 'keep-b' | 'keep-both' | 'merge' | 'discard-both';
+  rationale: string;
+}
+
+export interface LifecycleProtocolOutput {
+  taskId: string;
+  forks: any[];
+  branchStates: Record<string, any>;
+  collectedResults: any[];
+  mergeCandidates: any[];
+  abortDecisions: any[];
+  escalationDecisions: any[];
+  recoveryHints: any[];
+  overallStatus: string;
+  timestamp: number;
+}
+
+export interface TaskNotification {
+  notificationId: string;
+  taskId: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface ContinueVsSpawnDecision {
+  action: 'continue' | 'spawn';
+  reason: string;
+}
+
+export interface TaskSynthesisSpec {
+  taskId: string;
+  sourceTaskIds: string[];
+  expectedOutput: string;
+}
+
+export interface IndependentVerificationConfig {
+  required: boolean;
+  verifierRoles: AgentRole[];
+  successCriteria: string[];
+}
+
+function runtimeToken(name: string) {
+  return function CoordinatorRuntimeToken() {
+    return { kind: name };
+  };
+}
+
+export const AgentRole = Object.freeze(['worker', 'explorer', 'researcher', 'implementer', 'verifier', 'coordinator', 'specialist']);
+export const TaskRiskLevel = 'TaskRiskLevel';
+export const VerificationRequirement = 'VerificationRequirement';
+export const ContextOverlapType = 'ContextOverlapType';
+export const TaskExecutionStatus = 'TaskExecutionStatus';
+export const ForkStrategy = 'ForkStrategy';
+export const AbortReason = 'AbortReason';
+export const EscalationReason = 'EscalationReason';
+export const MainTaskPlan = runtimeToken('MainTaskPlan');
+export const SubtaskPlan = runtimeToken('SubtaskPlan');
+export const TaskAssignment = runtimeToken('TaskAssignment');
+export const AgentRuntimeState = runtimeToken('AgentRuntimeState');
+export const MultiAgentRuntimeState = runtimeToken('MultiAgentRuntimeState');
+export const ForkExecutionPlan = runtimeToken('ForkExecutionPlan');
+export const BranchExecutionState = runtimeToken('BranchExecutionState');
+export const IntermediateResult = runtimeToken('IntermediateResult');
+export const CollectedIntermediateResult = runtimeToken('CollectedIntermediateResult');
+export const MergeCandidate = runtimeToken('MergeCandidate');
+export const MergeResult = runtimeToken('MergeResult');
+export const EscalationDecision = runtimeToken('EscalationDecision');
+export const LifecycleRecoveryHint = runtimeToken('LifecycleRecoveryHint');
+export const BranchState = runtimeToken('BranchState');
+export const CoordinationCheckpoint = runtimeToken('CoordinationCheckpoint');
+export const CoordinationSummary = runtimeToken('CoordinationSummary');
+export const WorkflowStage = runtimeToken('WorkflowStage');
+export const WorkflowPhaseType = runtimeToken('WorkflowPhaseType');
+export const TaskDependencyGraph = runtimeToken('TaskDependencyGraph');
+export const CoordinationPlan = runtimeToken('CoordinationPlan');
+export const AgentExecutionContext = runtimeToken('AgentExecutionContext');
+export const AgentCapabilityProfile = runtimeToken('AgentCapabilityProfile');
+export const RoleExecutionConstraint = runtimeToken('RoleExecutionConstraint');
+export const ContextDecisionState = runtimeToken('ContextDecisionState');
+export const ContextOverlapState = runtimeToken('ContextOverlapState');
+export const SharedContextSlice = runtimeToken('SharedContextSlice');
+export const IntermediateResultEnvelope = runtimeToken('IntermediateResultEnvelope');
+export const AssignmentTrace = runtimeToken('AssignmentTrace');
+export const DecisionTrace = runtimeToken('DecisionTrace');
+export const StateTransitionRecord = runtimeToken('StateTransitionRecord');
+export const CoordinationHealthState = runtimeToken('CoordinationHealthState');
+export const BranchComparison = runtimeToken('BranchComparison');
+export const LifecycleProtocolOutput = runtimeToken('LifecycleProtocolOutput');
+export const TaskNotification = runtimeToken('TaskNotification');
+export const ContinueVsSpawnDecision = runtimeToken('ContinueVsSpawnDecision');
+export const TaskSynthesisSpec = runtimeToken('TaskSynthesisSpec');
+export const IndependentVerificationConfig = runtimeToken('IndependentVerificationConfig');
+
+export function createTaskNotification(taskId: string, message: string): TaskNotification {
+  return {
+    notificationId: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    taskId,
+    message,
+    createdAt: Date.now(),
+  };
+}
+
+export function evaluateContextOverlap(sourceTaskId: string, targetTaskId: string, overlapScore = 0): ContextOverlapState {
+  return {
+    sourceTaskId,
+    targetTaskId,
+    overlapScore,
+    recommendation: overlapScore >= 0.75 ? 'reuse' : overlapScore >= 0.35 ? 'refresh' : 'isolate',
+  };
+}
+
+export function isTerminalTaskStatus(status: TaskExecutionStatus): boolean {
+  return status === 'completed' || status === 'failed' || status === 'aborted';
 }

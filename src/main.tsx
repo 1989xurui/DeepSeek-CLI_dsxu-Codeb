@@ -2,7 +2,7 @@
 // 1. profileCheckpoint marks entry before heavy module evaluation begins
 // 2. startMdmRawRead fires MDM subprocesses (plutil/reg query) so they run in
 //    parallel with the remaining ~135ms of imports below
-// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + provider-migration API
+// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + archived API
 //    key) in parallel; isRemoteManagedSettingsEligible() otherwise reads them
 //    sequentially via sync spawn inside applySafeConfigEnvironmentVariables()
 //    (~65ms on every macOS startup)
@@ -104,7 +104,7 @@ import { setupDsxuBrowserProvider, shouldAutoEnableDsxuBrowserProvider, shouldEn
 import { getContextWindowForModel } from './utils/context.js';
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
-import { getDsxuCodeEnv, hasNodeOption, isBareMode, isDsxuRuntimeMode, isEnvTruthy, isInProtectedNamespace, isProviderMigrationServiceShellAllowed } from './utils/envUtils.js';
+import { getDsxuCodeEnv, hasNodeOption, isBareMode, isDsxuRuntimeMode, isEnvTruthy, isInProtectedNamespace, isArchivedServiceShellAllowed } from './utils/envUtils.js';
 import { refreshExampleCommands } from './utils/exampleCommands.js';
 import type { FpsMetrics } from './utils/fpsTracker.js';
 import { getWorktreePaths } from './utils/getWorktreePaths.js';
@@ -138,21 +138,21 @@ import { validateUuid } from './utils/uuid.js';
 
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CL' + 'AUDE_CODE_';
-const providerMigrationCodeEnv = (suffix: string): string => `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}${suffix}`;
-const DSXU_PROVIDER_MIGRATION_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL';
-const DSXU_PROVIDER_MIGRATION_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL';
-const PROVIDER_MIGRATION_CODE_COMMAND = 'cl' + 'aude';
-const PROVIDER_MIGRATION_CLOUD_SOURCE = `${PROVIDER_MIGRATION_CODE_COMMAND}ai`;
-const PROVIDER_MIGRATION_DESKTOP_CLIENT = `${PROVIDER_MIGRATION_CODE_COMMAND}-desktop`;
-const PROVIDER_MIGRATION_VSCODE_CLIENT = `${PROVIDER_MIGRATION_CODE_COMMAND}-vscode`;
-const PROVIDER_MIGRATION_DESKTOP_IMPORT_COMMAND = `add-from-${PROVIDER_MIGRATION_CODE_COMMAND}-desktop`;
-const DSXU_PROVIDER_MIGRATION_SUBSCRIPTION_OPTION = `--${PROVIDER_MIGRATION_CLOUD_SOURCE}`;
+const ARCHIVED_CODE_ENV_PREFIX = 'CL' + 'AUDE_CODE_';
+const archivedCodeEnv = (suffix: string): string => `${ARCHIVED_CODE_ENV_PREFIX}${suffix}`;
+const ARCHIVED_PROVIDER_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL';
+const ARCHIVED_PROVIDER_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL';
+const ARCHIVED_CODE_COMMAND = 'cl' + 'aude';
+const ARCHIVED_CLOUD_SOURCE = `${ARCHIVED_CODE_COMMAND}ai`;
+const ARCHIVED_DESKTOP_CLIENT = `${ARCHIVED_CODE_COMMAND}-desktop`;
+const ARCHIVED_VSCODE_CLIENT = `${ARCHIVED_CODE_COMMAND}-vscode`;
+const ARCHIVED_DESKTOP_IMPORT_COMMAND = `add-from-${ARCHIVED_CODE_COMMAND}-desktop`;
+const ARCHIVED_PROVIDER_SUBSCRIPTION_OPTION = `--${ARCHIVED_CLOUD_SOURCE}`;
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
 import { clearServerCache } from 'src/services/mcp/client.js';
-import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupProviderMigrationMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getDsxuCodeMcpConfigsCore, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
-import { isProviderMigrationMcpEnabled } from 'src/services/mcp/dsxuProvider.js';
+import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupArchivedMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getDsxuCodeMcpConfigsCore, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
+import { isArchivedMcpEnabled } from 'src/services/mcp/dsxuProvider.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
@@ -183,7 +183,7 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
-import { runProviderMigrationExternalProviderAliasMigration, runProviderMigrationDefaultModelMigration, runProviderMigrationExplicitModelCleanup, runProviderMigrationLongContextPinMigration, runProviderMigrationTierModelCleanup } from './migrations/providerMigrationModelMigrations.js';
+import { runProviderMigrationExternalProviderAliasMigration as runArchivedExternalProviderAliasMigration, runProviderMigrationDefaultModelMigration as runArchivedDefaultModelMigration, runProviderMigrationExplicitModelCleanup as runArchivedExplicitModelCleanup, runProviderMigrationLongContextPinMigration as runArchivedLongContextPinMigration, runProviderMigrationTierModelCleanup as runArchivedTierModelCleanup } from './migrations/providerMigrationModelMigrations.js';
 import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
 import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOptInForDefaultOffer.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -209,29 +209,29 @@ import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from '.
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
 profileCheckpoint('main_tsx_imports_loaded');
 
-function shouldLoadProviderMigrationServiceShell(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed();
+function shouldLoadArchivedServiceShell(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed();
 }
 
 function resolveStartupFilesApiBaseUrl(): string | undefined {
   const dsxuBaseUrl = getDsxuCodeEnv('API_BASE_URL');
   if (dsxuBaseUrl) return dsxuBaseUrl;
-  if (!shouldLoadProviderMigrationServiceShell()) return undefined;
-  return process.env[DSXU_PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL;
+  if (!shouldLoadArchivedServiceShell()) return undefined;
+  return process.env[ARCHIVED_PROVIDER_BASE_URL_ENV] || getOauthConfig().BASE_API_URL;
 }
 
-function blockProviderMigrationServiceShell(flagName: string): never {
-  process.stderr.write(chalk.red(`Error: ${flagName} belongs to the provider migration remote shell and is disabled on the DSXU Code default local CLI/TUI mainline. Set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated migration work.\n`));
+function blockArchivedServiceShell(flagName: string): never {
+  process.stderr.write(chalk.red(`Error: ${flagName} belongs to the archived remote shell and is disabled on the DSXU Code default local CLI/TUI mainline. Set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated archived override work.\n`));
   process.exit(1);
 }
 
 function loadRemoteManagedSettingsIfAllowed(): void {
-  if (!shouldLoadProviderMigrationServiceShell()) return;
+  if (!shouldLoadArchivedServiceShell()) return;
   void import('./services/remoteManagedSettings/index.js').then(m => m.loadRemoteManagedSettings());
 }
 
 function refreshRemoteManagedSettingsIfAllowed(): void {
-  if (!shouldLoadProviderMigrationServiceShell()) return;
+  if (!shouldLoadArchivedServiceShell()) return;
   void import('./services/remoteManagedSettings/index.js').then(m => m.refreshRemoteManagedSettings());
 }
 
@@ -320,7 +320,7 @@ function getCertEnvVarTelemetry(): Record<string, boolean> {
   if (process.env.NODE_EXTRA_CA_CERTS) {
     result.has_node_extra_ca_certs = true;
   }
-  if (process.env[providerMigrationCodeEnv('CLIENT_CERT')]) {
+  if (process.env[archivedCodeEnv('CLIENT_CERT')]) {
     result.has_client_cert = true;
   }
   if (hasNodeOption('--use-system-ca')) {
@@ -347,7 +347,7 @@ async function logStartupTelemetry(): Promise<void> {
   });
 }
 
-// @[MODEL LAUNCH]: Consider whether DSXU needs a provider-migration projection for saved model strings.
+// @[MODEL LAUNCH]: Consider whether DSXU needs an archived projection for saved model strings.
 // Bump this when adding a new sync migration so existing users re-run the set.
 const CURRENT_MIGRATION_VERSION = 11;
 function runMigrations(): void {
@@ -355,16 +355,16 @@ function runMigrations(): void {
     migrateAutoUpdatesToSettings();
     migrateBypassPermissionsAcceptedToSettings();
     migrateEnableAllProjectMcpServersToSettings();
-    runProviderMigrationDefaultModelMigration();
-    runProviderMigrationLongContextPinMigration();
-    runProviderMigrationExplicitModelCleanup();
-    runProviderMigrationTierModelCleanup();
+    runArchivedDefaultModelMigration();
+    runArchivedLongContextPinMigration();
+    runArchivedExplicitModelCleanup();
+    runArchivedTierModelCleanup();
     migrateReplBridgeEnabledToRemoteControlAtStartup();
     if (feature('TRANSCRIPT_CLASSIFIER')) {
       resetAutoModeOptInForDefaultOffer();
     }
     if (false) {
-      runProviderMigrationExternalProviderAliasMigration();
+      runArchivedExternalProviderAliasMigration();
     }
     saveGlobalConfig(prev => prev.migrationVersion === CURRENT_MIGRATION_VERSION ? prev : {
       ...prev,
@@ -416,7 +416,7 @@ export function startDeferredPrefetches(): void {
   // However, the spawned processes and async work still contend for CPU and event
   // loop time, which skews startup benchmarks (CPU profiles, time-to-first-render
   // measurements). Skip all of it when we're only measuring startup performance.
-  if (isEnvTruthy(process.env[providerMigrationCodeEnv('EXIT_AFTER_FIRST_RENDER')]) ||
+  if (isEnvTruthy(process.env[archivedCodeEnv('EXIT_AFTER_FIRST_RENDER')]) ||
   // --bare: skip ALL prefetches. These are cache-warms for the REPL's
   // first-turn responsiveness (initUser, getUserContext, tips, countFiles,
   // modelCapabilities, change detectors). Scripted -p calls don't have a
@@ -431,10 +431,10 @@ export function startDeferredPrefetches(): void {
   void getUserContext();
   prefetchSystemContextIfSafe();
   void getRelevantTips();
-  if (isEnvTruthy(process.env[providerMigrationCodeEnv('USE_BEDROCK')]) && !isEnvTruthy(process.env[providerMigrationCodeEnv('SKIP_BEDROCK_AUTH')])) {
+  if (isEnvTruthy(process.env[archivedCodeEnv('USE_BEDROCK')]) && !isEnvTruthy(process.env[archivedCodeEnv('SKIP_BEDROCK_AUTH')])) {
     void prefetchAwsCredentialsAndBedRockInfoIfSafe();
   }
-  if (isEnvTruthy(process.env[providerMigrationCodeEnv('USE_VERTEX')]) && !isEnvTruthy(process.env[providerMigrationCodeEnv('SKIP_VERTEX_AUTH')])) {
+  if (isEnvTruthy(process.env[archivedCodeEnv('USE_VERTEX')]) && !isEnvTruthy(process.env[archivedCodeEnv('SKIP_VERTEX_AUTH')])) {
     void prefetchGcpCredentialsIfSafe();
   }
   void countFilesRoundedRg(getCwd(), AbortSignal.timeout(3000), []);
@@ -542,7 +542,7 @@ function eagerLoadSettings(): void {
 }
 function initializeEntrypoint(isNonInteractive: boolean): void {
   // Skip if already set (e.g., by SDK or other entrypoints)
-  if (process.env[providerMigrationCodeEnv('ENTRYPOINT')]) {
+  if (process.env[archivedCodeEnv('ENTRYPOINT')]) {
     return;
   }
   const cliArgs = process.argv.slice(2);
@@ -550,19 +550,19 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
   // Check for MCP serve command (handle flags before mcp serve, e.g., --debug mcp serve)
   const mcpIndex = cliArgs.indexOf('mcp');
   if (mcpIndex !== -1 && cliArgs[mcpIndex + 1] === 'serve') {
-    process.env[providerMigrationCodeEnv('ENTRYPOINT')] = 'mcp';
+    process.env[archivedCodeEnv('ENTRYPOINT')] = 'mcp';
     return;
   }
-  if (isEnvTruthy(process.env[providerMigrationCodeEnv('ACTION')])) {
-    process.env[providerMigrationCodeEnv('ENTRYPOINT')] = 'dsxu-code-github-action';
+  if (isEnvTruthy(process.env[archivedCodeEnv('ACTION')])) {
+    process.env[archivedCodeEnv('ENTRYPOINT')] = 'dsxu-code-github-action';
     return;
   }
 
   // Note: 'local-agent' entrypoint is set by the local agent mode launcher
-  // via provider-migration ENTRYPOINT env alias (handled by early return above)
+  // via archived ENTRYPOINT env alias (handled by early return above)
 
   // Set based on interactive status
-  process.env[providerMigrationCodeEnv('ENTRYPOINT')] = isNonInteractive ? 'sdk-cli' : 'cli';
+  process.env[archivedCodeEnv('ENTRYPOINT')] = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
 // Set by early argv processing when `dsxu-code open <url>` is detected (interactive mode only)
@@ -689,7 +689,7 @@ export async function main() {
     // URL arrives via Apple Event (not argv). LaunchServices overwrites
     // __CFBundleIdentifier to the launching bundle's ID, which is a precise
     // positive signal -cheaper than importing and guessing with heuristics.
-    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === `com.${'anth' + 'ropic'}.${PROVIDER_MIGRATION_CODE_COMMAND}-code-url-handler`) {
+    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === `com.${'anth' + 'ropic'}.${ARCHIVED_CODE_COMMAND}-code-url-handler`) {
       const {
         enableConfigs
       } = await import('./utils/config.js');
@@ -843,34 +843,34 @@ export async function main() {
   // Determine client type
   const clientType = (() => {
     if (isEnvTruthy(process.env.GITHUB_ACTIONS)) return 'github-action';
-    const entrypoint = process.env[providerMigrationCodeEnv('ENTRYPOINT')];
+    const entrypoint = process.env[archivedCodeEnv('ENTRYPOINT')];
     if (entrypoint === 'sdk-ts') return 'sdk-typescript';
     if (entrypoint === 'sdk-py') return 'sdk-python';
     if (entrypoint === 'sdk-cli') return 'sdk-cli';
-    if (entrypoint === PROVIDER_MIGRATION_VSCODE_CLIENT) return PROVIDER_MIGRATION_VSCODE_CLIENT;
+    if (entrypoint === ARCHIVED_VSCODE_CLIENT) return ARCHIVED_VSCODE_CLIENT;
     if (entrypoint === 'local-agent') return 'local-agent';
-    if (entrypoint === PROVIDER_MIGRATION_DESKTOP_CLIENT) return PROVIDER_MIGRATION_DESKTOP_CLIENT;
+    if (entrypoint === ARCHIVED_DESKTOP_CLIENT) return ARCHIVED_DESKTOP_CLIENT;
 
     // Check if session-ingress token is provided (indicates remote session)
-    const hasSessionIngressToken = process.env[providerMigrationCodeEnv('SESSION_ACCESS_TOKEN')] || process.env[providerMigrationCodeEnv('WEBSOCKET_AUTH_FILE_DESCRIPTOR')];
+    const hasSessionIngressToken = process.env[archivedCodeEnv('SESSION_ACCESS_TOKEN')] || process.env[archivedCodeEnv('WEBSOCKET_AUTH_FILE_DESCRIPTOR')];
     if (entrypoint === 'remote' || hasSessionIngressToken) {
       return 'remote';
     }
     return 'cli';
   })();
   setClientType(clientType);
-  const previewFormat = process.env[providerMigrationCodeEnv('QUESTION_PREVIEW_FORMAT')];
+  const previewFormat = process.env[archivedCodeEnv('QUESTION_PREVIEW_FORMAT')];
   if (previewFormat === 'markdown' || previewFormat === 'html') {
     setQuestionPreviewFormat(previewFormat);
   } else if (!clientType.startsWith('sdk-') &&
   // Desktop and CCR pass previewFormat via toolConfig; when the feature is
   // gated off they pass undefined -don't override that with markdown.
-  clientType !== PROVIDER_MIGRATION_DESKTOP_CLIENT && clientType !== 'local-agent' && clientType !== 'remote') {
+  clientType !== ARCHIVED_DESKTOP_CLIENT && clientType !== 'local-agent' && clientType !== 'remote') {
     setQuestionPreviewFormat('markdown');
   }
 
   // Tag sessions created via `dsxu-code remote-control` so the backend can identify them
-  if (process.env[providerMigrationCodeEnv('ENVIRONMENT_KIND')] === 'bridge') {
+  if (process.env[archivedCodeEnv('ENVIRONMENT_KIND')] === 'bridge') {
     setSessionSource('remote-control');
   }
   profileCheckpoint('main_client_type_determined');
@@ -946,7 +946,7 @@ async function run(): Promise<CommanderCommand> {
     // process.title on Windows sets the console title directly; on POSIX,
     // terminal shell integration may mirror the process name to the tab.
     // After init() so settings.json env can also gate this (gh-4765).
-    if (!isEnvTruthy(process.env[providerMigrationCodeEnv('DISABLE_TERMINAL_TITLE')])) {
+    if (!isEnvTruthy(process.env[archivedCodeEnv('DISABLE_TERMINAL_TITLE')])) {
       process.title = 'dsxu-code';
     }
 
@@ -977,8 +977,8 @@ async function run(): Promise<CommanderCommand> {
     runMigrations();
     profileCheckpoint('preAction_after_migrations');
 
-    // Provider migration remote-managed settings are not part of the DSXU
-    // default local CLI/TUI mainline. Keep the migration path explicit.
+    // Archived remote-managed settings are not part of the DSXU
+    // default local CLI/TUI mainline. Keep the archived path explicit.
     loadRemoteManagedSettingsIfAllowed();
     void loadPolicyLimits();
     profileCheckpoint('preAction_after_remote_settings');
@@ -994,7 +994,7 @@ async function run(): Promise<CommanderCommand> {
   const productName = isDSXUCodeMode ? 'DSXU Code' : 'DSXU Code';
   const commandName = 'dsxu-code';
   const bareModeHelp = isDSXUCodeMode
-    ? 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU.md auto-discovery. Sets DSXU_CODE_SIMPLE=1 and provider-migration simple-mode alias. DSXU auth uses DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.'
+    ? 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU.md auto-discovery. Sets DSXU_CODE_SIMPLE=1 and archived simple-mode alias. DSXU auth uses DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.'
     : 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and DSXU instruction auto-discovery. Sets DSXU_CODE_SIMPLE=1. Provider auth is API-key or apiKeyHelper via --settings; OAuth and keychain are not read. 3P providers use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir, --mcp-config, --settings, --agents, --plugin-dir.';
   const modelHelp = isDSXUCodeMode
     ? `Model for the current session. Provide a DSXU/DeepSeek alias (e.g. 'flash', 'pro', 'deepseek-v4-flash', or 'deepseek-v4-pro').`
@@ -1057,7 +1057,7 @@ async function run(): Promise<CommanderCommand> {
     if ((options as {
       bare?: boolean;
     }).bare) {
-      process.env[providerMigrationCodeEnv('SIMPLE')] = '1';
+      process.env[archivedCodeEnv('SIMPLE')] = '1';
     }
 
     // Ignore "code" as a prompt - treat it the same as no prompt
@@ -1159,7 +1159,7 @@ async function run(): Promise<CommanderCommand> {
     const agentsJson = options.agents;
     const agentCli = options.agent;
     if (feature('BG_SESSIONS') && agentCli) {
-      process.env[providerMigrationCodeEnv('AGENT')] = agentCli;
+      process.env[archivedCodeEnv('AGENT')] = agentCli;
     }
 
     // NOTE: LSP manager initialization is intentionally deferred until after
@@ -1184,7 +1184,7 @@ async function run(): Promise<CommanderCommand> {
     }).tasks;
     const taskListId = tasksOption ? typeof tasksOption === 'string' ? tasksOption : DEFAULT_TASKS_MODE_TASK_LIST_ID : undefined;
     if (false && taskListId) {
-      process.env[providerMigrationCodeEnv('TASK_LIST_ID')] = taskListId;
+      process.env[archivedCodeEnv('TASK_LIST_ID')] = taskListId;
     }
 
     // Extract worktree option
@@ -1231,7 +1231,7 @@ async function run(): Promise<CommanderCommand> {
     let storedTeammateOpts: TeammateOptions | undefined;
     if (isAgentSwarmsEnabled()) {
       // Extract agent identity options (for tmux-spawned agents)
-      // These replace the provider-migration env identity aliases
+      // These replace the archived env identity aliases
       const teammateOpts = extractTeammateOptions(options);
       storedTeammateOpts = teammateOpts;
 
@@ -1268,12 +1268,12 @@ async function run(): Promise<CommanderCommand> {
     }).sdkUrl ?? undefined;
 
     // Allow env var to enable partial messages (used by sandbox gateway for baku)
-    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env[providerMigrationCodeEnv('INCLUDE_PARTIAL_MESSAGES')]);
+    const effectiveIncludePartialMessages = includePartialMessages || isEnvTruthy(process.env[archivedCodeEnv('INCLUDE_PARTIAL_MESSAGES')]);
 
     // Enable all hook event types when explicitly requested via SDK option
-    // or when running in provider-migration remote mode (CCR needs them).
+    // or when running in archived remote mode (CCR needs them).
     // Without this, only SessionStart and Setup events are emitted.
-    if (includeHookEvents || isEnvTruthy(process.env[providerMigrationCodeEnv('REMOTE')])) {
+    if (includeHookEvents || isEnvTruthy(process.env[archivedCodeEnv('REMOTE')])) {
       setAllHookEventsEnabled(true);
     }
 
@@ -1318,10 +1318,10 @@ async function run(): Promise<CommanderCommand> {
     let remoteControl = false;
     const remoteControlName = typeof remoteControlOption === 'string' && remoteControlOption.length > 0 ? remoteControlOption : undefined;
 
-    if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
-      if (teleport) blockProviderMigrationServiceShell('--teleport');
-      if (remote !== null) blockProviderMigrationServiceShell('--remote');
-      if (remoteControlOption !== undefined) blockProviderMigrationServiceShell('--remote-control/--rc');
+    if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
+      if (teleport) blockArchivedServiceShell('--teleport');
+      if (remote !== null) blockArchivedServiceShell('--remote');
+      if (remoteControlOption !== undefined) blockArchivedServiceShell('--remote-control/--rc');
     }
 
     // Validate session ID if provided
@@ -1357,15 +1357,15 @@ async function run(): Promise<CommanderCommand> {
       file?: string[];
     }).file;
     if (fileSpecs && fileSpecs.length > 0) {
-      // Get session ingress token (provided by the DSXU/provider-migration EnvManager)
+      // Get session ingress token (provided by the DSXU/archived EnvManager)
       const sessionToken = getSessionIngressAuthToken();
       if (!sessionToken) {
-        process.stderr.write(chalk.red(`Error: Session token required for file downloads. ${providerMigrationCodeEnv('SESSION_ACCESS_TOKEN')} must be set.\n`));
+        process.stderr.write(chalk.red(`Error: Session token required for file downloads. ${archivedCodeEnv('SESSION_ACCESS_TOKEN')} must be set.\n`));
         process.exit(1);
       }
 
       // Resolve session ID: prefer remote session ID, fall back to internal session ID
-      const fileSessionId = process.env[providerMigrationCodeEnv('REMOTE_SESSION_ID')] || getSessionId();
+      const fileSessionId = process.env[archivedCodeEnv('REMOTE_SESSION_ID')] || getSessionId();
       const files = parseFileSpecs(fileSpecs);
       if (files.length > 0) {
         const filesApiBaseUrl = resolveStartupFilesApiBaseUrl();
@@ -1831,21 +1831,21 @@ async function run(): Promise<CommanderCommand> {
     });
     void assertMinVersion();
 
-    // Provider migration config fetch: -p mode only (interactive uses useManageMCPConnections
+    // Archived config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
-    const providerMigrationMcpConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() && isProviderMigrationMcpEnabled() &&
-    // --bare / SIMPLE: skip provider migration proxy servers (datadog, Gmail,
+    const archivedMcpConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() && isArchivedMcpEnabled() &&
+    // --bare / SIMPLE: skip archived proxy servers (datadog, Gmail,
     // Slack, BigQuery, PubMed -6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
-    !isBareMode() ? import('src/services/mcp/providerConnectorMigration.js').then(m => m.fetchProviderMigrationMcpConfigsIfEligible()).then(configs => {
+    !isBareMode() ? import('src/services/mcp/providerConnectorMigration.js').then(m => m.fetchArchivedMcpConfigsIfEligible()).then(configs => {
       const {
         allowed,
         blocked
       } = filterMcpServersByPolicy(configs);
       if (blocked.length > 0) {
-        process.stderr.write(`Warning: provider migration MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
+        process.stderr.write(`Warning: archived MCP ${plural(blocked.length, 'server')} blocked by enterprise policy: ${blocked.join(', ')}\n`);
       }
       return allowed;
     }) : Promise.resolve({});
@@ -1922,7 +1922,7 @@ async function run(): Promise<CommanderCommand> {
 
     // Apply coordinator mode tool filtering for headless path
     // (mirrors useMergedTools.ts filtering for REPL/interactive path)
-    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env[providerMigrationCodeEnv('COORDINATOR_MODE')])) {
+    if (feature('COORDINATOR_MODE') && isEnvTruthy(process.env[archivedCodeEnv('COORDINATOR_MODE')])) {
       const {
         applyCoordinatorToolFilter
       } = await import('./utils/toolPool.js');
@@ -1970,12 +1970,12 @@ async function run(): Promise<CommanderCommand> {
     // pure in-memory array pushes (<1ms, zero I/O) that getBundledSkills()
     // reads synchronously. Previously ran inside setup() after ~20ms of
     // await points, so the parallel getCommands() memoized an empty list.
-    if (process.env[providerMigrationCodeEnv('ENTRYPOINT')] !== 'local-agent') {
-      // V15: bundled provider-migration plugins are retired from default startup.
+    if (process.env[archivedCodeEnv('ENTRYPOINT')] !== 'local-agent') {
+      // Bundled archived plugins are retired from default startup.
       // DSXU plugin/tool semantics now enter through the control plane.
       initBundledSkills();
     }
-    const setupPromise = process.env[providerMigrationCodeEnv('LOCAL_RECOVERY')] === '1' ? (async () => {
+    const setupPromise = process.env[archivedCodeEnv('LOCAL_RECOVERY')] === '1' ? (async () => {
       setOriginalCwd(preSetupCwd);
       setProjectRoot(preSetupCwd);
       logForDebugging('[STARTUP] setup() skipped in local recovery mode');
@@ -2066,10 +2066,10 @@ async function run(): Promise<CommanderCommand> {
     // fresh pods. Awaiting init here populates the in-memory payload map that
     // _CACHED_MAY_BE_STALE now checks first. Gated so the warm path stays
     // non-blocking:
-    //  - explicit model via --model or DSXU provider migration model env (both feed alias resolution)
+    //  - explicit model via --model or DSXU archived model env (both feed alias resolution)
     //  - no env override (which short-circuits _CACHED_MAY_BE_STALE before disk)
     //  - flag absent from disk (== null also catches pre-#22279 poisoned null)
-    const explicitModel = options.model || process.env[DSXU_PROVIDER_MIGRATION_MODEL_ENV];
+    const explicitModel = options.model || process.env[ARCHIVED_PROVIDER_MODEL_ENV];
     if (false && explicitModel && explicitModel !== 'default' && !hasFeatureFlagEnvOverride('tengu_ant_model_override') && getGlobalConfig().cachedGrowthBookFeatures?.['tengu_ant_model_override'] == null) {
       await initializeFeatureFlags();
     }
@@ -2256,7 +2256,7 @@ async function run(): Promise<CommanderCommand> {
     // access and conflict with delegation instructions.
     if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
       proactive?: boolean;
-    }).proactive || isEnvTruthy(process.env[providerMigrationCodeEnv('PROACTIVE')])) && !coordinatorModeModule?.isCoordinatorMode()) {
+    }).proactive || isEnvTruthy(process.env[archivedCodeEnv('PROACTIVE')])) && !coordinatorModeModule?.isCoordinatorMode()) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const briefVisibility = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('./tools/BriefTool/BriefTool.js') as typeof import('./tools/BriefTool/BriefTool.js')).isBriefEnabled() ? 'Call SendUserMessage at checkpoints to mark where things stand.' : 'The user will see any text you output.' : 'The user will see any text you output.';
       /* eslint-enable @typescript-eslint/no-require-imports */
@@ -2279,7 +2279,7 @@ async function run(): Promise<CommanderCommand> {
       const ctx = getRenderContext(false);
       getFpsMetrics = ctx.getFpsMetrics;
       stats = ctx.stats;
-      // Install asciicast recorder before Ink mounts (dsxu-internal, opt-in via provider-migration TERMINAL_RECORDING=1)
+      // Install asciicast recorder before Ink mounts (dsxu-internal, opt-in via archived TERMINAL_RECORDING=1)
       if (false) {
         installAsciicastRecorder();
       }
@@ -2350,7 +2350,7 @@ async function run(): Promise<CommanderCommand> {
         // -enrollTrustedDevice() via checkGate_CACHED_OR_BLOCKING (awaits
         // the feature flag provider reinit above), clearTrustedDeviceToken() via the
         // sync cached check (acceptable since clear is idempotent).
-        if (shouldLoadProviderMigrationServiceShell()) {
+        if (shouldLoadArchivedServiceShell()) {
           void import('./services/bridge/dsxuRemoteBridgeFacade.js').then(m => {
             m.clearTrustedDeviceToken();
             return m.enrollTrustedDevice();
@@ -2472,11 +2472,11 @@ async function run(): Promise<CommanderCommand> {
       tools: [],
       commands: []
     }) : prefetchAllMcpResources(regularMcpConfigs);
-    const providerMigrationMcpPromise = isNonInteractiveSession ? Promise.resolve({
+    const archivedMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
-    }) : providerMigrationMcpConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
+    }) : archivedMcpConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
       clients: [],
       tools: [],
       commands: []
@@ -2485,10 +2485,10 @@ async function run(): Promise<CommanderCommand> {
     // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
     // local dedup flags, so merging two calls can yield duplicates. print.ts
     // already uniqBy's the final tool pool, but dedup here keeps appState clean.
-    const mcpPromise = Promise.all([localMcpPromise, providerMigrationMcpPromise]).then(([local, providerMigration]) => ({
-      clients: [...local.clients, ...providerMigration.clients],
-      tools: uniqBy([...local.tools, ...providerMigration.tools], 'name'),
-      commands: uniqBy([...local.commands, ...providerMigration.commands], 'name')
+    const mcpPromise = Promise.all([localMcpPromise, archivedMcpPromise]).then(([local, archived]) => ({
+      clients: [...local.clients, ...archived.clients],
+      tools: uniqBy([...local.tools, ...archived.tools], 'name'),
+      commands: uniqBy([...local.commands, ...archived.commands], 'name')
     }));
 
     // Start hooks early so they run in parallel with MCP connections.
@@ -2782,35 +2782,35 @@ async function run(): Promise<CommanderCommand> {
       // message and turn-1 tool list both need configured MCP tools present.
       // Zero-server case is free via the early return in connectMcpBatch.
       // Connectors parallelize inside getMcpToolsCommandsAndResources
-      // (processBatched with Promise.all). DSXU provider migration is awaited too -its
+      // (processBatched with Promise.all). DSXU archived config fetch is awaited too -its
       // fetch was kicked off early (line ~2558) so only residual time blocks
-      // here. --bare skips DSXU provider migration entirely for perf-sensitive scripts.
+      // here. --bare skips DSXU archived config fetch entirely for perf-sensitive scripts.
       profileCheckpoint('before_connectMcp');
       await connectMcpBatch(regularMcpConfigs, 'regular');
       profileCheckpoint('after_connectMcp');
-      // Dedup: suppress plugin MCP servers that duplicate a DSXU provider migration
-      // connector (connector wins), then connect DSXU provider migration servers.
+      // Dedup: suppress plugin MCP servers that duplicate a DSXU archived
+      // connector (connector wins), then connect DSXU archived servers.
       // Bounded wait -#23725 made this blocking so single-turn -p sees
       // connectors, but with 40+ slow connectors tengu_startup_perf p99
       // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
       // the promise keeps running and updates headlessStore in the
       // background so turn 2+ still sees connectors.
-      const PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS = 5_000;
-      const providerMigrationConnect = providerMigrationMcpConfigPromise.then(providerMigrationConfigs => {
-        if (Object.keys(providerMigrationConfigs).length > 0) {
-          const providerMigrationSigs = new Set<string>();
-          for (const config of Object.values(providerMigrationConfigs)) {
+      const ARCHIVED_MCP_TIMEOUT_MS = 5_000;
+      const archivedMcpConnect = archivedMcpConfigPromise.then(archivedMcpConfigs => {
+        if (Object.keys(archivedMcpConfigs).length > 0) {
+          const archivedMcpSigs = new Set<string>();
+          for (const config of Object.values(archivedMcpConfigs)) {
             const sig = getMcpServerSignature(config);
-            if (sig) providerMigrationSigs.add(sig);
+            if (sig) archivedMcpSigs.add(sig);
           }
           const suppressed = new Set<string>();
           for (const [name, config] of Object.entries(regularMcpConfigs)) {
             if (!name.startsWith('plugin:')) continue;
             const sig = getMcpServerSignature(config);
-            if (sig && providerMigrationSigs.has(sig)) suppressed.add(name);
+            if (sig && archivedMcpSigs.has(sig)) suppressed.add(name);
           }
           if (suppressed.size > 0) {
-            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate DSXU provider migration connectors: ${[...suppressed].join(', ')}`);
+            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate DSXU archived connectors: ${[...suppressed].join(', ')}`);
             // Disconnect before filtering from state. Only connected
             // servers need cleanup -clearServerCache on a never-connected
             // server triggers a real connect just to kill it (memoize
@@ -2846,27 +2846,27 @@ async function run(): Promise<CommanderCommand> {
             });
           }
         }
-        // Suppress provider migration connectors that duplicate an enabled
+        // Suppress archived connectors that duplicate an enabled
         // manual server (URL-signature match). Plugin dedup above only
         // handles `plugin:*` keys; this catches manual `.mcp.json` entries.
         // plugin:* must be excluded here -step 1 already suppressed
-        // those (provider migration wins); leaving them in suppresses the
+        // those (archived connector wins); leaving them in suppresses the
         // connector too, and neither survives (gh-39974).
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
         const {
-          servers: dedupedProviderMigration
-        } = dedupProviderMigrationMcpServers(providerMigrationConfigs, nonPluginConfigs);
-        return connectMcpBatch(dedupedProviderMigration, PROVIDER_MIGRATION_CLOUD_SOURCE);
+          servers: dedupedArchivedMcp
+        } = dedupArchivedMcpServers(archivedMcpConfigs, nonPluginConfigs);
+        return connectMcpBatch(dedupedArchivedMcp, ARCHIVED_CLOUD_SOURCE);
       });
-      let providerMigrationTimer: ReturnType<typeof setTimeout> | undefined;
-      const providerMigrationTimedOut = await Promise.race([providerMigrationConnect.then(() => false), new Promise<boolean>(resolve => {
-        providerMigrationTimer = setTimeout(r => r(true), PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS, resolve);
+      let archivedMcpTimer: ReturnType<typeof setTimeout> | undefined;
+      const archivedMcpTimedOut = await Promise.race([archivedMcpConnect.then(() => false), new Promise<boolean>(resolve => {
+        archivedMcpTimer = setTimeout(r => r(true), ARCHIVED_MCP_TIMEOUT_MS, resolve);
       })]);
-      if (providerMigrationTimer) clearTimeout(providerMigrationTimer);
-      if (providerMigrationTimedOut) {
-        logForDebugging(`[MCP] provider connectors not ready after ${PROVIDER_MIGRATION_CLOUD_MCP_TIMEOUT_MS}ms; proceeding while background connection continues`);
+      if (archivedMcpTimer) clearTimeout(archivedMcpTimer);
+      if (archivedMcpTimedOut) {
+        logForDebugging(`[MCP] archived connectors not ready after ${ARCHIVED_MCP_TIMEOUT_MS}ms; proceeding while background connection continues`);
       }
-      profileCheckpoint('after_connectMcp_provider_migration_cloud');
+      profileCheckpoint('after_connectMcp_archived_cloud');
 
       // In headless mode, start deferred prefetches immediately (no user typing delay)
       // --bare / SIMPLE: startDeferredPrefetches early-returns internally.
@@ -2959,7 +2959,7 @@ async function run(): Promise<CommanderCommand> {
     // Log model config at startup
     logEvent('tengu_startup_manual_model_config', {
       cli_flag: options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      env_var: process.env[DSXU_PROVIDER_MIGRATION_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      env_var: process.env[ARCHIVED_PROVIDER_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       settings_file: (getInitialSettings() || {}).model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       subscriptionType: getSubscriptionType() as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       agent: agentSetting as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -3155,7 +3155,7 @@ async function run(): Promise<CommanderCommand> {
     // environments can be recreated at any user message index. Gating:
     //   - Build-time: this import is stubbed in external builds.
     //   - Runtime: uploader checks provider-owned remote + gcloud auth.
-    //   - Safety: provider-migration DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
+    //   - Safety: archived DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
     // Import is dynamic + async to avoid adding startup latency.
     const sessionUploaderPromise = false ? import('./utils/sessionDataUploader.js') : null;
 
@@ -3357,8 +3357,8 @@ async function run(): Promise<CommanderCommand> {
       // of a remote assistant session. The agentic loop runs remotely; this
       // process streams live events and POSTs messages. History is lazy-
       // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
-      if (!shouldLoadProviderMigrationServiceShell()) {
-        blockProviderMigrationServiceShell('assistant remote viewer');
+      if (!shouldLoadArchivedServiceShell()) {
+        blockArchivedServiceShell('assistant remote viewer');
       }
       const {
         discoverAssistantSessions
@@ -3974,7 +3974,7 @@ async function run(): Promise<CommanderCommand> {
   }
 
   // Teammate identity options (set by leader when spawning tmux teammates)
-  // These replace the provider-migration env identity aliases
+  // These replace the archived env identity aliases
   program.addOption(new Option('--agent-id <id>', 'Teammate agent ID').hideHelp());
   program.addOption(new Option('--agent-name <name>', 'Teammate display name').hideHelp());
   program.addOption(new Option('--team-name <name>', 'Team name for swarm coordination').hideHelp());
@@ -4077,7 +4077,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddJsonHandler(name, json, options);
   });
-  mcp.command('import-desktop').description('Import MCP servers from DSXU desktop MCP config; provider-migration desktop config is migration-only').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command('import-desktop').description('Import MCP servers from DSXU desktop MCP config; archived desktop config is explicit intake only').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -4085,7 +4085,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddFromDesktopHandler(options);
   });
-  mcp.command(PROVIDER_MIGRATION_DESKTOP_IMPORT_COMMAND).description('Provider migration: import MCP servers from a provider-migration desktop config into DSXU').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command(ARCHIVED_DESKTOP_IMPORT_COMMAND).description('Archived intake: import MCP servers from an archived desktop config into DSXU').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -4241,10 +4241,11 @@ async function run(): Promise<CommanderCommand> {
   // DSXU provider auth
 
   const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Sign in to your DSXU provider account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use provider console API usage billing').option(DSXU_PROVIDER_MIGRATION_SUBSCRIPTION_OPTION, 'Use provider subscription (default)').action(async (loginOptions: {
+  auth.command('login').description('Sign in to your DSXU provider account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use provider console API usage billing').option('--api-key-stdin', 'Read a DSXU/DeepSeek API key from stdin and save it locally').option(ARCHIVED_PROVIDER_SUBSCRIPTION_OPTION, 'Use provider subscription (default)').action(async (loginOptions: {
     email?: string;
     sso?: boolean;
     console?: boolean;
+    apiKeyStdin?: boolean;
     [key: string]: boolean | string | undefined;
   }) => {
     const {
@@ -4252,7 +4253,7 @@ async function run(): Promise<CommanderCommand> {
       sso,
       console: useConsole
     } = loginOptions;
-    const providerMigrationLogin = Boolean(loginOptions[PROVIDER_MIGRATION_CLOUD_SOURCE]);
+    const archivedProviderLogin = Boolean(loginOptions[ARCHIVED_CLOUD_SOURCE]);
     const {
       authLogin
     } = await import('./cli/handlers/auth.js');
@@ -4260,7 +4261,8 @@ async function run(): Promise<CommanderCommand> {
       email,
       sso,
       console: useConsole,
-      [PROVIDER_MIGRATION_CLOUD_SOURCE]: providerMigrationLogin
+      apiKeyStdin: Boolean(loginOptions.apiKeyStdin),
+      [ARCHIVED_CLOUD_SOURCE]: archivedProviderLogin
     });
   });
   auth.command('status').description('Show authentication status').option('--json', 'Output as JSON (default)').option('--text', 'Output as human-readable text').action(async (opts: {
@@ -4455,7 +4457,7 @@ async function run(): Promise<CommanderCommand> {
     }
   }
 
-  // Remote Control command -connect local environment to DSXU provider migration/code.
+  // Remote Control command -connect local environment to DSXU archived/code.
   // The actual command is intercepted by the fast-path in cli.tsx before
   // Commander.js runs, so this registration exists only for help output.
   // Always hidden: isBridgeEnabled() at this point (before enableConfigs)
@@ -4759,7 +4761,7 @@ async function logTenguInit({
 function maybeActivateProactive(options: unknown): void {
   if ((feature('PROACTIVE') || feature('KAIROS')) && ((options as {
     proactive?: boolean;
-  }).proactive || isEnvTruthy(process.env[providerMigrationCodeEnv('PROACTIVE')]))) {
+  }).proactive || isEnvTruthy(process.env[archivedCodeEnv('PROACTIVE')]))) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const proactiveModule = require('./proactive/index.js');
     if (!proactiveModule.isProactiveActive()) {
@@ -4772,12 +4774,12 @@ function maybeActivateBrief(options: unknown): void {
   const briefFlag = (options as {
     brief?: boolean;
   }).brief;
-  const briefEnv = isEnvTruthy(process.env[providerMigrationCodeEnv('BRIEF')]);
+  const briefEnv = isEnvTruthy(process.env[archivedCodeEnv('BRIEF')]);
   if (!briefFlag && !briefEnv) return;
-  // --brief / provider-migration BRIEF are explicit opt-ins: check entitlement,
+  // --brief / archived BRIEF are explicit opt-ins: check entitlement,
   // then set userMsgOptIn to activate the tool + prompt section. The env
   // var also grants entitlement (isBriefEntitled() reads it), so setting
-  // provider-migration BRIEF=1 alone force-enables for dev/testing; no GB gate
+  // archived BRIEF=1 alone force-enables for dev/testing; no GB gate
   // needed. initialIsBriefOnly reads getUserMsgOptIn() directly.
   // Conditional require: static import would leak the tool name string
   // into external builds via BriefTool.ts and prompt.ts.

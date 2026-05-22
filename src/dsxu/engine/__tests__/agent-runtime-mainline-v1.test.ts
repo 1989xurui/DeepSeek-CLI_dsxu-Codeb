@@ -77,7 +77,7 @@ function git(cwd: string, args: string[]): string {
 }
 
 function makeWorkspaceTempRoot(prefix: string): string {
-  const baseDir = join(process.cwd(), '.dsxu', 'trace', 'v19-agent-runtime-tests')
+  const baseDir = join(process.cwd(), 'tmp', 'agent-runtime-mainline-v1-tests')
   mkdirSync(baseDir, { recursive: true })
   return mkdtempSync(join(baseDir, prefix))
 }

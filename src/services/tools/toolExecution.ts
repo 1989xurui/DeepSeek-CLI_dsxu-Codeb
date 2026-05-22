@@ -132,11 +132,13 @@ import {
 } from './toolHooks.js'
 import {
   getDsxuToolPathLifecycle,
+  buildDsxuToolRuntimeEventBoundary,
   mapDsxuToolResultForLifecycle,
   traceDsxuToolLifecyclePath,
   traceDsxuToolLifecyclePermissionDecision,
   traceDsxuToolLifecycleProgress,
   traceDsxuToolLifecycleResultMapping,
+  traceDsxuToolRuntimeEventBoundary,
 } from './toolLifecycle.js'
 import {
   buildWorkflowPolicyDenialMessage,
@@ -325,7 +327,7 @@ export function getDsxuToolExecutionRuntimeProfile(): {
       'sse-ide',
       'ws-ide',
       'dsxu-provider',
-      'provider-migration-dsxuai-proxy',
+      'archived-dsxuai-proxy',
     ],
     resultDiscipline:
       'tool outputs are normalized into tool_result blocks with optional context modifiers and MCP metadata',
@@ -1401,6 +1403,17 @@ async function checkPermissionsAndCallTool(
       toolUseID,
       tool.name,
       resultMapping,
+    )
+    const toolRuntimeBoundary = buildDsxuToolRuntimeEventBoundary({
+      toolUseID,
+      toolName: tool.name,
+      mapping: resultMapping,
+      startTime,
+    })
+    traceDsxuToolRuntimeEventBoundary(
+      toolUseID,
+      tool.name,
+      toolRuntimeBoundary,
     )
     const mappedToolResultBlock = resultMapping.block
     const toolResultSizeBytes = resultMapping.sizeBytes

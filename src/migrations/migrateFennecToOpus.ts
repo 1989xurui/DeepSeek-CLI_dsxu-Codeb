@@ -50,7 +50,7 @@ export function migrateFennecToOpus(): void {
 export function getDsxuFennecMigrationRuntimeProfile() {
   return {
     runtime: 'DSXU Fennec/Opus Migration Boundary',
-    defaultBehavior: 'provider-migration alias intake is disabled in DSXU runtime so DeepSeek defaults are preserved',
+    defaultBehavior: 'archived alias intake is disabled in DSXU runtime so DeepSeek defaults are preserved',
     providerTarget: 'DSXU DeepSeek Model Policy',
     activationEvidence: [
       'migrateFennecToOpus returns immediately in DSXU mode',

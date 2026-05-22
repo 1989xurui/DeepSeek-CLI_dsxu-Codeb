@@ -101,11 +101,13 @@ function groupBySource<T extends {
 }
 interface Props {
   data: ContextData;
+  advanced?: boolean;
 }
 export function ContextVisualization(t0) {
   const $ = _c(87);
   const {
-    data
+    data,
+    advanced = false
   } = t0;
   const {
     categories,
@@ -389,7 +391,50 @@ export function ContextVisualization(t0) {
   } else {
     t18 = $[86];
   }
-  return t18;
+  if (!advanced) {
+    return t18;
+  }
+  return <Box flexDirection="column">{t18}<ContextAdvancedBreakdown systemTools={systemTools} deferredBuiltinTools={t1 ?? []} systemPromptSections={systemPromptSections} messageBreakdown={messageBreakdown} /></Box>;
+}
+
+function ContextAdvancedBreakdown({
+  systemTools,
+  deferredBuiltinTools,
+  systemPromptSections,
+  messageBreakdown
+}: {
+  systemTools: ContextData['systemTools'];
+  deferredBuiltinTools: NonNullable<ContextData['deferredBuiltinTools']>;
+  systemPromptSections: ContextData['systemPromptSections'];
+  messageBreakdown: ContextData['messageBreakdown'];
+}) {
+  const loadedDeferred = deferredBuiltinTools.filter(tool => tool.isLoaded);
+  const availableDeferred = deferredBuiltinTools.filter(tool => !tool.isLoaded);
+  return <Box flexDirection="column" marginTop={1}>
+      <Text bold={true}>Advanced context breakdown</Text>
+      {(systemTools && systemTools.length > 0 || deferredBuiltinTools.length > 0) && <Box flexDirection="column" marginTop={1}>
+          <Text dimColor={true}>System tools</Text>
+          {systemTools?.map((tool, i) => <Box key={`sys-${i}`} marginLeft={1}><Text>{tool.name}: </Text><Text dimColor={true}>{formatTokens(tool.tokens)} tokens</Text></Box>)}
+          {loadedDeferred.map((tool, i) => <Box key={`def-loaded-${i}`} marginLeft={1}><Text>{tool.name}: </Text><Text dimColor={true}>{formatTokens(tool.tokens)} tokens loaded</Text></Box>)}
+          {availableDeferred.length > 0 && <Text dimColor={true}>available on demand: {availableDeferred.map(tool => tool.name).join(', ')}</Text>}
+        </Box>}
+      {systemPromptSections && systemPromptSections.length > 0 && <Box flexDirection="column" marginTop={1}>
+          <Text dimColor={true}>System prompt sections</Text>
+          {systemPromptSections.map((section, i) => <Box key={`section-${i}`} marginLeft={1}><Text>{section.name}: </Text><Text dimColor={true}>{formatTokens(section.tokens)} tokens</Text></Box>)}
+        </Box>}
+      {messageBreakdown && <Box flexDirection="column" marginTop={1}>
+          <Text dimColor={true}>Message breakdown</Text>
+          <Box marginLeft={1}><Text>Tool calls: </Text><Text dimColor={true}>{formatTokens(messageBreakdown.toolCallTokens)} tokens</Text></Box>
+          <Box marginLeft={1}><Text>Tool results: </Text><Text dimColor={true}>{formatTokens(messageBreakdown.toolResultTokens)} tokens</Text></Box>
+          <Box marginLeft={1}><Text>Attachments: </Text><Text dimColor={true}>{formatTokens(messageBreakdown.attachmentTokens)} tokens</Text></Box>
+          <Box marginLeft={1}><Text>Assistant messages: </Text><Text dimColor={true}>{formatTokens(messageBreakdown.assistantMessageTokens)} tokens</Text></Box>
+          <Box marginLeft={1}><Text>User messages: </Text><Text dimColor={true}>{formatTokens(messageBreakdown.userMessageTokens)} tokens</Text></Box>
+          {messageBreakdown.toolCallsByType.length > 0 && <Box flexDirection="column" marginTop={1}>
+              <Text dimColor={true}>Top tools</Text>
+              {messageBreakdown.toolCallsByType.slice(0, 5).map((tool, i) => <Box key={`top-tool-${i}`} marginLeft={1}><Text>{tool.name}: </Text><Text dimColor={true}>calls {formatTokens(tool.callTokens)}, results {formatTokens(tool.resultTokens)}</Text></Box>)}
+            </Box>}
+        </Box>}
+    </Box>;
 }
 function _temp27(attachment, i_10) {
   return <Box key={i_10} marginLeft={1}><Text>└ {attachment.name}: </Text><Text dimColor={true}>{formatTokens(attachment.tokens)} tokens</Text></Box>;

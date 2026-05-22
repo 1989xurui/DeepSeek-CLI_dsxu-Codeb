@@ -480,6 +480,59 @@ describe('CacheMonitor', () => {
 
     monitor.recordResponse(miss)
     expect(missFn).toHaveBeenCalledTimes(1)
+    expect(missFn).toHaveBeenLastCalledWith(expect.objectContaining({
+      mode: 'dry-run',
+      consecutiveMisses: 2,
+      inputTokens: 100,
+      reason: expect.stringContaining('cache miss'),
+      command: expect.stringContaining('cache:reality-run'),
+      claimBoundary: expect.stringContaining('no provider call'),
+      performanceBoundary: expect.stringContaining('observability-only event'),
+    }))
+    expect(monitor.getCacheMissWarmupEvents()).toHaveLength(1)
+    expect(monitor.getCacheMissWarmupEvents()[0].mode).toBe('dry-run')
+  })
+
+  it('should debounce cache miss warmup during the same miss streak', () => {
+    const missFn = vi.fn()
+    const monitor = new CacheMonitor({ onCacheMiss: missFn, cacheMissWarmupDebounceMs: 60_000 })
+    const miss = { content: '', toolCalls: [] as any[], stopReason: 'end_turn' as const, usage: { inputTokens: 100, outputTokens: 10 } }
+
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+
+    expect(missFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should allow a new cache miss warmup after a hit resets the streak', () => {
+    const missFn = vi.fn()
+    const monitor = new CacheMonitor({ onCacheMiss: missFn, cacheMissWarmupDebounceMs: 60_000 })
+    const miss = { content: '', toolCalls: [] as any[], stopReason: 'end_turn' as const, usage: { inputTokens: 100, outputTokens: 10 } }
+    const hit = { ...miss, usage: { inputTokens: 100, outputTokens: 10, cacheHit: true } }
+
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+    monitor.recordResponse(hit)
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+
+    expect(missFn).toHaveBeenCalledTimes(2)
+    expect(monitor.getCacheMissWarmupEvents()).toHaveLength(2)
+  })
+
+  it('should clear cache miss warmup ledger on reset', () => {
+    const missFn = vi.fn()
+    const monitor = new CacheMonitor({ onCacheMiss: missFn })
+    const miss = { content: '', toolCalls: [] as any[], stopReason: 'end_turn' as const, usage: { inputTokens: 100, outputTokens: 10 } }
+
+    monitor.recordResponse(miss)
+    monitor.recordResponse(miss)
+
+    expect(monitor.getCacheMissWarmupEvents()).toHaveLength(1)
+    monitor.reset()
+    expect(monitor.getCacheMissWarmupEvents()).toEqual([])
   })
 
   it('should detect L1 hash change', () => {

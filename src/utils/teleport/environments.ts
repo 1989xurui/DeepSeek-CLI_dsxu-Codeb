@@ -6,13 +6,13 @@ import { toError } from '../errors.js'
 import { logError } from '../log.js'
 import { getOAuthHeaders } from './api.js'
 
-const PROVIDER_MIGRATION_SOURCE_TOKEN = 'anth' + 'ropic'
-const PROVIDER_MIGRATION_CLOUD_KIND = `${PROVIDER_MIGRATION_SOURCE_TOKEN}_cloud` as const
-const PROVIDER_MIGRATION_ENVIRONMENT_TYPE = PROVIDER_MIGRATION_SOURCE_TOKEN
-const PROVIDER_MIGRATION_BETA_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-beta`
+const ARCHIVED_PROVIDER_SOURCE_TOKEN = 'anth' + 'ropic'
+const ARCHIVED_PROVIDER_CLOUD_KIND = `${ARCHIVED_PROVIDER_SOURCE_TOKEN}_cloud` as const
+const ARCHIVED_PROVIDER_ENVIRONMENT_TYPE = ARCHIVED_PROVIDER_SOURCE_TOKEN
+const ARCHIVED_PROVIDER_BETA_HEADER = `${ARCHIVED_PROVIDER_SOURCE_TOKEN}-beta`
 
 export type EnvironmentKind =
-  | typeof PROVIDER_MIGRATION_CLOUD_KIND
+  | typeof ARCHIVED_PROVIDER_CLOUD_KIND
   | 'byoc'
   | 'bridge'
 export type EnvironmentState = 'active'
@@ -78,7 +78,7 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
 }
 
 /**
- * Creates a default provider-migration cloud environment for users who have none.
+ * Creates a default archived cloud environment for users who have none.
  * Uses the public environment_providers route (same auth as fetchEnvironments).
  */
 export async function createDefaultCloudEnvironment(
@@ -98,10 +98,10 @@ export async function createDefaultCloudEnvironment(
     url,
     {
       name,
-      kind: PROVIDER_MIGRATION_CLOUD_KIND,
+      kind: ARCHIVED_PROVIDER_CLOUD_KIND,
       description: '',
       config: {
-        environment_type: PROVIDER_MIGRATION_ENVIRONMENT_TYPE,
+        environment_type: ARCHIVED_PROVIDER_ENVIRONMENT_TYPE,
         cwd: '/home/user',
         init_script: null,
         environment: {},
@@ -118,7 +118,7 @@ export async function createDefaultCloudEnvironment(
     {
       headers: {
         ...getOAuthHeaders(accessToken),
-        [PROVIDER_MIGRATION_BETA_HEADER]: 'ccr-byoc-2025-07-29',
+        [ARCHIVED_PROVIDER_BETA_HEADER]: 'ccr-byoc-2025-07-29',
         'x-organization-uuid': orgUUID,
       },
       timeout: 15000,

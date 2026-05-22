@@ -8,7 +8,7 @@ import { openBrowser } from '../../utils/browser.js';
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js';
 import { logError } from '../../utils/log.js';
 import { Login } from '../login/login.js';
-const PROVIDER_MIGRATION_CLOUD_UPGRADE_URL = `https://${'cl' + 'aude'}.ai/upgrade/max`;
+const ARCHIVED_CLOUD_UPGRADE_URL = `https://${'cl' + 'aude'}.ai/upgrade/max`;
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode | null> {
   try {
     if (isDsxuRuntimeMode()) {
@@ -30,7 +30,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
         return null;
       }
     }
-    const url = PROVIDER_MIGRATION_CLOUD_UPGRADE_URL;
+    const url = ARCHIVED_CLOUD_UPGRADE_URL;
     await openBrowser(url);
     return <Login startingMessage={'Starting new login following /upgrade. Exit with Ctrl-C to use existing account.'} onDone={success => {
       context.onChangeAPIKey();
@@ -38,7 +38,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     }} />;
   } catch (error) {
     logError(error as Error);
-    setTimeout(onDone, 0, `Failed to open browser. Please visit ${PROVIDER_MIGRATION_CLOUD_UPGRADE_URL} to upgrade.`);
+    setTimeout(onDone, 0, `Failed to open browser. Please visit ${ARCHIVED_CLOUD_UPGRADE_URL} to upgrade.`);
   }
   return null;
 }

@@ -16,20 +16,20 @@ import { getDsxuCodeEnv } from './envUtils.js'
 import { getDSXUCodeUserAgent } from './userAgent.js'
 import { getWorkload } from './workloadContext.js'
 
-const PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV = 'CL' + 'AUDE_AGENT_SDK_VERSION'
-const PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV = 'CL' + 'AUDE_AGENT_SDK_CLIENT_APP'
+const ARCHIVED_AGENT_SDK_VERSION_ENV = 'CL' + 'AUDE_AGENT_SDK_VERSION'
+const ARCHIVED_AGENT_SDK_CLIENT_APP_ENV = 'CL' + 'AUDE_AGENT_SDK_CLIENT_APP'
 
 // WARNING: downstream logs rely on the product token in this user agent.
 // Please do NOT change this without making sure that logging also gets updated!
 export function getUserAgent(): string {
   const sdkVersion =
     process.env.DSXU_AGENT_SDK_VERSION ??
-    process.env[PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV]
+    process.env[ARCHIVED_AGENT_SDK_VERSION_ENV]
   const agentSdkVersion = sdkVersion ? `, agent-sdk/${sdkVersion}` : ''
   // SDK consumers can identify their app/library via DSXU_AGENT_SDK_CLIENT_APP
   const sdkClientApp =
     process.env.DSXU_AGENT_SDK_CLIENT_APP ??
-    process.env[PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV]
+    process.env[ARCHIVED_AGENT_SDK_CLIENT_APP_ENV]
   const clientApp = sdkClientApp
     ? `, client-app/${sdkClientApp}`
     : ''
@@ -51,13 +51,13 @@ export function getMCPUserAgent(): string {
   }
   const sdkVersion =
     process.env.DSXU_AGENT_SDK_VERSION ??
-    process.env[PROVIDER_MIGRATION_AGENT_SDK_VERSION_ENV]
+    process.env[ARCHIVED_AGENT_SDK_VERSION_ENV]
   if (sdkVersion) {
     parts.push(`agent-sdk/${sdkVersion}`)
   }
   const sdkClientApp =
     process.env.DSXU_AGENT_SDK_CLIENT_APP ??
-    process.env[PROVIDER_MIGRATION_AGENT_SDK_CLIENT_APP_ENV]
+    process.env[ARCHIVED_AGENT_SDK_CLIENT_APP_ENV]
   if (sdkClientApp) {
     parts.push(`client-app/${sdkClientApp}`)
   }

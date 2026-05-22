@@ -5,8 +5,8 @@ import type {
 } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod/v4'
 import {
-  PROVIDER_MIGRATION_CONFIG_SCOPE,
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  ARCHIVED_MCP_CONFIG_SCOPE,
+  ARCHIVED_MCP_TRANSPORT,
 } from '../../constants/providerMigrationProtocol.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
@@ -18,7 +18,7 @@ export const ConfigScopeSchema = lazySchema(() =>
     'project',
     'dynamic',
     'enterprise',
-    PROVIDER_MIGRATION_CONFIG_SCOPE,
+    ARCHIVED_MCP_CONFIG_SCOPE,
     'managed',
   ]),
 )
@@ -116,10 +116,10 @@ export const McpSdkServerConfigSchema = lazySchema(() =>
   }),
 )
 
-// Config type for isolated provider migration connector servers
-export const McpProviderMigrationProxyServerConfigSchema = lazySchema(() =>
+// Config type for isolated archived connector servers
+export const McpArchivedProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal(PROVIDER_MIGRATION_MCP_TRANSPORT),
+    type: z.literal(ARCHIVED_MCP_TRANSPORT),
     url: z.string(),
     id: z.string(),
   }),
@@ -134,7 +134,7 @@ export const McpServerConfigSchema = lazySchema(() =>
     McpHTTPServerConfigSchema(),
     McpWebSocketServerConfigSchema(),
     McpSdkServerConfigSchema(),
-    McpProviderMigrationProxyServerConfigSchema(),
+    McpArchivedProxyServerConfigSchema(),
   ]),
 )
 
@@ -159,8 +159,8 @@ export type McpWebSocketServerConfig = z.infer<
 export type McpSdkServerConfig = z.infer<
   ReturnType<typeof McpSdkServerConfigSchema>
 >
-export type McpProviderMigrationProxyServerConfig = z.infer<
-  ReturnType<typeof McpProviderMigrationProxyServerConfigSchema>
+export type McpArchivedProxyServerConfig = z.infer<
+  ReturnType<typeof McpArchivedProxyServerConfigSchema>
 >
 export type McpServerConfig = z.infer<ReturnType<typeof McpServerConfigSchema>>
 

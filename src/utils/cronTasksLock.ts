@@ -19,10 +19,10 @@ import { safeParseJSON } from './json.js'
 import { lazySchema } from './lazySchema.js'
 import { jsonStringify } from './slowOperations.js'
 import { isDsxuRuntimeMode } from './envUtils.js'
-const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+const ARCHIVED_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 function getLockFileRel(): string {
   return join(
-    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_PROJECT_CONFIG_DIR,
     'scheduled_tasks.lock',
   )
 }

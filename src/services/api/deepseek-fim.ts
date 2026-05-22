@@ -1,6 +1,6 @@
 import {
+  DEEPSEEK_V4_FLASH_MODEL,
   DEEPSEEK_V4_MAX_FIM_OUTPUT_TOKENS,
-  DEEPSEEK_V4_PRO_MODEL,
   clampDeepSeekV4MaxTokens,
 } from '../../utils/model/deepseekV4Control.js'
 
@@ -33,7 +33,7 @@ export async function runDeepSeekFIMCompletion(
     throw new Error('DEEPSEEK_API_KEY not set')
   }
 
-  const model = input.model || process.env.DSXU_DEEPSEEK_FIM_MODEL || DEEPSEEK_V4_PRO_MODEL
+  const model = input.model || process.env.DSXU_DEEPSEEK_FIM_MODEL || DEEPSEEK_V4_FLASH_MODEL
   const maxTokens = clampDeepSeekV4MaxTokens({
     model,
     requestedMaxTokens: input.maxTokens ?? DEEPSEEK_V4_MAX_FIM_OUTPUT_TOKENS,

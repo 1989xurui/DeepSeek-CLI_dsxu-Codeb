@@ -1,11 +1,10 @@
-/**
- * Graph Retrieval 模块导出
+﻿/**
+ * Graph Retrieval 妯″潡瀵煎嚭
  *
- * 提供图检索和上下文路由功能
- * 吸收上游 repo-level context 组织方式
+ * 鎻愪緵鍥炬绱㈠拰涓婁笅鏂囪矾鐢卞姛鑳? * 鍚告敹涓婃父 repo-level context 缁勭粐鏂瑰紡
  */
 
-// 类型导出
+// 绫诲瀷瀵煎嚭
 export type {
   RetrievalQuery,
   RetrievalQueryType,
@@ -21,43 +20,45 @@ export type {
   ContextRoutingBundle
 } from './types'
 
-// Graph Retrieval 实现
+// Graph Retrieval 瀹炵幇
 import { GraphRetrievalImpl as GraphRetrievalImplClass } from './graph-retrieval'
 export { GraphRetrievalImplClass as GraphRetrievalImpl }
 export type { RetrievalResult, RetrievalMode, RankingReason } from './graph-retrieval'
 
-// Context Routing 实现
+// Context Routing 瀹炵幇
 import { ContextRoutingImpl as ContextRoutingImplClass, createContextRouting as createContextRoutingFn, routeContextQuick as routeContextQuickFn } from './context-routing'
 export { ContextRoutingImplClass as ContextRoutingImpl, createContextRoutingFn as createContextRouting, routeContextQuickFn as routeContextQuick }
 export type { RoutingDecision, RoutingConfig, RoutingContext } from './context-routing'
 
 /**
- * 创建完整的 Graph Retrieval 系统
+ * 鍒涘缓瀹屾暣鐨?Graph Retrieval 绯荤粺
  */
 export function createGraphRetrievalSystem(graphMemory: any) {
   const graphRetrieval = new GraphRetrievalImplClass(graphMemory)
   const contextRouting = createContextRoutingFn(graphRetrieval)
 
-  return {
+  const system: any = {
     graphRetrieval,
     contextRouting,
-
-    // 快捷方法
-    retrieve: (query: RetrievalQuery) => graphRetrieval.retrieve(query),
-    routeContext: (query: RetrievalQuery, context?: RoutingContext) =>
-      contextRouting.routeContext(query, context),
-
-    // 系统信息
+    retrieve: (query: RetrievalQuery) => system.graphRetrieval.retrieve(query),
+    routeContext: (query: RetrievalQuery, context?: RoutingContext) => {
+      if (system.graphRetrieval !== graphRetrieval) {
+        return createContextRoutingFn(system.graphRetrieval).routeContext(query, context)
+      }
+      return contextRouting.routeContext(query, context)
+    },
     getVersion: () => '1.0.0 (F-2 Graph Retrieval & Context Routing)',
     getStats: () => ({
-      retrieval: graphRetrieval.getMetrics(),
+      retrieval: system.graphRetrieval.getMetrics ? system.graphRetrieval.getMetrics() : graphRetrieval.getMetrics(),
       routing: contextRouting.getRoutingStats()
     })
   }
+
+  return system
 }
 
 /**
- * 检查 Graph Retrieval 是否可用
+ * 妫€鏌?Graph Retrieval 鏄惁鍙敤
  */
 export function isGraphRetrievalAvailable(): boolean {
   try {
@@ -69,7 +70,7 @@ export function isGraphRetrievalAvailable(): boolean {
 }
 
 /**
- * 获取 Graph Retrieval 版本信息
+ * 鑾峰彇 Graph Retrieval 鐗堟湰淇℃伅
  */
 export function getGraphRetrievalVersion(): string {
   return '1.0.0 (F-2 Graph Retrieval & Context Routing)'

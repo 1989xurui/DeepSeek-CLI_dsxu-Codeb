@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { buildReleaseSurfaceSourcePolicyReviewState } from '../release-surface-source-policy-review-v1'
-import type { V18OpenSourceCleanExportManifestEntry } from '../v18-open-source-package-gate'
+import type { V18OpenSourceCleanExportManifestEntry } from '../open-source-package-gate'
 
 const rewriteEntry: V18OpenSourceCleanExportManifestEntry = {
   path: 'docs/DSXU_V18_V19_MERGED_AUDIT_20260510_CLEAN.md',

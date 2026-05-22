@@ -28,27 +28,27 @@ import { getInitialSettings } from '../../utils/settings/settings.js'
 import { jsonParse } from '../../utils/slowOperations.js'
 import { buildRedirectUri, findAvailablePort } from './oauthPort.js'
 const DSXU_XAA_ENABLE_ENV = 'DSXU_CODE_ENABLE_XAA'
-const PROVIDER_MIGRATION_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
+const ARCHIVED_XAA_ENABLE_ENV = 'CL' + 'AUDE_CODE_ENABLE_XAA'
 export function isXaaEnabled(): boolean {
   return (
     isEnvTruthy(process.env[DSXU_XAA_ENABLE_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_XAA_ENABLE_ENV])
+    isEnvTruthy(process.env[ARCHIVED_XAA_ENABLE_ENV])
   )
 }
 export function getDsxuXaaRuntimeProfile(): {
   runtime: 'DSXU MCP XAA Identity'
   enabled: boolean
   primaryEnv: typeof DSXU_XAA_ENABLE_ENV
-  providerMigrationEnv: string
+  archivedEnv: string
   cachePolicy: string
 } {
   return {
     runtime: 'DSXU MCP XAA Identity',
     enabled: isXaaEnabled(),
     primaryEnv: DSXU_XAA_ENABLE_ENV,
-    providerMigrationEnv: PROVIDER_MIGRATION_XAA_ENABLE_ENV,
+    archivedEnv: ARCHIVED_XAA_ENABLE_ENV,
     cachePolicy:
-      `DSXU uses the same OIDC/XAA token-exchange semantics, but the default activation switch is ${DSXU_XAA_ENABLE_ENV}; provider-migration env remains migration-only.`,
+      `DSXU uses the same OIDC/XAA token-exchange semantics, but the default activation switch is ${DSXU_XAA_ENABLE_ENV}; archived env remains migration-only.`,
   }
 }
 export type XaaIdpSettings = {

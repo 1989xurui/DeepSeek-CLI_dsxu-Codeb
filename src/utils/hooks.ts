@@ -123,8 +123,8 @@ import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import { firstLineOf } from './stringUtils.js'
 import {
-  normalizeProviderMigrationToolName,
-  getProviderMigrationToolNames,
+  normalizeArchivedToolName,
+  getArchivedToolNames,
   permissionRuleValueFromString,
 } from './permissions/permissionRuleParser.js'
 import { logError } from './log.js'
@@ -163,7 +163,7 @@ import { jsonStringify, jsonParse } from './slowOperations.js'
 import { getDsxuCodeEnv, isDsxuCodeEnvTruthy } from './envUtils.js'
 import { errorMessage, getErrnoCode } from './errors.js'
 
-const PROVIDER_MIGRATION_HOOK_ENV = {
+const ARCHIVED_HOOK_ENV = {
   PROJECT_DIR: `${'CLA' + 'UDE'}_PROJECT_DIR`,
   PLUGIN_ROOT: `${'CLA' + 'UDE'}_PLUGIN_ROOT`,
   PLUGIN_DATA: `${'CLA' + 'UDE'}_PLUGIN_DATA`,
@@ -177,7 +177,7 @@ const DSXU_HOOK_ENV = {
   PLUGIN_OPTION_PREFIX: 'DSXU_PLUGIN_OPTION_',
   ENV_FILE: 'DSXU_ENV_FILE',
 } as const
-const providerMigrationHookTemplate = (name: string) =>
+const archivedHookTemplate = (name: string) =>
   new RegExp(`\\$\\{${name}\\}`, 'g')
 
 const TOOL_HOOK_EXECUTION_TIMEOUT_MS = 10 * 60 * 1000
@@ -826,9 +826,9 @@ async function execCommandHook(
       ? (p: string) => windowsPathToPosixPath(p)
       : (p: string) => p
 
-  // Set DSXU/provider-migration PROJECT_DIR to the stable project root (not the worktree path).
+  // Set DSXU/archived PROJECT_DIR to the stable project root (not the worktree path).
   // getProjectRoot() is never updated when entering a worktree, so hooks that
-  // reference $DSXU_PROJECT_DIR or provider-migration PROJECT_DIR always resolve relative to the real repo root.
+  // reference $DSXU_PROJECT_DIR or archived PROJECT_DIR always resolve relative to the real repo root.
   const projectDir = getProjectRoot()
 
   // Substitute ${DSXU_PLUGIN_ROOT} and ${user_config.X} in the command string.
@@ -860,14 +860,14 @@ async function execCommandHook(
     const rootPath = toHookPath(pluginRoot)
     command = command.replace(/\$\{DSXU_PLUGIN_ROOT\}/g, () => rootPath)
     command = command.replace(
-      providerMigrationHookTemplate(PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_ROOT),
+      archivedHookTemplate(ARCHIVED_HOOK_ENV.PLUGIN_ROOT),
       () => rootPath,
     )
     if (pluginId) {
       const dataPath = toHookPath(getPluginDataDir(pluginId))
       command = command.replace(/\$\{DSXU_PLUGIN_DATA\}/g, () => dataPath)
       command = command.replace(
-        providerMigrationHookTemplate(PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_DATA),
+        archivedHookTemplate(ARCHIVED_HOOK_ENV.PLUGIN_DATA),
         () => dataPath,
       )
     }
@@ -907,17 +907,17 @@ async function execCommandHook(
   const envVars: NodeJS.ProcessEnv = {
     ...subprocessEnv(),
     [DSXU_HOOK_ENV.PROJECT_DIR]: toHookPath(projectDir),
-    [PROVIDER_MIGRATION_HOOK_ENV.PROJECT_DIR]: toHookPath(projectDir),
+    [ARCHIVED_HOOK_ENV.PROJECT_DIR]: toHookPath(projectDir),
   }
 
   // Plugin and skill hooks both set DSXU_PLUGIN_ROOT (skills use the same
   // name for consistency - skills can migrate to plugins without code changes)
   if (pluginRoot) {
     envVars[DSXU_HOOK_ENV.PLUGIN_ROOT] = toHookPath(pluginRoot)
-    envVars[PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_ROOT] = toHookPath(pluginRoot)
+    envVars[ARCHIVED_HOOK_ENV.PLUGIN_ROOT] = toHookPath(pluginRoot)
     if (pluginId) {
       envVars[DSXU_HOOK_ENV.PLUGIN_DATA] = toHookPath(getPluginDataDir(pluginId))
-      envVars[PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_DATA] = toHookPath(getPluginDataDir(pluginId))
+      envVars[ARCHIVED_HOOK_ENV.PLUGIN_DATA] = toHookPath(getPluginDataDir(pluginId))
     }
   }
   // Expose plugin options as env vars too, so hooks can read them without
@@ -930,12 +930,12 @@ async function execCommandHook(
       // belt-and-suspenders, but cheap insurance if someone bypasses the schema.
       const envKey = key.replace(/[^A-Za-z0-9_]/g, '_').toUpperCase()
       envVars[`${DSXU_HOOK_ENV.PLUGIN_OPTION_PREFIX}${envKey}`] = String(value)
-      envVars[`${PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_OPTION_PREFIX}${envKey}`] = String(value)
+      envVars[`${ARCHIVED_HOOK_ENV.PLUGIN_OPTION_PREFIX}${envKey}`] = String(value)
     }
   }
   if (skillRoot) {
     envVars[DSXU_HOOK_ENV.PLUGIN_ROOT] = toHookPath(skillRoot)
-    envVars[PROVIDER_MIGRATION_HOOK_ENV.PLUGIN_ROOT] = toHookPath(skillRoot)
+    envVars[ARCHIVED_HOOK_ENV.PLUGIN_ROOT] = toHookPath(skillRoot)
   }
 
   // DSXU_ENV_FILE points to a .sh file that the hook writes env var
@@ -954,7 +954,7 @@ async function execCommandHook(
   ) {
     const hookEnvFilePath = await getHookEnvFilePath(hookEvent, hookIndex)
     envVars[DSXU_HOOK_ENV.ENV_FILE] = hookEnvFilePath
-    envVars[PROVIDER_MIGRATION_HOOK_ENV.ENV_FILE] = hookEnvFilePath
+    envVars[ARCHIVED_HOOK_ENV.ENV_FILE] = hookEnvFilePath
   }
 
   // When agent worktrees are removed, getCwd() may return a deleted path via
@@ -1385,11 +1385,11 @@ function matchesPattern(matchQuery: string, matcher: string): boolean {
     if (matcher.includes('|')) {
       const patterns = matcher
         .split('|')
-        .map(p => normalizeProviderMigrationToolName(p.trim()))
+        .map(p => normalizeArchivedToolName(p.trim()))
       return patterns.includes(matchQuery)
     }
     // Simple exact match
-    return matchQuery === normalizeProviderMigrationToolName(matcher)
+    return matchQuery === normalizeArchivedToolName(matcher)
   }
 
   // Otherwise treat as regex
@@ -1398,9 +1398,9 @@ function matchesPattern(matchQuery: string, matcher: string): boolean {
     if (regex.test(matchQuery)) {
       return true
     }
-    // Also test against provider-migration aliases so patterns like "^Task$" still match
-    for (const providerMigrationAlias of getProviderMigrationToolNames(matchQuery)) {
-      if (regex.test(providerMigrationAlias)) {
+    // Also test against archived aliases so patterns like "^Task$" still match
+    for (const archivedAlias of getArchivedToolNames(matchQuery)) {
+      if (regex.test(archivedAlias)) {
         return true
       }
     }
@@ -1432,7 +1432,7 @@ async function prepareIfConditionMatcher(
     return undefined
   }
 
-  const toolName = normalizeProviderMigrationToolName(hookInput.tool_name)
+  const toolName = normalizeArchivedToolName(hookInput.tool_name)
   const tool = tools && findToolByName(tools, hookInput.tool_name)
   const input = tool?.inputSchema.safeParse(hookInput.tool_input)
   const patternMatcher =
@@ -1442,7 +1442,7 @@ async function prepareIfConditionMatcher(
 
   return ifCondition => {
     const parsed = permissionRuleValueFromString(ifCondition)
-    if (normalizeProviderMigrationToolName(parsed.toolName) !== toolName) {
+    if (normalizeArchivedToolName(parsed.toolName) !== toolName) {
       return false
     }
     if (!parsed.ruleContent) {
@@ -1569,7 +1569,7 @@ function getHooksConfig(
   // REGISTRATION sites (runAgent.ts:526 for agent frontmatter hooks) where
   // agentDefinition.source is known. A blanket block here would also kill
   // plugin-provided agents' frontmatter hooks, which is too broad.
-  // Also skip if appState not provided (for provider-migration continuity)
+  // Also skip if appState not provided (for archived continuity)
   if (!managedOnly && appState !== undefined) {
     const sessionHooks = getSessionHooks(appState, sessionId, hookEvent).get(
       hookEvent,
@@ -1626,7 +1626,7 @@ function hasHookForEvent(
 
 /**
  * Get hook commands that match the given query
- * @param appState The current app state (optional for provider-migration continuity)
+ * @param appState The current app state (optional for archived continuity)
  * @param sessionId The current session ID (main session or agent ID)
  * @param hookEvent The hook event
  * @param hookInput The hook input for matching

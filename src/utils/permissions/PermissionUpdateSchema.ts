@@ -18,7 +18,7 @@ import {
   permissionRuleValueSchema,
 } from './PermissionRule.js'
 
-// Re-export for provider-migration import continuity
+// Re-export for archived import continuity
 export type { PermissionUpdate, PermissionUpdateDestination }
 
 /**

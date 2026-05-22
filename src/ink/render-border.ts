@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import cliBoxes, { type Boxes, type BoxStyle } from 'cli-boxes'
+import { ASCII_TUI_MODE } from '../constants/figures.js'
 import { applyColor } from './colorize.js'
 import type { DOMNode } from './dom.js'
 import type Output from './output.js'
@@ -31,6 +32,22 @@ export type BorderStyle =
   | keyof Boxes
   | keyof typeof CUSTOM_BORDER_STYLES
   | BoxStyle
+
+function resolveBorderBox(borderStyle: BorderStyle): BoxStyle {
+  if (typeof borderStyle !== 'string') {
+    return borderStyle
+  }
+
+  const resolved =
+    CUSTOM_BORDER_STYLES[borderStyle as keyof typeof CUSTOM_BORDER_STYLES] ??
+    cliBoxes[borderStyle as keyof Boxes]
+
+  if (ASCII_TUI_MODE && borderStyle !== 'classic') {
+    return cliBoxes.classic
+  }
+
+  return resolved
+}
 
 function embedTextInBorder(
   borderLine: string,
@@ -88,12 +105,7 @@ const renderBorder = (
   if (node.style.borderStyle) {
     const width = Math.floor(node.yogaNode!.getComputedWidth())
     const height = Math.floor(node.yogaNode!.getComputedHeight())
-    const box =
-      typeof node.style.borderStyle === 'string'
-        ? (CUSTOM_BORDER_STYLES[
-            node.style.borderStyle as keyof typeof CUSTOM_BORDER_STYLES
-          ] ?? cliBoxes[node.style.borderStyle as keyof Boxes])
-        : node.style.borderStyle
+    const box = resolveBorderBox(node.style.borderStyle)
 
     const topBorderColor = node.style.borderTopColor ?? node.style.borderColor
     const bottomBorderColor =

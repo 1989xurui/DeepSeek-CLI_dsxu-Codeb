@@ -46,6 +46,10 @@ export interface MutationBudget {
 }
 
 export interface MutationConfig {
+  /** Real runner command. Use {file} and {mutationId} placeholders when needed. */
+  testCommand?: string;
+  /** Real runner working directory. */
+  cwd?: string;
   /** Mock test runner for G4 testing */
   mockTestRunner?: (file: string, mutation: Mutation) => Promise<{ passed: boolean; output: string }>;
   /** Mock mutation generator for G4 testing */

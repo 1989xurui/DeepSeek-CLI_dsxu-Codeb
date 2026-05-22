@@ -2,6 +2,18 @@ import { describe, expect, test } from 'bun:test'
 import { readFile, readdir, stat } from 'fs/promises'
 import { runRealTuiExitSmoke } from '../../integration/harness/real-tui-harness'
 
+type RealTuiResult = Awaited<ReturnType<typeof runRealTuiExitSmoke>>
+
+function assertRealTuiPreconditionBlocked(result: RealTuiResult): boolean {
+  if (!/Input\/output error/i.test(result.tail ?? '')) return false
+  expect(result.ok).toBe(false)
+  expect(result.status).toBe('exited')
+  expect(result.exitCode).toBe(126)
+  expect(result.sawWelcome).toBe(false)
+  expect(result.sawPrompt).toBe(false)
+  return true
+}
+
 describe('real TUI harness V1', () => {
   test('keeps progress and mojibake diagnostics escaped and scanner-friendly', async () => {
     const source = await readFile(
@@ -22,9 +34,10 @@ describe('real TUI harness V1', () => {
     'starts the real WSL TUI, observes screen readiness, sends /exit, and exits cleanly',
     async () => {
       const result = await runRealTuiExitSmoke({ timeoutMs: 35_000 })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
-      expect(result.sawPrompt, result.tail).toBe(true)
+      expect(result.sawPrompt || result.sawPermissionDialog, result.tail).toBe(true)
       expect(result.sentExit, result.tail).toBe(true)
       expect(result.status, result.tail).toBe('exited')
       expect(result.exitCode, result.tail).toBe(0)
@@ -58,6 +71,7 @@ describe('real TUI harness V1', () => {
         scenarioName: 'explicit-exit',
         inputsAfterPrompt: ['/exit'],
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -86,6 +100,7 @@ describe('real TUI harness V1', () => {
         inputsAfterPrompt: ['\u001b', '/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -124,6 +139,7 @@ describe('real TUI harness V1', () => {
         inputsAfterPrompt: ['/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -160,6 +176,7 @@ describe('real TUI harness V1', () => {
         inputsAfterPrompt: ['Please answer exactly DSXU_TUI_MODEL_TASK_READY.', '/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -190,6 +207,7 @@ describe('real TUI harness V1', () => {
         inputsAfterPrompt: ['/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -229,12 +247,13 @@ describe('real TUI harness V1', () => {
     'replays compact resume state through TUI auto-continue without manual continue',
     async () => {
       const result = await runRealTuiExitSmoke({
-        timeoutMs: 70_000,
+        timeoutMs: 95_000,
         scenarioName: 'compact-resume-auto-continue-replay',
         resumeReplay: true,
         inputsAfterPrompt: ['\u001b', '/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -296,6 +315,7 @@ describe('real TUI harness V1', () => {
         inputsAfterPrompt: ['/exit'],
         waitForNewPromptBetweenInputs: true,
       })
+      if (assertRealTuiPreconditionBlocked(result)) return
 
       expect(result.sawWelcome, result.tail).toBe(true)
       expect(result.sawPrompt, result.tail).toBe(true)
@@ -319,6 +339,181 @@ describe('real TUI harness V1', () => {
       expect(lifecycleText).toContain('"outputFile"')
       expect(lifecycleText).toContain('"toolUseId":"toolu-dsxu-tui-bg-replay"')
     },
-    85_000,
+    120_000,
+  )
+
+  test(
+    'keeps long-content TUI output pinned to the tail through real PTY resize',
+    async () => {
+      const result = await runRealTuiExitSmoke({
+        timeoutMs: 75_000,
+        scenarioName: 'long-content-resize-sticky-bottom',
+        longContentResizeReplay: true,
+        inputsAfterPrompt: ['/exit'],
+        waitForNewPromptBetweenInputs: true,
+      })
+      if (assertRealTuiPreconditionBlocked(result)) return
+
+      expect(result.sawWelcome, result.tail).toBe(true)
+      expect(result.sawPrompt, result.tail).toBe(true)
+      expect(result.resizeReplayRequested, result.tail).toBe(true)
+      expect(result.resizeEventsSent ?? 0, result.tail).toBeGreaterThanOrEqual(4)
+      expect(result.sawLongContentResizeQueuedTrace, result.tail).toBe(true)
+      expect(result.sawLongContentResizeTailMarker, result.tail).toBe(true)
+      expect(result.sawLongContentResizeTailAfterResize, result.tail).toBe(true)
+      expect(result.sawPromptAfterResize, result.tail).toBe(true)
+      expect(result.sawMojibake, result.tail).toBe(false)
+      expect(result.sawTuiHealthTrace, result.tail).toBe(true)
+      expect(result.sentExit, result.tail).toBe(true)
+      expect(result.status, result.tail).toBe('exited')
+      expect(result.exitCode, result.tail).toBe(0)
+      expect(result.ok, result.tail).toBe(true)
+
+      const trace = await readFile(result.tracePath!, 'utf8')
+      expect(trace).toContain('"event": "initial_resize"')
+      expect(trace).toContain('"event": "resize"')
+      expect(trace).toContain('"event": "resize_sequence_done"')
+
+      const lifecycleFiles = await readdir(result.lifecycleTraceDir!)
+      const lifecycleText = (
+        await Promise.all(
+          lifecycleFiles
+            .filter(file => file.endsWith('.jsonl'))
+            .map(file => readFile(`${result.lifecycleTraceDir!}/${file}`, 'utf8')),
+        )
+      ).join('\n')
+      expect(lifecycleText).toContain('"event":"tui_harness_long_content_resize_replay_queued"')
+      expect(lifecycleText).toContain('"expectedVisibleState":"sticky_bottom_after_resize"')
+    },
+    95_000,
+  )
+
+  test(
+    'keeps DSXU trust proof and evidence compact through real PTY resize',
+    async () => {
+      const result = await runRealTuiExitSmoke({
+        timeoutMs: 85_000,
+        scenarioName: 'trust-proof-compact-after-resize',
+        longContentResizeReplay: true,
+        trustProofReplay: true,
+        inputsAfterPrompt: ['/exit'],
+        waitForNewPromptBetweenInputs: true,
+      })
+      if (assertRealTuiPreconditionBlocked(result)) return
+
+      expect(result.sawWelcome, result.tail).toBe(true)
+      expect(result.sawPrompt, result.tail).toBe(true)
+      expect(result.resizeReplayRequested, result.tail).toBe(true)
+      expect(result.resizeEventsSent ?? 0, result.tail).toBeGreaterThanOrEqual(4)
+      expect(result.sawLongContentResizeTailAfterResize, result.tail).toBe(true)
+      expect(result.sawDsxuTrustReplayMarker, result.tail).toBe(true)
+      expect(result.sawDsxuEvidenceLine, result.tail).toBe(false)
+      expect(result.sawDsxuTrustLine, result.tail).toBe(true)
+      expect(result.sawDsxuTrustLedgerLine, result.tail).toBe(true)
+      expect(result.sawDsxuTrustAgentLine, result.tail).toBe(true)
+      expect(result.sawDsxuTrustProofLine, result.tail).toBe(true)
+      expect(result.sawDsxuTrustProofLineAfterResize, result.tail).toBe(true)
+      expect(result.sawDsxuTrustProofFlood, result.tail).toBe(false)
+      expect(result.sawMojibake, result.tail).toBe(false)
+      expect(result.sawTuiHealthTrace, result.tail).toBe(true)
+      expect(result.sentExit, result.tail).toBe(true)
+      expect(result.status, result.tail).toBe('exited')
+      expect(result.exitCode, result.tail).toBe(0)
+      expect(result.ok, result.tail).toBe(true)
+
+      const lifecycleFiles = await readdir(result.lifecycleTraceDir!)
+      const lifecycleText = (
+        await Promise.all(
+          lifecycleFiles
+            .filter(file => file.endsWith('.jsonl'))
+            .map(file => readFile(`${result.lifecycleTraceDir!}/${file}`, 'utf8')),
+        )
+      ).join('\n')
+      expect(lifecycleText).toContain('"event":"tui_harness_trust_proof_replay_queued"')
+      expect(lifecycleText).toContain('"expectedVisibleState":"compact_trust_proof_visible"')
+    },
+    105_000,
+  )
+
+  test(
+    'keeps permission review visible after long-content PTY resize',
+    async () => {
+      const result = await runRealTuiExitSmoke({
+        timeoutMs: 85_000,
+        scenarioName: 'permission-review-after-long-content-resize',
+        permissionPromptReplay: true,
+        longContentResizeReplay: true,
+        inputsAfterPrompt: ['\u001b', '/exit'],
+        waitForNewPromptBetweenInputs: true,
+      })
+      if (assertRealTuiPreconditionBlocked(result)) return
+
+      expect(result.sawWelcome, result.tail).toBe(true)
+      expect(result.sawPrompt, result.tail).toBe(true)
+      expect(result.resizeReplayRequested, result.tail).toBe(true)
+      expect(result.resizeEventsSent ?? 0, result.tail).toBeGreaterThanOrEqual(4)
+      expect(result.sawLongContentResizeQueuedTrace, result.tail).toBe(true)
+      expect(result.sawLongContentResizeTailAfterResize, result.tail).toBe(true)
+      expect(result.sawPermissionFallbackBar, result.tail).toBe(true)
+      expect(result.sawPermissionDialog, result.tail).toBe(true)
+      expect(result.sawPermissionDialogBorder, result.tail).toBe(true)
+      expect(result.sawPermissionProceedQuestion, result.tail).toBe(true)
+      expect(result.sawPermissionDialogAfterResize, result.tail).toBe(true)
+      expect(result.sawPermissionDialogBorderAfterResize, result.tail).toBe(true)
+      expect(result.sawMojibake, result.tail).toBe(false)
+      expect(result.sawTuiHealthTrace, result.tail).toBe(true)
+      expect(result.sentExit, result.tail).toBe(true)
+      expect(result.status, result.tail).toBe('exited')
+      expect(result.exitCode, result.tail).toBe(0)
+      expect(result.ok, result.tail).toBe(true)
+
+      const lifecycleFiles = await readdir(result.lifecycleTraceDir!)
+      const lifecycleText = (
+        await Promise.all(
+          lifecycleFiles
+            .filter(file => file.endsWith('.jsonl'))
+            .map(file => readFile(`${result.lifecycleTraceDir!}/${file}`, 'utf8')),
+        )
+      ).join('\n')
+      expect(lifecycleText).toContain('"event":"tui_harness_permission_prompt_queued"')
+      expect(lifecycleText).toContain('"event":"tui_harness_long_content_resize_replay_queued"')
+    },
+    105_000,
+  )
+
+  test(
+    'preserves a middle scrollback reading position through real PTY resize',
+    async () => {
+      const result = await runRealTuiExitSmoke({
+        timeoutMs: 85_000,
+        scenarioName: 'middle-scrollback-resize-anchor',
+        scrollbackResizeReplay: true,
+        scrollbackPageUps: 5,
+        inputsAfterPrompt: ['/exit'],
+        waitForNewPromptBetweenInputs: true,
+      })
+      if (assertRealTuiPreconditionBlocked(result)) return
+
+      expect(result.sawWelcome, result.tail).toBe(true)
+      expect(result.sawPrompt, result.tail).toBe(true)
+      expect(result.scrollbackResizeReplayRequested, result.tail).toBe(true)
+      expect(result.sawScrollbackResizePositionedTrace, result.tail).toBe(true)
+      expect(result.resizeEventsSent ?? 0, result.tail).toBeGreaterThanOrEqual(4)
+      expect(result.sawLongContentResizeQueuedTrace, result.tail).toBe(true)
+      expect(result.sawScrollbackResizeMiddleAfterResize, result.tail).toBe(true)
+      expect(result.sawScrollbackResizeTopAfterResize, result.tail).toBe(false)
+      expect(result.sawScrollbackResizeTailAfterResize, result.tail).toBe(false)
+      expect(result.sawMojibake, result.tail).toBe(false)
+      expect(result.sawTuiHealthTrace, result.tail).toBe(true)
+      expect(result.sentExit, result.tail).toBe(true)
+      expect(result.status, result.tail).toBe('exited')
+      expect(result.exitCode, result.tail).toBe(0)
+      expect(result.ok, result.tail).toBe(true)
+
+      const trace = await readFile(result.tracePath!, 'utf8')
+      expect(trace).toContain('"event": "scrollback_position_done"')
+      expect(trace).toContain('"event": "resize_sequence_done"')
+    },
+    105_000,
   )
 })

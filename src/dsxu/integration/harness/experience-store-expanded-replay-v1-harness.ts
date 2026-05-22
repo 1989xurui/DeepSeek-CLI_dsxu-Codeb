@@ -53,7 +53,7 @@ export type ExperienceStoreExpandedReplayResult = {
     allReadBeforeEdit: boolean
     allVerified: boolean
     allReducedExploration: boolean
-    failedVerificationRoutesPro: boolean
+    failedVerificationUsesRecoveryRoute: boolean
     featureCanStayFlash: boolean
     strategyChangedAfterFailure: boolean
     noRepeatedCommandWithoutStrategyChange: boolean
@@ -104,6 +104,13 @@ function recordEntries(store: ReturnType<typeof createDsxuExperienceStore>, entr
     const result = recordDsxuExperience(store, entry)
     if (!result.accepted) throw new Error(result.reason)
   }
+}
+
+function isFailedVerificationRecoveryRoute(input: { model: string; routeReason: string }): boolean {
+  return (
+    /^deepseek-v4-(flash|pro)$/.test(input.model) &&
+    /^failed_verification_(flash|pro)_thinking_max$/.test(input.routeReason)
+  )
 }
 
 async function runFeatureNativeTestScenario(input: {
@@ -420,7 +427,10 @@ async function runFailedVerificationRecoveryScenario(input: {
       replayReport.repeatedExplorationReduced &&
       strategyChangedAfterFailure &&
       !repeatedCommandWithoutStrategyChange &&
-      costRoute.requestedModel === 'deepseek-v4-pro',
+      isFailedVerificationRecoveryRoute({
+        model: costRoute.requestedModel,
+        routeReason: costRoute.routeReason,
+      }),
     recallIds: recalls.map(recall => recall.entry.id),
     sourceTruthRefreshRequired: injection.memory.sourceTruthRefreshRequired,
     readBeforeEdit: true,
@@ -461,8 +471,8 @@ export async function runExperienceStoreExpandedReplayHarness(options: {
       allReadBeforeEdit: scenarios.every(scenario => scenario.readBeforeEdit),
       allVerified: scenarios.every(scenario => scenario.verified),
       allReducedExploration: scenarios.every(scenario => scenario.replayReport.repeatedExplorationReduced),
-      failedVerificationRoutesPro: scenarios.some(
-        scenario => scenario.kind === 'failed_verification_recovery' && scenario.costRoute.model === 'deepseek-v4-pro',
+      failedVerificationUsesRecoveryRoute: scenarios.some(
+        scenario => scenario.kind === 'failed_verification_recovery' && isFailedVerificationRecoveryRoute(scenario.costRoute),
       ),
       featureCanStayFlash: scenarios.some(
         scenario => scenario.kind === 'feature_native_test' && scenario.costRoute.model === 'deepseek-v4-flash',
@@ -497,7 +507,7 @@ export async function runExperienceStoreExpandedReplayHarness(options: {
         allReadBeforeEdit: false,
         allVerified: false,
         allReducedExploration: false,
-        failedVerificationRoutesPro: false,
+        failedVerificationUsesRecoveryRoute: false,
         featureCanStayFlash: false,
         strategyChangedAfterFailure: false,
         noRepeatedCommandWithoutStrategyChange: false,

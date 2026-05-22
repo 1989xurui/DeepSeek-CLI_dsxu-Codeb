@@ -33,6 +33,13 @@ type Props = {
   verbose: boolean;
   isTranscriptMode?: boolean;
 };
+
+export function shouldSuppressDsxuFinalUsageEvidence(content: string): boolean {
+  const trimmed = content.trim()
+  if (trimmed.startsWith('DSXU final usage evidence:')) return true
+  return /^Evidence:\s*deepseek[-_\w.]*\s*\|\s*cost=\$?[0-9.]+(?:\s*\|\s*cache=[\w.%:-]+)?$/i.test(trimmed)
+}
+
 export function SystemTextMessage(t0) {
   const $ = _c(51);
   const {
@@ -198,6 +205,9 @@ export function SystemTextMessage(t0) {
     return t6;
   }
   const isStopHookSummary = message.subtype === "stop_hook_summary";
+  if (!isStopHookSummary && typeof message.content === "string" && shouldSuppressDsxuFinalUsageEvidence(message.content)) {
+    return null;
+  }
   if (!isStopHookSummary && !verbose && message.level === "info") {
     return null;
   }

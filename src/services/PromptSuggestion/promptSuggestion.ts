@@ -114,7 +114,7 @@ export function getDsxuPromptSuggestionRuntimeProfile(): {
     runtime: 'DSXU Prompt Suggestion',
     env: [
       'DSXU_CODE_ENABLE_PROMPT_SUGGESTION',
-      'provider-migration prompt-suggestion alias',
+      'archived prompt-suggestion alias',
     ],
     suppressReasons: [
       'disabled',
@@ -127,7 +127,7 @@ export function getDsxuPromptSuggestionRuntimeProfile(): {
       'aborted',
     ],
     activationEvidence: [
-      'DSXU env override is checked before provider-migration alias',
+      'DSXU env override is checked before archived alias',
       'suggestions are disabled in non-interactive sessions and swarm teammates',
       'pending permissions, elicitations, and plan mode suppress generation',
       'tryGenerateSuggestion uses forked-agent cache-safe params before writing promptSuggestion into AppState',

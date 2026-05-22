@@ -2,16 +2,17 @@
  * DSXU engine LLM adapter for DeepSeek-compatible model calls.
  *
  * Default mode is direct DeepSeek chat-completions-compatible transport. Proxy and gateway
- * paths are retained only as explicit provider migration options.
+ * paths are retained only as explicit archived provider options.
  */
 import type { Message, ToolSchema, LLMCallFn, LLMCallOptions, LLMResponse } from './types'
-import { getModelConfig, isProviderMigrationMappedModel } from './model-config'
+import { getModelConfig, isArchivedMappedModel } from './model-config'
 import { APIService, type APIServiceConfig } from './api-service'
 import { createLiteLLMDSXULLMCall } from './model-gateway-client'
+import { DeepSeekAdapter } from '../../services/api/deepseek-adapter'
 
-const PROVIDER_MIGRATION_VERSION_HEADER = `${'anth' + 'ropic'}-version`
+const ARCHIVED_VERSION_HEADER = `${'anth' + 'ropic'}-version`
 
-/** Call through an explicit provider migration proxy. */
+/** Call through an explicit archived provider proxy. */
 export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): LLMCallFn {
   return async (messages, tools, options) => {
 
@@ -22,12 +23,12 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
       model: modelConfig.name,
       max_tokens: options.maxTokens ?? modelConfig.maxOutputTokens,
       stream: false,
-      messages: convertToproviderMessages(messages),
+      messages: convertToArchivedMessages(messages),
     }
 
 
-    if (isProviderMigrationMappedModel(options.model)) {
-      console.warn(`[LLMAdapter] Using provider migration model mapping: ${options.model} -> ${modelConfig.name}`)
+    if (isArchivedMappedModel(options.model)) {
+      console.warn(`[LLMAdapter] Using archived model mapping: ${options.model} -> ${modelConfig.name}`)
     }
 
 
@@ -52,7 +53,7 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': 'dsxu-engine',
-        [PROVIDER_MIGRATION_VERSION_HEADER]: '2023-06-01',
+        [ARCHIVED_VERSION_HEADER]: '2023-06-01',
       },
       body: JSON.stringify(body),
       signal: options.abortSignal,
@@ -64,7 +65,7 @@ export function createProxyLLMCall(proxyUrl: string = 'http://localhost:8082'): 
     }
 
     const data = await resp.json() as any
-    return parseproviderResponse(data)
+    return parseArchivedResponse(data)
   }
 }
 
@@ -74,53 +75,38 @@ export function createDirectLLMCall(
   baseUrl: string = 'https://api.deepseek.com/v1',
 ): LLMCallFn {
   return async (messages, tools, options) => {
-
     const modelConfig = getModelConfig(options.model)
-
-    const chatCompletionMessages = convertToChatCompletionsMessages(messages)
-    const body: any = {
+    const systemMsg = messages.find(m => m.role === 'system')
+    const providerMessages = convertToArchivedMessages(messages)
+    const providerTools = tools.map(t => ({
+      name: t.name,
+      description: t.description,
+      input_schema: t.inputSchema,
+    }))
+    const data = await DeepSeekAdapter.transformRequest({
       model: modelConfig.name,
-      messages: chatCompletionMessages,
       max_tokens: options.maxTokens ?? modelConfig.maxOutputTokens,
-    }
-
-
-    if (isProviderMigrationMappedModel(options.model)) {
-      console.warn(`[LLMAdapter] Direct call with provider migration model: ${options.model} -> ${modelConfig.name}`)
-    }
-
-    if (tools.length > 0) {
-      body.tools = tools.map(t => ({
-        type: 'function',
-        function: {
-          name: t.name,
-          description: t.description,
-          parameters: t.inputSchema,
-        },
-      }))
-    }
-
-    if (options.temperature !== undefined) {
-      body.temperature = options.temperature
-    }
-
-    const resp = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
+      stream: false,
+      messages: providerMessages,
+      system: systemMsg
+        ? (typeof systemMsg.content === 'string'
+          ? systemMsg.content
+          : JSON.stringify(systemMsg.content))
+        : undefined,
+      tools: providerTools,
+      ...(options.temperature !== undefined ? { temperature: options.temperature } : {}),
+      ...(options.responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {}),
+    }, {
+      apiKey,
+      baseUrl,
       signal: options.abortSignal,
     })
 
-    if (!resp.ok) {
-      const err = await resp.text()
-      throw new Error(`DeepSeek API error ${resp.status}: ${err}`)
+    if (isArchivedMappedModel(options.model)) {
+      console.warn(`[LLMAdapter] Direct call with archived model mapping: ${options.model} -> ${modelConfig.name}`)
     }
 
-    const data = await resp.json() as any
-    return parseChatCompletionsResponse(data)
+    return parseArchivedResponse(data)
   }
 }
 
@@ -186,7 +172,7 @@ export function createPreferredDSXULLMCall(options?: {
     options?.allowProxyFallback === true ||
     process.env.DSXU_ALLOW_PROVIDER_MIGRATION_PROXY_FALLBACK === '1'
   ) {
-    console.warn('[LLMAdapter] Direct provider configuration was not found; falling back to the explicit provider migration proxy path.')
+    console.warn('[LLMAdapter] Direct provider configuration was not found; falling back to the explicit archived provider proxy path.')
     return createProxyLLMCall(options?.proxyUrl)
   }
 
@@ -258,7 +244,7 @@ function normalizeMockLLMResponse(raw: any): LLMResponse {
 
 
 
-function convertToproviderMessages(messages: Message[]): any[] {
+function convertToArchivedMessages(messages: Message[]): any[] {
   return messages
     .filter(m => m.role !== 'system')
     .map(m => {
@@ -275,6 +261,9 @@ function convertToproviderMessages(messages: Message[]): any[] {
 
       if (m.role === 'assistant' && m.toolCalls?.length) {
         const content: any[] = []
+        if (m.reasoning) {
+          content.push({ type: 'thinking', thinking: m.reasoning })
+        }
         if (m.content) {
           content.push({ type: 'text', text: typeof m.content === 'string' ? m.content : '' })
         }
@@ -327,7 +316,7 @@ function convertToChatCompletionsMessages(messages: Message[]): any[] {
   return result
 }
 
-function parseproviderResponse(data: any): LLMResponse {
+function parseArchivedResponse(data: any): LLMResponse {
   const content = data.content ?? []
   let text = ''
   const toolCalls: LLMResponse['toolCalls'] = []

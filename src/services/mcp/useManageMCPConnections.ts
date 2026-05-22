@@ -1,4 +1,4 @@
-import { feature } from 'bun:bundle'
+﻿import { feature } from 'bun:bundle'
 import { basename } from 'path'
 import { useCallback, useEffect, useRef } from 'react'
 import { getSessionId } from '../../bootstrap/state.js'
@@ -42,7 +42,7 @@ import {
   logEvent,
 } from 'src/services/analytics/index.js'
 import {
-  dedupProviderMigrationMcpServers,
+  dedupArchivedMcpServers,
   doesEnterpriseMcpConfigExist,
   filterMcpServersByPolicy,
   getDsxuCodeMcpConfigs,
@@ -67,9 +67,9 @@ import {
   CHANNEL_PERMISSION_METHOD,
   ChannelMessageNotificationSchema,
   ChannelPermissionNotificationSchema,
+  ARCHIVED_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
   findChannelEntry,
   gateChannelServer,
-  PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
   wrapChannelMessage,
 } from './channelNotification.js'
 import {
@@ -78,19 +78,19 @@ import {
   isChannelPermissionRelayEnabled,
 } from './channelPermissions.js'
 import {
-  clearProviderMigrationMcpConfigsCache,
-  fetchProviderMigrationMcpConfigsIfEligible,
+  clearArchivedMcpConfigsCache,
+  fetchArchivedMcpConfigsIfEligible,
 } from './providerConnectorMigration.js'
 import {
-  getProviderMigrationMcpDisabledReason,
+  getArchivedMcpDisabledReason,
   isDsxuMcpDefaultMode,
-  isProviderMigrationMcpEnabled,
+  isArchivedMcpEnabled,
 } from './dsxuProvider.js'
 import {
-  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
-  PROVIDER_MIGRATION_CHANNEL_METHOD,
-  PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY,
-  PROVIDER_MIGRATION_CONFIG_SCOPE,
+  ARCHIVED_CHANNEL_CAPABILITY,
+  ARCHIVED_CHANNEL_METHOD,
+  ARCHIVED_CHANNEL_PERMISSION_CAPABILITY,
+  ARCHIVED_MCP_CONFIG_SCOPE,
 } from '../../constants/providerMigrationProtocol.js'
 import { registerElicitationHandler } from './elicitationHandler.js'
 import { getMcpPrefix } from './mcpStringUtils.js'
@@ -104,7 +104,7 @@ const MAX_BACKOFF_MS = 30000
 export function getDsxuMcpConnectionRuntimeProfile(): {
   runtime: 'DSXU MCP Connection Manager'
   defaultProviderMode: boolean
-  providerMigrationEnabled: boolean
+  archivedConnectorEnabled: boolean
   reconnectPolicy: {
     maxAttempts: number
     initialBackoffMs: number
@@ -115,7 +115,7 @@ export function getDsxuMcpConnectionRuntimeProfile(): {
   return {
     runtime: 'DSXU MCP Connection Manager',
     defaultProviderMode: isDsxuMcpDefaultMode(),
-    providerMigrationEnabled: isProviderMigrationMcpEnabled(),
+    archivedConnectorEnabled: isArchivedMcpEnabled(),
     reconnectPolicy: {
       maxAttempts: MAX_RECONNECT_ATTEMPTS,
       initialBackoffMs: INITIAL_BACKOFF_MS,
@@ -123,7 +123,7 @@ export function getDsxuMcpConnectionRuntimeProfile(): {
     },
     activationEvidence: [
       'loads DSXU/user/project/plugin MCP configs through getDsxuCodeMcpConfigs',
-      'blocks provider migration connectors unless explicit migration flag is enabled',
+      'blocks archived connectors unless explicit migration flag is enabled',
       'refreshes tools/prompts/resources into AppState for Tool/Skill/MCP activation',
     ],
   }
@@ -505,7 +505,7 @@ export function useManageMCPConnections(
             }
           }
 
-          // Channel push: provider migration channel - enqueue().
+          // Channel push: archived channel - enqueue().
           // Gate decides whether to register the handler; connection stays
           // up either way (allowedMcpServers controls that).
           if (feature('KAIROS') || feature('KAIROS_CHANNELS')) {
@@ -570,13 +570,13 @@ export function useManageMCPConnections(
                 )
                 // Permission-reply handler - separate event, separate
                 // capability. Only registers if the server declares
-                // the provider migration permission capability (same opt-in check as the send
+                // the archived permission capability (same opt-in check as the send
                 // path in interactiveHandler.ts). Server parses the user's
                 // reply and emits {request_id, behavior}; no regex on our
                 // side, text in the general channel can't accidentally match.
                 if (
                   client.capabilities?.experimental?.[
-                    PROVIDER_MIGRATION_CHANNEL_PERMISSION_CAPABILITY
+                    ARCHIVED_CHANNEL_PERMISSION_CAPABILITY
                   ] !== undefined
                 ) {
                   client.client.setNotificationHandler(
@@ -591,7 +591,7 @@ export function useManageMCPConnections(
                         ) ?? false
                       logMCPDebug(
                         client.name,
-                        `provider migration channel permission: ${request_id} - ${behavior} (${resolved ? 'matched pending' : 'no pending entry - stale or unknown ID'})`,
+                        `archived channel permission: ${request_id} - ${behavior} (${resolved ? 'matched pending' : 'no pending entry - stale or unknown ID'})`,
                       )
                     },
                   )
@@ -604,10 +604,10 @@ export function useManageMCPConnections(
                 // the gate says skip but the earlier handler keeps enqueuing.
                 // Map.delete - safe when never registered.
                 client.client.removeNotificationHandler(
-                  PROVIDER_MIGRATION_CHANNEL_METHOD,
+                  ARCHIVED_CHANNEL_METHOD,
                 )
                 client.client.removeNotificationHandler(
-                  PROVIDER_MIGRATION_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
+                  ARCHIVED_CHANNEL_PERMISSION_NOTIFICATION_METHOD,
                 )
                 client.client.removeNotificationHandler(
                   CHANNEL_PERMISSION_METHOD,
@@ -640,7 +640,7 @@ export function useManageMCPConnections(
                       : gate.kind === 'auth'
                         ? isDsxuMcpDefaultMode()
                           ? 'Channels require DSXU MCP Provider authorization'
-                          : 'Channels require provider migration authentication - run /login'
+                          : 'Channels require archived authentication - run /login'
                         : gate.kind === 'policy'
                           ? 'Channels are not enabled for your org - have an administrator set channelsEnabled: true in managed settings'
                           : gate.reason
@@ -809,7 +809,7 @@ export function useManageMCPConnections(
   // Re-runs on session change (/clear) and on /reload-plugins (pluginReconnectKey).
   // On plugin reload, also disconnects stale plugin MCP servers (scope 'dynamic')
   // that no longer appear in configs - prevents ghost tools from disabled plugins.
-  // Skip provider migration dedup here to avoid blocking on the network fetch; the connect
+  // Skip archived dedup here to avoid blocking on the network fetch; the connect
   // useEffect below runs immediately after and dedups before connecting.
   const sessionId = getSessionId()
   useEffect(() => {
@@ -897,39 +897,39 @@ export function useManageMCPConnections(
   ])
 
   // Load MCP configs and connect to servers.
-  // DSXU default mode only loads DSXU/user/project/plugin configs. Provider-migration
-  // cloud connectors are migration-only and must be explicitly enabled.
+  // DSXU default mode only loads DSXU/user/project/plugin configs. Archived
+  // archived cloud connectors must be explicitly enabled.
   useEffect(() => {
     let cancelled = false
 
     async function loadAndConnectMcpConfigs() {
-      let providerMigrationPromise: Promise<Record<string, ScopedMcpServerConfig>>
-      const allowProviderMigration =
+      let archivedConnectorPromise: Promise<Record<string, ScopedMcpServerConfig>>
+      const allowArchivedConnectors =
         !isStrictMcpConfig &&
         !doesEnterpriseMcpConfigExist() &&
-        (!isDsxuMcpDefaultMode() || isProviderMigrationMcpEnabled())
-      if (allowProviderMigration) {
-        clearProviderMigrationMcpConfigsCache()
-        providerMigrationPromise = fetchProviderMigrationMcpConfigsIfEligible()
+        (!isDsxuMcpDefaultMode() || isArchivedMcpEnabled())
+      if (allowArchivedConnectors) {
+        clearArchivedMcpConfigsCache()
+        archivedConnectorPromise = fetchArchivedMcpConfigsIfEligible()
       } else {
-        providerMigrationPromise = Promise.resolve({})
-        if (isDsxuMcpDefaultMode() && !isProviderMigrationMcpEnabled()) {
+        archivedConnectorPromise = Promise.resolve({})
+        if (isDsxuMcpDefaultMode() && !isArchivedMcpEnabled()) {
           logMCPDebug(
             'useManageMCPConnections',
-            getProviderMigrationMcpDisabledReason(),
+            getArchivedMcpDisabledReason(),
           )
         }
       }
 
       // Phase 1: Load DSXU Code configs. Plugin MCP servers that duplicate a
-      // --mcp-config entry or an explicitly enabled provider migration connector are
+      // --mcp-config entry or an explicitly enabled archived connector are
       // suppressed here so they don't connect twice.
       const { servers: dsxuCodeConfigs, errors: mcpErrors } =
         isStrictMcpConfig
           ? { servers: {}, errors: [] }
           : await getDsxuCodeMcpConfigs(
               dynamicMcpConfig,
-              providerMigrationPromise,
+              archivedConnectorPromise,
             )
       if (cancelled) return
 
@@ -938,7 +938,7 @@ export function useManageMCPConnections(
 
       const configs = { ...dsxuCodeConfigs, ...dynamicMcpConfig }
 
-      // Start connecting to DSXU Code servers (don't wait - runs concurrently with optional migration connectors)
+      // Start connecting to DSXU Code servers (don't wait - runs concurrently with optional archived connectors)
       // Filter out disabled servers to avoid unnecessary connection attempts
       const enabledConfigs = Object.fromEntries(
         Object.entries(configs).filter(([name]) => !isMcpServerDisabled(name)),
@@ -953,32 +953,32 @@ export function useManageMCPConnections(
         )
       })
 
-      // Phase 2: Optional provider migration connectors.
-      let providerMigrationConfigs: Record<string, ScopedMcpServerConfig> = {}
-      if (allowProviderMigration) {
-        providerMigrationConfigs = filterMcpServersByPolicy(
-          await providerMigrationPromise,
+      // Phase 2: Optional archived connectors.
+      let archivedConnectorConfigs: Record<string, ScopedMcpServerConfig> = {}
+      if (allowArchivedConnectors) {
+        archivedConnectorConfigs = filterMcpServersByPolicy(
+          await archivedConnectorPromise,
         ).allowed
         if (cancelled) return
 
-        // Suppress provider migration connectors that duplicate an enabled manual server.
-        // Keys never collide (`slack` vs `provider migration Slack`) so the merge below
+        // Suppress archived connectors that duplicate an enabled manual server.
+        // Keys never collide (`slack` vs `archived Slack`) so the merge below
         // won't catch this - need content-based dedup by URL signature.
-        if (Object.keys(providerMigrationConfigs).length > 0) {
-          const { servers: dedupedProviderMigration } = dedupProviderMigrationMcpServers(
-            providerMigrationConfigs,
+        if (Object.keys(archivedConnectorConfigs).length > 0) {
+          const { servers: dedupedArchivedConnectors } = dedupArchivedMcpServers(
+            archivedConnectorConfigs,
             configs,
           )
-          providerMigrationConfigs = dedupedProviderMigration
+          archivedConnectorConfigs = dedupedArchivedConnectors
         }
 
-        if (Object.keys(providerMigrationConfigs).length > 0) {
-          // Add migration servers as pending immediately so they show up in UI
+        if (Object.keys(archivedConnectorConfigs).length > 0) {
+          // Add archived connectors as pending immediately so they show up in UI
           setAppState(prevState => {
             const existingServerNames = new Set(
               prevState.mcp.clients.map(c => c.name),
             )
-            const newClients = Object.entries(providerMigrationConfigs)
+            const newClients = Object.entries(archivedConnectorConfigs)
               .filter(([name]) => !existingServerNames.has(name))
               .map(([name, config]) => ({
                 name,
@@ -998,32 +998,32 @@ export function useManageMCPConnections(
           })
 
           // Now start connecting (only enabled servers)
-          const enabledProviderMigrationConfigs = Object.fromEntries(
-            Object.entries(providerMigrationConfigs).filter(
+          const enabledArchivedConnectorConfigs = Object.fromEntries(
+            Object.entries(archivedConnectorConfigs).filter(
               ([name]) => !isMcpServerDisabled(name),
             ),
           )
           getMcpToolsCommandsAndResources(
             onConnectionAttempt,
-            enabledProviderMigrationConfigs,
+            enabledArchivedConnectorConfigs,
           ).catch(error => {
             logMCPError(
               'useManageMcpConnections',
-              `Failed to get provider migration MCP resources: ${errorMessage(error)}`,
+              `Failed to get archived MCP resources: ${errorMessage(error)}`,
             )
           })
         }
       }
 
       // Log server counts after both phases complete
-      const allConfigs = { ...configs, ...providerMigrationConfigs }
+      const allConfigs = { ...configs, ...archivedConnectorConfigs }
       const counts = {
         enterprise: 0,
         global: 0,
         project: 0,
         user: 0,
         plugin: 0,
-        providerMigration: 0,
+        archivedConnectors: 0,
       }
       // DSXU internal: collect stdio command basenames to correlate with RSS/FPS
       // metrics. Stdio servers like rust-analyzer can be heavy and we want to
@@ -1035,8 +1035,8 @@ export function useManageMCPConnections(
         else if (serverConfig.scope === 'project') counts.project++
         else if (serverConfig.scope === 'local') counts.user++
         else if (serverConfig.scope === 'dynamic') counts.plugin++
-        else if (serverConfig.scope === PROVIDER_MIGRATION_CONFIG_SCOPE)
-          counts.providerMigration++
+        else if (serverConfig.scope === ARCHIVED_MCP_CONFIG_SCOPE)
+          counts.archivedConnectors++
 
         if (
           process.env.USER_TYPE === 'ant' &&

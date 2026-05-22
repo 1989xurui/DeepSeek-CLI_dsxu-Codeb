@@ -505,13 +505,500 @@ export class CoordinatorV1 {
       summary: this.getLifecycleSummary(taskId),
     };
   }
+
+  createForkExecutionPlans(
+    taskId: string,
+    strategies: LegacyForkStrategy[],
+    descriptions: string[],
+  ) {
+    const branches = strategies.map((strategy, index) => ({
+      branchId: `${taskId}-branch-${index + 1}`,
+      task: descriptions[index] ?? `${strategy} branch`,
+      role: legacyRoleForStrategy(strategy),
+      goal: descriptions[index] ?? `${strategy} branch output`,
+      accessMode: strategy === 'exploratory' ? 'read-only' : 'write',
+      runMode: strategy === 'sequential' ? 'sequential' : 'parallel',
+      executionStrategy: strategy,
+      dependencies: [],
+      description: descriptions[index] ?? `${strategy} branch`,
+      strategy,
+    }));
+
+    const plan = this.createForkPlan(taskId, branches, {
+      strategy: {
+        name: strategies.every((s) => s === 'sequential') ? 'sequential-first' : 'parallel-first',
+        executionMode: strategies.every((s) => s === 'sequential') ? 'sequential' : 'parallel',
+        maxParallelism: Math.max(1, strategies.filter((s) => s !== 'sequential').length),
+        rationale: 'legacy lifecycle surface folded into CoordinatorV1',
+      },
+      allowReadOnlyParallelism: true,
+      writeBranchConstraint: 'isolated-writers',
+      orderingRules: ['preserve user task order', 'single writer if conflict is detected'],
+      fallbackPolicy: 'downgrade-parallelism',
+    });
+
+    return plan.branches.map((branch: ForkBranchSpec, index: number) => legacyBranchRecord({
+      ...branch,
+      description: descriptions[index],
+      strategy: strategies[index],
+    }));
+  }
+
+  updateBranchState(
+    branchId: string,
+    status: BranchStatus,
+    progress?: number,
+  ) {
+    return this.updateBranchProgress(branchId, progress ?? (status === 'completed' ? 100 : status === 'running' ? 50 : 0), status);
+  }
+
+  addIntermediateResult(branchId: string, input: any) {
+    const result = this.collectIntermediateResult({
+      branchId,
+      summary: input.summary ?? '',
+      reusable: Boolean(input.isReusable),
+      confidenceProfile: {
+        confidence: typeof input.confidence === 'number' ? input.confidence : 0.5,
+        qualitySignals: input.tags ?? [],
+        risks: [],
+      },
+      originTrace: {
+        sourceBranchId: branchId,
+        sourceTask: input.type ?? 'intermediate',
+        generatedAt: Date.now(),
+        generatorRole: this.getBranchState(branchId)?.role ?? 'worker',
+        evidenceRefs: input.tags ?? [],
+      },
+    }) as CollectedIntermediateResult & Record<string, unknown>;
+
+    result.id = `${branchId}-result-${this.intermediateResults.length}`;
+    result.type = input.type;
+    result.content = input.content;
+    result.confidence = typeof input.confidence === 'number' ? input.confidence : 0.5;
+    result.isReusable = Boolean(input.isReusable);
+    result.tags = input.tags ?? [];
+    result.timestamp = result.createdAt;
+    return result;
+  }
+
+  collectIntermediateResults(branchId: string) {
+    const results = this.intermediateResults.filter((result: any) => result.branchId === branchId);
+    const reusableCount = results.filter((result: any) => result.reusable || result.isReusable).length;
+    const qualityScore = results.length
+      ? Math.round(results.reduce((sum: number, result: any) => sum + ((result.confidenceProfile?.confidence ?? result.confidence ?? 0) * 100), 0) / results.length)
+      : 0;
+    return {
+      branchId,
+      results,
+      totalCount: results.length,
+      reusableCount,
+      qualityScore,
+      summary: `${results.length} intermediate result(s), ${reusableCount} reusable`,
+    };
+  }
+
+  evaluateMergeCandidates(branchIds: string[]) {
+    return this.buildMergeCandidates(branchIds).map((candidate: MergeCandidate) => ({
+      ...candidate,
+      strengths: candidate.confidence >= 0.7 ? ['high-confidence evidence'] : ['available branch output'],
+      weaknesses: candidate.confidence < 0.5 ? ['low confidence'] : [],
+      compatibility: candidate.score >= 75 ? 'high' : candidate.score >= 45 ? 'medium' : 'low',
+      estimatedIntegrationEffort: candidate.score >= 75 ? 'low' : candidate.score >= 45 ? 'medium' : 'high',
+    }));
+  }
+
+  performMerge(
+    branchId: string,
+    mergeStrategy: 'select-best' | 'combine' | 'hybrid' = 'select-best',
+  ) {
+    const candidates = this.buildMergeCandidates([branchId]);
+    this.mergeCandidates('legacy-merge-task', candidates, {
+      mode: mergeStrategy === 'combine' ? 'combine-best' : 'winner-takes-all',
+      minimumScore: 0,
+      confidenceFloor: 0,
+      allowPartialMerge: true,
+      conflictPreference: 'prefer-high-confidence',
+    });
+    return {
+      selectedBranchId: branchId,
+      mergedContent: candidates[0]?.summary ?? '',
+      mergeStrategy,
+      rationale: `selected ${branchId} through CoordinatorV1 merge owner`,
+      integrationNotes: ['merge recorded in CoordinatorV1 protocol'],
+      qualityAssessment: {
+        completeness: Math.max(0, Math.min(100, candidates[0]?.score ?? 75)),
+        correctness: Math.max(0, Math.min(100, Math.round((candidates[0]?.confidence ?? 0.75) * 100))),
+        maintainability: 80,
+      },
+    };
+  }
+
+  decideAbort(branchId: string, reasons: string[]) {
+    const primaryReason = reasons[0] ?? 'manual-stop';
+    const shouldAbort = reasons.length > 0;
+    return {
+      shouldAbort,
+      primaryReason,
+      recoveryHint: shouldAbort ? {
+        type: 'abort',
+        branchId,
+        steps: ['capture evidence', 'stop branch execution', 'replan affected work'],
+      } : undefined,
+    };
+  }
+
+  decideEscalation(taskId: string, reasons: string[]) {
+    if (reasons.length === 0) return null;
+    const reason = reasons[0];
+    return {
+      taskId,
+      reason,
+      severity: reason.includes('risk') ? 'high' : 'medium',
+      recommendedAction: reason.includes('risk') ? 'pause' : 'replan',
+      suggestedRoles: ['coordinator', 'specialist'],
+      rationale: `CoordinatorV1 escalation for ${reason}`,
+      expectedOutcome: 'risk is explicitly owned before continuing',
+    };
+  }
+
+  compareBranches(branchA: string, branchB: string) {
+    return {
+      branchA,
+      branchB,
+      similarityScore: branchA === branchB ? 100 : 50,
+      differences: branchA === branchB ? [] : [`${branchA} differs from ${branchB}`],
+      recommendation: 'keep-both',
+      rationale: 'branches are independent until merge evidence selects a winner',
+    };
+  }
+
+  generateLifecycleProtocolOutput(taskId: string) {
+    const protocol = this.getProtocol(taskId);
+    const branches = protocol.forkPlan?.branches ?? [];
+    const branchIds = branches.map((branch: ForkBranchSpec) => branch.branchId);
+    return {
+      taskId,
+      forks: branches.map((branch: ForkBranchSpec) => legacyBranchRecord(branch)),
+      branchStates: protocol.branchStates,
+      collectedResults: protocol.intermediateResults,
+      mergeCandidates: this.evaluateMergeCandidates(branchIds),
+      abortDecisions: protocol.abortDecisions,
+      escalationDecisions: protocol.escalationDecisions,
+      recoveryHints: protocol.recoveryHints,
+      overallStatus: protocol.summary.completedBranches === protocol.summary.totalBranches ? 'completed' : 'executing',
+      timestamp: Date.now(),
+    };
+  }
+
+  analyzeTask(title: string, description: string) {
+    return createSimpleRoleRouting(title, description);
+  }
+
+  analyzeTaskEnhanced(title: string, description: string) {
+    return createEnhancedRoleRouting(title, description);
+  }
+
+  generateCoordinatorSystemPrompt() {
+    return [
+      'DSXU CoordinatorV1',
+      'Use one coordinator owner, visible work-state, explicit evidence, and independent verification.',
+      'Do not create duplicate runtimes or bypass Tool Gate.',
+    ].join('\n');
+  }
+
+  createSubtaskPlan(
+    id: string,
+    type: string,
+    title: string,
+    description: string,
+    assignedRole: AgentRole,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      id,
+      type,
+      title,
+      description,
+      assignedRole,
+      dependencies: options.dependencies ?? [],
+      expectedOutput: options.expectedOutput ?? 'task output',
+      priority: options.priority ?? 'medium',
+      riskProfile: options.riskProfile ?? {
+        riskLevel: 'medium',
+        factors: { complexity: 'medium', impact: 'medium', uncertainty: 'medium', dependencies: 'some' },
+        recommendedRoles: [assignedRole],
+        riskMitigation: ['keep owner evidence visible'],
+      },
+      validationRequirement: options.validationRequirement ?? {
+        level: type === 'verification' ? 'independent' : 'self',
+        description: 'default validation',
+        requiredRoles: type === 'verification' ? ['verifier'] : [],
+        validationSteps: ['run owner tests'],
+        successCriteria: ['owner evidence passes'],
+      },
+      contextOverlap: options.contextOverlap ?? 'fresh',
+      estimatedDuration: options.estimatedDuration ?? 30000,
+    };
+  }
+
+  createMainTaskPlan(
+    id: string,
+    title: string,
+    description: string,
+    subtasks: any[] = [],
+    options: Record<string, any> = {}
+  ) {
+    const requiredRoles = [...new Set(subtasks.map((subtask) => subtask.assignedRole).filter(Boolean))];
+    return {
+      id,
+      title,
+      description,
+      subtasks,
+      requiredRoles,
+      estimatedComplexity: options.estimatedComplexity ?? 'medium',
+      overallRisk: options.overallRisk ?? 'medium',
+      verificationLevel: options.verificationLevel ?? 'self',
+      coordinatorOverride: options.coordinatorOverride ?? false,
+    };
+  }
+
+  createTaskAssignment(
+    taskId: string,
+    assignedRole: AgentRole,
+    assignmentRationale: string,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      taskId,
+      subtaskId: options.subtaskId,
+      assignedRole,
+      assignmentTime: Date.now(),
+      assignmentRationale,
+      priority: options.priority ?? 'medium',
+      resourceRequirements: options.resourceRequirements ?? {},
+      constraints: options.constraints ?? {},
+      status: 'pending',
+    };
+  }
+
+  createAgentRuntimeState(
+    agentId: string,
+    role: AgentRole,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      agentId,
+      role,
+      currentTaskId: options.currentTaskId,
+      status: options.status ?? 'idle',
+      riskLevel: options.riskLevel ?? 'medium',
+      verificationStatus: options.verificationStatus ?? 'pending',
+      contextOverlap: options.contextOverlap ?? 'fresh',
+      updatedAt: Date.now(),
+    };
+  }
+
+  createMultiAgentRuntimeState(
+    taskId: string,
+    agents: any[],
+    options: Record<string, any> = {}
+  ) {
+    return {
+      taskId,
+      agents,
+      overallStatus: options.overallStatus ?? 'pending',
+      startTime: Date.now(),
+      lastUpdateTime: Date.now(),
+      riskAssessment: options.riskAssessment ?? 'medium',
+      verificationSummary: options.verificationSummary ?? { required: 0, completed: 0, passed: 0, failed: 0 },
+      updatedAt: Date.now(),
+    };
+  }
+
+  createBranchState(
+    branchId: string,
+    taskId: string,
+    strategy: LegacyForkStrategy,
+    description: string,
+    assignedRole: AgentRole,
+    options: Record<string, any> = {}
+  ) {
+    const state = {
+      branchId,
+      taskId,
+      strategy,
+      description,
+      assignedRole,
+      status: options.status ?? 'planned',
+      startTime: Date.now(),
+      progress: options.progress ?? 0,
+      phase: options.phase ?? 'planning',
+      goals: options.goals ?? [description],
+      successCriteria: options.successCriteria ?? ['branch objective completed'],
+      constraints: options.constraints ?? {},
+      intermediateResults: options.intermediateResults ?? [],
+      errors: options.errors ?? [],
+      warnings: options.warnings ?? [],
+      contextDecisions: options.contextDecisions ?? [],
+      metrics: options.metrics ?? { contextEfficiency: 0.75, parallelizability: 0.7, verificationReadiness: 0.6 },
+      context: options.context ?? { sharedContextIds: [], isolationLevel: 'none', contextFreshness: 1, contextRelevance: 1, contextOverlap: {} },
+      dsxuAlignment: options.dsxuAlignment ?? { workflowCompliance: 0.8, decisionPatternMatch: 0.8, contextStrategyAlignment: 0.8, verificationAlignment: 0.8 },
+    };
+    this.branchStates.set(branchId, {
+      branchId,
+      status: state.status,
+      progress: state.progress,
+      lastUpdatedAt: Date.now(),
+      role: assignedRole,
+      goal: description,
+      history: [],
+    });
+    return state;
+  }
+
+  createCoordinationCheckpoint(
+    checkpointId: string,
+    taskId: string,
+    phase: string,
+    workflowStage: Record<string, any>,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      checkpointId,
+      taskId,
+      phase,
+      workflowStage,
+      stateSnapshot: options.stateSnapshot ?? { taskStates: {}, agentStates: {}, resourceUsage: {} },
+      metrics: options.metrics ?? { progress: 0, quality: 0, efficiency: 0 },
+      dsxuParity: options.dsxuParity ?? { workflowAlignment: 0.75, absorptionLevel: 'parity' },
+      createdAt: Date.now(),
+    };
+  }
+
+  createContextDecisionState(
+    decisionId: string,
+    taskId: string,
+    decisionType: string,
+    rationale: string,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      decisionId,
+      taskId,
+      decisionType,
+      rationale,
+      subtaskId: options.subtaskId,
+      phase: options.phase,
+      factors: options.factors ?? {},
+      decision: options.decision ?? { contextAction: decisionType, dsxuPattern: 'default' },
+      outcome: options.outcome,
+      createdAt: Date.now(),
+    };
+  }
+
+  createCoordinatorStatePackage(
+    taskId: string,
+    taskPlan: any,
+    coordinatorDecision: any,
+    options: Record<string, any> = {}
+  ) {
+    return {
+      taskId,
+      taskPlan,
+      coordinatorDecision,
+      multiAgentState: this.createMultiAgentRuntimeState(taskId, options.agentStates ?? []),
+      branchStates: options.branchStates ?? [],
+      contextDecisions: options.contextDecisions ?? [],
+      checkpoints: options.checkpoints ?? [],
+      parityScore: options.parityScore ?? 0,
+      absorptionLevel: options.absorptionLevel ?? 'baseline',
+    };
+  }
+
+  intelligentTaskDecompositionEnhanced(
+    title: string,
+    description: string,
+    options: Record<string, any> = {}
+  ) {
+    const taskId = `task_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const subtasks = [
+      this.createSubtaskPlan(`${taskId}_research`, 'research', `Research: ${title}`, description, 'researcher'),
+      this.createSubtaskPlan(`${taskId}_implementation`, 'implementation', `Implement: ${title}`, description, 'implementer'),
+      this.createSubtaskPlan(`${taskId}_verification`, 'verification', `Verify: ${title}`, description, 'verifier'),
+    ];
+    if (options.includeSynthesis) {
+      subtasks.push(this.createSubtaskPlan(`${taskId}_synthesis`, 'coordination', `Synthesize: ${title}`, description, 'coordinator'));
+    }
+    return this.createMainTaskPlan(taskId, title, description, subtasks, {
+      overallRisk: 'medium',
+      verificationLevel: 'independent',
+      coordinatorOverride: false,
+    });
+  }
+
+  createCoordinatorDecisionEnhanced(taskPlan: any) {
+    return {
+      taskId: taskPlan.id,
+      roleAssignments: taskPlan.subtasks.map((subtask: any) => ({
+        subtaskId: subtask.id,
+        assignedRole: subtask.assignedRole,
+        rationale: `assign ${subtask.assignedRole} for ${subtask.type}`,
+        expectedDuration: subtask.estimatedDuration,
+        riskAssessment: subtask.riskProfile?.riskLevel ?? 'medium',
+        verificationNeeded: subtask.validationRequirement?.level !== 'none',
+        contextDecision: subtask.contextOverlap ?? 'fresh',
+      })),
+      concurrencyPlan: {
+        parallelTasks: taskPlan.subtasks.filter((subtask: any) => subtask.type === 'research').map((subtask: any) => subtask.id),
+        sequentialTasks: taskPlan.subtasks.filter((subtask: any) => subtask.type !== 'research').map((subtask: any) => subtask.id),
+        writeHeavyTasks: taskPlan.subtasks.filter((subtask: any) => subtask.type === 'implementation').map((subtask: any) => subtask.id),
+      },
+      rationale: 'enhanced CoordinatorV1 decision with risk and verification evidence',
+    };
+  }
+
+
+  toMainlineEnvelope(taskId: string, decision: any) {
+    const protocol = this.getProtocol(taskId);
+    return buildCoordinatorMainlineEnvelope(taskId, decision, protocol);
+  }
+
 }
 
 export function createCoordinatorV1(): CoordinatorV1 {
   return new CoordinatorV1();
 }
 
-// ===== V10-2D Mainline Bridge Methods =====
+type LegacyForkStrategy = 'parallel' | 'sequential' | 'exploratory' | 'competitive';
+
+function legacyRoleForStrategy(strategy: LegacyForkStrategy): AgentRole {
+  if (strategy === 'exploratory') return 'explorer';
+  if (strategy === 'competitive') return 'specialist';
+  if (strategy === 'sequential') return 'implementer';
+  return 'worker';
+}
+
+function legacyPriorityForStrategy(strategy: LegacyForkStrategy): 'low' | 'medium' | 'high' {
+  if (strategy === 'competitive') return 'high';
+  if (strategy === 'exploratory') return 'medium';
+  return 'medium';
+}
+
+function legacyBranchRecord(branch: ForkBranchSpec & { description?: string; strategy?: LegacyForkStrategy }) {
+  const strategy = branch.strategy ?? (branch.runMode === 'parallel' ? 'parallel' : 'sequential');
+  return {
+    branchId: branch.branchId,
+    strategy,
+    description: branch.description ?? branch.task,
+    assignedRole: branch.role,
+    expectedOutput: branch.goal,
+    priority: legacyPriorityForStrategy(strategy),
+    riskTolerance: strategy === 'competitive' ? 'medium' : 'low',
+  };
+}
+
+
+// ===== Mainline Projection Helpers =====
 
 export function createSimpleRoleRouting(title: string, description: string) {
   const taskId = `task-${Date.now()}`;
@@ -577,12 +1064,8 @@ export function buildCoordinatorMainlineEnvelope(
   };
 }
 
-(CoordinatorV1.prototype as any).toMainlineEnvelope = function toMainlineEnvelope(taskId: string, decision: any) {
-  const protocol = this.getProtocol(taskId);
-  return buildCoordinatorMainlineEnvelope(taskId, decision, protocol);
-};
 
-// ===== V10-3 Skills Resolution Coordination =====
+// ===== Skills Resolution Coordination =====
 
 export interface CoordinatorSkillResolutionInput {
   taskId: string;
@@ -613,7 +1096,7 @@ export function consumeSkillResolutionInCoordinator(input: CoordinatorSkillResol
   };
 }
 
-// ===== V10-4 Tool Mainline Coordination =====
+// ===== Tool Mainline Coordination =====
 
 export interface CoordinatorToolSignalInput {
   taskId: string;
@@ -660,7 +1143,7 @@ export function consumeToolSignalsInCoordinator(input: CoordinatorToolSignalInpu
   };
 }
 
-// ===== V10-2F Phase D Multi-Agent Runtime Coordination =====
+// ===== Phase D Multi-Agent Runtime Coordination =====
 export function consumeMultiAgentRuntimeSignals(input: {
   taskId: string;
   routeDecision: { phase: string; assignedRole: string };

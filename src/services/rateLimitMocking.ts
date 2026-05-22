@@ -12,8 +12,8 @@ import {
   isMockFastModeRateLimitScenario,
   shouldProcessMockLimits,
 } from './mockRateLimits.js'
-import { isProviderMigrationHighTierModelTarget } from '../utils/model/providerMigration/providerMigrationModel.js'
-import { isProviderMigrationHighTierRateLimitClaim } from './mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.js'
+import { isArchivedHighTierModelTarget } from '../utils/model/providerMigration/providerMigrationModel.js'
+import { isProviderMigrationHighTierRateLimitClaim as isArchivedHighTierRateLimitClaim } from './mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.js'
 
 /**
  * Process headers, applying mocks if /mock-limits command is active
@@ -69,23 +69,23 @@ export function checkMockRateLimitError(
   // Only throw if:
   // 1. Status is rejected AND
   // 2. Either no overage headers OR overage is also rejected
-  // 3. For provider-migration high-tier limits, only throw when the current model
-  //    belongs to that hidden provider-migration target.
+  // 3. For archived high-tier limits, only throw when the current model
+  //    belongs to that hidden archived target.
   const status = mockHeaders['provider-ratelimit-unified-status']
   const overageStatus =
     mockHeaders['provider-ratelimit-unified-overage-status']
   const rateLimitType =
     mockHeaders['provider-ratelimit-unified-representative-claim']
 
-  const isProviderMigrationHighTierLimit =
-    isProviderMigrationHighTierRateLimitClaim(rateLimitType)
+  const isArchivedHighTierLimit =
+    isArchivedHighTierRateLimitClaim(rateLimitType)
 
-  const isUsingProviderMigrationHighTierModel =
-    isProviderMigrationHighTierModelTarget(currentModel)
+  const isUsingArchivedHighTierModel =
+    isArchivedHighTierModelTarget(currentModel)
 
-  // For provider-migration high-tier limits, only throw 429 if the request is
+  // For archived high-tier limits, only throw 429 if the request is
   // actually using that model target. This simulates fallback success.
-  if (isProviderMigrationHighTierLimit && !isUsingProviderMigrationHighTierModel) {
+  if (isArchivedHighTierLimit && !isUsingArchivedHighTierModel) {
     return null
   }
 

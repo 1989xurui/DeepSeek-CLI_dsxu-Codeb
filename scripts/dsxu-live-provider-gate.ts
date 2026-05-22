@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'fs/promises'
 import { dirname, join, resolve } from 'path'
 import { writeLiveProviderGateEvidence } from '../src/dsxu/integration/harness/live-provider-gate-v1-harness'
-import { getV18LiveDeepSeekBenchmarkGate } from '../src/dsxu/engine/v18-live-deepseek-benchmark-gate'
+import { getV18LiveDeepSeekBenchmarkGate } from '../src/dsxu/engine/live-deepseek-benchmark-gate'
 
 const GENERATED_DIR = join(process.cwd(), 'docs', 'generated')
 const OUTPUT_JSON_PATH = join(GENERATED_DIR, 'DSXU_V20_LIVE_PROVIDER_GATE_20260515.json')

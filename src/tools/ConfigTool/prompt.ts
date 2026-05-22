@@ -77,7 +77,7 @@ ${modelSection}
 - When to use: inspect or change configuration only when the user asks, when a setting directly blocks the task, or when a safe configuration change is explicitly beneficial.
 - When not to use: do not change model, permissions, telemetry, tools, or project settings as a workaround for failed implementation or without user intent.
 - Recovery after failure: if a setting is unavailable or invalid, report the exact setting and valid options instead of guessing another key.
-- Weak-model anti-pattern: do not silently widen permissions, switch models, enable remote/provider-migration features, or mutate project settings to make a benchmark pass.
+- Weak-model anti-pattern: do not silently widen permissions, switch models, enable remote/archived features, or mutate project settings to make a benchmark pass.
 - Verification / evidence: after a change, cite the setting name, scope, value, and the read-back or command evidence confirming it.
 
 ## Examples

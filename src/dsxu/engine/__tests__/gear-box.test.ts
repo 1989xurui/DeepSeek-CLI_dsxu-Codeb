@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createGearBox } from '../gear-box'
+import { DEEPSEEK_V4_FLASH_MODEL, DEEPSEEK_V4_PRO_MODEL } from '../../../utils/model/deepseekV4Control'
 
 describe('GearBox', () => {
   beforeEach(() => {
@@ -7,13 +8,14 @@ describe('GearBox', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
   it('should start at gear 1', () => {
     const gearBox = createGearBox()
     expect(gearBox.getGear()).toBe(1)
-    expect(gearBox.getModel()).toBe('deepseek-chat')
+    expect(gearBox.getModel()).toBe(DEEPSEEK_V4_FLASH_MODEL)
   })
 
   it('should upgrade to gear 2 after 4 consecutive errors', () => {
@@ -28,7 +30,7 @@ describe('GearBox', () => {
     // 第4次错误 - 应该升到2档
     gearBox.reportToolResult({ isError: true, content: 'error' }, 'Bash')
     expect(gearBox.getGear()).toBe(2)
-    expect(gearBox.getModel()).toBe('deepseek-reasoner')
+    expect(gearBox.getModel()).toBe(DEEPSEEK_V4_PRO_MODEL)
   })
 
   it('should upgrade to gear 3 after 6 consecutive errors', () => {
@@ -43,7 +45,7 @@ describe('GearBox', () => {
     // 第6次错误 - 应该升到3档
     gearBox.reportToolResult({ isError: true, content: 'error' }, 'Bash')
     expect(gearBox.getGear()).toBe(3)
-    expect(gearBox.getModel()).toBe('deepseek-reasoner') // 3档也是reasoner
+    expect(gearBox.getModel()).toBe(DEEPSEEK_V4_PRO_MODEL)
   })
 
   it('should reset to gear 1 when test passes', () => {
@@ -71,7 +73,7 @@ describe('GearBox', () => {
     }, 'Bash')
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('测试失败')
+      expect.stringContaining('test failed')
     )
 
     // 模拟测试通过输出
@@ -81,7 +83,7 @@ describe('GearBox', () => {
     }, 'Bash')
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('测试通过')
+      expect.stringContaining('test passed')
     )
   })
 
@@ -108,7 +110,7 @@ describe('GearBox', () => {
     gearBox.reportLLMError(new Error('LLM timeout'), 'call-123')
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('LLM 错误')
+      expect.stringContaining('LLM error')
     )
     expect(gearBox.getGear()).toBe(1) // 1次错误不会升档
   })
@@ -152,5 +154,56 @@ describe('GearBox', () => {
 
     const state = gearBox.getState()
     expect(state.testHistory).toHaveLength(5) // TEST_HISTORY_SIZE = 5
+  })
+
+  it('should consume VerifyGate summaries through GearBox without a recovery bridge', () => {
+    const gearBox = createGearBox()
+
+    const decision = gearBox.reportVerificationSummary(
+      {
+        passed: false,
+        score: 0,
+        findings: [
+          {
+            severity: 'P1',
+            title: 'Verification evidence is missing',
+            detail: 'File mutation happened, but no native verification command was recorded.',
+          },
+        ],
+      },
+      {
+        policy: 'block',
+        failedAttemptsSinceProgress: 2,
+        command: 'bun test src/example.test.ts',
+      },
+    )
+
+    expect(decision).toMatchObject({
+      action: 'replan',
+      reason: 'verify-failure',
+      metadata: {
+        missingEvidence: true,
+        command: 'bun test src/example.test.ts',
+        sourceRecoveryDecisionTable: true,
+      },
+    })
+    expect(decision?.metadata?.stallDecision).toMatchObject({
+      schemaVersion: 'dsxu.stall-recovery-decision.v1',
+      owner: 'Recovery / GearBox',
+      reason: 'repeated_verification_failure',
+      action: 'replan',
+    })
+    expect(gearBox.getState().lastRecoveryDecision).toBe(decision)
+    expect(gearBox.getGear()).toBeGreaterThanOrEqual(2)
+
+    const passDecision = gearBox.reportVerificationSummary({
+      passed: true,
+      score: 100,
+      findings: [],
+    })
+
+    expect(passDecision).toBeNull()
+    expect(gearBox.getState().lastRecoveryDecision).toBeUndefined()
+    expect(gearBox.getGear()).toBe(1)
   })
 })

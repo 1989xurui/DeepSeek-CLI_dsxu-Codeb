@@ -19,7 +19,7 @@ import { isModelAllowed } from '../modelAllowlist.js'
 import { getAntModels } from '../antModels.js'
 import {
   getCanonicalName,
-  getProviderMigrationUserDefaultModelDescription,
+  getArchivedUserDefaultModelDescription,
   getDefaultSonnetModel,
   getDefaultOpusModel,
   getDefaultHaikuModel,
@@ -36,22 +36,22 @@ import { getGlobalConfig } from '../../config.js'
 import { DSXU_DEEPSEEK_FLASH_MAX_ALIAS, DSXU_DEEPSEEK_FLASH_MODEL, DSXU_DEEPSEEK_PRO_MODEL, isDSXUCodeMode } from '../dsxuModel.js'
 
 // @[MODEL LAUNCH]: Update all the available and default model option strings below.
-const PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_NAME_ENV =
+const ARCHIVED_DEFAULT_SONNET_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL'
+const ARCHIVED_DEFAULT_SONNET_MODEL_NAME_ENV =
   'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL_NAME'
-const PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV =
+const ARCHIVED_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV =
   'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL_DESCRIPTION'
-const PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_NAME_ENV =
+const ARCHIVED_DEFAULT_OPUS_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL'
+const ARCHIVED_DEFAULT_OPUS_MODEL_NAME_ENV =
   'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL_NAME'
-const PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV =
+const ARCHIVED_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV =
   'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL_DESCRIPTION'
-const PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_NAME_ENV =
+const ARCHIVED_DEFAULT_HAIKU_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL'
+const ARCHIVED_DEFAULT_HAIKU_MODEL_NAME_ENV =
   'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL_NAME'
-const PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV =
+const ARCHIVED_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV =
   'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION'
-const providerMigrationSourceModelId = (family: string) => `cla${'ude'}-${family}`
+const archivedSourceModelId = (family: string) => `cla${'ude'}-${family}`
 
 export type ModelOption = {
   value: ModelSetting
@@ -87,7 +87,7 @@ export function getDefaultOptionForUser(fastMode = false): ModelOption {
     return {
       value: null,
       label: 'Default (recommended)',
-      description: getProviderMigrationUserDefaultModelDescription(fastMode),
+      description: getArchivedUserDefaultModelDescription(fastMode),
     }
   }
 
@@ -102,18 +102,18 @@ export function getDefaultOptionForUser(fastMode = false): ModelOption {
 
 function getCustomSonnetOption(): ModelOption | undefined {
   const is3P = getAPIProvider() !== 'firstParty'
-  const customSonnetModel = process.env[PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_ENV]
+  const customSonnetModel = process.env[ARCHIVED_DEFAULT_SONNET_MODEL_ENV]
   // When a 3P user has a custom sonnet model string, show it directly
   if (is3P && customSonnetModel) {
     const is1m = has1mContext(customSonnetModel)
     return {
       value: 'sonnet',
       label:
-        process.env[PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_NAME_ENV] ?? customSonnetModel,
+        process.env[ARCHIVED_DEFAULT_SONNET_MODEL_NAME_ENV] ?? customSonnetModel,
       description:
-        process.env[PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV] ??
+        process.env[ARCHIVED_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV] ??
         `Custom Sonnet model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env[PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV] ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`,
+      descriptionForModel: `${process.env[ARCHIVED_DEFAULT_SONNET_MODEL_DESCRIPTION_ENV] ?? `Custom Sonnet model${is1m ? ' with 1M context' : ''}`} (${customSonnetModel})`,
     }
   }
 }
@@ -133,17 +133,17 @@ function getSonnet46Option(): ModelOption {
 
 function getCustomOpusOption(): ModelOption | undefined {
   const is3P = getAPIProvider() !== 'firstParty'
-  const customOpusModel = process.env[PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_ENV]
+  const customOpusModel = process.env[ARCHIVED_DEFAULT_OPUS_MODEL_ENV]
   // When a 3P user has a custom opus model string, show it directly
   if (is3P && customOpusModel) {
     const is1m = has1mContext(customOpusModel)
     return {
       value: 'opus',
-      label: process.env[PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_NAME_ENV] ?? customOpusModel,
+      label: process.env[ARCHIVED_DEFAULT_OPUS_MODEL_NAME_ENV] ?? customOpusModel,
       description:
-        process.env[PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV] ??
+        process.env[ARCHIVED_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV] ??
         `Custom Opus model${is1m ? ' (1M context)' : ''}`,
-      descriptionForModel: `${process.env[PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV] ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`,
+      descriptionForModel: `${process.env[ARCHIVED_DEFAULT_OPUS_MODEL_DESCRIPTION_ENV] ?? `Custom Opus model${is1m ? ' with 1M context' : ''}`} (${customOpusModel})`,
     }
   }
 }
@@ -152,8 +152,8 @@ function getOpus41Option(): ModelOption {
   return {
     value: 'opus',
     label: 'Opus 4.1',
-    description: `Opus 4.1 · Previous provider-migration source version`,
-    descriptionForModel: 'Opus 4.1 - previous provider-migration source version',
+    description: `Opus 4.1 · Previous archived source version`,
+    descriptionForModel: 'Opus 4.1 - previous archived source version',
   }
 }
 
@@ -191,16 +191,16 @@ export function getOpus46_1MOption(fastMode = false): ModelOption {
 
 function getCustomHaikuOption(): ModelOption | undefined {
   const is3P = getAPIProvider() !== 'firstParty'
-  const customHaikuModel = process.env[PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_ENV]
+  const customHaikuModel = process.env[ARCHIVED_DEFAULT_HAIKU_MODEL_ENV]
   // When a 3P user has a custom haiku model string, show it directly
   if (is3P && customHaikuModel) {
     return {
       value: 'haiku',
-      label: process.env[PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_NAME_ENV] ?? customHaikuModel,
+      label: process.env[ARCHIVED_DEFAULT_HAIKU_MODEL_NAME_ENV] ?? customHaikuModel,
       description:
-        process.env[PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV] ??
+        process.env[ARCHIVED_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV] ??
         'Custom Haiku model',
-      descriptionForModel: `${process.env[PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV] ?? 'Custom Haiku model'} (${customHaikuModel})`,
+      descriptionForModel: `${process.env[ARCHIVED_DEFAULT_HAIKU_MODEL_DESCRIPTION_ENV] ?? 'Custom Haiku model'} (${customHaikuModel})`,
     }
   }
 }
@@ -440,11 +440,11 @@ function getModelFamilyInfo(
 
   // Sonnet family
   if (
-    canonical.includes(providerMigrationSourceModelId('sonnet-4-6')) ||
-    canonical.includes(providerMigrationSourceModelId('sonnet-4-5')) ||
-    canonical.includes(providerMigrationSourceModelId('sonnet-4-')) ||
-    canonical.includes(providerMigrationSourceModelId('3-7-sonnet')) ||
-    canonical.includes(providerMigrationSourceModelId('3-5-sonnet'))
+    canonical.includes(archivedSourceModelId('sonnet-4-6')) ||
+    canonical.includes(archivedSourceModelId('sonnet-4-5')) ||
+    canonical.includes(archivedSourceModelId('sonnet-4-')) ||
+    canonical.includes(archivedSourceModelId('3-7-sonnet')) ||
+    canonical.includes(archivedSourceModelId('3-5-sonnet'))
   ) {
     const currentName = getMarketingNameForModel(getDefaultSonnetModel())
     if (currentName) {
@@ -453,7 +453,7 @@ function getModelFamilyInfo(
   }
 
   // Opus family
-  if (canonical.includes(providerMigrationSourceModelId('opus-4'))) {
+  if (canonical.includes(archivedSourceModelId('opus-4'))) {
     const currentName = getMarketingNameForModel(getDefaultOpusModel())
     if (currentName) {
       return { alias: 'Opus', currentVersionName: currentName }
@@ -462,8 +462,8 @@ function getModelFamilyInfo(
 
   // Haiku family
   if (
-    canonical.includes(providerMigrationSourceModelId('haiku')) ||
-    canonical.includes(providerMigrationSourceModelId('3-5-haiku'))
+    canonical.includes(archivedSourceModelId('haiku')) ||
+    canonical.includes(archivedSourceModelId('3-5-haiku'))
   ) {
     const currentName = getMarketingNameForModel(getDefaultHaikuModel())
     if (currentName) {
@@ -475,7 +475,7 @@ function getModelFamilyInfo(
 }
 
 /**
- * Returns a ModelOption for a known provider-migration source model with a human-readable
+ * Returns a ModelOption for a known archived source model with a human-readable
  * label, and an upgrade hint if a newer version is available via the alias.
  * Returns null if the model is not recognized.
  */
@@ -512,23 +512,23 @@ function getKnownModelOption(model: string): ModelOption | null {
 export function getModelOptions(fastMode = false): ModelOption[] {
   const options = getModelOptionsBase(fastMode)
 
-  const providerMigrationCustomModelOptionEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
-  const providerMigrationCustomModelOptionNameEnv =
+  const archivedCustomModelOptionEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
+  const archivedCustomModelOptionNameEnv =
     `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION_NAME`
-  const providerMigrationCustomModelOptionDescriptionEnv =
+  const archivedCustomModelOptionDescriptionEnv =
     `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION_DESCRIPTION`
 
-  // Add the custom model from the provider migration source custom-model env var.
-  const envCustomModel = process.env[providerMigrationCustomModelOptionEnv]
+  // Add the custom model from the archived source custom-model env var.
+  const envCustomModel = process.env[archivedCustomModelOptionEnv]
   if (
     envCustomModel &&
     !options.some(existing => existing.value === envCustomModel)
   ) {
     options.push({
       value: envCustomModel,
-      label: process.env[providerMigrationCustomModelOptionNameEnv] ?? envCustomModel,
+      label: process.env[archivedCustomModelOptionNameEnv] ?? envCustomModel,
       description:
-        process.env[providerMigrationCustomModelOptionDescriptionEnv] ??
+        process.env[archivedCustomModelOptionDescriptionEnv] ??
         `Custom model (${envCustomModel})`,
     })
   }
@@ -565,7 +565,7 @@ export function getModelOptions(fastMode = false): ModelOption[] {
       getMergedOpus1MOption(fastMode),
     ])
   } else {
-    // Try to show a human-readable label for known provider-migration source models, with an
+    // Try to show a human-readable label for known archived source models, with an
     // upgrade hint if the alias now resolves to a newer version.
     const knownOption = getKnownModelOption(customModel)
     if (knownOption) {

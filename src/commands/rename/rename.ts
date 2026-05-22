@@ -57,7 +57,7 @@ export async function call(
   // Always save the custom title (session name)
   await saveCustomTitle(sessionId, newName, fullPath)
 
-  // Sync title to bridge session on the provider migration route (best-effort, non-blocking).
+  // Sync title to bridge session on the archived route (best-effort, non-blocking).
   // v2 env-less bridge stores cse_* in replBridgeSessionId —
   // updateBridgeSessionTitle retags internally for the compat endpoint.
   const appState = context.getAppState()
@@ -91,7 +91,7 @@ export function getDsxuRenameCommandRuntimeProfile(): {
   command: '/rename'
   runtime: 'DSXU Local Session Rename'
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     command: '/rename',
@@ -101,9 +101,9 @@ export function getDsxuRenameCommandRuntimeProfile(): {
       'saveAgentName updates DSXU prompt-bar session identity',
       'DSXU_CODE_MODE skips cloud bridge title synchronization',
     ],
-    providerMigrationIsolation: [
-      'updateBridgeSessionTitle is provider migration remote only',
-      'provider migration title sync cannot run from DSXU runtime',
+    archivedIsolation: [
+      'updateBridgeSessionTitle is archived remote only',
+      'archived title sync cannot run from DSXU runtime',
     ],
   }
 }

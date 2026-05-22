@@ -5,7 +5,7 @@ import type { ToolUseContext } from '../../Tool.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
 import { getProviderControlAccessToken } from '../../services/auth/dsxuProviderControlAuth.js'
-import { getProviderMigrationDefaultTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
+import { getArchivedDefaultTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import { checkRepoForRemoteAccess } from '../../utils/background/remote/preconditions.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
@@ -24,13 +24,13 @@ import { registerBundledSkill } from '../bundledSkills.js'
 
 // Base58 alphabet (Bitcoin-style) used by the tagged ID system
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-const PROVIDER_MIGRATION_SOURCE_TOKEN = 'cl' + 'aude'
-const PROVIDER_MIGRATION_CLOUD_CONFIG_TYPE = `${PROVIDER_MIGRATION_SOURCE_TOKEN}ai-proxy`
-const PROVIDER_MIGRATION_CLOUD_NAME_PREFIX_RE = new RegExp(
-  `^${PROVIDER_MIGRATION_SOURCE_TOKEN}[.\\s-]ai[.\\s-]`,
+const ARCHIVED_SOURCE_TOKEN = 'cl' + 'aude'
+const ARCHIVED_CLOUD_CONFIG_TYPE = `${ARCHIVED_SOURCE_TOKEN}ai-proxy`
+const ARCHIVED_CLOUD_NAME_PREFIX_RE = new RegExp(
+  `^${ARCHIVED_SOURCE_TOKEN}[.\\s-]ai[.\\s-]`,
   'i',
 )
-const PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV =
+const ARCHIVED_REMOTE_TRIGGER_ENV =
   'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_TRIGGER'
 
 /**
@@ -76,8 +76,8 @@ function isDsxuProviderMode(): boolean {
   return isEnvTruthy(process.env.DSXU_CODE_MODE)
 }
 
-function isProviderMigrationScheduleEnabled(): boolean {
-  return isEnvTruthy(process.env[PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV])
+function isArchivedScheduleEnabled(): boolean {
+  return isEnvTruthy(process.env[ARCHIVED_REMOTE_TRIGGER_ENV])
 }
 
 function getConnectedDsxuConnectors(
@@ -88,7 +88,7 @@ function getConnectedDsxuConnectors(
     if (client.type !== 'connected') {
       continue
     }
-    if (client.config.type === PROVIDER_MIGRATION_CLOUD_CONFIG_TYPE) {
+    if (client.config.type === ARCHIVED_CLOUD_CONFIG_TYPE) {
       continue
     }
     if (!('url' in client.config) || typeof client.config.url !== 'string') {
@@ -103,7 +103,7 @@ function getConnectedDsxuConnectors(
   return connectors
 }
 
-function getConnectedProviderMigrationConnectors(
+function getConnectedArchivedConnectors(
   mcpClients: MCPServerConnection[],
 ): ConnectorInfo[] {
   const connectors: ConnectorInfo[] = []
@@ -111,7 +111,7 @@ function getConnectedProviderMigrationConnectors(
     if (client.type !== 'connected') {
       continue
     }
-    if (client.config.type !== PROVIDER_MIGRATION_CLOUD_CONFIG_TYPE) {
+    if (client.config.type !== ARCHIVED_CLOUD_CONFIG_TYPE) {
       continue
     }
     const uuid = taggedIdToUUID(client.config.id)
@@ -129,7 +129,7 @@ function getConnectedProviderMigrationConnectors(
 
 function sanitizeConnectorName(name: string): string {
   return name
-    .replace(PROVIDER_MIGRATION_CLOUD_NAME_PREFIX_RE, '')
+    .replace(ARCHIVED_CLOUD_NAME_PREFIX_RE, '')
     .replace(/[^a-zA-Z0-9_-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
@@ -139,7 +139,7 @@ function formatConnectorsInfo(connectors: ConnectorInfo[]): string {
   if (connectors.length === 0) {
     return isDsxuProviderMode()
       ? 'No connected DSXU MCP connectors found. Configure DSXU MCP servers in .dsxu or settings before attaching connectors.'
-      : 'No connected provider migration MCP connectors found. Connector import is migration-only.'
+      : 'No connected archived MCP connectors found. Connector import is migration-only.'
   }
   const lines = ['Connected connectors (available for triggers):']
   for (const c of connectors) {
@@ -216,13 +216,13 @@ Set \`header: "Action"\` and offer the four actions (create/list/update/run) as 
 
   const providerName = isDsxuProviderMode()
     ? 'DSXU Remote Session Provider'
-    : 'provider migration remote agents'
+    : 'archived remote agents'
   const defaultModel = isDsxuProviderMode()
     ? 'deepseek-v4-flash-thinking-high'
-    : getProviderMigrationDefaultTierModelId()
+    : getArchivedDefaultTierModelId()
   const scheduledUrl = isDsxuProviderMode()
     ? 'local DSXU task dashboard or .dsxu/remote-triggers.json'
-    : 'provider migration scheduled-agent dashboard'
+    : 'archived scheduled-agent dashboard'
 
   return `# Schedule Remote Agents
 
@@ -286,7 +286,7 @@ ${connectorsInfo}
 
 When attaching connectors to a trigger, use the \`connector_uuid\` and \`name\` shown above (the name is already sanitized to only contain letters, numbers, hyphens, and underscores), and the connector's URL. The \`name\` field in \`mcp_connections\` must only contain \`[a-zA-Z0-9_-]\` ...dots and spaces are NOT allowed.
 
-**Important:** Infer what services the agent needs from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack connectors. Cross-reference against the list above and warn if any required service isn't connected. In DSXU mode, missing connectors should be configured through DSXU MCP settings rather than provider migration settings.
+**Important:** Infer what services the agent needs from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack connectors. Cross-reference against the list above and warn if any required service isn't connected. In DSXU mode, missing connectors should be configured through DSXU MCP settings rather than archived settings.
 
 ## Environments
 
@@ -342,7 +342,7 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 4. **Choose the model** ...Default to \`${defaultModel}\`. Tell the user which model you're defaulting to and ask if they want a different one.
 5. **Validate connections** ...Infer what services the agent will need from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack MCP connectors. Cross-reference with the connectors list above. If any are missing, warn the user to configure DSXU MCP connectors before scheduling.${gitRepoUrl ? ` The default git repo is already set to \`${gitRepoUrl}\`. Ask the user if this is the right repo or if they need a different one.` : ' Ask which git repos the remote/background agent needs cloned into its environment.'}
 6. **Review and confirm** ...Show the full configuration before creating. Let them adjust.
-7. **Create it** \u2014 Call \`${REMOTE_TRIGGER_TOOL_NAME}\` with \`action: "create"\` and show the result. The response includes the trigger ID. In DSXU mode, say where the local trigger evidence was written; in provider migration mode, output the scheduled-agent URL.
+7. **Create it** \u2014 Call \`${REMOTE_TRIGGER_TOOL_NAME}\` with \`action: "create"\` and show the result. The response includes the trigger ID. In DSXU mode, say where the local trigger evidence was written; in archived mode, output the scheduled-agent URL.
 
 ### UPDATE a trigger:
 
@@ -364,7 +364,7 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 
 ## Important Notes
 
-- These are DSXU remote/background agents. In DSXU mode they run under DSXU policy and evidence rules; do not imply provider migration execution.
+- These are DSXU remote/background agents. In DSXU mode they run under DSXU policy and evidence rules; do not imply archived execution.
 - Always convert cron to human-readable when displaying
 - Default to \`enabled: true\` unless user says otherwise
 - Accept GitHub URLs in any format (https://github.com/org/repo, org/repo, etc.) and normalize to the full HTTPS URL (without .git suffix)
@@ -384,17 +384,17 @@ export function registerScheduleRemoteAgentsSkill(): void {
     userInvocable: true,
     isEnabled: () =>
       (isDsxuProviderMode() ||
-        (isProviderMigrationScheduleEnabled() &&
+        (isArchivedScheduleEnabled() &&
           getFeatureValue_CACHED_MAY_BE_STALE('tengu_surreal_dali', false))) &&
       isPolicyAllowed('allow_remote_sessions'),
     allowedTools: [REMOTE_TRIGGER_TOOL_NAME, ASK_USER_QUESTION_TOOL_NAME],
     async getPromptForCommand(args: string, context: ToolUseContext) {
       const dsxuMode = isDsxuProviderMode()
-      if (!dsxuMode && !isProviderMigrationScheduleEnabled()) {
+      if (!dsxuMode && !isArchivedScheduleEnabled()) {
         return [
           {
             type: 'text',
-            text: `Provider migration scheduling is physically isolated. Enable ${PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV}=1 only for one-time migration. Default DSXU scheduling uses the DSXU Remote Session Provider.`,
+            text: `Archived scheduling is physically isolated. Enable ${ARCHIVED_REMOTE_TRIGGER_ENV}=1 only for one-time migration. Default DSXU scheduling uses the DSXU Remote Session Provider.`,
           },
         ]
       }
@@ -403,7 +403,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
         return [
           {
             type: 'text',
-            text: 'Provider migration scheduling requires migrated cloud credentials. DSXU mode uses the DSXU Remote Session Provider and does not require provider migration login.',
+            text: 'Archived scheduling requires migrated cloud credentials. DSXU mode uses the DSXU Remote Session Provider and does not require archived login.',
           },
         ]
       }
@@ -427,7 +427,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
           return [
             {
               type: 'text',
-              text: "We're having trouble connecting with the provider migration account to set up a scheduled task. Use DSXU mode or try the migration path again later.",
+              text: "We're having trouble connecting with the archived account to set up a scheduled task. Use DSXU mode or try the migration path again later.",
             },
           ]
         }
@@ -489,12 +489,12 @@ export function registerScheduleRemoteAgentsSkill(): void {
 
       const connectors = dsxuMode
         ? getConnectedDsxuConnectors(context.options.mcpClients)
-        : getConnectedProviderMigrationConnectors(context.options.mcpClients)
+        : getConnectedArchivedConnectors(context.options.mcpClients)
       if (connectors.length === 0) {
         setupNotes.push(
           dsxuMode
             ? `No MCP connectors ...configure DSXU MCP servers if needed.`
-            : `No MCP connectors ...provider migration connector import is migration-only.`,
+            : `No MCP connectors ...archived connector import is migration-only.`,
         )
       }
 
@@ -534,16 +534,16 @@ export function getDsxuScheduleRemoteAgentsRuntimeProfile(): {
     runtime: 'DSXU Schedule Remote Agents Skill',
     providerMode: isDsxuProviderMode()
       ? 'DSXU Remote Session Provider'
-      : 'provider migration path',
+      : 'archived path',
     allowedTools: [REMOTE_TRIGGER_TOOL_NAME, ASK_USER_QUESTION_TOOL_NAME],
     defaultModel: isDsxuProviderMode()
       ? 'deepseek-v4-flash-thinking-high'
-      : `${getProviderMigrationDefaultTierModelId()} provider migration default`,
+      : `${getArchivedDefaultTierModelId()} archived default`,
     activationEvidence: [
-      'skill is enabled in DSXU mode without provider migration OAuth',
-      `provider migration scheduling requires explicit ${PROVIDER_MIGRATION_REMOTE_TRIGGER_ENV}`,
+      'skill is enabled in DSXU mode without archived OAuth',
+      `archived scheduling requires explicit ${ARCHIVED_REMOTE_TRIGGER_ENV}`,
       'DSXU mode uses dsxu-local-workspace environment',
-      'connected non-provider-migration MCP clients become DSXU connectors',
+      'connected non-archived MCP clients become DSXU connectors',
       'prompt requires RemoteTriggerTool rather than shell-only cron snippets',
     ],
   }

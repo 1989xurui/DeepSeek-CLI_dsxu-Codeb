@@ -11,7 +11,7 @@ describe('DSXU Control Plane CP12 Stage Acceptance V1', () => {
     expect(result.failures).toEqual([])
     expect(checkNames).toEqual([
       'no-legacy-directory-regression',
-      'provider-migration-facade-thin',
+      'archived-facade-thin',
       'control-messaging-visible-permission',
       'sdk-control-message-adapter',
       'remote-session-lifecycle-shared-registry',

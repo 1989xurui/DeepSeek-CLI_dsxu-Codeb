@@ -68,7 +68,7 @@ REMEMBER: Only update if there is substantial new information. The Magic Doc hea
 /**
  * Load custom Magic Docs prompt from file if it exists
  * Custom prompts can be placed at ~/.dsxu/magic-docs/prompt.md in DSXU mode,
- * or the active runtime config directory for explicit provider-migration compatibility.
+ * or the active runtime config directory for explicit archived compatibility.
  * Use {{variableName}} syntax for variable substitution (e.g., {{docContents}}, {{docPath}}, {{docTitle}})
  */
 async function loadMagicDocsPrompt(): Promise<string> {

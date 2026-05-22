@@ -73,7 +73,7 @@ import {
   getDsxuConfigHomeDir,
   getDsxuCodeEnv,
   isDsxuCodeEnvTruthy,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
   isDsxuRuntimeMode,
   isEnvTruthy,
 } from './envUtils.js'
@@ -206,7 +206,7 @@ export function getProjectsDir(): string {
   return join(
     isDsxuRuntimeMode()
       ? getDsxuConfigHomeDir()
-      : getProviderMigrationHomeDir(),
+      : getArchivedHomeDir(),
     'projects',
   )
 }
@@ -963,9 +963,9 @@ class Project {
 
   /**
    * True when test env / cleanupPeriodDays=0 / --no-session-persistence /
-   * DSXU/provider-migration skip-prompt-history env should suppress all transcript writes.
+   * DSXU/archived skip-prompt-history env should suppress all transcript writes.
    * Shared guard for appendEntry and materializeSessionFile so both skip
-   * consistently. The env var is set by tmuxSocket.ts so Tungsten-spawned
+   * consistently. The env var is set by tmuxSocket.ts so DSXU terminal
    * test sessions don't pollute the user's --resume list.
    */
   private shouldSkipPersistence(): boolean {
@@ -3572,7 +3572,7 @@ export async function loadTranscriptFile(
     // preservedSegment (those messages keep their pre-compact parentUuid on
     // disk -- applyPreservedSegmentRelinks splices them in-memory AFTER
     // parse, so a pre-parse chain walk would drop them as orphans), and when
-    // DSXU/provider-migration precompact-skip kill switch is set (that means
+    // DSXU/archived precompact-skip kill switch is set (that means
     // "load everything, skip nothing"; this is another skip-before-parse
     // optimization and the scan it depends on for hasPreservedSegment did
     // not run).

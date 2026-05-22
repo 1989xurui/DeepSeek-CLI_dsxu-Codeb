@@ -1,4 +1,4 @@
-// DSXU V18 ownership marker: DSXU tool orchestration semantics are absorbed
+// DSXU tool orchestration semantics are absorbed
 // into the DSXU/DeepSeek coding mainline; no DSXU service runtime required.
 import type { ToolUseBlock } from 'src/types/providerSdk.js'
 import type { CanUseToolFn } from '../../hooks/useCanUseTool.js'
@@ -14,13 +14,13 @@ import {
   traceDsxuToolLifecycleGateDecision,
 } from './toolLifecycle.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const PROVIDER_MIGRATION_TOOL_CONCURRENCY_ENV = `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const ARCHIVED_TOOL_CONCURRENCY_ENV = `${ARCHIVED_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`
 
 function getMaxToolUseConcurrency(): number {
   return (
     parseInt(process.env.DSXU_CODE_MAX_TOOL_USE_CONCURRENCY || '', 10) ||
-    parseInt(process.env[PROVIDER_MIGRATION_TOOL_CONCURRENCY_ENV] || '', 10) ||
+    parseInt(process.env[ARCHIVED_TOOL_CONCURRENCY_ENV] || '', 10) ||
     10
   )
 }
@@ -28,7 +28,7 @@ function getMaxToolUseConcurrency(): number {
 export function getDsxuToolOrchestrationRuntimeProfile(): {
   runtime: 'DSXU Tool Orchestration'
   concurrencyEnv: string
-  providerMigrationConcurrencyEnv: string
+  archivedConcurrencyEnv: string
   currentConcurrency: number
   executionDiscipline: string
   activationEvidence?: readonly string[]
@@ -36,7 +36,7 @@ export function getDsxuToolOrchestrationRuntimeProfile(): {
   return {
     runtime: 'DSXU Tool Orchestration',
     concurrencyEnv: 'DSXU_CODE_MAX_TOOL_USE_CONCURRENCY',
-    providerMigrationConcurrencyEnv: `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MAX_TOOL_USE_CONCURRENCY`,
+    archivedConcurrencyEnv: ARCHIVED_TOOL_CONCURRENCY_ENV,
     currentConcurrency: getMaxToolUseConcurrency(),
     executionDiscipline:
       'read-only/concurrency-safe tool batches run concurrently; mutating or unsafe calls run serially with context updates preserved',

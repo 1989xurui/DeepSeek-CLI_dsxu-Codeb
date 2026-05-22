@@ -29,16 +29,16 @@ export default {
 
 export function getDsxuPassesCommandRuntimeProfile(): {
   command: '/passes'
-  runtime: 'DSXU Provider-Migration Referral Isolation'
+  runtime: 'DSXU Archived Referral Isolation'
   activationEvidence: readonly string[]
 } {
   return {
     command: '/passes',
-    runtime: 'DSXU Provider-Migration Referral Isolation',
+    runtime: 'DSXU Archived Referral Isolation',
     activationEvidence: [
       'DSXU_CODE_MODE hides DSXU Code referral passes from the default command surface',
       'description points DSXU users to local provider credit settings',
-      'provider-migration source referral eligibility is not checked in DSXU runtime',
+      'archived source referral eligibility is not checked in DSXU runtime',
     ],
   }
 }

@@ -45,8 +45,8 @@ const FILE_PREFIX = '1p_failed_events.'
 
 const PROVIDER_API_ORIGIN = `https://api.${'anth' + 'ropic'}.com`
 const PROVIDER_API_STAGING_ORIGIN = `https://api-staging.${'anth' + 'ropic'}.com`
-const PROVIDER_MIGRATION_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
-const PROVIDER_MIGRATION_INSTRUMENTATION_SCOPE =
+const ARCHIVED_PROVIDER_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
+const ARCHIVED_PROVIDER_INSTRUMENTATION_SCOPE =
   `com.${'anth' + 'ropic'}.${'cl' + 'aude'}_code.events`
 
 // Storage directory for failed events - evaluated at runtime to respect DSXU_CONFIG_DIR in tests
@@ -120,11 +120,11 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       schedule?: (fn: () => Promise<void>, delayMs: number) => () => void
     } = {},
   ) {
-    // Default: prod, except when the provider migration base URL is explicitly staging.
+    // Default: prod, except when the archived base URL is explicitly staging.
     // Overridable via tengu_1p_event_batch_config.baseUrl.
     const baseUrl =
       options.baseUrl ||
-      (process.env[PROVIDER_MIGRATION_BASE_URL_ENV] === PROVIDER_API_STAGING_ORIGIN
+      (process.env[ARCHIVED_PROVIDER_BASE_URL_ENV] === PROVIDER_API_STAGING_ORIGIN
         ? PROVIDER_API_STAGING_ORIGIN
         : PROVIDER_API_ORIGIN)
 
@@ -322,7 +322,7 @@ export class FirstPartyEventLoggingExporter implements LogRecordExporter {
       // Filter for event logs only (by scope name)
       const eventLogs = logs.filter(
         log =>
-          log.instrumentationScope?.name === PROVIDER_MIGRATION_INSTRUMENTATION_SCOPE,
+          log.instrumentationScope?.name === ARCHIVED_PROVIDER_INSTRUMENTATION_SCOPE,
       )
 
       if (eventLogs.length === 0) {

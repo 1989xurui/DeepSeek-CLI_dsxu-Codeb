@@ -25,7 +25,7 @@ const TIERS = [
 
 /**
  * Check whether a 3p model capability override is set for a model that matches one of
- * the pinned provider-migration default-model env vars.
+ * the pinned archived default-model env vars.
  */
 export const get3PModelCapabilityOverride = memoize(
   (model: string, capability: ModelCapabilityOverride): boolean | undefined => {

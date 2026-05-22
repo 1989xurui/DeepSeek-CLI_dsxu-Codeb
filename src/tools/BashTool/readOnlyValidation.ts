@@ -30,7 +30,7 @@ import {
   type PathCommand,
 } from './pathValidation.js'
 import { sedCommandIsAllowedByAllowlist } from './sedValidation.js'
-const PROVIDER_MIGRATION_SOURCE_CLI_HELP_REGEXES = [
+const ARCHIVED_SOURCE_CLI_HELP_REGEXES = [
   new RegExp(`^${'cl' + 'aude'} -h$`),
   new RegExp(`^${'cl' + 'aude'} --help$`),
 ]
@@ -1447,12 +1447,12 @@ const READONLY_COMMAND_REGEXES = new Set([
   // Allow newlines in single quotes (safe) but not in double quotes (could be dangerous with variable expansion)
   // Also allow optional 2>&1 stderr redirection at the end
   /^echo(?:\s+(?:'[^']*'|"[^"$<>\n\r]*"|[^|;&`$(){}><#\\!"'\s]+))*(?:\s+2>&1)?\s*$/,
-  // DSXU CLI help, with provider-migration source help kept only for migration intake
+  // DSXU CLI help, with archived source help kept only for migration intake
   /^dsxu -h$/,
   /^dsxu --help$/,
   /^dsxu-code -h$/,
   /^dsxu-code --help$/,
-  ...PROVIDER_MIGRATION_SOURCE_CLI_HELP_REGEXES,
+  ...ARCHIVED_SOURCE_CLI_HELP_REGEXES,
   // Git readonly commands are now handled via COMMAND_ALLOWLIST with explicit flag validation
   // (git status, git blame, git ls-files, git config --get, git remote, git tag, git branch)
   /^uniq(?:\s+(?:-[a-zA-Z]+|--[a-zA-Z-]+(?:=\S+)?|-[fsw]\s+\d+))*(?:\s|$)\s*$/, // Only allow flags, no input/output files
@@ -1891,7 +1891,7 @@ export function getDsxuBashReadOnlyRuntimeProfile(): {
     activationEvidence: [
       'checkReadOnlyConstraints returns allow only when every subcommand validates read-only',
       'DSXU CLI help commands are explicitly recognized',
-      'provider-migration source CLI help commands remain migration-only read-only entries',
+      'archived source CLI help commands remain migration-only read-only entries',
     ],
   }
 }

@@ -1,7 +1,7 @@
 import { resolveAntModel } from '../antModels.js'
 import type { APIProvider } from '../providers.js'
 
-export function supportsProviderMigrationThinking(input: {
+export function supportsArchivedThinking(input: {
   canonical: string
   model: string
   provider: APIProvider
@@ -19,7 +19,7 @@ export function supportsProviderMigrationThinking(input: {
   )
 }
 
-export function supportsProviderMigrationAdaptiveThinking(canonical: string): boolean | undefined {
+export function supportsArchivedAdaptiveThinking(canonical: string): boolean | undefined {
   if (canonical.includes('opus-4-6') || canonical.includes('sonnet-4-6')) {
     return true
   }
@@ -32,3 +32,7 @@ export function supportsProviderMigrationAdaptiveThinking(canonical: string): bo
   }
   return undefined
 }
+
+export const supportsProviderMigrationThinking = supportsArchivedThinking
+export const supportsProviderMigrationAdaptiveThinking =
+  supportsArchivedAdaptiveThinking

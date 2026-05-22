@@ -1,4 +1,4 @@
-import { PROVIDER_MIGRATION_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
+import { ARCHIVED_CLOUD_AVAILABILITY, type Command } from '../../types/command.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
@@ -9,9 +9,9 @@ const web = {
   get description() {
     return isDsxuRuntimeMode()
       ? 'DSXU remote setup is handled by the local Remote Session Provider'
-      : 'Setup provider-migration remote workspace (requires connecting your GitHub account)'
+      : 'Setup archived remote workspace (requires connecting your GitHub account)'
   },
-  availability: [PROVIDER_MIGRATION_CLOUD_AVAILABILITY],
+  availability: [ARCHIVED_CLOUD_AVAILABILITY],
   isEnabled: () =>
     !isDsxuRuntimeMode() &&
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_lantern', false) &&
@@ -34,9 +34,9 @@ export function getDsxuRemoteSetupCommandRuntimeProfile(): {
     command: '/web-setup',
     runtime: 'DSXU Local Remote Session Setup',
     activationEvidence: [
-      'DSXU_CODE_MODE disables the provider-migration web setup command',
+      'DSXU_CODE_MODE disables the archived web setup command',
       'DSXU remote execution is routed through the local Remote Session Provider',
-      'provider-migration feature flag and policy checks are bypassed in DSXU runtime',
+      'archived feature flag and policy checks are bypassed in DSXU runtime',
     ],
   }
 }

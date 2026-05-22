@@ -4,7 +4,7 @@ import { loadInstalledPluginsV2 } from '../../utils/plugins/installedPluginsMana
 import { OFFICIAL_MARKETPLACE_NAME } from '../../utils/plugins/officialMarketplace.js'
 import { playAnimation } from '../thinkback/thinkback.js'
 
-// DSXU keeps the provider-migration marketplace identifier only for existing plugin installs.
+// DSXU keeps the archived marketplace identifier only for existing plugin installs.
 const INTERNAL_MARKETPLACE_NAME = `${'clau' + 'de'}-code-marketplace`
 const SKILL_NAME = 'thinkback'
 

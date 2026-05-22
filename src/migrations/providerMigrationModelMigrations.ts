@@ -6,7 +6,7 @@ import { resetProToOpusDefault } from './resetProToOpusDefault.js'
 import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 
 /**
- * DSXU-owned facade for provider-migration source model migrations.
+ * DSXU-owned facade for archived source model migrations.
  *
  * The underlying files keep their historical names until release packaging
  * decides whether to rename, hide, or exclude them. Mainline startup imports

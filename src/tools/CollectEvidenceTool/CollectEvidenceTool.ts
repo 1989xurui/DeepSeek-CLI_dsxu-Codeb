@@ -2,7 +2,7 @@ import { z } from 'zod/v4'
 import { buildTool, type ToolDef } from '../../Tool.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { collectEvidenceFromVerificationEvents } from '../../dsxu/engine/v18-semantic-tools.js'
+import { collectEvidenceFromVerificationEvents } from '../../dsxu/engine/semantic-tools.js'
 import { extractSemanticVerificationEventsFromMessages } from '../RunNativeTestTool/semanticVerificationMessages.js'
 
 export const COLLECT_EVIDENCE_TOOL_NAME = 'CollectEvidence'

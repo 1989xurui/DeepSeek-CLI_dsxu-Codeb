@@ -16,11 +16,11 @@ import { TEAM_CREATE_TOOL_NAME } from '../tools/TeamCreateTool/constants.js'
 import { TEAM_DELETE_TOOL_NAME } from '../tools/TeamDeleteTool/constants.js'
 import { isDsxuCodeEnvTruthy } from '../utils/envUtils.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
+const ARCHIVED_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
 
 function clearDsxuCodeEnv(name: string): void {
   delete process.env[`DSXU_CODE_${name}`]
-  delete process.env[`${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`]
+  delete process.env[`${ARCHIVED_CODE_ENV_PREFIX}_${name}`]
 }
 
 // Checks the same gate as isScratchpadEnabled() in

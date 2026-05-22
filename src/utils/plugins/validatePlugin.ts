@@ -30,10 +30,10 @@ const MARKETPLACE_ONLY_MANIFEST_FIELDS = new Set([
 ])
 
 const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
-const PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const ARCHIVED_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
 const PLUGIN_MANIFEST_DIRS = [
   DSXU_PLUGIN_MANIFEST_DIR,
-  PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR,
+  ARCHIVED_PLUGIN_MANIFEST_DIR,
 ] as const
 
 function isPluginManifestDir(dirName: string): boolean {
@@ -268,14 +268,14 @@ export async function validatePluginManifest(
     const manifest = result.data
 
   // Warn if name isn't strict kebab-case. DSXU accepts the broader local form,
-  // but the provider-migration marketplace sync rejects non-kebab names. Surfacing this
+  // but the archived marketplace sync rejects non-kebab names. Surfacing this
   // here lets authors catch it in CI before the sync fails on them.
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(manifest.name)) {
       warnings.push({
         path: 'name',
         message:
           `Plugin name "${manifest.name}" is not kebab-case. DSXU Code accepts ` +
-          `it, but the provider-migration marketplace sync requires kebab-case ` +
+          `it, but the archived marketplace sync requires kebab-case ` +
           `(lowercase letters, digits, and hyphens only, e.g., "my-plugin").`,
       })
     }

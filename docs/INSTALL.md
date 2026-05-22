@@ -56,7 +56,7 @@ V20 当前仍是 release-blocked 状态。`package.json` 仍标记为 `private: 
 
 - 依赖安装可以使用企业 npm mirror，但不要把 mirror 配置写死进源码。
 - DeepSeek API base URL 应通过 `.env` 或 DSXU config 显式配置。
-- 不要把 OpenAI/Ollama/provider-migration fallback 当成默认 DSXU provider runtime。
+- 不要把 OpenAI/Ollama/archived-provider fallback 当成默认 DSXU provider runtime。
 
 ## Smoke Checks
 

@@ -9,7 +9,7 @@ import {
   PDF_MAX_PAGES_PER_READ,
 } from '../../constants/apiLimits.js'
 import { hasBinaryExtension } from '../../constants/files.js'
-import { getProviderMigrationHighTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
+import { getArchivedHighTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import { memoryFreshnessNote } from '../../memdir/memoryAge.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import { logEvent } from '../../services/analytics/index.js'
@@ -842,7 +842,7 @@ export const CYBER_RISK_MITIGATION_REMINDER =
   '\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n'
 
 // Models where cyber risk mitigation should be skipped
-const MITIGATION_EXEMPT_MODELS = new Set([getProviderMigrationHighTierModelId()])
+const MITIGATION_EXEMPT_MODELS = new Set([getArchivedHighTierModelId()])
 
 function shouldIncludeFileReadMitigation(): boolean {
   const shortName = getCanonicalName(getMainLoopModel())

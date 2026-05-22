@@ -151,12 +151,12 @@ export function getDsxuBootstrapRuntimeProfile() {
   return {
     runtime: 'DSXU Bootstrap Provider',
     defaultMode: 'local-provider-bootstrap',
-    isolatedProviderMigrationBoundary: `/api/${'cl' + 'aude'}_cli/bootstrap`,
+    isolatedArchivedBoundary: `/api/${'cl' + 'aude'}_cli/bootstrap`,
     persistedFields: ['clientDataCache', 'additionalModelOptionsCache'],
     activationEvidence: [
-      'DSXU_CODE_MODE skips the provider-migration bootstrap API',
+      'DSXU_CODE_MODE skips the archived bootstrap API',
       'local provider/model bootstrap is resolved by DSXU settings and DeepSeek adapter',
-      'provider migration bootstrap remains unreachable from DSXU default runtime',
+      'archived bootstrap remains unreachable from DSXU default runtime',
     ],
   }
 }

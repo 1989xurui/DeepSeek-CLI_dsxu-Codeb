@@ -1,11 +1,11 @@
 /**
- * V14 FROZEN: this legacy aggregation layer is replaced by DSXU control-plane
+ * Legacy aggregation layer replaced by DSXU control-plane
  * modules (`context-discipline-control` and `memory-refill-control`). The file
  * is retained only because Windows ACL blocked physical removal.
  *
  * Memory/Context/Compact 统一承接层
  *
- * V8-2 Runtime Core: 统一管理记忆、上下文和压缩功能
+ * Runtime core: unified memory, context, and compact ownership.
  */
 
 // ── Unified Memory Manager ──

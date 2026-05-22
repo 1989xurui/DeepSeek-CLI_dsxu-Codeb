@@ -62,7 +62,7 @@ export function ConsoleOAuthFlow({
   if (isDsxuRuntimeMode()) {
     return <Box flexDirection="column" gap={1}>
       <Text color="warning">DSXU Code uses DSXU Provider credentials in runtime mode.</Text>
-      <Text dimColor>Provider-migration OAuth is disabled by default; use DeepSeek or the DSXU Provider.</Text>
+      <Text dimColor>Archived OAuth is disabled by default; use DeepSeek or the DSXU Provider.</Text>
       <Text dimColor>Press Enter to return.</Text>
     </Box>;
   }

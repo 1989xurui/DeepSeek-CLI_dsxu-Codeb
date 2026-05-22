@@ -25,7 +25,7 @@ import {
   getDsxuCodeEnv,
   isDsxuCodeEnvTruthy,
   isEnvTruthy,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import {
@@ -36,7 +36,7 @@ import {
   isFastModeEnabled,
   triggerFastModeCooldown,
 } from '../../utils/fastMode.js'
-import { isProviderMigrationHighTierModelTarget } from '../../utils/model/model.js'
+import { isArchivedHighTierModelTarget } from '../../utils/model/model.js'
 import { disableKeepAlive } from '../../utils/proxy.js'
 import { sleep } from '../../utils/sleep.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
@@ -96,12 +96,12 @@ function isPrimaryModelFallbackAllowed(model: string): boolean {
   ) {
     return true
   }
-  if (!isProviderMigrationServiceShellAllowed()) {
+  if (!isArchivedServiceShellAllowed()) {
     return false
   }
   return Boolean(process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS) ||
     (!isProviderSubscriptionAccount() &&
-      isProviderMigrationHighTierModelTarget(model))
+      isArchivedHighTierModelTarget(model))
 }
 
 // DSXU unattended retry: for unattended sessions (dsxu internal). Retries 429/529
@@ -373,7 +373,7 @@ export async function* withRetry<T>(
       // Handle max tokens context overflow errors by adjusting max_tokens for the next attempt
       // NOTE: With extended-context-window beta, this 400 error should not occur.
       // The API now returns 'model_context_window_exceeded' stop_reason instead.
-      // Keep the context-window overflow retry as an explicit provider-migration boundary.
+      // Keep the context-window overflow retry as an explicit archived boundary.
       if (error instanceof APIError) {
         const overflowData = parseMaxTokensContextOverflowError(error)
         if (overflowData) {

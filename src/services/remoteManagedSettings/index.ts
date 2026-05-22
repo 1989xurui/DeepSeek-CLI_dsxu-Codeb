@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (provider migration cloud): Only Enterprise/C4E and Team subscribers are eligible
+ * - OAuth users (archived cloud): Only Enterprise/C4E and Team subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without remote settings
  * - API returns empty settings for users without managed settings
  */
@@ -55,9 +55,9 @@ import {
 const SETTINGS_TIMEOUT_MS = 10000 // 10 seconds for settings fetch
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
-const PROVIDER_MIGRATION_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
-const PROVIDER_MIGRATION_REMOTE_SETTINGS_PATH =
-  `/api/${PROVIDER_MIGRATION_CODE_API_SEGMENT}/settings`
+const ARCHIVED_PROVIDER_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const ARCHIVED_REMOTE_SETTINGS_PATH =
+  `/api/${ARCHIVED_PROVIDER_CODE_API_SEGMENT}/settings`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null
@@ -109,7 +109,7 @@ export function initializeRemoteManagedSettingsLoadingPromise(): void {
  * Uses the OAuth config base API URL
  */
 function getRemoteManagedSettingsEndpoint() {
-  return `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_REMOTE_SETTINGS_PATH}`
+  return `${getOauthConfig().BASE_API_URL}${ARCHIVED_REMOTE_SETTINGS_PATH}`
 }
 
 /**
@@ -646,8 +646,8 @@ export function getDsxuRemoteManagedSettingsServiceProfile() {
     defaultBehavior:
       'service load/poll path is disabled by eligibility gate in DSXU runtime',
     providerTarget: 'DSXU Policy/Workspace Settings Provider',
-    migrationBoundary: [
-      'provider-migration source settings endpoint is not used by DSXU default runtime',
+    archivedBoundary: [
+      'archived source settings endpoint is not used by DSXU default runtime',
       'checksum/cache/polling semantics are reusable for DSXU policy sync',
       'background polling remains guarded by isRemoteManagedSettingsEligible',
     ],

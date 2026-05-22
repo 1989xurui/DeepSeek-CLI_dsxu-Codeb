@@ -10,7 +10,7 @@ import {
   APIConnectionError,
   AuthenticationError,
 } from '../../types/providerSdk.js'
-import { getThirdPartyProviderMigrationFallbackModelSuggestion } from './providerMigration/providerMigrationModel.js'
+import { getArchivedThirdPartyFallbackModelSuggestion } from './providerMigration/providerMigrationModel.js'
 
 // Cache valid models to avoid repeated API calls
 const validModelCache = new Map<string, boolean>()
@@ -42,9 +42,9 @@ export async function validateModel(
     return { valid: true }
   }
 
-  const providerMigrationCustomModelEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
+  const archivedCustomModelEnv = `ANTH${'ROPIC'}_CUSTOM_MODEL_OPTION`
   // Check if it matches the custom model option (pre-validated by the user)
-  if (!isDSXUCodeMode() && normalizedModel === process.env[providerMigrationCustomModelEnv]) {
+  if (!isDSXUCodeMode() && normalizedModel === process.env[archivedCustomModelEnv]) {
     return { valid: true }
   }
 
@@ -146,5 +146,5 @@ function handleValidationError(
 function get3PFallbackSuggestion(model: string): string | undefined {
   if (isDSXUCodeMode()) return undefined
   if (getAPIProvider() === 'firstParty') return undefined
-  return getThirdPartyProviderMigrationFallbackModelSuggestion(model)
+  return getArchivedThirdPartyFallbackModelSuggestion(model)
 }

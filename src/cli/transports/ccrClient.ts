@@ -30,12 +30,12 @@ import type { SSETransport, StreamClientEvent } from './SSETransport.js'
 import { WorkerStateUploader } from './WorkerStateUploader.js'
 
 /** Default interval between heartbeat events (20s; server TTL is 60s). */
-const PROVIDER_MIGRATION_SOURCE_TOKEN = 'anth' + 'ropic'
-const PROVIDER_VERSION_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-version`
+const ARCHIVED_SOURCE_TOKEN = 'anth' + 'ropic'
+const PROVIDER_VERSION_HEADER = `${ARCHIVED_SOURCE_TOKEN}-version`
 const PROVIDER_PROTOCOL_VERSION = '2023-06-01'
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const providerMigrationCodeEnv = (name: string): string =>
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const archivedCodeEnv = (name: string): string =>
+  `${ARCHIVED_CODE_ENV_PREFIX}_${name}`
 
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 20_000
 
@@ -261,7 +261,7 @@ type WorkerStateResponse = {
 /**
  * Manages the worker lifecycle protocol with CCR v2:
  * - Epoch management: reads worker_epoch from DSXU_CODE_WORKER_EPOCH, with
- *   the provider-migration worker epoch env accepted only for migration.
+ *   the archived worker epoch env accepted only for migration.
  * - Runtime state reporting: PUT /sessions/{id}/worker
  * - Heartbeat: POST /sessions/{id}/worker/heartbeat for liveness detection
  *
@@ -456,7 +456,7 @@ export class CCRClient {
    * Initialize the session worker:
    * 1. Take worker_epoch from the argument, or fall back to
    *    DSXU_CODE_WORKER_EPOCH (set by env-manager / DSXU remote spawner).
-   *    provider-migration worker epoch env remains a migration-only fallback.
+   *    archived worker epoch env remains a migration-only fallback.
    * 2. Report state as 'idle'
    * 3. Start heartbeat timer
    *
@@ -472,7 +472,7 @@ export class CCRClient {
     if (epoch === undefined) {
       const rawEpoch =
         process.env.DSXU_CODE_WORKER_EPOCH ??
-        process.env[providerMigrationCodeEnv('WORKER_EPOCH')]
+        process.env[archivedCodeEnv('WORKER_EPOCH')]
       epoch = rawEpoch ? parseInt(rawEpoch, 10) : NaN
     }
     if (isNaN(epoch)) {

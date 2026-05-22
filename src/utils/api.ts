@@ -198,7 +198,7 @@ export async function toolToAPISchema(
     // Without FGTS, the API buffers entire tool input parameters before sending
     // input_json_delta events, causing multi-minute hangs on large tool inputs.
     // Gated to direct the first-party provider API: proxies (LiteLLM etc.) and Bedrock/Vertex
-    // with provider-migration source model families reject this field with 400. See GH#32742, PR #21729.
+    // with archived source model families reject this field with 400. See GH#32742, PR #21729.
     if (
       getAPIProvider() === 'firstParty' &&
       isFirstPartyProviderBaseUrl() &&
@@ -279,7 +279,7 @@ function logStripOnce(stripped: string[]): void {
 
 /**
  * Log stats about first block for analyzing prefix matching config
- * (Statsig prompt-prefix dynamic config; external key is provider-migration owned).
+ * (Statsig prompt-prefix dynamic config; external key is archived-owned).
  */
 export function logAPIPrefix(systemPrompt: SystemPrompt): void {
   const [firstSyspromptBlock] = splitSysPromptPrefix(systemPrompt)
@@ -298,7 +298,7 @@ export function logAPIPrefix(systemPrompt: SystemPrompt): void {
 
 /**
  * Split system prompt blocks by content type for API matching and cache control.
- * See the provider-migration prompt-prefix dynamic config in Statsig.
+ * See the archived prompt-prefix dynamic config in Statsig.
  *
  * Behavior depends on feature flags and options:
  *
@@ -662,21 +662,21 @@ export function normalizeToolInput<T extends Tool>(
       } as z.infer<T['inputSchema']>
     }
     case TASK_OUTPUT_TOOL_NAME: {
-      // Normalize provider-migration parameter names from AgentOutputTool/BashOutputTool
-      const providerMigrationInput = input as Record<string, unknown>
+      // Normalize archived parameter names from AgentOutputTool/BashOutputTool
+      const archivedInput = input as Record<string, unknown>
       const taskId =
-        providerMigrationInput.task_id ??
-        providerMigrationInput.agentId ??
-        providerMigrationInput.bash_id
+        archivedInput.task_id ??
+        archivedInput.agentId ??
+        archivedInput.bash_id
       const timeout =
-        providerMigrationInput.timeout ??
-        (typeof providerMigrationInput.wait_up_to === 'number'
-          ? providerMigrationInput.wait_up_to * 1000
+        archivedInput.timeout ??
+        (typeof archivedInput.wait_up_to === 'number'
+          ? archivedInput.wait_up_to * 1000
           : undefined)
       // SAFETY: See comment in BashTool case above
       return {
         task_id: taskId ?? '',
-        block: providerMigrationInput.block ?? true,
+        block: archivedInput.block ?? true,
         timeout: timeout ?? 30000,
       } as z.infer<T['inputSchema']>
     }

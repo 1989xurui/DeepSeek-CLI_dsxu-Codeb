@@ -21,8 +21,8 @@ type ExtraKnownMarketplace = z.infer<
 
 const SETTINGS_FILES = ['settings.json', 'settings.local.json'] as const
 const DSXU_SETTINGS_DIR = '.dsxu'
-const PROVIDER_MIGRATION_SETTINGS_DIR = '.clau' + 'de'
-const SETTINGS_DIRS = [PROVIDER_MIGRATION_SETTINGS_DIR, DSXU_SETTINGS_DIR] as const
+const ARCHIVED_SETTINGS_DIR = '.clau' + 'de'
+const SETTINGS_DIRS = [ARCHIVED_SETTINGS_DIR, DSXU_SETTINGS_DIR] as const
 
 function readAddDirSettings(dir: string, file: string): SettingsJson[] {
   return SETTINGS_DIRS.map(configDir => {

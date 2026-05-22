@@ -1,5 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React from 'react';
+import { LIGHT_HORIZONTAL } from '../../constants/figures.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { stringWidth } from '../../ink/stringWidth.js';
 import { Ansi, Text } from '../../ink.js';
@@ -72,7 +73,7 @@ export function Divider(t0) {
     padding: t2,
     title
   } = t0;
-  const char = t1 === undefined ? "\u2500" : t1;
+  const char = t1 === undefined ? LIGHT_HORIZONTAL : t1;
   const padding = t2 === undefined ? 0 : t2;
   const {
     columns: terminalWidth

@@ -108,21 +108,21 @@ export function getSessionIngressAuthToken(): string | null {
     return envToken
   }
 
-  // 2. Check file descriptor (provider-migration path), with file fallback
+  // 2. Check file descriptor (archived path), with file fallback
   return getTokenFromFileDescriptor()
 }
 
 /**
  * Build auth headers for the current session token.
- * Provider-migration session keys use Cookie auth + X-Organization-Uuid;
+ * Archived session keys use Cookie auth + X-Organization-Uuid;
  * JWTs use Bearer auth.
  */
-const PROVIDER_MIGRATION_SESSION_KEY_PREFIX = ['sk', 'ant', 'sid'].join('-')
+const ARCHIVED_SESSION_KEY_PREFIX = ['sk', 'ant', 'sid'].join('-')
 
 export function getSessionIngressAuthHeaders(): Record<string, string> {
   const token = getSessionIngressAuthToken()
   if (!token) return {}
-  if (token.startsWith(PROVIDER_MIGRATION_SESSION_KEY_PREFIX)) {
+  if (token.startsWith(ARCHIVED_SESSION_KEY_PREFIX)) {
     const headers: Record<string, string> = {
       Cookie: `sessionKey=${token}`,
     }

@@ -1,5 +1,6 @@
 import { existsSync } from 'fs'
 import { resolve } from 'path'
+import { autoDiscoverP12TargetReferenceManifest, DEFAULT_P12_TARGET_DISCOVERY_RELATIVE_PATH } from '../src/dsxu/engine/p12-target-reference-manifest-autodiscovery'
 import { runRawEvidenceReadinessRegisterHarness } from '../src/dsxu/integration/harness/raw-evidence-readiness-register-v1-harness'
 
 type P12RawReadinessCliOptions = {
@@ -30,6 +31,7 @@ function usage(): string {
     '  - This script imports and validates evidence only.',
     '  - It never fabricates target-reference logs.',
     '  - Templates, dry plans, generic logs, and target-only logs do not count as P12 PASS.',
+    '  - If no targetReferenceManifestPath is provided, it may reuse a READY discovery report canonical manifest.',
   ].join('\n')
 }
 
@@ -114,10 +116,17 @@ async function main(): Promise<void> {
     return
   }
 
-  const targetReferenceManifestPath = assertExistingInput(
+  const explicitTargetReferenceManifestPath = assertExistingInput(
     options.targetReferenceManifestPath,
     'targetReferenceManifestPath',
   )
+  const autoDiscovery = explicitTargetReferenceManifestPath
+    ? {
+      discoveryPath: resolve(process.cwd(), DEFAULT_P12_TARGET_DISCOVERY_RELATIVE_PATH),
+      reason: 'explicit-target-reference-manifest-provided',
+    }
+    : await autoDiscoverP12TargetReferenceManifest()
+  const targetReferenceManifestPath = explicitTargetReferenceManifestPath ?? autoDiscovery.path
   const deferredEvalRawLiveManifestPath = assertExistingInput(
     options.deferredEvalRawLiveManifestPath,
     'deferredEvalRawLiveManifestPath',
@@ -130,6 +139,14 @@ async function main(): Promise<void> {
   const summary = {
     schemaVersion: 'dsxu.p12.raw-readiness-cli.v1',
     status: result.status,
+    targetReferenceManifestPath: targetReferenceManifestPath ?? null,
+    targetReferenceManifestSource: explicitTargetReferenceManifestPath
+      ? 'explicit'
+      : autoDiscovery.path
+        ? 'auto-discovered'
+        : 'missing',
+    targetReferenceManifestDiscoveryPath: autoDiscovery.discoveryPath,
+    targetReferenceManifestDiscoveryReason: autoDiscovery.reason,
     p12Status: result.p12Status,
     deferredEvalStatus: result.deferredEvalStatus,
     p12PairedRawLogCount: result.p12PairedRawLogCount,

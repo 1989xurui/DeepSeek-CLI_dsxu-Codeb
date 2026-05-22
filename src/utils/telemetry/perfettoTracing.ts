@@ -14,7 +14,7 @@
  *
  * Usage:
  * 1. Enable via DSXU_CODE_PERFETTO_TRACE=1 or DSXU_CODE_PERFETTO_TRACE=<path>
- *    (provider-migration source DSXU_CODE_PERFETTO_... aliases are also honored)
+ *    (archived source DSXU_CODE_PERFETTO_... aliases are also honored)
  * 2. Optionally set DSXU_CODE_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
  *    trace file periodically (default: write only on exit).
  * 3. Run DSXU Code normally

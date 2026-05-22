@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   DSXU_TOOL_RESULT_AUTO_CONTINUE_GATE_STATE,
   buildDsxuFinalGateState,
+  buildDsxuIdenticalToolCallStormGate,
   buildDsxuPhase6GateCloseAudit,
   buildDsxuPostPassFinalizationGateState,
   buildDsxuRecoveryGateState,
@@ -132,5 +133,55 @@ describe('V19 query-loop gate state classification', () => {
     )
     expect(audit.blockedHeavyEvidence.join('\n')).toContain('generated alias')
     expect(audit.phase12Residuals.join('\n')).toContain('Phase 12')
+  })
+
+  test('blocks identical read-only tool storms without treating the gate as a benchmark-only smell', () => {
+    const gate = buildDsxuIdenticalToolCallStormGate({
+      threshold: 3,
+      calls: [
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+      ],
+    })
+
+    expect(gate.gateState).toEqual({
+      owner: 'query_loop',
+      gateId: 'dsxu_identical_tool_call_storm_gate',
+      gateKind: 'tool_scheduling',
+      gateClass: 'RECOVERY_BLOCK',
+      blocked: true,
+      completionBlocked: true,
+      nextAction: 'change_strategy_or_mutate_source_before_repeating_identical_tool_call',
+    })
+    expect(gate.signals).toContain('identical_tool_call_storm')
+    expect(gate.blockedToolName).toBe('Read')
+    expect(gate.repeatedCount).toBe(3)
+  })
+
+  test('allows verification reread after a mutating tool resets the duplicate window', () => {
+    const gate = buildDsxuIdenticalToolCallStormGate({
+      threshold: 3,
+      calls: [
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+        {
+          toolName: 'Edit',
+          input: {
+            file_path: 'src/query.ts',
+            old_string: 'before',
+            new_string: 'after',
+          },
+          readWriteClass: 'write-local',
+        },
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+        { toolName: 'Read', input: { file_path: 'src/query.ts' }, readWriteClass: 'read-only' },
+      ],
+    })
+
+    expect(gate.gateState).toBeNull()
+    expect(gate.signals).toContain('mutating_tool_reset_read_window')
+    expect(gate.signals).not.toContain('identical_tool_call_storm')
+    expect(gate.evidence.join('\n')).toContain('mutation:Edit clears read-only duplicate window')
   })
 })

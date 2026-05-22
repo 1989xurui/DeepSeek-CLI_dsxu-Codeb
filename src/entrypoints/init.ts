@@ -21,9 +21,9 @@ import { logForDiagnosticsNoPII } from '../utils/diagLogs.js'
 import { initJetBrainsDetection } from '../utils/envDynamic.js'
 import {
   getDsxuCodeEnv,
+  isArchivedServiceShellAllowed,
   isDsxuRuntimeMode,
   isEnvTruthy,
-  isProviderMigrationServiceShellAllowed,
 } from '../utils/envUtils.js'
 import { ConfigParseError, errorMessage } from '../utils/errors.js'
 // showInvalidConfigDialog is dynamically imported in the error path to avoid loading React at init
@@ -53,12 +53,12 @@ import { setShellIfWindows } from '../utils/windowsPaths.js'
 // Track if telemetry has been initialized to prevent double initialization
 let telemetryInitialized = false
 
-function shouldLoadProviderMigrationServiceShell(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function shouldLoadArchivedServiceShell(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
-async function populateProviderMigrationOAuthAccountInfoIfAllowed(): Promise<void> {
-  if (!shouldLoadProviderMigrationServiceShell()) return
+async function populateArchivedOAuthAccountInfoIfAllowed(): Promise<void> {
+  if (!shouldLoadArchivedServiceShell()) return
   try {
     const { populateOAuthAccountInfoIfNeeded } = await import(
       '../services/oauth/client.js'
@@ -73,7 +73,7 @@ async function populateProviderMigrationOAuthAccountInfoIfAllowed(): Promise<voi
 }
 
 async function initializeRemoteManagedSettingsIfAllowed(): Promise<void> {
-  if (!shouldLoadProviderMigrationServiceShell()) return
+  if (!shouldLoadArchivedServiceShell()) return
   const {
     initializeRemoteManagedSettingsLoadingPromise,
     isEligibleForRemoteManagedSettings,
@@ -134,9 +134,9 @@ export const init = memoize(async (): Promise<void> => {
     })
     profileCheckpoint('init_after_1p_event_logging')
 
-    // DSXU default local-coding mainline must not activate the provider-migration
-    // OAuth shell. Keep the migration path behind an explicit flag.
-    void populateProviderMigrationOAuthAccountInfoIfAllowed()
+    // DSXU default local-coding mainline must not activate the archived
+    // OAuth shell. Keep the archived source path behind an explicit flag.
+    void populateArchivedOAuthAccountInfoIfAllowed()
     profileCheckpoint('init_after_oauth_populate')
 
     // Initialize JetBrains IDE detection asynchronously (populates cache for later sync access)
@@ -185,18 +185,18 @@ export const init = memoize(async (): Promise<void> => {
     // reuse the global pool.
     preconnectProviderApi()
 
-    // Provider migration upstream proxy. DSXU no longer starts this source shell,
-    // even with the migration flag; remote/provider work must route through
+    // Archived upstream proxy. DSXU no longer starts this source shell,
+    // even with the archived override flag; remote/provider work must route through
     // the DSXU provider contract instead.
     if (isEnvTruthy(getDsxuCodeEnv('REMOTE'))) {
-      if (!shouldLoadProviderMigrationServiceShell()) {
+      if (!shouldLoadArchivedServiceShell()) {
         logForDebugging(
-          '[init] DSXU_CODE_REMOTE ignored on the default DSXU local mainline; set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated provider migration work.',
+          '[init] DSXU_CODE_REMOTE ignored on the default DSXU local mainline; set DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1 only for isolated archived provider shell work.',
           { level: 'warn' },
         )
       } else {
         logForDebugging(
-          '[init] provider migration upstream proxy shell is archived; DSXU provider contract owns remote/session routing.',
+          '[init] archived upstream proxy shell is disabled; DSXU provider contract owns remote/session routing.',
           { level: 'warn' },
         )
       }
@@ -265,7 +265,7 @@ export const init = memoize(async (): Promise<void> => {
  * This should only be called once, after the trust dialog has been accepted.
  */
 export function initializeTelemetryAfterTrust(): void {
-  if (!shouldLoadProviderMigrationServiceShell()) {
+  if (!shouldLoadArchivedServiceShell()) {
     void doInitializeTelemetry().catch(error => {
       logForDebugging(
         `[3P telemetry] Telemetry init failed: ${errorMessage(error)}`,

@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: tool-bus type file retained only because Windows ACL blocked
+ * Legacy tool-bus type file retained only because Windows ACL blocked
  * physical removal after copying to _deleted_files.
  *
  * Tool Bus 洋葱圈架构 - 类型定义
@@ -98,6 +98,8 @@ export interface ToolBusConfig {
   enablePerformanceMonitoring?: boolean
   /** 是否启用错误恢复 */
   enableErrorRecovery?: boolean
+  /** Whether to assemble legacy default middlewares. Default false; owners opt in explicitly. */
+  enableDefaultMiddlewares?: boolean
 }
 
 /**

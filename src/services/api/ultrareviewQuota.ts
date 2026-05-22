@@ -4,7 +4,7 @@ import { isProviderSubscriptionAccount } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
 
@@ -15,8 +15,8 @@ export type UltrareviewQuotaResponse = {
   is_overage: boolean
 }
 
-function isProviderMigrationAccountApiAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 /**
@@ -25,7 +25,7 @@ function isProviderMigrationAccountApiAllowed(): boolean {
  * the endpoint errors.
  */
 export async function fetchUltrareviewQuota(): Promise<UltrareviewQuotaResponse | null> {
-  if (!isProviderMigrationAccountApiAllowed()) return null
+  if (!isArchivedAccountApiAllowed()) return null
   if (!isProviderSubscriptionAccount()) return null
   try {
     const { accessToken, orgUUID } = await prepareApiRequest()

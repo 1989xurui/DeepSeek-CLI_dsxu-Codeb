@@ -65,10 +65,10 @@ Query forms:
  * - It has shouldDefer: true
  *
  * A tool is NEVER deferred if it has alwaysLoad: true (MCP tools set this via
- * _meta provider-migration always-load flag). This check runs first, before any other rule.
+ * _meta archived always-load flag). This check runs first, before any other rule.
  */
 export function isDeferredTool(tool: Tool): boolean {
-  // Explicit opt-out via provider-migration always-load metadata: tool appears in the
+  // Explicit opt-out via archived always-load metadata: tool appears in the
   // initial prompt with full schema. Checked first so MCP tools can opt out.
   if (tool.alwaysLoad === true) return false
 

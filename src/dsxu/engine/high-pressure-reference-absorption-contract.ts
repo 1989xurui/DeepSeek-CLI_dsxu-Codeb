@@ -277,7 +277,7 @@ const items: readonly HighPressureAbsorptionItem[] = [
     ],
     stressBehaviors: [
       'default CLI/TUI import scan proves old shell unreachable',
-      'default tool pool and prompt do not advertise provider-migration shell',
+      'default tool pool and prompt do not advertise archived shell',
       'legacy aliases remain explicit legacy flags',
       'five smoke classes stay green after cleanup',
     ],

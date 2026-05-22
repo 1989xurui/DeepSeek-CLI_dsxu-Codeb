@@ -17,10 +17,10 @@ import { logError } from './log.js'
 import { getCanonicalName, type ModelName } from './model/model.js'
 import { sequential } from './sequential.js'
 import {
-  getProviderMigrationDsxuContribution,
-  getProviderMigrationSourceEntrypoint,
-  isProviderMigrationInternalModelRepoRemote,
-  sanitizeProviderMigrationModelName,
+  getArchivedDsxuContribution,
+  getArchivedSourceEntrypoint,
+  isArchivedInternalModelRepoRemote,
+  sanitizeArchivedModelName,
 } from './commitAttributionProviderMigration.js'
 
 /**
@@ -28,7 +28,7 @@ import {
  * Includes both SSH and HTTPS URL formats.
  *
  * NOTE: This is intentionally a repo allowlist, not an org-wide check.
- * Some provider-migration source and experimental orgs contain public repos.
+ * Some archived source and experimental orgs contain public repos.
  * Undercover mode must stay ON in those to prevent codename leaks.
  * Only add repos here that are confirmed PRIVATE.
  */
@@ -45,7 +45,7 @@ export function getAttributionRepoRoot(): string {
 }
 
 // Cache for repo classification result. Primed once per process.
-// 'internal' = remote matches the provider-migration private repo allowlist
+// 'internal' = remote matches the archived private repo allowlist
 // 'external' = has a remote, not on allowlist (public/open-source repo)
 // 'none'     = no remote URL (not a git repo, or no remote configured)
 let repoClassCache: 'internal' | 'external' | 'none' | null = null
@@ -82,7 +82,7 @@ export const isInternalModelRepo = sequential(async (): Promise<boolean> => {
     repoClassCache = 'none'
     return false
   }
-  const isInternal = isProviderMigrationInternalModelRepoRemote(remoteUrl)
+  const isInternal = isArchivedInternalModelRepoRemote(remoteUrl)
   repoClassCache = isInternal ? 'internal' : 'external'
   return isInternal
 })
@@ -111,7 +111,7 @@ export function sanitizeSurfaceKey(surfaceKey: string): string {
  * Maps internal variants to their public names based on model family.
  */
 export function sanitizeModelName(shortName: string): string {
-  return sanitizeProviderMigrationModelName(shortName)
+  return sanitizeArchivedModelName(shortName)
 }
 
 /**
@@ -174,7 +174,7 @@ export type AttributionData = {
  * Get the current client surface from environment.
  */
 export function getClientSurface(): string {
-  return process.env.DSXU_CODE_ENTRYPOINT ?? getProviderMigrationSourceEntrypoint() ?? 'cli'
+  return process.env.DSXU_CODE_ENTRYPOINT ?? getArchivedSourceEntrypoint() ?? 'cli'
 }
 
 /**
@@ -313,7 +313,7 @@ function computeFileModificationState(
 
     // Get current file state if it exists
     const existingState = existingFileStates.get(normalizedPath)
-    const existingContribution = getProviderMigrationDsxuContribution(existingState)
+    const existingContribution = getArchivedDsxuContribution(existingState)
 
     return {
       contentHash: computeContentHash(newContent),
@@ -404,7 +404,7 @@ export function trackFileDeletion(
 ): AttributionState {
   const normalizedPath = normalizeFilePath(filePath)
   const existingState = state.fileStates.get(normalizedPath)
-  const existingContribution = getProviderMigrationDsxuContribution(existingState)
+  const existingContribution = getArchivedDsxuContribution(existingState)
   const deletedChars = oldContent.length
 
   const newFileState: FileAttributionState = {
@@ -451,7 +451,7 @@ export function trackBulkFileChanges(
     if (change.type === 'deleted') {
       const normalizedPath = normalizeFilePath(change.path)
       const existingState = newFileStates.get(normalizedPath)
-      const existingContribution = getProviderMigrationDsxuContribution(existingState)
+      const existingContribution = getArchivedDsxuContribution(existingState)
       const deletedChars = change.oldContent.length
 
       newFileStates.set(normalizedPath, {
@@ -552,7 +552,7 @@ export async function calculateCommitAttribution(
         mergedFileStates.set(path, {
           ...fileState,
           dsxuContribution:
-            getProviderMigrationDsxuContribution(existing) + getProviderMigrationDsxuContribution(fileState),
+            getArchivedDsxuContribution(existing) + getArchivedDsxuContribution(fileState),
         })
       } else {
         mergedFileStates.set(path, fileState)
@@ -585,7 +585,7 @@ export async function calculateCommitAttribution(
         // File was deleted
         if (fileState) {
           // DSXU deleted this file (tracked deletion)
-          dsxuChars = getProviderMigrationDsxuContribution(fileState)
+          dsxuChars = getArchivedDsxuContribution(fileState)
           humanChars = 0
         } else {
           // Human deleted this file (untracked deletion)
@@ -602,7 +602,7 @@ export async function calculateCommitAttribution(
 
           if (fileState) {
             // We have tracked modifications for this file
-            dsxuChars = getProviderMigrationDsxuContribution(fileState)
+            dsxuChars = getArchivedDsxuContribution(fileState)
             humanChars = 0
           } else if (baseline) {
             // File was modified but not tracked - human modification

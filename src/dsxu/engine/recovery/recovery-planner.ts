@@ -20,6 +20,10 @@ export interface RecoveryPlannerConfig {
   logDecisions?: boolean
   maxRetries?: number
   maxReplans?: number
+  retryThreshold?: number
+  rollbackThreshold?: number
+  humanInterventionThreshold?: number
+  preferRetryForToolFailures?: boolean
 }
 
 /**
@@ -37,6 +41,10 @@ export class RecoveryPlanner {
       logDecisions: true,
       maxRetries: 3,
       maxReplans: 2,
+      retryThreshold: 2,
+      rollbackThreshold: 3,
+      humanInterventionThreshold: 0.3,
+      preferRetryForToolFailures: true,
       ...config,
     }
   }
@@ -106,6 +114,22 @@ export class RecoveryPlanner {
       return 'tool-failure'
     }
 
+    const explicitBugType = input.bugRecord?.type ?? input.bugPattern?.bugType
+    switch (explicitBugType) {
+      case 'verify-failure':
+      case 'reviewer-rejection':
+      case 'tool-failure':
+      case 'context-insufficiency':
+      case 'graph-retrieval-miss':
+      case 'memory-insufficiency':
+      case 'resource-exhaustion':
+      case 'configuration-error':
+      case 'integration-failure':
+        return explicitBugType
+      case 'execution-timeout':
+        return 'timeout'
+    }
+
     // 处理上下文不足
     if (input.bugRecord?.context?.compactContext?.compactLevel === 'aggressive' ||
         (input.context && input.context.contextHygieneScore && input.context.contextHygieneScore < 0.3)) {
@@ -130,11 +154,37 @@ export class RecoveryPlanner {
     context: RecoveryContext,
     input: RecoveryInput
   ): RecoveryAction {
+    const sameTypeFailures = input.failureHistory?.sameTypeFailures ?? 0
+    const recentFailures = input.failureHistory?.recentFailures ?? 0
+    const retryThreshold = this.config.retryThreshold ?? 2
+    const rollbackThreshold = this.config.rollbackThreshold ?? 3
+    const humanThreshold = this.config.humanInterventionThreshold ?? 0.3
+    const contextHygieneScore =
+      context.contextHygieneScore ??
+      (input as { context?: Partial<RecoveryContext> }).context?.contextHygieneScore ??
+      input.bugRecord?.context?.compactContext?.hygieneScore
+    const lowContextQuality =
+      (contextHygieneScore !== undefined && contextHygieneScore <= humanThreshold) ||
+      (context.memoryAvailability === 'low' && context.graphCoverage === 'minimal')
+
+    if (lowContextQuality) {
+      return 'ask-human'
+    }
+
     // 基于失败原因选择动作
     switch (reason) {
       case 'verify-failure':
         // verify 失败：根据上下文选择重试或重新规划
         if (context.turnCount && context.turnCount < 2) {
+          return 'retry'
+        }
+        if (sameTypeFailures > rollbackThreshold || recentFailures > rollbackThreshold) {
+          return input.bugRecord?.severity === 'critical' ? 'escalate' : 'rollback'
+        }
+        if (sameTypeFailures >= rollbackThreshold && rollbackThreshold <= 2) {
+          return input.bugRecord?.severity === 'critical' ? 'escalate' : 'rollback'
+        }
+        if (sameTypeFailures <= retryThreshold) {
           return 'retry'
         }
         return 'replan'
@@ -145,7 +195,13 @@ export class RecoveryPlanner {
 
       case 'tool-failure':
         // 工具失败：根据失败历史选择重试或中止
-        if (input.failureHistory?.sameTypeFailures && input.failureHistory.sameTypeFailures < 2) {
+        if (this.config.preferRetryForToolFailures === false) {
+          return 'abort'
+        }
+        if (input.bugRecord?.severity === 'critical') {
+          return 'abort'
+        }
+        if (sameTypeFailures <= retryThreshold) {
           return 'retry'
         }
         return 'abort'
@@ -310,7 +366,7 @@ export class RecoveryPlanner {
     // 第一步总是评估当前状态
     steps.push({
       stepId: `step-1-${Date.now()}`,
-      action: 'assess-current-state',
+      action: `assess-current-state-for-${decision.action}`,
       description: 'Evaluate current system state and failure context',
       parameters: {
         decisionId: decision.decisionId,
@@ -335,6 +391,19 @@ export class RecoveryPlanner {
         break
 
       case 'replan':
+        if (decision.reason === 'context-insufficiency') {
+          steps.push({
+            stepId: `step-2-context-${Date.now()}`,
+            action: 'gather-context',
+            description: 'Gather missing source truth and compact-safe context before replanning',
+            parameters: {
+              requiredContextSize: decision.context.requiredContextSize,
+              availableContextSize: decision.context.availableContextSize,
+              memoryAvailability: decision.context.memoryAvailability,
+            },
+            expectedOutcome: 'Missing context gathered for a source-grounded recovery plan',
+          })
+        }
         steps.push({
           stepId: `step-2-${Date.now()}`,
           action: 'analyze-alternatives',
@@ -344,6 +413,16 @@ export class RecoveryPlanner {
             considerFallbacks: true,
           },
           expectedOutcome: 'Alternative plan identified',
+        })
+        steps.push({
+          stepId: `step-3-${Date.now()}`,
+          action: 'select-replan-path',
+          description: 'Select the safest recovery path before execution',
+          parameters: {
+            preserveEvidence: true,
+            avoidRepeatFailure: true,
+          },
+          expectedOutcome: 'A concrete replanning path is selected',
         })
         break
 
@@ -421,6 +500,10 @@ export class RecoveryPlanner {
    */
   getDecisionHistory(): RecoveryDecision[] {
     return [...this.decisionHistory]
+  }
+
+  getDecision(decisionId: string): RecoveryDecision | undefined {
+    return this.decisionHistory.find((decision) => decision.decisionId === decisionId)
   }
 
   /**

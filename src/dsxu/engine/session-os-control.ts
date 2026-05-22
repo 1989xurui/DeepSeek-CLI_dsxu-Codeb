@@ -89,6 +89,29 @@ export class DSXUSessionStateMachine {
     })
   }
 
+  handleLongTaskContinuation(input: {
+    taskId: string
+    lastStep: number
+    pendingSteps: Array<{
+      stepId: string
+      description: string
+      status: 'pending' | 'in_progress' | 'completed'
+    }>
+    resumeContext: Record<string, unknown>
+  }): void {
+    if (!this.sessionState) {
+      this.sessionState = {
+        sessionId: this.sessionId,
+        lastActivityTime: Date.now(),
+        sessionState: 'active',
+        checkpoints: [],
+        resumeHistory: [],
+      }
+    }
+    this.sessionState.longTaskContinuation = input
+    this.sessionState.lastActivityTime = Date.now()
+  }
+
   private latestCheckpoint(): SessionCheckpoint | undefined {
     if (!this.sessionState || this.sessionState.checkpoints.length === 0) return undefined
     return this.sessionState.checkpoints[this.sessionState.checkpoints.length - 1]

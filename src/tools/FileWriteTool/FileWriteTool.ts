@@ -1,7 +1,16 @@
 import { dirname, sep } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
 import { z } from 'zod/v4'
+import {
+  buildPostMutationVerificationEnvelope,
+  buildPostMutationSemanticCodeGraphEvidence,
+  formatPostMutationVerificationFailure,
+  formatPostMutationVerificationToolState,
+  summarizePostMutationVerificationEnvelope,
+} from '../../dsxu/engine/post-mutation-verification-envelope.js'
+import { invokePostWriteTddGate } from '../../coordinator/tdd-gate/post-write-hook.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
+import { invokeStaticAnalysisToolGate } from '../../services/static-analysis/tool-gate.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/LSPDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
@@ -84,6 +93,38 @@ const outputSchema = lazySchema(() =>
         'The original file content before the write (null for new files)',
       ),
     gitDiff: gitDiffSchema().optional(),
+    postMutationVerification: z.object({
+      schemaVersion: z.literal('dsxu.post-mutation-verification-summary.v1'),
+      owner: z.literal('Tool Gate / VerificationKernel'),
+      status: z.enum([
+        'READY_FOR_FOCUSED_CLAIM',
+        'NEEDS_FOCUSED_VERIFICATION',
+        'NEEDS_REVIEW',
+        'BLOCKED',
+      ]),
+      finalClaimAllowed: z.boolean(),
+      reviewRequired: z.boolean(),
+      blockingFailure: z.boolean(),
+      rollbackStrategy: z.enum(['restore-old-content', 'manual-review']),
+      editProof: z.object({
+        schemaVersion: z.literal('dsxu.edit-proof-envelope.v5'),
+        claimAllowed: z.boolean(),
+        verification: z.enum(['pass', 'fail', 'not_run']),
+        guardCount: z.number(),
+      }),
+      semanticCodeGraph: z.object({
+        schemaVersion: z.literal('dsxu.semantic-code-graph.v5'),
+        status: z.enum([
+          'PASS_SEMANTIC_CODE_GRAPH_READY',
+          'NEEDS_SEMANTIC_CODE_GRAPH_REVIEW',
+        ]),
+        affectedTestCount: z.number(),
+        guardCount: z.number(),
+      }).optional(),
+      nextAction: z.string(),
+      evidence: z.array(z.string()),
+      compactLine: z.string(),
+    }).optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -353,7 +394,77 @@ export const FileWriteTool = buildTool({
       limit: undefined,
     })
 
-    // Log when writing to DSXU.md / provider-migration source instruction files.
+    const staticGateResult = await invokeStaticAnalysisToolGate({
+      filePaths: [fullFilePath],
+      patchContent: content,
+    })
+    if (staticGateResult.status === 'FAIL') {
+      logForDebugging(
+        `Static analysis tool gate failed for ${fullFilePath}: ${staticGateResult.error ?? 'unknown error'}`,
+      )
+    }
+
+    const semanticGraphEvidence = buildPostMutationSemanticCodeGraphEvidence({
+      repoRoot: getCwd(),
+      filePath: fullFilePath,
+    })
+    const semanticAffectedTests =
+      semanticGraphEvidence.semanticCodeGraph?.affectedTests ?? []
+
+    const tddGateResult = await invokePostWriteTddGate({
+      filePath: fullFilePath,
+      changeType: 'write',
+      oldContent,
+      newContent: content,
+      repoRoot: getCwd(),
+      existingTests: semanticAffectedTests.length > 0 ? [...semanticAffectedTests] : undefined,
+    })
+    if (tddGateResult.status === 'FAIL') {
+      logForDebugging(
+        `TDD post-write gate failed for ${fullFilePath}: ${tddGateResult.error ?? 'unknown error'}`,
+      )
+      if (tddGateResult.blocking) {
+        logForDebugging(
+          `TDD post-write gate requested blocking for ${fullFilePath}; building DSXU verification envelope`,
+        )
+      }
+    }
+    const verificationEnvelope = buildPostMutationVerificationEnvelope({
+      filePath: fullFilePath,
+      changeType: 'write',
+      oldContent,
+      newContent: content,
+      semanticCodeGraph: semanticGraphEvidence.semanticCodeGraph,
+      semanticCodeGraphError: semanticGraphEvidence.semanticCodeGraphError,
+      gates: [
+        {
+          name: 'static-analysis',
+          status: staticGateResult.status,
+          blocking: staticGateResult.shouldBlock,
+          passed: staticGateResult.status !== 'FAIL',
+          issues: staticGateResult.issues,
+          error: staticGateResult.error,
+        },
+        {
+          name: 'post-mutation-verification',
+          status: tddGateResult.status,
+          blocking: tddGateResult.blocking,
+          passed: tddGateResult.passed,
+          durationMs: tddGateResult.durationMs,
+          error: tddGateResult.error,
+        },
+      ],
+    })
+    logForDebugging(
+      `DSXU post-mutation verification for ${fullFilePath}: ${JSON.stringify(verificationEnvelope)}`,
+    )
+    if (verificationEnvelope.blockingFailure) {
+      throw new Error(formatPostMutationVerificationFailure(verificationEnvelope))
+    }
+    const postMutationVerification =
+      summarizePostMutationVerificationEnvelope(verificationEnvelope)
+
+    // Log when writing to DSXU.md / archived source instruction files.
     if (fullFilePath.endsWith(`${sep}DSXU.md`)) {
       logEvent('tengu_write_dsxu_instruction', {})
     } else if (fullFilePath.endsWith(`${sep}${'CL' + 'AUDE'}.md`)) {
@@ -394,6 +505,7 @@ export const FileWriteTool = buildTool({
         content,
         structuredPatch: patch,
         originalFile: oldContent,
+        postMutationVerification,
         ...(gitDiff && { gitDiff }),
       }
       // Track lines added and removed for file updates, right before yielding result
@@ -417,6 +529,7 @@ export const FileWriteTool = buildTool({
       content,
       structuredPatch: [],
       originalFile: null,
+      postMutationVerification,
       ...(gitDiff && { gitDiff }),
     }
 
@@ -434,19 +547,22 @@ export const FileWriteTool = buildTool({
       data,
     }
   },
-  mapToolResultToToolResultBlockParam({ filePath, type }, toolUseID) {
+  mapToolResultToToolResultBlockParam({ filePath, type, postMutationVerification }, toolUseID) {
+    const verificationState = postMutationVerification
+      ? `\n${formatPostMutationVerificationToolState(postMutationVerification)}`
+      : ''
     switch (type) {
       case 'create':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `File created successfully at: ${filePath}. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.`,
+          content: `File created successfully at: ${filePath}. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.\nDSXU tool state: file_written; blocked=repeat_same_write,shell_write_fallback; next=verify.${verificationState}`,
         }
       case 'update':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `The file ${filePath} has been updated successfully. Do not repeat the same Write unless the verification shows this content is wrong. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.`,
+          content: `The file ${filePath} has been updated successfully. Do not repeat the same Write unless the verification shows this content is wrong. Run the smallest relevant verification command next, or Read only if you need fresh file evidence.\nDSXU tool state: write_applied; blocked=repeat_same_write,shell_write_fallback; next=verify.${verificationState}`,
         }
     }
   },

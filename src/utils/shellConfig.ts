@@ -1,6 +1,6 @@
 /**
  * Utilities for managing shell configuration files (like .bashrc, .zshrc)
- * Used for managing provider-migration source aliases and PATH entries.
+ * Used for managing archived source aliases and PATH entries.
  */
 
 import { open, readFile, stat } from 'fs/promises'
@@ -9,15 +9,15 @@ import { join } from 'path'
 import { isFsInaccessible } from './errors.js'
 import { getLocalDsxuPath } from './localInstaller.js'
 
-const PROVIDER_MIGRATION_SOURCE_ALIAS = 'cl' + 'aude'
-export const PROVIDER_MIGRATION_SOURCE_ALIAS_REGEX = new RegExp(
-  `^\\s*alias\\s+${PROVIDER_MIGRATION_SOURCE_ALIAS}\\s*=`,
+const ARCHIVED_SOURCE_ALIAS = 'cl' + 'aude'
+export const ARCHIVED_SOURCE_ALIAS_REGEX = new RegExp(
+  `^\\s*alias\\s+${ARCHIVED_SOURCE_ALIAS}\\s*=`,
 )
-const PROVIDER_MIGRATION_SOURCE_ALIAS_QUOTED_TARGET_REGEX = new RegExp(
-  `alias\\s+${PROVIDER_MIGRATION_SOURCE_ALIAS}\\s*=\\s*["']([^"']+)["']`,
+const ARCHIVED_SOURCE_ALIAS_QUOTED_TARGET_REGEX = new RegExp(
+  `alias\\s+${ARCHIVED_SOURCE_ALIAS}\\s*=\\s*["']([^"']+)["']`,
 )
-const PROVIDER_MIGRATION_SOURCE_ALIAS_TARGET_REGEX = new RegExp(
-  `alias\\s+${PROVIDER_MIGRATION_SOURCE_ALIAS}\\s*=\\s*([^#\\n]+)`,
+const ARCHIVED_SOURCE_ALIAS_TARGET_REGEX = new RegExp(
+  `alias\\s+${ARCHIVED_SOURCE_ALIAS}\\s*=\\s*([^#\\n]+)`,
 )
 
 type EnvLike = Record<string, string | undefined>
@@ -46,25 +46,25 @@ export function getShellConfigPaths(
 }
 
 /**
- * Filter out installer-created provider-migration source aliases from an array of lines.
- * Only removes aliases pointing to the provider-migration source local installer path.
+ * Filter out installer-created archived source aliases from an array of lines.
+ * Only removes aliases pointing to the archived source local installer path.
  * Preserves custom user aliases that point to other locations
  * Returns the filtered lines and whether our default installer alias was found
  */
-export function filterProviderMigrationSourceAliases(lines: string[]): {
+export function filterArchivedSourceAliases(lines: string[]): {
   filtered: string[]
   hadAlias: boolean
 } {
   let hadAlias = false
   const filtered = lines.filter(line => {
-    // Check if this is a provider-migration source alias.
-    if (PROVIDER_MIGRATION_SOURCE_ALIAS_REGEX.test(line)) {
+    // Check if this is an archived source alias.
+    if (ARCHIVED_SOURCE_ALIAS_REGEX.test(line)) {
       // Extract the alias target - handle spaces, quotes, and various formats
       // First try with quotes
-      let match = line.match(PROVIDER_MIGRATION_SOURCE_ALIAS_QUOTED_TARGET_REGEX)
+      let match = line.match(ARCHIVED_SOURCE_ALIAS_QUOTED_TARGET_REGEX)
       if (!match) {
         // Try without quotes (capturing until end of line or comment)
-        match = line.match(PROVIDER_MIGRATION_SOURCE_ALIAS_TARGET_REGEX)
+        match = line.match(ARCHIVED_SOURCE_ALIAS_TARGET_REGEX)
       }
 
       if (match && match[1]) {
@@ -116,11 +116,11 @@ export async function writeFileLines(
 }
 
 /**
- * Check if a provider-migration source alias exists in any shell config file
+ * Check if an archived source alias exists in any shell config file
  * Returns the alias target if found, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findProviderMigrationSourceAlias(
+export async function findArchivedSourceAlias(
   options?: ShellConfigOptions,
 ): Promise<string | null> {
   const configs = getShellConfigPaths(options)
@@ -130,10 +130,10 @@ export async function findProviderMigrationSourceAlias(
     if (!lines) continue
 
     for (const line of lines) {
-      if (PROVIDER_MIGRATION_SOURCE_ALIAS_REGEX.test(line)) {
+      if (ARCHIVED_SOURCE_ALIAS_REGEX.test(line)) {
         // Extract the alias target
         const match = line.match(
-          new RegExp(`alias\\s+${PROVIDER_MIGRATION_SOURCE_ALIAS}=["']?([^"'\\s]+)`),
+          new RegExp(`alias\\s+${ARCHIVED_SOURCE_ALIAS}=["']?([^"'\\s]+)`),
         )
         if (match && match[1]) {
           return match[1]
@@ -146,14 +146,14 @@ export async function findProviderMigrationSourceAlias(
 }
 
 /**
- * Check if a provider-migration source alias exists and points to a valid executable
+ * Check if an archived source alias exists and points to a valid executable
  * Returns the alias target if valid, null otherwise
  * @param options Optional overrides for testing (env, homedir)
  */
-export async function findValidProviderMigrationSourceAlias(
+export async function findValidArchivedSourceAlias(
   options?: ShellConfigOptions,
 ): Promise<string | null> {
-  const aliasTarget = await findProviderMigrationSourceAlias(options)
+  const aliasTarget = await findArchivedSourceAlias(options)
   if (!aliasTarget) return null
 
   const home = options?.homedir ?? osHomedir()

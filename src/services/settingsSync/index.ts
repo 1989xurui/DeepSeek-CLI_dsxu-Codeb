@@ -6,7 +6,7 @@
  * - Interactive CLI: Uploads local settings to remote (incremental, only changed entries)
  * - CCR: Downloads remote settings to local before plugin installation
  *
- * Backend API: provider-migration source settings-sync contract #218817
+ * Backend API: archived source settings-sync contract #218817
  */
 
 import { feature } from 'bun:bundle'
@@ -32,7 +32,7 @@ import { classifyAxiosError } from '../../utils/errors.js'
 import { getRepoRemoteHash } from '../../utils/git.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import {
   getAPIProvider,
@@ -56,10 +56,10 @@ import {
 const SETTINGS_SYNC_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 3
 const MAX_FILE_SIZE_BYTES = 500 * 1024 // 500 KB per file (matches backend limit)
-const PROVIDER_MIGRATION_SETTINGS_SYNC_PATH = `/api/${'cla' + 'ude'}_code/user_settings`
+const ARCHIVED_SETTINGS_SYNC_PATH = `/api/${'cla' + 'ude'}_code/user_settings`
 
-function isProviderMigrationSettingsSyncAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedSettingsSyncAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 /**
@@ -71,7 +71,7 @@ export async function uploadUserSettingsInBackground(): Promise<void> {
   try {
     if (
       !feature('UPLOAD_USER_SETTINGS') ||
-      !isProviderMigrationSettingsSyncAllowed() ||
+      !isArchivedSettingsSyncAllowed() ||
       !getFeatureValue_CACHED_MAY_BE_STALE(
         'tengu_enable_settings_sync_push',
         false,
@@ -172,7 +172,7 @@ async function doDownloadUserSettings(
     try {
       if (
         !getFeatureValue_CACHED_MAY_BE_STALE('tengu_strap_foyer', false) ||
-        !isProviderMigrationSettingsSyncAllowed() ||
+        !isArchivedSettingsSyncAllowed() ||
         !isUsingOAuth()
       ) {
         logForDiagnosticsNoPII('info', 'settings_sync_download_skipped')
@@ -222,7 +222,7 @@ async function doDownloadUserSettings(
  * download a no-op there. Upload is independently guarded by getIsInteractive().
  */
 function isUsingOAuth(): boolean {
-  if (!isProviderMigrationSettingsSyncAllowed()) {
+  if (!isArchivedSettingsSyncAllowed()) {
     return false
   }
 
@@ -237,7 +237,7 @@ function isUsingOAuth(): boolean {
 }
 
 function getSettingsSyncEndpoint(): string {
-  return `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_SETTINGS_SYNC_PATH}`
+  return `${getOauthConfig().BASE_API_URL}${ARCHIVED_SETTINGS_SYNC_PATH}`
 }
 
 function getSettingsSyncAuthHeaders(): {

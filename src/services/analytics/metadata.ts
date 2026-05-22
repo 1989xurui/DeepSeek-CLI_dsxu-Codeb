@@ -36,7 +36,7 @@ import type { CoreUserData } from 'src/utils/user.js'
 import { getAgentContext } from '../../utils/agentContext.js'
 import {
   DSXU_TELEMETRY_ENV_FIELDS,
-  PROVIDER_MIGRATION_ACTION_PATH_SEGMENT,
+  ARCHIVED_PROVIDER_ACTION_PATH_SEGMENT,
   type DsxuTelemetryEnvironmentMetadata,
   type DsxuTelemetryPublicApiAuth,
 } from '../../types/analyticsTelemetry.js'
@@ -443,7 +443,7 @@ export type EnvContext = {
   tags?: string
   isGithubAction: boolean
   isDsxuCodeAction: boolean
-  isProviderMigrationAuth: boolean
+  isArchivedProviderAuth: boolean
   version: string
   versionBase?: string
   buildTime: string
@@ -624,7 +624,7 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     }),
     isGithubAction: isEnvTruthy(process.env.GITHUB_ACTIONS),
     isDsxuCodeAction: isDsxuCodeEnvTruthy('ACTION'),
-    isProviderMigrationAuth: isProviderSubscriptionAccount(),
+    isArchivedProviderAuth: isProviderSubscriptionAccount(),
     version: MACRO.VERSION,
     versionBase: getVersionBase(),
     buildTime: MACRO.BUILD_TIME,
@@ -634,9 +634,9 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
       githubActionsRunnerEnvironment: process.env.RUNNER_ENVIRONMENT,
       githubActionsRunnerOs: process.env.RUNNER_OS,
       githubActionRef: process.env.GITHUB_ACTION_PATH?.includes(
-        PROVIDER_MIGRATION_ACTION_PATH_SEGMENT,
+        ARCHIVED_PROVIDER_ACTION_PATH_SEGMENT,
       )
-        ? process.env.GITHUB_ACTION_PATH.split(PROVIDER_MIGRATION_ACTION_PATH_SEGMENT)[1]
+        ? process.env.GITHUB_ACTION_PATH.split(ARCHIVED_PROVIDER_ACTION_PATH_SEGMENT)[1]
         : undefined,
     }),
     ...(getWslVersion() && { wslVersion: getWslVersion() }),
@@ -828,7 +828,7 @@ export function to1PEventFormat(
   // parallel type previously let #11318, #13924, #19448, and coworker_type all
   // ship fields that never reached BQ.
   // Adding a field? Update the monorepo proto first (go/cc-logging):
-  //   event_schemas/.../<provider-migration-code>/v1/<internal-event>.proto
+  //   event_schemas/.../<archived-code>/v1/<internal-event>.proto
   // then run `bun run generate:proto` here.
   const env: DsxuTelemetryEnvironmentMetadata = {
     platform: envContext.platform,
@@ -858,8 +858,8 @@ export function to1PEventFormat(
   }
   env[DSXU_TELEMETRY_ENV_FIELDS.isRemote] = envContext.isDsxuCodeRemote
   env[DSXU_TELEMETRY_ENV_FIELDS.isAction] = envContext.isDsxuCodeAction
-  env[DSXU_TELEMETRY_ENV_FIELDS.isProviderMigrationAuth] =
-    envContext.isProviderMigrationAuth
+  env[DSXU_TELEMETRY_ENV_FIELDS.isArchivedProviderAuth] =
+    envContext.isArchivedProviderAuth
 
   if (envContext.dsxuCodeContainerId) {
     env[DSXU_TELEMETRY_ENV_FIELDS.containerId] =

@@ -3,6 +3,20 @@ import { runVerifyGate } from '../../verify-gate'
 import { ReviewerSubagent } from '../../reviewer-subagent'
 import type { QueryEvent, QueryResult, AgentSummary } from '../../types'
 
+function passingVerificationEvent(): QueryEvent {
+  return {
+    type: 'tool_result',
+    toolName: 'Bash',
+    timestamp: Date.now(),
+    result: {
+      content: 'bun test src/example.test.ts\n1 pass\n0 fail',
+      success: true,
+      isError: false,
+      exitCode: 0
+    }
+  }
+}
+
 describe('9A-C: Checks as Rules 接入 Verify/Review 链验证', () => {
   describe('测试1：Verify Gate 输出包含 ruleResults', () => {
     it('runVerifyGate() 返回的 verification 应该包含 ruleResults 数组', async () => {
@@ -16,7 +30,8 @@ describe('9A-C: Checks as Rules 接入 Verify/Review 链验证', () => {
             content: '测试文件编辑',
             success: true
           }
-        }
+        },
+        passingVerificationEvent()
       ]
 
       const result: QueryResult = {
@@ -73,7 +88,8 @@ describe('9A-C: Checks as Rules 接入 Verify/Review 链验证', () => {
             content: '另一个测试编辑',
             success: true
           }
-        }
+        },
+        passingVerificationEvent()
       ]
 
       const result: QueryResult = {
@@ -220,7 +236,8 @@ describe('9A-C: Checks as Rules 接入 Verify/Review 链验证', () => {
           type: 'transaction_rolled_back',
           timestamp: Date.now(),
           reason: '测试回滚'
-        }
+        },
+        passingVerificationEvent()
       ]
       const rollbackResult: QueryResult = {
         exitReason: 'success',
@@ -264,7 +281,8 @@ describe('9A-C: Checks as Rules 接入 Verify/Review 链验证', () => {
             content: '结构测试',
             success: true
           }
-        }
+        },
+        passingVerificationEvent()
       ]
 
       const result: QueryResult = {

@@ -47,7 +47,7 @@ export type ImportTokenError =
  * POSTs a GitHub token to the CCR backend, which validates it against
  * GitHub's /user endpoint and stores it Fernet-encrypted in sync_user_tokens.
  * The stored token satisfies the same read paths as an OAuth token, so
- * clone/push in the provider migration code workspace works immediately after this succeeds.
+ * clone/push in the archived code workspace works immediately after this succeeds.
  */
 export async function importGithubToken(
   token: RedactedGithubToken,
@@ -176,7 +176,7 @@ export async function createDefaultEnvironment(): Promise<boolean> {
   }
 }
 
-/** Returns true when the user has valid provider migration OAuth credentials. */
+/** Returns true when the user has valid archived OAuth credentials. */
 export async function isSignedIn(): Promise<boolean> {
   if (isDsxuRuntimeMode()) {
     return false
@@ -194,17 +194,17 @@ export function getCodeWebUrl(): string {
   if (isDsxuRuntimeMode()) {
     return 'dsxu://remote-setup-disabled'
   }
-  const providerMigrationOriginKey = ('CLA' + 'UDE_AI_ORIGIN') as keyof ReturnType<
+  const archivedOriginKey = ('CLA' + 'UDE_AI_ORIGIN') as keyof ReturnType<
     typeof getOauthConfig
   >
-  return `${getOauthConfig()[providerMigrationOriginKey]}/code`
+  return `${getOauthConfig()[archivedOriginKey]}/code`
 }
 
 export function getDsxuRemoteSetupApiRuntimeProfile(): {
   runtime: 'DSXU Remote Setup Isolation'
   defaultBehavior: 'disabled-in-dsxu-runtime'
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     runtime: 'DSXU Remote Setup Isolation',
@@ -212,10 +212,10 @@ export function getDsxuRemoteSetupApiRuntimeProfile(): {
     activationEvidence: [
       'DSXU_CODE_MODE short-circuits DSXU cloud GitHub token import',
       'DSXU_CODE_MODE prevents default provider cloud environment creation',
-      'DSXU remote setup URL returns a disabled local scheme instead of the provider migration code workspace',
+      'DSXU remote setup URL returns a disabled local scheme instead of the archived code workspace',
     ],
-    providerMigrationIsolation: [
-      'CCR and provider cloud environment endpoints are non-DSXU provider migration surfaces',
+    archivedIsolation: [
+      'CCR and provider cloud environment endpoints are non-DSXU archived surfaces',
       'DSXU Remote Session Provider owns new remote/cron/task execution paths',
     ],
   }

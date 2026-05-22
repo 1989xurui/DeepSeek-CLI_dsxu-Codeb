@@ -20,12 +20,12 @@ import {
   SOURCE_AGENT_TOOL_ALIAS_NAME,
 } from '../tools/AgentTool/constants.js'
 import type { LogOption } from '../types/logs.js'
-import { getProviderMigrationHomeDir, getDsxuConfigHomeDir, isDsxuRuntimeMode } from '../utils/envUtils.js'
+import { getArchivedHomeDir as getArchivedConfigHomeDir, getDsxuConfigHomeDir, isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { execFileNoThrow } from '../utils/execFileNoThrow.js'
 import { logError } from '../utils/log.js'
 import { extractTextContent } from '../utils/messages.js'
-import { getProviderMigrationInsightsAnalysisModel } from '../utils/model/providerMigration/providerMigrationInsightsModel.js'
+import { getArchivedInsightsAnalysisModel } from '../utils/model/providerMigration/providerMigrationInsightsModel.js'
 import {
   getProjectsDir,
   getSessionFilesWithMtime,
@@ -39,12 +39,12 @@ import { escapeXmlAttr as escapeHtml } from '../utils/xml.js'
 
 // Model for facet extraction and summarization (DSXU high-quality analysis route)
 function getAnalysisModel(): string {
-  return getProviderMigrationInsightsAnalysisModel()
+  return getArchivedInsightsAnalysisModel()
 }
 
 // Model for narrative insights (DSXU high-quality analysis route)
 function getInsightsModel(): string {
-  return getProviderMigrationInsightsAnalysisModel()
+  return getArchivedInsightsAnalysisModel()
 }
 
 
@@ -53,7 +53,7 @@ function getInsightsProductName(): string {
 }
 
 function getInsightsConfigHomeDir(): string {
-  return isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getProviderMigrationHomeDir()
+  return isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getArchivedConfigHomeDir()
 }
 
 function getInsightsInstructionFileName(): string {
@@ -453,9 +453,9 @@ const LABEL_MAP: Record<string, string> = {
   essential: 'Essential',
 }
 
-// Lazy getters: getProviderMigrationHomeDir() is memoized and reads process.env.
+// Lazy getters: getArchivedConfigHomeDir() is memoized and reads process.env.
 // Calling it at module scope would populate the memoize cache before
-// entrypoints can set provider-migration source config dir, breaking all 150+ other callers.
+// entrypoints can set archived source config dir, breaking all 150+ other callers.
 function getDataDir(): string {
   return join(getInsightsConfigHomeDir(), 'usage-data')
 }
@@ -3120,9 +3120,9 @@ const usageReport: Command = {
         .slice(0, 15)
       const username = process.env.SAFEUSER || process.env.USER || 'unknown'
       const filename = `${username}_insights_${timestamp}.html`
-      const providerMigrationReportBucket = `${'anth' + 'ropic'}-serve`
-      const s3Path = `s3://${providerMigrationReportBucket}/atamkin/cc-user-reports/${filename}`
-      const s3Url = `https://s3-frontend.infra.ant.dev/${providerMigrationReportBucket}/atamkin/cc-user-reports/${filename}`
+      const archivedReportBucket = `${'anth' + 'ropic'}-serve`
+      const s3Path = `s3://${archivedReportBucket}/atamkin/cc-user-reports/${filename}`
+      const s3Url = `https://s3-frontend.infra.ant.dev/${archivedReportBucket}/atamkin/cc-user-reports/${filename}`
 
       reportUrl = s3Url
       try {

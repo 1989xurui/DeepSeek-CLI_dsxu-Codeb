@@ -14,7 +14,7 @@ import { isEnvTruthy } from './envUtils.js'
 // Cache for email fetched asynchronously at startup
 let cachedEmail: string | undefined | null = null // null means not fetched yet
 let emailFetchPromise: Promise<string | undefined> | null = null
-const PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN = 'anth' + 'ropic.com'
+const ARCHIVED_INTERNAL_EMAIL_DOMAIN = 'anth' + 'ropic.com'
 
 /**
  * GitHub Actions metadata when running in CI
@@ -153,7 +153,7 @@ function getEmail(): string | undefined {
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@${PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN}`
+    return `${process.env.COO_CREATOR}@${ARCHIVED_INTERNAL_EMAIL_DOMAIN}`
   }
 
   // If initUser() wasn't called, we return undefined instead of blocking
@@ -173,7 +173,7 @@ async function getEmailAsync(): Promise<string | undefined> {
   }
 
   if (process.env.COO_CREATOR) {
-    return `${process.env.COO_CREATOR}@${PROVIDER_MIGRATION_INTERNAL_EMAIL_DOMAIN}`
+    return `${process.env.COO_CREATOR}@${ARCHIVED_INTERNAL_EMAIL_DOMAIN}`
   }
 
   return getGitEmail()

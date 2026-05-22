@@ -214,6 +214,20 @@ export interface BlastResult {
   totalAffected: number
 }
 
+export interface DSXUSemanticCodeGraphEvidence {
+  schemaVersion: 'dsxu.semantic-code-graph.v5'
+  owner: 'Semantic Code Graph / Source Truth Repair'
+  status: 'PASS_SEMANTIC_CODE_GRAPH_READY' | 'NEEDS_SEMANTIC_CODE_GRAPH_REVIEW'
+  projectRoot: string
+  changedFiles: readonly string[]
+  symbolCount: number
+  dependencyEdgeCount: number
+  affectedTests: readonly string[]
+  sourceEvidence: readonly string[]
+  guards: readonly string[]
+  blastRadius: BlastResult
+}
+
 /**
  * 判断是否为测试文件
  */
@@ -329,6 +343,53 @@ export function computeBlastRadius(
     affectedTests,
     summary,
     totalAffected,
+  }
+}
+
+export function buildDSXUSemanticCodeGraphEvidence(input: {
+  projectRoot: string
+  changedFiles: readonly string[]
+  files?: readonly string[]
+  maxDepth?: number
+}): DSXUSemanticCodeGraphEvidence {
+  const projectRoot = resolve(input.projectRoot)
+  const graph = buildDepGraph(projectRoot, input.files ? [...input.files] : undefined)
+  const changedFiles = input.changedFiles.map(file =>
+    resolve(projectRoot, file),
+  )
+  const blastRadius = computeBlastRadius(graph, changedFiles, input.maxDepth ?? 5)
+  let symbolCount = 0
+  let dependencyEdgeCount = 0
+  for (const node of graph.nodes.values()) {
+    symbolCount += node.exports.length
+    dependencyEdgeCount += node.imports.size
+  }
+  const guards = [
+    graph.nodes.size === 0 ? 'empty semantic graph' : '',
+    changedFiles.some(file => !graph.nodes.has(file)) ? 'changed file missing from semantic graph' : '',
+    blastRadius.affectedTests.length === 0 ? 'no affected tests linked' : '',
+  ].filter(Boolean)
+
+  return {
+    schemaVersion: 'dsxu.semantic-code-graph.v5',
+    owner: 'Semantic Code Graph / Source Truth Repair',
+    status: guards.length === 0
+      ? 'PASS_SEMANTIC_CODE_GRAPH_READY'
+      : 'NEEDS_SEMANTIC_CODE_GRAPH_REVIEW',
+    projectRoot,
+    changedFiles,
+    symbolCount,
+    dependencyEdgeCount,
+    affectedTests: blastRadius.affectedTests,
+    sourceEvidence: [
+      `nodes:${graph.nodes.size}`,
+      `symbols:${symbolCount}`,
+      `dependencyEdges:${dependencyEdgeCount}`,
+      `affectedTests:${blastRadius.affectedTests.length}`,
+      blastRadius.summary,
+    ],
+    guards,
+    blastRadius,
   }
 }
 

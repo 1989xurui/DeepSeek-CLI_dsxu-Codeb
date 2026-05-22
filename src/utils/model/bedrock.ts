@@ -2,8 +2,8 @@ import memoize from 'lodash-es/memoize.js'
 import { refreshAndGetAwsCredentials } from '../auth.js'
 import { getAWSRegion, isDsxuCodeEnvTruthy } from '../envUtils.js'
 
-const BEDROCK_PROVIDER_MIGRATION_SOURCE_PREFIX = 'anth' + 'ropic'
-const PROVIDER_MIGRATION_BEDROCK_BASE_URL_ENV = `ANTH${'ROPIC'}_BEDROCK_BASE_URL`
+const BEDROCK_ARCHIVED_SOURCE_PREFIX = 'anth' + 'ropic'
+const ARCHIVED_BEDROCK_BASE_URL_ENV = `ANTH${'ROPIC'}_BEDROCK_BASE_URL`
 import { logError } from '../log.js'
 import { getAWSClientProxyConfig } from '../proxy.js'
 
@@ -32,10 +32,10 @@ export const getBedrockInferenceProfiles = memoize(async function (): Promise<
       nextToken = response.nextToken
     } while (nextToken)
 
-    // Filter for provider-migration source models (SYSTEM_DEFINED filtering handled in query)
+    // Filter for archived source models (SYSTEM_DEFINED filtering handled in query)
     return allProfiles
       .filter(profile =>
-        profile.inferenceProfileId?.includes(BEDROCK_PROVIDER_MIGRATION_SOURCE_PREFIX),
+        profile.inferenceProfileId?.includes(BEDROCK_ARCHIVED_SOURCE_PREFIX),
       )
       .map(profile => profile.inferenceProfileId)
       .filter(Boolean) as string[]
@@ -54,7 +54,7 @@ export function findFirstMatch(
 
 async function createBedrockClient() {
   const { BedrockClient } = await import('@aws-sdk/client-bedrock')
-  // Match the provider-migration Bedrock SDK's region behavior exactly:
+  // Match the archived Bedrock SDK's region behavior exactly:
   // - Reads AWS_REGION or AWS_DEFAULT_REGION env vars (not AWS config files)
   // - Falls back to 'us-east-1' if neither is set
   // This ensures we query profiles from the same region the client will use
@@ -64,8 +64,8 @@ async function createBedrockClient() {
 
   const clientConfig: ConstructorParameters<typeof BedrockClient>[0] = {
     region,
-    ...(process.env[PROVIDER_MIGRATION_BEDROCK_BASE_URL_ENV] && {
-      endpoint: process.env[PROVIDER_MIGRATION_BEDROCK_BASE_URL_ENV],
+    ...(process.env[ARCHIVED_BEDROCK_BASE_URL_ENV] && {
+      endpoint: process.env[ARCHIVED_BEDROCK_BASE_URL_ENV],
     }),
     ...(await getAWSClientProxyConfig()),
     ...(skipAuth && {
@@ -107,8 +107,8 @@ export async function createBedrockRuntimeClient() {
 
   const clientConfig: ConstructorParameters<typeof BedrockRuntimeClient>[0] = {
     region,
-    ...(process.env[PROVIDER_MIGRATION_BEDROCK_BASE_URL_ENV] && {
-      endpoint: process.env[PROVIDER_MIGRATION_BEDROCK_BASE_URL_ENV],
+    ...(process.env[ARCHIVED_BEDROCK_BASE_URL_ENV] && {
+      endpoint: process.env[ARCHIVED_BEDROCK_BASE_URL_ENV],
     }),
     ...(await getAWSClientProxyConfig()),
     ...(skipAuth && {
@@ -181,10 +181,10 @@ export const getInferenceProfileBackingModel = memoize(async function (
 })
 
 /**
- * Check if a model ID is a provider-migration source foundation model.
+ * Check if a model ID is an archived source foundation model.
  */
 export function isFoundationModel(modelId: string): boolean {
-  return modelId.startsWith(`${BEDROCK_PROVIDER_MIGRATION_SOURCE_PREFIX}.`)
+  return modelId.startsWith(`${BEDROCK_ARCHIVED_SOURCE_PREFIX}.`)
 }
 
 /**
@@ -229,7 +229,7 @@ export function getBedrockRegionPrefix(
   for (const prefix of BEDROCK_REGION_PREFIXES) {
     if (
       effectiveModelId.startsWith(
-        `${prefix}.${BEDROCK_PROVIDER_MIGRATION_SOURCE_PREFIX}.`,
+        `${prefix}.${BEDROCK_ARCHIVED_SOURCE_PREFIX}.`,
       )
     ) {
       return prefix

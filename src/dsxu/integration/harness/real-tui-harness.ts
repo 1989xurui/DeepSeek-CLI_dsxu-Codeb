@@ -32,6 +32,11 @@ export type RealTuiHarnessResult = {
   sawPromptAfterTask: boolean
   sawPermissionFallbackBar: boolean
   sawPermissionReplayMarker: boolean
+  sawPermissionDialog?: boolean
+  sawPermissionDialogBorder?: boolean
+  sawPermissionProceedQuestion?: boolean
+  sawPermissionDialogAfterResize?: boolean
+  sawPermissionDialogBorderAfterResize?: boolean
   sawNoProgressReplayTrace: boolean
   sawBackgroundTaskReplayTrace: boolean
   sawBackgroundTaskPillMarker: boolean
@@ -45,6 +50,28 @@ export type RealTuiHarnessResult = {
   sawAutoContinueSuppressedTrace: boolean
   sawTuiHealthTrace: boolean
   sawTuiStallTrace: boolean
+  resizeReplayRequested?: boolean
+  resizeEventsSent?: number
+  sawLongContentResizeMarker?: boolean
+  sawLongContentResizeTailMarker?: boolean
+  sawLongContentResizeTailAfterResize?: boolean
+  sawPromptAfterResize?: boolean
+  sawLongContentResizeQueuedTrace?: boolean
+  scrollbackResizeReplayRequested?: boolean
+  scrollbackPageUpsSent?: number
+  sawScrollbackResizeMiddleAfterResize?: boolean
+  sawScrollbackResizeTopAfterResize?: boolean
+  sawScrollbackResizeTailAfterResize?: boolean
+  sawScrollbackResizePositionedTrace?: boolean
+  sawDsxuTrustReplayMarker?: boolean
+  sawDsxuEvidenceLine?: boolean
+  sawDsxuTrustLine?: boolean
+  sawDsxuTrustLedgerLine?: boolean
+  sawDsxuTrustAgentLine?: boolean
+  sawDsxuTrustProofLine?: boolean
+  sawDsxuTrustProofLineAfterResize?: boolean
+  dsxuTrustProofLineCount?: number
+  sawDsxuTrustProofFlood?: boolean
   outputBytes: number
   elapsedMs: number
   tail: string
@@ -68,6 +95,15 @@ export type RealTuiHarnessOptions = {
   backgroundTaskReplay?: boolean
   autoContinueReplay?: boolean
   resumeReplay?: boolean
+  longContentResizeReplay?: boolean
+  trustProofReplay?: boolean
+  resizeSequence?: Array<{
+    rows: number
+    cols: number
+    afterMs?: number
+  }>
+  scrollbackResizeReplay?: boolean
+  scrollbackPageUps?: number
 }
 
 function windowsPathToWslPath(filePath: string): string {
@@ -136,10 +172,24 @@ function buildPythonHarness(
   backgroundTaskReplay: boolean,
   autoContinueReplay: boolean,
   resumeReplay: boolean,
+  longContentResizeReplay: boolean,
+  trustProofReplay: boolean,
+  resizeSequence: Array<{ rows: number; cols: number; afterMs?: number }>,
+  scrollbackResizeReplay: boolean,
+  scrollbackPageUps: number,
 ): string {
   const timeoutSeconds = Math.max(5, Math.ceil(timeoutMs / 1000))
+  const effectiveResizeSequence =
+    resizeSequence.length > 0
+      ? resizeSequence
+      : [
+          { rows: 18, cols: 80, afterMs: 250 },
+          { rows: 34, cols: 140, afterMs: 250 },
+          { rows: 14, cols: 62, afterMs: 250 },
+          { rows: 30, cols: 118, afterMs: 350 },
+        ]
   return String.raw`
-import glob, json, os, pty, re, select, shutil, signal, subprocess, time
+import fcntl, glob, json, os, pty, re, select, shutil, signal, struct, subprocess, termios, time
 
 root = ${JSON.stringify(root)}
 timeout_s = ${timeoutSeconds}
@@ -152,6 +202,11 @@ no_progress_replay = ${noProgressReplay ? 'True' : 'False'}
 background_task_replay = ${backgroundTaskReplay ? 'True' : 'False'}
 auto_continue_replay = ${autoContinueReplay ? 'True' : 'False'}
 resume_replay = ${resumeReplay ? 'True' : 'False'}
+long_content_resize_replay = ${longContentResizeReplay ? 'True' : 'False'}
+trust_proof_replay = ${trustProofReplay ? 'True' : 'False'}
+scrollback_resize_replay = ${scrollbackResizeReplay ? 'True' : 'False'}
+scrollback_page_ups = ${Math.max(1, scrollbackPageUps)}
+resize_sequence = ${JSON.stringify(effectiveResizeSequence)}
 env = os.environ.copy()
 home = env.get("HOME", "/home/xurui")
 env["PATH"] = f"{home}/.bun/bin:/usr/local/bin:/usr/bin:/bin:" + env.get("PATH", "")
@@ -171,6 +226,13 @@ if auto_continue_replay:
     env["DSXU_CODE_TUI_HARNESS_AUTO_CONTINUE_REPLAY"] = "1"
 if resume_replay:
     env["DSXU_CODE_TUI_HARNESS_RESUME_REPLAY"] = "1"
+if trust_proof_replay:
+    env["DSXU_CODE_TUI_HARNESS_TRUST_PROOF_REPLAY"] = "1"
+if long_content_resize_replay or scrollback_resize_replay:
+    env["DSXU_CODE_TUI_HARNESS_LONG_CONTENT_RESIZE"] = "1"
+    env["DSXU_CODE_NO_FLICKER"] = "1"
+if scrollback_resize_replay:
+    env["DSXU_CODE_TUI_HARNESS_SCROLLBACK_RESIZE"] = "1"
 
 start = time.time()
 buf = bytearray()
@@ -191,6 +253,11 @@ last_input_at = 0.0
 saw_prompt_after_task = False
 saw_permission_fallback_bar = False
 saw_permission_replay_marker = False
+saw_permission_dialog = False
+saw_permission_dialog_border = False
+saw_permission_proceed_question = False
+saw_permission_dialog_after_resize = False
+saw_permission_dialog_border_after_resize = False
 saw_no_progress_replay_trace = False
 saw_background_task_replay_trace = False
 saw_background_task_pill_marker = False
@@ -202,6 +269,29 @@ saw_resume_provider_preflight_trace = False
 saw_auto_continue_enqueued_trace = False
 saw_auto_continue_processed_trace = False
 saw_auto_continue_suppressed_trace = False
+saw_long_content_resize_marker = False
+saw_long_content_resize_tail_marker = False
+saw_long_content_resize_tail_after_resize = False
+saw_prompt_after_resize = False
+saw_long_content_resize_queued_trace = False
+resize_events_sent = 0
+resize_sequence_done = False
+resize_start_total = 0
+scrollback_position_done = False
+scrollback_page_ups_sent = 0
+saw_scrollback_resize_middle_after_resize = False
+saw_scrollback_resize_top_after_resize = False
+saw_scrollback_resize_tail_after_resize = False
+saw_scrollback_resize_positioned_trace = False
+saw_dsxu_trust_replay_marker = False
+saw_dsxu_evidence_line = False
+saw_dsxu_trust_line = False
+saw_dsxu_trust_ledger_line = False
+saw_dsxu_trust_agent_line = False
+saw_dsxu_trust_proof_line = False
+saw_dsxu_trust_proof_line_after_resize = False
+dsxu_trust_proof_line_count = 0
+saw_dsxu_trust_proof_flood = False
 lifecycle_trace_text = ""
 trace = []
 
@@ -244,9 +334,65 @@ def compact_terminal_text(value):
     stripped = ansi_re.sub("", value)
     return re.sub(r"\s+", "", stripped)
 
+def plain_terminal_text(value):
+    return ansi_re.sub("", value).replace("\r", "\n")
+
+def has_prompt_marker(value):
+    compact = compact_terminal_text(value)
+    return (
+        "\u276f" in value
+        or "? for shortcuts" in value
+        or "WhatshouldDSXUdo" in compact
+        or ("Whatshould" in compact and "instead" in compact)
+    )
+
+def has_visible_border_line(value):
+    plain = plain_terminal_text(value)
+    return re.search(r"[-\u2500\u2501\u2550]{8,}", plain) is not None
+
+def has_permission_dialog_border(value):
+    compact = compact_terminal_text(value)
+    if not (
+        "Bashcommand" in compact
+        or "PowerShellcommand" in compact
+        or "Editfile" in compact
+        or "Writefile" in compact
+        or "Reviewrequired" in compact
+    ):
+        return False
+    plain = plain_terminal_text(value)
+    lines = [line for line in plain.split("\n") if line.strip()]
+    for index, line in enumerate(lines):
+        compact_line = re.sub(r"\s+", "", line)
+        if (
+            "Bashcommand" in compact_line
+            or "PowerShellcommand" in compact_line
+            or "Editfile" in compact_line
+            or "Writefile" in compact_line
+            or "Reviewrequired" in compact_line
+        ):
+            window = "\n".join(lines[max(0, index - 3):index + 4])
+            if has_visible_border_line(window):
+                return True
+    return False
+
+def set_winsize(fd, rows, cols, proc=None, stage="resize"):
+    global resize_events_sent
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, 0, 0))
+    resize_events_sent += 1
+    if proc is not None:
+        try:
+            os.killpg(proc.pid, signal.SIGWINCH)
+        except Exception:
+            pass
+    record(stage, rows=rows, cols=cols, resizeEventsSent=resize_events_sent)
+
 try:
     record("spawn", root=root)
     master, slave = pty.openpty()
+    if (long_content_resize_replay or scrollback_resize_replay) and len(resize_sequence) > 0:
+        first = resize_sequence[0]
+        set_winsize(slave, int(first.get("rows", 24)), int(first.get("cols", 80)), None, "initial_resize")
     proc = subprocess.Popen(
         ["bash", "./bin/dsxu-code"],
         cwd=root,
@@ -276,13 +422,29 @@ try:
         text = buf.decode("utf-8", errors="replace")
         compact_text = compact_terminal_text(text)
         saw_welcome = saw_welcome or ("DSXU Code" in text or "Welcome" in text)
-        saw_prompt = saw_prompt or ("\u276f" in text or "? for shortcuts" in text)
+        saw_prompt = saw_prompt or has_prompt_marker(text)
         saw_permission_fallback_bar = saw_permission_fallback_bar or (
-            "Reviewrequired" in compact_text and (
-                "pendingreviewvisible" in compact_text
-                or "Approvaldialog" in compact_text
-                or "approvalpanel" in compact_text
+            (
+                "Reviewrequired" in compact_text and (
+                    "pendingreviewvisible" in compact_text
+                    or "Approvaldialog" in compact_text
+                    or "approvalpanel" in compact_text
+                )
             )
+            or (
+                "approvalpanel" in compact_text
+                and "pendingreviewvisible" in compact_text
+            )
+        )
+        saw_permission_dialog = saw_permission_dialog or (
+            "Bashcommand" in compact_text
+            or "PowerShellcommand" in compact_text
+            or "Editfile" in compact_text
+            or "Writefile" in compact_text
+        )
+        saw_permission_dialog_border = saw_permission_dialog_border or has_permission_dialog_border(text)
+        saw_permission_proceed_question = saw_permission_proceed_question or (
+            "Doyouwanttoproceed" in compact_text
         )
         saw_permission_replay_marker = saw_permission_replay_marker or (
             "DSXU_TUI_PERMISSION_REPLAY" in text
@@ -298,7 +460,77 @@ try:
         saw_resume_replay_marker = saw_resume_replay_marker or (
             "DSXU_TUI_RESUME_REPLAY_META" in text
         )
-        if auto_continue_replay or resume_replay or no_progress_replay or background_task_replay:
+        saw_long_content_resize_marker = saw_long_content_resize_marker or (
+            "DSXU_TUI_LONG_CONTENT_RESIZE_START" in text
+        )
+        saw_long_content_resize_tail_marker = saw_long_content_resize_tail_marker or (
+            "DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER" in text
+        )
+        saw_dsxu_trust_replay_marker = saw_dsxu_trust_replay_marker or (
+            "DSXU_TUI_TRUST_PROOF_REPLAY_META" in text
+        )
+        saw_dsxu_evidence_line = saw_dsxu_evidence_line or (
+            "Evidence:deepseek-v4-flash" in compact_text
+            and "usage=available" in compact_text
+        )
+        saw_dsxu_trust_line = saw_dsxu_trust_line or (
+            "DSXU:Flash" in compact_text
+            and "check:pass" in compact_text
+            and "cache:78%" in compact_text
+        )
+        saw_dsxu_trust_ledger_line = saw_dsxu_trust_ledger_line or (
+            "task:verify" in compact_text
+            and "events:6" in compact_text
+            and "next:verify" in compact_text
+        )
+        saw_dsxu_trust_agent_line = saw_dsxu_trust_agent_line or (
+            "agent:1" in compact_text
+            and "running:1" in compact_text
+            and "scope:src/dsxu/engine" in compact_text
+        )
+        saw_dsxu_trust_proof_line = saw_dsxu_trust_proof_line or (
+            "proof:toolok3/3|eventok2/2" in compact_text
+        )
+        dsxu_trust_proof_line_count = len(re.findall(r"proof:tool\s*ok\s*3/3", plain_terminal_text(text)))
+        saw_dsxu_trust_proof_flood = saw_dsxu_trust_proof_flood or dsxu_trust_proof_line_count > 48
+        if resize_sequence_done and resize_start_total > 0:
+            text_after_resize = buf[resize_start_total:].decode("utf-8", errors="replace")
+            viewport_after_resize = text_after_resize.rsplit("\x1b[H", 1)[-1]
+            saw_long_content_resize_tail_after_resize = saw_long_content_resize_tail_after_resize or (
+                "DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER" in text_after_resize
+            )
+            saw_prompt_after_resize = saw_prompt_after_resize or has_prompt_marker(text_after_resize)
+            compact_after_resize = compact_terminal_text(text_after_resize)
+            saw_dsxu_trust_proof_line_after_resize = saw_dsxu_trust_proof_line_after_resize or (
+                "proof:toolok3/3|eventok2/2" in compact_after_resize
+            )
+            saw_permission_dialog_after_resize = saw_permission_dialog_after_resize or (
+                "Bashcommand" in compact_after_resize
+                or "PowerShellcommand" in compact_after_resize
+                or "Editfile" in compact_after_resize
+                or "Writefile" in compact_after_resize
+                or "Reviewrequired" in compact_after_resize
+            )
+            saw_permission_dialog_border_after_resize = (
+                saw_permission_dialog_border_after_resize
+                or has_permission_dialog_border(text_after_resize)
+            )
+            saw_scrollback_resize_top_after_resize = saw_scrollback_resize_top_after_resize or (
+                "DSXU_TUI_LONG_CONTENT_RESIZE_ROW_001" in viewport_after_resize
+                or "Welcome back" in viewport_after_resize
+            )
+            saw_scrollback_resize_middle_after_resize = saw_scrollback_resize_middle_after_resize or any(
+                f"DSXU_TUI_LONG_CONTENT_RESIZE_ROW_{i:03d}" in viewport_after_resize
+                for i in range(55, 151)
+            )
+            saw_scrollback_resize_tail_after_resize = saw_scrollback_resize_tail_after_resize or (
+                "DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER" in viewport_after_resize
+                or any(
+                    f"DSXU_TUI_LONG_CONTENT_RESIZE_ROW_{i:03d}" in viewport_after_resize
+                    for i in range(172, 181)
+                )
+            )
+        if auto_continue_replay or resume_replay or no_progress_replay or background_task_replay or long_content_resize_replay or scrollback_resize_replay:
             _, lifecycle_trace_text = read_lifecycle_trace_text()
             saw_no_progress_replay_trace = saw_no_progress_replay_trace or (
                 '"event":"tui_harness_no_progress_replay_started"' in lifecycle_trace_text
@@ -341,6 +573,37 @@ try:
                 and '"nextActionPreserved":true' in lifecycle_trace_text
                 and '"experienceStorePackPreserved":true' in lifecycle_trace_text
             )
+            saw_long_content_resize_queued_trace = saw_long_content_resize_queued_trace or (
+                '"event":"tui_harness_long_content_resize_replay_queued"' in lifecycle_trace_text
+                and '"expectedVisibleState":"sticky_bottom_after_resize"' in lifecycle_trace_text
+            )
+            saw_scrollback_resize_positioned_trace = saw_scrollback_resize_positioned_trace or (
+                '"event":"tui_harness_scrollback_resize_positioned"' in lifecycle_trace_text
+                and '"expectedVisibleState":"middle_scrollback_after_resize"' in lifecycle_trace_text
+            )
+        if (
+            scrollback_resize_replay
+            and not scrollback_position_done
+            and saw_scrollback_resize_positioned_trace
+        ):
+            scrollback_position_done = True
+            record("scrollback_position_done", pageUpsSent=scrollback_page_ups_sent, positionedTrace=True)
+            time.sleep(0.4)
+        if (
+            (long_content_resize_replay or scrollback_resize_replay)
+            and not resize_sequence_done
+            and saw_long_content_resize_tail_marker
+            and saw_long_content_resize_queued_trace
+            and (not scrollback_resize_replay or scrollback_position_done)
+        ):
+            resize_start_total = len(buf)
+            for index, item in enumerate(resize_sequence):
+                rows = int(item.get("rows", 24))
+                cols = int(item.get("cols", 80))
+                set_winsize(master, rows, cols, proc, "resize")
+                time.sleep(max(0.05, float(item.get("afterMs", 250)) / 1000.0))
+            resize_sequence_done = True
+            record("resize_sequence_done", resizeEventsSent=resize_events_sent)
         progress_markers = [
             "Thinking", "Churned for", "Cooked for", "Brewed for",
             "Worked for", "Waiting", "Successfully loaded", "Listed ",
@@ -375,19 +638,30 @@ try:
         saw_mojibake = saw_mojibake or any(marker in text for marker in mojibake_markers) or re.search(r"\?{3,}.*\?{3,}", text) is not None
 
         can_send_input = False
-        if saw_prompt and input_index < len(inputs_after_prompt):
+        permission_review_ready = (
+            permission_prompt_replay
+            and input_index == 0
+            and (saw_permission_dialog or saw_permission_fallback_bar)
+        )
+        if (saw_prompt or permission_review_ready) and input_index < len(inputs_after_prompt):
             if input_index == 0 or not wait_for_new_prompt_between_inputs:
                 can_send_input = True
             else:
                 text_after_last_input = buf[last_input_total:].decode("utf-8", errors="replace")
-                prompt_after_last_input = ("\u276f" in text_after_last_input or "? for shortcuts" in text_after_last_input)
+                prompt_after_last_input = has_prompt_marker(text_after_last_input)
                 saw_prompt_after_task = saw_prompt_after_task or prompt_after_last_input
                 can_send_input = prompt_after_last_input and (time.time() - last_input_at) >= 1.0
-            if permission_prompt_replay and input_index == 0 and not saw_permission_replay_marker:
+            if (
+                permission_prompt_replay
+                and input_index == 0
+                and not (saw_permission_replay_marker or saw_permission_dialog or saw_permission_fallback_bar)
+            ):
                 can_send_input = False
             if no_progress_replay and input_index == 0 and not saw_no_progress_replay_trace:
                 can_send_input = False
             if background_task_replay and input_index == 0 and not saw_background_task_replay_trace:
+                can_send_input = False
+            if background_task_replay and input_index == 0 and not saw_background_task_pill_marker:
                 can_send_input = False
             if auto_continue_replay and input_index == 0 and not saw_auto_continue_enqueued_trace:
                 can_send_input = False
@@ -396,6 +670,12 @@ try:
             if resume_replay and input_index == 0 and not saw_resume_source_truth_gate_trace:
                 can_send_input = False
             if resume_replay and input_index == 0 and not saw_resume_provider_preflight_trace:
+                can_send_input = False
+            if (long_content_resize_replay or scrollback_resize_replay) and input_index == 0 and not resize_sequence_done:
+                can_send_input = False
+            if long_content_resize_replay and input_index == 0 and not saw_long_content_resize_tail_after_resize:
+                can_send_input = False
+            if scrollback_resize_replay and input_index == 0 and not saw_scrollback_resize_middle_after_resize:
                 can_send_input = False
 
         if can_send_input:
@@ -412,7 +692,15 @@ try:
             last_input_total = len(buf)
             last_input_at = time.time()
             time.sleep(0.5)
-        elif (not sent_exit) and saw_prompt and not inputs_after_prompt:
+        elif (
+            (not sent_exit)
+            and saw_prompt
+            and not inputs_after_prompt
+            and not (
+                (long_content_resize_replay and not saw_long_content_resize_tail_after_resize)
+                or (scrollback_resize_replay and not saw_scrollback_resize_middle_after_resize)
+            )
+        ):
             time.sleep(0.5)
             os.write(master, b"/exit\r")
             record("input", value="/exit")
@@ -475,6 +763,33 @@ mojibake_markers = [
 ]
 saw_terminal_mojibake = any(marker in final_text for marker in mojibake_markers)
 saw_mojibake = saw_terminal_mojibake or saw_input_encoding_loss
+saw_dsxu_trust_replay_marker = saw_dsxu_trust_replay_marker or (
+    "DSXU_TUI_TRUST_PROOF_REPLAY_META" in final_text
+)
+saw_dsxu_evidence_line = saw_dsxu_evidence_line or (
+    "Evidence:deepseek-v4-flash" in compact_final_text
+    and "usage=available" in compact_final_text
+)
+saw_dsxu_trust_line = saw_dsxu_trust_line or (
+    "DSXU:Flash" in compact_final_text
+    and "check:pass" in compact_final_text
+    and "cache:78%" in compact_final_text
+)
+saw_dsxu_trust_ledger_line = saw_dsxu_trust_ledger_line or (
+    "task:verify" in compact_final_text
+    and "events:6" in compact_final_text
+    and "next:verify" in compact_final_text
+)
+saw_dsxu_trust_agent_line = saw_dsxu_trust_agent_line or (
+    "agent:1" in compact_final_text
+    and "running:1" in compact_final_text
+    and "scope:src/dsxu/engine" in compact_final_text
+)
+saw_dsxu_trust_proof_line = saw_dsxu_trust_proof_line or (
+    "proof:toolok3/3|eventok2/2" in compact_final_text
+)
+dsxu_trust_proof_line_count = len(re.findall(r"proof:tool\s*ok\s*3/3", plain_terminal_text(final_text)))
+saw_dsxu_trust_proof_flood = saw_dsxu_trust_proof_flood or dsxu_trust_proof_line_count > 48
 try:
     with open(transcript_path, "wb") as handle:
         handle.write(buf)
@@ -536,7 +851,56 @@ saw_resume_provider_preflight_trace = (
     and '"nextActionPreserved":true' in lifecycle_trace_text
     and '"experienceStorePackPreserved":true' in lifecycle_trace_text
 )
-record("done", status=status, exitCode=exit_code, sentExit=sent_exit, sawWelcome=saw_welcome, sawPrompt=saw_prompt, sawProgress=saw_progress, progressMarkerCount=progress_marker_count, sawLoginWarning=saw_login_warning, sawMojibake=saw_mojibake, sawTerminalMojibake=saw_terminal_mojibake, sawInputEncodingLoss=saw_input_encoding_loss, sentInputCount=input_index, sawPromptAfterTask=saw_prompt_after_task, sawPermissionFallbackBar=saw_permission_fallback_bar, sawPermissionReplayMarker=saw_permission_replay_marker, sawNoProgressReplayTrace=saw_no_progress_replay_trace, sawBackgroundTaskReplayTrace=saw_background_task_replay_trace, sawBackgroundTaskPillMarker=saw_background_task_pill_marker, sawAutoContinueReplayMarker=saw_auto_continue_replay_marker, sawResumeReplayMarker=saw_resume_replay_marker, sawResumeReplayQueuedTrace=saw_resume_replay_queued_trace, sawResumeSourceTruthGateTrace=saw_resume_source_truth_gate_trace, sawResumeProviderPreflightTrace=saw_resume_provider_preflight_trace, sawAutoContinueEnqueuedTrace=saw_auto_continue_enqueued_trace, sawAutoContinueProcessedTrace=saw_auto_continue_processed_trace, sawAutoContinueSuppressedTrace=saw_auto_continue_suppressed_trace, outputBytes=len(buf), elapsedMs=elapsed_ms)
+saw_long_content_resize_queued_trace = (
+    '"event":"tui_harness_long_content_resize_replay_queued"' in lifecycle_trace_text
+    and '"expectedVisibleState":"sticky_bottom_after_resize"' in lifecycle_trace_text
+)
+if resize_sequence_done and resize_start_total > 0:
+    text_after_resize = final_text[resize_start_total:]
+    viewport_after_resize = text_after_resize.rsplit("\x1b[H", 1)[-1]
+    compact_after_resize = compact_terminal_text(text_after_resize)
+    saw_long_content_resize_tail_after_resize = (
+        saw_long_content_resize_tail_after_resize
+        or "DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER" in text_after_resize
+    )
+    saw_prompt_after_resize = saw_prompt_after_resize or has_prompt_marker(text_after_resize)
+    saw_permission_dialog_after_resize = (
+        saw_permission_dialog_after_resize
+        or "Bashcommand" in compact_after_resize
+        or "PowerShellcommand" in compact_after_resize
+        or "Editfile" in compact_after_resize
+        or "Writefile" in compact_after_resize
+        or "Reviewrequired" in compact_after_resize
+    )
+    saw_permission_dialog_border_after_resize = (
+        saw_permission_dialog_border_after_resize
+        or has_permission_dialog_border(text_after_resize)
+    )
+    saw_scrollback_resize_top_after_resize = (
+        saw_scrollback_resize_top_after_resize
+        or "DSXU_TUI_LONG_CONTENT_RESIZE_ROW_001" in viewport_after_resize
+        or "Welcome back" in viewport_after_resize
+    )
+    saw_scrollback_resize_middle_after_resize = (
+        saw_scrollback_resize_middle_after_resize
+        or any(
+            f"DSXU_TUI_LONG_CONTENT_RESIZE_ROW_{i:03d}" in viewport_after_resize
+            for i in range(55, 151)
+        )
+    )
+    saw_scrollback_resize_tail_after_resize = (
+        saw_scrollback_resize_tail_after_resize
+        or "DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER" in viewport_after_resize
+        or any(
+            f"DSXU_TUI_LONG_CONTENT_RESIZE_ROW_{i:03d}" in viewport_after_resize
+            for i in range(172, 181)
+        )
+    )
+    saw_dsxu_trust_proof_line_after_resize = (
+        saw_dsxu_trust_proof_line_after_resize
+        or "proof:toolok3/3|eventok2/2" in compact_terminal_text(text_after_resize)
+    )
+record("done", status=status, exitCode=exit_code, sentExit=sent_exit, sawWelcome=saw_welcome, sawPrompt=saw_prompt, sawProgress=saw_progress, progressMarkerCount=progress_marker_count, sawLoginWarning=saw_login_warning, sawMojibake=saw_mojibake, sawTerminalMojibake=saw_terminal_mojibake, sawInputEncodingLoss=saw_input_encoding_loss, sentInputCount=input_index, sawPromptAfterTask=saw_prompt_after_task, sawPermissionFallbackBar=saw_permission_fallback_bar, sawPermissionReplayMarker=saw_permission_replay_marker, sawPermissionDialog=saw_permission_dialog, sawPermissionDialogBorder=saw_permission_dialog_border, sawPermissionProceedQuestion=saw_permission_proceed_question, sawPermissionDialogAfterResize=saw_permission_dialog_after_resize, sawPermissionDialogBorderAfterResize=saw_permission_dialog_border_after_resize, sawNoProgressReplayTrace=saw_no_progress_replay_trace, sawBackgroundTaskReplayTrace=saw_background_task_replay_trace, sawBackgroundTaskPillMarker=saw_background_task_pill_marker, sawAutoContinueReplayMarker=saw_auto_continue_replay_marker, sawResumeReplayMarker=saw_resume_replay_marker, sawResumeReplayQueuedTrace=saw_resume_replay_queued_trace, sawResumeSourceTruthGateTrace=saw_resume_source_truth_gate_trace, sawResumeProviderPreflightTrace=saw_resume_provider_preflight_trace, sawAutoContinueEnqueuedTrace=saw_auto_continue_enqueued_trace, sawAutoContinueProcessedTrace=saw_auto_continue_processed_trace, sawAutoContinueSuppressedTrace=saw_auto_continue_suppressed_trace, resizeReplayRequested=(long_content_resize_replay or scrollback_resize_replay), resizeEventsSent=resize_events_sent, sawLongContentResizeMarker=saw_long_content_resize_marker, sawLongContentResizeTailMarker=saw_long_content_resize_tail_marker, sawLongContentResizeTailAfterResize=saw_long_content_resize_tail_after_resize, sawPromptAfterResize=saw_prompt_after_resize, sawLongContentResizeQueuedTrace=saw_long_content_resize_queued_trace, scrollbackResizeReplayRequested=scrollback_resize_replay, scrollbackPageUpsSent=scrollback_page_ups_sent, sawScrollbackResizeMiddleAfterResize=saw_scrollback_resize_middle_after_resize, sawScrollbackResizeTopAfterResize=saw_scrollback_resize_top_after_resize, sawScrollbackResizeTailAfterResize=saw_scrollback_resize_tail_after_resize, sawScrollbackResizePositionedTrace=saw_scrollback_resize_positioned_trace, sawDsxuTrustReplayMarker=saw_dsxu_trust_replay_marker, sawDsxuEvidenceLine=saw_dsxu_evidence_line, sawDsxuTrustLine=saw_dsxu_trust_line, sawDsxuTrustLedgerLine=saw_dsxu_trust_ledger_line, sawDsxuTrustAgentLine=saw_dsxu_trust_agent_line, sawDsxuTrustProofLine=saw_dsxu_trust_proof_line, sawDsxuTrustProofLineAfterResize=saw_dsxu_trust_proof_line_after_resize, dsxuTrustProofLineCount=dsxu_trust_proof_line_count, sawDsxuTrustProofFlood=saw_dsxu_trust_proof_flood, outputBytes=len(buf), elapsedMs=elapsed_ms)
 ok = status == "exited" and exit_code == 0 and sent_exit and saw_welcome and saw_prompt
 print("DSXU_TUI_HARNESS_RESULT=" + json.dumps({
     "ok": ok,
@@ -555,6 +919,11 @@ print("DSXU_TUI_HARNESS_RESULT=" + json.dumps({
     "sawPromptAfterTask": saw_prompt_after_task,
     "sawPermissionFallbackBar": saw_permission_fallback_bar,
     "sawPermissionReplayMarker": saw_permission_replay_marker,
+    "sawPermissionDialog": saw_permission_dialog,
+    "sawPermissionDialogBorder": saw_permission_dialog_border,
+    "sawPermissionProceedQuestion": saw_permission_proceed_question,
+    "sawPermissionDialogAfterResize": saw_permission_dialog_after_resize,
+    "sawPermissionDialogBorderAfterResize": saw_permission_dialog_border_after_resize,
     "sawNoProgressReplayTrace": saw_no_progress_replay_trace,
     "sawBackgroundTaskReplayTrace": saw_background_task_replay_trace,
     "sawBackgroundTaskPillMarker": saw_background_task_pill_marker,
@@ -568,6 +937,28 @@ print("DSXU_TUI_HARNESS_RESULT=" + json.dumps({
     "sawAutoContinueSuppressedTrace": saw_auto_continue_suppressed_trace,
     "sawTuiHealthTrace": saw_tui_health_trace,
     "sawTuiStallTrace": saw_tui_stall_trace,
+    "resizeReplayRequested": long_content_resize_replay or scrollback_resize_replay,
+    "resizeEventsSent": resize_events_sent,
+    "sawLongContentResizeMarker": saw_long_content_resize_marker,
+    "sawLongContentResizeTailMarker": saw_long_content_resize_tail_marker,
+    "sawLongContentResizeTailAfterResize": saw_long_content_resize_tail_after_resize,
+    "sawPromptAfterResize": saw_prompt_after_resize,
+    "sawLongContentResizeQueuedTrace": saw_long_content_resize_queued_trace,
+    "scrollbackResizeReplayRequested": scrollback_resize_replay,
+    "scrollbackPageUpsSent": scrollback_page_ups_sent,
+    "sawScrollbackResizeMiddleAfterResize": saw_scrollback_resize_middle_after_resize,
+    "sawScrollbackResizeTopAfterResize": saw_scrollback_resize_top_after_resize,
+    "sawScrollbackResizeTailAfterResize": saw_scrollback_resize_tail_after_resize,
+    "sawScrollbackResizePositionedTrace": saw_scrollback_resize_positioned_trace,
+    "sawDsxuTrustReplayMarker": saw_dsxu_trust_replay_marker,
+    "sawDsxuEvidenceLine": saw_dsxu_evidence_line,
+    "sawDsxuTrustLine": saw_dsxu_trust_line,
+    "sawDsxuTrustLedgerLine": saw_dsxu_trust_ledger_line,
+    "sawDsxuTrustAgentLine": saw_dsxu_trust_agent_line,
+    "sawDsxuTrustProofLine": saw_dsxu_trust_proof_line,
+    "sawDsxuTrustProofLineAfterResize": saw_dsxu_trust_proof_line_after_resize,
+    "dsxuTrustProofLineCount": dsxu_trust_proof_line_count,
+    "sawDsxuTrustProofFlood": saw_dsxu_trust_proof_flood,
     "outputBytes": len(buf),
     "elapsedMs": elapsed_ms,
     "tail": tail,
@@ -653,6 +1044,11 @@ export async function runRealTuiExitSmoke(
       options.backgroundTaskReplay ?? false,
       options.autoContinueReplay ?? false,
       options.resumeReplay ?? false,
+      options.longContentResizeReplay ?? false,
+      options.trustProofReplay ?? false,
+      options.resizeSequence ?? [],
+      options.scrollbackResizeReplay ?? false,
+      options.scrollbackPageUps ?? 5,
     ),
     'utf8',
   )

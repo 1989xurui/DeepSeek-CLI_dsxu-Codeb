@@ -214,7 +214,7 @@ export type {
   ResumeEntrypoint,
 } from './types/command.js'
 export { getCommandName, isCommandEnabled } from './types/command.js'
-export { PROVIDER_MIGRATION_CLOUD_AVAILABILITY } from './types/command.js'
+export { ARCHIVED_CLOUD_AVAILABILITY } from './types/command.js'
 
 // Commands that get eliminated from the external build
 export const INTERNAL_ONLY_COMMANDS = memoize((): Command[] => [
@@ -450,7 +450,7 @@ export function meetsAvailabilityRequirement(cmd: Command): boolean {
         if (isProviderSubscriptionAccount()) return true
         break
       case 'console':
-        // Console API key user = direct first-party API customer (not 3P, not provider migration).
+        // Console API key user = direct first-party API customer (not 3P, not archived migration).
         // Excludes 3P (Bedrock/Vertex/Foundry) who don't set PROVIDER_BASE_URL
         // and gateway users who proxy through a custom base URL.
         if (
@@ -811,7 +811,7 @@ export function getDsxuCommandRegistryRuntimeProfile(): {
     bridgeSafeCount: BRIDGE_SAFE_COMMANDS.size,
     activationEvidence: [
       'getCommands loads all command sources then filters by availability and isEnabled',
-      'DSXU availability can expose DSXU-only commands without provider migration subscriber state',
+      'DSXU availability can expose DSXU-only commands without archived subscriber state',
       'dynamic skills are inserted before built-in commands when newly discovered',
       'remote and bridge command allowlists prevent local-only UI/fs/git commands from leaking into remote surfaces',
     ],

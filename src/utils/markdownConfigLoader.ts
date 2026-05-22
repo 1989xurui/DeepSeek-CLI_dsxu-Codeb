@@ -12,7 +12,7 @@ import { getProjectRoot } from '../bootstrap/state.js'
 import { logForDebugging } from './debug.js'
 import {
   getDsxuConfigHomeDir,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
   isDsxuRuntimeMode,
   isEnvTruthy,
 } from './envUtils.js'
@@ -39,13 +39,13 @@ export const DSXU_CONFIG_DIRECTORIES = [
   ...(feature('TEMPLATES') ? (['templates'] as const) : []),
 ] as const
 
-export const DSXU_PROVIDER_MIGRATION_CONFIG_DIRECTORIES = DSXU_CONFIG_DIRECTORIES
+export const DSXU_ARCHIVED_CONFIG_DIRECTORIES = DSXU_CONFIG_DIRECTORIES
 
 export type DsxuConfigDirectory = (typeof DSXU_CONFIG_DIRECTORIES)[number]
 export type RuntimeConfigDirectory = DsxuConfigDirectory
 
 const DSXU_PROJECT_CONFIG_DIR = '.dsxu'
-const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
+const ARCHIVED_PROJECT_CONFIG_DIR = '.' + ('cl' + 'aude')
 
 export type MarkdownFile = {
   filePath: string
@@ -57,17 +57,17 @@ export type MarkdownFile = {
 
 function getRuntimeProjectConfigDirNames(): readonly string[] {
   return isDsxuRuntimeMode()
-    ? [DSXU_PROJECT_CONFIG_DIR, PROVIDER_MIGRATION_PROJECT_CONFIG_DIR]
-    : [PROVIDER_MIGRATION_PROJECT_CONFIG_DIR]
+    ? [DSXU_PROJECT_CONFIG_DIR, ARCHIVED_PROJECT_CONFIG_DIR]
+    : [ARCHIVED_PROJECT_CONFIG_DIR]
 }
 
 function getRuntimeUserConfigDirs(subdir: DsxuConfigDirectory): string[] {
   if (!isDsxuRuntimeMode()) {
-    return [join(getProviderMigrationHomeDir(), subdir)]
+    return [join(getArchivedHomeDir(), subdir)]
   }
   const dirs = [join(getDsxuConfigHomeDir(), subdir)]
-  const providerMigrationDir = join(getProviderMigrationHomeDir(), subdir)
-  if (providerMigrationDir !== dirs[0]) dirs.push(providerMigrationDir)
+  const archivedDir = join(getArchivedHomeDir(), subdir)
+  if (archivedDir !== dirs[0]) dirs.push(archivedDir)
   return dirs
 }
 

@@ -8,6 +8,8 @@
 export interface CacheStats {
   hit: number
   miss: number
+  record(usage: CacheUsage): void
+  flush(): void
   ratio(): number
   reset(): void
   snapshot(): { hit: number; miss: number; ratio: number; ts: number }
@@ -15,7 +17,40 @@ export interface CacheStats {
 
 export interface CacheUsage {
   prompt_cache_hit_tokens?: number
+  prompt_cache_miss_tokens?: number
   prompt_tokens?: number
+  input_tokens?: number
+  cache_read_input_tokens?: number
+  cache_creation_input_tokens?: number
+  dsxu?: {
+    prompt_cache_hit_tokens?: number
+    prompt_cache_miss_tokens?: number
+  }
+}
+
+function readTokenCount(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      return value
+    }
+  }
+  return undefined
+}
+
+function getCacheStatsFilePath(): string {
+  const path = require('path')
+  const explicitPath = process.env.DSXU_CACHE_STATS_PATH?.trim()
+  if (explicitPath) return explicitPath
+
+  const explicitDir = process.env.DSXU_CACHE_STATS_DIR?.trim()
+  const dataDir = explicitDir || path.join(process.cwd(), '.dsxu')
+  return path.join(dataDir, 'cache-stats.json')
+}
+
+function getCacheStatsFlushIntervalMs(): number {
+  const raw = Number(process.env.DSXU_CACHE_STATS_FLUSH_INTERVAL_MS)
+  if (Number.isFinite(raw) && raw >= 0) return raw
+  return 5_000
 }
 
 export class CacheStatsImpl implements CacheStats {
@@ -23,11 +58,15 @@ export class CacheStatsImpl implements CacheStats {
   private _miss = 0
   private _lastResetTime = Date.now()
   private readonly RESET_INTERVAL_MS = 24 * 60 * 60 * 1000
+  private readonly FLUSH_INTERVAL_MS = getCacheStatsFlushIntervalMs()
+  private _dirty = false
+  private _flushTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(private skipDiskLoad = false) {
     if (!skipDiskLoad) {
       this.loadFromDisk()
       this.startResetCheck()
+      this.installFinalFlushHook()
     }
   }
 
@@ -48,7 +87,7 @@ export class CacheStatsImpl implements CacheStats {
     this._hit = 0
     this._miss = 0
     this._lastResetTime = Date.now()
-    this.saveToDisk()
+    this.flush()
   }
 
   snapshot(): { hit: number; miss: number; ratio: number; ts: number } {
@@ -62,20 +101,32 @@ export class CacheStatsImpl implements CacheStats {
 
   record(usage: CacheUsage): void {
     const hitTokens =
-      typeof usage.prompt_cache_hit_tokens === 'number'
-        ? usage.prompt_cache_hit_tokens
-        : 0
-    const totalTokens =
-      typeof usage.prompt_tokens === 'number' ? usage.prompt_tokens : 0
-    const missTokens = Math.max(0, totalTokens - hitTokens)
+      readTokenCount(
+        usage.prompt_cache_hit_tokens,
+        usage.cache_read_input_tokens,
+        usage.dsxu?.prompt_cache_hit_tokens,
+      ) ?? 0
+    const explicitMissTokens = readTokenCount(
+      usage.prompt_cache_miss_tokens,
+      usage.cache_creation_input_tokens,
+      usage.dsxu?.prompt_cache_miss_tokens,
+    )
+    const totalTokens = readTokenCount(usage.prompt_tokens, usage.input_tokens)
+    const missTokens =
+      explicitMissTokens ?? (typeof totalTokens === 'number' ? Math.max(0, totalTokens - hitTokens) : 0)
 
     this._miss += missTokens
     this._hit += hitTokens
     this.exportToOtel(hitTokens, missTokens)
+    this.scheduleSaveToDisk()
+  }
 
-    if ((this._hit + this._miss) % 100 === 0) {
-      this.saveToDisk()
+  flush(): void {
+    if (this._flushTimer) {
+      clearTimeout(this._flushTimer)
+      this._flushTimer = null
     }
+    this.saveToDisk()
   }
 
   private exportToOtel(hitTokens: number, missTokens: number): void {
@@ -119,10 +170,13 @@ export class CacheStatsImpl implements CacheStats {
 
   private saveToDisk(): void {
     try {
+      if (!this._dirty && this._hit + this._miss > 0) {
+        return
+      }
       const fs = require('fs')
       const path = require('path')
-      const dataDir = path.join(__dirname, '../../../.dsxu')
-      const filePath = path.join(dataDir, 'cache-stats.json')
+      const filePath = getCacheStatsFilePath()
+      const dataDir = path.dirname(filePath)
 
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true })
@@ -138,16 +192,30 @@ export class CacheStatsImpl implements CacheStats {
         }, null, 2),
         'utf8',
       )
+      this._dirty = false
     } catch (error) {
       console.warn('[cache-stats] Failed to save cache stats:', error)
     }
   }
 
+  private scheduleSaveToDisk(): void {
+    this._dirty = true
+    if (this.FLUSH_INTERVAL_MS === 0) {
+      this.flush()
+      return
+    }
+    if (this._flushTimer) return
+    this._flushTimer = setTimeout(() => {
+      this._flushTimer = null
+      this.flush()
+    }, this.FLUSH_INTERVAL_MS)
+    this._flushTimer.unref?.()
+  }
+
   private loadFromDisk(): void {
     try {
       const fs = require('fs')
-      const path = require('path')
-      const filePath = path.join(__dirname, '../../../.dsxu/cache-stats.json')
+      const filePath = getCacheStatsFilePath()
 
       if (!fs.existsSync(filePath)) return
 
@@ -165,12 +233,27 @@ export class CacheStatsImpl implements CacheStats {
   }
 
   private startResetCheck(): void {
-    setInterval(() => {
+    const timer = setInterval(() => {
       if (Date.now() - this._lastResetTime > this.RESET_INTERVAL_MS) {
         console.log('[cache-stats] Auto-resetting cache stats after 24h')
         this.reset()
       }
     }, 60 * 60 * 1000)
+    timer.unref?.()
+  }
+
+  private installFinalFlushHook(): void {
+    const globals = globalThis as typeof globalThis & {
+      __dsxuCacheStatsFinalFlushInstalled?: boolean
+    }
+    if (globals.__dsxuCacheStatsFinalFlushInstalled) return
+    globals.__dsxuCacheStatsFinalFlushInstalled = true
+    process.once?.('beforeExit', () => {
+      this.flush()
+    })
+    process.once?.('exit', () => {
+      this.flush()
+    })
   }
 }
 
@@ -181,14 +264,17 @@ export function recordCacheUsage(usage: unknown): void {
 
   const value = usage as CacheUsage
   globalCacheStats.record({
-    prompt_cache_hit_tokens:
-      typeof value.prompt_cache_hit_tokens === 'number'
-        ? value.prompt_cache_hit_tokens
-        : undefined,
-    prompt_tokens:
-      typeof value.prompt_tokens === 'number'
-        ? value.prompt_tokens
-        : undefined,
+    prompt_cache_hit_tokens: readTokenCount(
+      value.prompt_cache_hit_tokens,
+      value.cache_read_input_tokens,
+      value.dsxu?.prompt_cache_hit_tokens,
+    ),
+    prompt_cache_miss_tokens: readTokenCount(
+      value.prompt_cache_miss_tokens,
+      value.cache_creation_input_tokens,
+      value.dsxu?.prompt_cache_miss_tokens,
+    ),
+    prompt_tokens: readTokenCount(value.prompt_tokens, value.input_tokens),
   })
 }
 

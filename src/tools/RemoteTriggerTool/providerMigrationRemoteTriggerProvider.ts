@@ -9,7 +9,7 @@ import type { Input, Output } from './RemoteTriggerTool.js'
 
 const TRIGGERS_BETA = 'ccr-triggers-2026-01-30'
 
-export async function callProviderMigrationRemoteTriggerProvider(
+export async function callArchivedRemoteTriggerProvider(
   input: Input,
   context: ToolUseContext,
 ): Promise<Output> {
@@ -17,12 +17,12 @@ export async function callProviderMigrationRemoteTriggerProvider(
   const accessToken = getProviderControlAccessToken()
   if (!accessToken) {
     throw new Error(
-      'Provider migration remote trigger provider is isolated. Run DSXU migration tooling only if you intentionally need provider migration remote trigger import.',
+      'Archived remote trigger provider is isolated. Run DSXU migration tooling only if you intentionally need archived remote trigger import.',
     )
   }
   const orgUUID = await getOrganizationUUID()
   if (!orgUUID) {
-    throw new Error('Unable to resolve provider migration organization UUID.')
+    throw new Error('Unable to resolve archived organization UUID.')
   }
 
   const base = `${getOauthConfig().BASE_API_URL}/v1/code/triggers`

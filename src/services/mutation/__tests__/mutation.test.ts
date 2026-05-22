@@ -1,4 +1,7 @@
 import { describe, test, expect, beforeEach } from 'bun:test';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { generateMutations, resetIdCounter, runMutationTests } from '../index';
 import type { Mutation, MutationOperator } from '../contract';
 
@@ -172,5 +175,42 @@ describe('runMutationTests', () => {
     });
     expect(report.timedOut).toBe(1);
     expect(report.killed).toBe(0);
+  });
+
+  test('real runner mutates a file, runs tests, and restores source', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsxu-mutation-test-'));
+    const sourceFile = join(dir, 'target.ts');
+    const testFile = join(dir, 'target.test.ts');
+    const source = 'export function add(a: number, b: number) { return a + b; }\n';
+
+    try {
+      await writeFile(sourceFile, source, 'utf-8');
+      await writeFile(testFile, `
+        import { describe, expect, test } from 'bun:test';
+        import { add } from './target';
+
+        describe('add', () => {
+          test('adds positive numbers', () => {
+            expect(add(1, 2)).toBe(3);
+            expect(add(2, 2)).toBe(4);
+          });
+        });
+      `, 'utf-8');
+
+      const report = await runMutationTests(source, sourceFile, {
+        maxMutations: 1,
+        timeoutMs: 20_000,
+      }, {
+        cwd: dir,
+        testCommand: 'bun test target.test.ts',
+      });
+
+      expect(report.total).toBe(1);
+      expect(report.killed).toBe(1);
+      expect(report.survived).toBe(0);
+      expect(await readFile(sourceFile, 'utf-8')).toBe(source);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

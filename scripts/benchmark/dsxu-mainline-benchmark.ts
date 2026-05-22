@@ -24,10 +24,10 @@ export type BenchmarkRouteExpectation = {
 }
 
 export const DSXU_MAINLINE_BENCHMARK_PACKS = [
-  'v6-mainline-completion',
-  'v6-real-long-task-harness',
-  'v6-stop-hook-runtime',
-  'v6-session-memory-resume',
+  'mainline-completion',
+  'mainline-real-long-task-harness',
+  'mainline-stop-hook-runtime',
+  'mainline-session-memory-resume',
   'background-governance-v5',
   'query-loop-mainline',
   'tool-permission-mainline',
@@ -37,8 +37,8 @@ export const DSXU_MAINLINE_BENCHMARK_PACKS = [
   'reference-governance-productization',
   'reference-governance-live-core',
   'mutation-product-grade-live',
-  'v7-productization',
-  'v7-release-gate',
+  'productization',
+  'productization-release-gate',
   'v11-100-point-roadmap',
   'v11-100-point-roadmap-live',
   'v11-open-project-pack-readiness-live',
@@ -91,13 +91,17 @@ const BENCHMARK_CASES: readonly BenchmarkCase[] = [
     id: 'governance-query-recovery-live',
     category: 'recovery',
     prompt: 'Recover a DSXU query-loop coding task from a failed tool result, preserve the failure evidence, reread source truth, and finish only after focused verification.',
+    maxToolCalls: 5,
+    maxReadCalls: 3,
+    maxPowerShellCalls: 0,
     requirePreEditBaselineVerification: true,
   },
   {
     id: 'governance-skills-selection-live',
     category: 'feature',
     prompt: 'Select a DSXU skill only when its scope matches the task, avoid duplicate skill invocation, and finish with source or test evidence instead of skill output alone.',
-    maxToolCalls: 4,
+    maxToolCalls: 5,
+    maxReadCalls: 3,
   },
   {
     id: 'todo-task-closeout',
@@ -175,13 +179,13 @@ const BENCHMARK_CASES: readonly BenchmarkCase[] = [
     id: 'product-agent-worker-longrun-live',
     category: 'agent',
     prompt: 'Run a long Agent worker scenario with explicit ownership, verifier evidence, and parent synthesis from worker output only.',
-    allowedTools: 'TaskCreate,SendMessage,TaskUpdate',
+    allowedTools: 'Agent,SendMessage,Read,RunNativeTest,CollectEvidence,TaskCreate,TaskUpdate',
   },
   {
     id: 'product-agent-failure-correction-live',
     category: 'agent',
     prompt: 'Correct an Agent worker that reports unverified success, require concrete source or test evidence, and synthesize only after verifier acceptance.',
-    allowedTools: 'TaskCreate,SendMessage,TaskUpdate',
+    allowedTools: 'Agent,SendMessage,Read,RunNativeTest,CollectEvidence,TaskCreate,TaskUpdate',
   },
   {
     id: 'product-real-mcp-task-live',
@@ -253,7 +257,8 @@ const BENCHMARK_CASES: readonly BenchmarkCase[] = [
     id: 'mutation-query-orphan-tool-use-deny-pass-live',
     category: 'review',
     prompt: 'Detect an orphan tool_use without a matching tool_result. Deny PASS, explain the missing evidence, and replan to collect the source truth.',
-    maxToolCalls: 2,
+    maxToolCalls: 5,
+    maxReadCalls: 4,
   },
   {
     id: 'mutation-query-max-turns-partial-quality-live',
@@ -715,6 +720,10 @@ export function finalTextHasStandaloneMarker(text: string, marker: string): bool
 
 export function getBenchmarkCaseForTest(id: string): BenchmarkCase | undefined {
   return BENCHMARK_CASES.find(item => item.id === id)
+}
+
+export function getBenchmarkCasesForProductDataPack(): readonly BenchmarkCase[] {
+  return BENCHMARK_CASES
 }
 
 export function inferBenchmarkExactSuccessfulEditBudget(prompt: string): number | undefined {

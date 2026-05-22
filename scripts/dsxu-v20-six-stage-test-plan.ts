@@ -107,8 +107,9 @@ async function main(): Promise<void> {
       'function-tests',
       'prove core owner paths: tools, permission, provider routing, agent lifecycle, MCP/skill registry, context, evidence',
       [
-        'bun test src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts src/dsxu/engine/__tests__/tool-definition-v20.test.ts src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts',
-        'bun test src/dsxu/engine/__tests__/api-service.test.ts src/dsxu/engine/__tests__/provider-contract-v1.test.ts src/dsxu/engine/__tests__/provider-migration-model-migration-boundary-v1.test.ts',
+        'bun test src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts src/dsxu/engine/__tests__/tool-definition-owner.test.ts src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts',
+        'bun test src/dsxu/engine/__tests__/api-service.test.ts src/dsxu/engine/__tests__/provider-contract-v1.test.ts src/dsxu/engine/__tests__/provider' +
+          '-migration-model-migration-boundary-v1.test.ts',
         'bun test src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts src/dsxu/engine/__tests__/local-agent-background-lifecycle-v1.test.ts',
       ],
       'all core functions pass without duplicate runtime, shortcut bridge, or hidden compatibility path',
@@ -120,7 +121,7 @@ async function main(): Promise<void> {
       'prove UI/TUI/operator-visible state can show trustworthy long-task progress and continuation state',
       [
         'bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts src/dsxu/engine/__tests__/model-driven-tui-long-task-v1.test.ts src/dsxu/engine/__tests__/streaming-ui-visibility-v1.test.ts',
-        'bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts src/dsxu/engine/__tests__/v20-real-gap-acceptance-v1.test.ts',
+        'bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts src/dsxu/engine/__tests__/control-plane-stage-acceptance-v1.test.ts src/dsxu/engine/__tests__/real-gap-acceptance.test.ts',
         'browser UI smoke: open local DSXU surface only after release gate permits interactive verification',
       ],
       'operator can see pending permission, active plan, tool state, recovery status, cost/evidence without misleading completion',
@@ -142,7 +143,7 @@ async function main(): Promise<void> {
       'performance-tests',
       'prove routing, cache, cost, and long-task loops are fast enough under DeepSeek Flash/Flash-MAX/Pro policy',
       [
-        'bun test src/dsxu/engine/__tests__/phase12-live-cost-matrix-v1.test.ts src/dsxu/engine/__tests__/v18-prompt-prefix-cache-builder-v1.test.ts',
+        'bun test src/dsxu/engine/__tests__/phase12-live-cost-matrix-v1.test.ts src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts',
         'bun run live:provider-gate',
         'bun run live:cache-prefix-smoke',
       ],
@@ -156,7 +157,7 @@ async function main(): Promise<void> {
       [
         'bun run p12:raw-readiness --targetReferenceManifestPath <real-target-reference-manifest>',
         'bun test src/dsxu/engine/__tests__/phase12-raw-comparison-v1.test.ts src/dsxu/engine/__tests__/phase12-reference-semantic-exam-v1.test.ts src/dsxu/engine/__tests__/phase12-senior-programmer-experience-v1.test.ts',
-        'bun test src/dsxu/engine/__tests__/v18-evidence-eval-pack-v1.test.ts src/dsxu/engine/__tests__/v18-eval-baseline-manifest-v1.test.ts',
+        'bun test src/dsxu/engine/__tests__/evidence-eval-pack.test.ts src/dsxu/engine/__tests__/eval-baseline-manifest.test.ts',
       ],
       'P12 target raw paired logs meet 14/14 family coverage and delta report supports the 90+ experience claim',
       productStageStatus,

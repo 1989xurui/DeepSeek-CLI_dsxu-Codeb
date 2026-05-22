@@ -92,7 +92,7 @@ export function getDsxuOfficialMcpRegistryRuntimeProfile(): {
     registryEnv: 'DSXU_MCP_REGISTRY_URL',
     disableTrafficEnv: [
       'DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
-      'provider migration disable-nonessential-traffic alias',
+      'archived disable-nonessential-traffic alias',
     ],
     lookupPolicy:
       'undefined or failed registry fetch is fail-closed: isOfficialMcpUrl returns false',

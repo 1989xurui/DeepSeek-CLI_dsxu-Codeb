@@ -349,7 +349,7 @@ export type Tool<
   P extends ToolProgressData = ToolProgressData,
 > = {
   /**
-   * V20 runtime metadata for owner/evidence review. This extends the existing
+   * Runtime metadata for owner/evidence review. This extends the existing
    * Tool owner contract; it is not a second registry.
    */
   runtimeMetadata?: {
@@ -391,7 +391,7 @@ export type Tool<
   // rather than converting from Zod schema
   readonly inputJSONSchema?: ToolInputJSONSchema
   // Optional for dynamic MCP / pseudo-tools that may provide JSON schema only.
-  // Most product tools should define this so V20 owner evidence can inspect output.
+  // Most product tools should define this so owner evidence can inspect output.
   outputSchema?: z.ZodType<unknown>
   inputsEquivalent?(a: z.infer<Input>, b: z.infer<Input>): boolean
   isConcurrencySafe(input: z.infer<Input>): boolean
@@ -771,7 +771,7 @@ export function buildTool<D extends AnyToolDef>(def: D): BuiltTool<D> {
   } as BuiltTool<D>
 }
 
-export type ToolDefinitionV20Summary = {
+export type ToolDefinitionOwnerSummary = {
   name: string
   aliases: readonly string[]
   owner: string
@@ -800,10 +800,10 @@ function safeToolBoolean(fn: () => boolean): boolean | null {
   }
 }
 
-export function summarizeToolDefinitionV20(
+export function summarizeToolDefinitionOwner(
   tool: Tool,
   input?: unknown,
-): ToolDefinitionV20Summary {
+): ToolDefinitionOwnerSummary {
   const parsed = input === undefined ? null : tool.inputSchema.safeParse(input)
   const parsedInput = parsed?.success ? parsed.data : undefined
   const metadata = tool.runtimeMetadata
@@ -862,7 +862,7 @@ export function getDsxuToolRuntimeContractSummary(): {
   requiredPhases: readonly string[]
   evidenceFields: readonly string[]
   legacyProtocolCompatibility: string
-  toolDefinitionV20: readonly string[]
+  toolDefinitionOwnerEvidence: readonly string[]
   activationEvidence?: readonly string[]
 } {
   return {
@@ -887,13 +887,13 @@ export function getDsxuToolRuntimeContractSummary(): {
     ],
     legacyProtocolCompatibility:
       'Provider SDK message/tool block types remain as wire-shape compatibility only; DSXU owns the runtime semantics',
-    toolDefinitionV20: [
+    toolDefinitionOwnerEvidence: [
       'runtimeMetadata.owner',
       'runtimeMetadata.sideEffects',
       'runtimeMetadata.permission',
       'runtimeMetadata.evidence',
       'runtimeMetadata.uiProjection',
-      'summarizeToolDefinitionV20(tool, input)',
+      'summarizeToolDefinitionOwner(tool, input)',
     ],
     activationEvidence: [
       'buildTool fills fail-closed defaults for concurrency/read-only/destructive semantics',

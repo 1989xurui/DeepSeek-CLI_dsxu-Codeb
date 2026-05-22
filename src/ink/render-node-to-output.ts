@@ -70,6 +70,46 @@ export function resetScrollDrainNode(): void {
 export function getScrollDrainNode(): DOMElement | null {
   return scrollDrainNode
 }
+
+export type ResizeAnchoredScrollTopInput = {
+  scrollTop: number
+  prevMaxScroll: number
+  nextMaxScroll: number
+}
+
+export function getResizeAnchoredScrollTop({
+  scrollTop,
+  prevMaxScroll,
+  nextMaxScroll,
+}: ResizeAnchoredScrollTopInput): number {
+  const nextMax = Math.max(0, nextMaxScroll)
+  if (prevMaxScroll <= 0 || nextMax <= 0) {
+    return Math.max(0, Math.min(scrollTop, nextMax))
+  }
+  const progress = Math.max(0, Math.min(1, scrollTop / prevMaxScroll))
+  return Math.round(progress * nextMax)
+}
+
+export type AtBottomFollowInput = {
+  sticky: boolean
+  grew: boolean
+  resizedViewport: boolean
+  scrollTopBeforeFollow: number
+  prevMaxScroll: number
+}
+
+export function shouldApplyAtBottomFollow({
+  sticky,
+  grew,
+  resizedViewport,
+  scrollTopBeforeFollow,
+  prevMaxScroll,
+}: AtBottomFollowInput): boolean {
+  if (sticky) return true
+  if (resizedViewport) return false
+  return grew && scrollTopBeforeFollow >= prevMaxScroll
+}
+
 // At-bottom follow scroll event this frame. When streaming content
 // triggers scrollTop = maxScroll, the ScrollBox records the delta +
 // viewport bounds here. ink.tsx consumes it post-render to translate any active
@@ -690,17 +730,61 @@ function renderNodeToOutput(
         // Capture scrollTop before follow so ink.tsx can translate any
         // active text selection by the same delta (native terminal behavior:
         // view keeps scrolling, highlight walks up with the text).
-        const scrollTopBeforeFollow = node.scrollTop ?? 0
-        const sticky =
-          node.stickyScroll ?? Boolean(node.attributes['stickyScroll'])
         const prevMaxScroll = Math.max(0, prevScrollHeight - prevInnerHeight)
+        let sticky =
+          node.stickyScroll ?? Boolean(node.attributes['stickyScroll'])
+        if (
+          sticky &&
+          node.stickyScroll !== true &&
+          node.lastNonStickyScrollTop !== undefined &&
+          node.lastNonStickyScrollTop > 0 &&
+          (node.scrollTop ?? node.lastNonStickyScrollTop) < prevMaxScroll
+        ) {
+          sticky = false
+          node.stickyScroll = false
+        }
+        const resizedViewport =
+          cached != null &&
+          (cached.width !== width ||
+            cached.height !== height ||
+            prevInnerHeight !== innerHeight)
+        let scrollTopBeforeFollow = node.scrollTop ?? 0
+        if (!sticky && resizedViewport && (node.pendingScrollDelta ?? 0) === 0) {
+          const rememberedScrollTop = node.lastNonStickyScrollTop
+          const rememberedPrevMaxScroll = node.lastNonStickyMaxScroll
+          const hasRememberedNonSticky =
+            rememberedScrollTop !== undefined && rememberedScrollTop > 0
+          const anchorScrollTop =
+            hasRememberedNonSticky && scrollTopBeforeFollow <= 0
+              ? rememberedScrollTop
+              : scrollTopBeforeFollow
+          const anchorPrevMaxScroll =
+            hasRememberedNonSticky &&
+            rememberedPrevMaxScroll !== undefined &&
+            rememberedPrevMaxScroll > 0
+              ? rememberedPrevMaxScroll
+              : prevMaxScroll
+          scrollTopBeforeFollow = getResizeAnchoredScrollTop({
+            scrollTop: anchorScrollTop,
+            prevMaxScroll: anchorPrevMaxScroll,
+            nextMaxScroll: maxScroll,
+          })
+          node.scrollTop = scrollTopBeforeFollow
+          node.lastNonStickyScrollTop = scrollTopBeforeFollow
+          node.lastNonStickyMaxScroll = maxScroll
+        }
         // Positional check only valid when content grew ...virtualization can
         // transiently SHRINK scrollHeight (tail unmount + stale heightCache
         // spacer) making scrollTop >= prevMaxScroll true by artifact, not
         // because the user was at bottom.
         const grew = scrollHeight >= prevScrollHeight
-        const atBottom =
-          sticky || (grew && scrollTopBeforeFollow >= prevMaxScroll)
+        const atBottom = shouldApplyAtBottomFollow({
+          sticky,
+          grew,
+          resizedViewport,
+          scrollTopBeforeFollow,
+          prevMaxScroll,
+        })
         if (atBottom && (node.pendingScrollDelta ?? 0) >= 0) {
           node.scrollTop = maxScroll
           node.pendingScrollDelta = undefined
@@ -780,6 +864,10 @@ function renderNodeToOutput(
           ? Math.max(cMin, Math.min(scrollTop, cMax))
           : scrollTop
         node.scrollTop = scrollTop
+        if (!sticky && maxScroll > 0) {
+          node.lastNonStickyScrollTop = scrollTop
+          node.lastNonStickyMaxScroll = maxScroll
+        }
         // Clamp hitting top/bottom consumes any remainder. Set drainPending
         // only after clamp so a wasted no-op frame isn't scheduled.
         if (scrollTop !== cur) node.pendingScrollDelta = undefined
@@ -1066,6 +1154,13 @@ function renderNodeToOutput(
             // disable prevScreen here so the partial-row child re-renders at
             // correct bounds instead of blitting a clipped (truncated) old
             // rect.
+            const viewportTop = Math.floor((y1 ?? y) + padTop)
+            output.clip({
+              x1: undefined,
+              x2: undefined,
+              y1: viewportTop,
+              y2: viewportTop + innerHeight,
+            })
             renderScrolledChildren(
               content,
               output,
@@ -1077,6 +1172,7 @@ function renderNodeToOutput(
               scrollTop + innerHeight,
               boxBackgroundColor,
             )
+            output.unclip()
           }
           nodeCache.set(content, {
             x: contentX,

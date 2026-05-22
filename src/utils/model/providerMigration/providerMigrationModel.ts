@@ -44,20 +44,20 @@ export type ModelShortName = string
 export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
-const PROVIDER_MIGRATION_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL'
-const PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV = 'ANTH' + 'ROPIC_SMALL_FAST_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL'
-const PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL'
-function providerMigrationSourceModelId(family: string): string {
+const ARCHIVED_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL'
+const ARCHIVED_SMALL_FAST_MODEL_ENV = 'ANTH' + 'ROPIC_SMALL_FAST_MODEL'
+const ARCHIVED_DEFAULT_OPUS_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_OPUS_MODEL'
+const ARCHIVED_DEFAULT_SONNET_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_SONNET_MODEL'
+const ARCHIVED_DEFAULT_HAIKU_MODEL_ENV = 'ANTH' + 'ROPIC_DEFAULT_HAIKU_MODEL'
+function archivedSourceModelId(family: string): string {
   return `cla${'ude'}-${family}`
 }
 
 function getRuntimeModelEnv(
   dsxuEnv: string,
-  providerMigrationEnv: string,
+  archivedEnv: string,
 ): string | undefined {
-  return process.env[dsxuEnv] ?? process.env[providerMigrationEnv]
+  return process.env[dsxuEnv] ?? process.env[archivedEnv]
 }
 
 export function getSmallFastModel(): ModelName {
@@ -65,7 +65,7 @@ export function getSmallFastModel(): ModelName {
     return getDSXUDefaultModel()
   }
   return (
-    getRuntimeModelEnv('DSXU_SMALL_FAST_MODEL', PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV) ||
+    getRuntimeModelEnv('DSXU_SMALL_FAST_MODEL', ARCHIVED_SMALL_FAST_MODEL_ENV) ||
     getDefaultHaikuModel()
   )
 }
@@ -79,15 +79,17 @@ export function isNonCustomOpusModel(model: ModelName): boolean {
   )
 }
 
-export function isProviderMigrationHighTierModelTarget(model: ModelName): boolean {
+export function isArchivedHighTierModelTarget(model: ModelName): boolean {
   return isNonCustomOpusModel(model) || model === 'opus'
 }
+export const isProviderMigrationHighTierModelTarget =
+  isArchivedHighTierModelTarget
 
 /**
- * Compatibility-only fallback for provider-migration third-party model deployments.
+ * Compatibility-only fallback for archived third-party model deployments.
  * DSXU public model routing should not expose these family names.
  */
-export function getThirdPartyProviderMigrationFallbackModelSuggestion(
+export function getArchivedThirdPartyFallbackModelSuggestion(
   model: string,
 ): string | undefined {
   if (getAPIProvider() === 'firstParty') {
@@ -106,6 +108,8 @@ export function getThirdPartyProviderMigrationFallbackModelSuggestion(
   }
   return undefined
 }
+export const getThirdPartyProviderMigrationFallbackModelSuggestion =
+  getArchivedThirdPartyFallbackModelSuggestion
 
 /**
  * Helper to get the model from /model (including via /config), the --model flag, environment variable,
@@ -116,7 +120,7 @@ export function getThirdPartyProviderMigrationFallbackModelSuggestion(
  * Priority order within this function:
  * 1. Model override during session (from /model command) - highest priority
  * 2. Model override at startup (from --model flag)
- * 3. DSXU_MODEL or provider migration model environment variable
+ * 3. DSXU_MODEL or archived model environment variable
  * 4. Settings (from user's saved settings)
  */
 export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
@@ -128,7 +132,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
   } else {
     const settings = getSettings_DEPRECATED() || {}
     specifiedModel =
-      getRuntimeModelEnv('DSXU_MODEL', PROVIDER_MIGRATION_MODEL_ENV) ||
+      getRuntimeModelEnv('DSXU_MODEL', ARCHIVED_MODEL_ENV) ||
       settings.model ||
       undefined
   }
@@ -147,7 +151,7 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
  * Model Selection Priority Order:
  * 1. Model override during session (from /model command) - highest priority
  * 2. Model override at startup (from --model flag)
- * 3. DSXU_MODEL or provider migration model environment variable
+ * 3. DSXU_MODEL or archived model environment variable
  * 4. Settings (from user's saved settings)
  * 5. Built-in default
  *
@@ -175,7 +179,7 @@ export function getDefaultOpusModel(): ModelName {
   }
   const configuredOpusModel = getRuntimeModelEnv(
     'DSXU_DEFAULT_OPUS_MODEL',
-    PROVIDER_MIGRATION_DEFAULT_OPUS_MODEL_ENV,
+    ARCHIVED_DEFAULT_OPUS_MODEL_ENV,
   )
   if (configuredOpusModel) {
     return configuredOpusModel
@@ -196,7 +200,7 @@ export function getDefaultSonnetModel(): ModelName {
   }
   const configuredSonnetModel = getRuntimeModelEnv(
     'DSXU_DEFAULT_SONNET_MODEL',
-    PROVIDER_MIGRATION_DEFAULT_SONNET_MODEL_ENV,
+    ARCHIVED_DEFAULT_SONNET_MODEL_ENV,
   )
   if (configuredSonnetModel) {
     return configuredSonnetModel
@@ -215,7 +219,7 @@ export function getDefaultHaikuModel(): ModelName {
   }
   const configuredHaikuModel = getRuntimeModelEnv(
     'DSXU_DEFAULT_HAIKU_MODEL',
-    PROVIDER_MIGRATION_DEFAULT_HAIKU_MODEL_ENV,
+    ARCHIVED_DEFAULT_HAIKU_MODEL_ENV,
   )
   if (configuredHaikuModel) {
     return configuredHaikuModel
@@ -306,52 +310,52 @@ export function getDefaultMainLoopModel(): ModelName {
  */
 export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
   name = name.toLowerCase()
-  // Special cases for provider-migration source 4+ models to differentiate versions
+  // Special cases for archived source 4+ models to differentiate versions
   // Order matters: check more specific versions first (4-5 before 4)
-  if (name.includes(providerMigrationSourceModelId('opus-4-6'))) {
-    return providerMigrationSourceModelId('opus-4-6')
+  if (name.includes(archivedSourceModelId('opus-4-6'))) {
+    return archivedSourceModelId('opus-4-6')
   }
-  if (name.includes(providerMigrationSourceModelId('opus-4-5'))) {
-    return providerMigrationSourceModelId('opus-4-5')
+  if (name.includes(archivedSourceModelId('opus-4-5'))) {
+    return archivedSourceModelId('opus-4-5')
   }
-  if (name.includes(providerMigrationSourceModelId('opus-4-1'))) {
-    return providerMigrationSourceModelId('opus-4-1')
+  if (name.includes(archivedSourceModelId('opus-4-1'))) {
+    return archivedSourceModelId('opus-4-1')
   }
-  if (name.includes(providerMigrationSourceModelId('opus-4'))) {
-    return providerMigrationSourceModelId('opus-4')
+  if (name.includes(archivedSourceModelId('opus-4'))) {
+    return archivedSourceModelId('opus-4')
   }
-  if (name.includes(providerMigrationSourceModelId('sonnet-4-6'))) {
-    return providerMigrationSourceModelId('sonnet-4-6')
+  if (name.includes(archivedSourceModelId('sonnet-4-6'))) {
+    return archivedSourceModelId('sonnet-4-6')
   }
-  if (name.includes(providerMigrationSourceModelId('sonnet-4-5'))) {
-    return providerMigrationSourceModelId('sonnet-4-5')
+  if (name.includes(archivedSourceModelId('sonnet-4-5'))) {
+    return archivedSourceModelId('sonnet-4-5')
   }
-  if (name.includes(providerMigrationSourceModelId('sonnet-4'))) {
-    return providerMigrationSourceModelId('sonnet-4')
+  if (name.includes(archivedSourceModelId('sonnet-4'))) {
+    return archivedSourceModelId('sonnet-4')
   }
-  if (name.includes(providerMigrationSourceModelId('haiku-4-5'))) {
-    return providerMigrationSourceModelId('haiku-4-5')
+  if (name.includes(archivedSourceModelId('haiku-4-5'))) {
+    return archivedSourceModelId('haiku-4-5')
   }
-  // Provider-migration 3.x models use a different naming scheme
-  if (name.includes(providerMigrationSourceModelId('3-7-sonnet'))) {
-    return providerMigrationSourceModelId('3-7-sonnet')
+  // Archived 3.x models use a different naming scheme
+  if (name.includes(archivedSourceModelId('3-7-sonnet'))) {
+    return archivedSourceModelId('3-7-sonnet')
   }
-  if (name.includes(providerMigrationSourceModelId('3-5-sonnet'))) {
-    return providerMigrationSourceModelId('3-5-sonnet')
+  if (name.includes(archivedSourceModelId('3-5-sonnet'))) {
+    return archivedSourceModelId('3-5-sonnet')
   }
-  if (name.includes(providerMigrationSourceModelId('3-5-haiku'))) {
-    return providerMigrationSourceModelId('3-5-haiku')
+  if (name.includes(archivedSourceModelId('3-5-haiku'))) {
+    return archivedSourceModelId('3-5-haiku')
   }
-  if (name.includes(providerMigrationSourceModelId('3-opus'))) {
-    return providerMigrationSourceModelId('3-opus')
+  if (name.includes(archivedSourceModelId('3-opus'))) {
+    return archivedSourceModelId('3-opus')
   }
-  if (name.includes(providerMigrationSourceModelId('3-sonnet'))) {
-    return providerMigrationSourceModelId('3-sonnet')
+  if (name.includes(archivedSourceModelId('3-sonnet'))) {
+    return archivedSourceModelId('3-sonnet')
   }
-  if (name.includes(providerMigrationSourceModelId('3-haiku'))) {
-    return providerMigrationSourceModelId('3-haiku')
+  if (name.includes(archivedSourceModelId('3-haiku'))) {
+    return archivedSourceModelId('3-haiku')
   }
-  const match = name.match(new RegExp(`(${providerMigrationSourceModelId('(\\d+-\\d+-)?\\w+')})`))
+  const match = name.match(new RegExp(`(${archivedSourceModelId('(\\d+-\\d+-)?\\w+')})`))
   if (match && match[1]) {
     return match[1]
   }
@@ -363,7 +367,7 @@ export function firstPartyNameToCanonical(name: ModelName): ModelShortName {
  * Maps a full model string to a shorter canonical version that's unified across 1P and 3P providers.
  * Provider-specific full model IDs are mapped to the shortest canonical family ID.
  * @param fullModelName The full model name.
- * @returns The short name (e.g., providerMigrationSourceModelId('3-5-haiku')) if found, or the original name if no mapping exists
+ * @returns The short name (e.g., archivedSourceModelId('3-5-haiku')) if found, or the original name if no mapping exists
  */
 export function getCanonicalName(fullModelName: ModelName): ModelShortName {
   // Resolve overridden model IDs (e.g. Bedrock ARNs) back to canonical names.
@@ -372,7 +376,7 @@ export function getCanonicalName(fullModelName: ModelName): ModelShortName {
 }
 
 // @[MODEL LAUNCH]: Update the default model description strings shown to users.
-export function getProviderMigrationUserDefaultModelDescription(
+export function getArchivedUserDefaultModelDescription(
   fastMode = false,
 ): string {
   if (isDSXUCodeMode()) {
@@ -386,6 +390,9 @@ export function getProviderMigrationUserDefaultModelDescription(
   }
   return 'Sonnet 4.6 · Best for everyday tasks'
 }
+
+export const getProviderMigrationUserDefaultModelDescription =
+  getArchivedUserDefaultModelDescription
 
 export function renderDefaultModelSetting(
   setting: ModelName | ModelAlias,
@@ -580,8 +587,8 @@ export function parseUserSpecifiedModel(
   // 3P providers may not yet have 4.6 capacity, so pass through unchanged.
   if (
     getAPIProvider() === 'firstParty' &&
-    isProviderMigrationSourceOpusFirstParty(modelString) &&
-    isProviderMigrationModelRemapEnabled()
+    isArchivedSourceOpusFirstParty(modelString) &&
+    isArchivedModelRemapEnabled()
   ) {
     return getDefaultOpusModel() + (has1mTag ? '[1m]' : '')
   }
@@ -631,7 +638,7 @@ export function resolveSkillModelOverride(
   if (has1mContext(skillModel) || !has1mContext(currentModel)) {
     return skillModel
   }
-  // modelSupports1M matches on canonical IDs (providerMigrationSourceModelId('opus-4-6'), providerMigrationSourceModelId('sonnet-4'));
+  // modelSupports1M matches on canonical IDs (archivedSourceModelId('opus-4-6'), archivedSourceModelId('sonnet-4'));
   // a bare 'opus' alias falls through getCanonicalName unmatched. Resolve first.
   if (modelSupports1M(parseUserSpecifiedModel(skillModel))) {
     return skillModel + '[1m]'
@@ -639,30 +646,32 @@ export function resolveSkillModelOverride(
   return skillModel
 }
 
-const PROVIDER_MIGRATION_OPUS_FIRSTPARTY = [
-  providerMigrationSourceModelId('opus-4-20250514'),
-  providerMigrationSourceModelId('opus-4-1-20250805'),
-  providerMigrationSourceModelId('opus-4-0'),
-  providerMigrationSourceModelId('opus-4-1'),
+const ARCHIVED_OPUS_FIRSTPARTY = [
+  archivedSourceModelId('opus-4-20250514'),
+  archivedSourceModelId('opus-4-1-20250805'),
+  archivedSourceModelId('opus-4-0'),
+  archivedSourceModelId('opus-4-1'),
 ]
 
-function isProviderMigrationSourceOpusFirstParty(model: string): boolean {
-  return PROVIDER_MIGRATION_OPUS_FIRSTPARTY.includes(model)
+function isArchivedSourceOpusFirstParty(model: string): boolean {
+  return ARCHIVED_OPUS_FIRSTPARTY.includes(model)
 }
 
 /**
- * Opt-out for provider-migration source Opus 4.0/4.1 to current Opus remap.
+ * Opt-out for archived source Opus 4.0/4.1 to current Opus remap.
  */
-export function isProviderMigrationModelRemapEnabled(): boolean {
+export function isArchivedModelRemapEnabled(): boolean {
   return !isDsxuCodeEnvTruthy('DISABLE_PROVIDER_MIGRATION_MODEL_REMAP')
 }
+
+export const isProviderMigrationModelRemapEnabled = isArchivedModelRemapEnabled
 
 export function modelDisplayString(model: ModelSetting): string {
   if (model === null) {
     if (process.env.USER_TYPE === 'ant') {
       return `Default for Ants (${renderDefaultModelSetting(getDefaultMainLoopModelSetting())})`
     } else if (isProviderSubscriptionAccount()) {
-      return `Default (${getProviderMigrationUserDefaultModelDescription()})`
+      return `Default (${getArchivedUserDefaultModelDescription()})`
     }
     return `Default (${getDefaultMainLoopModel()})`
   }
@@ -682,37 +691,37 @@ export function getMarketingNameForModel(modelId: string): string | undefined {
   const has1m = modelId.toLowerCase().includes('[1m]')
   const canonical = getCanonicalName(modelId)
 
-  if (canonical.includes(providerMigrationSourceModelId('opus-4-6'))) {
+  if (canonical.includes(archivedSourceModelId('opus-4-6'))) {
     return has1m ? 'Opus 4.6 (with 1M context)' : 'Opus 4.6'
   }
-  if (canonical.includes(providerMigrationSourceModelId('opus-4-5'))) {
+  if (canonical.includes(archivedSourceModelId('opus-4-5'))) {
     return 'Opus 4.5'
   }
-  if (canonical.includes(providerMigrationSourceModelId('opus-4-1'))) {
+  if (canonical.includes(archivedSourceModelId('opus-4-1'))) {
     return 'Opus 4.1'
   }
-  if (canonical.includes(providerMigrationSourceModelId('opus-4'))) {
+  if (canonical.includes(archivedSourceModelId('opus-4'))) {
     return 'Opus 4'
   }
-  if (canonical.includes(providerMigrationSourceModelId('sonnet-4-6'))) {
+  if (canonical.includes(archivedSourceModelId('sonnet-4-6'))) {
     return has1m ? 'Sonnet 4.6 (with 1M context)' : 'Sonnet 4.6'
   }
-  if (canonical.includes(providerMigrationSourceModelId('sonnet-4-5'))) {
+  if (canonical.includes(archivedSourceModelId('sonnet-4-5'))) {
     return has1m ? 'Sonnet 4.5 (with 1M context)' : 'Sonnet 4.5'
   }
-  if (canonical.includes(providerMigrationSourceModelId('sonnet-4'))) {
+  if (canonical.includes(archivedSourceModelId('sonnet-4'))) {
     return has1m ? 'Sonnet 4 (with 1M context)' : 'Sonnet 4'
   }
-  if (canonical.includes(providerMigrationSourceModelId('3-7-sonnet'))) {
+  if (canonical.includes(archivedSourceModelId('3-7-sonnet'))) {
     return 'Sonnet 3.7'
   }
-  if (canonical.includes(providerMigrationSourceModelId('3-5-sonnet'))) {
+  if (canonical.includes(archivedSourceModelId('3-5-sonnet'))) {
     return 'Sonnet 3.5'
   }
-  if (canonical.includes(providerMigrationSourceModelId('haiku-4-5'))) {
+  if (canonical.includes(archivedSourceModelId('haiku-4-5'))) {
     return 'Haiku 4.5'
   }
-  if (canonical.includes(providerMigrationSourceModelId('3-5-haiku'))) {
+  if (canonical.includes(archivedSourceModelId('3-5-haiku'))) {
     return 'Haiku 3.5'
   }
 

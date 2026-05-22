@@ -8,6 +8,7 @@ import { count } from '../utils/array.js';
 import { dirname, join } from 'path';
 import { tmpdir } from 'os';
 import figures from 'figures';
+import { ASCII_TUI_MODE, TEARDROP_ASTERISK, tuiBorderStyle } from '../constants/figures.js';
 // eslint-disable-next-line custom-rules/prefer-use-keybindings -- / n N Esc [ v are bare letters in transcript modal context, same class as g/G/j/k in ScrollKeybindingHandler
 import { useInput } from '../ink.js';
 import { useSearchInput } from '../hooks/useSearchInput.js';
@@ -278,7 +279,6 @@ import { useTeammateLifecycleNotification } from 'src/hooks/notifs/useTeammateSh
 import { useFastModeNotification } from 'src/hooks/notifs/useFastModeNotification.js';
 import { AutoRunIssueNotification, shouldAutoRunIssue, getAutoRunIssueReasonText, getAutoRunCommand, type AutoRunIssueReason } from '../utils/autoRunIssue.js';
 import type { HookProgress } from '../types/hooks.js';
-import { TungstenLiveMonitor } from '../tools/TungstenTool/TungstenLiveMonitor.js';
 /* eslint-disable @typescript-eslint/no-require-imports */
 const WebBrowserPanelModule = feature('WEB_BROWSER_TOOL') ? require('../tools/WebBrowserTool/WebBrowserPanel.js') as typeof import('../tools/WebBrowserTool/WebBrowserPanel.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -416,7 +416,7 @@ function TranscriptModeFooter(t0) {
   }
   let t5;
   if ($[6] !== t3 || $[7] !== t4) {
-    t5 = <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%">{t3}{t4}</Box>;
+    t5 = <Box noSelect={true} alignItems="center" alignSelf="center" borderTopDimColor={true} borderBottom={false} borderLeft={false} borderRight={false} borderStyle={tuiBorderStyle('single')} marginTop={1} paddingLeft={2} width="100%">{t3}{t4}</Box>;
     $[6] = t3;
     $[7] = t4;
     $[8] = t5;
@@ -511,7 +511,7 @@ function TranscriptSearchBar({
   }, [query, warmDone]);
   const off = cursorOffset;
   const cursorChar = off < query.length ? query[off] : ' ';
-  return <Box borderTopDimColor borderBottom={false} borderLeft={false} borderRight={false} borderStyle="single" marginTop={1} paddingLeft={2} width="100%"
+  return <Box borderTopDimColor borderBottom={false} borderLeft={false} borderRight={false} borderStyle={tuiBorderStyle('single')} marginTop={1} paddingLeft={2} width="100%"
   // applySearchHighlight scans the whole screen buffer. The query
   // text rendered here IS on screen — /foo matches its own 'foo' in
   // the bar. With no content matches that's the ONLY visible match →
@@ -535,8 +535,8 @@ function TranscriptSearchBar({
         </Text> : null}
     </Box>;
 }
-const TITLE_ANIMATION_FRAMES = ['⠂', '⠐'];
-const TITLE_STATIC_PREFIX = '✳';
+const TITLE_ANIMATION_FRAMES = ASCII_TUI_MODE ? ['*', '*'] : ['⠂', '⠐'];
+const TITLE_STATIC_PREFIX = TEARDROP_ASTERISK;
 const TITLE_ANIMATION_INTERVAL_MS = 960;
 
 /**
@@ -1312,7 +1312,7 @@ export function REPL({
         expectedVisibleState: 'idle',
       });
     }, 1_500);
-  }, [isLoading, queryGuard, setIsExternalLoading, setToolJSX]);
+  }, [isLoading, queryGuard.isActive, setIsExternalLoading, setToolJSX]);
   const harnessPermissionPromptInjectedRef = useRef(false);
   useEffect(() => {
     if (!isDsxuCodeEnvTruthy('TUI_HARNESS_PERMISSION_PROMPT')) return;
@@ -1478,6 +1478,8 @@ export function REPL({
   const harnessAutoContinueInjectedRef = useRef(false);
   const harnessResumeReplayInjectedRef = useRef(false);
   const harnessBackgroundTaskInjectedRef = useRef(false);
+  const harnessLongContentResizeInjectedRef = useRef(false);
+  const harnessTrustProofInjectedRef = useRef(false);
   // Stores the willowMode variant that was shown (or false if no hint shown).
   // Captured at hint_shown time so hint_converted telemetry reports the same
   // variant — the feature flag provider value shouldn't change mid-session, but reading
@@ -1519,6 +1521,203 @@ export function REPL({
   }, []);
 
   useEffect(() => {
+    if (!isDsxuCodeEnvTruthy('TUI_HARNESS_LONG_CONTENT_RESIZE')) return;
+    if (harnessLongContentResizeInjectedRef.current) return;
+    if (isLoading || queryGuard.isActive) return;
+    harnessLongContentResizeInjectedRef.current = true;
+
+    const longContent = [
+      'DSXU_TUI_LONG_CONTENT_RESIZE_START',
+      ...Array.from({ length: 180 }, (_, index) => {
+        const row = String(index + 1).padStart(3, '0');
+        return [
+          `DSXU_TUI_LONG_CONTENT_RESIZE_ROW_${row}`,
+          'visible-state',
+          'tool-evidence',
+          'permission-state',
+          'route-cost-cache',
+          'repair-loop',
+          'source-capsule',
+          'agent-envelope',
+          'release-claim-binder',
+        ].join(' | ');
+      }),
+      'DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER',
+    ].join('\n');
+
+    setMessages(prev => [
+      ...prev,
+      createUserMessage({
+        content: 'DSXU_TUI_LONG_CONTENT_RESIZE_PROMPT',
+        isMeta: true,
+      }),
+      createAssistantMessage({
+        content: longContent,
+        isVirtual: true,
+      }),
+    ]);
+    traceDsxuLifecycle('tui_harness_long_content_resize_replay_queued', {
+      rows: 180,
+      expectedVisibleState: 'sticky_bottom_after_resize',
+      tailMarker: 'DSXU_TUI_LONG_CONTENT_RESIZE_TAIL_MARKER',
+    });
+    if (isDsxuCodeEnvTruthy('TUI_HARNESS_SCROLLBACK_RESIZE')) {
+      let attempts = 0;
+      const positionScrollback = () => {
+        attempts += 1;
+        const scrollBox = scrollRef.current;
+        if (!scrollBox && attempts < 20) {
+          setTimeout(positionScrollback, 250);
+          return;
+        }
+        if (!scrollBox) {
+          traceDsxuLifecycle('tui_harness_scrollback_resize_position_failed', {
+            attempts,
+            reason: 'scrollbox_missing',
+          });
+          return;
+        }
+        const maxScroll = Math.max(0, scrollBox.getScrollHeight() - scrollBox.getViewportHeight());
+        if (maxScroll <= 0 && attempts < 20) {
+          setTimeout(positionScrollback, 250);
+          return;
+        }
+        const target = Math.floor(maxScroll * 0.86);
+        scrollBox.scrollTo(target);
+        traceDsxuLifecycle('tui_harness_scrollback_resize_position_requested', {
+          target,
+          maxScroll,
+          attempts,
+          scrollTopAfterSet: scrollBox.getScrollTop(),
+          pendingDeltaAfterSet: scrollBox.getPendingDelta(),
+          stickyAfterSet: scrollBox.isSticky(),
+          expectedVisibleState: 'middle_scrollback_after_resize',
+        });
+        setTimeout(() => {
+          const currentScrollBox = scrollRef.current;
+          currentScrollBox?.scrollTo(target);
+          traceDsxuLifecycle('tui_harness_scrollback_resize_positioned', {
+            target,
+            maxScroll,
+            scrollTop: currentScrollBox?.getScrollTop() ?? null,
+            pendingDelta: currentScrollBox?.getPendingDelta() ?? null,
+            sticky: currentScrollBox?.isSticky() ?? null,
+          });
+        }, 250);
+      };
+      setTimeout(positionScrollback, 500);
+    } else {
+      queueMicrotask(() => {
+        scrollRef.current?.scrollToBottom();
+      });
+    }
+  }, [isLoading, queryGuard.isActive, setMessages]);
+
+  useEffect(() => {
+    if (!isDsxuCodeEnvTruthy('TUI_HARNESS_TRUST_PROOF_REPLAY')) return;
+    if (harnessTrustProofInjectedRef.current) return;
+    if (isLoading || queryGuard.isActive) return;
+    harnessTrustProofInjectedRef.current = true;
+
+    const updatedAt = Date.now();
+    const evidenceMessage = [
+      'DSXU final usage evidence: model=deepseek-v4-flash',
+      'route=flash',
+      'workflow=coding',
+      'estimated_cost_usd=0.0042',
+      'cacheHitRatePct=78',
+      'usage=available',
+    ].join('; ');
+
+    setMessages(prev => [
+      ...prev,
+      createAssistantMessage({
+        content: 'DSXU_TUI_TRUST_PROOF_REPLAY_META',
+        isVirtual: true,
+      }),
+      createSystemMessage(evidenceMessage, 'info'),
+    ]);
+    setAppState(prev => ({
+      ...prev,
+      dsxuTrustState: {
+        schemaVersion: 'dsxu.trust-state.v1',
+        updatedAt,
+        route: {
+          model: 'deepseek-v4-flash',
+          reason: 'tui-harness-trust-proof-replay',
+          workflowKind: 'coding',
+          role: 'coder',
+          estimatedCostUsd: 0.0042,
+          cacheHitRatePct: 78,
+        },
+        verification: {
+          state: 'pass',
+          reason: 'tui harness proof replay',
+          command: 'bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts',
+        },
+        recovery: {
+          state: 'healthy',
+          requiredAction: 'verify',
+          canClaimComplete: true,
+          reason: 'trust proof is visible and compact',
+        },
+        finalClaim: {
+          allowed: true,
+          gateId: 'dsxu_tui_trust_proof_replay_gate',
+          nextAction: 'verify',
+        },
+        ledger: {
+          state: 'verify',
+          taskId: 'dsxu-tui-trust-proof-replay',
+          eventCount: 6,
+          isResumable: true,
+          isCompleted: false,
+          resumePoint: 'verify',
+          nextAction: 'verify',
+        },
+        agent: {
+          activeCount: 1,
+          runningCount: 1,
+          completedCount: 0,
+          failedCount: 0,
+          incompleteEvidence: false,
+          scopes: ['src/dsxu/engine'],
+          verification: 'bounded-evidence-envelope',
+          risk: 'compact',
+        },
+        proof: {
+          tool: {
+            status: 'ready',
+            readyConsumers: 3,
+            requiredConsumers: 3,
+            missingConsumers: [],
+            outputChars: 128,
+            boundary: 'dsxu.tool-call-result.v1',
+          },
+          runtime: {
+            status: 'ready',
+            presentKinds: 2,
+            requiredKinds: 2,
+            missingKinds: [],
+          },
+        },
+        health: {
+          status: 'ok',
+          reason: 'tui harness replay',
+        },
+      },
+    }));
+    traceDsxuLifecycle('tui_harness_trust_proof_replay_queued', {
+      expectedVisibleState: 'compact_trust_proof_visible',
+      evidenceLine: true,
+      footerProofLine: true,
+    });
+    queueMicrotask(() => {
+      scrollRef.current?.scrollToBottom();
+    });
+  }, [isLoading, queryGuard.isActive, setAppState, setMessages]);
+
+  useEffect(() => {
     if (!isDsxuCodeEnvTruthy('TUI_HARNESS_AUTO_CONTINUE_REPLAY')) return;
     if (harnessAutoContinueInjectedRef.current) return;
     if (isLoading || queryGuard.isActive) return;
@@ -1558,7 +1757,7 @@ export function REPL({
     traceDsxuLifecycle('tui_harness_auto_continue_replay_queued', {
       toolUseID,
     });
-  }, [isLoading, queryGuard, setMessages]);
+  }, [isLoading, queryGuard.isActive, setMessages]);
 
   useEffect(() => {
     if (!isDsxuCodeEnvTruthy('TUI_HARNESS_RESUME_REPLAY')) return;
@@ -1628,7 +1827,7 @@ export function REPL({
       verificationStatus: 'failed',
       nextAction: 'read_source_truth_edit_verify',
     });
-  }, [isLoading, queryGuard, setMessages]);
+  }, [isLoading, queryGuard.isActive, setMessages]);
 
   useEffect(() => {
     if (!isDsxuCodeEnvTruthy('TUI_HARNESS_BACKGROUND_TASK_REPLAY')) return;
@@ -1683,7 +1882,7 @@ export function REPL({
       toolUseId: task.toolUseId,
       expectedVisibleState: 'background_task_running',
     });
-  }, [isLoading, queryGuard, setAppState]);
+  }, [isLoading, queryGuard.isActive, setAppState]);
 
   const enqueueToolResultAutoContinueIfNeeded = useCallback((aborted: boolean, trigger: 'query-finally' | 'idle-effect' = 'query-finally') => {
     if (aborted) return;
@@ -2608,6 +2807,16 @@ export function REPL({
     return undefined;
   }
   const focusedInputDialog = getFocusedInputDialog();
+  const blockingInteractionDialogActive =
+    focusedInputDialog === 'message-selector' ||
+    focusedInputDialog === 'sandbox-permission' ||
+    focusedInputDialog === 'tool-permission' ||
+    focusedInputDialog === 'worker-sandbox-permission' ||
+    focusedInputDialog === 'elicitation' ||
+    focusedInputDialog === 'cost' ||
+    focusedInputDialog === 'idle-return' ||
+    focusedInputDialog === 'ultraplan-choice' ||
+    focusedInputDialog === 'ultraplan-launch';
 
   // True when permission prompts exist but are hidden because the user is typing
   const hasSuppressedDialogs = isPromptInputActive && (promptQueue[0] || workerSandboxPermissions.queue[0] || elicitation.queue[0] || showingCostDialog);
@@ -2703,22 +2912,40 @@ export function REPL({
     }
   }, [focusedInputDialog, isLoading]);
 
-  // Re-pin scroll to bottom whenever the permission overlay appears or
-  // dismisses. Overlay now renders below messages inside the same
-  // ScrollBox (no remount), so we need an explicit scrollToBottom for:
-  //  - appear: user may have been scrolled up (sticky broken) — the
-  //    dialog is blocking and must be visible
-  //  - dismiss: user may have scrolled up to read context during the
-  //    overlay, and onScroll was suppressed so the pill state is stale
-  // useLayoutEffect so the re-pin commits before the Ink frame renders —
-  // no 1-frame flash of the wrong scroll position.
-  const prevDialogRef = useRef(focusedInputDialog);
+  // DSXU Interaction Shell: blocking dialogs must stay visible without
+  // stealing a fullscreen scrollback anchor.
+  const prevBlockingInteractionRef = useRef(blockingInteractionDialogActive);
+  const blockingInteractionScrollSnapshotRef = useRef<{
+    scrollTop: number;
+  } | null>(null);
   useLayoutEffect(() => {
-    const was = prevDialogRef.current === 'tool-permission';
-    const now = focusedInputDialog === 'tool-permission';
-    if (was !== now) repinScroll();
-    prevDialogRef.current = focusedInputDialog;
-  }, [focusedInputDialog, repinScroll]);
+    const was = prevBlockingInteractionRef.current;
+    const now = blockingInteractionDialogActive;
+    if (was === now) return;
+
+    const scrollBox = scrollRef.current;
+    const fullscreen = isFullscreenEnvEnabled();
+    if (now) {
+      if (fullscreen && scrollBox && !scrollBox.isSticky()) {
+        blockingInteractionScrollSnapshotRef.current = {
+          scrollTop: scrollBox.getScrollTop(),
+        };
+      } else {
+        blockingInteractionScrollSnapshotRef.current = null;
+        repinScroll();
+      }
+    } else {
+      const snapshot = blockingInteractionScrollSnapshotRef.current;
+      blockingInteractionScrollSnapshotRef.current = null;
+      if (fullscreen && scrollBox && snapshot) {
+        scrollBox.scrollTo(snapshot.scrollTop);
+      } else {
+        repinScroll();
+      }
+    }
+
+    prevBlockingInteractionRef.current = now;
+  }, [blockingInteractionDialogActive, repinScroll]);
   function onCancel() {
     if (focusedInputDialog === 'elicitation') {
       // Elicitation dialog handles its own Escape, and closing it shouldn't affect any loading state.
@@ -3554,23 +3781,6 @@ export function REPL({
         // Notify bridge clients that the turn is complete so mobile apps
         // can stop the spark animation and show post-turn UI.
         sendBridgeResultRef.current();
-
-        // Auto-hide tungsten panel content at turn end (dsxu-internal), but keep
-        // tungstenActiveSession set so the pill stays in the footer and the user
-        // can reopen the panel. Background tmux tasks (e.g. /hunter) run for
-        // minutes — wiping the session made the pill disappear entirely, forcing
-        // the user to re-invoke Tmux just to peek. Skip on abort so the panel
-        // stays open for inspection (matches the turn-duration guard below).
-        if (false && !abortController.signal.aborted) {
-          setAppState(prev => {
-            if (prev.tungstenActiveSession === undefined) return prev;
-            if (prev.tungstenPanelAutoHidden === true) return prev;
-            return {
-              ...prev,
-              tungstenPanelAutoHidden: true
-            };
-          });
-        }
 
         // Capture budget info before clearing (dsxu-internal)
         let budgetInfo: {
@@ -5209,7 +5419,8 @@ export function REPL({
   // render paths below. Commands that used to route through bottom
   // (immediate: /model, /mcp, /btw, ...) and scrollable (non-immediate:
   // /config, /theme, /diff, ...) both go here now.
-  const toolJsxCentered = isFullscreenEnvEnabled() && toolJSX?.isLocalJSXCommand === true;
+  const fullscreenLocalJsx = isFullscreenEnvEnabled() && toolJSX?.isLocalJSXCommand === true;
+  const toolJsxCentered = fullscreenLocalJsx && !blockingInteractionDialogActive;
   const centeredModal: React.ReactNode = toolJsxCentered ? toolJSX!.jsx : null;
 
   // <AlternateScreen> at the root: everything below is inside its
@@ -5250,10 +5461,9 @@ export function REPL({
           text: placeholderText,
           type: 'text'
         }} addMargin={true} verbose={verbose} />}
-              {toolJSX && !(toolJSX.isLocalJSXCommand && toolJSX.isImmediate) && !toolJsxCentered && <Box flexDirection="column" width="100%">
+              {toolJSX && !(toolJSX.isLocalJSXCommand && toolJSX.isImmediate) && !fullscreenLocalJsx && <Box flexDirection="column" width="100%">
                     {toolJSX.jsx}
                   </Box>}
-              {false && <TungstenLiveMonitor />}
               {feature('WEB_BROWSER_TOOL') ? WebBrowserPanelModule && <WebBrowserPanelModule.WebBrowserPanel /> : null}
               <Box flexGrow={1} />
               {showSpinner && <SpinnerWithVerb mode={streamMode} spinnerTip={spinnerTip} responseLengthRef={responseLengthRef} apiMetricsRef={apiMetricsRef} overrideMessage={spinnerMessage} spinnerSuffix={stopHookSpinnerSuffix} verbose={verbose} loadingStartTimeRef={loadingStartTimeRef} totalPausedMsRef={totalPausedMsRef} pauseStartTimeRef={pauseStartTimeRef} overrideColor={spinnerColor} overrideShimmerColor={spinnerShimmerColor} hasActiveTools={inProgressToolUseIDs.size > 0} leaderIsIdle={!isLoading} />}
@@ -5274,7 +5484,7 @@ export function REPL({
                   stays in scrollable: the main loop is paused so no jiggle,
                   and their tall content (DiffDetailView renders up to 400
                   lines with no internal scroll) needs the outer ScrollBox. */}
-                {toolJSX?.isLocalJSXCommand && toolJSX.isImmediate && !toolJsxCentered && <Box flexDirection="column" width="100%">
+                {toolJSX?.isLocalJSXCommand && toolJSX.isImmediate && !fullscreenLocalJsx && <Box flexDirection="column" width="100%">
                       {toolJSX.jsx}
                     </Box>}
                 {!showSpinner && !toolJSX?.isLocalJSXCommand && showExpandedTodos && tasksV2 && tasksV2.length > 0 && <Box width="100%" flexDirection="column">

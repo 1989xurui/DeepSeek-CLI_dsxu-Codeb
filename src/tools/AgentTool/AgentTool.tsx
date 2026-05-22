@@ -46,7 +46,8 @@ import { BackgroundHint } from '../BashTool/UI.js';
 import { FILE_READ_TOOL_NAME } from '../FileReadTool/prompt.js';
 import { spawnTeammate } from '../shared/spawnMultiAgent.js';
 import { setAgentColor } from './agentColorManager.js';
-import { agentToolResultSchema, classifyHandoffIfNeeded, emitTaskProgress, extractPartialResult, finalizeAgentTool, getLastToolUseName, renderAgentEvidencePacket, runAsyncAgentLifecycle } from './agentToolUtils.js';
+import { agentToolResultSchema } from './agentToolSchemas.js';
+import { classifyHandoffIfNeeded, emitTaskProgress, extractPartialResult, finalizeAgentTool, getLastToolUseName, renderAgentEvidencePacket, runAsyncAgentLifecycle } from './agentToolUtils.js';
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js';
 import { AGENT_TOOL_NAME, ONE_SHOT_BUILTIN_AGENT_TYPES, SOURCE_AGENT_TOOL_ALIAS_NAME } from './constants.js';
 import { buildForkedMessages, buildWorktreeNotice, FORK_AGENT, isForkSubagentEnabled, isInForkChild } from './forkSubagent.js';
@@ -68,10 +69,11 @@ const isBackgroundTasksDisabled =
 // eslint-disable-next-line custom-rules/no-process-env-top-level -- Intentional: schema must be defined at module load
 isDsxuCodeEnvTruthy('DISABLE_BACKGROUND_TASKS');
 
-const PROVIDER_MIGRATION_REMOTE_AGENT_ENV = 'ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT';
+const ARCHIVED_REMOTE_AGENT_ENV = ['ENABLE', 'PROVIDER', 'MIGRATION', 'REMOTE', 'AGENT'].join('_');
+const ARCHIVED_REMOTE_AGENT_ENV_NAME = 'DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT';
 
-function isProviderMigrationRemoteAgentIsolationEnabled(): boolean {
-  return isDsxuCodeEnvTruthy(PROVIDER_MIGRATION_REMOTE_AGENT_ENV);
+function isArchivedRemoteAgentIsolationEnabled(): boolean {
+  return isDsxuCodeEnvTruthy(ARCHIVED_REMOTE_AGENT_ENV);
 }
 
 // Auto-background agent tasks after this many ms (0 = disabled)
@@ -184,7 +186,7 @@ const fullInputSchema = lazySchema(() => {
     mode: permissionModeSchema().optional().describe('Permission mode for spawned teammate (e.g., "plan" to require plan approval).')
   });
   return baseInputSchema().merge(multiAgentInputSchema).extend({
-    isolation: (isProviderMigrationRemoteAgentIsolationEnabled() ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe(isProviderMigrationRemoteAgentIsolationEnabled() ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the provider-migration remote agent backend and is opt-in only.' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
+    isolation: (isArchivedRemoteAgentIsolationEnabled() ? z.enum(['worktree', 'remote']) : z.enum(['worktree'])).optional().describe(isArchivedRemoteAgentIsolationEnabled() ? 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo. "remote" launches the archived remote agent backend and is opt-in only.' : 'Isolation mode. "worktree" creates a temporary git worktree so the agent works on an isolated copy of the repo.'),
     cwd: z.string().optional().describe('Absolute path to run the agent in. Overrides the working directory for all filesystem and shell operations within this agent. Mutually exclusive with isolation: "worktree".')
   });
 });
@@ -565,8 +567,8 @@ export const AgentTool = buildTool({
     // Resolve effective isolation mode (explicit param overrides agent def)
     const effectiveIsolation = isolation ?? selectedAgent.isolation;
 
-    if (effectiveIsolation === 'remote' && !isProviderMigrationRemoteAgentIsolationEnabled()) {
-      throw new Error('Remote agent isolation is disabled in the DSXU default mainline. Use isolation: "worktree", or enable DSXU_CODE_ENABLE_PROVIDER_MIGRATION_REMOTE_AGENT only for explicit provider migration work.');
+    if (effectiveIsolation === 'remote' && !isArchivedRemoteAgentIsolationEnabled()) {
+      throw new Error(`Remote agent isolation is disabled in the DSXU default mainline. Use isolation: "worktree", or enable ${ARCHIVED_REMOTE_AGENT_ENV_NAME} only for explicit archived work.`);
     }
 
     const inferredCwd = !cwd && effectiveIsolation !== 'worktree'
@@ -574,7 +576,7 @@ export const AgentTool = buildTool({
       : undefined;
     const effectiveCwd = cwd ?? inferredCwd;
 
-    // Remote isolation: provider-migration remote-session backend, gated behind explicit DSXU opt-in.
+    // Remote isolation: archived remote-session backend, gated behind explicit DSXU opt-in.
     if (effectiveIsolation === 'remote') {
       const {
         checkRemoteAgentEligibility,
@@ -1503,7 +1505,7 @@ The agent is now running and will receive instructions via mailbox.`
         type: 'tool_result',
         content: [{
           type: 'text',
-          text: `Provider-migration remote agent launched.\ntaskId: ${r.taskId}\nsession_url: ${r.sessionUrl}\noutput_file: ${r.outputFile}\nThe agent is running remotely through the explicit DSXU provider-migration gate. You will be notified automatically when it completes.\nBriefly tell the user what you launched and end your response. Never fabricate or predict the remote agent result.`
+          text: `Archived remote agent launched.\ntaskId: ${r.taskId}\nsession_url: ${r.sessionUrl}\noutput_file: ${r.outputFile}\nThe agent is running remotely through the explicit DSXU archived gate. You will be notified automatically when it completes.\nBriefly tell the user what you launched and end your response. Never fabricate or predict the remote agent result.`
         }]
       };
     }

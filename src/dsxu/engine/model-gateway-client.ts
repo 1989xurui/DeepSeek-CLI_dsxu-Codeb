@@ -51,7 +51,9 @@ export function buildLiteLLMChatRequest(input: {
   const policy = decideDSXUDeepSeekPolicy(input.policy ?? { workflowKind: 'generic_chat' })
   const request: DSXULiteLLMChatRequest = {
     model: policy.litellmModel,
-    messages: convertToChatCompletionsMessages(input.messages),
+    messages: convertToChatCompletionsMessages(input.messages, {
+      thinkingEnabled: policy.apiMode === 'thinking',
+    }),
     max_tokens: input.maxTokens ?? policy.maxTokens,
     stream: false,
     thinking: {
@@ -120,7 +122,10 @@ export function createLiteLLMDSXULLMCall(config?: DSXULiteLLMGatewayConfig): LLM
   }
 }
 
-function convertToChatCompletionsMessages(messages: Message[]): Array<Record<string, unknown>> {
+function convertToChatCompletionsMessages(
+  messages: Message[],
+  options: { thinkingEnabled?: boolean } = {},
+): Array<Record<string, unknown>> {
   const result: Array<Record<string, unknown>> = []
   for (const message of messages) {
     if (message.role === 'tool') {
@@ -136,6 +141,7 @@ function convertToChatCompletionsMessages(messages: Message[]): Array<Record<str
       result.push({
         role: 'assistant',
         content: typeof message.content === 'string' ? message.content : '',
+        ...(options.thinkingEnabled && message.reasoning ? { reasoning_content: message.reasoning } : {}),
         tool_calls: message.toolCalls.map((toolCall) => ({
           id: toolCall.id,
           type: 'function',
@@ -151,6 +157,9 @@ function convertToChatCompletionsMessages(messages: Message[]): Array<Record<str
     result.push({
       role: message.role,
       content: typeof message.content === 'string' ? message.content : JSON.stringify(message.content),
+      ...(message.role === 'assistant' && options.thinkingEnabled && message.reasoning
+        ? { reasoning_content: message.reasoning }
+        : {}),
     })
   }
   return result

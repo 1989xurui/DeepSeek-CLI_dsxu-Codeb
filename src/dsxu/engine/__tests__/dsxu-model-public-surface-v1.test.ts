@@ -3,7 +3,7 @@ import {
   buildV18ModelPublicSurfaceGate,
   collectDsxuModelPublicSurfaceItems,
   runV18ModelPublicSurfaceGateHarness,
-} from '../v18-model-public-surface-gate'
+} from '../model-public-surface-gate'
 
 describe('DSXU model public surface V1', () => {
   test('blocks provider-migration source model family names in public model UI/evidence', () => {

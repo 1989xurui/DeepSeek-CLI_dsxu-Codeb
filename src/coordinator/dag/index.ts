@@ -4,4 +4,10 @@
 
 export * from './types';
 export { topologicalSort, getLayers, runDag } from './runner';
-export { linearDag, reflexionDag, mapReduceDag, debateDag } from './templates';
+export {
+  linearDag,
+  reflexionDag,
+  mapReduceDag,
+  debateDag,
+  planExecuteVerifyDag,
+} from './templates';

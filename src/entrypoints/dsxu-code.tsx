@@ -1,6 +1,6 @@
 ﻿// DSXU Code formal entrypoint.
-// This delegates to the full Ink CLI/TUI. Provider-migration shells stay outside
-// the default path and require explicit provider-migration flags elsewhere.
+// This delegates to the full Ink CLI/TUI. Archived shells stay outside
+// the default path and require explicit archived flags elsewhere.
 
 process.env.DSXU_CODE_MODE = '1'
 process.env.DSXU_PRODUCT_NAME ??= 'DSXU Code'
@@ -10,6 +10,26 @@ process.env.ENABLE_TOOL_SEARCH ??= 'true'
 process.env.DSXU_CODE_ENABLE_TASKS ??= '1'
 process.env.ENABLE_LSP_TOOL ??= '1'
 process.env.DSXU_CODE_ENABLE_BUNDLED_SKILLS ??= '1'
+
+const globalScope = globalThis as typeof globalThis & {
+  MACRO?: {
+    VERSION: string
+    PACKAGE_URL: string
+    NATIVE_PACKAGE_URL: string
+    FEEDBACK_CHANNEL: string
+    ISSUES_EXPLAINER: string
+    BUILD_TIME: string
+  }
+}
+
+globalScope.MACRO ??= {
+  VERSION: process.env.npm_package_version || '0.1.0-source',
+  PACKAGE_URL: 'dsxu-code',
+  NATIVE_PACKAGE_URL: 'dsxu-code',
+  FEEDBACK_CHANNEL: 'DSXU support',
+  ISSUES_EXPLAINER: 'open a DSXU issue',
+  BUILD_TIME: '',
+}
 
 const args = process.argv.slice(2)
 const printIndex = args.findIndex(arg => arg === '-p' || arg === '--print')

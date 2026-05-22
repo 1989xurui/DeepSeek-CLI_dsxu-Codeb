@@ -1,7 +1,7 @@
 /**
  * Brief Generator - 摘要生成器
  *
- * V8-2 Runtime Core: Memory/Context/Compact 承接层
+ * Runtime core: memory/context/compact ownership layer.
  *
  * 生成用户友好的对话摘要，支持多种格式和定制
  */

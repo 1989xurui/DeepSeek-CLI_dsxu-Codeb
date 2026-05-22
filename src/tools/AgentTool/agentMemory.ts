@@ -38,7 +38,7 @@ function getRemoteAgentMemoryDir(): string | undefined {
  * Returns the local agent memory directory, which is project-specific and not checked into VCS.
  * When DSXU_CODE_REMOTE_MEMORY_DIR is set, persists to the mount with project
  * namespacing. Otherwise, uses <cwd>/.dsxu/agent-memory-local/<agentType>/ in
- * DSXU mode. The provider-migration source remote-memory env remains a migration alias.
+ * DSXU mode. The archived source remote-memory env remains a migration alias.
  */
 function getLocalAgentMemoryDir(dirName: string): string {
   const remoteMemoryDir = getRemoteAgentMemoryDir()
@@ -208,7 +208,7 @@ export function getDsxuAgentMemoryRuntimeProfile(): {
     projectStateDir: getProjectStateDirName(),
     remoteEnv: [
       'DSXU_CODE_REMOTE_MEMORY_DIR',
-      'provider-migration source remote-memory alias',
+      'archived source remote-memory alias',
     ],
     activationEvidence: [
       'getAgentMemoryDir maps user/project/local scopes to DSXU memory locations',

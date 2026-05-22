@@ -16,7 +16,7 @@ import { getCwd } from '../cwd.js'
 import { getFastModeState } from '../fastMode.js'
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 
-// Provider-migration wire projection retained until SDK consumers migrate to the
+// Archived wire projection retained until SDK consumers migrate to the
 // DSXU Agent tool name. Product runtime still owns the tool as Agent.
 export function sdkSourceWireToolName(name: string): string {
   return name === AGENT_TOOL_NAME ? SOURCE_AGENT_TOOL_ALIAS_NAME : name

@@ -28,7 +28,7 @@ describe('ExperienceStore + smooth resume pack V1', () => {
       allBlockPassBeforeVerify: true,
       bugfixHasDeleteExplainEvidence: true,
       featureCanStayFlash: true,
-      failedVerificationRoutesPro: true,
+      failedVerificationUsesRecoveryRoute: true,
       compactResumePreservesFailedCommand: true,
       benchmarkAnswerLeakBlocked: true,
     })

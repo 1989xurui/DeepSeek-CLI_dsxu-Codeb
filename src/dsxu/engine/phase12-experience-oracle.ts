@@ -217,7 +217,7 @@ export const PHASE12_EXPERIENCE_ORACLE: readonly Phase12Scenario[] = [
     evidenceTests: [
       'phase12-live-cost-matrix-v1.test.ts',
       'final-report-usage-evidence-v1.test.ts',
-      'v19-cost-cache-live-task-evidence-v1.test.ts',
+      'cost-cache-live-task-evidence-v1.test.ts',
       'deepseek-v4-control-v1.test.ts',
     ],
     requiredArtifacts: [

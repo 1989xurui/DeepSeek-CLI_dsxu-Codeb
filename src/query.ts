@@ -38,6 +38,7 @@ import type {
   UserMessage,
   TombstoneMessage,
 } from './types/message.js'
+import type { AppState } from './state/AppStateStore.js'
 import { logError } from './utils/log.js'
 import {
   PROMPT_TOO_LONG_ERROR_MESSAGE,
@@ -51,6 +52,9 @@ import {
   formatDeepSeekV4ModelEvidence,
   inferDeepSeekV4RouteInput,
   normalizeDeepSeekV4Model,
+  type DeepSeekV4RouteInput,
+  type DeepSeekV4RouteRole,
+  type DeepSeekV4WorkflowKind,
 } from './utils/model/deepseekV4Control.js'
 import {
   createUserMessage,
@@ -126,7 +130,24 @@ import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
 import { traceDsxuLifecycle } from './utils/dsxuLifecycleTrace.js'
 import { expandPath } from './utils/path.js'
-import { recordDSXUQueryPromptPrefixCacheEvidence } from './dsxu/engine/v18-prompt-prefix-cache-evidence.js'
+import { recordDSXUQueryPromptPrefixCacheEvidence } from './dsxu/engine/prompt-prefix-cache-evidence.js'
+import { buildDSXUWorkStateTimeline } from './dsxu/engine/work-state-timeline.js'
+import { buildDSXUContextPressureDecision } from './dsxu/engine/context-pressure-matrix.js'
+import {
+  buildToolResultContractConsumptionBoard,
+  normalizeProviderToolResultBlock,
+  type ToolResultContractConsumerEvidence,
+} from './dsxu/engine/tool-protocol.js'
+import {
+  appendLedgerEvent,
+  buildDSXUActiveFrame,
+  buildRuntimeEventSchemaConsumptionProof,
+  createProgressLedger,
+  projectDeepSeekRouteAdmissionToLedgerEvent,
+  projectToolCallResultToLedgerEvent,
+  type LongTaskLedgerEvent,
+} from './dsxu/engine/progress-ledger.js'
+import type { RuntimeState } from './dsxu/engine/types.js'
 import {
   DSXU_TOOL_RESULT_AUTO_CONTINUE_GATE_STATE,
   buildDsxuFinalGateState,
@@ -134,6 +155,11 @@ import {
   buildDsxuRecoveryGateState,
   type DsxuQueryLoopGateState,
 } from './dsxu/engine/query-loop-gate-state-v1.js'
+import {
+  compileDSXUExecutionContract,
+  type DSXUExecutionContract,
+} from './dsxu/engine/action-contract.js'
+import { buildDSXUPromptSectionPlan } from './dsxu/engine/prompt-section-router.js'
 
 export {
   DSXU_TOOL_RESULT_AUTO_CONTINUE_GATE_STATE,
@@ -333,10 +359,128 @@ export function buildDeepSeekRouteText(messages: readonly Message[]): string {
   return ''
 }
 
+const DSXU_ROUTE_LATCH_WORKFLOWS = new Set<DeepSeekV4WorkflowKind>([
+  'bugfix',
+  'feature',
+  'review',
+  'verification',
+  'repo_understanding',
+  'recovery',
+  'planning',
+  'workflow',
+  'generic_chat',
+  'fim',
+])
+
+const DSXU_ROUTE_LATCH_ROLES = new Set<DeepSeekV4RouteRole>([
+  'planner',
+  'coder',
+  'fim',
+  'reviewer',
+  'verifier',
+  'recovery',
+  'summarizer',
+  'classifier',
+])
+
+function applyDeepSeekRouteProfileLatch(input: DeepSeekV4RouteInput): DeepSeekV4RouteInput {
+  const workflow = process.env.DSXU_DEEPSEEK_ROUTE_WORKFLOW_KIND
+  const role = process.env.DSXU_DEEPSEEK_ROUTE_ROLE
+  const hasWorkflow = DSXU_ROUTE_LATCH_WORKFLOWS.has(workflow as DeepSeekV4WorkflowKind)
+  const hasRole = DSXU_ROUTE_LATCH_ROLES.has(role as DeepSeekV4RouteRole)
+  if (!hasWorkflow && !hasRole) return input
+
+  return {
+    ...input,
+    ...(hasWorkflow && { workflowKind: workflow as DeepSeekV4WorkflowKind }),
+    ...(hasRole && { role: role as DeepSeekV4RouteRole }),
+    retryAfterFailure: false,
+    failedVerification: false,
+    complexAgentTask: false,
+  }
+}
+
 function usageNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
     : 0
+}
+
+function buildDsxuFinalUsageWorkStateEvidence(input: {
+  model: string
+  routeReason: string
+  workflowKind?: string
+  role?: string
+  usageAvailable: boolean
+  estimatedCostUsd?: number
+  cacheHitInputTokens?: number
+  cacheMissInputTokens?: number
+  outputTokens?: number
+}): string {
+  const workflow = input.workflowKind ?? 'generic_chat'
+  const cacheTotal =
+    (input.cacheHitInputTokens ?? 0) + (input.cacheMissInputTokens ?? 0)
+  const cacheHitRatePct =
+    cacheTotal > 0 && typeof input.cacheHitInputTokens === 'number'
+      ? Math.round((input.cacheHitInputTokens / cacheTotal) * 1000) / 10
+      : undefined
+  const timeline = buildDSXUWorkStateTimeline({
+    goal: `Expose DeepSeek final route/cost/cache evidence for ${workflow}`,
+    plan: [
+      'Resolve DeepSeek route for the turn',
+      'Collect assistant usage and cache counters',
+      'Expose model, route, cost, cache, and next action',
+    ],
+    requiresSourceTruth: false,
+    requiresToolState: false,
+    requiresPermissionVisibility: false,
+    requiresCostVisibility: true,
+    nextAction: input.usageAvailable
+      ? 'continue with visible DeepSeek cost evidence'
+      : 'continue, but do not claim cost readiness until usage appears',
+    events: [
+      {
+        id: 'query-final-route-cost-cache',
+        kind: 'cost',
+        status: input.usageAvailable ? 'completed' : 'blocked',
+        title: 'DeepSeek final route, cost, and cache evidence',
+        owner: 'DeepSeek Model Router / Cost Evidence',
+        model: input.model,
+        routeReason: input.routeReason,
+        costUsd: input.estimatedCostUsd,
+        cacheHitInputTokens: input.cacheHitInputTokens,
+        cacheMissInputTokens: input.cacheMissInputTokens,
+        outputTokens: input.outputTokens,
+        cacheHitRatePct,
+        evidence: [
+          `workflow:${workflow}`,
+          `role:${input.role ?? 'none'}`,
+          `usageAvailable:${input.usageAvailable}`,
+          `routeProfileLatch:${process.env.DSXU_DEEPSEEK_ROUTE_WORKFLOW_KIND ?? 'auto'}/${process.env.DSXU_DEEPSEEK_ROUTE_ROLE ?? 'auto'}`,
+          `cacheHitInputTokens:${input.cacheHitInputTokens ?? 'missing'}`,
+          `cacheMissInputTokens:${input.cacheMissInputTokens ?? 'missing'}`,
+          `cacheHitRatePct:${cacheHitRatePct ?? 'missing'}`,
+          `outputTokens:${input.outputTokens ?? 'missing'}`,
+        ],
+      },
+      {
+        id: 'query-final-usage-evidence',
+        kind: 'evidence',
+        status: 'completed',
+        title: 'Final usage evidence is projected into the operator stream',
+        owner: 'Evidence / Release',
+        evidence: [
+          `model:${input.model}`,
+          `route:${input.routeReason}`,
+          `workflow:${workflow}`,
+        ],
+      },
+    ],
+  })
+  return [
+    `work_state_timeline_status=${timeline.status}`,
+    `work_state_guards=${timeline.guards.length === 0 ? 'none' : timeline.guards.join('|')}`,
+  ].join('; ')
 }
 
 function buildDsxuFinalUsageEvidenceSystemMessage({
@@ -376,6 +520,13 @@ function buildDsxuFinalUsageEvidenceSystemMessage({
       : Math.max(0, inputTokens - cacheHitInputTokens)
 
   if (!usage || inputTokens + outputTokens + cacheHitInputTokens + cacheMissInputTokens === 0) {
+    const workStateEvidence = buildDsxuFinalUsageWorkStateEvidence({
+      model: evidenceModel,
+      routeReason: evidenceRouteReason,
+      workflowKind,
+      role,
+      usageAvailable: false,
+    })
     return [
       `DSXU final usage evidence: model=${evidenceModel}`,
       `route=${evidenceRouteReason}`,
@@ -384,6 +535,7 @@ function buildDsxuFinalUsageEvidenceSystemMessage({
       'usage=unavailable',
       `missing=${usage ? 'zero_token_usage' : 'assistant_message_usage'}`,
       'cost=unavailable',
+      workStateEvidence,
     ].join('; ')
   }
 
@@ -408,7 +560,179 @@ function buildDsxuFinalUsageEvidenceSystemMessage({
     `cache_miss_input_tokens=${cacheMissInputTokens}`,
     `estimated_cost_usd=${estimatedCostUsd.toFixed(6)}`,
     'source=assistant_message_usage',
+    buildDsxuFinalUsageWorkStateEvidence({
+      model: evidenceModel,
+      routeReason: evidenceRouteReason,
+      workflowKind,
+      role,
+      usageAvailable: true,
+      estimatedCostUsd,
+      cacheHitInputTokens,
+      cacheMissInputTokens,
+      outputTokens,
+    }),
   ].join('; ')
+}
+
+function readDsxuEvidenceNumber(evidence: string, key: string): number | undefined {
+  const match = evidence.match(new RegExp(`${key}=([0-9.]+)`))
+  if (!match) return undefined
+  const value = Number(match[1])
+  return Number.isFinite(value) ? value : undefined
+}
+
+function updateDsxuTrustState(
+  toolUseContext: ToolUseContext,
+  updater: (previous: AppState['dsxuTrustState']) => AppState['dsxuTrustState'],
+): void {
+  if (toolUseContext.agentId) return
+  const setAppState = toolUseContext.setAppStateForTasks ?? toolUseContext.setAppState
+  setAppState(prev => {
+    const next = updater(prev.dsxuTrustState)
+    if (next === prev.dsxuTrustState) return prev
+    return {
+      ...prev,
+      dsxuTrustState: next,
+    }
+  })
+}
+
+function projectDsxuFinalUsageEvidenceToTrustState({
+  toolUseContext,
+  evidence,
+  model,
+  routeReason,
+  workflowKind,
+  role,
+}: {
+  toolUseContext: ToolUseContext
+  evidence: string
+  model: string
+  routeReason: string
+  workflowKind?: string
+  role?: string
+}): void {
+  const estimatedCostUsd = readDsxuEvidenceNumber(evidence, 'estimated_cost_usd')
+  const cacheHitInputTokens = readDsxuEvidenceNumber(evidence, 'cache_hit_input_tokens') ?? 0
+  const cacheMissInputTokens = readDsxuEvidenceNumber(evidence, 'cache_miss_input_tokens') ?? 0
+  const cacheTotal = cacheHitInputTokens + cacheMissInputTokens
+  const cacheHitRatePct =
+    cacheTotal > 0 ? Math.round((cacheHitInputTokens / cacheTotal) * 1000) / 10 : undefined
+  updateDsxuTrustState(toolUseContext, previous => ({
+    schemaVersion: 'dsxu.trust-state.v1',
+    updatedAt: Date.now(),
+    route: {
+      model,
+      reason: routeReason,
+      workflowKind: workflowKind ?? 'generic_chat',
+      role: role ?? 'none',
+      ...(estimatedCostUsd !== undefined && { estimatedCostUsd }),
+      ...(cacheHitRatePct !== undefined && { cacheHitRatePct }),
+      ...(previous?.route?.proAdmissionState && { proAdmissionState: previous.route.proAdmissionState }),
+      ...(previous?.route?.proAdmissionReason && { proAdmissionReason: previous.route.proAdmissionReason }),
+      ...(previous?.route?.approvalRequired !== undefined && { approvalRequired: previous.route.approvalRequired }),
+    },
+    verification: previous?.verification ?? {
+      state: 'not_run',
+      reason: 'no visible verification result yet',
+    },
+    recovery: previous?.recovery ?? {
+      state: 'idle',
+      requiredAction: 'none',
+      canClaimComplete: false,
+      reason: 'no DSXU recovery condition detected',
+    },
+    finalClaim: {
+      allowed: true,
+      gateId: 'dsxu_final_usage_evidence',
+      nextAction: 'visible_final_answer_or_next_user_task',
+    },
+    ledger: previous?.ledger,
+    agent: previous?.agent,
+    proof: previous?.proof,
+    health: {
+      status: 'ok',
+      reason: evidence.includes('usage=unavailable')
+        ? 'final route visible; usage unavailable'
+        : 'final route/cost/cache evidence visible',
+    },
+  }))
+}
+
+function projectDsxuExecutionContractToTrustState(
+  toolUseContext: ToolUseContext,
+  contract: DSXUExecutionContract,
+): void {
+  const keepPreviousCost =
+    (previous: AppState['dsxuTrustState']) =>
+      previous?.route?.model === contract.routeDecision.model &&
+      previous.route.reason === contract.routeDecision.reason
+  updateDsxuTrustState(toolUseContext, previous => ({
+    schemaVersion: 'dsxu.trust-state.v1',
+    updatedAt: Date.now(),
+    route: {
+      model: contract.routeDecision.model,
+      reason: contract.routeDecision.reason,
+      workflowKind: contract.workflow,
+      role: contract.taskType,
+      ...(keepPreviousCost(previous) && previous?.route?.estimatedCostUsd !== undefined
+        ? { estimatedCostUsd: previous.route.estimatedCostUsd }
+        : {}),
+      ...(keepPreviousCost(previous) && previous?.route?.cacheHitRatePct !== undefined
+        ? { cacheHitRatePct: previous.route.cacheHitRatePct }
+        : {}),
+      ...(contract.routeDecision.proAdmission && {
+        proAdmissionState: contract.routeDecision.proAdmission.state,
+        proAdmissionReason: contract.routeDecision.proAdmission.reason,
+        approvalRequired: contract.routeDecision.proAdmission.approvalRequired,
+      }),
+    },
+    verification: previous?.verification ?? {
+      state: 'not_run',
+      reason: `contract verification:${contract.verificationLevel}`,
+    },
+    recovery: previous?.recovery ?? {
+      state: 'idle',
+      requiredAction: contract.fallbackPolicy,
+      canClaimComplete: false,
+      reason: `contract fallback:${contract.fallbackPolicy}`,
+    },
+    finalClaim: previous?.finalClaim ?? {
+      allowed: contract.claimPolicy === 'verified_claim',
+      gateId: 'dsxu_execution_contract_v5',
+      nextAction: contract.workflow,
+    },
+    ledger: previous?.ledger,
+    agent: previous?.agent,
+    proof: {
+      ...previous?.proof,
+      contract: {
+        status: contract.guards.length > 0 ? 'review' : 'ready',
+        taskType: contract.taskType,
+        workflow: contract.workflow,
+        risk: contract.risk,
+        model: contract.routeDecision.model,
+        visibleToolCount: contract.visibleTools.length,
+        verificationLevel: contract.verificationLevel,
+        guardCount: contract.guards.length,
+        ...(contract.guards.length > 0 && { guards: [...contract.guards] }),
+      },
+    },
+    health: previous?.health ?? {
+      status: contract.guards.length > 0 ? 'waiting' : 'ok',
+      reason: contract.guards[0] ?? 'V5 execution contract projected into default query owner',
+    },
+  }))
+}
+
+function countDsxuSourceEvidence(messages: readonly Message[]): number {
+  let count = 0
+  for (const message of messages) {
+    for (const toolUse of collectToolUseBlocksFromMessage(message)) {
+      if (DSXU_DISCOVERY_TOOL_NAMES.has(toolUse.name)) count += 1
+    }
+  }
+  return count
 }
 
 function collectAssistantToolUseBlocks(
@@ -568,63 +892,31 @@ export function buildDsxuContextBudgetSystemContext({
   postCompact: boolean
 }): string {
   const effectiveWindow = Math.max(1, getEffectiveContextWindowSize(model))
-  const contextUsedPercent = Math.min(
-    100,
-    Math.max(0, Math.round((tokenUsage / effectiveWindow) * 100)),
-  )
-  const estimatedTurnsRemaining = Math.max(
-    0,
-    Math.floor((effectiveWindow - tokenUsage) / 12_000),
-  )
-  const compactionRisk =
-    contextUsedPercent >= 85 ? 'high' : contextUsedPercent >= 70 ? 'medium' : 'low'
-  const recommendedAction =
-    contextUsedPercent >= 85
-      ? 'snapshot_then_context_hygiene'
-      : contextUsedPercent >= 70
-        ? 'checkpoint_and_trim_dynamic_tail'
-        : 'continue'
-  const contextHygieneAction =
-    contextUsedPercent >= 85
-      ? 'snapshot_before_compact_if_route_cache_or_recovery_requires'
-      : contextUsedPercent >= 70
-        ? 'compress_long_logs_and_repeated_tool_output_only'
-        : 'none'
+  const decision = buildDSXUContextPressureDecision({
+    tokenUsage,
+    effectiveWindow,
+    postCompact,
+  })
   const contextWindowClass = getDsxuContextWindowClass(effectiveWindow)
-  const contextUsedBucket =
-    contextUsedPercent >= 85
-      ? '>=85'
-      : contextUsedPercent >= 70
-        ? '70-84'
-        : '<70'
   const estimatedTurnsBucket =
-    estimatedTurnsRemaining <= 2
+    decision.estimatedTurnsRemaining <= 2
       ? '0-2'
-      : estimatedTurnsRemaining <= 9
+      : decision.estimatedTurnsRemaining <= 9
         ? '3-9'
         : '>=10'
-  const warnings = [
-    contextUsedPercent >= 70
-      ? 'Medium context pressure: checkpoint the current step and keep volatile discovery/logs out of the dynamic tail.'
-      : null,
-    contextUsedPercent >= 85
-      ? 'High context pressure: update the task snapshot first; compact only when route, context-window, cache, or recovery risk requires it.'
-      : null,
-    postCompact
-      ? 'Post-compact/resume turn: memory and summaries are hints; re-read source truth before editing or claiming PASS.'
-      : null,
-  ].filter(Boolean)
 
   return [
     'contextPolicy: route-aware/context-window-aware/cache-aware',
     `contextWindowClass: ${contextWindowClass}`,
-    `contextUsedPercent: ${contextUsedBucket}`,
+    `contextUsedPercent: ${decision.bucket}`,
     `estimatedTurnsRemaining: ${estimatedTurnsBucket}`,
-    `contextRisk: ${compactionRisk}`,
-    `contextHygieneAction: ${contextHygieneAction}`,
-    `recommendedAction: ${recommendedAction}`,
+    `contextRisk: ${decision.risk}`,
+    `contextHygieneAction: ${decision.contextHygieneAction}`,
+    `recommendedAction: ${decision.recommendedAction}`,
+    `cachePolicy: ${decision.cachePolicy}`,
+    `promptTooLongCompatibility: ${decision.promptTooLongCompatibility}`,
     'sourceTruthReread: required-before-edit-or-pass',
-    ...warnings,
+    ...decision.warnings,
   ].join('\n')
 }
 
@@ -785,7 +1077,7 @@ export function getDsxuQueryBlockAuditContract(): {
 }
 
 const DSXU_VERIFICATION_PASS_NUDGE =
-  'DSXU verified-pass hard final gate: the latest verification command passed and no failing assertion remains. DSXU query-loop cursor state: recovery_state=verified_passed_ready_final; required_action=final_answer; can_claim_complete=true; verification_required=false. Do not call any tool, do not rerun the same command, and do not repeat Edit/Read. Reply with the requested PASS marker or final answer now. Continue only for an explicit new user task after this verified PASS.'
+  'DSXU verified-evidence hard final gate: the latest verification command or CollectEvidence PASS succeeded and no failing assertion remains. DSXU query-loop cursor state: recovery_state=verified_passed_ready_final; required_action=final_answer; can_claim_complete=true; verification_required=false. Do not call any tool, do not rerun the same command, and do not repeat Edit/Read. Reply with the requested PASS marker or final answer now. Continue only for an explicit new user task after this verified PASS.'
 
 const DSXU_BENCH_PASS_MARKER_RE = /\bDSXU_BENCH_[A-Z0-9_]+_PASS\b/g
 
@@ -839,6 +1131,129 @@ function getToolResultText(message: Message): Array<{
     }))
 }
 
+function getLatestDsxuToolResultBlock(messages: readonly Message[]): {
+  block: ToolResultBlockParam
+  toolName: string
+} | null {
+  const toolNameById = new Map<string, string>()
+  for (const message of messages) {
+    if (message.type !== 'assistant') continue
+    for (const toolUse of collectToolUseBlocksFromMessage(message)) {
+      toolNameById.set(toolUse.id, toolUse.name)
+    }
+  }
+
+  for (let messageIndex = messages.length - 1; messageIndex >= 0; messageIndex--) {
+    const message = messages[messageIndex]
+    if (message?.type !== 'user') continue
+    const content = getDsxuMessageContentArray(message)
+    for (let blockIndex = content.length - 1; blockIndex >= 0; blockIndex--) {
+      const block = content[blockIndex] as Partial<ToolResultBlockParam>
+      if (
+        block?.type === 'tool_result' &&
+        typeof block.tool_use_id === 'string'
+      ) {
+        return {
+          block: block as ToolResultBlockParam,
+          toolName: toolNameById.get(block.tool_use_id) ?? 'tool',
+        }
+      }
+    }
+  }
+  return null
+}
+
+export function buildDsxuToolRuntimeTrustProof(
+  messages: readonly Message[],
+): {
+  tool?: NonNullable<NonNullable<AppState['dsxuTrustState']>['proof']>['tool']
+  runtime?: NonNullable<NonNullable<AppState['dsxuTrustState']>['proof']>['runtime']
+} | undefined {
+  const latest = getLatestDsxuToolResultBlock(messages)
+  if (!latest) return undefined
+
+  const result = normalizeProviderToolResultBlock(latest.block, latest.toolName)
+  const consumers: ToolResultContractConsumerEvidence[] = [
+    {
+      consumer: 'work-state',
+      owner: 'Work-State Timeline / Query Loop',
+      canonicalResultSchema: 'dsxu.tool-call-result.v1',
+      runtimeEventSchema: 'dsxu.runtime-event.v1',
+      usesCanonicalResult: true,
+      evidenceIds: ['query:tool-result-normalized-for-work-state'],
+    },
+    {
+      consumer: 'ledger',
+      owner: 'PlanGraph / Work-State',
+      canonicalResultSchema: 'dsxu.tool-call-result.v1',
+      runtimeEventSchema: 'dsxu.runtime-event.v1',
+      usesCanonicalResult: true,
+      evidenceIds: ['query:tool-result-projected-to-ledger-event'],
+    },
+    {
+      consumer: 'tui',
+      owner: 'TUI Trust Projection',
+      canonicalResultSchema: 'dsxu.tool-call-result.v1',
+      runtimeEventSchema: 'dsxu.runtime-event.v1',
+      usesCanonicalResult: true,
+      evidenceIds: ['query:dsxuTrustState.proof.tool'],
+    },
+  ]
+  const board = buildToolResultContractConsumptionBoard({
+    result,
+    boundaryKind: 'provider_message',
+    consumers,
+    requiredConsumers: ['work-state', 'ledger', 'tui'],
+  })
+  const rawLedgerEvent = projectToolCallResultToLedgerEvent({
+    result,
+    callId: latest.block.tool_use_id,
+    toolName: latest.toolName,
+    owner: 'Tool Gate / Query Loop',
+  })
+  const ledgerEvent: LongTaskLedgerEvent = {
+    schemaVersion: 'dsxu.runtime-event.v1',
+    eventId: `query-tool-${latest.block.tool_use_id}`,
+    timestamp: Date.now(),
+    ...rawLedgerEvent,
+  }
+  const evidenceEvent: LongTaskLedgerEvent = {
+    schemaVersion: 'dsxu.runtime-event.v1',
+    eventId: `query-tool-proof-${latest.block.tool_use_id}`,
+    kind: 'evidence',
+    owner: 'TUI Trust Projection',
+    summary: 'Tool result contract proof projected into live trust state',
+    timestamp: Date.now(),
+    toolUseId: latest.block.tool_use_id,
+    evidence: ['query:dsxuTrustState.proof.tool'],
+  }
+  const runtimeProof = buildRuntimeEventSchemaConsumptionProof({
+    events: [ledgerEvent, evidenceEvent],
+    requiredKinds: ['tool', 'evidence'],
+  })
+
+  return {
+    tool: {
+      status: board.status === 'PASS_TOOL_RESULT_CONTRACT_CONSUMPTION'
+        ? 'ready'
+        : 'review',
+      readyConsumers: board.readyConsumers.length,
+      requiredConsumers: board.requiredConsumers.length,
+      missingConsumers: board.missingConsumers,
+      outputChars: board.contract.outputChars,
+      boundary: board.contract.boundaryKind,
+    },
+    runtime: {
+      status: runtimeProof.status === 'PASS_RUNTIME_EVENT_SCHEMA_CONSUMPTION'
+        ? 'ready'
+        : 'review',
+      presentKinds: runtimeProof.presentKinds.length,
+      requiredKinds: runtimeProof.requiredKinds.length,
+      missingKinds: runtimeProof.missingKinds,
+    },
+  }
+}
+
 export function looksLikeDsxuVerifiedPassingTest(text: string): boolean {
   const hasTestSignal =
     /\bbun test\b/i.test(text) ||
@@ -874,6 +1289,13 @@ export function looksLikeDsxuFailingVerification(text: string): boolean {
   return hasFailure && !looksLikeDsxuVerifiedPassingTest(text)
 }
 
+function looksLikeDsxuEvidenceCollectedPass(text: string): boolean {
+  return (
+    /DSXU tool state:\s*evidence_collected\b/i.test(text) &&
+    /\b(?:CollectEvidence\s+status|status)\s*:\s*PASS\b/i.test(text)
+  )
+}
+
 export function hasDsxuVerificationFailure(messages: Message[]): boolean {
   let sawMutation = false
   let unresolvedFailure = false
@@ -888,10 +1310,7 @@ export function hasDsxuVerificationFailure(messages: Message[]): boolean {
       }
       if (
         /DSXU tool state:\s*verification_passed\b/i.test(result.text) ||
-        (
-          /DSXU tool state:\s*evidence_collected\b/i.test(result.text) &&
-          /\b(?:CollectEvidence\s+status|status)\s*:\s*PASS\b/i.test(result.text)
-        ) ||
+        looksLikeDsxuEvidenceCollectedPass(result.text) ||
         looksLikeDsxuVerifiedPassingTest(result.text)
       ) {
         unresolvedFailure = false
@@ -910,9 +1329,7 @@ export function getLatestRequestedDsxuBenchPassMarker(
 ): string | null {
   let latest: string | null = null
   for (const message of messages) {
-    const text = extractDsxuMessageText(
-      (message as { message?: { content?: unknown } }).message?.content,
-    )
+    const text = extractDsxuMessageTextFromMessage(message)
     const matches = text.match(DSXU_BENCH_PASS_MARKER_RE)
     if (!matches || matches.length === 0) continue
     latest = matches[matches.length - 1] ?? latest
@@ -920,15 +1337,111 @@ export function getLatestRequestedDsxuBenchPassMarker(
   return latest
 }
 
+function hasDsxuStrictJsonFinalContract(messages: readonly Message[]): boolean {
+  return messages.some(message => {
+    const text = extractDsxuMessageTextFromMessage(message)
+    return (
+      /Final response must be one strict compact JSON object/i.test(text) ||
+      /Required JSON keys:\s*\{[\s\S]*"status"\s*:\s*"PASS\|PARTIAL\|FAIL\|BLOCKED"/i.test(text)
+    )
+  })
+}
+
 export function buildDsxuVerificationPassNudge(
   messages: readonly Message[],
 ): string {
   const marker = getLatestRequestedDsxuBenchPassMarker(messages)
   if (!marker) return DSXU_VERIFICATION_PASS_NUDGE
+  if (hasDsxuStrictJsonFinalContract(messages)) {
+    return [
+      DSXU_VERIFICATION_PASS_NUDGE,
+      `Requested benchmark PASS marker detected: ${marker}. The active task also requires strict compact JSON, so do not output the marker alone. Return one valid JSON object with status "PASS", cite the passing verification in evidence, and include the marker as an evidence string or nextAction value only if useful.`,
+    ].join(' ')
+  }
   return [
     DSXU_VERIFICATION_PASS_NUDGE,
     `Requested benchmark PASS marker detected: ${marker}. Your next assistant response must be exactly ${marker} and nothing else: no explanation, no Markdown, no file summary, no test summary, no prefix, and no suffix.`,
   ].join(' ')
+}
+
+function extractDsxuStrictJsonCaseId(messages: readonly Message[]): string {
+  const text = messages
+    .map(message => extractDsxuMessageTextFromMessage(message))
+    .join('\n')
+  const laneCase = text.match(/\bDSXU public-comparable DSXU lane case:\s*([A-Za-z0-9_.:-]+)/i)
+  if (laneCase?.[1]) return laneCase[1]
+  const explicitCase = text.match(/\bcaseId\b\s*[:=]\s*["'`]?([A-Za-z0-9_.:-]+)/i)
+  if (explicitCase?.[1]) return explicitCase[1]
+  return 'dsxu-post-pass-finalization'
+}
+
+function extractDsxuExecutedToolNames(messages: readonly Message[]): string[] {
+  const names = new Set<string>()
+  for (const message of messages) {
+    const content = (message as { message?: { content?: unknown } }).message?.content
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      if (
+        block &&
+        typeof block === 'object' &&
+        (block as { type?: unknown }).type === 'tool_use' &&
+        typeof (block as { name?: unknown }).name === 'string'
+      ) {
+        names.add((block as { name: string }).name)
+      }
+    }
+  }
+  return [...names].sort()
+}
+
+function extractDsxuExecutedEvidencePaths(messages: readonly Message[]): string[] {
+  const paths = new Set<string>()
+  for (const message of messages) {
+    const content = (message as { message?: { content?: unknown } }).message?.content
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      if (
+        !block ||
+        typeof block !== 'object' ||
+        (block as { type?: unknown }).type !== 'tool_use'
+      ) {
+        continue
+      }
+      const inputText = JSON.stringify((block as { input?: unknown }).input ?? {})
+      for (const match of inputText.matchAll(/\b(?:src|test|tests|__tests__)[\\/][A-Za-z0-9_.\\/-]+\.(?:ts|tsx|js|jsx|mjs|cjs)\b/g)) {
+        paths.add(match[0].replace(/\\/g, '/').replace(/\/+/g, '/'))
+      }
+    }
+  }
+  return [...paths].sort()
+}
+
+function buildDsxuStrictJsonPostPassFinal(
+  messages: readonly Message[],
+  options?: { blockedAfterPass?: boolean },
+): string {
+  const marker = getLatestRequestedDsxuBenchPassMarker(messages)
+  const toolsUsed = extractDsxuExecutedToolNames(messages)
+  const evidencePaths = extractDsxuExecutedEvidencePaths(messages)
+  const evidence = [
+    'DSXU tool state verification_passed was already observed',
+    options?.blockedAfterPass
+      ? 'stop-on-pass gate blocked extra post-pass tool use'
+      : 'runtime finalization synthesized strict JSON after passing verification',
+    ...evidencePaths.map(path => `executed evidence path: ${path}`),
+    ...(marker ? [`requested PASS marker preserved as evidence: ${marker}`] : []),
+  ]
+  const risks = options?.blockedAfterPass
+    ? ['extra tool call was blocked after verified PASS']
+    : ['runtime finalization prevented post-pass overthinking']
+  return JSON.stringify({
+    caseId: extractDsxuStrictJsonCaseId(messages),
+    status: 'PASS',
+    evidence,
+    toolsUsed,
+    risks,
+    nextAction: marker ?? 'final_answer',
+  })
 }
 
 export function buildDsxuPostPassToolBlockHardStopFinal(
@@ -941,19 +1454,30 @@ export function buildDsxuPostPassToolBlockHardStopFinal(
       ),
     )
     .join('\n')
-  if (
-    !/DSXU tool state:\s*tool_blocked_after_pass(?:_marker)?\b/i.test(text)
-  ) {
+  const blockedAfterPass =
+    /DSXU tool state:\s*tool_blocked_after_pass(?:_marker)?\b/i.test(text)
+  const verifiedPass =
+    /DSXU tool state:\s*verification_passed\b/i.test(text) ||
+    looksLikeDsxuEvidenceCollectedPass(text) ||
+    looksLikeDsxuVerifiedPassingTest(text)
+  const strictJson = hasDsxuStrictJsonFinalContract(messages)
+
+  if (!blockedAfterPass && !(strictJson && verifiedPass)) {
     return null
   }
 
   const marker = getLatestRequestedDsxuBenchPassMarker(messages)
-  if (marker) return marker
+  if (strictJson && !hasDsxuVerificationFailure(messages as Message[])) {
+    return buildDsxuStrictJsonPostPassFinal(messages, { blockedAfterPass })
+  }
+  if (blockedAfterPass && marker) return marker
 
-  return [
-    'DSXU task is already at a verified final state.',
-    'No further tools were run after the stop-on-pass gate.',
-  ].join('\n')
+  return blockedAfterPass
+    ? [
+        'DSXU task is already at a verified final state.',
+        'No further tools were run after the stop-on-pass gate.',
+      ].join('\n')
+    : null
 }
 
 function hasDsxuMutationAwaitingVerification(messages: Message[]): boolean {
@@ -994,6 +1518,7 @@ function shouldInjectVerifiedPassNudge(
   const toolNameById = new Map(toolUseBlocks.map(block => [block.id, block.name]))
   for (const resultMessage of toolResults) {
     for (const result of getToolResultText(resultMessage)) {
+      if (looksLikeDsxuEvidenceCollectedPass(result.text)) return true
       const toolName = toolNameById.get(result.toolUseId)
       if (!toolName || !DSXU_VERIFICATION_TOOL_NAMES.has(toolName)) continue
       if (looksLikeDsxuVerifiedPassingTest(result.text)) return true
@@ -1069,6 +1594,14 @@ function extractDsxuMessageText(value: unknown): string {
     })
     .filter(Boolean)
     .join('\n')
+}
+
+function extractDsxuMessageTextFromMessage(message: Message): string {
+  const nested = extractDsxuMessageText(
+    (message as { message?: { content?: unknown } }).message?.content,
+  )
+  const direct = extractDsxuMessageText((message as { content?: unknown }).content)
+  return [nested, direct].filter(Boolean).join('\n')
 }
 
 function hasDsxuPostCompactResumeSnapshot(messages: readonly Message[]): boolean {
@@ -1266,6 +1799,191 @@ function createDsxuExecutionVisibilityBlockedToolResultMessage({
   })
 }
 
+function getDsxuLaneBudgetLimit(name: string): number | undefined {
+  const value = process.env[name]
+  if (!value) return undefined
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined
+}
+
+function countDsxuToolUsesByName(blocks: readonly ToolUseBlock[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const block of blocks) {
+    counts[block.name] = (counts[block.name] ?? 0) + 1
+  }
+  return counts
+}
+
+function sumDsxuToolUseCounts(counts: Record<string, number>, names: readonly string[]): number {
+  return names.reduce((sum, name) => sum + (counts[name] ?? 0), 0)
+}
+
+function formatDsxuLaneBudgetUsage(used: number, max: number | undefined): string {
+  return max === undefined ? `${used}/unlimited` : `${used}/${max}`
+}
+
+function formatDsxuLaneBudgetRemaining(used: number, max: number | undefined): string {
+  return max === undefined ? 'unlimited' : String(Math.max(0, max - used))
+}
+
+function getDsxuLaneBudgetCounts(priorMessages: readonly Message[]): {
+  maxToolCalls?: number
+  maxReadCalls?: number
+  maxShellCalls?: number
+  total: number
+  read: number
+  shell: number
+} | null {
+  const maxToolCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_TOOL_CALLS')
+  const maxReadCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_READ_CALLS')
+  const maxShellCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_SHELL_CALLS')
+  if (
+    maxToolCalls === undefined &&
+    maxReadCalls === undefined &&
+    maxShellCalls === undefined
+  ) {
+    return null
+  }
+
+  const priorToolUses = priorMessages.flatMap(collectToolUseBlocksFromMessage)
+  const counts = countDsxuToolUsesByName(priorToolUses)
+  return {
+    maxToolCalls,
+    maxReadCalls,
+    maxShellCalls,
+    total: Object.values(counts).reduce((sum, value) => sum + value, 0),
+    read: sumDsxuToolUseCounts(counts, ['Read']),
+    shell: sumDsxuToolUseCounts(counts, ['Bash', 'PowerShell', 'bash', 'powershell']),
+  }
+}
+
+export function buildDsxuToolBudgetStatusNudge(
+  priorMessages: readonly Message[],
+): string | null {
+  const counts = getDsxuLaneBudgetCounts(priorMessages)
+  if (!counts || counts.total === 0) return null
+
+  const remainingToolCalls =
+    counts.maxToolCalls === undefined
+      ? undefined
+      : Math.max(0, counts.maxToolCalls - counts.total)
+  const remainingReadCalls =
+    counts.maxReadCalls === undefined
+      ? undefined
+      : Math.max(0, counts.maxReadCalls - counts.read)
+  const remainingShellCalls =
+    counts.maxShellCalls === undefined
+      ? undefined
+      : Math.max(0, counts.maxShellCalls - counts.shell)
+  const finiteRemainingValues = [
+    remainingToolCalls,
+    remainingReadCalls,
+    remainingShellCalls,
+  ].filter((value): value is number => value !== undefined)
+  const toolBudgetExhausted =
+    remainingToolCalls !== undefined && remainingToolCalls <= 0
+  const nearExhausted = finiteRemainingValues.some(value => value === 1)
+  const readBudgetExhausted =
+    remainingReadCalls !== undefined && remainingReadCalls <= 0
+  const shellBudgetExhausted =
+    remainingShellCalls !== undefined && remainingShellCalls <= 0
+
+  if (!toolBudgetExhausted && !nearExhausted) {
+    return [
+      'DSXU tool-budget status:',
+      `- used_tool_calls=${formatDsxuLaneBudgetUsage(counts.total, counts.maxToolCalls)}; remaining_tool_calls=${formatDsxuLaneBudgetRemaining(counts.total, counts.maxToolCalls)}.`,
+      `- used_read_calls=${formatDsxuLaneBudgetUsage(counts.read, counts.maxReadCalls)}; remaining_read_calls=${formatDsxuLaneBudgetRemaining(counts.read, counts.maxReadCalls)}.`,
+      `- used_shell_calls=${formatDsxuLaneBudgetUsage(counts.shell, counts.maxShellCalls)}; remaining_shell_calls=${formatDsxuLaneBudgetRemaining(counts.shell, counts.maxShellCalls)}.`,
+      '- next_assistant_limit: the next tool batch must stay within all remaining counts. Prefer final JSON now if source evidence is already sufficient.',
+      ...(readBudgetExhausted ? ['- read_budget: no more Read calls are available; use existing snippets, precise Grep output, or final JSON.'] : []),
+      ...(shellBudgetExhausted ? ['- shell_budget: no Bash/PowerShell calls are available in this lane.'] : []),
+      '- budget_strategy: do not spend calls on duplicate confirmation reads; choose the smallest direct evidence query.',
+    ].join('\n')
+  }
+
+  return [
+    'DSXU tool-budget status:',
+    `- used_tool_calls=${formatDsxuLaneBudgetUsage(counts.total, counts.maxToolCalls)}; remaining_tool_calls=${formatDsxuLaneBudgetRemaining(counts.total, counts.maxToolCalls)}.`,
+    `- used_read_calls=${formatDsxuLaneBudgetUsage(counts.read, counts.maxReadCalls)}; remaining_read_calls=${formatDsxuLaneBudgetRemaining(counts.read, counts.maxReadCalls)}.`,
+    `- used_shell_calls=${formatDsxuLaneBudgetUsage(counts.shell, counts.maxShellCalls)}; remaining_shell_calls=${formatDsxuLaneBudgetRemaining(counts.shell, counts.maxShellCalls)}.`,
+    toolBudgetExhausted
+      ? '- required_next: return the final compact JSON now unless the task can be completed with zero more tool calls. Do not emit more tool_use blocks for exhausted budgets.'
+      : '- required_next: you are on the last useful evidence call. Emit at most one precise tool_use block, or return the final compact JSON now if evidence is sufficient.',
+    ...(readBudgetExhausted ? ['- read_budget: no more Read calls are available; do not issue Read again.'] : []),
+    ...(shellBudgetExhausted ? ['- shell_budget: no Bash/PowerShell calls are available in this lane.'] : []),
+    '- user_experience: this is runtime working memory, not a suggestion. A lane cannot claim clean completion by hiding extra exploratory calls.',
+  ].join('\n')
+}
+
+export function buildDsxuToolBudgetGateNudge(
+  toolUseBlocks: readonly ToolUseBlock[],
+  priorMessages: readonly Message[],
+): string | null {
+  const maxToolCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_TOOL_CALLS')
+  const maxReadCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_READ_CALLS')
+  const maxShellCalls = getDsxuLaneBudgetLimit('DSXU_LANE_MAX_SHELL_CALLS')
+  if (
+    maxToolCalls === undefined &&
+    maxReadCalls === undefined &&
+    maxShellCalls === undefined
+  ) {
+    return null
+  }
+
+  const priorToolUses = priorMessages.flatMap(collectToolUseBlocksFromMessage)
+  const combinedCounts = countDsxuToolUsesByName([
+    ...priorToolUses,
+    ...toolUseBlocks,
+  ])
+  const total = Object.values(combinedCounts).reduce((sum, value) => sum + value, 0)
+  const read = sumDsxuToolUseCounts(combinedCounts, ['Read'])
+  const shell = sumDsxuToolUseCounts(combinedCounts, ['Bash', 'PowerShell', 'bash', 'powershell'])
+  const violations = [
+    maxToolCalls !== undefined && total > maxToolCalls
+      ? `tool_calls=${total}/${maxToolCalls}`
+      : null,
+    maxReadCalls !== undefined && read > maxReadCalls
+      ? `read_calls=${read}/${maxReadCalls}`
+      : null,
+    maxShellCalls !== undefined && shell > maxShellCalls
+      ? `shell_calls=${shell}/${maxShellCalls}`
+      : null,
+  ].filter((value): value is string => value !== null)
+
+  if (violations.length === 0) return null
+
+  const currentNames = Array.from(new Set(toolUseBlocks.map(block => block.name)))
+    .slice(0, 8)
+    .join(', ')
+  return [
+    'DSXU tool-budget gate:',
+    `- blocked_tool_budget: ${violations.join(', ')}${currentNames ? `; current_batch=${currentNames}` : ''}.`,
+    '- required_next: do not re-issue the blocked tools. Use only executed evidence. If executed evidence is sufficient, return the correct rubric status; otherwise return PARTIAL/BLOCKED with the missing evidence.',
+    '- user_experience: blocked extra calls are not evidence and must be disclosed as a risk. The runtime prevented hidden fan-out; do not claim anything from blocked tool results.',
+  ].join('\n')
+}
+
+function createDsxuToolBudgetBlockedToolResultMessage({
+  toolUseBlocks,
+  assistantMessages,
+  nudge,
+}: {
+  toolUseBlocks: readonly ToolUseBlock[]
+  assistantMessages: AssistantMessage[]
+  nudge: string
+}): UserMessage {
+  return createUserMessage({
+    content: toolUseBlocks.map(block => ({
+      type: 'tool_result' as const,
+      tool_use_id: block.id,
+      is_error: true,
+      content: `<tool_use_error>${nudge}</tool_use_error>`,
+    })),
+    toolUseResult: nudge,
+    sourceToolAssistantUUID: assistantMessages.at(-1)?.uuid,
+  })
+}
+
 function dsxuFinalTextClaimsCompletion(text: string): boolean {
   return (
     /\b(done|complete|completed|fixed|implemented|resolved|verified|passes?|passing|ready|all set)\b/i.test(text) ||
@@ -1299,6 +2017,7 @@ export function hasDsxuUnverifiedMutationSinceVerification(
         /DSXU tool state:\s*verification_(?:passed|failed)\b/i.test(
           result.text,
         ) ||
+        looksLikeDsxuEvidenceCollectedPass(result.text) ||
         looksLikeDsxuVerifiedPassingTest(result.text) ||
         looksLikeDsxuFailingVerification(result.text)
       ) {
@@ -1307,6 +2026,117 @@ export function hasDsxuUnverifiedMutationSinceVerification(
     }
   }
   return mutationAwaitingVerification
+}
+
+function hasDsxuMaxTurnsFinalSynthesisGate(messages: readonly Message[]): boolean {
+  return messages.some(message =>
+    extractDsxuMessageText(
+      (message as { message?: { content?: unknown } }).message?.content,
+    ).includes(DSXU_MAX_TURNS_FINAL_SYNTHESIS_GATE_MARKER),
+  )
+}
+
+function hasDsxuCurrentVerifiedCompletionEvidence(
+  messages: readonly Message[],
+): boolean {
+  let hasCurrentPass = false
+  for (const message of messages) {
+    for (const result of getToolResultText(message)) {
+      if (
+        /DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_blocked_unsafe_batch)\b/i.test(result.text)
+      ) {
+        hasCurrentPass = false
+        continue
+      }
+      if (looksLikeDsxuFailingVerification(result.text)) {
+        hasCurrentPass = false
+        continue
+      }
+      if (
+        /DSXU tool state:\s*verification_passed\b/i.test(result.text) ||
+        looksLikeDsxuEvidenceCollectedPass(result.text) ||
+        looksLikeDsxuVerifiedPassingTest(result.text)
+      ) {
+        hasCurrentPass = true
+      }
+    }
+  }
+  return hasCurrentPass
+}
+
+function hasDsxuAnyExecutedEvidence(messages: readonly Message[]): boolean {
+  return messages.some(message => getToolResultText(message).length > 0)
+}
+
+export function buildDsxuMaxTurnsFinalSynthesisNudge(
+  messages: readonly Message[],
+  {
+    maxTurns,
+    turnCount,
+  }: {
+    maxTurns: number
+    turnCount: number
+  },
+): string | null {
+  if (hasDsxuMaxTurnsFinalSynthesisGate(messages)) return null
+  const hasVerifiedCompletion = hasDsxuCurrentVerifiedCompletionEvidence(messages)
+  const hasAnyExecutedEvidence = hasDsxuAnyExecutedEvidence(messages)
+  if (!hasVerifiedCompletion && !hasAnyExecutedEvidence) return null
+  const completeMessages = messages as Message[]
+  const hasFailedVerification = hasDsxuVerificationFailure(completeMessages)
+  const hasUnverifiedMutation = hasDsxuUnverifiedMutationSinceVerification(completeMessages)
+  const passForbidden = !hasVerifiedCompletion || hasFailedVerification || hasUnverifiedMutation
+
+  return [
+    `${DSXU_MAX_TURNS_FINAL_SYNTHESIS_GATE_MARKER}:`,
+    `- max_turns_reached_after_verified_evidence: turn_count=${turnCount}; max_turns=${maxTurns}.`,
+    passForbidden
+      ? '- runtime_decision: reserve exactly one final synthesis turn instead of stopping after max-turn pressure with executed but incomplete evidence.'
+      : '- runtime_decision: allow exactly one final synthesis turn instead of stopping after a passing verification result.',
+    '- required_next: do not call tools. Return the final visible answer or strict benchmark JSON now using only executed evidence.',
+    passForbidden
+      ? '- evidence_rule: PASS/DONE is forbidden because the current evidence is not a clean verified completion. Return PARTIAL/FAIL/BLOCKED with the exact missing evidence, failed command, or blocked tool evidence.'
+      : '- evidence_rule: if the executed evidence is sufficient, claim PASS/DONE with the concrete verification command/result; if not, return PARTIAL/BLOCKED with the exact missing evidence.',
+    '- anti_hallucination: blocked, skipped, or merely planned tool calls are not evidence.',
+  ].join('\n')
+}
+
+export function buildDsxuMaxTurnsFinalSynthesisToolBlockNudge(
+  toolUseBlocks: readonly ToolUseBlock[],
+  messages: readonly Message[],
+): string | null {
+  if (toolUseBlocks.length === 0) return null
+  if (!hasDsxuMaxTurnsFinalSynthesisGate(messages)) return null
+  const toolNames = Array.from(new Set(toolUseBlocks.map(block => block.name)))
+    .slice(0, 8)
+    .join(', ')
+  return [
+    `${DSXU_MAX_TURNS_FINAL_SYNTHESIS_GATE_MARKER}:`,
+    `- blocked_tool_after_finalization_gate: ${toolUseBlocks.length} tool call(s)${toolNames ? ` (${toolNames})` : ''} were emitted after the runtime reserved the last turn for final synthesis.`,
+    '- required_next: do not re-issue tools. Return the final visible answer or strict benchmark JSON using only executed evidence.',
+    '- evidence_rule: if executed evidence is insufficient, return PARTIAL/BLOCKED with the exact missing evidence; do not spend hidden extra calls.',
+  ].join('\n')
+}
+
+function createDsxuMaxTurnsFinalSynthesisBlockedToolResultMessage({
+  toolUseBlocks,
+  assistantMessages,
+  nudge,
+}: {
+  toolUseBlocks: readonly ToolUseBlock[]
+  assistantMessages: AssistantMessage[]
+  nudge: string
+}): UserMessage {
+  return createUserMessage({
+    content: toolUseBlocks.map(block => ({
+      type: 'tool_result' as const,
+      tool_use_id: block.id,
+      is_error: true,
+      content: `<tool_use_error>${nudge}</tool_use_error>`,
+    })),
+    toolUseResult: nudge,
+    sourceToolAssistantUUID: assistantMessages.at(-1)?.uuid,
+  })
 }
 
 export function buildDsxuUnverifiedMutationFinalGateNudge(
@@ -2225,7 +3055,8 @@ export function getDsxuFailedVerificationStreakSinceEdit(
       }
       const toolResult = block as { content: string; tool_use_id?: string }
       if (
-        /DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_passed|edit_preflight_required|edit_preflight_failed)/i.test(toolResult.content)
+        /DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_passed|edit_preflight_required|edit_preflight_failed)/i.test(toolResult.content) ||
+        looksLikeDsxuEvidenceCollectedPass(toolResult.content)
       ) {
         streak = 0
         continue
@@ -2240,7 +3071,8 @@ export function getDsxuFailedVerificationStreakSinceEdit(
   }
   for (const result of currentToolStates) {
     if (
-      /DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_passed|edit_preflight_required|edit_preflight_failed)/i.test(result.text)
+      /DSXU tool state:\s*(?:edit_applied|edit_already_applied|verification_passed|edit_preflight_required|edit_preflight_failed)/i.test(result.text) ||
+      looksLikeDsxuEvidenceCollectedPass(result.text)
     ) {
       streak = 0
       continue
@@ -2378,6 +3210,7 @@ export function getDsxuFileLookupMissStreakSinceProgress(
 function isDsxuProgressToolState(text: string): boolean {
   return (
     /DSXU tool state:\s*verification_passed/i.test(text) ||
+    looksLikeDsxuEvidenceCollectedPass(text) ||
     /DSXU tool state:\s*edit_applied/i.test(text) ||
     /DSXU tool state:\s*edit_already_applied/i.test(text)
   )
@@ -2387,7 +3220,10 @@ export function getDsxuUnverifiedEditStreak(messages: Message[]): number {
   let streak = 0
   for (const message of messages) {
     for (const result of getToolResultText(message)) {
-      if (/DSXU tool state:\s*verification_passed/i.test(result.text)) {
+      if (
+        /DSXU tool state:\s*verification_passed/i.test(result.text) ||
+        looksLikeDsxuEvidenceCollectedPass(result.text)
+      ) {
         streak = 0
         continue
       }
@@ -2443,6 +3279,9 @@ export type DsxuQueryLoopStateTraceSnapshot = {
 
 export const DSXU_TOOL_RESULT_AUTO_CONTINUE_PROMPT =
   'DSXU auto-continue: the previous turn ended after tool results without a visible final answer. Continue from the latest tool results, do not repeat completed tools, and either take the next necessary step or give the final answer now.'
+
+const DSXU_MAX_TURNS_FINAL_SYNTHESIS_GATE_MARKER =
+  'DSXU max-turn finalization gate'
 
 function collectDsxuPendingToolUseIDs(messages: readonly Message[]): string[] {
   const completedToolUseIDs = collectToolResultIDs(
@@ -2514,6 +3353,300 @@ export function buildDsxuQueryLoopStateTraceSnapshot({
   }
 }
 
+function inferDsxuLedgerLiveState(
+  snapshot: DsxuQueryLoopStateTraceSnapshot,
+  gate: DsxuQueryLoopGateState | null,
+): string {
+  if (snapshot.permissionState.waiting) return 'permission'
+  if (snapshot.pendingToolUseIDs.length > 0) return 'tool'
+  if (gate?.gateKind === 'verification') return 'verification'
+  if (gate?.gateKind === 'recovery') return 'recovery'
+  if (snapshot.backgroundTaskState.activeCount > 0) return 'agent'
+  if (gate?.completionBlocked) return 'blocked'
+  if (gate && !gate.completionBlocked) return 'ready'
+  return snapshot.transitionReason ?? snapshot.lastEvent
+}
+
+function buildDsxuLedgerTrustProjection(
+  snapshot: DsxuQueryLoopStateTraceSnapshot,
+  gate: DsxuQueryLoopGateState | null,
+  contract?: NonNullable<NonNullable<AppState['dsxuTrustState']>['proof']>['contract'],
+): NonNullable<AppState['dsxuTrustState']>['ledger'] {
+  const state = inferDsxuLedgerLiveState(snapshot, gate)
+  const isCompleted =
+    gate !== null &&
+    !gate.completionBlocked &&
+    (gate.gateKind === 'final' || gate.nextAction === 'final_answer')
+  const isResumable =
+    !isCompleted &&
+    (snapshot.pendingToolUseIDs.length > 0 ||
+      snapshot.permissionState.waiting ||
+      snapshot.backgroundTaskState.activeCount > 0 ||
+      Boolean(gate?.completionBlocked))
+  const eventCount =
+    snapshot.turnCount +
+    snapshot.pendingToolUseIDs.length +
+    snapshot.backgroundTaskState.activeCount +
+    (gate ? 1 : 0)
+  return {
+    state,
+    taskId: snapshot.turnId,
+    eventCount,
+    isResumable,
+    isCompleted,
+    resumePoint: isResumable ? state : undefined,
+    nextAction: gate?.nextAction ?? snapshot.transitionReason ?? snapshot.lastEvent,
+    stall:
+      gate?.gateKind === 'recovery' || gate?.completionBlocked
+        ? gate.gateId
+        : undefined,
+    activeFrame: buildDsxuActiveFrameTrustProjection(snapshot, gate, contract),
+  }
+}
+
+function toDsxuRuntimeState(state: string): RuntimeState {
+  if (state === 'permission' || state === 'tool' || state === 'agent') return 'execute'
+  if (state === 'verification') return 'verify'
+  if (state === 'recovery' || state === 'blocked') return 'rollback'
+  if (state === 'ready') return 'review'
+  if (
+    state === 'plan' ||
+    state === 'retrieve' ||
+    state === 'edit' ||
+    state === 'execute' ||
+    state === 'verify' ||
+    state === 'review' ||
+    state === 'commit' ||
+    state === 'rollback'
+  ) {
+    return state
+  }
+  return 'plan'
+}
+
+function buildDsxuActiveFrameTrustProjection(
+  snapshot: DsxuQueryLoopStateTraceSnapshot,
+  gate: DsxuQueryLoopGateState | null,
+  contract?: NonNullable<NonNullable<AppState['dsxuTrustState']>['proof']>['contract'],
+): NonNullable<NonNullable<AppState['dsxuTrustState']>['ledger']>['activeFrame'] {
+  const liveState = inferDsxuLedgerLiveState(snapshot, gate)
+  let ledger = createProgressLedger(snapshot.turnId, 'query-loop', toDsxuRuntimeState(liveState))
+  ledger = appendLedgerEvent(ledger, {
+    kind: 'goal',
+    owner: 'Query Loop',
+    summary: snapshot.lastEvent,
+    evidence: [
+      `turn:${snapshot.turnCount}`,
+      snapshot.transitionReason ? `transition:${snapshot.transitionReason}` : '',
+    ].filter(Boolean),
+  })
+  if (contract) {
+    ledger = appendLedgerEvent(ledger, {
+      kind: 'task_contract',
+      owner: 'Query Loop / PlanGraph / Tool Gate',
+      summary: 'V5 execution contract consumed by active frame',
+      evidence: [
+        'schema:dsxu.execution-contract.v5',
+        `taskType:${contract.taskType}`,
+        `workflow:${contract.workflow}`,
+        `model:${contract.model}`,
+        `verification:${contract.verificationLevel}`,
+      ],
+      metadata: {
+        executionContract: {
+          goal: snapshot.turnId,
+          risk: contract.risk,
+          visibleTools: Array.from({ length: contract.visibleToolCount }, (_, index) => `visible-tool-${index + 1}`),
+          verificationLevel: contract.verificationLevel,
+          fallbackPolicy: contract.workflow,
+        },
+      },
+    })
+  }
+  if (snapshot.pendingToolUseIDs.length > 0) {
+    ledger = appendLedgerEvent(ledger, {
+      kind: 'tool',
+      owner: 'Tool Gate / Query Loop',
+      summary: 'Pending tool use is visible in active frame',
+      evidence: snapshot.pendingToolUseIDs.slice(0, 6).map(id => `pendingTool:${id}`),
+    })
+  }
+  if (gate) {
+    ledger = appendLedgerEvent(ledger, {
+      kind: gate.gateKind === 'verification' ? 'verification' : gate.gateKind === 'recovery' ? 'recovery' : 'evidence',
+      owner: 'Query Loop / Final Gate',
+      summary: gate.gateId,
+      evidence: [
+        `gate:${gate.gateId}`,
+        `next:${gate.nextAction}`,
+        `blocked:${String(gate.completionBlocked)}`,
+      ],
+    })
+  }
+  const frame = buildDSXUActiveFrame({ ledger })
+  return {
+    status: frame.guards.length > 0 ? 'review' : 'ready',
+    phase: frame.phase,
+    risk: frame.risk,
+    confirmedFactCount: frame.confirmedFacts.length,
+    openObligationCount: frame.openObligations.length,
+    nextAllowedActions: [...frame.nextAllowedActions].slice(0, 3),
+    guardCount: frame.guards.length,
+  }
+}
+
+function buildDsxuAgentTrustProjection(
+  snapshot: DsxuQueryLoopStateTraceSnapshot,
+  gate: DsxuQueryLoopGateState | null,
+): NonNullable<AppState['dsxuTrustState']>['agent'] {
+  const tasks = snapshot.backgroundTaskState.activeTasks
+  const runningCount = tasks.filter(task =>
+    /running|active|pending|queued/i.test(task.status),
+  ).length
+  const failedCount = tasks.filter(task =>
+    /fail|error|cancel/i.test(task.status),
+  ).length
+  const completedCount = tasks.filter(task =>
+    /complete|success|done|finished/i.test(task.status),
+  ).length
+  const scopes = Array.from(
+    new Set(
+      tasks
+        .map(task => task.type || task.description.split(/\s+/)[0])
+        .filter(Boolean),
+    ),
+  ).slice(0, 3)
+  const incompleteEvidence = gate?.gateId === 'dsxu_agent_final_gate'
+  return {
+    activeCount: snapshot.backgroundTaskState.activeCount,
+    incompleteEvidence,
+    runningCount,
+    completedCount,
+    failedCount,
+    scopes,
+    verification: incompleteEvidence
+      ? 'missing final task id/output/status evidence'
+      : snapshot.backgroundTaskState.activeCount > 0
+        ? 'active worker evidence pending'
+        : 'no active worker evidence required',
+    risk:
+      failedCount > 0
+        ? 'failed-worker'
+        : incompleteEvidence
+          ? 'incomplete-evidence'
+          : snapshot.backgroundTaskState.activeCount > 0
+            ? 'running'
+            : 'none',
+  }
+}
+
+function projectDsxuQueryLoopSnapshotToTrustState(
+  toolUseContext: ToolUseContext,
+  snapshot: DsxuQueryLoopStateTraceSnapshot,
+  messages: readonly Message[],
+): void {
+  const gate = snapshot.gateState
+  const proof = buildDsxuToolRuntimeTrustProof(messages)
+  const verificationState =
+    gate?.gateId.includes('verified_passed') ||
+    gate?.nextAction.includes('verified_pass')
+      ? 'pass'
+      : gate?.gateId.includes('verification_failed') ||
+          gate?.gateId.includes('failed_verification')
+        ? 'fail'
+        : gate?.completionBlocked
+          ? 'blocked'
+          : 'not_run'
+  const recoveryState = gate?.gateId.startsWith('dsxu_recovery_')
+    ? gate.gateId.replace(/^dsxu_recovery_/, '')
+    : gate?.gateKind === 'recovery'
+      ? gate.gateId
+      : 'idle'
+  const healthStatus =
+    snapshot.permissionState.waiting || snapshot.pendingToolUseIDs.length > 0
+      ? 'waiting'
+      : gate?.completionBlocked
+        ? 'blocked'
+        : 'ok'
+
+  updateDsxuTrustState(toolUseContext, previous => {
+    const next = {
+      schemaVersion: 'dsxu.trust-state.v1' as const,
+      updatedAt: Date.now(),
+      route: previous?.route,
+      verification: {
+        state: verificationState,
+        reason: gate?.gateId ?? snapshot.lastEvent,
+      },
+      recovery: {
+        state: recoveryState,
+        requiredAction: gate?.nextAction ?? 'none',
+        canClaimComplete: gate ? !gate.completionBlocked : false,
+        reason: gate?.gateClass ?? snapshot.transitionReason ?? snapshot.lastEvent,
+      },
+      finalClaim: {
+        allowed: gate ? !gate.completionBlocked : false,
+        ...(gate?.gateId && { gateId: gate.gateId }),
+        nextAction: gate?.nextAction ?? 'continue',
+      },
+      ledger: buildDsxuLedgerTrustProjection(snapshot, gate, previous?.proof?.contract),
+      agent: buildDsxuAgentTrustProjection(snapshot, gate),
+      proof: proof ?? previous?.proof,
+      health: {
+        status: healthStatus,
+        reason: snapshot.lastEvent,
+      },
+    }
+
+    if (
+      previous?.route === next.route &&
+      previous?.verification.state === next.verification.state &&
+      previous?.verification.reason === next.verification.reason &&
+      previous?.recovery.state === next.recovery.state &&
+      previous?.recovery.requiredAction === next.recovery.requiredAction &&
+      previous?.finalClaim.allowed === next.finalClaim.allowed &&
+      previous?.finalClaim.gateId === next.finalClaim.gateId &&
+      previous?.ledger?.state === next.ledger?.state &&
+      previous?.ledger?.taskId === next.ledger?.taskId &&
+      previous?.ledger?.eventCount === next.ledger?.eventCount &&
+      previous?.ledger?.isResumable === next.ledger?.isResumable &&
+      previous?.ledger?.isCompleted === next.ledger?.isCompleted &&
+      previous?.ledger?.resumePoint === next.ledger?.resumePoint &&
+      previous?.ledger?.nextAction === next.ledger?.nextAction &&
+      previous?.ledger?.stall === next.ledger?.stall &&
+      previous?.ledger?.activeFrame?.status === next.ledger?.activeFrame?.status &&
+      previous?.ledger?.activeFrame?.phase === next.ledger?.activeFrame?.phase &&
+      previous?.ledger?.activeFrame?.risk === next.ledger?.activeFrame?.risk &&
+      previous?.ledger?.activeFrame?.confirmedFactCount === next.ledger?.activeFrame?.confirmedFactCount &&
+      previous?.ledger?.activeFrame?.openObligationCount === next.ledger?.activeFrame?.openObligationCount &&
+      previous?.ledger?.activeFrame?.guardCount === next.ledger?.activeFrame?.guardCount &&
+      previous?.ledger?.activeFrame?.nextAllowedActions?.join('|') === next.ledger?.activeFrame?.nextAllowedActions?.join('|') &&
+      previous?.health?.status === next.health.status &&
+      previous?.health?.reason === next.health.reason &&
+      previous?.agent?.activeCount === next.agent.activeCount &&
+      previous?.agent?.incompleteEvidence === next.agent.incompleteEvidence &&
+      previous?.agent?.runningCount === next.agent.runningCount &&
+      previous?.agent?.completedCount === next.agent.completedCount &&
+      previous?.agent?.failedCount === next.agent.failedCount &&
+      previous?.agent?.verification === next.agent.verification &&
+      previous?.agent?.risk === next.agent.risk &&
+      previous?.agent?.scopes?.join('|') === next.agent.scopes?.join('|') &&
+      previous?.proof?.tool?.status === next.proof?.tool?.status &&
+      previous?.proof?.tool?.readyConsumers === next.proof?.tool?.readyConsumers &&
+      previous?.proof?.tool?.requiredConsumers === next.proof?.tool?.requiredConsumers &&
+      previous?.proof?.tool?.missingConsumers?.join('|') === next.proof?.tool?.missingConsumers?.join('|') &&
+      previous?.proof?.runtime?.status === next.proof?.runtime?.status &&
+      previous?.proof?.runtime?.presentKinds === next.proof?.runtime?.presentKinds &&
+      previous?.proof?.runtime?.requiredKinds === next.proof?.runtime?.requiredKinds &&
+      previous?.proof?.runtime?.missingKinds?.join('|') === next.proof?.runtime?.missingKinds?.join('|')
+    ) {
+      return previous
+    }
+
+    return next
+  })
+}
+
 function getMessageContentText(content: unknown): string {
   if (typeof content === 'string') return content
   if (Array.isArray(content)) {
@@ -2558,11 +3691,29 @@ export function shouldAllowSystemQueuedCommandDrainForTurn(
   const latestHumanPrompt = getLatestRealUserPromptText(messages)
   if (!latestHumanPrompt) return true
   return (
-    /\b(continue|status|progress|background|task|agent|output|result|resume|wait|finish|notification)\b/i.test(
-      latestHumanPrompt,
+    isQueuedSystemDrainRequest(latestHumanPrompt) &&
+    !isStaleTopicBoundaryComplaint(latestHumanPrompt)
+  )
+}
+
+function isQueuedSystemDrainRequest(prompt: string): boolean {
+  return (
+    /\b(continue|status|progress|background|task|agent|output|result|resume|wait|finish|notification|queue|log|terminal)\b/i.test(
+      prompt,
     ) ||
-    /(?:继续|状态|进度|后台|任务|智能体|输出|结果|恢复|等待|完成|通知|看一下|查看)/.test(
-      latestHumanPrompt,
+    /(?:继续|状态|进度|后台|背景|任务|代理|输出|结果|恢复|等待|完成|通知|队列|挂起|运行中|日志|终端)/.test(
+      prompt,
+    )
+  )
+}
+
+function isStaleTopicBoundaryComplaint(prompt: string): boolean {
+  return (
+    /\b(old|previous|stale|unrelated|wrong topic|new topic)\b/i.test(
+      prompt,
+    ) ||
+    /(?:旧问题|旧话题|上个话题|上一轮|历史问题|无关|错话题|新话题|话题结束|不要回复旧|为什么还在回复)/.test(
+      prompt,
     )
   )
 }
@@ -2695,17 +3846,88 @@ async function* queryLoop(
       turnCount,
     } = state
     const routeText = buildDeepSeekRouteText(messages)
-    const routeInput = {
+    const failedVerificationStreak = getDsxuFailedVerificationStreakSinceEdit(messages)
+    const sourceEvidenceCount = countDsxuSourceEvidence(messages)
+    const hasUnresolvedVerificationFailure =
+      hasDsxuVerificationFailure(messages) || failedVerificationStreak > 0
+    const routeInput = applyDeepSeekRouteProfileLatch({
       ...inferDeepSeekV4RouteInput(routeText, {
         initialPlanningTurn: turnCount === 1 && state.transition === undefined,
       }),
       retryAfterFailure: shouldEscalateDeepSeekRouteAfterTransition(
         state.transition,
-      ),
-      failedVerification: hasDsxuVerificationFailure(messages),
+      ) || hasUnresolvedVerificationFailure,
+      failedVerification: hasUnresolvedVerificationFailure,
+      priorFlashAttempted: hasUnresolvedVerificationFailure,
+      savedTaskEvidence: sourceEvidenceCount > 0 || hasUnresolvedVerificationFailure,
+      allowProAdmission: failedVerificationStreak >= DSXU_FAILED_VERIFICATION_RECOVERY_THRESHOLD,
       complexAgentTask: !!toolUseContext.agentId,
-    }
+    })
     const routeDecision = decideDeepSeekV4Route(routeInput)
+    const routeAdmissionProjection = projectDeepSeekRouteAdmissionToLedgerEvent({
+      routeDecision,
+      priorFailureCount: failedVerificationStreak,
+      sourceEvidenceCount,
+      taskId: `query-turn-${turnCount}`,
+      turnId: `query-turn-${turnCount}`,
+    })
+    traceDsxuLifecycle('deepseek_route_admission_v8', {
+      proAdmissionState: routeAdmissionProjection.proAdmissionState,
+      route: routeDecision.reason,
+      model: routeDecision.model,
+      evidence: routeAdmissionProjection.evidence,
+    })
+    const dsxuExecutionContract = compileDSXUExecutionContract({
+      taskId: `query-turn-${turnCount}`,
+      userRequest: routeText || 'DSXU query turn',
+      riskTags: [
+        routeInput.highRiskBash ? 'external' : '',
+        routeInput.complexAgentTask ? 'agent' : '',
+        routeInput.failedVerification ? 'verification' : '',
+        routeInput.workflowKind === 'verification' ? 'benchmark' : '',
+      ].filter(Boolean),
+      publicClaimIntent: routeInput.workflowKind === 'verification',
+      benchmarkIntent: routeInput.workflowKind === 'verification',
+      externalSideEffectIntent: routeInput.highRiskBash,
+      requiresAgentEvidence: routeInput.complexAgentTask,
+      priorFailureCount: failedVerificationStreak,
+      sourceEvidenceCount,
+      routeDecisionOverride: routeDecision,
+    })
+    const actualToolNames = toolUseContext.options.tools.map(tool => tool.name)
+    const dsxuPromptFramePlan = buildDSXUPromptSectionPlan({
+      taskType: dsxuExecutionContract.taskType,
+      riskLevel: dsxuExecutionContract.risk,
+      goal: routeText || 'DSXU query turn',
+      currentEvidence: dsxuExecutionContract.evidence,
+      verificationLevel: dsxuExecutionContract.verificationLevel,
+      stopCondition:
+        dsxuExecutionContract.claimPolicy === 'verified_claim'
+          ? 'verified evidence before final PASS'
+          : 'honest PARTIAL/BLOCKED until required evidence exists',
+      toolView: {
+        profile: dsxuExecutionContract.taskType === 'explain' ? 'explain' : dsxuExecutionContract.taskType,
+        visibleToolIds: dsxuExecutionContract.visibleTools,
+        hiddenToolIds: actualToolNames.filter(toolName => !dsxuExecutionContract.visibleTools.includes(toolName)).slice(0, 16),
+      },
+    })
+    projectDsxuExecutionContractToTrustState(toolUseContext, dsxuExecutionContract)
+    traceDsxuLifecycle('dsxu_execution_contract_v5', {
+      schemaVersion: dsxuExecutionContract.schemaVersion,
+      taskType: dsxuExecutionContract.taskType,
+      workflow: dsxuExecutionContract.workflow,
+      risk: dsxuExecutionContract.risk,
+      model: dsxuExecutionContract.routeDecision.model,
+      routeReason: dsxuExecutionContract.routeDecision.reason,
+      actualVisibleTools: toolUseContext.options.tools.length,
+      shadowVisibleTools: dsxuExecutionContract.visibleTools.length,
+      promptFrameChars: dsxuPromptFramePlan.promptChars,
+      promptFrameDynamicTailChars: dsxuPromptFramePlan.dynamicTailChars,
+      visibleToolCount: dsxuExecutionContract.visibleTools.length,
+      verificationLevel: dsxuExecutionContract.verificationLevel,
+      guardCount: dsxuExecutionContract.guards.length,
+      owner: dsxuExecutionContract.owner,
+    })
     const routeModelOverride = decideDeepSeekV4RuntimeModelOverride({
       currentModel: toolUseContext.options.mainLoopModel,
       routeDecision,
@@ -2802,21 +4024,27 @@ async function* queryLoop(
       gateState?: DsxuQueryLoopGateState | null
     }) => {
       const loopAppState = toolUseContext.getAppState()
+      const snapshot = buildDsxuQueryLoopStateTraceSnapshot({
+        turnId: queryTracking.chainId,
+        turnCount,
+        transition: state.transition,
+        lastEvent,
+        lastEventTime: new Date().toISOString(),
+        pendingToolUseSummary,
+        messages: snapshotMessages,
+        permissionMode: loopAppState.toolPermissionContext?.mode,
+        tasks: loopAppState.tasks as Record<string, unknown> | undefined,
+        finalGateState,
+        gateState,
+      })
       traceDsxuLifecycle(
         'query_loop_state_snapshot',
-        buildDsxuQueryLoopStateTraceSnapshot({
-          turnId: queryTracking.chainId,
-          turnCount,
-          transition: state.transition,
-          lastEvent,
-          lastEventTime: new Date().toISOString(),
-          pendingToolUseSummary,
-          messages: snapshotMessages,
-          permissionMode: loopAppState.toolPermissionContext?.mode,
-          tasks: loopAppState.tasks as Record<string, unknown> | undefined,
-          finalGateState,
-          gateState,
-        }),
+        snapshot,
+      )
+      projectDsxuQueryLoopSnapshotToTrustState(
+        toolUseContext,
+        snapshot,
+        snapshotMessages,
       )
     }
     traceQueryLoopStateSnapshot({
@@ -2852,6 +4080,9 @@ async function* queryLoop(
           .filter(t => !Number.isFinite(t.maxResultSizeChars))
           .map(t => t.name),
       ),
+      {
+        profile: dsxuExecutionContract.taskType,
+      },
     )
 
     // Apply snip before microcompact (both may run -?they are not mutually exclusive).
@@ -2919,6 +4150,7 @@ async function* queryLoop(
         ...(modelRouteEvidence.length > 0
           ? { 'DSXU Model Route Evidence': modelRouteEvidence[modelRouteEvidence.length - 1] }
           : {}),
+        'DSXU V8 Active Frame': dsxuPromptFramePlan.promptText,
       }),
     )
 
@@ -3039,6 +4271,32 @@ async function* queryLoop(
         lastEvent: 'recovery_gate_advisory',
         snapshotMessages: messagesForQuery,
         gateState: tailToolResultRecoveryCursor.gateState,
+      })
+    }
+
+    const toolBudgetStatusNudge =
+      buildDsxuToolBudgetStatusNudge(messagesForQuery)
+    if (toolBudgetStatusNudge) {
+      const toolBudgetStatusMessage = createUserMessage({
+        content: toolBudgetStatusNudge,
+        isMeta: true,
+      })
+      messagesForQuery = [
+        ...messagesForQuery,
+        toolBudgetStatusMessage,
+      ]
+      traceQueryLoopStateSnapshot({
+        lastEvent: 'tool_budget_status_advisory',
+        snapshotMessages: messagesForQuery,
+        gateState: {
+          owner: 'query_loop',
+          gateId: 'dsxu_tool_budget_status',
+          gateKind: 'tool_scheduling',
+          gateClass: 'QUALITY_ADVISORY',
+          blocked: false,
+          completionBlocked: false,
+          nextAction: 'stay_within_remaining_tool_budget_or_finalize',
+        },
       })
     }
 
@@ -4184,16 +5442,22 @@ async function* queryLoop(
       }
 
       if (!toolUseContext.agentId) {
-        yield createSystemMessage(
-          buildDsxuFinalUsageEvidenceSystemMessage({
-            assistantMessages,
-            model: routeDecision.model,
-            routeReason: routeDecision.reason,
-            workflowKind: routeInput.workflowKind,
-            role: routeInput.role,
-          }),
-          'info',
-        )
+        const finalUsageEvidence = buildDsxuFinalUsageEvidenceSystemMessage({
+          assistantMessages,
+          model: routeDecision.model,
+          routeReason: routeDecision.reason,
+          workflowKind: routeInput.workflowKind,
+          role: routeInput.role,
+        })
+        projectDsxuFinalUsageEvidenceToTrustState({
+          toolUseContext,
+          evidence: finalUsageEvidence,
+          model: routeDecision.model,
+          routeReason: routeDecision.reason,
+          workflowKind: routeInput.workflowKind,
+          role: routeInput.role,
+        })
+        yield createSystemMessage(finalUsageEvidence, 'info')
       }
 
       return { reason: 'completed' }
@@ -4265,6 +5529,117 @@ async function* queryLoop(
         stopHookActive: undefined,
         turnCount,
         transition: { reason: 'dsxu_execution_visibility_gate' },
+      }
+      continue
+    }
+
+    const toolBudgetNudge = buildDsxuToolBudgetGateNudge(
+      toolUseBlocks,
+      messagesForQuery,
+    )
+    if (toolBudgetNudge) {
+      if (streamingToolExecutor) {
+        await streamingToolExecutor.discardAndSettle()
+      }
+      const blockedToolResults =
+        createDsxuToolBudgetBlockedToolResultMessage({
+          toolUseBlocks,
+          assistantMessages,
+          nudge: toolBudgetNudge,
+        })
+      yield blockedToolResults
+      traceQueryLoopStateSnapshot({
+        lastEvent: 'tool_scheduling_gate_blocked',
+        snapshotMessages: [
+          ...messagesForQuery,
+          ...assistantMessages,
+          blockedToolResults,
+        ],
+        gateState: {
+          owner: 'query_loop',
+          gateId: 'dsxu_tool_budget_gate',
+          gateKind: 'tool_scheduling',
+          gateClass: 'QUALITY_BLOCK',
+          blocked: true,
+          completionBlocked: true,
+          nextAction: 'return_partial_or_continue_within_tool_budget',
+        },
+      })
+      state = {
+        messages: [
+          ...messagesForQuery,
+          ...assistantMessages,
+          blockedToolResults,
+          createUserMessage({
+            content: toolBudgetNudge,
+            isMeta: true,
+          }),
+        ],
+        toolUseContext,
+        autoCompactTracking: tracking,
+        maxOutputTokensRecoveryCount: 0,
+        hasAttemptedReactiveCompact,
+        maxOutputTokensOverride: undefined,
+        pendingToolUseSummary: undefined,
+        stopHookActive: undefined,
+        turnCount,
+        transition: { reason: 'dsxu_tool_budget_gate' },
+      }
+      continue
+    }
+
+    const maxTurnsFinalSynthesisToolBlockNudge =
+      buildDsxuMaxTurnsFinalSynthesisToolBlockNudge(
+        toolUseBlocks,
+        messagesForQuery,
+      )
+    if (maxTurnsFinalSynthesisToolBlockNudge) {
+      if (streamingToolExecutor) {
+        await streamingToolExecutor.discardAndSettle()
+      }
+      const blockedToolResults =
+        createDsxuMaxTurnsFinalSynthesisBlockedToolResultMessage({
+          toolUseBlocks,
+          assistantMessages,
+          nudge: maxTurnsFinalSynthesisToolBlockNudge,
+        })
+      yield blockedToolResults
+      traceQueryLoopStateSnapshot({
+        lastEvent: 'tool_scheduling_gate_blocked',
+        snapshotMessages: [
+          ...messagesForQuery,
+          ...assistantMessages,
+          blockedToolResults,
+        ],
+        gateState: {
+          owner: 'query_loop',
+          gateId: 'dsxu_max_turns_final_synthesis_tool_block',
+          gateKind: 'tool_scheduling',
+          gateClass: 'QUALITY_BLOCK',
+          blocked: true,
+          completionBlocked: true,
+          nextAction: 'return_final_answer_from_executed_evidence',
+        },
+      })
+      state = {
+        messages: [
+          ...messagesForQuery,
+          ...assistantMessages,
+          blockedToolResults,
+          createUserMessage({
+            content: maxTurnsFinalSynthesisToolBlockNudge,
+            isMeta: true,
+          }),
+        ],
+        toolUseContext,
+        autoCompactTracking: tracking,
+        maxOutputTokensRecoveryCount: 0,
+        hasAttemptedReactiveCompact,
+        maxOutputTokensOverride: undefined,
+        pendingToolUseSummary: undefined,
+        stopHookActive: undefined,
+        turnCount,
+        transition: { reason: 'dsxu_max_turns_final_synthesis_tool_block' },
       }
       continue
     }
@@ -4373,16 +5748,22 @@ async function* queryLoop(
         gateState: buildDsxuPostPassFinalizationGateState(postPassSource),
       })
       if (!toolUseContext.agentId) {
-        yield createSystemMessage(
-          buildDsxuFinalUsageEvidenceSystemMessage({
-            assistantMessages,
-            model: routeDecision.model,
-            routeReason: routeDecision.reason,
-            workflowKind: routeInput.workflowKind,
-            role: routeInput.role,
-          }),
-          'info',
-        )
+        const finalUsageEvidence = buildDsxuFinalUsageEvidenceSystemMessage({
+          assistantMessages,
+          model: routeDecision.model,
+          routeReason: routeDecision.reason,
+          workflowKind: routeInput.workflowKind,
+          role: routeInput.role,
+        })
+        projectDsxuFinalUsageEvidenceToTrustState({
+          toolUseContext,
+          evidence: finalUsageEvidence,
+          model: routeDecision.model,
+          routeReason: routeDecision.reason,
+          workflowKind: routeInput.workflowKind,
+          role: routeInput.role,
+        })
+        yield createSystemMessage(finalUsageEvidence, 'info')
       }
       return { reason: 'completed' }
     }
@@ -4786,6 +6167,60 @@ async function* queryLoop(
 
     // Check if we've reached the max turns limit
     if (maxTurns && nextTurnCount > maxTurns) {
+      const messagesForFinalSynthesisGate = [
+        ...messagesForQuery,
+        ...assistantMessages,
+        ...toolResults,
+        ...(verifiedPassNudge ? [verifiedPassNudge] : []),
+        ...(toolStateCursorNudge ? [toolStateCursorNudge] : []),
+        ...pendingAgentContinuations,
+      ]
+      const maxTurnsFinalSynthesisNudge =
+        buildDsxuMaxTurnsFinalSynthesisNudge(
+          messagesForFinalSynthesisGate,
+          {
+            maxTurns,
+            turnCount: nextTurnCount,
+          },
+        )
+      if (maxTurnsFinalSynthesisNudge) {
+        const maxTurnsFinalSynthesisMessage = createUserMessage({
+          content: maxTurnsFinalSynthesisNudge,
+          isMeta: true,
+        })
+        traceQueryLoopStateSnapshot({
+          lastEvent: 'max_turns_final_synthesis_advisory',
+          snapshotMessages: [
+            ...messagesForFinalSynthesisGate,
+            maxTurnsFinalSynthesisMessage,
+          ],
+          gateState: {
+            owner: 'query_loop',
+            gateId: 'dsxu_max_turns_final_synthesis_gate',
+            gateKind: 'completion',
+            gateClass: 'QUALITY_ADVISORY',
+            blocked: false,
+            completionBlocked: false,
+            nextAction: 'return_final_answer_from_executed_evidence',
+          },
+        })
+        state = {
+          messages: [
+            ...messagesForFinalSynthesisGate,
+            maxTurnsFinalSynthesisMessage,
+          ],
+          toolUseContext: toolUseContextWithQueryTracking,
+          autoCompactTracking: tracking,
+          turnCount: nextTurnCount,
+          maxOutputTokensRecoveryCount: 0,
+          hasAttemptedReactiveCompact: false,
+          pendingToolUseSummary: nextPendingToolUseSummary,
+          maxOutputTokensOverride: undefined,
+          stopHookActive,
+          transition: { reason: 'next_turn' },
+        }
+        continue
+      }
       yield createAttachmentMessage({
         type: 'max_turns_reached',
         maxTurns,

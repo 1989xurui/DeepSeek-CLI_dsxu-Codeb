@@ -26,13 +26,13 @@ export type ResolvedAttachment = {
 export function getDsxuBriefAttachmentRuntimeProfile(): {
   runtime: 'DSXU Brief Attachment Resolver'
   uploadEnv: readonly string[]
-  providerMigrationSourceUploadEnv: readonly string[]
+  archivedSourceUploadEnv: readonly string[]
   validationPolicy: string
 } {
   return {
     runtime: 'DSXU Brief Attachment Resolver',
     uploadEnv: ['DSXU_CODE_BRIEF_UPLOAD'],
-    providerMigrationSourceUploadEnv: ['DSXU_CODE_BRIEF_UPLOAD'],
+    archivedSourceUploadEnv: ['DSXU_CODE_BRIEF_UPLOAD'],
     validationPolicy:
       'DSXU validates local attachment existence, regular-file status, permissions, image classification, and optional bridge upload before evidence rendering.',
   }
@@ -104,7 +104,7 @@ export async function resolveAttachments(
     // Headless/SDK callers never set appState.replBridgeEnabled (only the TTY
     // REPL does, at main.tsx init). DSXU_CODE_BRIEF_UPLOAD lets a host that
     // runs the CLI as a subprocess opt in — e.g. the cowork desktop bridge,
-    // while provider-migration source hosts may still pass DSXU_CODE_OAUTH_TOKEN for migration.
+    // while archived source hosts may still pass DSXU_CODE_OAUTH_TOKEN for migration.
     const shouldUpload =
       uploadCtx.replBridgeEnabled ||
       isDsxuCodeEnvTruthy('BRIEF_UPLOAD')

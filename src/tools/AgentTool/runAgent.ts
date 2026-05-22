@@ -371,9 +371,9 @@ export async function* runAgent({
     agentDefinition.omitDsxuMd &&
     !override?.userContext &&
     getFeatureValue_CACHED_MAY_BE_STALE(slimSubagentInstructionFlag, true)
-  const providerMigrationInstructionContextField = `${'cl' + 'aude'}Md`
+  const archivedInstructionContextField = `${'cl' + 'aude'}Md`
   const {
-    [providerMigrationInstructionContextField]: _omittedInstructionContext,
+    [archivedInstructionContextField]: _omittedInstructionContext,
     ...userContextWithoutInstructionContext
   } =
     baseUserContext
@@ -638,7 +638,7 @@ export async function* runAgent({
     // Fork children inherit thinking to keep cache-safe params aligned. DSXU
     // coding agents also inherit thinking because DeepSeek Flash/Pro planning,
     // review, and recovery quality drops sharply when sub-agents are forced
-    // into non-thinking mode. Provider-migration source mode keeps the old token-saving default.
+    // into non-thinking mode. Archived source mode keeps the old token-saving default.
     thinkingConfig: getDsxuSubagentThinkingConfig(
       useExactTools,
       toolUseContext.options.thinkingConfig,

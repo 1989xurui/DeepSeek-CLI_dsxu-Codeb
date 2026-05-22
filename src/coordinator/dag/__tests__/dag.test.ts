@@ -6,6 +6,7 @@ import {
   linearDag,
   mapReduceDag,
   debateDag,
+  planExecuteVerifyDag,
 } from '../index';
 import type { DagSpec, DagNode } from '../types';
 
@@ -45,6 +46,16 @@ describe('DAG templates', () => {
     expect(spec.nodes.length).toBe(5);
     const executors = spec.nodes.filter(n => n.kind === 'executor');
     expect(executors.length).toBe(2);
+  });
+
+  test('planExecuteVerifyDag exposes the PEV chain', () => {
+    const spec = planExecuteVerifyDag();
+    expect(spec.nodes.map(n => n.id)).toEqual(['plan', 'execute', 'verify']);
+    expect(spec.entry).toBe('plan');
+    expect(spec.exit).toBe('verify');
+    expect(spec.nodes[1].deps).toEqual(['plan']);
+    expect(spec.nodes[2].deps).toEqual(['execute']);
+    expect(spec.nodes[2].config?.gates).toContain('tdd-gate');
   });
 });
 
@@ -170,5 +181,18 @@ describe('runDag', () => {
     expect(result.nodeResults['root'].status).toBe('success');
     expect(result.nodeResults['a'].status).toBe('failed');
     expect(result.nodeResults['b'].status).toBe('success');
+  });
+
+  test('does not pretend to execute without an explicit mainline executor', async () => {
+    const spec: DagSpec = {
+      nodes: [node('plan')],
+      entry: 'plan',
+      exit: 'plan',
+    };
+    const result = await runDag(spec);
+
+    expect(result.status).toBe('failed');
+    expect(result.failedNodes).toContain('plan');
+    expect(result.nodeResults['plan'].error ?? '').toContain('no DSXU mainline executor');
   });
 });

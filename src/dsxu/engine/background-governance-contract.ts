@@ -32,7 +32,7 @@ const providerShellReplacement: DSXUBackgroundGovernanceItem = {
   ],
   requiredTests: [
     'default CLI path rejects old control/session aliases',
-    'provider migration source loads only behind explicit DSXU legacy flags',
+    'archived source loads only behind explicit DSXU legacy flags',
     'remote sessions are blocked until a DSXU-owned remote backend is configured',
     'provider events cover session, tool, permission, remote blocked, and task sync semantics',
     'MCP credential-like values are redacted before model re-entry',
@@ -42,7 +42,7 @@ const providerShellReplacement: DSXUBackgroundGovernanceItem = {
     'real-mcp-resource-redaction',
   ],
   archivalRule:
-    'old control/session/proxy shell directories may be archived only after DSXU provider contract tests and live default-path benchmark are green and provider-migration aliases remain provider-migration-flag-only.',
+    'old control/session/proxy shell directories may be archived only after DSXU provider contract tests and live default-path benchmark are green and archived aliases remain explicit-flag-only.',
 }
 
 const stopHooks: DSXUBackgroundGovernanceItem = {

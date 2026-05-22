@@ -14,8 +14,8 @@ type DiagnosticsDisplayProps = {
   attachment: DiagnosticsAttachment;
   verbose: boolean;
 };
-const PROVIDER_MIGRATION_RIGHT_FS_PREFIX = `_${'cl' + 'aude'}_fs_right:`;
-const PROVIDER_MIGRATION_RIGHT_FS_LABEL = 'provider_migration_fs_right';
+const ARCHIVED_RIGHT_FS_PREFIX = `_${'cl' + 'aude'}_fs_right:`;
+const ARCHIVED_RIGHT_FS_LABEL = 'archived_fs_right';
 export function DiagnosticsDisplay(t0) {
   const $ = _c(14);
   const {
@@ -86,7 +86,7 @@ export function DiagnosticsDisplay(t0) {
   }
 }
 function _temp3(file_0, fileIndex) {
-  return <React.Fragment key={fileIndex}><MessageResponse><Text dimColor={true} wrap="wrap"><Text bold={true}>{relative(getCwd(), file_0.uri.replace("file://", "").replace(PROVIDER_MIGRATION_RIGHT_FS_PREFIX, ""))}</Text>{" "}<Text dimColor={true}>{file_0.uri.startsWith("file://") ? "(file://)" : file_0.uri.startsWith(PROVIDER_MIGRATION_RIGHT_FS_PREFIX) ? `(${PROVIDER_MIGRATION_RIGHT_FS_LABEL})` : `(${file_0.uri.split(":")[0]})`}</Text>:</Text></MessageResponse>{file_0.diagnostics.map(_temp2)}</React.Fragment>;
+  return <React.Fragment key={fileIndex}><MessageResponse><Text dimColor={true} wrap="wrap"><Text bold={true}>{relative(getCwd(), file_0.uri.replace("file://", "").replace(ARCHIVED_RIGHT_FS_PREFIX, ""))}</Text>{" "}<Text dimColor={true}>{file_0.uri.startsWith("file://") ? "(file://)" : file_0.uri.startsWith(ARCHIVED_RIGHT_FS_PREFIX) ? `(${ARCHIVED_RIGHT_FS_LABEL})` : `(${file_0.uri.split(":")[0]})`}</Text>:</Text></MessageResponse>{file_0.diagnostics.map(_temp2)}</React.Fragment>;
 }
 function _temp2(diagnostic, diagIndex) {
   return <MessageResponse key={diagIndex}><Text dimColor={true} wrap="wrap">{"  "}{DiagnosticTrackingService.getSeveritySymbol(diagnostic.severity)}{" [Line "}{diagnostic.range.start.line + 1}:{diagnostic.range.start.character + 1}{"] "}{diagnostic.message}{diagnostic.code ? ` [${diagnostic.code}]` : ""}{diagnostic.source ? ` (${diagnostic.source})` : ""}</Text></MessageResponse>;

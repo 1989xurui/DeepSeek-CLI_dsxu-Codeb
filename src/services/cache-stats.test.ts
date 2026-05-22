@@ -1,60 +1,152 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
-import { globalCacheStats, recordCacheUsage, CacheStatsImpl, cacheTuningHook } from './cache-stats';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import {
+  CacheStatsImpl,
+  cacheTuningHook,
+  globalCacheStats,
+  recordCacheUsage,
+} from './cache-stats';
 
-describe('R5-19: Cache hit 埋点 + telemetry', () => {
+describe('R5-19: Cache hit baseline + telemetry', () => {
   let cacheStats: CacheStatsImpl;
+  let tmpStatsRoot: string | null = null;
+  const originalCacheStatsPath = process.env.DSXU_CACHE_STATS_PATH;
+  const originalCacheStatsDir = process.env.DSXU_CACHE_STATS_DIR;
 
   beforeEach(() => {
-    // 使用新的实例进行测试，避免全局状态污染
-    // 跳过磁盘加载以避免测试间状态污染
+    tmpStatsRoot = mkdtempSync(join(tmpdir(), 'dsxu-cache-stats-test-'));
+    process.env.DSXU_CACHE_STATS_PATH = join(tmpStatsRoot, 'cache-stats.json');
+    delete process.env.DSXU_CACHE_STATS_DIR;
     cacheStats = new CacheStatsImpl(true);
   });
 
-  describe('基础功能', () => {
-    it('初始状态应为零', () => {
+  afterEach(() => {
+    if (originalCacheStatsPath === undefined) delete process.env.DSXU_CACHE_STATS_PATH;
+    else process.env.DSXU_CACHE_STATS_PATH = originalCacheStatsPath;
+    if (originalCacheStatsDir === undefined) delete process.env.DSXU_CACHE_STATS_DIR;
+    else process.env.DSXU_CACHE_STATS_DIR = originalCacheStatsDir;
+    if (tmpStatsRoot && existsSync(tmpStatsRoot)) {
+      rmSync(tmpStatsRoot, { recursive: true, force: true });
+    }
+    tmpStatsRoot = null;
+  });
+
+  describe('basic accounting', () => {
+    it('starts at zero', () => {
       expect(cacheStats.hit).toBe(0);
       expect(cacheStats.miss).toBe(0);
       expect(cacheStats.ratio()).toBe(0);
     });
 
-    it('记录命中 tokens', () => {
+    it('derives miss tokens from total prompt tokens when explicit miss is absent', () => {
       cacheStats.record({ prompt_cache_hit_tokens: 100, prompt_tokens: 200 });
       expect(cacheStats.hit).toBe(100);
-      expect(cacheStats.miss).toBe(100); // 200 - 100 = 100
+      expect(cacheStats.miss).toBe(100);
       expect(cacheStats.ratio()).toBe(0.5);
     });
 
-    it('记录只有命中 tokens（无总 tokens）', () => {
+    it('uses explicit DeepSeek miss tokens instead of deriving from total tokens', () => {
+      cacheStats.record({
+        prompt_cache_hit_tokens: 100,
+        prompt_cache_miss_tokens: 20,
+        prompt_tokens: 999,
+      });
+
+      expect(cacheStats.hit).toBe(100);
+      expect(cacheStats.miss).toBe(20);
+      expect(cacheStats.ratio()).toBeCloseTo(100 / 120);
+    });
+
+    it('records normalized adapter cache fields', () => {
+      cacheStats.record({
+        cache_read_input_tokens: 30,
+        cache_creation_input_tokens: 70,
+        input_tokens: 100,
+      });
+
+      expect(cacheStats.hit).toBe(30);
+      expect(cacheStats.miss).toBe(70);
+      expect(cacheStats.ratio()).toBe(0.3);
+    });
+
+    it('records nested dsxu usage fields when top-level fields are absent', () => {
+      cacheStats.record({
+        prompt_tokens: 50,
+        dsxu: {
+          prompt_cache_hit_tokens: 44,
+          prompt_cache_miss_tokens: 6,
+        },
+      });
+
+      expect(cacheStats.hit).toBe(44);
+      expect(cacheStats.miss).toBe(6);
+    });
+
+    it('records only hit tokens when no total or explicit miss is present', () => {
       cacheStats.record({ prompt_cache_hit_tokens: 50 });
       expect(cacheStats.hit).toBe(50);
       expect(cacheStats.miss).toBe(0);
       expect(cacheStats.ratio()).toBe(1);
     });
 
-    it('记录只有总 tokens（无命中）', () => {
+    it('records only total tokens as misses when hit tokens are absent', () => {
       cacheStats.record({ prompt_tokens: 300 });
       expect(cacheStats.hit).toBe(0);
       expect(cacheStats.miss).toBe(300);
       expect(cacheStats.ratio()).toBe(0);
     });
 
-    it('记录空 usage 对象', () => {
+    it('ignores empty and invalid usage fields', () => {
       cacheStats.record({});
+      // @ts-expect-error invalid input shape for defensive runtime behavior
+      cacheStats.record({ prompt_cache_hit_tokens: 'invalid', prompt_tokens: null });
+
       expect(cacheStats.hit).toBe(0);
       expect(cacheStats.miss).toBe(0);
       expect(cacheStats.ratio()).toBe(0);
     });
 
-    it('记录无效字段类型', () => {
-      // @ts-expect-error 测试无效输入
-      cacheStats.record({ prompt_cache_hit_tokens: 'invalid', prompt_tokens: null });
-      expect(cacheStats.hit).toBe(0);
-      expect(cacheStats.miss).toBe(0);
+    it('persists stats to the configured project cache path when flushed', () => {
+      const statsPath = process.env.DSXU_CACHE_STATS_PATH!;
+
+      cacheStats.record({
+        prompt_cache_hit_tokens: 12,
+        prompt_cache_miss_tokens: 3,
+      });
+      expect(existsSync(statsPath)).toBe(false);
+      cacheStats.flush();
+
+      expect(existsSync(statsPath)).toBe(true);
+      const saved = JSON.parse(readFileSync(statsPath, 'utf8'));
+      expect(saved).toMatchObject({ hit: 12, miss: 3 });
+    });
+
+    it('can opt into immediate disk writes for deterministic diagnostics', () => {
+      const previousFlushInterval = process.env.DSXU_CACHE_STATS_FLUSH_INTERVAL_MS;
+      const statsPath = process.env.DSXU_CACHE_STATS_PATH!;
+      try {
+        process.env.DSXU_CACHE_STATS_FLUSH_INTERVAL_MS = '0';
+        const immediateStats = new CacheStatsImpl(true);
+
+        immediateStats.record({
+          prompt_cache_hit_tokens: 9,
+          prompt_cache_miss_tokens: 1,
+        });
+
+        expect(existsSync(statsPath)).toBe(true);
+        const saved = JSON.parse(readFileSync(statsPath, 'utf8'));
+        expect(saved).toMatchObject({ hit: 9, miss: 1 });
+      } finally {
+        if (previousFlushInterval === undefined) delete process.env.DSXU_CACHE_STATS_FLUSH_INTERVAL_MS;
+        else process.env.DSXU_CACHE_STATS_FLUSH_INTERVAL_MS = previousFlushInterval;
+      }
     });
   });
 
-  describe('reset 功能', () => {
-    it('reset 后计数器归零', () => {
+  describe('reset and snapshots', () => {
+    it('reset clears counters', () => {
       cacheStats.record({ prompt_cache_hit_tokens: 100, prompt_tokens: 200 });
       expect(cacheStats.hit).toBe(100);
       expect(cacheStats.miss).toBe(100);
@@ -65,7 +157,7 @@ describe('R5-19: Cache hit 埋点 + telemetry', () => {
       expect(cacheStats.ratio()).toBe(0);
     });
 
-    it('snapshot 包含正确数据', () => {
+    it('snapshot includes current counters', () => {
       cacheStats.record({ prompt_cache_hit_tokens: 75, prompt_tokens: 150 });
       const snapshot = cacheStats.snapshot();
 
@@ -75,68 +167,38 @@ describe('R5-19: Cache hit 埋点 + telemetry', () => {
       expect(typeof snapshot.ts).toBe('number');
       expect(snapshot.ts).toBeGreaterThan(0);
     });
-
-    it('reset 后 snapshot 全零', () => {
-      cacheStats.record({ prompt_cache_hit_tokens: 100, prompt_tokens: 200 });
-      cacheStats.reset();
-      const snapshot = cacheStats.snapshot();
-
-      expect(snapshot.hit).toBe(0);
-      expect(snapshot.miss).toBe(0);
-      expect(snapshot.ratio).toBe(0);
-    });
   });
 
-  describe('并发安全性（模拟）', () => {
-    it('模拟并发记录应保持数值一致', async () => {
-      const promises = [];
-      const iterations = 100;
-      const hitPerIteration = 10;
-      const totalPerIteration = 20;
-
-      for (let i = 0; i < iterations; i++) {
-        promises.push(
-          Promise.resolve().then(() => {
-            cacheStats.record({
-              prompt_cache_hit_tokens: hitPerIteration,
-              prompt_tokens: totalPerIteration
-            });
-          })
-        );
-      }
-
-      await Promise.all(promises);
-
-      const expectedHit = iterations * hitPerIteration;
-      const expectedMiss = iterations * (totalPerIteration - hitPerIteration);
-
-      expect(cacheStats.hit).toBe(expectedHit);
-      expect(cacheStats.miss).toBe(expectedMiss);
-      expect(cacheStats.ratio()).toBe(0.5);
-    });
-  });
-
-  describe('全局单例和 proxy 注入点', () => {
+  describe('global singleton and proxy entrypoint', () => {
     beforeEach(() => {
-      // 重置全局单例
       (globalCacheStats as any).reset?.();
-      // 清除可能的状态
       (globalCacheStats as any)._hit = 0;
       (globalCacheStats as any)._miss = 0;
     });
 
-    it('recordCacheUsage 处理有效 usage', () => {
+    it('recordCacheUsage handles provider usage fields', () => {
       recordCacheUsage({
         prompt_cache_hit_tokens: 30,
-        prompt_tokens: 60
+        prompt_cache_miss_tokens: 5,
+        prompt_tokens: 60,
       });
 
       expect(globalCacheStats.hit).toBe(30);
-      expect(globalCacheStats.miss).toBe(30);
+      expect(globalCacheStats.miss).toBe(5);
     });
 
-    it('recordCacheUsage 处理无效 usage', () => {
-      // 不应崩溃
+    it('recordCacheUsage handles normalized adapter fields', () => {
+      recordCacheUsage({
+        cache_read_input_tokens: 44,
+        cache_creation_input_tokens: 6,
+        input_tokens: 50,
+      });
+
+      expect(globalCacheStats.hit).toBe(44);
+      expect(globalCacheStats.miss).toBe(6);
+    });
+
+    it('recordCacheUsage handles invalid usage without changing counters', () => {
       recordCacheUsage(null);
       recordCacheUsage(undefined);
       recordCacheUsage('invalid');
@@ -145,27 +207,12 @@ describe('R5-19: Cache hit 埋点 + telemetry', () => {
       expect(globalCacheStats.hit).toBe(0);
       expect(globalCacheStats.miss).toBe(0);
     });
-
-    it('recordCacheUsage 处理部分字段', () => {
-      recordCacheUsage({ prompt_cache_hit_tokens: 40 });
-      expect(globalCacheStats.hit).toBe(40);
-      expect(globalCacheStats.miss).toBe(0);
-
-      recordCacheUsage({ prompt_tokens: 80 });
-      expect(globalCacheStats.hit).toBe(40); // 保持不变
-      expect(globalCacheStats.miss).toBe(80);
-    });
   });
 
-  describe('自调优 hook', () => {
-    it('getParams 返回当前参数', () => {
-      cacheStats.record({ prompt_cache_hit_tokens: 25, prompt_tokens: 50 });
-      // 注意：cacheTuningHook 使用全局单例，不是测试实例
-      // 所以这里测试的是全局单例的状态
+  describe('self-tuning hook', () => {
+    it('getParams returns the expected shape', () => {
       const params = cacheTuningHook.getParams();
 
-      // 全局单例可能在其他测试中被修改，所以不检查具体值
-      // 只检查返回的结构
       expect(params).toHaveProperty('currentRatio');
       expect(params).toHaveProperty('hit');
       expect(params).toHaveProperty('miss');
@@ -174,59 +221,17 @@ describe('R5-19: Cache hit 埋点 + telemetry', () => {
       expect(typeof params.miss).toBe('number');
     });
 
-    it('proposeNext 在低命中率时建议调整', () => {
-      const proposal = cacheTuningHook.proposeNext({ ratio: 0.2 });
-      expect(proposal).toEqual({ action: 'rotate_prefix_order' });
+    it('proposeNext suggests prefix tuning only for low hit rates', () => {
+      expect(cacheTuningHook.proposeNext({ ratio: 0.2 })).toEqual({
+        action: 'rotate_prefix_order',
+      });
+      expect(cacheTuningHook.proposeNext({ ratio: 0.5 })).toBeNull();
     });
 
-    it('proposeNext 在正常命中率时不建议调整', () => {
-      const proposal = cacheTuningHook.proposeNext({ ratio: 0.5 });
-      expect(proposal).toBeNull();
-    });
-
-    it('hasConverged 判断收敛', () => {
-      const history1 = [
-        { ratio: 0.45 },
-        { ratio: 0.46 },
-        { ratio: 0.44 }
-      ];
-      expect(cacheTuningHook.hasConverged(history1)).toBe(true);
-
-      const history2 = [
-        { ratio: 0.3 },
-        { ratio: 0.7 },
-        { ratio: 0.5 }
-      ];
-      expect(cacheTuningHook.hasConverged(history2)).toBe(false);
-
-      const history3 = [
-        { ratio: 0.5 },
-        { ratio: 0.51 }
-      ];
-      expect(cacheTuningHook.hasConverged(history3)).toBe(false); // 少于3次
-    });
-  });
-
-  describe('FMEA 风险缓解测试', () => {
-    it('应对字段名变更：使用类型安全的接口', () => {
-      // 通过 TypeScript 类型检查确保字段名正确
-      const usage: any = {
-        prompt_cache_hit_tokens: 100,
-        prompt_tokens: 200,
-        // 模拟未来可能的新字段名
-        cache_hit_tokens: 50, // 这个字段不会被使用
-      };
-
-      cacheStats.record(usage);
-      expect(cacheStats.hit).toBe(100); // 只使用正确的字段名
-      expect(cacheStats.miss).toBe(100);
-    });
-  });
-
-  describe('覆盖率目标 ≥85%', () => {
-    it('覆盖所有主要代码路径', () => {
-      // 这个测试本身不验证覆盖率，但确保我们测试了所有主要场景
-      expect(true).toBe(true);
+    it('hasConverged checks the last three samples', () => {
+      expect(cacheTuningHook.hasConverged([{ ratio: 0.45 }, { ratio: 0.46 }, { ratio: 0.44 }])).toBe(true);
+      expect(cacheTuningHook.hasConverged([{ ratio: 0.3 }, { ratio: 0.7 }, { ratio: 0.5 }])).toBe(false);
+      expect(cacheTuningHook.hasConverged([{ ratio: 0.5 }, { ratio: 0.51 }])).toBe(false);
     });
   });
 });

@@ -12,6 +12,7 @@ import {
   clampDeepSeekV4MaxTokens,
   normalizeDeepSeekV4Model,
 } from '../../utils/model/deepseekV4Control'
+import { DeepSeekAdapter } from '../../services/api/deepseek-adapter'
 
 export interface APIBackend {
   name: string
@@ -56,6 +57,14 @@ export interface APIServiceConfig {
   openrouterReferer?: string
   /** OpenRouter title header (optional) */
   openrouterTitle?: string
+  /**
+   * Session-level sticky model routing. Default is observe-only so cache
+   * evidence is collected without reducing quality by blocking an intentional
+   * Pro upgrade. Set true or DSXU_STICKY_MODEL_ROUTING=1 to enforce.
+   */
+  stickyModelRouting?: boolean | 'observe'
+  /** How long a sticky model lock is considered part of the same session. */
+  stickyModelRoutingWindowMs?: number
 }
 
 export function getDsxuApiServiceRuntimeProfile(): {
@@ -115,11 +124,37 @@ export class APIService {
   private readonly healthCheckIntervalMs: number
   private readonly openrouterReferer?: string
   private readonly openrouterTitle?: string
+  private readonly stickyModelRoutingMode: 'off' | 'observe' | 'enforce'
+  private readonly stickyModelRoutingWindowMs: number
+  private stickyModelLock: {
+    model: string
+    lockedAt: number
+    lastRequestedModel: string
+    switchCount: number
+    lastDecision: 'locked' | 'observed' | 'expired' | 'unchanged'
+  } | null = null
 
   constructor(config?: APIServiceConfig) {
     this.healthCheckIntervalMs = config?.healthCheckInterval ?? HEALTH_CHECK_INTERVAL
     this.openrouterReferer = config?.openrouterReferer || process.env.OPENROUTER_HTTP_REFERER
     this.openrouterTitle = config?.openrouterTitle || process.env.OPENROUTER_X_TITLE
+    this.stickyModelRoutingMode =
+      config?.stickyModelRouting === false
+        ? 'off'
+        : config?.stickyModelRouting === true || isTruthyEnv(process.env.DSXU_STICKY_MODEL_ROUTING)
+        ? 'enforce'
+        : config?.stickyModelRouting === 'observe' || isTruthyEnv(process.env.DSXU_STICKY_MODEL_ROUTING_OBSERVE)
+          ? 'observe'
+          : 'observe'
+    const envStickyWindowMs = Number.parseInt(
+      process.env.DSXU_STICKY_MODEL_ROUTING_WINDOW_MS || '',
+      10,
+    )
+    this.stickyModelRoutingWindowMs =
+      config?.stickyModelRoutingWindowMs ??
+      (Number.isFinite(envStickyWindowMs) && envStickyWindowMs > 0
+        ? envStickyWindowMs
+        : 30 * 60_000)
 
     // Backend 1: DeepSeek primary.
     const dsKey = config?.deepseekKey || process.env.DEEPSEEK_API_KEY || ''
@@ -259,6 +294,71 @@ export class APIService {
     return this.healthTimer !== null
   }
 
+  private resolveStickyModelRoute(requestedModel: string): {
+    modelForRequest: string
+    decision: 'locked' | 'observed' | 'expired' | 'unchanged'
+  } {
+    const now = Date.now()
+    if (
+      this.stickyModelLock &&
+      now - this.stickyModelLock.lockedAt > this.stickyModelRoutingWindowMs
+    ) {
+      this.stickyModelLock.lastDecision = 'expired'
+      this.stickyModelLock = null
+    }
+
+    if (this.stickyModelRoutingMode === 'off') {
+      return { modelForRequest: requestedModel, decision: 'unchanged' }
+    }
+
+    if (!this.stickyModelLock) {
+      this.stickyModelLock = {
+        model: requestedModel,
+        lockedAt: now,
+        lastRequestedModel: requestedModel,
+        switchCount: 0,
+        lastDecision: 'unchanged',
+      }
+      return { modelForRequest: requestedModel, decision: 'unchanged' }
+    }
+
+    if (this.stickyModelLock.model === requestedModel) {
+      this.stickyModelLock.lastRequestedModel = requestedModel
+      this.stickyModelLock.lastDecision = 'unchanged'
+      return { modelForRequest: requestedModel, decision: 'unchanged' }
+    }
+
+    this.stickyModelLock.switchCount++
+    this.stickyModelLock.lastRequestedModel = requestedModel
+
+    if (this.stickyModelRoutingMode === 'enforce') {
+      this.stickyModelLock.lastDecision = 'locked'
+      return { modelForRequest: this.stickyModelLock.model, decision: 'locked' }
+    }
+
+    this.stickyModelLock.lastDecision = 'observed'
+    return { modelForRequest: requestedModel, decision: 'observed' }
+  }
+
+  getStickyModelRoutingSnapshot(): {
+    mode: 'off' | 'observe' | 'enforce'
+    model?: string
+    lastRequestedModel?: string
+    switchCount: number
+    lastDecision?: 'locked' | 'observed' | 'expired' | 'unchanged'
+    performanceBoundary: string
+  } {
+    return {
+      mode: this.stickyModelRoutingMode,
+      model: this.stickyModelLock?.model,
+      lastRequestedModel: this.stickyModelLock?.lastRequestedModel,
+      switchCount: this.stickyModelLock?.switchCount ?? 0,
+      lastDecision: this.stickyModelLock?.lastDecision,
+      performanceBoundary:
+        'session-local routing decision only; no provider preflight, no synchronous cache warmup, no extra model turn',
+    }
+  }
+
   /** Mark backend failure. */
   private markFailure(backend: APIBackend): void {
     backend.consecutiveFailures++
@@ -319,6 +419,11 @@ export class APIService {
     abortSignal?: AbortSignal,
   ): Promise<{ response: any; backend: string }> {
     const available = this.getAvailableBackends()
+    const normalizedRequestedModel = normalizeDeepSeekV4Model(model)
+    const stickyRoute = this.resolveStickyModelRoute(normalizedRequestedModel)
+    if (stickyRoute.decision === 'locked') {
+      console.warn(`[APIService] sticky model routing kept ${stickyRoute.modelForRequest} instead of ${normalizedRequestedModel}`)
+    }
 
     if (available.length === 0) {
       // Try to recover one backend before failing the request.
@@ -338,22 +443,37 @@ export class APIService {
 
     for (const backend of available) {
       try {
-        const normalizedModel = normalizeDeepSeekV4Model(model)
-        const mappedModel = backend.modelMap[model] || backend.modelMap[normalizedModel] || normalizedModel
+        const normalizedModel = stickyRoute.modelForRequest
+        const mappedModel = backend.modelMap[normalizedModel] || normalizedModel
         const url = backend.name === 'ollama'
           ? `${backend.baseUrl}/v1/chat/completions`
           : `${backend.baseUrl}/chat/completions`
 
-        const body: any = {
-          model: mappedModel,
-          messages,
-          max_tokens: clampDeepSeekV4MaxTokens({
-            model: normalizedModel,
-            requestedMaxTokens: maxTokens,
-            endpointKind: 'chat_completions',
-          }),
-        }
-        if (tools?.length) body.tools = tools
+        const body = backend.name === 'deepseek'
+          ? DeepSeekAdapter.buildDeepSeekChatCompletionBody({
+              plan: {
+                ...DeepSeekAdapter.resolveRequestPlanForBaseUrl({
+                  model: normalizedModel,
+                  max_tokens: maxTokens,
+                  messages,
+                  tools,
+                }, backend.baseUrl),
+                modelName: mappedModel,
+              },
+              messages,
+              tools,
+              stream: false,
+            })
+          : {
+              model: mappedModel,
+              messages,
+              max_tokens: clampDeepSeekV4MaxTokens({
+                model: normalizedModel,
+                requestedMaxTokens: maxTokens,
+                endpointKind: 'chat_completions',
+              }),
+              ...(tools?.length ? { tools } : {}),
+            }
 
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "dsxu.v20.post-authorization-verification-plan.v1",
-  "generatedAt": "2026-05-15T03:39:43.102Z",
+  "generatedAt": "2026-05-16T11:51:10.483Z",
   "repoRoot": "D:\\DSXU-code",
   "status": "POST_STAGE_VERIFIED_REMAINING_GATES_BLOCKED",
   "mutationCommandCount": 57,
@@ -12,21 +12,28 @@
   "deletionPathCount": 147,
   "totalPlannedPathCount": 1893,
   "gitStatus": {
-    "total": 2005,
-    "staged": 2005,
-    "unstaged": 32,
-    "untracked": 0,
+    "total": 2348,
+    "staged": 2024,
+    "unstaged": 213,
+    "untracked": 218,
     "codes": {
-      "A ": 176,
-      "M ": 1650,
-      "AM": 32,
+      "A ": 179,
+      "MM": 36,
+      " M": 58,
+      "AM": 41,
+      "M ": 1592,
       "D ": 116,
-      "R ": 31
+      "AD": 7,
+      " D": 48,
+      "R ": 30,
+      "MD": 22,
+      "RM": 1,
+      "??": 218
     }
   },
   "cachedDiff": {
-    "total": 2005,
-    "added": 208,
+    "total": 2024,
+    "added": 227,
     "modified": 1650,
     "deleted": 116,
     "renamed": 31,
@@ -35,7 +42,7 @@
   "p12RawReadinessStatus": "PASS",
   "p12PairedRawLogCount": 14,
   "p12ReplayFamilyGapCount": 0,
-  "aclResidueCount": 4,
+  "aclResidueCount": 7,
   "didMutateGit": true,
   "didStageGit": true,
   "didCommit": false,
@@ -47,7 +54,7 @@
   "postStageInvariant": {
     "stagedSuccessfully": true,
     "p12Ready": true,
-    "noUntrackedPaths": true,
+    "noUntrackedPaths": false,
     "hasCachedDiff": true,
     "noFailedStageCommands": true,
     "hasOnlyExpectedUnstagedGeneratedRefresh": false

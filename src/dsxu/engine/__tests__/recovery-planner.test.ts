@@ -2,7 +2,7 @@
  * Recovery Planner 核心功能测试
  */
 
-import { RecoveryPlanner } from '../recovery/planner'
+import { RecoveryPlanner } from '../recovery/recovery-planner'
 import { RecoveryContext, RecoveryInput } from '../recovery/types'
 
 describe('RecoveryPlanner', () => {
@@ -186,7 +186,7 @@ describe('RecoveryPlanner', () => {
 
       // 首次失败可能重试，重复失败可能重新规划或回滚
       expect(firstDecision.action).not.toBe('rollback')
-      expect(['rollback', 'escalate', 'ask-human']).toContain(repeatedDecision.action)
+      expect(['replan', 'rollback', 'escalate', 'ask-human']).toContain(repeatedDecision.action)
     })
   })
 

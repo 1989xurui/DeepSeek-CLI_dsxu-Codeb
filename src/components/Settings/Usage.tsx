@@ -16,7 +16,7 @@ import { ConfigurableShortcutHint } from '../ConfigurableShortcutHint.js';
 import { Byline } from '../design-system/Byline.js';
 import { ProgressBar } from '../design-system/ProgressBar.js';
 import { isEligibleForOverageCreditGrant, OverageCreditUpsell } from '../LogoV2/OverageCreditUpsell.js';
-import { getProviderMigrationHighCapacityWeeklyLimit } from '../../utils/model/providerMigration/providerMigrationUsageLimit.js';
+import { getArchivedHighCapacityWeeklyLimit } from '../../utils/model/providerMigration/providerMigrationUsageLimit.js';
 type LimitBarProps = {
   title: string;
   limit: RateLimit;
@@ -218,7 +218,7 @@ export function Usage(): React.ReactNode {
   });
   if (dsxuRuntimeMode) {
     return <Box flexDirection="column" gap={1}>
-        <Text dimColor>Provider-migration subscription usage is disabled in DSXU runtime.</Text>
+        <Text dimColor>Archived subscription usage is disabled in DSXU runtime.</Text>
         <Text dimColor>Use DSXU cost/evidence telemetry for local model, tool, and task usage.</Text>
         <Text dimColor>
           <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
@@ -257,7 +257,7 @@ export function Usage(): React.ReactNode {
     limit: utilization.seven_day
   }, ...(showHighCapacityRouteBar ? [{
     title: 'Current week (high-capacity route)',
-    limit: getProviderMigrationHighCapacityWeeklyLimit(utilization)
+    limit: getArchivedHighCapacityWeeklyLimit(utilization)
   }] : [])];
   return <Box flexDirection="column" gap={1} width="100%">
       {limits.some(({

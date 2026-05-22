@@ -15,7 +15,7 @@ import {
 import { getDisplayPath } from './file.js';
 import { formatNumber } from './format.js';
 import { getIdeClientName, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from './ide.js';
-import { getProviderMigrationUserDefaultModelDescription, modelDisplayString } from './model/model.js';
+import { getArchivedUserDefaultModelDescription as getArchivedProviderDefaultModelDescription, modelDisplayString } from './model/model.js';
 import { getAPIProvider } from './model/providers.js';
 import { getMTLSConfig } from './mtls.js';
 import { checkInstall } from './nativeInstaller/index.js';
@@ -361,7 +361,7 @@ export function buildAPIProviderProperties(): Property[] {
 export function getModelDisplayLabel(mainLoopModel: string | null): string {
   let modelLabel = modelDisplayString(mainLoopModel);
   if (mainLoopModel === null && isProviderSubscriptionAccount()) {
-    const description = getProviderMigrationUserDefaultModelDescription();
+    const description = getArchivedProviderDefaultModelDescription();
     modelLabel = `${chalk.bold('Default')} ${description}`;
   }
   return modelLabel;

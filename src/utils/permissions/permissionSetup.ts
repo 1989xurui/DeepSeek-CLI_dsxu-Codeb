@@ -76,7 +76,7 @@ import {
 } from './PermissionUpdate.js'
 import type { PermissionUpdateDestination } from './PermissionUpdateSchema.js'
 import {
-  normalizeProviderMigrationToolName,
+  normalizeArchivedToolName,
   permissionRuleValueFromString,
   permissionRuleValueToString,
 } from './permissionRuleParser.js'
@@ -241,7 +241,7 @@ export function isDangerousTaskPermission(
   toolName: string,
   _ruleContent: string | undefined,
 ): boolean {
-  return normalizeProviderMigrationToolName(toolName) === AGENT_TOOL_NAME
+  return normalizeArchivedToolName(toolName) === AGENT_TOOL_NAME
 }
 
 function formatPermissionSource(source: PermissionRuleSource): string {
@@ -890,7 +890,7 @@ export async function initializeToolPermissionContext({
   overlyBroadBashPermissions: DangerousPermissionInfo[]
 }> {
   // Parse comma-separated allowed and disallowed tools if provided
-  // Normalize provider-migration tool aliases (e.g., 'Task' ->'Agent') so that in-memory
+  // Normalize archived tool aliases (e.g., 'Task' ->'Agent') so that in-memory
   // rule removal in stripDangerousPermissionsForAutoMode matches correctly.
   const parsedAllowedToolsCli = parseToolListFromCLI(allowedToolsCli).map(
     rule => permissionRuleValueToString(permissionRuleValueFromString(rule)),
@@ -901,9 +901,9 @@ export async function initializeToolPermissionContext({
   // We need to check if base tools were explicitly provided (not just empty default)
   if (baseToolsCli && baseToolsCli.length > 0) {
     const baseToolsResult = parseBaseToolsFromCLI(baseToolsCli)
-    // Normalize provider-migration tool aliases (e.g., 'Task' ->'Agent') so user-provided
+    // Normalize archived tool aliases (e.g., 'Task' ->'Agent') so user-provided
     // base tool lists using old names still match canonical names.
-    const baseToolsSet = new Set(baseToolsResult.map(normalizeProviderMigrationToolName))
+    const baseToolsSet = new Set(baseToolsResult.map(normalizeArchivedToolName))
     const allToolNames = getToolsForDefaultPreset()
     const toolsToDisallow = allToolNames.filter(tool => !baseToolsSet.has(tool))
     parsedDisallowedToolsCli = [...parsedDisallowedToolsCli, ...toolsToDisallow]

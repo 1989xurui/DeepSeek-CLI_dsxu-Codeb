@@ -4,7 +4,7 @@ import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { isUltrareviewEnabled } from './review/ultrareviewEnabled.js'
 
 // Legal wants an explicit remote workflow name plus a docs link visible before
-// the user triggers the provider-migration remote review path.
+// the user triggers the archived remote review path.
 const CCR_TERMS_URL = 'https://docs.dsxu.local/dsxu-code-workflow'
 
 const LOCAL_REVIEW_PROMPT = (args: string) => `
@@ -51,7 +51,7 @@ const ultrareview: Command = {
   name: 'ultrareview',
   description: isDsxuRuntimeMode()
     ? '~10-30 min - Finds and verifies bugs in your branch. Runs through DSXU review workflow.'
-    : `~10–20 min · Finds and verifies bugs in your branch. Runs through provider-migration remote review workflow. See ${CCR_TERMS_URL}`,
+    : `~10-20 min - Finds and verifies bugs in your branch. Runs through archived remote review workflow. See ${CCR_TERMS_URL}`,
   isEnabled: () => isUltrareviewEnabled(),
   load: () => import('./review/ultrareviewCommand.js'),
 }
@@ -64,7 +64,7 @@ export function getDsxuReviewCommandRuntimeProfile(): {
   localCommand: string
   remoteCommand: string
   activationEvidence: readonly string[]
-  providerMigrationPolicy: string
+  archivedPolicy: string
 } {
   return {
     runtime: 'DSXU Review Commands',
@@ -75,7 +75,7 @@ export function getDsxuReviewCommandRuntimeProfile(): {
       'DSXU runtime mode avoids old web product copy',
       'ultrareview is still separately gated by isUltrareviewEnabled',
     ],
-    providerMigrationPolicy:
-      'remote workflow terms URL remains only for non-DSXU provider-migration path',
+    archivedPolicy:
+      'remote workflow terms URL remains only for non-DSXU archived remote path',
   }
 }

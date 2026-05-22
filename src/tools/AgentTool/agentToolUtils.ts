@@ -1,5 +1,4 @@
 import { feature } from 'bun:bundle'
-import { z } from 'zod/v4'
 import { clearInvokedSkillsForAgent } from '../../bootstrap/state.js'
 import {
   ALL_AGENT_DISALLOWED_TOOLS,
@@ -43,7 +42,6 @@ import { logForDebugging } from '../../utils/debug.js'
 import { isInProtectedNamespace } from '../../utils/envUtils.js'
 import { AbortError, errorMessage } from '../../utils/errors.js'
 import type { CacheSafeParams } from '../../utils/forkedAgent.js'
-import { lazySchema } from '../../utils/lazySchema.js'
 import {
   extractTextContent,
   getLastAssistantMessage,
@@ -60,6 +58,20 @@ import { getTokenCountFromUsage } from '../../utils/tokens.js'
 import { EXIT_PLAN_MODE_V2_TOOL_NAME } from '../ExitPlanModeTool/constants.js'
 import { AGENT_TOOL_NAME, SOURCE_AGENT_TOOL_ALIAS_NAME } from './constants.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
+import {
+  agentEvidencePacketSchema,
+  agentToolResultSchema,
+  type AgentEvidencePacket,
+  type AgentToolResult,
+} from './agentToolSchemas.js'
+export {
+  agentEvidencePacketSchema,
+  agentToolResultSchema,
+}
+export type {
+  AgentEvidencePacket,
+  AgentToolResult,
+}
 export type ResolvedAgentTools = {
   hasWildcard: boolean
   validTools: string[]
@@ -212,69 +224,6 @@ export function resolveAgentTools(
     allowedAgentTypes,
   }
 }
-export const agentToolResultSchema = lazySchema(() =>
-  z.object({
-    agentId: z.string(),
-    // Optional: older persisted sessions won't have this (resume replays
-    // results verbatim without re-validation). Used to gate the sync
-    // result trailer ...one-shot built-ins skip the SendMessage hint.
-    agentType: z.string().optional(),
-    content: z.array(z.object({ type: z.literal('text'), text: z.string() })),
-    evidencePacket: agentEvidencePacketSchema().optional(),
-    runtimeEvidence: z.object({
-      taskId: z.string(),
-      taskType: z.literal('local_agent'),
-      owner: z.string(),
-      writeScope: z.array(z.string()),
-      cwd: z.string().optional(),
-      isolation: z.enum(['none', 'cwd_override', 'worktree_isolation', 'remote_gated_isolation', 'fork_context_inheritance']),
-      recoverPath: z.enum(['send_message_continuation', 'task_output_then_sendmessage', 'partial_result_notification']),
-      lifecycleState: z.enum(['pending', 'running', 'completed', 'failed', 'killed']),
-      placement: z.enum(['foreground', 'background']),
-      outputPath: z.string(),
-      progressEventCount: z.number(),
-      canAbort: z.boolean(),
-      canRecover: z.boolean(),
-    }).optional(),
-    totalToolUseCount: z.number(),
-    totalDurationMs: z.number(),
-    totalTokens: z.number(),
-    usage: z.object({
-      input_tokens: z.number(),
-      output_tokens: z.number(),
-      cache_creation_input_tokens: z.number().nullable(),
-      cache_read_input_tokens: z.number().nullable(),
-      server_tool_use: z
-        .object({
-          web_search_requests: z.number(),
-          web_fetch_requests: z.number(),
-        })
-        .nullable(),
-      service_tier: z.enum(['standard', 'priority', 'batch']).nullable(),
-      cache_creation: z
-        .object({
-          ephemeral_1h_input_tokens: z.number(),
-          ephemeral_5m_input_tokens: z.number(),
-        })
-        .nullable(),
-    }),
-  }),
-)
-export type AgentToolResult = z.input<ReturnType<typeof agentToolResultSchema>>
-export const agentEvidencePacketSchema = lazySchema(() =>
-  z.object({
-    files_read: z.array(z.string()),
-    files_changed: z.array(z.string()),
-    commands_run: z.array(z.string()),
-    tests_passed: z.array(z.string()),
-    tests_failed: z.array(z.string()),
-    unresolved_risks: z.array(z.string()),
-    completion_claim: z.enum(['complete', 'partial', 'unknown']),
-  }),
-)
-export type AgentEvidencePacket = z.input<
-  ReturnType<typeof agentEvidencePacketSchema>
->
 const AGENT_EVIDENCE_MAX_ITEMS = 8
 const AGENT_EVIDENCE_MAX_TEXT = 180
 function truncateEvidenceText(value: string): string {
@@ -657,7 +606,7 @@ export async function classifyHandoffIfNeeded({
       decision:
         handoffDecision as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       toolName:
-        // Use the provider-migration source wire alias for analytics continuity across the Task -> Agent rename.
+        // Use the archived source wire alias for analytics continuity across the Task -> Agent rename.
         SOURCE_AGENT_TOOL_ALIAS_NAME as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
       inProtectedNamespace: isInProtectedNamespace(),
       classifierModel:

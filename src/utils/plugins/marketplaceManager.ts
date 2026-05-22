@@ -88,7 +88,7 @@ import {
 } from './schemas.js'
 
 const DSXU_PLUGIN_PACKAGE_DIR = '.dsxu-plugin'
-const PROVIDER_MIGRATION_PLUGIN_PACKAGE_DIR = `.${'clau' + 'de'}-plugin`
+const ARCHIVED_PLUGIN_PACKAGE_DIR = `.${'clau' + 'de'}-plugin`
 const PLUGIN_MARKETPLACE_FILENAME = 'marketplace.json'
 
 function pluginMarketplacePath(root: string, packageDir: string): string {
@@ -109,7 +109,7 @@ async function resolveMarketplaceManifestPath(
   } catch (error) {
     if (!isENOENT(error)) throw error
   }
-  return pluginMarketplacePath(root, PROVIDER_MIGRATION_PLUGIN_PACKAGE_DIR)
+  return pluginMarketplacePath(root, ARCHIVED_PLUGIN_PACKAGE_DIR)
 }
 
 /**
@@ -1660,7 +1660,7 @@ async function loadAndCacheMarketplace(
 
       case 'directory': {
         // For directories, prefer .dsxu-plugin/marketplace.json and fall back
-        // to the provider-migration plugin package layout.
+        // to the archived plugin package layout.
         // Resolve to absolute so error messages show the actual path checked
         // (previous known_marketplaces.json entries may have relative paths)
         const absPath = resolve(source.path)
@@ -2084,7 +2084,7 @@ async function readCachedMarketplace(
   installLocation: string,
 ): Promise<PluginMarketplace> {
   // For git-sourced directories, the manifest lives under the DSXU plugin
-  // package directory, with provider-migration package layout as a migration fallback.
+  // package directory, with archived package layout as an explicit fallback.
   // For url/file/directory sources it is the installLocation itself.
   // Try the nested path first; fall back to installLocation when it is a plain file
   // (ENOTDIR) or the nested file is simply missing (ENOENT).
@@ -2559,10 +2559,10 @@ export async function refreshMarketplace(
             ? source.repo
             : redactUrlCredentials(source.url)
         const deprecatedMarketplaceName = `${'clau' + 'de'}-code-plugins`
-        const providerMigrationOfficialMarketplaceName = `${'clau' + 'de'}-plugins-official`
+        const archivedOfficialMarketplaceName = `${'clau' + 'de'}-plugins-official`
         const reason =
           name === deprecatedMarketplaceName
-            ? `We've deprecated "${deprecatedMarketplaceName}" in favor of "${providerMigrationOfficialMarketplaceName}".`
+            ? `We've deprecated "${deprecatedMarketplaceName}" in favor of "${archivedOfficialMarketplaceName}".`
             : `This marketplace may have been deprecated or moved to a new location.`
         throw new Error(
           `The marketplace.json file is no longer present in this repository.\n\n` +

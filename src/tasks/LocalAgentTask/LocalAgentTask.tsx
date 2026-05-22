@@ -168,7 +168,7 @@ export type LocalAgentTaskState = TaskStateBase & {
   // Bootstrap has read the sidechain JSONL and UUID-merged into messages.
   // One-shot per retain cycle; stream appends from there.
   diskLoaded: boolean;
-  // DSXU V19 Agent runtime metadata. This is the task-level source of truth
+  // DSXU Agent runtime metadata. This is the task-level source of truth.
   // for runtime placement and ownership; model-visible modes stay limited to
   // serial_worker / parallel_fanout.
   runtime?: AgentTaskRuntimeMetadata;

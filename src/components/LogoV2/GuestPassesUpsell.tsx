@@ -73,7 +73,7 @@ export function GuestPassesUpsell() {
 export function getDsxuGuestPassesUpsellRuntimeProfile() {
   return {
     runtime: 'DSXU Guest Pass Shell Boundary',
-    defaultBehavior: 'Provider-migration guest-pass upsell is disabled in DSXU runtime so the coding CLI does not prompt provider subscription flows',
+    defaultBehavior: 'Archived guest-pass upsell is disabled in DSXU runtime so the coding CLI does not prompt provider subscription flows',
     providerTarget: 'DSXU Identity/Billing Provider',
     activationEvidence: [
       'shouldShowGuestPassesUpsell returns false in DSXU mode',

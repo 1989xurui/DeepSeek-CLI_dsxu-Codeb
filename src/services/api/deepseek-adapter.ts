@@ -4,6 +4,7 @@ import { appendFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { createHash } from 'crypto';
 import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from '../../constants/prompts.js';
+import { recordCacheUsage } from '../cache-stats.js';
 import {
   estimateDeepSeekV4Cost,
   normalizeDeepSeekV4Model,
@@ -15,6 +16,7 @@ import {
   type DeepSeekV4RouteInput,
 } from '../../utils/model/deepseekV4Control.js';
 import { resolveDeepSeekV4CostRoute } from '../../utils/model/deepseekV4CostRouter.js';
+import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';
 
 export interface DeepSeekRequestPlan {
   baseUrl: string
@@ -29,6 +31,51 @@ export interface DeepSeekRequestPlan {
   routeDecision?: DeepSeekV4RouteDecision
   routeReason: string
   modelEvidence: string
+}
+
+export interface DeepSeekToolExtractionOptions {
+  allowedNames?: readonly string[]
+  maxCalls?: number
+  maxInputChars?: number
+}
+
+export type DeepSeekToolCallSchemaPath = 'strict_schema' | 'xml_fallback' | 'json_scavenge'
+
+export type DeepSeekExtractedToolUse = {
+  id: string
+  name: string
+  input: Record<string, unknown>
+  schemaPath: Exclude<DeepSeekToolCallSchemaPath, 'strict_schema'>
+  fallbackReason: string
+}
+
+export type DeepSeekSchemaFlattenMapping = {
+  flatKey: string
+  path: readonly string[]
+  required: boolean
+}
+
+export type DeepSeekSchemaFlattenPlan = {
+  shouldFlatten: boolean
+  leafCount: number
+  maxDepth: number
+  flattenedSchema: Record<string, unknown>
+  mappings: readonly DeepSeekSchemaFlattenMapping[]
+}
+
+export type DeepSeekMessageConversionOptions = {
+  thinkingEnabled?: boolean
+}
+
+export type DeepSeekChatCompletionBodyInput = {
+  plan: DeepSeekRequestPlan
+  messages: readonly any[]
+  tools?: readonly any[]
+  toolSchemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>
+  stream?: boolean
+  temperature?: number
+  tool_choice?: any
+  response_format?: any
 }
 
 function appendDeepSeekRouteTrace(event: string, payload: Record<string, unknown>): void {
@@ -59,23 +106,56 @@ function appendDeepSeekRouteTrace(event: string, payload: Record<string, unknown
  * - Normalize usage and cost accounting fields for the mainline runtime.
  */
 export class DeepSeekAdapter {
-  static extractToolUsesFromText(text: string): Array<{
+  static extractToolUsesFromText(text: string, options: DeepSeekToolExtractionOptions = {}): Array<{
     id: string
     name: string
     input: Record<string, unknown>
   }> {
+    return DeepSeekAdapter.extractToolUsesFromTextWithEvidence(text, options).map(({
+      schemaPath: _schemaPath,
+      fallbackReason: _fallbackReason,
+      ...toolUse
+    }) => toolUse)
+  }
+
+  static extractToolUsesFromTextWithEvidence(
+    text: string,
+    options: DeepSeekToolExtractionOptions = {},
+  ): DeepSeekExtractedToolUse[] {
+    const sourceText = typeof options.maxInputChars === 'number' && options.maxInputChars >= 0
+      ? text.slice(0, options.maxInputChars)
+      : text
+    const allowedNames = options.allowedNames
+      ? new Set(
+          options.allowedNames
+            .map(name => DeepSeekAdapter.normalizeToolName(name))
+            .filter((name): name is string => typeof name === 'string'),
+        )
+      : null
+    const maxCalls = typeof options.maxCalls === 'number' && options.maxCalls > 0
+      ? Math.floor(options.maxCalls)
+      : Number.POSITIVE_INFINITY
     const calls: Array<{
       id: string
       name: string
       input: Record<string, unknown>
+      schemaPath: Exclude<DeepSeekToolCallSchemaPath, 'strict_schema'>
+      fallbackReason: string
       position: number
       sequence: number
     }> = [];
     const seen = new Set<string>();
     let sequence = 0;
-    const push = (name: string, input: Record<string, unknown>, position: number) => {
+    const push = (
+      name: string,
+      input: Record<string, unknown>,
+      position: number,
+      schemaPath: Exclude<DeepSeekToolCallSchemaPath, 'strict_schema'>,
+    ) => {
+      if (calls.length >= maxCalls) return;
       const normalizedName = DeepSeekAdapter.normalizeToolName(name);
       if (!normalizedName) return;
+      if (allowedNames && !allowedNames.has(normalizedName)) return;
       const key = `${position}:${normalizedName}:${JSON.stringify(input)}`;
       if (seen.has(key)) return;
       seen.add(key);
@@ -83,6 +163,10 @@ export class DeepSeekAdapter {
         id: `dsxu_tool_${calls.length + 1}_${Date.now()}`,
         name: normalizedName,
         input,
+        schemaPath,
+        fallbackReason: schemaPath === 'xml_fallback'
+          ? 'DeepSeek response used XML/simple-tag fallback instead of strict function call'
+          : 'DeepSeek response used bounded JSON scavenge fallback instead of strict function call',
         position,
         sequence: sequence++,
       });
@@ -90,34 +174,320 @@ export class DeepSeekAdapter {
 
     const toolCallPattern =
       /<tool_call\s+name=["']?([^"'>\s]+)["']?\s*>([\s\S]*?)<\/tool_call>/gi;
-    for (const match of text.matchAll(toolCallPattern)) {
+    for (const match of sourceText.matchAll(toolCallPattern)) {
       const name = match[1] || '';
       const body = (match[2] || '').trim();
       const parsed = DeepSeekAdapter.parseToolPayload(body, name);
-      if (parsed) push(name, parsed, match.index ?? 0);
+      if (parsed) push(name, parsed, match.index ?? 0, 'xml_fallback');
     }
 
     const simpleTagPattern =
       /<(Read|FileRead|Bash|Shell|PowerShell|PowerShellTool|Write|FileWrite|Edit|FileEdit|Glob|Grep|TodoWrite|Todo|TaskCreate|TaskCreateTool|TaskGet|TaskGetTool|TaskList|TaskListTool|TaskUpdate|TaskUpdateTool|Agent|Task|ForkAgent|SendMessage|SendMessageTool|Skill|SkillTool|MCP|MCPTool|ListMcpResourcesTool|ReadMcpResourceTool|LSP|LSPTool|Workflow|WorkflowTool|AskUser|AskUserQuestion|AskUserQuestionTool|NotebookEdit|NotebookEditTool|Config|ConfigTool|EnterPlanMode|EnterPlanModeTool|ExitPlanMode|ExitPlanModeTool|ReadEditTool|BashTool)\b[^>]*>([\s\S]*?)<\/\1>/gi;
-    for (const match of text.matchAll(simpleTagPattern)) {
+    for (const match of sourceText.matchAll(simpleTagPattern)) {
       const name = match[1] || '';
       const body = match[2] || '';
       const parsed = DeepSeekAdapter.parseXmlToolBody(name, body);
-      if (parsed) push(name, parsed, match.index ?? 0);
+      if (parsed) push(name, parsed, match.index ?? 0, 'xml_fallback');
     }
 
     const readOperationPattern =
       /<ReadOperation\b[^>]*>([\s\S]*?)<\/ReadOperation>/gi;
-    for (const match of text.matchAll(readOperationPattern)) {
+    for (const match of sourceText.matchAll(readOperationPattern)) {
       const body = match[1] || '';
       for (const filePath of DeepSeekAdapter.extractTagValues(body, 'path')) {
-        push('Read', { file_path: filePath }, match.index ?? 0);
+        push('Read', { file_path: filePath }, match.index ?? 0, 'xml_fallback');
       }
+    }
+
+    for (const candidate of DeepSeekAdapter.scavengeJsonToolCalls(sourceText)) {
+      push(candidate.name, candidate.input, candidate.position, 'json_scavenge')
     }
 
     return calls
       .sort((left, right) => left.position - right.position || left.sequence - right.sequence)
       .map(({ position: _position, sequence: _sequence, ...call }) => call);
+  }
+
+  static planDeepSeekToolSchemaFlattening(schema: Record<string, unknown>): DeepSeekSchemaFlattenPlan {
+    const leaves: Array<{ path: string[]; schema: Record<string, unknown>; required: boolean }> = []
+    DeepSeekAdapter.collectSchemaLeaves(schema, [], leaves, true)
+    const maxDepth = leaves.reduce((max, leaf) => Math.max(max, leaf.path.length), 0)
+    const shouldFlatten = leaves.length > 10 || maxDepth > 2
+    const properties: Record<string, unknown> = {}
+    const required: string[] = []
+    const mappings: DeepSeekSchemaFlattenMapping[] = []
+
+    for (const leaf of leaves) {
+      const flatKey = leaf.path.join('__')
+      properties[flatKey] = leaf.schema
+      if (leaf.required) required.push(flatKey)
+      mappings.push({ flatKey, path: leaf.path, required: leaf.required })
+    }
+
+    return {
+      shouldFlatten,
+      leafCount: leaves.length,
+      maxDepth,
+      flattenedSchema: shouldFlatten
+        ? {
+            type: 'object',
+            properties,
+            required,
+            additionalProperties: false,
+          }
+        : schema,
+      mappings,
+    }
+  }
+
+  static nestDeepSeekFlattenedArguments(
+    args: Record<string, unknown>,
+    plan: DeepSeekSchemaFlattenPlan,
+  ): Record<string, unknown> {
+    if (!plan.shouldFlatten) return { ...args }
+    const nested: Record<string, unknown> = {}
+    const mappedKeys = new Set(plan.mappings.map(mapping => mapping.flatKey))
+    for (const mapping of plan.mappings) {
+      if (!(mapping.flatKey in args)) continue
+      let cursor: Record<string, unknown> = nested
+      mapping.path.forEach((segment, index) => {
+        if (index === mapping.path.length - 1) {
+          cursor[segment] = args[mapping.flatKey]
+          return
+        }
+        const existing = cursor[segment]
+        if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+          cursor[segment] = {}
+        }
+        cursor = cursor[segment] as Record<string, unknown>
+      })
+    }
+    for (const [key, value] of Object.entries(args)) {
+      if (!mappedKeys.has(key)) nested[key] = value
+    }
+    return nested
+  }
+
+  private static collectSchemaLeaves(
+    schema: Record<string, unknown>,
+    path: string[],
+    leaves: Array<{ path: string[]; schema: Record<string, unknown>; required: boolean }>,
+    requiredPath: boolean,
+  ): void {
+    const properties = schema.properties
+    if (
+      schema.type === 'object' &&
+      properties &&
+      typeof properties === 'object' &&
+      !Array.isArray(properties)
+    ) {
+      const requiredFields = new Set(
+        Array.isArray(schema.required)
+          ? schema.required.filter((item): item is string => typeof item === 'string')
+          : [],
+      )
+      for (const [key, child] of Object.entries(properties as Record<string, unknown>)) {
+        if (child && typeof child === 'object' && !Array.isArray(child)) {
+          DeepSeekAdapter.collectSchemaLeaves(
+            child as Record<string, unknown>,
+            [...path, key],
+            leaves,
+            requiredPath && requiredFields.has(key),
+          )
+        }
+      }
+      return
+    }
+    if (path.length > 0) {
+      leaves.push({ path, schema, required: requiredPath })
+    }
+  }
+
+  static buildDeepSeekToolSchemaPlans(tools?: readonly any[]): Map<string, DeepSeekSchemaFlattenPlan> {
+    const plans = new Map<string, DeepSeekSchemaFlattenPlan>()
+    for (const tool of tools ?? []) {
+      if (!tool?.name || !tool?.input_schema || typeof tool.input_schema !== 'object') continue
+      const plan = DeepSeekAdapter.planDeepSeekToolSchemaFlattening(tool.input_schema as Record<string, unknown>)
+      if (plan.shouldFlatten) plans.set(tool.name, plan)
+    }
+    return plans
+  }
+
+  static getDeepSeekToolParameters(
+    tool: any,
+    schemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>,
+  ): Record<string, unknown> {
+    const plan = schemaPlans?.get(tool?.name)
+    if (plan?.shouldFlatten) return plan.flattenedSchema
+    return tool?.input_schema ?? { type: 'object', properties: {} }
+  }
+
+  static nestDeepSeekToolArguments(
+    toolName: string,
+    args: Record<string, unknown>,
+    schemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>,
+  ): Record<string, unknown> {
+    const plan = schemaPlans?.get(toolName)
+    return plan ? DeepSeekAdapter.nestDeepSeekFlattenedArguments(args, plan) : args
+  }
+
+  static normalizeDeepSeekToolChoice(toolChoice: any): unknown {
+    if (!toolChoice) return undefined
+    if (toolChoice.type === 'auto') return 'auto'
+    if (toolChoice.type === 'any') return 'required'
+    if (typeof toolChoice.name === 'string') {
+      return { type: 'function', function: { name: toolChoice.name } }
+    }
+    if (toolChoice.type === 'function' && typeof toolChoice.function?.name === 'string') {
+      return { type: 'function', function: { name: toolChoice.function.name } }
+    }
+    return toolChoice
+  }
+
+  static normalizeDeepSeekProviderTool(
+    tool: any,
+    schemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>,
+  ): Record<string, unknown> | null {
+    if (tool?.type === 'function' && tool.function && typeof tool.function === 'object') {
+      const fn = tool.function as Record<string, unknown>
+      const name = typeof fn.name === 'string' ? fn.name : undefined
+      if (!name) return null
+      return {
+        type: 'function',
+        function: {
+          name,
+          description: typeof fn.description === 'string' ? fn.description : '',
+          parameters:
+            fn.parameters && typeof fn.parameters === 'object'
+              ? fn.parameters
+              : { type: 'object', properties: {} },
+        },
+      }
+    }
+
+    if (!tool?.name) return null
+    return {
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: DeepSeekAdapter.getDeepSeekToolParameters(tool, schemaPlans),
+      },
+    }
+  }
+
+  static buildDeepSeekChatCompletionBody(input: DeepSeekChatCompletionBodyInput): Record<string, unknown> {
+    const normalizedTools = (input.tools ?? [])
+      .map(tool => DeepSeekAdapter.normalizeDeepSeekProviderTool(tool, input.toolSchemaPlans))
+      .filter((tool): tool is Record<string, unknown> => tool !== null)
+    const toolChoice = DeepSeekAdapter.normalizeDeepSeekToolChoice(input.tool_choice)
+
+    return {
+      model: input.plan.modelName,
+      messages: [...input.messages],
+      stream: input.stream ?? false,
+      ...(input.stream ? { stream_options: { include_usage: true } } : {}),
+      max_tokens: input.plan.maxTokens,
+      thinking: { type: input.plan.thinkingEnabled ? 'enabled' : 'disabled' },
+      ...(input.plan.thinkingEnabled && input.plan.reasoningEffort ? { reasoning_effort: input.plan.reasoningEffort } : {}),
+      ...(!input.plan.thinkingEnabled ? { temperature: input.temperature ?? 1.0 } : {}),
+      ...(input.response_format ? { response_format: input.response_format } : {}),
+      ...(normalizedTools.length > 0
+        ? {
+            tools: normalizedTools,
+            ...(toolChoice ? { tool_choice: toolChoice } : {}),
+          }
+        : {}),
+    }
+  }
+
+  private static scavengeJsonToolCalls(text: string): Array<{
+    name: string
+    input: Record<string, unknown>
+    position: number
+  }> {
+    const candidates: Array<{ raw: string; position: number }> = []
+    const trimmed = text.trim()
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      candidates.push({ raw: trimmed, position: 0 })
+    }
+
+    let offset = 0
+    for (const line of text.split(/\r?\n/)) {
+      const raw = line.trim()
+      if (raw !== trimmed && (raw.startsWith('{') || raw.startsWith('['))) {
+        candidates.push({ raw, position: offset + line.indexOf(raw) })
+      }
+      offset += line.length + 1
+    }
+
+    const fencedJsonPattern = /```(?:json)?\s*([\s\S]*?)```/gi
+    for (const match of text.matchAll(fencedJsonPattern)) {
+      const raw = (match[1] || '').trim()
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        candidates.push({ raw, position: match.index ?? 0 })
+      }
+    }
+
+    return candidates.flatMap(candidate => DeepSeekAdapter.toolCallsFromJsonCandidate(candidate.raw, candidate.position))
+  }
+
+  private static toolCallsFromJsonCandidate(raw: string, position: number): Array<{
+    name: string
+    input: Record<string, unknown>
+    position: number
+  }> {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      const repaired = DeepSeekAdapter.repairTruncatedJson(raw)
+      if (repaired === null) return []
+      parsed = repaired
+    }
+
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+    return items.flatMap(item => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return []
+      const record = item as Record<string, unknown>
+      const openAiFunction =
+        record.type === 'function' &&
+        record.function &&
+        typeof record.function === 'object' &&
+        !Array.isArray(record.function)
+          ? record.function as Record<string, unknown>
+          : null
+      const name =
+        typeof record.name === 'string'
+          ? record.name
+          : typeof record.tool_name === 'string'
+            ? record.tool_name
+            : typeof openAiFunction?.name === 'string'
+              ? openAiFunction.name
+              : ''
+      if (!name) return []
+
+      const rawArgs =
+        record.arguments ??
+        record.tool_args ??
+        openAiFunction?.arguments ??
+        {}
+      const input = DeepSeekAdapter.parseJsonToolArguments(rawArgs, name)
+      return input ? [{ name, input, position }] : []
+    })
+  }
+
+  private static parseJsonToolArguments(
+    rawArgs: unknown,
+    toolName: string,
+  ): Record<string, unknown> | null {
+    if (typeof rawArgs === 'string') {
+      return DeepSeekAdapter.parseToolPayload(rawArgs, toolName)
+    }
+    if (rawArgs && typeof rawArgs === 'object' && !Array.isArray(rawArgs)) {
+      return DeepSeekAdapter.normalizeToolInput(rawArgs, toolName)
+    }
+    return DeepSeekAdapter.normalizeToolInput({}, toolName)
   }
 
   private static normalizeToolName(name: string): string | null {
@@ -164,7 +534,58 @@ export class DeepSeekAdapter {
       const parsed = JSON.parse(trimmed);
       return DeepSeekAdapter.normalizeToolInput(parsed, toolName);
     } catch {
+      if (/^[\[{]/.test(trimmed)) {
+        const repaired = DeepSeekAdapter.repairTruncatedJson(trimmed)
+        if (repaired && typeof repaired === 'object' && !Array.isArray(repaired)) {
+          return DeepSeekAdapter.normalizeToolInput(repaired, toolName)
+        }
+        return DeepSeekAdapter.normalizeToolInput({
+          __dsxu_invalid_tool_payload: trimmed,
+          __dsxu_repair_error: 'unrecoverable_json_payload',
+        }, toolName)
+      }
       return DeepSeekAdapter.normalizeToolInput({ command: trimmed }, toolName);
+    }
+  }
+
+  private static repairTruncatedJson(text: string): unknown | null {
+    let repaired = text.trim()
+    if (!/^[\[{]/.test(repaired)) return null
+
+    const closers: string[] = []
+    let inString = false
+    let escaped = false
+    for (const char of repaired) {
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (char === '\\' && inString) {
+        escaped = true
+        continue
+      }
+      if (char === '"') {
+        inString = !inString
+        continue
+      }
+      if (inString) continue
+      if (char === '{') closers.push('}')
+      if (char === '[') closers.push(']')
+      if ((char === '}' || char === ']') && closers[closers.length - 1] === char) {
+        closers.pop()
+      }
+    }
+
+    if (inString) repaired += '"'
+    while (closers.length > 0) {
+      repaired += closers.pop()
+    }
+    repaired = repaired.replace(/,\s*([}\]])/g, '$1')
+
+    try {
+      return JSON.parse(repaired)
+    } catch {
+      return null
     }
   }
 
@@ -528,17 +949,22 @@ export class DeepSeekAdapter {
 
   private static async executeRequest(params: any, options?: any): Promise<{ data: any, response: Response, request_id: string }> {
     try {
-      const apiKey = process.env.DEEPSEEK_API_KEY;
+      const apiKey = options?.apiKey ?? process.env.DEEPSEEK_API_KEY;
       if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
 
-      const plan = DeepSeekAdapter.resolveRequestPlan(params, options);
+      const baseUrl = typeof options?.baseUrl === 'string' && options.baseUrl.trim().length > 0
+        ? options.baseUrl.trim().replace(/\/+$/, '')
+        : DeepSeekAdapter.getBaseUrl();
+      const plan = DeepSeekAdapter.resolveRequestPlanForBaseUrl(params, baseUrl, options);
+      const trajectoryRequestTag = DeepSeekTrajectoryStore.createRequestTag();
+      const routeInput = DeepSeekAdapter.getRouteInput(params, options);
       const systemPromptSummary =
         DeepSeekAdapter.summarizeSystemContentForDeepSeek(params.system);
       appendDeepSeekRouteTrace('request_plan', {
         paramsModel: params?.model,
         paramsThinking: params?.thinking?.type,
         paramsReasoningEffort: params?.reasoning_effort,
-        routeInput: DeepSeekAdapter.getRouteInput(params, options),
+        routeInput,
         requestedModel: plan.requestedModel,
         modelName: plan.modelName,
         apiMode: plan.apiMode,
@@ -550,29 +976,51 @@ export class DeepSeekAdapter {
         envDeepSeekModel: process.env.DEEPSEEK_MODEL,
         systemPromptSummary,
       });
-      const messages = DeepSeekAdapter.convertMessages(params.messages, params.system);
+      DeepSeekTrajectoryStore.append({
+        event: 'request_plan',
+        requestTag: trajectoryRequestTag,
+        paramsModel: params?.model,
+        paramsThinking: params?.thinking?.type,
+        paramsReasoningEffort: params?.reasoning_effort,
+        routeInput: routeInput
+          ? {
+              workflowKind: routeInput.workflowKind,
+              role: routeInput.role,
+              riskLevel: routeInput.riskLevel,
+              failedVerification: routeInput.failedVerification,
+              retryAfterFailure: routeInput.retryAfterFailure,
+            }
+          : undefined,
+        requestedModel: plan.requestedModel,
+        modelName: plan.modelName,
+        apiMode: plan.apiMode,
+        thinkingEnabled: plan.thinkingEnabled,
+        reasoningEffort: plan.reasoningEffort,
+        endpointKind: plan.endpointKind,
+        maxTokens: plan.maxTokens,
+        routeReason: plan.routeReason,
+        systemPromptSummary,
+      });
+      const messages = DeepSeekAdapter.convertMessages(params.messages, params.system, {
+        thinkingEnabled: plan.thinkingEnabled,
+      });
+      const toolSchemaPlans = DeepSeekAdapter.buildDeepSeekToolSchemaPlans(params.tools);
+      DeepSeekTrajectoryStore.append({
+        event: 'request_messages',
+        requestTag: trajectoryRequestTag,
+        ...DeepSeekTrajectoryStore.summarizeMessages(messages),
+      });
 
-      const body = {
-        model: plan.modelName,
-        messages: messages,
+      const body = DeepSeekAdapter.buildDeepSeekChatCompletionBody({
+        plan,
+        messages,
+        tools: params.tools,
+        toolSchemaPlans,
         stream: params.stream ?? false,
-        ...(params.stream ? { stream_options: { include_usage: true } } : {}),
-        max_tokens: plan.maxTokens,
-        thinking: { type: plan.thinkingEnabled ? 'enabled' : 'disabled' },
-        ...(plan.thinkingEnabled && plan.reasoningEffort ? { reasoning_effort: plan.reasoningEffort } : {}),
-        ...(!plan.thinkingEnabled ? { temperature: params.temperature ?? 1.0 } : {}),
-        ...( (params.tools && params.tools.length > 0) ? {
-           tools: params.tools.map((t: any) => ({
-             type: 'function',
-             function: { name: t.name, description: t.description, parameters: t.input_schema }
-           })),
-           tool_choice: params.tool_choice ? (
-             params.tool_choice.type === 'auto' ? 'auto' :
-             params.tool_choice.type === 'any' ? 'required' :
-             { type: 'function', function: { name: params.tool_choice.name } }
-           ) : undefined
-        } : {})
-      };
+        temperature: params.temperature,
+        tool_choice: params.tool_choice,
+        response_format: params.response_format,
+      });
 
       const response = await fetch(`${plan.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -596,7 +1044,9 @@ export class DeepSeekAdapter {
       }
 
       const requestId = response.headers.get('x-request-id') || `ds-${Date.now()}`;
-      const data = params.stream ? DeepSeekAdapter.handleStream(response, plan) : await DeepSeekAdapter.handleJSON(response, plan);
+      const data = params.stream
+        ? DeepSeekAdapter.handleStream(response, plan, trajectoryRequestTag, requestId, toolSchemaPlans)
+        : await DeepSeekAdapter.handleJSON(response, plan, trajectoryRequestTag, requestId, toolSchemaPlans);
 
       return { data, response, request_id: requestId };
     } catch (e) {
@@ -693,7 +1143,11 @@ export class DeepSeekAdapter {
     };
   }
 
-  private static convertMessages(providerMessages: any[], system?: unknown): any[] {
+  private static convertMessages(
+    providerMessages: any[],
+    system?: unknown,
+    conversionOptions: DeepSeekMessageConversionOptions = {},
+  ): any[] {
     const result: any[] = [];
     const systemContent = DeepSeekAdapter.normalizeSystemContentForDeepSeek(system);
     if (systemContent) result.push({ role: 'system', content: systemContent });
@@ -722,12 +1176,16 @@ export class DeepSeekAdapter {
           }
         } else textParts = content;
 
-        result.push({
+        const assistantMessage: Record<string, unknown> = {
           role: 'assistant',
           content: textParts || null,
-          ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
+          ...(conversionOptions.thinkingEnabled && reasoningContent ? { reasoning_content: reasoningContent } : {}),
           ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
-        });
+        };
+        if (conversionOptions.thinkingEnabled && assistantMessage.reasoning_content === undefined) {
+          assistantMessage.reasoning_content = '';
+        }
+        result.push(assistantMessage);
       } else if (msg.role === 'user') {
         if (Array.isArray(content)) {
           const toolResults = content.filter(c => c.type === 'tool_result');
@@ -741,10 +1199,13 @@ export class DeepSeekAdapter {
         } else result.push({ role: 'user', content: content });
       }
     }
-    return DeepSeekAdapter.fixMessageSequence(result);
+    return DeepSeekAdapter.fixMessageSequence(result, conversionOptions);
   }
 
-  private static fixMessageSequence(msgs: any[]): any[] {
+  private static fixMessageSequence(
+    msgs: any[],
+    conversionOptions: DeepSeekMessageConversionOptions = {},
+  ): any[] {
     const fixed: any[] = [];
     for (const m of msgs) {
       if (fixed.length > 0 && fixed[fixed.length - 1].role === m.role && m.role === 'assistant') {
@@ -752,7 +1213,8 @@ export class DeepSeekAdapter {
         const prevContent = typeof prev.content === 'string' ? prev.content : '';
         const currentContent = typeof m.content === 'string' ? m.content : '';
         prev.content = [prevContent, currentContent].filter(Boolean).join('\n\n') || null;
-        prev.reasoning_content = [prev.reasoning_content, m.reasoning_content].filter(Boolean).join('\n\n') || undefined;
+        prev.reasoning_content = [prev.reasoning_content, m.reasoning_content].filter(Boolean).join('\n\n') ||
+          (conversionOptions.thinkingEnabled ? '' : undefined);
         if (m.tool_calls?.length) {
           prev.tool_calls = [...(prev.tool_calls || []), ...m.tool_calls];
         }
@@ -768,7 +1230,13 @@ export class DeepSeekAdapter {
     return fixed;
   }
 
-  private static async *handleStream(response: Response, plan?: DeepSeekRequestPlan) {
+  private static async *handleStream(
+    response: Response,
+    plan?: DeepSeekRequestPlan,
+    trajectoryRequestTag = DeepSeekTrajectoryStore.createRequestTag(),
+    requestId?: string,
+    toolSchemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>,
+  ) {
     const reader = response.body?.getReader();
     if (!reader) return;
     const decoder = new TextDecoder();
@@ -779,7 +1247,14 @@ export class DeepSeekAdapter {
     let thinkingBlockOpen = false;
     let textBlockIndex = 0;
     let finalUsage: any | undefined;
+    let responseModel: unknown;
+    let reasoningContent = '';
     const startedToolBlocks = new Set<number>();
+    const streamToolCalls = new Map<number, {
+      id?: string;
+      function?: { name?: string; arguments?: string };
+    }>();
+    const bufferToolInputForFlattening = Boolean(toolSchemaPlans?.size);
 
     yield { type: 'message_start', message: { id: 'msg', role: 'assistant', content: [], usage: { input_tokens: 0, output_tokens: 0 } } };
 
@@ -798,12 +1273,14 @@ export class DeepSeekAdapter {
           if (dataStr === '[DONE]') break;
           try {
             const data = JSON.parse(dataStr);
+            responseModel = data.model ?? responseModel;
             if (data.usage) {
               finalUsage = DeepSeekAdapter.normalizeUsage({
                 ...data,
                 dsxu_model_evidence: plan?.modelEvidence,
                 dsxu_route_reason: plan?.routeReason,
               });
+              recordCacheUsage(finalUsage);
               appendDeepSeekRouteTrace('response_usage', {
                 responseModel: data.model,
                 requestedModel: plan?.requestedModel,
@@ -818,12 +1295,23 @@ export class DeepSeekAdapter {
                     ? Math.round((finalUsage.cache_read_input_tokens / finalUsage.input_tokens) * 1000) / 10
                     : 0,
               });
+              DeepSeekTrajectoryStore.append({
+                event: 'response_usage',
+                requestTag: trajectoryRequestTag,
+                requestId,
+                responseModel: data.model,
+                requestedModel: plan?.requestedModel,
+                modelName: plan?.modelName,
+                routeReason: plan?.routeReason,
+                usage: finalUsage,
+              });
             }
             const delta = data.choices[0]?.delta;
             if (!delta) continue;
 
             // R1 Thinking
             if (delta.reasoning_content) {
+              reasoningContent += delta.reasoning_content;
               if (!hasStartedThinking) {
                 yield { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '', signature: '' } };
                 hasStartedThinking = true;
@@ -856,11 +1344,20 @@ export class DeepSeekAdapter {
                   thinkingBlockOpen = false;
                 }
                 const toolIndex = textBlockIndex + 1 + (tc.index ?? 0);
+                const currentToolCall = streamToolCalls.get(toolIndex) ?? {};
+                if (tc.id && !currentToolCall.id) currentToolCall.id = tc.id;
+                if (!currentToolCall.function) currentToolCall.function = {};
+                if (tc.function?.name) currentToolCall.function.name = tc.function.name;
+                if (tc.function?.arguments) {
+                  currentToolCall.function.arguments =
+                    (currentToolCall.function.arguments ?? '') + tc.function.arguments;
+                }
+                streamToolCalls.set(toolIndex, currentToolCall);
                 if (tc.function?.name && !startedToolBlocks.has(toolIndex)) {
                   yield { type: 'content_block_start', index: toolIndex, content_block: { type: 'tool_use', id: tc.id, name: tc.function.name, input: {} } };
                   startedToolBlocks.add(toolIndex);
                 }
-                if (tc.function?.arguments) {
+                if (tc.function?.arguments && !bufferToolInputForFlattening) {
                   yield { type: 'content_block_delta', index: toolIndex, delta: { type: 'input_json_delta', partial_json: tc.function.arguments } };
                 }
               }
@@ -879,6 +1376,24 @@ export class DeepSeekAdapter {
       yield { type: 'content_block_stop', index: textBlockIndex };
     }
     for (const index of startedToolBlocks) {
+      if (bufferToolInputForFlattening) {
+        const call = streamToolCalls.get(index);
+        const name = call?.function?.name;
+        const rawArguments = call?.function?.arguments;
+        if (name && rawArguments) {
+          let partialJson = rawArguments;
+          const planForTool = toolSchemaPlans?.get(name);
+          if (planForTool?.shouldFlatten) {
+            try {
+              const nested = DeepSeekAdapter.nestDeepSeekFlattenedArguments(JSON.parse(rawArguments), planForTool);
+              partialJson = JSON.stringify(nested);
+            } catch {
+              partialJson = rawArguments;
+            }
+          }
+          yield { type: 'content_block_delta', index, delta: { type: 'input_json_delta', partial_json: partialJson } };
+        }
+      }
       yield { type: 'content_block_stop', index };
     }
     yield {
@@ -888,16 +1403,36 @@ export class DeepSeekAdapter {
       },
       usage: finalUsage ?? { output_tokens: 0 },
     };
+    DeepSeekTrajectoryStore.append({
+      event: 'stream_response',
+      requestTag: trajectoryRequestTag,
+      requestId,
+      ...DeepSeekTrajectoryStore.streamSnapshot({
+        responseModel,
+        reasoningContent,
+        toolCalls: [...streamToolCalls.values()].map(call =>
+          DeepSeekTrajectoryStore.toolSnapshot(call),
+        ),
+        finalUsage,
+      }),
+    });
     yield { type: 'message_stop' };
   }
 
-  private static async handleJSON(response: Response, plan?: DeepSeekRequestPlan) {
+  private static async handleJSON(
+    response: Response,
+    plan?: DeepSeekRequestPlan,
+    trajectoryRequestTag = DeepSeekTrajectoryStore.createRequestTag(),
+    requestId?: string,
+    toolSchemaPlans?: ReadonlyMap<string, DeepSeekSchemaFlattenPlan>,
+  ) {
     const data = await response.json();
     const normalizedUsage = DeepSeekAdapter.normalizeUsage({
       ...data,
       dsxu_model_evidence: plan?.modelEvidence,
       dsxu_route_reason: plan?.routeReason,
     });
+    recordCacheUsage(normalizedUsage);
     appendDeepSeekRouteTrace('response_usage', {
       responseModel: data.model,
       requestedModel: plan?.requestedModel,
@@ -912,11 +1447,27 @@ export class DeepSeekAdapter {
           ? Math.round((normalizedUsage.cache_read_input_tokens / normalizedUsage.input_tokens) * 1000) / 10
           : 0,
     });
+    DeepSeekTrajectoryStore.append({
+      event: 'json_response',
+      requestTag: trajectoryRequestTag,
+      requestId,
+      ...DeepSeekTrajectoryStore.responseSnapshot(data),
+    });
+    DeepSeekTrajectoryStore.append({
+      event: 'response_usage',
+      requestTag: trajectoryRequestTag,
+      requestId,
+      responseModel: data.model,
+      requestedModel: plan?.requestedModel,
+      modelName: plan?.modelName,
+      routeReason: plan?.routeReason,
+      usage: normalizedUsage,
+    });
     const choice = data.choices[0];
     const msg = choice.message;
     const content: any[] = [];
     const textToolUses = msg.content
-      ? DeepSeekAdapter.extractToolUsesFromText(msg.content)
+      ? DeepSeekAdapter.extractToolUsesFromTextWithEvidence(msg.content)
       : [];
     if (msg.content) {
       const hasOnlyToolMarkup =
@@ -934,7 +1485,14 @@ export class DeepSeekAdapter {
     }
     if (msg.tool_calls) {
       for (const tc of msg.tool_calls) {
-        content.push({ type: 'tool_use', id: tc.id, name: tc.function.name, input: JSON.parse(tc.function.arguments) });
+        const rawArgs = JSON.parse(tc.function.arguments);
+        content.push({
+          type: 'tool_use',
+          id: tc.id,
+          name: tc.function.name,
+          input: DeepSeekAdapter.nestDeepSeekToolArguments(tc.function.name, rawArgs, toolSchemaPlans),
+          schemaPath: 'strict_schema',
+        });
       }
     }
     return {

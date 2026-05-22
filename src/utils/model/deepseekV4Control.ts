@@ -32,6 +32,7 @@ export type DeepSeekV4WorkflowKind =
   | 'fim'
 
 export type DeepSeekV4PolicyReason =
+  | 'fim_flash_beta_non_thinking'
   | 'fim_pro_beta_non_thinking'
   | 'lightweight_flash_non_thinking'
   | 'strict_json_flash_non_thinking'
@@ -45,6 +46,7 @@ export type DeepSeekV4PolicyReason =
   | 'recovery_flash_thinking_max'
   | 'planning_review_pro_thinking_high'
   | 'complex_recovery_pro_thinking_max'
+  | 'failed_verification_flash_thinking_max'
   | 'failed_verification_pro_thinking_max'
   | 'high_risk_pro_thinking_max_requires_approval'
 
@@ -83,6 +85,9 @@ export type DeepSeekV4RouteInput = {
   highRiskBash?: boolean
   retryAfterFailure?: boolean
   failedVerification?: boolean
+  priorFlashAttempted?: boolean
+  savedTaskEvidence?: boolean
+  allowProAdmission?: boolean
   forceNonThinkingJson?: boolean
   latencySensitive?: boolean
   requiredContextTokens?: number
@@ -103,6 +108,13 @@ export type DeepSeekV4RouteDecision = {
   contextWindow: number
   needsCompaction: boolean
   pricing: DeepSeekV4Pricing
+  proAdmission?: {
+    state: 'not_required' | 'requires_approval' | 'admitted' | 'blocked_missing_evidence'
+    reason: string
+    priorFlashAttempted: boolean
+    savedTaskEvidence: boolean
+    approvalRequired: boolean
+  }
 }
 
 export type DeepSeekV4RuntimeModelOverrideInput = {
@@ -310,10 +322,72 @@ export function estimateDeepSeekV4Cost(input: DeepSeekV4CostInput): number {
   )
 }
 
-export function inferDeepSeekV4WorkflowKind(text: string | undefined): DeepSeekV4WorkflowKind {
-  const lower = (text ?? '').toLowerCase()
+type DeepSeekV4RouteInferenceContext = {
+  initialPlanningTurn?: boolean
+  allowTextFimInference?: boolean
+}
+
+function extractDeepSeekV4RouteIntentText(text: string | undefined): string {
+  const raw = text ?? ''
+  const taskPacketMatch = raw.match(/Task-specific review packet:\s*([\s\S]*)$/i)
+  if (taskPacketMatch?.[1]) return taskPacketMatch[1]
+  return raw
+}
+
+function hasExplicitFimRouteIntent(text: string): boolean {
+  const lower = extractDeepSeekV4RouteIntentText(text).toLowerCase()
+  if (!lower.trim()) return false
+  const positiveAction =
+    /\b(?:run|use|call|perform|execute|route|send|create|generate|request|invoke)\b/.test(lower) ||
+    /(?:运行|使用|调用|执行|发起|生成|请求)/.test(lower)
+  if (!positiveAction) return false
+  return (
+    /\b(?:fim|fill[- ]?in[- ]?the[- ]?middle|autocomplete)\b/.test(lower) ||
+    /\b(?:code|prefix|suffix|inline)\s+completion\b/.test(lower) ||
+    /\bcompletion\s+(?:prefix|suffix|candidate|request)\b/.test(lower) ||
+    /(?:代码|前缀|后缀|中间)?补全/.test(lower)
+  )
+}
+
+export function inferDeepSeekV4WorkflowKind(
+  text: string | undefined,
+  context: { allowTextFimInference?: boolean } = {},
+): DeepSeekV4WorkflowKind {
+  const routeIntentText = extractDeepSeekV4RouteIntentText(text)
+  const lower = routeIntentText.toLowerCase()
   const hasAny = (terms: string[]) => terms.some(term => lower.includes(term))
-  if (/\b(fim|autocomplete|completion)\b/.test(lower) || hasAny(['\u8865\u5168'])) return 'fim'
+  if (context.allowTextFimInference && hasExplicitFimRouteIntent(routeIntentText)) return 'fim'
+  const hasChineseBenchmarkIntent =
+    hasAny(['\u57fa\u51c6', '\u8bc4\u4f30', '\u6253\u699c', '\u699c\u5355', '\u8bc1\u636e\u4eea\u8868\u76d8']) &&
+    (hasAny(['\u8fd0\u884c', '\u6267\u884c', '\u8f93\u51fa', '\u751f\u6210']) ||
+      /\b(?:run|execute|output|generate)\b/.test(lower))
+  if (hasChineseBenchmarkIntent) return 'verification'
+
+  const hasChineseLongTaskIntent = hasAny([
+    '\u7ee7\u7eed',
+    '\u4e0a\u4e00\u4e2a',
+    '\u957f\u671f',
+    '\u957f\u4efb\u52a1',
+    '\u8d26\u672c',
+    '\u6309\u8d26\u672c',
+  ])
+  if (hasChineseLongTaskIntent) {
+    return hasAny(['\u5931\u8d25', '\u62a5\u9519', '\u6062\u590d', '\u91cd\u8bd5'])
+      ? 'recovery'
+      : 'planning'
+  }
+
+  const hasChineseNoEditExplain =
+    hasAny(['\u89e3\u91ca', '\u8bf4\u660e', '\u7406\u89e3', '\u903b\u8f91']) &&
+    hasAny(['\u4e0d\u8981\u4fee\u6539', '\u4e0d\u7528\u4fee\u6539', '\u53ea\u5206\u6790', '\u53ea\u89e3\u91ca'])
+  if (hasChineseNoEditExplain) return 'repo_understanding'
+
+  const hasChineseMultiFileRefactor =
+    hasAny(['\u591a\u6587\u4ef6', '\u91cd\u6784', '\u67b6\u6784', '\u6a21\u5757\u8fb9\u754c']) &&
+    (hasAny(['\u67e5\u5f15\u7528', '\u5f15\u7528', '\u8dd1\u6d4b\u8bd5', '\u6d4b\u8bd5']) ||
+      /\b(?:lsp|references?|test|tests)\b/.test(lower))
+  if (hasChineseMultiFileRefactor) return 'planning'
+
   const hasRetryRecoveryWord = /\bretry(?![- ]?safe)\b/.test(lower)
   const hasLocalFailureContext =
     /\b(?:failed|failure|failing|error|timeout|stuck)\b[\s\S]{0,48}\b(?:verification|build|command|deploy|rerun|recover|recovery|retry)\b/.test(lower) ||
@@ -628,24 +702,33 @@ function hasExplicitFailedVerificationText(text: string | undefined): boolean {
 
 export function inferDeepSeekV4RouteInput(
   text: string | undefined,
-  context: {
-    initialPlanningTurn?: boolean
-  } = {},
+  context: DeepSeekV4RouteInferenceContext = {},
 ): DeepSeekV4RouteInput {
-  const boundedCodingWorkflowKind = inferBoundedCodingWorkflowKind(text)
+  const routeIntentText = extractDeepSeekV4RouteIntentText(text)
+  const boundedCodingWorkflowKind = inferBoundedCodingWorkflowKind(routeIntentText)
   if (boundedCodingWorkflowKind) {
     return { workflowKind: boundedCodingWorkflowKind, role: 'coder' }
   }
-  const workflowKind = inferDeepSeekV4WorkflowKind(text)
-  if (shouldTreatAsHighRiskPermissionWork(text)) {
+  const workflowKind = inferDeepSeekV4WorkflowKind(routeIntentText, {
+    allowTextFimInference: context.allowTextFimInference,
+  })
+  if (shouldTreatAsHighRiskPermissionWork(routeIntentText)) {
     return {
       workflowKind: workflowKind === 'generic_chat' ? 'review' : workflowKind,
       role: 'reviewer',
       riskLevel: 'high',
     }
   }
+  if (
+    context.initialPlanningTurn &&
+    workflowKind === 'recovery' &&
+    !hasExplicitFailedVerificationText(routeIntentText) &&
+    shouldEscalateInitialGeneralPlanning(routeIntentText, workflowKind)
+  ) {
+    return { workflowKind: 'planning', role: 'planner' }
+  }
   if (workflowKind === 'recovery') {
-    if (hasExplicitFailedVerificationText(text)) {
+    if (hasExplicitFailedVerificationText(routeIntentText)) {
       return { workflowKind, role: 'recovery', failedVerification: true }
     }
     return { workflowKind, role: 'recovery', retryAfterFailure: true }
@@ -653,7 +736,7 @@ export function inferDeepSeekV4RouteInput(
   if (workflowKind === 'planning') {
     return { workflowKind, role: 'planner' }
   }
-  if (context.initialPlanningTurn && shouldEscalateInitialGeneralPlanning(text ?? '', workflowKind)) {
+  if (context.initialPlanningTurn && shouldEscalateInitialGeneralPlanning(routeIntentText, workflowKind)) {
     return { workflowKind: 'planning', role: 'planner' }
   }
   if (workflowKind === 'review') {
@@ -673,23 +756,58 @@ export function decideDeepSeekV4Route(input: DeepSeekV4RouteInput = {}): DeepSee
   let endpointKind: DeepSeekV4EndpointKind = 'chat_completions'
   let approvalRequired = false
   let reason: DeepSeekV4PolicyReason = 'lightweight_flash_non_thinking'
+  let proAdmission: DeepSeekV4RouteDecision['proAdmission']
 
   if (input.requiresFim || workflowKind === 'fim' || input.role === 'fim') {
-    model = DEEPSEEK_V4_PRO_MODEL
+    model = DEEPSEEK_V4_FLASH_MODEL
     apiMode = 'non_thinking'
     endpointKind = 'fim_completion'
-    reason = 'fim_pro_beta_non_thinking'
+    reason = 'fim_flash_beta_non_thinking'
   } else if (input.highRiskBash || input.riskLevel === 'high') {
     model = DEEPSEEK_V4_PRO_MODEL
     apiMode = 'thinking'
     reasoningEffort = 'max'
     approvalRequired = true
     reason = 'high_risk_pro_thinking_max_requires_approval'
-  } else if (input.failedVerification) {
-    model = DEEPSEEK_V4_PRO_MODEL
+    proAdmission = {
+      state: 'requires_approval',
+      reason: 'high-risk tool or permission work requires explicit Pro admission evidence',
+      priorFlashAttempted: Boolean(input.priorFlashAttempted),
+      savedTaskEvidence: Boolean(input.savedTaskEvidence),
+      approvalRequired: true,
+    }
+  } else if (input.failedVerification && input.retryAfterFailure) {
     apiMode = 'thinking'
     reasoningEffort = 'max'
-    reason = 'failed_verification_pro_thinking_max'
+    const hasProAdmissionEvidence =
+      input.allowProAdmission === true &&
+      input.priorFlashAttempted === true &&
+      input.savedTaskEvidence === true
+    if (hasProAdmissionEvidence) {
+      model = DEEPSEEK_V4_PRO_MODEL
+      approvalRequired = true
+      reason = 'failed_verification_pro_thinking_max'
+      proAdmission = {
+        state: 'admitted',
+        reason: 'failed verification recovery has prior Flash attempt and saved task evidence',
+        priorFlashAttempted: Boolean(input.priorFlashAttempted),
+        savedTaskEvidence: Boolean(input.savedTaskEvidence),
+        approvalRequired: true,
+      }
+    } else {
+      reason = 'failed_verification_flash_thinking_max'
+      proAdmission = {
+        state: 'blocked_missing_evidence',
+        reason: 'failed verification recovery stays on Flash-MAX until repeated failure, prior Flash attempt, and saved task evidence exist',
+        priorFlashAttempted: Boolean(input.priorFlashAttempted),
+        savedTaskEvidence: Boolean(input.savedTaskEvidence),
+        approvalRequired: false,
+      }
+    }
+  } else if (input.failedVerification) {
+    apiMode = 'thinking'
+    reasoningEffort = 'max'
+    reason = 'failed_verification_flash_thinking_max'
   } else if (input.retryAfterFailure || input.complexAgentTask || workflowKind === 'recovery' || input.role === 'recovery') {
     apiMode = 'thinking'
     reasoningEffort = 'max'
@@ -726,8 +844,9 @@ export function decideDeepSeekV4Route(input: DeepSeekV4RouteInput = {}): DeepSee
     workflowKind === 'feature' ||
     input.role === 'coder'
   ) {
-    apiMode = 'non_thinking'
-    reason = 'coding_flash_non_thinking'
+    apiMode = 'thinking'
+    reasoningEffort = 'high'
+    reason = 'coding_flash_thinking_high'
   }
 
   const contextWindow = getDeepSeekV4ModelSpec(model).contextWindow
@@ -755,6 +874,13 @@ export function decideDeepSeekV4Route(input: DeepSeekV4RouteInput = {}): DeepSee
     contextWindow,
     needsCompaction: (input.requiredContextTokens ?? 0) > contextWindow * 0.85,
     pricing: getDeepSeekV4Pricing(model),
+    proAdmission: proAdmission ?? {
+      state: 'not_required',
+      reason: 'Flash route selected; Pro admission not required',
+      priorFlashAttempted: Boolean(input.priorFlashAttempted),
+      savedTaskEvidence: Boolean(input.savedTaskEvidence),
+      approvalRequired,
+    },
   }
 }
 

@@ -10,7 +10,7 @@ import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import { isOAuthTokenExpired } from '../oauth/client.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 
 export type RateLimit = {
@@ -34,12 +34,12 @@ export type Utilization = {
   extra_usage?: ExtraUsage | null
 }
 
-function isProviderMigrationAccountApiAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 export async function fetchUtilization(): Promise<Utilization | null> {
-  if (!isProviderMigrationAccountApiAllowed()) {
+  if (!isArchivedAccountApiAllowed()) {
     return {}
   }
 

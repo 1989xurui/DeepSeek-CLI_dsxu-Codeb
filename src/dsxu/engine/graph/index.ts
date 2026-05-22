@@ -44,5 +44,5 @@ export function isGraphMemoryAvailable(): boolean {
  * 获取 Graph Memory 版本信息
  */
 export function getGraphMemoryVersion(): string {
-  return '1.0.0 (V8-3 F-1 Graph Memory)'
+  return '1.0.0 (Graph Memory)'
 }

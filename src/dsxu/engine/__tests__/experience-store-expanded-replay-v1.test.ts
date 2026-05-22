@@ -16,7 +16,7 @@ describe('ExperienceStore expanded replay V1', () => {
       allReadBeforeEdit: true,
       allVerified: true,
       allReducedExploration: true,
-      failedVerificationRoutesPro: true,
+      failedVerificationUsesRecoveryRoute: true,
       featureCanStayFlash: true,
       strategyChangedAfterFailure: true,
       noRepeatedCommandWithoutStrategyChange: true,
@@ -32,8 +32,8 @@ describe('ExperienceStore expanded replay V1', () => {
     expect(feature?.replayReport.planningQuality.signals.actionableVerificationPresent).toBe(true)
 
     const recovery = result.scenarios.find(scenario => scenario.kind === 'failed_verification_recovery')
-    expect(recovery?.costRoute.model).toBe('deepseek-v4-pro')
-    expect(recovery?.costRoute.routeReason).toBe('failed_verification_pro_thinking_max')
+    expect(recovery?.costRoute.model).toBe('deepseek-v4-flash')
+    expect(recovery?.costRoute.routeReason).toBe('failed_verification_flash_thinking_max')
     expect(recovery?.strategyChangedAfterFailure).toBe(true)
     expect(recovery?.repeatedCommandWithoutStrategyChange).toBe(false)
     expect(recovery?.recallIds).toContain('exp-retry-failure-taxonomy')

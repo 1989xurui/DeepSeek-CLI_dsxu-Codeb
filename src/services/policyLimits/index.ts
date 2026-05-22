@@ -7,7 +7,7 @@
  *
  * Eligibility:
  * - Console users (API key): All eligible
- * - OAuth users (provider migration cloud): Only Team and Enterprise/C4E subscribers are eligible
+ * - OAuth users (archived cloud): Only Team and Enterprise/C4E subscribers are eligible
  * - API fails open (non-blocking) - if fetch fails, continues without restrictions
  * - API returns empty restrictions for users without policy limits
  */
@@ -63,8 +63,8 @@ const CACHE_FILENAME = 'policy-limits.json'
 const FETCH_TIMEOUT_MS = 10000 // 10 seconds
 const DEFAULT_MAX_RETRIES = 5
 const POLLING_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
-const PROVIDER_MIGRATION_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
-const POLICY_LIMITS_PATH = `/api/${PROVIDER_MIGRATION_CODE_API_SEGMENT}/policy_limits`
+const ARCHIVED_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const POLICY_LIMITS_PATH = `/api/${ARCHIVED_CODE_API_SEGMENT}/policy_limits`
 
 // Background polling state
 let pollingIntervalId: ReturnType<typeof setInterval> | null = null

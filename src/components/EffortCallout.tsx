@@ -1,10 +1,10 @@
-import { c as _c } from "react/compiler-runtime";
+﻿import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Box, Text } from '../ink.js';
 import { isMaxSubscriber, isProSubscriber, isTeamSubscriber } from '../utils/auth.js';
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config.js';
 import type { EffortLevel } from '../utils/effort.js';
-import { convertEffortValueToLevel, getProviderMigrationDefaultEffortConfig, getDefaultEffortForModel, isProviderMigrationDefaultEffortCalloutModel, toPersistableEffort } from '../utils/effort.js';
+import { convertEffortValueToLevel, getArchivedDefaultEffortConfig, getDefaultEffortForModel, isArchivedDefaultEffortCalloutModel, toPersistableEffort } from '../utils/effort.js';
 import { updateSettingsForSource } from '../utils/settings/settings.js';
 import type { OptionWithDescription } from './CustomSelect/select.js';
 import { Select } from './CustomSelect/select.js';
@@ -24,7 +24,7 @@ export function EffortCallout(t0) {
   } = t0;
   let t1;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = getProviderMigrationDefaultEffortConfig();
+    t1 = getArchivedDefaultEffortConfig();
     $[0] = t1;
   } else {
     t1 = $[0];
@@ -216,8 +216,8 @@ function EffortOptionLabel(t0) {
  * - Everyone else: mark as dismissed so it never shows
  */
 export function shouldShowEffortCallout(model: string): boolean {
-  // Only show for the provider-migration default-effort model for now.
-  if (!isProviderMigrationDefaultEffortCalloutModel(model)) {
+  // Only show for the archived default-effort model for now.
+  if (!isArchivedDefaultEffortCalloutModel(model)) {
     return false;
   }
   const config = getGlobalConfig();
@@ -237,14 +237,14 @@ export function shouldShowEffortCallout(model: string): boolean {
       markV2Dismissed();
       return false;
     }
-    return getProviderMigrationDefaultEffortConfig().enabled;
+    return getArchivedDefaultEffortConfig().enabled;
   }
 
   // Max/Team are the target of the tengu_grey_step2 config.
   // Do not mark dismissed when config is disabled; they should see the dialog
   // once it's enabled for them.
   if (isMaxSubscriber() || isTeamSubscriber()) {
-    return getProviderMigrationDefaultEffortConfig().enabled;
+    return getArchivedDefaultEffortConfig().enabled;
   }
 
   // Everyone else (free tier, API key, non-subscribers): not in scope.

@@ -25,12 +25,15 @@ export class ToolProtocolIntegration {
   private guardSystem: ToolGuardSystem
   private dispatcher: ToolDispatcher
   private externalAdapter: ExternalToolAdapter
+  /** @deprecated Compatibility alias for older owner tests; same DSXU external adapter, not a second runtime. */
+  readonly bridgeAdapter: ExternalToolAdapter
 
   constructor() {
     this.specRegistry = new ToolSpecRegistry()
     this.executorFactory = new ToolExecutorFactory()
     this.guardSystem = new ToolGuardSystem()
     this.externalAdapter = new ExternalToolAdapter()
+    this.bridgeAdapter = this.externalAdapter
 
     this.initializeExecutors()
     this.initializeToolSpecs()
@@ -58,7 +61,7 @@ export class ToolProtocolIntegration {
     this.specRegistry.register(createSpecFromExternalTool(toolName, externalTool))
   }
 
-  /** @deprecated V14 provider cleanup: use registerExternalTool. */
+  /** @deprecated Provider cleanup: use registerExternalTool. */
   registerBridgeTool(toolName: string, bridgeTool: any): void {
     this.registerExternalTool(toolName, bridgeTool)
   }
@@ -96,16 +99,19 @@ export class ToolProtocolIntegration {
       description: spec.description,
       inputSchema: spec.inputSchema,
       execute: async (input: Record<string, any>, legacyContext: any) => {
+        const safeLegacyContext = legacyContext ?? {}
         const protocolContext: ToolExecutionContext = {
-          cwd: legacyContext.cwd,
-          sessionId: legacyContext.sessionId,
-          gear: legacyContext.gear,
-          emitEvent: event => legacyContext.emitEvent?.(event),
-          abortSignal: legacyContext.abortSignal,
+          cwd: safeLegacyContext.cwd,
+          sessionId: safeLegacyContext.sessionId,
+          gear: safeLegacyContext.gear,
+          emitEvent: event => safeLegacyContext.emitEvent?.(event),
+          abortSignal: safeLegacyContext.abortSignal,
         }
 
         const request: ToolCallRequest = {
-          callId: legacyContext.toolUseId || legacy_,
+          callId:
+            safeLegacyContext.toolUseId ||
+            `legacy-${spec.name}-${safeLegacyContext.sessionId ?? 'session'}-${Date.now()}`,
           toolName: spec.name,
           arguments: input,
           source: 'llm',

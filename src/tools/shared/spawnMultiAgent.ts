@@ -405,7 +405,7 @@ async function handleSpawnSplitPane(
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args; provider-migration source env names are migration aliases only.
+  // Build teammate identity CLI args; archived source env names are migration aliases only.
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -612,7 +612,7 @@ async function handleSpawnSeparateWindow(
   // Note: We spawn without a prompt - initial instructions are sent via mailbox
   const binaryPath = getTeammateCommand()
 
-  // Build teammate identity CLI args; provider-migration source env names are migration aliases only.
+  // Build teammate identity CLI args; archived source env names are migration aliases only.
   const teammateArgs = [
     `--agent-id ${quote([teammateId])}`,
     `--agent-name ${quote([sanitizedName])}`,
@@ -1107,7 +1107,7 @@ export function getDsxuSpawnMultiAgentRuntimeProfile(): {
     runtime: 'DSXU Spawn Multi-Agent',
     teammateCommandEnv: [
       DSXU_TEAMMATE_COMMAND_ENV_VAR,
-      `${TEAMMATE_COMMAND_ENV_VAR} provider-migration source alias`,
+      `${TEAMMATE_COMMAND_ENV_VAR} archived source alias`,
     ],
     backends: ['in-process', 'tmux', 'iTerm2/split-pane', 'separate-window'],
     activationEvidence: [

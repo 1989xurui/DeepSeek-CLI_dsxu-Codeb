@@ -20,8 +20,8 @@ import { getErrnoCode } from '../utils/errors.js'
 import { normalizeMessagesForAPI } from '../utils/messages.js'
 import { jsonParse, jsonStringify } from '../utils/slowOperations.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const PROVIDER_MIGRATION_TEST_FIXTURES_ROOT_ENV = `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_TEST_FIXTURES_ROOT`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const ARCHIVED_TEST_FIXTURES_ROOT_ENV = `${ARCHIVED_CODE_ENV_PREFIX}_TEST_FIXTURES_ROOT`
 
 function shouldUseVCR(): boolean {
   if (process.env.NODE_ENV === 'test') {
@@ -55,7 +55,7 @@ async function withFixture<T>(
     .slice(0, 12)
   const filename = join(
     process.env.DSXU_CODE_TEST_FIXTURES_ROOT ??
-      process.env[PROVIDER_MIGRATION_TEST_FIXTURES_ROOT_ENV] ??
+      process.env[ARCHIVED_TEST_FIXTURES_ROOT_ENV] ??
       getCwd(),
     `fixtures/${fixtureName}-${hash}.json`,
   )
@@ -116,7 +116,7 @@ export async function withVCR(
   )
   const filename = join(
     process.env.DSXU_CODE_TEST_FIXTURES_ROOT ??
-      process.env[PROVIDER_MIGRATION_TEST_FIXTURES_ROOT_ENV] ??
+      process.env[ARCHIVED_TEST_FIXTURES_ROOT_ENV] ??
       getCwd(),
     `fixtures/${dehydratedInput.map(_ => createHash('sha1').update(jsonStringify(_)).digest('hex').slice(0, 6)).join('-')}.json`,
   )

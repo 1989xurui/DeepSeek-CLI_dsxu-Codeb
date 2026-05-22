@@ -16,9 +16,9 @@ import { getTeammateModeFromSnapshot } from './backends/teammateModeSnapshot.js'
 import { TEAMMATE_COMMAND_ENV_VAR } from './constants.js'
 
 const DSXU_TEAMMATE_COMMAND_ENV_VAR = 'DSXU_CODE_TEAMMATE_COMMAND'
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
-const PROVIDER_MIGRATION_CONFIG_DIR_ENV = `CL${'AUDE'}_CONFIG_DIR`
-const PROVIDER_MIGRATION_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
+const ARCHIVED_CODE_ENV_PREFIX = `CL${'AUDE'}_CODE`
+const ARCHIVED_CONFIG_DIR_ENV = `CL${'AUDE'}_CONFIG_DIR`
+const ARCHIVED_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
 
 /**
  * Gets the command to use for spawning teammate processes.
@@ -114,21 +114,21 @@ const TEAMMATE_ENV_VARS = [
   'DEEPSEEK_BASE_URL',
   // API provider selection ...without these, teammates default to firstParty
   // and send requests to the wrong endpoint (GitHub issue #23561)
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_USE_BEDROCK`,
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_USE_VERTEX`,
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_USE_FOUNDRY`,
+  `${ARCHIVED_CODE_ENV_PREFIX}_USE_BEDROCK`,
+  `${ARCHIVED_CODE_ENV_PREFIX}_USE_VERTEX`,
+  `${ARCHIVED_CODE_ENV_PREFIX}_USE_FOUNDRY`,
   // Custom API endpoint
   'PROVIDER_BASE_URL',
   // Config directory override
-  PROVIDER_MIGRATION_CONFIG_DIR_ENV,
+  ARCHIVED_CONFIG_DIR_ENV,
   // Remote-session marker ...teammates need this for CCR-aware code paths.
-  // Auth finds its own way via the provider-migration remote oauth file;
+  // Auth finds its own way via the archived remote oauth file;
   // the FD env var wouldn't help (pipe FDs don't cross tmux).
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_REMOTE`,
+  `${ARCHIVED_CODE_ENV_PREFIX}_REMOTE`,
   // Auto-memory gate (memdir/paths.ts) checks REMOTE && !MEMORY_DIR to
   // disable memory on ephemeral CCR filesystems. Forwarding REMOTE alone
   // would flip teammates to memory-off when the parent has it on.
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_REMOTE_MEMORY_DIR`,
+  `${ARCHIVED_CODE_ENV_PREFIX}_REMOTE_MEMORY_DIR`,
   // Upstream proxy ...the parent's MITM relay is reachable from teammates
   // (same container network). Forward the proxy vars so teammates route
   // customer-configured upstream traffic through the relay for credential
@@ -147,7 +147,7 @@ const TEAMMATE_ENV_VARS = [
 
 /**
  * Builds the `env KEY=VALUE ...` string for teammate spawn commands.
- * Always includes DSXU agent markers plus provider-migration source markers,
+ * Always includes DSXU agent markers plus archived source markers,
  * plus any provider/config env vars that are set in the current process.
  */
 export function buildInheritedEnvVars(): string {
@@ -155,8 +155,8 @@ export function buildInheritedEnvVars(): string {
     'DSXUCODE=1',
     'DSXU_CODE_MODE=1',
     'DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS=1',
-    `${PROVIDER_MIGRATION_RUNTIME_MARKER_ENV}=1`,
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_EXPERIMENTAL_AGENT_TEAMS=1`,
+    `${ARCHIVED_RUNTIME_MARKER_ENV}=1`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_EXPERIMENTAL_AGENT_TEAMS=1`,
   ]
 
   for (const key of TEAMMATE_ENV_VARS) {

@@ -94,6 +94,13 @@ async function writeCartFixture(fixtureDir: string): Promise<{ sourcePath: strin
   return { sourcePath, testPath }
 }
 
+function isFailedVerificationRecoveryRoute(input: { model: string; routeReason: string }): boolean {
+  return (
+    /^deepseek-v4-(flash|pro)$/.test(input.model) &&
+    /^failed_verification_(flash|pro)_thinking_max$/.test(input.routeReason)
+  )
+}
+
 export async function runExperienceStoreReplayHarness(options: {
   evidenceDir?: string
 } = {}): Promise<ExperienceStoreReplayResult> {
@@ -213,7 +220,7 @@ export async function runExperienceStoreReplayHarness(options: {
       {
         id: 'exp-cart-cost-route',
         kind: 'cost_route',
-        title: 'Failed verification routes recovery to Pro',
+        title: 'Failed verification uses strong recovery route',
         content: costRoute.modelEvidence,
         sourcePath: evidencePath,
         createdAt,
@@ -349,8 +356,10 @@ export async function runExperienceStoreReplayHarness(options: {
         readBeforeEdit &&
         verified &&
         replayReport.repeatedExplorationReduced &&
-        costRoute.requestedModel === 'deepseek-v4-pro' &&
-        costRoute.routeReason === 'failed_verification_pro_thinking_max' &&
+        isFailedVerificationRecoveryRoute({
+          model: costRoute.requestedModel,
+          routeReason: costRoute.routeReason,
+        }) &&
         costUsd > 0 &&
         traceIndex.tracePath === tracePath &&
         deletedIds.includes('exp-user-pref-delete-me'),

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'fs'
 import { runCodeModeSurgicalLoopHarness } from '../../integration/harness/code-mode-surgical-loop-v1-harness'
-import { runDSXUVerification } from '../code-mode-surgical-loop'
+import { buildDSXUEditProofEnvelope, runDSXUVerification } from '../code-mode-surgical-loop'
 
 describe('Code Mode Surgical Loop V1', () => {
   test('runs repo probe, localization, patch plan, apply, verify, and final report', async () => {
@@ -64,5 +64,43 @@ describe('Code Mode Surgical Loop V1', () => {
     expect(mixed.failureType).toBe('TEST')
     expect(clean.exitCode).toBe(0)
     expect(clean.passed).toBe(true)
+  })
+
+  test('builds V5 proof-carrying edit envelopes that block unverified claims', () => {
+    const verified = buildDSXUEditProofEnvelope({
+      claim: 'patched checkout validation',
+      filesChanged: ['src/checkout.ts'],
+      sourceEvidence: ['src/checkout.ts:42', 'src/checkout.test.ts:12'],
+      commandsRun: [],
+      verification: {
+        command: ['bun', 'test', 'src/checkout.test.ts'],
+        exitCode: 0,
+        stdout: '1 pass 0 fail',
+        stderr: '',
+        passed: true,
+        failureType: 'UNKNOWN',
+      },
+      rollbackPoint: '.dsxu/snapshots/checkout.ts.snapshot',
+    })
+    const blocked = buildDSXUEditProofEnvelope({
+      claim: 'patched release claim binder',
+      filesChanged: ['src/release.ts'],
+      sourceEvidence: [],
+      commandsRun: [],
+      verification: 'not_run',
+      risk: 'high',
+    })
+
+    expect(verified.schemaVersion).toBe('dsxu.edit-proof-envelope.v5')
+    expect(verified.claimAllowed).toBe(true)
+    expect(verified.guards).toEqual([])
+    expect(verified.commandsRun).toContain('bun test src/checkout.test.ts')
+    expect(blocked.claimAllowed).toBe(false)
+    expect(blocked.guards).toEqual(expect.arrayContaining([
+      'missing source evidence',
+      'verification not run',
+      'missing rollback point',
+      'high-risk edit missing source evidence',
+    ]))
   })
 })

@@ -18,7 +18,7 @@ import { userInfo } from 'os'
 import { getOauthConfig } from 'src/constants/oauth.js'
 import { getRuntimeConfigHomeDir } from '../envUtils.js'
 import type { SecureStorageData } from './types.js'
-// Suffix distinguishing the OAuth credentials keychain entry from the provider-migration source
+// Suffix distinguishing the OAuth credentials keychain entry from the archived source
 // API key entry (which uses no suffix). Both share the service name base.
 // DO NOT change this value - it's part of the keychain lookup key and would
 // orphan existing stored credentials.

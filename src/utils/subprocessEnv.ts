@@ -1,7 +1,7 @@
 import { isEnvTruthy } from './envUtils.js'
 import { getDsxuCodeEnv } from './envUtils.js'
 import { delimiter, dirname } from 'path'
-const PROVIDER_MIGRATION_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
+const ARCHIVED_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
 /**
  * Env vars to strip from subprocess environments when running inside GitHub
  * Actions. This prevents prompt-injection attacks from exfiltrating secrets
@@ -17,7 +17,7 @@ const PROVIDER_MIGRATION_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
 const GHA_SUBPROCESS_SCRUB = [
   // Provider auth ...DSXU re-reads these per-request, subprocesses don't need them
   'PROVIDER_API_KEY',
-  PROVIDER_MIGRATION_OAUTH_TOKEN_ENV,
+  ARCHIVED_OAUTH_TOKEN_ENV,
   'PROVIDER_AUTH_TOKEN',
   'PROVIDER_FOUNDRY_API_KEY',
   'PROVIDER_CUSTOM_HEADERS',
@@ -41,7 +41,7 @@ const GHA_SUBPROCESS_SCRUB = [
   // GitHub Actions artifact/cache API ...cache poisoning  -> supply-chain pivot
   'ACTIONS_RUNTIME_TOKEN',
   'ACTIONS_RUNTIME_URL',
-  // Provider-migration action-specific duplicates ...action JS consumes these during
+  // Archived action-specific duplicates ...action JS consumes these during
   // prepare, before spawning DSXU. ALL_INPUTS may contain provider keys as JSON.
   'ALL_INPUTS',
   'OVERRIDE_GITHUB_TOKEN',
@@ -53,8 +53,8 @@ const GHA_SUBPROCESS_SCRUB = [
  * spawning subprocesses (Bash tool, shell snapshot, MCP stdio servers, LSP
  * servers, shell hooks).
  *
- * Gated on DSXU_CODE_SUBPROCESS_ENV_SCRUB (provider-migration alias honored).
- * Provider-migration CI action sets this
+ * Gated on DSXU_CODE_SUBPROCESS_ENV_SCRUB (archived alias honored).
+ * Archived CI action sets this
  * automatically when `allowed_non_write_users` is configured ...the flag that
  * exposes a workflow to untrusted content (prompt injection surface).
  */

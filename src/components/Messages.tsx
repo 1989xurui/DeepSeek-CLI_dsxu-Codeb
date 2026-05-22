@@ -40,6 +40,7 @@ import { InVirtualListContext, type MessageActionsNav, MessageActionsSelectedCon
 import { AssistantThinkingMessage } from './messages/AssistantThinkingMessage.js';
 import { isNullRenderingAttachment } from './messages/nullRenderingAttachments.js';
 import { OffscreenFreeze } from './OffscreenFreeze.js';
+import { shouldAutoExpandShellOutput } from './shell/ExpandShellOutputContext.js';
 import type { ToolUseConfirm } from './permissions/PermissionRequest.js';
 import { StatusNotices } from './StatusNotices.js';
 import type { JumpHandle } from './VirtualMessageList.js';
@@ -78,7 +79,7 @@ const LogoHeader = React.memo(function LogoHeader(t0) {
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
 const proactiveModule = feature('PROACTIVE') || feature('KAIROS') ? require('../proactive/index.js') : null;
-const PROVIDER_MIGRATION_DISABLE_VIRTUAL_SCROLL_ENV = 'CL' + 'AUDE' + '_CODE_DISABLE_VIRTUAL_SCROLL';
+const ARCHIVED_DISABLE_VIRTUAL_SCROLL_ENV = 'CL' + 'AUDE' + '_CODE_DISABLE_VIRTUAL_SCROLL';
 const BRIEF_TOOL_NAME: string | null = feature('KAIROS') || feature('KAIROS_BRIEF') ? (require('../tools/BriefTool/prompt.js') as typeof import('../tools/BriefTool/prompt.js')).BRIEF_TOOL_NAME : null;
 const SEND_USER_FILE_TOOL_NAME: string | null = feature('KAIROS') ? (require('../tools/SendUserFileTool/prompt.js') as typeof import('../tools/SendUserFileTool/prompt.js')).SEND_USER_FILE_TOOL_NAME : null;
 
@@ -420,7 +421,8 @@ const MessagesImpl = ({
   }, [normalizedMessages, hidePastThinking, isStreamingThinkingVisible]);
 
   // Find the latest user bash output message (from ! commands)
-  // This allows us to show full output for the most recent bash command
+  // This allows us to show full output for short recent bash commands.
+  // Long outputs stay compact so resize/scrollback anchors remain stable.
   const latestBashOutputUUID = useMemo(() => {
     // Iterate backwards to find the last user message with bash output
     for (let i_0 = normalizedMessages.length - 1; i_0 >= 0; i_0--) {
@@ -432,6 +434,9 @@ const MessagesImpl = ({
           if (block_0.type === 'text') {
             const text = block_0.text;
             if (text.startsWith('<bash-stdout') || text.startsWith('<bash-stderr')) {
+              if (!shouldAutoExpandShellOutput(text)) {
+                return null;
+              }
               return msg_0.uuid;
             }
           }
@@ -459,7 +464,7 @@ const MessagesImpl = ({
   }), [streamingToolUsesWithoutInProgress]);
   const isTranscriptMode = screen === 'transcript';
   // Hoisted to mount-time — this component re-renders on every scroll.
-  const disableVirtualScroll = useMemo(() => isEnvTruthy(process.env.DSXU_CODE_DISABLE_VIRTUAL_SCROLL) || isEnvTruthy(process.env[PROVIDER_MIGRATION_DISABLE_VIRTUAL_SCROLL_ENV]), []);
+  const disableVirtualScroll = useMemo(() => isEnvTruthy(process.env.DSXU_CODE_DISABLE_VIRTUAL_SCROLL) || isEnvTruthy(process.env[ARCHIVED_DISABLE_VIRTUAL_SCROLL_ENV]), []);
   // Virtual scroll replaces the transcript cap: everything is scrollable and
   // memory is bounded by the mounted-item count, not the total. scrollRef is
   // only passed when isFullscreenEnvEnabled() is true (REPL.tsx gates it),

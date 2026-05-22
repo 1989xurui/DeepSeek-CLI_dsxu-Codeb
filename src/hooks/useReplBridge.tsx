@@ -3,12 +3,12 @@ import type React from 'react'
 import type { Command } from '../commands.js'
 import type { Message } from '../types/message.js'
 
-/** Delay retained for callers that still debounce the provider-migration remote dialog state. */
+/** Delay retained for callers that still debounce the archived remote dialog state. */
 export const BRIDGE_FAILURE_DISMISS_MS = 10_000
 
 /**
- * DSXU default mainline no longer starts the provider-migration bridge runtime from the REPL.
- * Remote/session routing is owned by the DSXU provider contract; provider-migration bridge
+ * DSXU default mainline no longer starts the archived bridge runtime from the REPL.
+ * Remote/session routing is owned by the DSXU provider contract; archived bridge
  * compatibility must enter through an explicit provider alias outside this hook.
  */
 export function useReplBridge(
@@ -33,8 +33,8 @@ export function getDsxuUseReplBridgeRuntimeProfile() {
   return {
     runtime: 'DSXU provider REPL facade',
     defaultBehavior:
-      'provider-migration bridge initialization is unavailable on the default DSXU mainline',
+      'archived bridge initialization is unavailable on the default DSXU mainline',
     defaultOverride: 'DSXU provider contract handles local peer/session routing',
-    providerMigrationOverride: 'provider-migration bridge code is not imported from useReplBridge',
+    archivedOverride: 'archived bridge code is not imported from useReplBridge',
   }
 }

@@ -3,7 +3,7 @@ import { join } from 'path'
 import { roughTokenCountEstimation } from '../../services/tokenEstimation.js'
 import {
   getDsxuConfigHomeDir,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
   isDsxuRuntimeMode,
 } from '../../utils/envUtils.js'
 import { getErrnoCode, toError } from '../../utils/errors.js'
@@ -15,7 +15,7 @@ const MAX_TOTAL_SESSION_MEMORY_TOKENS = 12000
 function getSessionMemoryConfigHomeDir(): string {
   return isDsxuRuntimeMode()
     ? getDsxuConfigHomeDir()
-    : getProviderMigrationHomeDir()
+    : getArchivedHomeDir()
 }
 
 export const DEFAULT_SESSION_MEMORY_TEMPLATE = `
@@ -116,7 +116,7 @@ export async function loadSessionMemoryTemplate(): Promise<string> {
 /**
  * Load custom session memory prompt from file if it exists
  * Custom prompts can be placed at ~/.dsxu/session-memory/prompt.md in DSXU
- * mode, or ~/.dsxu/session-memory/prompt.md for explicit provider migration.
+ * mode, or ~/.dsxu/session-memory/prompt.md for explicit archived intake.
  * Use {{variableName}} syntax for variable substitution (e.g., {{currentNotes}}, {{notesPath}})
  */
 export async function loadSessionMemoryPrompt(): Promise<string> {

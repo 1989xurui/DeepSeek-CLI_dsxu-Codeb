@@ -4,7 +4,7 @@ import {
 } from '../check1mAccess.js'
 import { isOpus1mMergeEnabled } from './providerMigrationModel.js'
 
-export function isProviderMigrationHighCapacity1mUnavailable(model: string): boolean {
+export function isArchivedHighCapacity1mUnavailable(model: string): boolean {
   const normalized = model.toLowerCase()
   return (
     !checkOpus1mAccess() &&
@@ -14,7 +14,7 @@ export function isProviderMigrationHighCapacity1mUnavailable(model: string): boo
   )
 }
 
-export function isProviderMigrationCoding1mUnavailable(model: string): boolean {
+export function isArchivedCoding1mUnavailable(model: string): boolean {
   const normalized = model.toLowerCase()
   return (
     !checkSonnet1mAccess() &&
@@ -23,19 +23,19 @@ export function isProviderMigrationCoding1mUnavailable(model: string): boolean {
   )
 }
 
-export function isProviderMigrationExtraUsageMergeEnabled(): boolean {
+export function isArchivedExtraUsageMergeEnabled(): boolean {
   return isOpus1mMergeEnabled()
 }
 
-export type ProviderMigrationContextUpgradeSuggestion = {
+export type ArchivedContextUpgradeSuggestion = {
   alias: string
   name: string
   multiplier: number
 }
 
-export function getProviderMigrationContextUpgradeSuggestion(
+export function getArchivedContextUpgradeSuggestion(
   currentModelSetting: string | null | undefined,
-): ProviderMigrationContextUpgradeSuggestion | null {
+): ArchivedContextUpgradeSuggestion | null {
   if (currentModelSetting === 'opus' && checkOpus1mAccess()) {
     return {
       alias: 'flash-max',
@@ -52,3 +52,14 @@ export function getProviderMigrationContextUpgradeSuggestion(
   }
   return null
 }
+
+export const isProviderMigrationHighCapacity1mUnavailable =
+  isArchivedHighCapacity1mUnavailable
+export const isProviderMigrationCoding1mUnavailable =
+  isArchivedCoding1mUnavailable
+export const isProviderMigrationExtraUsageMergeEnabled =
+  isArchivedExtraUsageMergeEnabled
+export type ProviderMigrationContextUpgradeSuggestion =
+  ArchivedContextUpgradeSuggestion
+export const getProviderMigrationContextUpgradeSuggestion =
+  getArchivedContextUpgradeSuggestion

@@ -185,7 +185,10 @@ export class PersistentDagRunner {
     if (this.config.mockNodeExecutor) {
       return this.config.mockNodeExecutor(node, inputs);
     }
-    return { nodeId: node.id, note: 'real execution not wired' };
+    throw new Error(
+      `Persistent DAG node "${node.id}" has no DSXU mainline executor. ` +
+        'Use the existing query-loop/PlanGraph/Tool Gate runtime, or provide an explicit executor for harness evidence.',
+    );
   }
 
   private async saveState(state: PersistentState): Promise<void> {

@@ -1,6 +1,6 @@
 import { c as _c } from "react/compiler-runtime";
 import React, { useCallback, useEffect, useState } from 'react';
-import { checkIsGitClean, checkNeedsProviderMigrationLogin } from 'src/utils/background/remote/preconditions.js';
+import { checkIsGitClean, checkNeedsArchivedCloudLogin } from 'src/utils/background/remote/preconditions.js';
 import { gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
 import { Box, Text } from '../ink.js';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
@@ -146,15 +146,15 @@ export function TeleportError(t0) {
         }
         let t9;
         if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-          t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires provider-migration cloud credentials.</Text><Text dimColor={true}>Those credentials are used only by the remote workspace adapter.</Text></Box>;
+          t9 = <Box flexDirection="column"><Text dimColor={true}>Teleport requires archived cloud credentials.</Text><Text dimColor={true}>Those credentials are used only by the remote workspace adapter.</Text></Box>;
           $[16] = t9;
         } else {
           t9 = $[16];
         }
         let t10;
         if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
-          t10 = <Dialog title="Log in to provider-migration cloud" onCancel={onCancel}>{t9}<Select options={[{
-              label: "Login with provider-migration cloud account",
+          t10 = <Dialog title="Log in to archived cloud" onCancel={onCancel}>{t9}<Select options={[{
+              label: "Login with archived cloud account",
               value: "login"
             }, {
               label: "Exit",
@@ -178,7 +178,7 @@ function _temp() {
 }
 export async function getTeleportErrors(): Promise<Set<TeleportLocalErrorType>> {
   const errors = new Set<TeleportLocalErrorType>();
-  const [needsLogin, isGitClean] = await Promise.all([checkNeedsProviderMigrationLogin(), checkIsGitClean()]);
+  const [needsLogin, isGitClean] = await Promise.all([checkNeedsArchivedCloudLogin(), checkIsGitClean()]);
   if (needsLogin) {
     errors.add('needsLogin');
   }

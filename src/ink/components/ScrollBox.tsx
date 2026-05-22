@@ -85,6 +85,8 @@ function ScrollBox({
   ...style
 }: PropsWithChildren<ScrollBoxProps>): React.ReactNode {
   const domRef = useRef<DOMElement>(null);
+  const lastScrollTopRef = useRef(0);
+  const lastStickyRef = useRef<boolean | undefined>(stickyScroll ? true : undefined);
   // scrollTo/scrollBy bypass React: they mutate scrollTop on the DOM node,
   // mark it dirty, and call the root's throttled scheduleRender directly.
   // The Ink renderer reads scrollTop from the node — no React state needed,
@@ -96,10 +98,33 @@ function ScrollBox({
   const [, forceRender] = useState(0);
   const listenersRef = useRef(new Set<() => void>());
   const renderQueuedRef = useRef(false);
+  const lastNonStickyScrollTopRef = useRef<number | undefined>(undefined);
+  const lastNonStickyMaxScrollRef = useRef<number | undefined>(undefined);
   const notify = () => {
     for (const l of listenersRef.current) l();
   };
+  function rememberScrollState(el: DOMElement): void {
+    lastScrollTopRef.current = el.scrollTop ?? lastScrollTopRef.current;
+    const isSticky = el.stickyScroll ?? Boolean(el.attributes['stickyScroll']);
+    lastStickyRef.current = isSticky;
+    if (!isSticky) {
+      const scrollTop = el.scrollTop ?? lastNonStickyScrollTopRef.current;
+      if (scrollTop !== undefined) {
+        el.lastNonStickyScrollTop = scrollTop;
+        lastNonStickyScrollTopRef.current = scrollTop;
+      }
+      const maxScroll =
+        el.scrollHeight !== undefined && el.scrollViewportHeight !== undefined
+          ? Math.max(0, el.scrollHeight - el.scrollViewportHeight)
+          : el.lastNonStickyMaxScroll ?? lastNonStickyMaxScrollRef.current;
+      if (maxScroll !== undefined) {
+        el.lastNonStickyMaxScroll = maxScroll;
+        lastNonStickyMaxScrollRef.current = maxScroll;
+      }
+    }
+  }
   function scrollMutated(el: DOMElement): void {
+    rememberScrollState(el);
     // Signal background intervals (IDE poll, LSP poll, GCS fetch, orphan
     // check) to skip their next tick — they compete for the event loop and
     // contributed to 1402ms max frame gaps during scroll drain.
@@ -123,7 +148,10 @@ function ScrollBox({
       el.stickyScroll = false;
       el.pendingScrollDelta = undefined;
       el.scrollAnchor = undefined;
+      el.scrollClampMin = undefined;
+      el.scrollClampMax = undefined;
       el.scrollTop = Math.max(0, Math.floor(y));
+      el.lastNonStickyScrollTop = el.scrollTop;
       scrollMutated(el);
     },
     scrollToElement(el: DOMElement, offset = 0) {
@@ -131,6 +159,8 @@ function ScrollBox({
       if (!box) return;
       box.stickyScroll = false;
       box.pendingScrollDelta = undefined;
+      box.scrollClampMin = undefined;
+      box.scrollClampMax = undefined;
       box.scrollAnchor = {
         el,
         offset
@@ -154,6 +184,7 @@ function ScrollBox({
       if (!el) return;
       el.pendingScrollDelta = undefined;
       el.stickyScroll = true;
+      rememberScrollState(el);
       markDirty(el);
       notify();
       forceRender(n => n + 1);
@@ -215,7 +246,23 @@ function ScrollBox({
   // commit, which is too late for the first frame.
   return <ink-box ref={el => {
     domRef.current = el;
-    if (el) el.scrollTop ??= 0;
+    if (el) {
+      el.scrollTop ??= lastScrollTopRef.current;
+      if (el.stickyScroll === undefined && lastStickyRef.current === false) {
+        el.stickyScroll = false;
+      }
+      if (lastStickyRef.current === false) {
+        if (lastNonStickyScrollTopRef.current !== undefined) {
+          el.lastNonStickyScrollTop ??= lastNonStickyScrollTopRef.current;
+          if ((el.scrollTop ?? 0) === 0 && lastNonStickyScrollTopRef.current > 0) {
+            el.scrollTop = lastNonStickyScrollTopRef.current;
+          }
+        }
+        if (lastNonStickyMaxScrollRef.current !== undefined) {
+          el.lastNonStickyMaxScroll ??= lastNonStickyMaxScrollRef.current;
+        }
+      }
+    }
   }} style={{
     flexWrap: 'nowrap',
     flexDirection: style.flexDirection ?? 'row',

@@ -17,7 +17,7 @@ export const MACOS_PREFERENCE_DOMAIN =
  *
  * These keys live under SOFTWARE\Policies which is on the WOW64 shared key
  * list — both 32-bit and 64-bit processes see the same values without
- * redirection. Do not move these provider-migration-compatible keys under SOFTWARE, as SOFTWARE is
+ * redirection. Do not move these archived-compatible keys under SOFTWARE, as SOFTWARE is
  * redirected and 32-bit processes would silently read from WOW6432Node.
  * See: https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys
  */

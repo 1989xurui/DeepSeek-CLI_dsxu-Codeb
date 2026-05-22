@@ -4,7 +4,7 @@ import { getOauthAccountInfo } from '../../utils/auth.js'
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
@@ -25,8 +25,8 @@ type CachedGrantEntry = {
 
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hour
 
-function isProviderMigrationAccountApiAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 /**
@@ -35,7 +35,7 @@ function isProviderMigrationAccountApiAllowed(): boolean {
  * so the CLI just reads the response without replicating that logic.
  */
 async function fetchOverageCreditGrant(): Promise<OverageCreditGrantInfo | null> {
-  if (!isProviderMigrationAccountApiAllowed()) return null
+  if (!isArchivedAccountApiAllowed()) return null
   try {
     const { accessToken, orgUUID } = await prepareApiRequest()
     const url = `${getOauthConfig().BASE_API_URL}/api/oauth/organizations/${orgUUID}/overage_credit_grant`
@@ -84,7 +84,7 @@ export function invalidateOverageCreditGrantCache(): void {
  * is about to render and the cache is empty.
  */
 export async function refreshOverageCreditGrantCache(): Promise<void> {
-  if (!isProviderMigrationAccountApiAllowed()) return
+  if (!isArchivedAccountApiAllowed()) return
   if (isEssentialTrafficOnly()) return
   const orgId = getOauthAccountInfo()?.organizationUuid
   if (!orgId) return

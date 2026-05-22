@@ -1,12 +1,12 @@
-import figures from 'figures';
+﻿import figures from 'figures';
 import React, { useEffect, useRef, useState } from 'react';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import type { CommandResultDisplay } from '../../commands.js';
 import {
-  PROVIDER_MIGRATION_MCP_MENU_AUTH,
-  PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH,
-  isProviderMigrationMcpTransport,
-  providerMigrationMcpEvent,
+  ARCHIVED_MCP_MENU_AUTH,
+  ARCHIVED_MCP_MENU_CLEAR_AUTH,
+  archivedMcpEvent,
+  isArchivedMcpTransport,
 } from '../../constants/providerMigrationProtocol.js';
 import { getProviderCloudOrigin } from '../../constants/oauth.js';
 import { useExitOnCtrlCDWithKeybindings } from '../../hooks/useExitOnCtrlCDWithKeybindings.js';
@@ -34,10 +34,10 @@ import { Spinner } from '../Spinner.js';
 import TextInput from '../TextInput.js';
 import { CapabilitiesSection } from './CapabilitiesSection.js';
 import type { HTTPServerInfo, SSEServerInfo } from './types.js';
-type ProviderMigrationServerInfo = HTTPServerInfo | SSEServerInfo;
+type ArchivedConnectorServerInfo = HTTPServerInfo | SSEServerInfo;
 import { handleReconnectError, handleReconnectResult } from './utils/reconnectHelpers.js';
 type Props = {
-  server: SSEServerInfo | HTTPServerInfo | ProviderMigrationServerInfo;
+  server: SSEServerInfo | HTTPServerInfo | ArchivedConnectorServerInfo;
   serverToolsCount: number;
   onViewTools: () => void;
   onCancel: () => void;
@@ -66,11 +66,11 @@ export function MCPRemoteServerMenu({
   const [authorizationUrl, setAuthorizationUrl] = React.useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const authAbortControllerRef = useRef<AbortController | null>(null);
-  const [isProviderMigrationAuthenticating, setIsProviderMigrationAuthenticating] = useState(false);
-  const [providerMigrationAuthUrl, setProviderMigrationAuthUrl] = useState<string | null>(null);
-  const [isProviderMigrationClearingAuth, setIsProviderMigrationClearingAuth] = useState(false);
-  const [providerMigrationClearAuthUrl, setProviderMigrationClearAuthUrl] = useState<string | null>(null);
-  const [providerMigrationClearAuthBrowserOpened, setProviderMigrationClearAuthBrowserOpened] = useState(false);
+  const [isArchivedConnectorAuthenticating, setisArchivedConnectorAuthenticating] = useState(false);
+  const [archivedConnectorAuthUrl, setarchivedConnectorAuthUrl] = useState<string | null>(null);
+  const [isArchivedConnectorClearingAuth, setisArchivedConnectorClearingAuth] = useState(false);
+  const [archivedConnectorClearAuthUrl, setarchivedConnectorClearAuthUrl] = useState<string | null>(null);
+  const [archivedConnectorClearAuthBrowserOpened, setarchivedConnectorClearAuthBrowserOpened] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const unmountedRef = useRef(false);
@@ -97,14 +97,14 @@ export function MCPRemoteServerMenu({
   // 2. It's connected and has tools (meaning it's working via some auth mechanism)
   const isEffectivelyAuthenticated = server.isAuthenticated || server.client.type === 'connected' && serverToolsCount > 0;
   const reconnectMcpServer = useMcpReconnect();
-  const handleProviderMigrationAuthComplete = React.useCallback(async () => {
-    setIsProviderMigrationAuthenticating(false);
-    setProviderMigrationAuthUrl(null);
+  const handleArchivedConnectorAuthComplete = React.useCallback(async () => {
+    setisArchivedConnectorAuthenticating(false);
+    setarchivedConnectorAuthUrl(null);
     setIsReconnecting(true);
     try {
       const result = await reconnectMcpServer(server.name);
       const success = result.client.type === 'connected';
-      logEvent(providerMigrationMcpEvent('auth_completed'), {
+      logEvent(archivedMcpEvent('auth_completed'), {
         success
       });
       if (success) {
@@ -115,7 +115,7 @@ export function MCPRemoteServerMenu({
         onComplete?.('Authentication successful, but server reconnection failed. You may need to manually restart DSXU Code for the changes to take effect.');
       }
     } catch (err) {
-      logEvent(providerMigrationMcpEvent('auth_completed'), {
+      logEvent(archivedMcpEvent('auth_completed'), {
         success: false
       });
       onComplete?.(handleReconnectError(err, server.name));
@@ -123,7 +123,7 @@ export function MCPRemoteServerMenu({
       setIsReconnecting(false);
     }
   }, [reconnectMcpServer, server.name, onComplete]);
-  const handleProviderMigrationClearAuthComplete = React.useCallback(async () => {
+  const handleArchivedConnectorClearAuthComplete = React.useCallback(async () => {
     await clearServerCache(server.name, {
       ...server.config,
       scope: server.scope
@@ -147,11 +147,11 @@ export function MCPRemoteServerMenu({
         }
       };
     });
-    logEvent(providerMigrationMcpEvent('clear_auth_completed'), {});
+    logEvent(archivedMcpEvent('clear_auth_completed'), {});
     onComplete?.(`Disconnected from ${server.name}.`);
-    setIsProviderMigrationClearingAuth(false);
-    setProviderMigrationClearAuthUrl(null);
-    setProviderMigrationClearAuthBrowserOpened(false);
+    setisArchivedConnectorClearingAuth(false);
+    setarchivedConnectorClearAuthUrl(null);
+    setarchivedConnectorClearAuthBrowserOpened(false);
   }, [server.name, server.config, server.scope, setAppState, onComplete]);
 
   // Escape to cancel authentication flow
@@ -165,44 +165,44 @@ export function MCPRemoteServerMenu({
     isActive: isAuthenticating
   });
 
-  // Escape cancels provider migration connector authentication
+  // Escape cancels archived connector authentication
   useKeybinding('confirm:no', () => {
-    setIsProviderMigrationAuthenticating(false);
-    setProviderMigrationAuthUrl(null);
+    setisArchivedConnectorAuthenticating(false);
+    setarchivedConnectorAuthUrl(null);
   }, {
     context: 'Confirmation',
-    isActive: isProviderMigrationAuthenticating
+    isActive: isArchivedConnectorAuthenticating
   });
 
-  // Escape cancels isolated provider migration connector clear auth
+  // Escape cancels isolated archived connector clear auth
   useKeybinding('confirm:no', () => {
-    setIsProviderMigrationClearingAuth(false);
-    setProviderMigrationClearAuthUrl(null);
-    setProviderMigrationClearAuthBrowserOpened(false);
+    setisArchivedConnectorClearingAuth(false);
+    setarchivedConnectorClearAuthUrl(null);
+    setarchivedConnectorClearAuthBrowserOpened(false);
   }, {
     context: 'Confirmation',
-    isActive: isProviderMigrationClearingAuth
+    isActive: isArchivedConnectorClearingAuth
   });
 
   // Return key handling for authentication flows and 'c' to copy URL
   useInput((input, key) => {
-    if (key.return && isProviderMigrationAuthenticating) {
-      void handleProviderMigrationAuthComplete();
+    if (key.return && isArchivedConnectorAuthenticating) {
+      void handleArchivedConnectorAuthComplete();
     }
-    if (key.return && isProviderMigrationClearingAuth) {
+    if (key.return && isArchivedConnectorClearingAuth) {
       if (isDsxuRuntimeMode()) return;
-      if (providerMigrationClearAuthBrowserOpened) {
-        void handleProviderMigrationClearAuthComplete();
+      if (archivedConnectorClearAuthBrowserOpened) {
+        void handleArchivedConnectorClearAuthComplete();
       } else {
         // First Enter: open the browser
         const connectorsUrl = `${getProviderCloudOrigin()}/settings/connectors`;
-        setProviderMigrationClearAuthUrl(connectorsUrl);
-        setProviderMigrationClearAuthBrowserOpened(true);
+        setarchivedConnectorClearAuthUrl(connectorsUrl);
+        setarchivedConnectorClearAuthBrowserOpened(true);
         void openBrowser(connectorsUrl);
       }
     }
     if (input === 'c' && !urlCopied) {
-      const urlToCopy = authorizationUrl || providerMigrationAuthUrl || providerMigrationClearAuthUrl;
+      const urlToCopy = authorizationUrl || archivedConnectorAuthUrl || archivedConnectorClearAuthUrl;
       if (urlToCopy) {
         void setClipboard(urlToCopy).then(raw => {
           if (unmountedRef.current) return;
@@ -221,44 +221,44 @@ export function MCPRemoteServerMenu({
   // Count MCP prompts for this server (skills are shown in /skills, not here)
   const serverCommandsCount = filterMcpPromptsByServer(mcp.commands, server.name).length;
   const toggleMcpServer = useMcpToggleEnabled();
-  const handleProviderMigrationAuth = React.useCallback(async () => {
+  const handleArchivedConnectorAuth = React.useCallback(async () => {
     if (isDsxuRuntimeMode()) {
-      onComplete?.(`DSXU mode isolates provider migration connector auth for ${server.name}. Add this server through DSXU MCP Provider settings instead.`);
+      onComplete?.(`DSXU mode isolates archived connector auth for ${server.name}. Add this server through DSXU MCP Provider settings instead.`);
       return;
     }
-    const providerMigrationBaseUrl = getProviderCloudOrigin();
+    const archivedConnectorBaseUrl = getProviderCloudOrigin();
     const accountInfo = getOauthAccountInfo();
     const orgUuid = accountInfo?.organizationUuid;
     let authUrl: string;
-    if (orgUuid && isProviderMigrationMcpTransport(server.config.type) && server.config.id) {
+    if (orgUuid && isArchivedMcpTransport(server.config.type) && server.config.id) {
       // Use the direct auth URL with org and server IDs
       // Replace 'mcprs' prefix with 'mcpsrv' if present
       const serverId = server.config.id.startsWith('mcprs') ? 'mcpsrv' + server.config.id.slice(5) : server.config.id;
       const productSurface = encodeURIComponent(getDsxuCodeEnv('ENTRYPOINT') || 'cli');
-      authUrl = `${providerMigrationBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
+      authUrl = `${archivedConnectorBaseUrl}/api/organizations/${orgUuid}/mcp/start-auth/${serverId}?product_surface=${productSurface}`;
     } else {
       // Fall back to settings/connectors if we don't have the required IDs
-      authUrl = `${providerMigrationBaseUrl}/settings/connectors`;
+      authUrl = `${archivedConnectorBaseUrl}/settings/connectors`;
     }
-    setProviderMigrationAuthUrl(authUrl);
-    setIsProviderMigrationAuthenticating(true);
-    logEvent(providerMigrationMcpEvent('auth_started'), {});
+    setarchivedConnectorAuthUrl(authUrl);
+    setisArchivedConnectorAuthenticating(true);
+    logEvent(archivedMcpEvent('auth_started'), {});
     await openBrowser(authUrl);
   }, [server.config, server.name, onComplete]);
-  const handleProviderMigrationClearAuth = React.useCallback(() => {
+  const handleArchivedConnectorClearAuth = React.useCallback(() => {
     if (isDsxuRuntimeMode()) {
-      onComplete?.(`DSXU mode isolates provider migration connector auth for ${server.name}. Use DSXU MCP Provider settings to disconnect or rotate credentials.`);
+      onComplete?.(`DSXU mode isolates archived connector auth for ${server.name}. Use DSXU MCP Provider settings to disconnect or rotate credentials.`);
       return;
     }
-    setIsProviderMigrationClearingAuth(true);
-    logEvent(providerMigrationMcpEvent('clear_auth_started'), {});
+    setisArchivedConnectorClearingAuth(true);
+    logEvent(archivedMcpEvent('clear_auth_started'), {});
   }, [server.name, onComplete]);
   const handleToggleEnabled = React.useCallback(async () => {
     const wasEnabled = server.client.type !== 'disabled';
     try {
       await toggleMcpServer(server.name);
-      if (isProviderMigrationMcpTransport(server.config.type)) {
-        logEvent(providerMigrationMcpEvent('toggle'), {
+      if (isArchivedMcpTransport(server.config.type)) {
+        logEvent(archivedMcpEvent('toggle'), {
           new_state: (wasEnabled ? 'disabled' : 'enabled') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
       }
@@ -271,7 +271,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.client.type, server.config.type, server.name, toggleMcpServer, onCancel, onComplete]);
   const handleAuthenticate = React.useCallback(async () => {
-    if (isProviderMigrationMcpTransport(server.config.type)) return;
+    if (isArchivedMcpTransport(server.config.type)) return;
     setIsAuthenticating(true);
     setError(null);
     const controller = new AbortController();
@@ -318,7 +318,7 @@ export function MCPRemoteServerMenu({
     }
   }, [server.isAuthenticated, server.config, server.name, onComplete, reconnectMcpServer, isEffectivelyAuthenticated]);
   const handleClearAuth = async () => {
-    if (isProviderMigrationMcpTransport(server.config.type)) return;
+    if (isArchivedMcpTransport(server.config.type)) return;
     if (server.config) {
       // First revoke the authentication tokens and clear all auth state
       await revokeServerTokens(server.name, server.config);
@@ -359,7 +359,7 @@ export function MCPRemoteServerMenu({
     // XAA: silent exchange (cached id_token 锟?no browser), so don't claim
     // one will open. If IdP login IS needed, authorizationUrl populates and
     // the URL fallback block below still renders.
-    const authCopy = !isProviderMigrationMcpTransport(server.config.type) && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
+    const authCopy = !isArchivedMcpTransport(server.config.type) && server.config.oauth?.xaa ? ' Authenticating via your identity provider' : ' A browser window will open for authentication';
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Authenticating with {server.name}...</Text>
         <Box>
@@ -399,14 +399,14 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isProviderMigrationAuthenticating) {
+  if (isArchivedConnectorAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Authenticating with {server.name}...</Text>
         <Box>
           <Spinner />
           <Text> A browser window will open for authentication</Text>
         </Box>
-        {providerMigrationAuthUrl && <Box flexDirection="column">
+        {archivedConnectorAuthUrl && <Box flexDirection="column">
             <Box>
               <Text dimColor>
                 If your browser doesn&apos;t open automatically, copy this URL
@@ -416,7 +416,7 @@ export function MCPRemoteServerMenu({
                   <KeyboardShortcutHint shortcut="c" action="copy" parens />
                 </Text>}
             </Box>
-            <Link url={providerMigrationAuthUrl} />
+            <Link url={archivedConnectorAuthUrl} />
           </Box>}
         <Box marginLeft={3} flexDirection="column">
           <Text color="permission">
@@ -428,15 +428,15 @@ export function MCPRemoteServerMenu({
         </Box>
       </Box>;
   }
-  if (isProviderMigrationClearingAuth) {
+  if (isArchivedConnectorClearingAuth) {
     return <Box flexDirection="column" gap={1} padding={1}>
         <Text color="brand">Clear authentication for {server.name}</Text>
-        {providerMigrationClearAuthBrowserOpened ? <>
+        {archivedConnectorClearAuthBrowserOpened ? <>
             <Text>
               Find the MCP server in the browser and click
               &quot;Disconnect&quot;.
             </Text>
-            {providerMigrationClearAuthUrl && <Box flexDirection="column">
+            {archivedConnectorClearAuthUrl && <Box flexDirection="column">
                 <Box>
                   <Text dimColor>
                     If your browser didn&apos;t open automatically, copy this
@@ -446,7 +446,7 @@ export function MCPRemoteServerMenu({
                       <KeyboardShortcutHint shortcut="c" action="copy" parens />
                     </Text>}
                 </Box>
-                <Link url={providerMigrationClearAuthUrl} />
+                <Link url={archivedConnectorClearAuthUrl} />
               </Box>}
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
@@ -458,7 +458,7 @@ export function MCPRemoteServerMenu({
             </Box>
           </> : <>
             <Text>
-              This provider migration path opens the source cloud connector settings. In DSXU mode, use DSXU MCP Provider settings to disconnect credentials.
+              This archived path opens source cloud connector settings. In DSXU mode, use DSXU MCP Provider settings to disconnect credentials.
             </Text>
             <Box marginLeft={3} flexDirection="column">
               <Text color="permission">
@@ -497,16 +497,16 @@ export function MCPRemoteServerMenu({
       value: 'tools'
     });
   }
-  if (isProviderMigrationMcpTransport(server.config.type)) {
+  if (isArchivedMcpTransport(server.config.type)) {
     if (server.client.type === 'connected') {
       menuOptions.push({
         label: 'Clear authentication',
-        value: PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH
+        value: ARCHIVED_MCP_MENU_CLEAR_AUTH
       });
     } else if (server.client.type !== 'disabled') {
       menuOptions.push({
         label: 'Authenticate',
-        value: PROVIDER_MIGRATION_MCP_MENU_AUTH
+        value: ARCHIVED_MCP_MENU_AUTH
       });
     }
   } else {
@@ -565,7 +565,7 @@ export function MCPRemoteServerMenu({
               </Text> : <Text>{color('error', theme)(figures.cross)} failed</Text>}
           </Box>
 
-          {!isProviderMigrationMcpTransport(server.transport) && <Box>
+          {!isArchivedMcpTransport(server.transport) && <Box>
               <Text bold>Auth: </Text>
               {isEffectivelyAuthenticated ? <Text>
                   {color('success', theme)(figures.tick)} authenticated
@@ -609,18 +609,18 @@ export function MCPRemoteServerMenu({
             case 'clear-auth':
               await handleClearAuth();
               break;
-            case PROVIDER_MIGRATION_MCP_MENU_AUTH:
-              await handleProviderMigrationAuth();
+            case ARCHIVED_MCP_MENU_AUTH:
+              await handleArchivedConnectorAuth();
               break;
-            case PROVIDER_MIGRATION_MCP_MENU_CLEAR_AUTH:
-              handleProviderMigrationClearAuth();
+            case ARCHIVED_MCP_MENU_CLEAR_AUTH:
+              handleArchivedConnectorClearAuth();
               break;
             case 'reconnectMcpServer':
               setIsReconnecting(true);
               try {
                 const result_1 = await reconnectMcpServer(server.name);
-                if (isProviderMigrationMcpTransport(server.config.type)) {
-                  logEvent(providerMigrationMcpEvent('reconnect'), {
+                if (isArchivedMcpTransport(server.config.type)) {
+                  logEvent(archivedMcpEvent('reconnect'), {
                     success: result_1.client.type === 'connected'
                   });
                 }
@@ -629,8 +629,8 @@ export function MCPRemoteServerMenu({
                 } = handleReconnectResult(result_1, server.name);
                 onComplete?.(message_0);
               } catch (err_2) {
-                if (isProviderMigrationMcpTransport(server.config.type)) {
-                  logEvent(providerMigrationMcpEvent('reconnect'), {
+                if (isArchivedMcpTransport(server.config.type)) {
+                  logEvent(archivedMcpEvent('reconnect'), {
                     success: false
                   });
                 }
@@ -665,11 +665,11 @@ export function getDsxuMcpRemoteServerMenuRuntimeProfile() {
   return {
     runtime: 'DSXU MCP Remote Server Menu',
     defaultProvider: 'DSXU MCP Provider settings',
-    isolatedProviderMigrationBoundary:
-      'provider migration connector OAuth / settings-connectors browser flow',
+    isolatedArchivedConnectorBoundary:
+      'archived connector OAuth / settings-connectors browser flow',
     activationEvidence: [
-      'DSXU_CODE_MODE blocks provider migration connector auth browser launch',
-      'DSXU_CODE_MODE blocks provider migration connector clear-auth browser launch',
+      'DSXU_CODE_MODE blocks archived connector auth browser launch',
+      'DSXU_CODE_MODE blocks archived connector clear-auth browser launch',
       'standard MCP OAuth remains available for DSXU and external providers',
     ],
   }

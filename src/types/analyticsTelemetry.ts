@@ -24,9 +24,9 @@ export type DsxuTelemetryPublicApiAuth = JsonRecord
 export const DSXU_TELEMETRY_ENV_FIELDS = {
   isRemote: 'is_dsxu_code_remote',
   isAction: 'is_dsxu_code_action',
-  isProviderMigrationAuth: 'is_provider_migration_auth',
+  isArchivedProviderAuth: 'is_archived_provider_auth',
   containerId: 'dsxu_code_container_id',
   remoteSessionId: 'dsxu_code_remote_session_id',
 } as const
 
-export const PROVIDER_MIGRATION_ACTION_PATH_SEGMENT = 'dsxu-code-action/'
+export const ARCHIVED_PROVIDER_ACTION_PATH_SEGMENT = 'dsxu-code-action/'

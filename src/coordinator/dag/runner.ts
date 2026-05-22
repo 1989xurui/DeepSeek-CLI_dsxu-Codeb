@@ -213,8 +213,10 @@ async function executeNode(
   if (config?.mockNodeExecutor) {
     return config.mockNodeExecutor(node, inputs);
   }
-  // Real executor: dispatch to R5-17 role system
-  return { nodeId: node.id, kind: node.kind, note: 'Real executor not yet wired' };
+  throw new Error(
+    `DAG node "${node.id}" has no DSXU mainline executor. ` +
+      'Use the existing query-loop/PlanGraph/Tool Gate runtime, or provide an explicit executor for harness evidence.',
+  );
 }
 
 function executeWithTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {

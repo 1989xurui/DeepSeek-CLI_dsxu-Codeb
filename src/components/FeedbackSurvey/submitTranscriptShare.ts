@@ -3,6 +3,10 @@ import { readFile, stat } from 'fs/promises'
 import type { Message } from '../../types/message.js'
 import { checkAndRefreshOAuthTokenIfNeeded } from '../../utils/auth.js'
 import { logForDebugging } from '../../utils/debug.js'
+import {
+  isDsxuRuntimeMode,
+  isArchivedServiceShellAllowed,
+} from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { getAuthHeaders, getUserAgent } from '../../utils/http.js'
 import { normalizeMessagesForAPI } from '../../utils/messages.js'
@@ -20,7 +24,7 @@ type TranscriptShareResult = {
   transcriptId?: string
 }
 
-const PROVIDER_MIGRATION_TRANSCRIPT_SHARE_URL =
+const ARCHIVED_TRANSCRIPT_SHARE_URL =
   `https://api.${'anth' + 'ropic'}.com/api/` +
   `${'clau' + 'de'}_code_shared_session_transcripts`
 
@@ -35,6 +39,9 @@ export async function submitTranscriptShare(
   trigger: TranscriptShareTrigger,
   appearanceId: string,
 ): Promise<TranscriptShareResult> {
+  if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
+    return { success: false }
+  }
   try {
     logForDebugging('Collecting transcript for sharing', { level: 'info' })
 
@@ -89,7 +96,7 @@ export async function submitTranscriptShare(
     }
 
     const response = await axios.post(
-      PROVIDER_MIGRATION_TRANSCRIPT_SHARE_URL,
+      ARCHIVED_TRANSCRIPT_SHARE_URL,
       { content, appearance_id: appearanceId },
       {
         headers,

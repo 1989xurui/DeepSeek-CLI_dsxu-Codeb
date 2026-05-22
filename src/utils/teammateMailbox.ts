@@ -79,7 +79,7 @@ async function ensureInboxDir(teamName?: string): Promise<void> {
 /**
  * Read all messages from a teammate's inbox
  * @param agentName - The agent name (not UUID) to read inbox for
- * @param teamName - Optional team name (defaults to DSXU/provider-migration team env var or 'default')
+ * @param teamName - Optional team name (defaults to DSXU/archived team env var or 'default')
  */
 export async function readMailbox(
   agentName: string,

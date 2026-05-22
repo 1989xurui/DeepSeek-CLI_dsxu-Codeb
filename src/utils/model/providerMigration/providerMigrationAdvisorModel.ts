@@ -1,4 +1,4 @@
-export function isProviderMigrationAdvisorCapableModel(model: string): boolean {
+export function isArchivedAdvisorCapableModel(model: string): boolean {
   const m = model.toLowerCase()
   return (
     m.includes('opus-4-6') ||
@@ -6,3 +6,5 @@ export function isProviderMigrationAdvisorCapableModel(model: string): boolean {
     process.env.USER_TYPE === 'ant'
   )
 }
+
+export const isProviderMigrationAdvisorCapableModel = isArchivedAdvisorCapableModel

@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test'
-import { PROVIDER_MIGRATION_CONFIG_SCOPE } from '../../../constants/providerMigrationProtocol'
+import { ARCHIVED_MCP_CONFIG_SCOPE } from '../../../constants/providerMigrationProtocol'
 import { buildMcpDoctorReport, formatMcpDoctorReport } from '../doctor'
 import type { ScopedMcpServerConfig } from '../types'
 
 describe('DSXU MCP doctor', () => {
-  test('reports DSXU mainline and provider-migration boundaries without connecting', () => {
+  test('reports DSXU mainline and archived boundaries without connecting', () => {
     const servers: Record<string, ScopedMcpServerConfig> = {
       filesystem: {
         scope: 'project',
@@ -19,7 +19,7 @@ describe('DSXU MCP doctor', () => {
         headers: { Authorization: 'Bearer redacted' },
       },
       migrated: {
-        scope: PROVIDER_MIGRATION_CONFIG_SCOPE,
+        scope: ARCHIVED_MCP_CONFIG_SCOPE,
         type: 'provider-migration-mcp',
         url: 'https://provider.example/mcp',
         id: 'migrated-1',
@@ -38,7 +38,7 @@ describe('DSXU MCP doctor', () => {
     expect(report.summary.registryConfigured).toBe(true)
     expect(report.releaseGate.status).toBe('WARN')
     expect(report.servers.find(server => server.name === 'filesystem')?.owner).toBe('dsxu-mainline')
-    expect(report.servers.find(server => server.name === 'migrated')?.owner).toBe('provider-migration-boundary')
+    expect(report.servers.find(server => server.name === 'migrated')?.owner).toBe('archived-boundary')
     expect(formatMcpDoctorReport(report)).toContain('DSXU MCP Doctor')
   })
 

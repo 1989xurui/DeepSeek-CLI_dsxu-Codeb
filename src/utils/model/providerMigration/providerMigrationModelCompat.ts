@@ -7,12 +7,12 @@ import {
 } from '../deepseekV4Control.js'
 import {
   type DsxuPublicModelAlias,
-  type ProviderMigrationModelAlias,
-  isProviderMigrationModelAlias,
+  type ArchivedSourceModelAlias,
+  isArchivedSourceModelAlias,
 } from '../aliases.js'
 
-export type ProviderMigrationModelResolution = {
-  sourceAlias: ProviderMigrationModelAlias
+export type ArchivedSourceModelResolution = {
+  sourceAlias: ArchivedSourceModelAlias
   normalizedAlias: string
   model: DeepSeekV4Model
   publicAlias: DsxuPublicModelAlias
@@ -26,6 +26,8 @@ export type ProviderMigrationModelResolution = {
   costRouterControlled: boolean
   migrationProjectionOnly: true
 }
+
+export type ProviderMigrationModelResolution = ArchivedSourceModelResolution
 
 function stripContextTag(modelInput: string): {
   normalizedAlias: string
@@ -41,11 +43,11 @@ function stripContextTag(modelInput: string): {
   return { normalizedAlias: normalized, contextHint: 'default' }
 }
 
-export function resolveProviderMigrationModelAlias(
+export function resolveArchivedSourceModelAlias(
   modelInput: string,
-): ProviderMigrationModelResolution | null {
+): ArchivedSourceModelResolution | null {
   const normalizedInput = modelInput.trim().toLowerCase()
-  if (!isProviderMigrationModelAlias(normalizedInput)) return null
+  if (!isArchivedSourceModelAlias(normalizedInput)) return null
 
   const { normalizedAlias, contextHint } = stripContextTag(normalizedInput)
   switch (normalizedAlias) {
@@ -83,64 +85,80 @@ export function resolveProviderMigrationModelAlias(
   }
 }
 
-export function getProviderMigrationModelAliasEvidence(modelInput: string): string | null {
-  const resolution = resolveProviderMigrationModelAlias(modelInput)
+export const resolveProviderMigrationModelAlias = resolveArchivedSourceModelAlias
+
+export function getArchivedModelAliasEvidence(modelInput: string): string | null {
+  const resolution = resolveArchivedSourceModelAlias(modelInput)
   if (!resolution) return null
   const context = resolution.contextHint === 'one_million' ? '; context_hint=1m' : ''
   const router = resolution.costRouterControlled ? '; cost_router_decides=true' : ''
   return `DSXU provider migration model alias: ${resolution.sourceAlias} -> ${resolution.publicAlias}; route_intent=${resolution.routeIntent}; projection_only=true${context}${router}.`
 }
 
-const PROVIDER_MIGRATION_SOURCE_CODE_FAMILY = 'cl' + 'aude'
-const PROVIDER_MIGRATION_HIGH_TIER_FAMILY = 'op' + 'us'
-const PROVIDER_MIGRATION_DEFAULT_TIER_FAMILY = 'son' + 'net'
-const PROVIDER_MIGRATION_LIGHTWEIGHT_FAMILY = 'hai' + 'ku'
+export const getProviderMigrationModelAliasEvidence = getArchivedModelAliasEvidence
 
-function providerMigrationSourceModelId(family: string, version: string): string {
-  return `${PROVIDER_MIGRATION_SOURCE_CODE_FAMILY}-${family}-${version}`
+const ARCHIVED_SOURCE_CODE_FAMILY = 'cl' + 'aude'
+const ARCHIVED_HIGH_TIER_FAMILY = 'op' + 'us'
+const ARCHIVED_DEFAULT_TIER_FAMILY = 'son' + 'net'
+const ARCHIVED_LIGHTWEIGHT_FAMILY = 'hai' + 'ku'
+
+function archivedSourceModelId(family: string, version: string): string {
+  return `${ARCHIVED_SOURCE_CODE_FAMILY}-${family}-${version}`
 }
 
-export function getProviderMigrationDeepSeekModelMapping(): Record<string, DeepSeekV4Model> {
+export function getArchivedDeepSeekModelMapping(): Record<string, DeepSeekV4Model> {
   return {
     'deepseek-chat': DEEPSEEK_V4_MODEL_ALIASES['deepseek-chat'],
     'deepseek-coder': DEEPSEEK_V4_MODEL_ALIASES['deepseek-coder'],
     'deepseek-reasoner': DEEPSEEK_V4_MODEL_ALIASES['deepseek-reasoner'],
-    [providerMigrationSourceModelId(PROVIDER_MIGRATION_DEFAULT_TIER_FAMILY, '4-6')]: DEEPSEEK_V4_PRO_MODEL,
-    [providerMigrationSourceModelId(PROVIDER_MIGRATION_HIGH_TIER_FAMILY, '4-6')]: DEEPSEEK_V4_PRO_MODEL,
+    [archivedSourceModelId(ARCHIVED_DEFAULT_TIER_FAMILY, '4-6')]: DEEPSEEK_V4_PRO_MODEL,
+    [archivedSourceModelId(ARCHIVED_HIGH_TIER_FAMILY, '4-6')]: DEEPSEEK_V4_PRO_MODEL,
     'gpt-4o': DEEPSEEK_V4_PRO_MODEL,
     'gpt-4o-mini': DEEPSEEK_V4_FLASH_MODEL,
   }
 }
 
-export function getProviderMigrationDefaultTierModelId(): string {
-  return providerMigrationSourceModelId(PROVIDER_MIGRATION_DEFAULT_TIER_FAMILY, '4-6')
+export const getProviderMigrationDeepSeekModelMapping = getArchivedDeepSeekModelMapping
+
+export function getArchivedDefaultTierModelId(): string {
+  return archivedSourceModelId(ARCHIVED_DEFAULT_TIER_FAMILY, '4-6')
 }
 
-export function getProviderMigrationHighTierModelId(): string {
-  return providerMigrationSourceModelId(PROVIDER_MIGRATION_HIGH_TIER_FAMILY, '4-6')
+export const getProviderMigrationDefaultTierModelId = getArchivedDefaultTierModelId
+
+export function getArchivedHighTierModelId(): string {
+  return archivedSourceModelId(ARCHIVED_HIGH_TIER_FAMILY, '4-6')
 }
 
-export function getProviderMigrationLightweightModelAlias(): string {
-  return PROVIDER_MIGRATION_LIGHTWEIGHT_FAMILY
+export const getProviderMigrationHighTierModelId = getArchivedHighTierModelId
+
+export function getArchivedLightweightModelAlias(): string {
+  return ARCHIVED_LIGHTWEIGHT_FAMILY
 }
 
-export function isProviderMigrationExtraUsageModel(
+export const getProviderMigrationLightweightModelAlias = getArchivedLightweightModelAlias
+
+export function isArchivedExtraUsageModel(
   normalizedModelName: string,
   isHighTierMerged: boolean,
 ): boolean {
   const highTierMatch =
-    normalizedModelName === PROVIDER_MIGRATION_HIGH_TIER_FAMILY ||
-    normalizedModelName.includes(`${PROVIDER_MIGRATION_HIGH_TIER_FAMILY}-4-6`)
+    normalizedModelName === ARCHIVED_HIGH_TIER_FAMILY ||
+    normalizedModelName.includes(`${ARCHIVED_HIGH_TIER_FAMILY}-4-6`)
   const defaultTierMatch =
-    normalizedModelName === PROVIDER_MIGRATION_DEFAULT_TIER_FAMILY ||
-    normalizedModelName.includes(`${PROVIDER_MIGRATION_DEFAULT_TIER_FAMILY}-4-6`)
+    normalizedModelName === ARCHIVED_DEFAULT_TIER_FAMILY ||
+    normalizedModelName.includes(`${ARCHIVED_DEFAULT_TIER_FAMILY}-4-6`)
 
   if (highTierMatch && isHighTierMerged) return false
   return highTierMatch || defaultTierMatch
 }
 
-export function isProviderMigrationPdfUnsupportedModel(modelName: string): boolean {
+export const isProviderMigrationExtraUsageModel = isArchivedExtraUsageModel
+
+export function isArchivedPdfUnsupportedModel(modelName: string): boolean {
   return modelName
     .toLowerCase()
-    .includes(providerMigrationSourceModelId(PROVIDER_MIGRATION_LIGHTWEIGHT_FAMILY, '3'))
+    .includes(archivedSourceModelId(ARCHIVED_LIGHTWEIGHT_FAMILY, '3'))
 }
+
+export const isProviderMigrationPdfUnsupportedModel = isArchivedPdfUnsupportedModel

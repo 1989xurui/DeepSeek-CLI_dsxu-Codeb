@@ -13,7 +13,7 @@ import {
   getSettings_DEPRECATED,
   getSettingsForSource,
 } from './settings/settings.js'
-const PROVIDER_MIGRATION_ENV = {
+const ARCHIVED_ENV = {
   UNIX_SOCKET: `${'ANTH' + 'ROPIC'}_UNIX_SOCKET`,
   BASE_URL: `${'ANTH' + 'ROPIC'}_BASE_URL`,
   API_KEY: `${'ANTH' + 'ROPIC'}_API_KEY`,
@@ -23,7 +23,7 @@ const PROVIDER_MIGRATION_ENV = {
   PROVIDER_MANAGED_BY_HOST: `${'CLA' + 'UDE'}_CODE_PROVIDER_MANAGED_BY_HOST`,
 } as const
 /**
- * DSXU SSH remote: the provider-migration socket routes auth through a -R forwarded
+ * DSXU SSH remote: the archived socket routes auth through a -R forwarded
  * socket to a local proxy, and the launcher sets a handful of placeholder auth
  * env vars that the remote's DSXU settings.env MUST NOT clobber. Strip them
  * from any settings-sourced env object.
@@ -31,18 +31,18 @@ const PROVIDER_MIGRATION_ENV = {
 function withoutSSHTunnelVars(
   env: Record<string, string> | undefined,
 ): Record<string, string> {
-  if (!env || !process.env[PROVIDER_MIGRATION_ENV.UNIX_SOCKET]) return env || {}
+  if (!env || !process.env[ARCHIVED_ENV.UNIX_SOCKET]) return env || {}
   const rest = { ...env }
-  delete rest[PROVIDER_MIGRATION_ENV.UNIX_SOCKET]
-  delete rest[PROVIDER_MIGRATION_ENV.BASE_URL]
-  delete rest[PROVIDER_MIGRATION_ENV.API_KEY]
-  delete rest[PROVIDER_MIGRATION_ENV.AUTH_TOKEN]
-  delete rest[PROVIDER_MIGRATION_ENV.OAUTH_TOKEN]
+  delete rest[ARCHIVED_ENV.UNIX_SOCKET]
+  delete rest[ARCHIVED_ENV.BASE_URL]
+  delete rest[ARCHIVED_ENV.API_KEY]
+  delete rest[ARCHIVED_ENV.AUTH_TOKEN]
+  delete rest[ARCHIVED_ENV.OAUTH_TOKEN]
   return rest
 }
 /**
  * When the host owns inference routing (sets
- * the DSXU or provider-migration-managed-by-host flag in spawn env), strip
+ * the DSXU or archived-managed-by-host flag in spawn env), strip
  * provider-selection / model-default vars from settings-sourced env so a
  * user's DSXU settings can't redirect requests away from the
  * host-configured provider.
@@ -53,7 +53,7 @@ function withoutHostManagedProviderVars(
   if (!env) return {}
   if (
     !isEnvTruthy(process.env.DSXU_CODE_PROVIDER_MANAGED_BY_HOST) &&
-    !isEnvTruthy(process.env[PROVIDER_MIGRATION_ENV.PROVIDER_MANAGED_BY_HOST])
+    !isEnvTruthy(process.env[ARCHIVED_ENV.PROVIDER_MANAGED_BY_HOST])
   ) {
     return env
   }
@@ -94,15 +94,15 @@ function filterSettingsEnv(
     withoutHostManagedProviderVars(withoutSSHTunnelVars(env)),
   )
 }
-function isProviderMigrationDesktopEntrypoint(): boolean {
+function isArchivedDesktopEntrypoint(): boolean {
   const entrypoint =
-    process.env.DSXU_CODE_ENTRYPOINT ?? process.env[PROVIDER_MIGRATION_ENV.ENTRYPOINT]
+    process.env.DSXU_CODE_ENTRYPOINT ?? process.env[ARCHIVED_ENV.ENTRYPOINT]
   return entrypoint === `${'cla' + 'ude'}-desktop`
 }
 /**
  * Trusted setting sources whose env vars can be applied before the trust dialog.
  *
- * - userSettings (DSXU/provider-migration user settings): controlled by the user, not project-specific
+ * - userSettings (DSXU/archived user settings): controlled by the user, not project-specific
  * - flagSettings (--settings CLI flag or SDK inline settings): explicitly passed by the user
  * - policySettings (managed settings from enterprise API or local managed-settings.json):
  *   controlled by IT/admin (highest priority, cannot be overridden)
@@ -132,7 +132,7 @@ const TRUSTED_SETTING_SOURCES = [
 export function applySafeConfigEnvironmentVariables(): void {
   // Capture CCD spawn-env keys before any settings.env is applied (once).
   if (ccdSpawnEnvKeys === undefined) {
-    ccdSpawnEnvKeys = isProviderMigrationDesktopEntrypoint()
+    ccdSpawnEnvKeys = isArchivedDesktopEntrypoint()
       ? new Set(Object.keys(process.env))
       : null
   }
@@ -142,7 +142,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   Object.assign(process.env, filterSettingsEnv(getGlobalConfig().env))
   // Apply ALL env vars from trusted setting sources, policySettings last.
   // Gate on isSettingSourceEnabled so SDK settingSources: [] (isolation mode)
-  // doesn't get clobbered by DSXU/provider-migration settings env (gh#217). policy/flag
+  // doesn't get clobbered by DSXU/archived settings env (gh#217). policy/flag
   // sources are always enabled, so this only ever filters userSettings.
   for (const source of TRUSTED_SETTING_SOURCES) {
     if (source === 'policySettings') continue
@@ -170,7 +170,7 @@ export function applySafeConfigEnvironmentVariables(): void {
   // in the safe allowlist. Only policySettings values are guaranteed to survive
   // unchanged (it has the highest merge priority in both loops) ...except
   // provider-routing vars, which filterSettingsEnv strips from every source
-  // when DSXU/provider-migration-managed-by-host is set.
+  // when DSXU/archived-managed-by-host is set.
   const settingsEnv = filterSettingsEnv(getSettings_DEPRECATED()?.env)
   for (const [key, value] of Object.entries(settingsEnv)) {
     if (SAFE_ENV_VARS.has(key.toUpperCase())) {
@@ -181,7 +181,7 @@ export function applySafeConfigEnvironmentVariables(): void {
 /**
  * Apply environment variables from settings to process.env.
  * This applies ALL environment variables (except provider-routing vars when
- * the DSXU/provider-migration-managed-by-host flag is set ...see filterSettingsEnv) and
+ * the DSXU/archived-managed-by-host flag is set ...see filterSettingsEnv) and
  * should only be called after trust is established. This applies potentially
  * dangerous environment variables such as LD_PRELOAD, PATH, etc.
  */

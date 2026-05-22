@@ -7,14 +7,19 @@ import { join, normalize, posix, sep } from 'path'
 import { hasAutoMemPathOverride, isAutoMemPath } from 'src/memdir/paths.js'
 import { isAgentMemoryPath } from 'src/tools/AgentTool/agentMemory.js'
 import {
+  ARCHIVED_CONFIG_FOLDER_PERMISSION_PATTERN,
   DSXU_FOLDER_PERMISSION_PATTERN,
   FILE_EDIT_TOOL_NAME,
+  GLOBAL_ARCHIVED_CONFIG_FOLDER_PERMISSION_PATTERN,
   GLOBAL_DSXU_FOLDER_PERMISSION_PATTERN,
-  GLOBAL_PROVIDER_MIGRATION_CONFIG_FOLDER_PERMISSION_PATTERN,
-  PROVIDER_MIGRATION_CONFIG_FOLDER_PERMISSION_PATTERN,
 } from 'src/tools/FileEditTool/constants.js'
 import type { z } from 'zod/v4'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
+import {
+  evaluateProductCoreGuard,
+  getProductCoreGuardRootsFromEnv,
+  isProductCoreGuardBypassed,
+} from '../../dsxu/engine/workspace-policy.js'
 import { checkStatsigFeatureGate_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
 import type { AnyObject, Tool, ToolPermissionContext } from '../../Tool.js'
 import { FILE_READ_TOOL_NAME } from '../../tools/FileReadTool/prompt.js'
@@ -51,12 +56,12 @@ import type { PermissionUpdate } from './PermissionUpdateSchema.js'
 import { getRuleByContentsForToolName } from './permissions.js'
 declare const MACRO: { VERSION: string }
 const DSXU_CONFIG_DIR_NAME = '.dsxu'
-const PROVIDER_MIGRATION_VENDOR_PREFIX = 'clau' + 'de'
-const PROVIDER_MIGRATION_CONFIG_DIR_NAME = `.${PROVIDER_MIGRATION_VENDOR_PREFIX}`
-const PROVIDER_MIGRATION_CONFIG_FILE_NAME = `${PROVIDER_MIGRATION_CONFIG_DIR_NAME}.json`
-const PROVIDER_MIGRATION_CODE_TMPDIR_ENV = 'CL' + 'AUDE' + '_CODE_TMPDIR'
+const ARCHIVED_VENDOR_PREFIX = 'clau' + 'de'
+const ARCHIVED_CONFIG_DIR_NAME = `.${ARCHIVED_VENDOR_PREFIX}`
+const ARCHIVED_CONFIG_FILE_NAME = `${ARCHIVED_CONFIG_DIR_NAME}.json`
+const ARCHIVED_CODE_TMPDIR_ENV = 'CL' + 'AUDE' + '_CODE_TMPDIR'
 const DSXU_CODE_TMPDIR_ENV = 'DSXU_CODE_TMPDIR'
-const PROVIDER_MIGRATION_JOB_DIR_ENV = 'CL' + 'AUDE' + '_JOB_DIR'
+const ARCHIVED_JOB_DIR_ENV = 'CL' + 'AUDE' + '_JOB_DIR'
 /**
  * Dangerous files that should be protected from auto-editing.
  * These files can be used for code execution or data exfiltration.
@@ -72,7 +77,7 @@ export const DANGEROUS_FILES = [
   '.ripgreprc',
   '.mcp.json',
   '.dsxu.json',
-  PROVIDER_MIGRATION_CONFIG_FILE_NAME,
+  ARCHIVED_CONFIG_FILE_NAME,
 ] as const
 /**
  * Dangerous directories that should be protected from auto-editing.
@@ -83,7 +88,7 @@ export const DANGEROUS_DIRECTORIES = [
   '.vscode',
   '.idea',
   DSXU_CONFIG_DIR_NAME,
-  PROVIDER_MIGRATION_CONFIG_DIR_NAME,
+  ARCHIVED_CONFIG_DIR_NAME,
 ] as const
 /**
  * Normalizes a path for case-insensitive comparison.
@@ -98,7 +103,7 @@ export function normalizeCaseForComparison(path: string): string {
   return path.toLowerCase()
 }
 /**
- * If filePath is inside a DSXU or absorbed provider-migration source skills/{name}/
+ * If filePath is inside a DSXU or absorbed archived source skills/{name}/
  * directory (project or global),
  * return the skill name and a session-allow pattern scoped to just that skill.
  * Used to offer a narrower "allow edits to this skill only" option in the
@@ -121,13 +126,13 @@ export function getDsxuSkillScope(
     },
     {
       dir: expandPath(
-        join(getOriginalCwd(), PROVIDER_MIGRATION_CONFIG_DIR_NAME, 'skills'),
+        join(getOriginalCwd(), ARCHIVED_CONFIG_DIR_NAME, 'skills'),
       ),
-      prefix: `/${PROVIDER_MIGRATION_CONFIG_DIR_NAME}/skills/`,
+      prefix: `/${ARCHIVED_CONFIG_DIR_NAME}/skills/`,
     },
     {
-      dir: expandPath(join(homedir(), PROVIDER_MIGRATION_CONFIG_DIR_NAME, 'skills')),
-      prefix: `~/${PROVIDER_MIGRATION_CONFIG_DIR_NAME}/skills/`,
+      dir: expandPath(join(homedir(), ARCHIVED_CONFIG_DIR_NAME, 'skills')),
+      prefix: `~/${ARCHIVED_CONFIG_DIR_NAME}/skills/`,
     },
   ]
   for (const { dir, prefix } of bases) {
@@ -217,10 +222,10 @@ export function isDsxuSettingsPath(filePath: string): boolean {
   if (
     normalizedPath.endsWith(`${sep}.dsxu${sep}settings.json`) ||
     normalizedPath.endsWith(`${sep}.dsxu${sep}settings.local.json`) ||
-    normalizedPath.endsWith(`${sep}${PROVIDER_MIGRATION_CONFIG_DIR_NAME}${sep}settings.json`) ||
-    normalizedPath.endsWith(`${sep}${PROVIDER_MIGRATION_CONFIG_DIR_NAME}${sep}settings.local.json`)
+    normalizedPath.endsWith(`${sep}${ARCHIVED_CONFIG_DIR_NAME}${sep}settings.json`) ||
+    normalizedPath.endsWith(`${sep}${ARCHIVED_CONFIG_DIR_NAME}${sep}settings.local.json`)
   ) {
-    // Include DSXU and provider-migration config settings even for other projects
+    // Include DSXU and archived config settings even for other projects
     return true
   }
   // Check for current project's settings files (including managed settings and CLI args)
@@ -234,10 +239,10 @@ function isDsxuConfigFilePath(filePath: string): boolean {
   if (isDsxuSettingsPath(filePath)) {
     return true
   }
-  // Check if file is within DSXU or provider-migration source commands/agents/skills directories
+  // Check if file is within DSXU or archived source commands/agents/skills directories
   // using proper path segment validation (not string matching with includes())
   // pathInWorkingPath now handles case-insensitive comparison to prevent bypasses
-  const protectedDirs = [DSXU_CONFIG_DIR_NAME, PROVIDER_MIGRATION_CONFIG_DIR_NAME].flatMap(configDir => [
+  const protectedDirs = [DSXU_CONFIG_DIR_NAME, ARCHIVED_CONFIG_DIR_NAME].flatMap(configDir => [
     join(getOriginalCwd(), configDir, 'commands'),
     join(getOriginalCwd(), configDir, 'agents'),
     join(getOriginalCwd(), configDir, 'skills'),
@@ -327,7 +332,7 @@ export function getDsxuTempDirName(): string {
 export const getDsxuTempDir = memoize(function getDsxuTempDir(): string {
   const baseTmpDir =
     process.env[DSXU_CODE_TMPDIR_ENV] ||
-    process.env[PROVIDER_MIGRATION_CODE_TMPDIR_ENV] ||
+    process.env[ARCHIVED_CODE_TMPDIR_ENV] ||
     (getPlatform() === 'windows' ? tmpdir() : '/tmp')
   // Resolve symlinks in the base temp directory (e.g., /tmp -> /private/tmp on macOS)
   // This ensures the path matches resolved paths in permission checks
@@ -435,11 +440,11 @@ function isDangerousFilePathToAutoEdit(path: string): boolean {
       if (normalizedSegment !== normalizeCaseForComparison(dir)) {
         continue
       }
-      // Special case: DSXU and absorbed provider-migration source worktrees are
+      // Special case: DSXU and absorbed archived source worktrees are
       // structural paths, not user-created dangerous directories. Skip the
       // config segment when it is followed by 'worktrees'. Any nested config
       // directories within the worktree are still blocked.
-      if (dir === DSXU_CONFIG_DIR_NAME || dir === PROVIDER_MIGRATION_CONFIG_DIR_NAME) {
+      if (dir === DSXU_CONFIG_DIR_NAME || dir === ARCHIVED_CONFIG_DIR_NAME) {
         const nextSegment = pathSegments[i + 1]
         if (
           nextSegment &&
@@ -596,6 +601,24 @@ export function checkPathSafetyForAutoEdit(
   // Get all paths to check (original + symlink resolved paths)
   const pathsToCheck =
     precomputedPathsToCheck ?? getPathsForPermissionCheck(path)
+  const productCoreRoots = getProductCoreGuardRootsFromEnv()
+  if (productCoreRoots.length > 0) {
+    for (const pathToCheck of pathsToCheck) {
+      const productCoreGuard = evaluateProductCoreGuard({
+        path: pathToCheck,
+        action: 'write',
+        protectedRoots: productCoreRoots,
+        allowCoreMutation: isProductCoreGuardBypassed(),
+      })
+      if (!productCoreGuard.allowed) {
+        return {
+          safe: false,
+          message: `DSXU requested permissions to edit ${path}, but it is inside the DSXU product core root (${productCoreGuard.matchedRoot}). Product Core Guard blocks project work from mutating DSXU core files.`,
+          classifierApprovable: false,
+        }
+      }
+    }
+  }
   // Check for suspicious Windows path patterns on all paths
   for (const pathToCheck of pathsToCheck) {
     if (hasSuspiciousWindowsPathPattern(pathToCheck)) {
@@ -679,7 +702,7 @@ export function pathInWorkingPath(path: string, workingPath: string): boolean {
     .replace(/^\/private\/var\//, '/var/')
     .replace(/^\/private\/tmp(\/|$)/, '/tmp$1')
   // Normalize case for case-insensitive comparison to prevent bypassing security
-  // checks on case-insensitive filesystems (macOS/Windows) like mixed-case provider-migration source command dirs
+  // checks on case-insensitive filesystems (macOS/Windows) like mixed-case archived source command dirs
   const caseNormalizedPath = normalizeCaseForComparison(normalizedPath)
   const caseNormalizedWorkingPath = normalizeCaseForComparison(
     normalizedWorkingPath,
@@ -1158,7 +1181,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
   if (internalEditResult.behavior !== 'passthrough') {
     return internalEditResult
   }
-  // 1.6. Check for DSXU and absorbed provider-migration config allow rules BEFORE safety checks
+  // 1.6. Check for DSXU and absorbed archived config allow rules BEFORE safety checks
   // This allows session-level permissions to bypass the safety blocks for DSXU config folders.
   // We only allow this for session-level rules to prevent users from accidentally
   // permanently granting broad access to their config folder.
@@ -1180,7 +1203,7 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     'allow',
   )
   if (configFolderAllowRule) {
-    // Check if this rule is scoped under DSXU or absorbed provider-migration config folders (project or global).
+    // Check if this rule is scoped under DSXU or absorbed archived config folders (project or global).
     // Accepts both broad patterns and
     // narrowed ones like '/.dsxu/skills/my-skill/**' so users can grant
     // session access to a single skill without also exposing settings.json
@@ -1191,8 +1214,8 @@ export function checkWritePermissionForTool<Input extends AnyObject>(
     const configFolderPrefixes = [
       DSXU_FOLDER_PERMISSION_PATTERN,
       GLOBAL_DSXU_FOLDER_PERMISSION_PATTERN,
-      PROVIDER_MIGRATION_CONFIG_FOLDER_PERMISSION_PATTERN,
-      GLOBAL_PROVIDER_MIGRATION_CONFIG_FOLDER_PERMISSION_PATTERN,
+      ARCHIVED_CONFIG_FOLDER_PERMISSION_PATTERN,
+      GLOBAL_ARCHIVED_CONFIG_FOLDER_PERMISSION_PATTERN,
     ].map(pattern => pattern.slice(0, -2))
     if (
       ruleContent &&
@@ -1411,7 +1434,7 @@ export function checkEditableInternalPath(
   // sides handles the macOS /tmp - /private/tmp case where the config dir
   // lives under a symlinked root.
   if (feature('TEMPLATES')) {
-    const jobDir = process.env[PROVIDER_MIGRATION_JOB_DIR_ENV]
+    const jobDir = process.env[ARCHIVED_JOB_DIR_ENV]
     if (jobDir) {
       const jobsRoot = join(getDsxuConfigHomeDir(), 'jobs')
       const jobDirForms = getPathsForPermissionCheck(jobDir).map(normalize)

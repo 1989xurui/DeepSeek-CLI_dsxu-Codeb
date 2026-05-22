@@ -2,6 +2,8 @@ import type {
   P12RawComparisonReport,
   P12TargetReferenceCollectionPack,
 } from './phase12-raw-comparison-v1'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { isAbsolute, join } from 'node:path'
 
 export type RawEvidenceReadinessStatus = 'PASS' | 'PARTIAL' | 'BLOCKED'
 
@@ -70,8 +72,122 @@ export type RawEvidenceReadinessEntry = {
   redlines: readonly string[]
 }
 
+export type PublicComparableRawEvidencePathField =
+  | 'rawTranscriptPath'
+  | 'toolTracePath'
+  | 'rawApiResponsePath'
+  | 'targetReferenceTranscriptPath'
+  | 'finalReportPath'
+  | 'artifactDir'
+
+export type PublicComparableRawEvidenceMetricField =
+  | 'firstAttemptPass'
+  | 'secondAttemptPass'
+  | 'finalPass'
+  | 'costUsd'
+  | 'wallClockMs'
+  | 'cacheHitRatePct'
+  | 'proAdmissionCount'
+  | 'failureRecoveryEvents'
+  | 'unavailableToolUseCount'
+  | 'executionVisibilityBlockedCount'
+  | 'noToolUnsupportedClaimCount'
+  | 'toolBudgetExceededCount'
+  | 'readBudgetExceededCount'
+  | 'shellBudgetExceededCount'
+  | 'toolResultChars'
+  | 'artifactLogSizeBytes'
+
+export type PublicComparableRawEvidenceField =
+  | PublicComparableRawEvidencePathField
+  | PublicComparableRawEvidenceMetricField
+
+export type PublicComparableBenchmarkManifestCase = {
+  id: string
+  category?: string
+  expectedModel?: string
+  workflowKind?: string
+  promptHash?: string
+}
+
+export type PublicComparableBenchmarkManifest = {
+  schemaVersion: 'dsxu.public-comparable-benchmark-manifest.v1'
+  status?: string
+  caseCount: number
+  rawEvidenceFields?: readonly { field: string; requiredFor?: string; reason?: string }[]
+  cases: readonly PublicComparableBenchmarkManifestCase[]
+}
+
+export type PublicComparableRawEvidenceCase = {
+  id: string
+  promptHash?: string
+} & Partial<Record<PublicComparableRawEvidencePathField, string>> &
+  Partial<Record<PublicComparableRawEvidenceMetricField, unknown>>
+
+export type PublicComparableRawEvidenceManifest = {
+  schemaVersion: 'dsxu.public-comparable-raw-evidence.v1'
+  source?: {
+    collectedAt?: string
+    acquisitionMethod?: 'manual-import' | 'runner-export'
+    immutableRawDir?: string
+  }
+  cases: readonly PublicComparableRawEvidenceCase[]
+}
+
+export type PublicComparableRawEvidenceReadinessCase = {
+  id: string
+  status: RawEvidenceReadinessStatus
+  category?: string
+  expectedModel?: string
+  missingFields: readonly PublicComparableRawEvidenceField[]
+  missingExternalTargetFields: readonly PublicComparableRawEvidencePathField[]
+  externalTargetRedlines: readonly string[]
+  publicComparableReady: boolean
+  externalTargetReady: boolean
+  redlines: readonly string[]
+}
+
+export type PublicComparableRawEvidenceReadiness = {
+  schemaVersion: 'dsxu.public-comparable-raw-evidence-readiness.v1'
+  status: RawEvidenceReadinessStatus
+  caseCount: number
+  rawEvidenceCaseCount: number
+  readyCaseCount: number
+  missingCaseCount: number
+  partialCaseCount: number
+  externalTargetReadyCount: number
+  publicBenchmarkClaimAllowed: boolean
+  externalComparisonClaimAllowed: boolean
+  firstAttemptSuccessRate: number | null
+  secondAttemptSuccessRate: number | null
+  finalPassRate: number | null
+  averageCostUsd: number | null
+  averageWallClockMs: number | null
+  averageCacheHitRatePct: number | null
+  proAdmissionCount: number | null
+  cases: readonly PublicComparableRawEvidenceReadinessCase[]
+  blockers: readonly string[]
+  safeguards: readonly string[]
+  nextAction:
+    | 'collect-public-comparable-raw-evidence'
+    | 'collect-target-reference-raw-evidence'
+    | 'ready-for-public-comparable-charts'
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isNonPlaceholderString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && !value.includes('<') && !/^todo$/i.test(value.trim())
+}
+
+function isFiniteMetric(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isBooleanMetric(value: unknown): value is boolean {
+  return typeof value === 'boolean'
 }
 
 function isDeferredEvalId(value: unknown): value is DeferredEvalId {
@@ -284,6 +400,298 @@ export const DEFERRED_EVAL_RAW_EVIDENCE_SPECS: readonly DeferredEvalRawEvidenceS
     forbiddenRuntimeShortcut: 'do not create a standalone retrieval/browser runtime',
   },
 ]
+
+export const PUBLIC_COMPARABLE_REQUIRED_DSXU_RAW_FIELDS: readonly PublicComparableRawEvidenceField[] = [
+  'rawTranscriptPath',
+  'toolTracePath',
+  'rawApiResponsePath',
+  'finalReportPath',
+  'artifactDir',
+  'firstAttemptPass',
+  'secondAttemptPass',
+  'finalPass',
+  'costUsd',
+  'wallClockMs',
+  'cacheHitRatePct',
+  'proAdmissionCount',
+  'failureRecoveryEvents',
+  'unavailableToolUseCount',
+  'executionVisibilityBlockedCount',
+  'noToolUnsupportedClaimCount',
+  'toolBudgetExceededCount',
+  'readBudgetExceededCount',
+  'shellBudgetExceededCount',
+  'toolResultChars',
+  'artifactLogSizeBytes',
+] as const
+
+export const PUBLIC_COMPARABLE_EXTERNAL_TARGET_FIELDS: readonly PublicComparableRawEvidencePathField[] = [
+  'targetReferenceTranscriptPath',
+] as const
+
+function hasPublicComparableField(
+  rawCase: PublicComparableRawEvidenceCase | undefined,
+  field: PublicComparableRawEvidenceField,
+): boolean {
+  if (!rawCase) return false
+  const value = rawCase[field]
+  if (
+    field === 'rawTranscriptPath' ||
+    field === 'toolTracePath' ||
+    field === 'rawApiResponsePath' ||
+    field === 'targetReferenceTranscriptPath' ||
+    field === 'finalReportPath' ||
+    field === 'artifactDir'
+  ) return isNonPlaceholderString(value)
+  if (
+    field === 'firstAttemptPass' ||
+    field === 'secondAttemptPass' ||
+    field === 'finalPass'
+  ) return isBooleanMetric(value)
+  if (field === 'failureRecoveryEvents') {
+    return Array.isArray(value) || isFiniteMetric(value)
+  }
+  return isFiniteMetric(value)
+}
+
+function publicComparablePromptHashRedlines(
+  manifestCase: PublicComparableBenchmarkManifestCase,
+  rawCase: PublicComparableRawEvidenceCase | undefined,
+): readonly string[] {
+  if (!manifestCase.promptHash) return []
+  if (!rawCase?.promptHash) return ['missing public comparable raw evidence: promptHash']
+  if (rawCase.promptHash !== manifestCase.promptHash) {
+    return ['public comparable raw evidence promptHash mismatch']
+  }
+  return []
+}
+
+function rateFromReadyCases(
+  rawCases: readonly PublicComparableRawEvidenceCase[],
+  field: 'firstAttemptPass' | 'secondAttemptPass' | 'finalPass',
+): number | null {
+  const values = rawCases
+    .map(rawCase => rawCase[field])
+    .filter(isBooleanMetric)
+  if (values.length === 0) return null
+  return Math.round((values.filter(Boolean).length / values.length) * 1000) / 10
+}
+
+function averageMetric(
+  rawCases: readonly PublicComparableRawEvidenceCase[],
+  field: 'costUsd' | 'wallClockMs' | 'cacheHitRatePct',
+): number | null {
+  const values = rawCases
+    .map(rawCase => rawCase[field])
+    .filter(isFiniteMetric)
+  if (values.length === 0) return null
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length
+  return Math.round(average * 1000) / 1000
+}
+
+function sumMetric(
+  rawCases: readonly PublicComparableRawEvidenceCase[],
+  field: 'proAdmissionCount',
+): number | null {
+  const values = rawCases
+    .map(rawCase => rawCase[field])
+    .filter(isFiniteMetric)
+  if (values.length === 0) return null
+  return values.reduce((sum, value) => sum + value, 0)
+}
+
+export function buildPublicComparableRawEvidenceReadiness(input: {
+  manifest: PublicComparableBenchmarkManifest
+  rawEvidenceManifest?: PublicComparableRawEvidenceManifest
+  artifactRoot?: string
+}): PublicComparableRawEvidenceReadiness {
+  const blockers: string[] = []
+  if (input.manifest.schemaVersion !== 'dsxu.public-comparable-benchmark-manifest.v1') {
+    blockers.push('public comparable manifest schemaVersion mismatch')
+  }
+  if (!Array.isArray(input.manifest.cases)) {
+    blockers.push('public comparable manifest cases must be an array')
+  }
+  if (input.manifest.caseCount !== input.manifest.cases.length) {
+    blockers.push(`public comparable manifest caseCount mismatch: ${input.manifest.caseCount} != ${input.manifest.cases.length}`)
+  }
+  const rawCases = Array.isArray(input.rawEvidenceManifest?.cases) ? input.rawEvidenceManifest.cases : []
+  const rawById = new Map(rawCases.map(rawCase => [rawCase.id, rawCase]))
+  const cases = input.manifest.cases.map(manifestCase => {
+    const rawCase = rawById.get(manifestCase.id)
+    const missingFields = PUBLIC_COMPARABLE_REQUIRED_DSXU_RAW_FIELDS
+      .filter(field => !hasPublicComparableField(rawCase, field))
+    const missingExternalTargetFields = PUBLIC_COMPARABLE_EXTERNAL_TARGET_FIELDS
+      .filter(field => !hasPublicComparableField(rawCase, field))
+    const promptHashRedlines = publicComparablePromptHashRedlines(manifestCase, rawCase)
+    const artifactRedlines = publicComparableArtifactRedlines(rawCase, input.artifactRoot)
+    const externalArtifactRedlines = publicComparableExternalArtifactRedlines(rawCase, input.artifactRoot)
+    const redlines = [
+      ...(rawCase ? [] : ['raw evidence case is missing']),
+      ...promptHashRedlines,
+      ...artifactRedlines,
+      ...missingFields.map(field => `missing public comparable raw evidence: ${field}`),
+    ]
+    const publicComparableReady = redlines.length === 0
+    const externalTargetReady = publicComparableReady &&
+      missingExternalTargetFields.length === 0 &&
+      externalArtifactRedlines.length === 0
+    const status: RawEvidenceReadinessStatus = publicComparableReady
+      ? 'PASS'
+      : rawCase
+        ? 'PARTIAL'
+        : 'BLOCKED'
+    return {
+      id: manifestCase.id,
+      status,
+      category: manifestCase.category,
+      expectedModel: manifestCase.expectedModel,
+      missingFields,
+      missingExternalTargetFields,
+      externalTargetRedlines: externalArtifactRedlines,
+      publicComparableReady,
+      externalTargetReady,
+      redlines,
+    }
+  })
+  const readyCaseCount = cases.filter(item => item.publicComparableReady).length
+  const missingCaseCount = cases.filter(item => item.status === 'BLOCKED').length
+  const partialCaseCount = cases.filter(item => item.status === 'PARTIAL').length
+  const externalTargetReadyCount = cases.filter(item => item.externalTargetReady).length
+  const publicBenchmarkClaimAllowed = blockers.length === 0 && readyCaseCount === cases.length && cases.length > 0
+  const externalComparisonClaimAllowed = publicBenchmarkClaimAllowed && externalTargetReadyCount === cases.length
+  const status: RawEvidenceReadinessStatus = blockers.length > 0 || missingCaseCount > 0
+    ? 'BLOCKED'
+    : partialCaseCount > 0
+      ? 'PARTIAL'
+      : 'PASS'
+
+  return {
+    schemaVersion: 'dsxu.public-comparable-raw-evidence-readiness.v1',
+    status,
+    caseCount: input.manifest.cases.length,
+    rawEvidenceCaseCount: rawCases.length,
+    readyCaseCount,
+    missingCaseCount,
+    partialCaseCount,
+    externalTargetReadyCount,
+    publicBenchmarkClaimAllowed,
+    externalComparisonClaimAllowed,
+    firstAttemptSuccessRate: publicBenchmarkClaimAllowed ? rateFromReadyCases(rawCases, 'firstAttemptPass') : null,
+    secondAttemptSuccessRate: publicBenchmarkClaimAllowed ? rateFromReadyCases(rawCases, 'secondAttemptPass') : null,
+    finalPassRate: publicBenchmarkClaimAllowed ? rateFromReadyCases(rawCases, 'finalPass') : null,
+    averageCostUsd: publicBenchmarkClaimAllowed ? averageMetric(rawCases, 'costUsd') : null,
+    averageWallClockMs: publicBenchmarkClaimAllowed ? averageMetric(rawCases, 'wallClockMs') : null,
+    averageCacheHitRatePct: publicBenchmarkClaimAllowed ? averageMetric(rawCases, 'cacheHitRatePct') : null,
+    proAdmissionCount: publicBenchmarkClaimAllowed ? sumMetric(rawCases, 'proAdmissionCount') : null,
+    cases,
+    blockers: [
+      ...blockers,
+      ...cases.flatMap(item => item.status === 'BLOCKED'
+        ? item.redlines.map(redline => `${item.id}: ${redline}`)
+        : []),
+    ],
+    safeguards: [
+      'public comparable manifest readiness is not a benchmark result',
+      'manifest PASS only means the fixed task set exists',
+      'GitHub charts require per-case raw transcripts, tool traces, artifacts, costs, cache, Pro admission, and failure recovery fields',
+      'external comparison claims require same-task target/reference raw evidence in addition to DSXU and raw API baseline evidence',
+      'do not promote internal smoke or manifest-ready status into public benchmark score',
+    ],
+    nextAction: publicBenchmarkClaimAllowed
+      ? externalComparisonClaimAllowed
+        ? 'ready-for-public-comparable-charts'
+        : 'collect-target-reference-raw-evidence'
+      : 'collect-public-comparable-raw-evidence',
+  }
+}
+
+function publicComparableArtifactRedlines(
+  rawCase: PublicComparableRawEvidenceCase | undefined,
+  artifactRoot: string | undefined,
+): readonly string[] {
+  if (!rawCase || !artifactRoot) return []
+  return PUBLIC_COMPARABLE_REQUIRED_DSXU_RAW_FIELDS
+    .filter((field): field is PublicComparableRawEvidencePathField =>
+      field === 'rawTranscriptPath' ||
+      field === 'toolTracePath' ||
+      field === 'rawApiResponsePath' ||
+      field === 'finalReportPath' ||
+      field === 'artifactDir',
+    )
+    .flatMap(field => publicComparablePathRedline(rawCase, field, artifactRoot))
+}
+
+function publicComparableExternalArtifactRedlines(
+  rawCase: PublicComparableRawEvidenceCase | undefined,
+  artifactRoot: string | undefined,
+): readonly string[] {
+  if (!rawCase || !artifactRoot) return []
+  return PUBLIC_COMPARABLE_EXTERNAL_TARGET_FIELDS
+    .flatMap(field => [
+      ...publicComparablePathRedline(rawCase, field, artifactRoot),
+      ...publicComparableExternalTargetContentRedlines(rawCase, field, artifactRoot),
+    ])
+}
+
+function publicComparablePathRedline(
+  rawCase: PublicComparableRawEvidenceCase,
+  field: PublicComparableRawEvidencePathField,
+  artifactRoot: string,
+): readonly string[] {
+  const value = rawCase[field]
+  if (!isNonPlaceholderString(value)) return []
+  const path = resolveEvidencePath(artifactRoot, value)
+  try {
+    if (!existsSync(path)) return [`public comparable raw evidence path does not exist: ${field}`]
+    const stats = statSync(path)
+    if (field === 'artifactDir') {
+      return stats.isDirectory() ? [] : [`public comparable raw evidence path is not a directory: ${field}`]
+    }
+    return stats.isFile() ? [] : [`public comparable raw evidence path is not a file: ${field}`]
+  } catch {
+    return [`public comparable raw evidence path cannot be read: ${field}`]
+  }
+}
+
+function publicComparableExternalTargetContentRedlines(
+  rawCase: PublicComparableRawEvidenceCase,
+  field: PublicComparableRawEvidencePathField,
+  artifactRoot: string,
+): readonly string[] {
+  if (field !== 'targetReferenceTranscriptPath') return []
+  const targetValue = rawCase.targetReferenceTranscriptPath
+  if (!isNonPlaceholderString(targetValue)) return []
+  const targetPath = resolveEvidencePath(artifactRoot, targetValue)
+  const rawValue = rawCase.rawTranscriptPath
+  const rawPath = isNonPlaceholderString(rawValue) ? resolveEvidencePath(artifactRoot, rawValue) : ''
+  const redlines: string[] = []
+  try {
+    if (!existsSync(targetPath) || !statSync(targetPath).isFile()) return redlines
+    if (rawPath && targetPath === rawPath) {
+      redlines.push('public comparable external target reference path reuses DSXU raw transcript: targetReferenceTranscriptPath')
+      return redlines
+    }
+    const targetContent = readFileSync(targetPath, 'utf8')
+    if (targetContent.trim().length === 0) {
+      redlines.push('public comparable external target reference transcript is empty: targetReferenceTranscriptPath')
+      return redlines
+    }
+    if (rawPath && existsSync(rawPath) && statSync(rawPath).isFile()) {
+      const rawContent = readFileSync(rawPath, 'utf8')
+      if (rawContent.length > 0 && rawContent === targetContent) {
+        redlines.push('public comparable external target reference transcript is byte-identical to DSXU raw transcript')
+      }
+    }
+  } catch {
+    redlines.push('public comparable external target reference transcript cannot be read: targetReferenceTranscriptPath')
+  }
+  return redlines
+}
+
+function resolveEvidencePath(artifactRoot: string, value: string): string {
+  return isAbsolute(value) ? value : join(artifactRoot, value)
+}
 
 function p12RawEvidenceState(report: P12RawComparisonReport): RawEvidenceReadinessEntry['rawEvidenceState'] {
   if (report.pairedRawLogCount === 0) return 'missing-target-raw'

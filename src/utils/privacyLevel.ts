@@ -12,7 +12,7 @@
  *
  * The resolved level is the most restrictive signal from:
  *   DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC   ->  essential-traffic
- *   provider-migration disable-nonessential alias -> essential-traffic
+ *   archived disable-nonessential alias -> essential-traffic
  *   DISABLE_TELEMETRY                         →  no-telemetry
  */
 
@@ -33,7 +33,7 @@ export function getPrivacyLevel(): PrivacyLevel {
 /**
  * True when all nonessential network traffic should be suppressed.
  * Equivalent to the old nonessential-traffic guard, with DSXU env taking
- * precedence over the provider-migration alias.
+ * precedence over the archived alias.
  */
 export function isEssentialTrafficOnly(): boolean {
   return getPrivacyLevel() === 'essential-traffic'

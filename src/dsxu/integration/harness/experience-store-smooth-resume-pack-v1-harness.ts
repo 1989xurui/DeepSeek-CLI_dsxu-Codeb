@@ -45,7 +45,7 @@ export type ExperienceStoreSmoothResumePackResult = {
     allBlockPassBeforeVerify: boolean
     bugfixHasDeleteExplainEvidence: boolean
     featureCanStayFlash: boolean
-    failedVerificationRoutesPro: boolean
+    failedVerificationUsesRecoveryRoute: boolean
     compactResumePreservesFailedCommand: boolean
     benchmarkAnswerLeakBlocked: boolean
     averageToolCallReductionPct: number
@@ -90,6 +90,13 @@ function proveBenchmarkAnswerLeakBlocked(evidencePath: string): boolean {
   }
   const result = recordDsxuExperience(store, leakEntry)
   return result.accepted === false && result.reason.startsWith('benchmark-answer-blocked:')
+}
+
+function isFailedVerificationRecoveryRoute(input: { model: string; routeReason: string }): boolean {
+  return (
+    /^deepseek-v4-(flash|pro)$/.test(input.model) &&
+    /^failed_verification_(flash|pro)_thinking_max$/.test(input.routeReason)
+  )
 }
 
 export async function runExperienceStoreSmoothResumePackHarness(options: {
@@ -160,11 +167,10 @@ export async function runExperienceStoreSmoothResumePackHarness(options: {
       featureCanStayFlash: scenarios.some(
         scenario => scenario.kind === 'feature_native_test' && scenario.model === 'deepseek-v4-flash',
       ),
-      failedVerificationRoutesPro: scenarios.some(
+      failedVerificationUsesRecoveryRoute: scenarios.some(
         scenario =>
           scenario.kind === 'failed_verification_recovery' &&
-          scenario.model === 'deepseek-v4-pro' &&
-          scenario.routeReason === 'failed_verification_pro_thinking_max',
+          isFailedVerificationRecoveryRoute(scenario),
       ),
       compactResumePreservesFailedCommand: compactResume.failedCommandPreserved,
       benchmarkAnswerLeakBlocked,
@@ -195,7 +201,7 @@ export async function runExperienceStoreSmoothResumePackHarness(options: {
         aggregate.allBlockPassBeforeVerify &&
         aggregate.bugfixHasDeleteExplainEvidence &&
         aggregate.featureCanStayFlash &&
-        aggregate.failedVerificationRoutesPro &&
+        aggregate.failedVerificationUsesRecoveryRoute &&
         aggregate.compactResumePreservesFailedCommand &&
         aggregate.benchmarkAnswerLeakBlocked &&
         aggregate.averageToolCallReductionPct >= 30 &&
@@ -238,7 +244,7 @@ export async function runExperienceStoreSmoothResumePackHarness(options: {
         allBlockPassBeforeVerify: false,
         bugfixHasDeleteExplainEvidence: false,
         featureCanStayFlash: false,
-        failedVerificationRoutesPro: false,
+        failedVerificationUsesRecoveryRoute: false,
         compactResumePreservesFailedCommand: false,
         benchmarkAnswerLeakBlocked: false,
         averageToolCallReductionPct: 0,

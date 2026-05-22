@@ -8,8 +8,8 @@ import {
   isDSXUCodeMode,
 } from './dsxuModel.js'
 import {
-  getDefaultOptionForUser as getProviderMigrationDefaultOptionForUser,
-  getModelOptions as getProviderMigrationModelOptions,
+  getDefaultOptionForUser as getArchivedProviderDefaultOptionForUser,
+  getModelOptions as getArchivedProviderModelOptions,
 } from './providerMigration/providerMigrationModelOptions.js'
 
 export type ModelOption = {
@@ -31,7 +31,7 @@ function getDsxuDefaultOptionForUser(): ModelOption {
 
 export function getDefaultOptionForUser(fastMode = false): ModelOption {
   if (!isDSXUCodeMode()) {
-    return getProviderMigrationDefaultOptionForUser(fastMode)
+    return getArchivedProviderDefaultOptionForUser(fastMode)
   }
   return getDsxuDefaultOptionForUser()
 }
@@ -68,7 +68,7 @@ function getDsxuModelOptions(): ModelOption[] {
 
 export function getModelOptions(fastMode = false): ModelOption[] {
   if (!isDSXUCodeMode()) {
-    return getProviderMigrationModelOptions(fastMode)
+    return getArchivedProviderModelOptions(fastMode)
   }
   return filterModelOptionsByAllowlist(getDsxuModelOptions())
 }

@@ -8,10 +8,9 @@ import { Byline } from '../design-system/Byline.js';
 import { Dialog } from '../design-system/Dialog.js';
 import { KeyboardShortcutHint } from '../design-system/KeyboardShortcutHint.js';
 export type GroveDecision = 'accept_opt_in' | 'accept_opt_out' | 'defer' | 'escape' | 'skip_rendering';
-const PROVIDER_MIGRATION_ORG_TOKEN = 'anth' + 'ropic';
-const PROVIDER_MIGRATION_TERMS_UPDATE_URL = `https://www.${PROVIDER_MIGRATION_ORG_TOKEN}.com/news/updates-to-our-consumer-terms`;
-const PROVIDER_MIGRATION_TERMS_URL = `https://${PROVIDER_MIGRATION_ORG_TOKEN}.com/legal/terms`;
-const PROVIDER_MIGRATION_PRIVACY_URL = `https://${PROVIDER_MIGRATION_ORG_TOKEN}.com/legal/privacy`;
+const DSXU_TERMS_UPDATE_URL = 'https://docs.dsxu.local/privacy';
+const DSXU_TERMS_URL = 'https://docs.dsxu.local/terms';
+const DSXU_PRIVACY_URL = 'https://docs.dsxu.local/privacy';
 type Props = {
   showIfAlreadyViewed: boolean;
   location: 'settings' | 'policy_update_modal' | 'onboarding';
@@ -32,7 +31,7 @@ function GracePeriodContentBody() {
   const $ = _c(9);
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = <Text>An update to our Consumer Terms and Privacy Policy will take effect on{" "}<Text bold={true}>October 8, 2025</Text>. You can accept the updated terms today.</Text>;
+    t0 = <Text>An update to DSXU Terms and Privacy Policy will take effect on{" "}<Text bold={true}>October 8, 2025</Text>. You can accept the updated terms today.</Text>;
     $[0] = t0;
   } else {
     t0 = $[0];
@@ -71,21 +70,21 @@ function GracePeriodContentBody() {
   }
   let t6;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <Link url={PROVIDER_MIGRATION_TERMS_UPDATE_URL} />;
+    t6 = <Link url={DSXU_TERMS_UPDATE_URL} />;
     $[6] = t6;
   } else {
     t6 = $[6];
   }
   let t7;
   if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
-    t7 = <Link url={PROVIDER_MIGRATION_TERMS_URL} />;
+    t7 = <Link url={DSXU_TERMS_URL} />;
     $[7] = t7;
   } else {
     t7 = $[7];
   }
   let t8;
   if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
-    t8 = <>{t0}{t5}<Text>Learn more ({t6}) or read the updated Consumer Terms ({t7}) and Privacy Policy (<Link url={PROVIDER_MIGRATION_PRIVACY_URL} />)</Text></>;
+    t8 = <>{t0}{t5}<Text>Learn more ({t6}) or read the updated DSXU Terms ({t7}) and Privacy Policy (<Link url={DSXU_PRIVACY_URL} />)</Text></>;
     $[8] = t8;
   } else {
     t8 = $[8];
@@ -96,7 +95,7 @@ function PostGracePeriodContentBody() {
   const $ = _c(7);
   let t0;
   if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-    t0 = <Text>We've updated our Consumer Terms and Privacy Policy.</Text>;
+    t0 = <Text>We've updated DSXU Terms and Privacy Policy.</Text>;
     $[0] = t0;
   } else {
     t0 = $[0];
@@ -124,21 +123,21 @@ function PostGracePeriodContentBody() {
   }
   let t4;
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = <Link url={PROVIDER_MIGRATION_TERMS_UPDATE_URL} />;
+    t4 = <Link url={DSXU_TERMS_UPDATE_URL} />;
     $[4] = t4;
   } else {
     t4 = $[4];
   }
   let t5;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t5 = <Link url={PROVIDER_MIGRATION_TERMS_URL} />;
+    t5 = <Link url={DSXU_TERMS_URL} />;
     $[5] = t5;
   } else {
     t5 = $[5];
   }
   let t6;
   if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
-    t6 = <>{t0}{t3}<Text>Learn more ({t4}) or read the updated Consumer Terms ({t5}) and Privacy Policy (<Link url={PROVIDER_MIGRATION_PRIVACY_URL} />)</Text></>;
+    t6 = <>{t0}{t3}<Text>Learn more ({t4}) or read the updated DSXU Terms ({t5}) and Privacy Policy (<Link url={DSXU_PRIVACY_URL} />)</Text></>;
     $[6] = t6;
   } else {
     t6 = $[6];
@@ -340,7 +339,7 @@ export function GroveDialog(t0) {
   }
   let t14;
   if ($[30] !== handleCancel || $[31] !== t13 || $[32] !== t8) {
-    t14 = <Dialog title="Updates to Consumer Terms and Policies" color="professionalBlue" onCancel={handleCancel} inputGuide={_temp}>{t8}{t13}</Dialog>;
+    t14 = <Dialog title="Updates to DSXU Terms and Policies" color="professionalBlue" onCancel={handleCancel} inputGuide={_temp}>{t8}{t13}</Dialog>;
     $[30] = handleCancel;
     $[31] = t13;
     $[32] = t8;

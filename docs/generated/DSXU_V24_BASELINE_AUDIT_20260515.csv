@@ -1,5 +1,5 @@
 "gate","status","count","requiredNextAction"
-"v20-final-preflight","PASS","2005","keep as inherited release baseline; V24 cannot claim 95 from this alone"
+"v20-final-preflight","PASS","2353","keep as inherited release baseline; V24 cannot claim 95 from this alone"
 "c2-owner-disposition","PRESENT","1902","convert owner disposition into experience-loop-density acceptance"
 "c2-behavior-acceptance","OPEN_REQUIRED_FOR_V24","0","run C2 density and behavior matrix; do not call C2 fully absorbed yet"
 "clean-export-artifact","READY_NOT_CREATED","1","create export only after V24 evidence and explicit release action"

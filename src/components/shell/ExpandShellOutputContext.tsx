@@ -10,6 +10,22 @@ import { useContext } from 'react';
  * a boolean context that child components can check to modify their behavior.
  */
 const ExpandShellOutputContext = React.createContext(false);
+
+export const MAX_AUTO_EXPAND_SHELL_OUTPUT_CHARS = 4000;
+export const MAX_AUTO_EXPAND_SHELL_OUTPUT_LINES = 80;
+
+export function shouldAutoExpandShellOutput(content: string): boolean {
+  if (!content) return false;
+  if (content.length > MAX_AUTO_EXPAND_SHELL_OUTPUT_CHARS) return false;
+
+  let lineCount = 1;
+  for (const char of content) {
+    if (char === '\n') lineCount++;
+    if (lineCount > MAX_AUTO_EXPAND_SHELL_OUTPUT_LINES) return false;
+  }
+  return true;
+}
+
 export function ExpandShellOutputProvider(t0) {
   const $ = _c(2);
   const {

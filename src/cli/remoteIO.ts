@@ -28,9 +28,9 @@ import { SSETransport } from './transports/SSETransport.js'
 import type { Transport } from './transports/Transport.js'
 import { getTransportForUrl } from './transports/transportUtils.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const providerMigrationCodeEnv = (name: string): string =>
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_${name}`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const archivedCodeEnv = (name: string): string =>
+  `${ARCHIVED_CODE_ENV_PREFIX}_${name}`
 
 /**
  * Bidirectional streaming for SDK mode with session tracking
@@ -69,7 +69,7 @@ export class RemoteIO extends StructuredIO {
     // Add environment runner version if available (set by Environment Manager)
     const erVersion =
       process.env.DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??
-      process.env[providerMigrationCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
+      process.env[archivedCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
     if (erVersion) {
       headers['x-environment-runner-version'] = erVersion
     }
@@ -85,7 +85,7 @@ export class RemoteIO extends StructuredIO {
       }
       const freshErVersion =
         process.env.DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??
-        process.env[providerMigrationCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
+        process.env[archivedCodeEnv('ENVIRONMENT_RUNNER_VERSION')]
       if (freshErVersion) {
         h['x-environment-runner-version'] = freshErVersion
       }
@@ -104,7 +104,7 @@ export class RemoteIO extends StructuredIO {
     this.isControlSessionCompat =
       process.env.DSXU_CODE_ENVIRONMENT_KIND === 'remote-session' ||
       process.env.DSXU_CODE_ENVIRONMENT_KIND === 'bridge' ||
-      process.env[providerMigrationCodeEnv('ENVIRONMENT_KIND')] === 'bridge'
+      process.env[archivedCodeEnv('ENVIRONMENT_KIND')] === 'bridge'
     this.isDebug = isDebugMode()
     this.transport.setOnData((data: string) => {
       this.inputStream.write(data)
@@ -125,7 +125,7 @@ export class RemoteIO extends StructuredIO {
     // 'received' delivery acks are silently dropped.
     if (
       isEnvTruthy(process.env.DSXU_CODE_USE_CCR_V2) ||
-      isEnvTruthy(process.env[providerMigrationCodeEnv('USE_CCR_V2')])
+      isEnvTruthy(process.env[archivedCodeEnv('USE_CCR_V2')])
     ) {
       // CCR v2 is SSE+POST by definition. getTransportForUrl returns
       // SSETransport under the same env var, but the two checks live in
@@ -189,9 +189,9 @@ export class RemoteIO extends StructuredIO {
     // remote control session. The keep_alive type is filtered before
     // reaching any client UI (Query.ts drops it; structuredIO.ts drops it;
     // web/iOS/Android never see it in their message loop). Interval comes
-    // from feature flag provider (provider-migration control poll interval config
+    // from feature flag provider (archived control poll interval config
     // session_keepalive_interval_v2_ms, default 120s); 0 = disabled.
-    // Control-session provider-migration only: fixes idle timeout on the remote
+    // Archived control-session transport only: fixes idle timeout on the remote
     // control topology. Workers on other network paths do not need it.
     const keepAliveIntervalMs =
       getPollIntervalConfig().session_keepalive_interval_v2_ms
@@ -236,7 +236,7 @@ export class RemoteIO extends StructuredIO {
 
   /**
    * Send output to the transport.
-   * In control-session provider-migration mode, control_request messages are always
+   * In archived control-session compatibility mode, control_request messages are always
    * echoed to stdout so the parent process can detect permission requests. Other
    * messages are echoed only in debug mode.
    */
@@ -270,11 +270,11 @@ export function getDsxuRemoteIORuntimeProfile() {
   return {
     runtime: 'DSXU Remote IO Provider Adapter',
     defaultBehavior:
-      'remote IO accepts DSXU_* session env while retaining provider-migration transport fallback',
+      'remote IO accepts DSXU_* session env while retaining archived transport fallback',
     dsxuMode: isDsxuRuntimeMode(),
     providerTarget: 'DSXU Remote Session Provider',
     activationEvidence: [
-      'DSXU_CODE_ENVIRONMENT_RUNNER_VERSION is preferred over provider-migration runner version',
+      'DSXU_CODE_ENVIRONMENT_RUNNER_VERSION is preferred over archived runner version',
       'DSXU_CODE_ENVIRONMENT_KIND=remote-session enables control-session stdout echoing',
       'DSXU_CODE_USE_CCR_V2 activates CCR lifecycle without DSXU env dependency',
     ],

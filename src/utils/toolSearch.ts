@@ -45,7 +45,7 @@ import {
 } from './model/providers.js'
 import { jsonStringify } from './slowOperations.js'
 import { zodToJsonSchema } from './zodToJsonSchema.js'
-import { getProviderMigrationUnsupportedToolReferencePatterns } from './model/providerMigration/providerMigrationToolSearchModel.js'
+import { getArchivedUnsupportedToolReferencePatterns } from './model/providerMigration/providerMigrationToolSearchModel.js'
 
 /**
  * Default percentage of context window at which to auto-enable tool search.
@@ -208,7 +208,7 @@ export function getToolSearchMode(): ToolSearchMode {
  * New models are assumed to support tool_reference unless explicitly listed here.
  */
 const DEFAULT_UNSUPPORTED_MODEL_PATTERNS =
-  getProviderMigrationUnsupportedToolReferencePatterns()
+  getArchivedUnsupportedToolReferencePatterns()
 
 /**
  * Get the list of model patterns that do NOT support tool_reference.
@@ -237,7 +237,7 @@ function getUnsupportedToolReferencePatterns(): string[] {
  * UNLESS they match a pattern in the unsupported list. This ensures new
  * models work by default without code changes.
  *
- * Currently, some lightweight provider-migration models do not support tool_reference. This can be
+ * Currently, some lightweight archived-provider models do not support tool_reference. This can be
  * updated via feature flag provider feature 'tengu_tool_search_unsupported_models'.
  *
  * @param model The model name to check
@@ -290,7 +290,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
   }
 
   // tool_reference is a beta content type that third-party API gateways
-  // (provider migration base URL proxies) typically don't support. When the provider
+  // (archived provider base URL proxies) typically don't support. When the provider
   // is 'firstParty' but the base URL points elsewhere, the proxy will reject
   // tool_reference blocks with a 400. Vertex/Bedrock/Foundry are unaffected ...  // they have their own endpoints and beta headers.
   // Upstream provider issue tracker #30912
@@ -312,7 +312,7 @@ export function isToolSearchEnabledOptimistic(): boolean {
     if (!loggedOptimistic) {
       loggedOptimistic = true
       logForDebugging(
-        `[ToolSearch:optimistic] disabled: provider base URL is not a first-party provider-migration host. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
+        `[ToolSearch:optimistic] disabled: provider base URL is not a supported hosted tool-reference endpoint. Set ENABLE_TOOL_SEARCH=true (or auto / auto:N) if your proxy forwards tool_reference blocks.`,
       )
     }
     return false

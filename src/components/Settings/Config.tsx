@@ -84,20 +84,20 @@ type Setting = (SettingBase & {
   type: 'managedEnum';
 });
 type SubMenu = 'Theme' | 'Model' | 'TeammateModel' | 'ExternalIncludes' | 'OutputStyle' | 'ChannelDowngrade' | 'Language' | 'EnableAutoUpdates';
-const PROVIDER_MIGRATION_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY';
-const PROVIDER_MIGRATION_FILE_CHECKPOINTING_ENV = `CL${'AUDE'}_CODE_DISABLE_FILE_CHECKPOINTING`;
+const ARCHIVED_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY';
+const ARCHIVED_FILE_CHECKPOINTING_ENV = `CL${'AUDE'}_CODE_DISABLE_FILE_CHECKPOINTING`;
 function getSettingsPanelProviderApiKey(): string | undefined {
   return getUsableApiKey(
     process.env.DSXU_API_KEY,
     process.env.DSXU_DEEPSEEK_API_KEY,
     process.env.DEEPSEEK_API_KEY,
-    process.env[PROVIDER_MIGRATION_API_KEY_ENV]
+    process.env[ARCHIVED_API_KEY_ENV]
   );
 }
 function isFileCheckpointingEnabledForSettings(): boolean {
   return (
     !isEnvTruthy(process.env.DSXU_CODE_DISABLE_FILE_CHECKPOINTING) &&
-    !isEnvTruthy(process.env[PROVIDER_MIGRATION_FILE_CHECKPOINTING_ENV])
+    !isEnvTruthy(process.env[ARCHIVED_FILE_CHECKPOINTING_ENV])
   );
 }
 export function Config({
@@ -1111,7 +1111,7 @@ export function Config({
       return `Set ${key} to ${chalk.bold(value_2)}`;
     });
     // Check for API key changes
-    // On homespace, provider-migration source keys are preserved in process.env for child
+    // On homespace, archived source keys are preserved in process.env for child
     // processes but ignored by DSXU Code itself (see auth.ts).
     const effectiveApiKey = isRunningOnHomespace() ? undefined : getSettingsPanelProviderApiKey();
     const initialUsingCustomKey = Boolean(effectiveApiKey && initialConfig.current.customApiKeyResponses?.approved?.includes(normalizeApiKeyForConfig(effectiveApiKey)));

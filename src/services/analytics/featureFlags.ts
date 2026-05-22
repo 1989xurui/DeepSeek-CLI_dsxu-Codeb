@@ -95,9 +95,9 @@ let reinitializingPromise: Promise<unknown> | null = null
 // init.ts) and must survive auth-change resets.
 type FeatureFlagRefreshListener = () => void | Promise<void>
 const refreshed = createSignal()
-const PROVIDER_MIGRATION_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
-const PROVIDER_MIGRATION_API_HOST = `api.${'anth' + 'ropic'}.com`
-const PROVIDER_MIGRATION_API_ORIGIN = `https://${PROVIDER_MIGRATION_API_HOST}/`
+const ARCHIVED_PROVIDER_BASE_URL_ENV = 'ANTH' + 'ROPIC_BASE_URL'
+const ARCHIVED_PROVIDER_API_HOST = `api.${'anth' + 'ropic'}.com`
+const ARCHIVED_PROVIDER_API_ORIGIN = `https://${ARCHIVED_PROVIDER_API_HOST}/`
 /** Call a listener with sync-throw and async-rejection both routed to logError. */
 function callSafe(listener: FeatureFlagRefreshListener): void {
   try {
@@ -148,11 +148,11 @@ export function onFeatureFlagsRefresh(
 }
 /**
  * Parse env var overrides for GrowthBook features.
- * Set the provider-migration feature-flag override env var to a JSON object mapping feature keys to values
+ * Set the archived feature-flag override env var to a JSON object mapping feature keys to values
  * to bypass remote eval and disk cache. Useful for eval harnesses that need to
  * test specific feature flag configurations. Only active when USER_TYPE is 'ant'.
  *
- * Example: <provider-migration override env>='{"my_feature": true, "my_config": {"key": "val"}}'
+ * Example: <archived override env>='{"my_feature": true, "my_config": {"key": "val"}}'
  */
 let envOverrides: Record<string, unknown> | null = null
 let envOverridesParsed = false
@@ -172,7 +172,7 @@ function getEnvOverrides(): Record<string, unknown> | null {
         } catch {
           logError(
             new Error(
-              `GrowthBook: Failed to parse provider-migration feature override env: ${raw}`,
+              `GrowthBook: Failed to parse archived feature override env: ${raw}`,
             ),
           )
         }
@@ -360,7 +360,7 @@ async function processRemoteEvalPayload(
     // Under remoteEval:true the server pre-evaluates. Whether the answer
     // lands in `value` (current API) or `defaultValue` (post-TODO API shape),
     // it's the authoritative value for this user. Guarding on both keeps
-    // syncRemoteEvalToDisk correct across a partial or full API migration.
+    // Keep syncRemoteEvalToDisk correct across partial archived-provider fallback.
     const v = 'value' in feature ? feature.value : feature.defaultValue
     if (v !== undefined) {
       remoteEvalFeatureValues.set(key, v)
@@ -410,11 +410,11 @@ function isGrowthBookEnabled(): boolean {
  * is absent for direct-API users. Hostname only ...no path/query/creds.
  */
 export function getApiBaseUrlHost(): string | undefined {
-  const baseUrl = process.env[PROVIDER_MIGRATION_BASE_URL_ENV]
+  const baseUrl = process.env[ARCHIVED_PROVIDER_BASE_URL_ENV]
   if (!baseUrl) return undefined
   try {
     const host = new URL(baseUrl).host
-    if (host === PROVIDER_MIGRATION_API_HOST) return undefined
+    if (host === ARCHIVED_PROVIDER_API_HOST) return undefined
     return host
   } catch {
     return undefined
@@ -469,8 +469,8 @@ const getGrowthBookClient = memoize(
     }
     const baseUrl =
       process.env.USER_TYPE === 'ant'
-        ? getDsxuCodeEnv('GB_BASE_URL') || PROVIDER_MIGRATION_API_ORIGIN
-        : PROVIDER_MIGRATION_API_ORIGIN
+        ? getDsxuCodeEnv('GB_BASE_URL') || ARCHIVED_PROVIDER_API_ORIGIN
+        : ARCHIVED_PROVIDER_API_ORIGIN
     // Skip auth if trust hasn't been established yet
     // This prevents executing apiKeyHelper commands before the trust dialog
     // Non-interactive sessions implicitly have workspace trust
@@ -728,15 +728,15 @@ export function getFeatureValue_CACHED_WITH_REFRESH<T>(
 /**
  * Check a Statsig feature gate value via GrowthBook, with fallback to Statsig cache.
  *
- * **MIGRATION ONLY**: This function is for migrating existing Statsig gates to GrowthBook.
+ * **ARCHIVED FALLBACK ONLY**: Keeps existing Statsig gates readable in GrowthBook.
  * For new features, use `getFeatureValue_CACHED_MAY_BE_STALE()` instead.
  *
  * - Checks GrowthBook disk cache first
- * - Falls back to Statsig's cachedStatsigGates during migration
+ * - Falls back to Statsig's cachedStatsigGates during archived-gate transition
  * - The value may be stale if the cache hasn't been updated recently
  *
  * @deprecated Use getFeatureValue_CACHED_MAY_BE_STALE() for new code. This function
- * exists only to support migration of existing Statsig gates.
+ * exists only to support archived Statsig gates.
  */
 export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
   gate: string,
@@ -760,13 +760,13 @@ export function checkStatsigFeatureGate_CACHED_MAY_BE_STALE(
     pendingExposures.add(gate)
   }
   // Return cached value immediately from disk
-  // First check GrowthBook cache, then fall back to Statsig cache for migration
+  // First check GrowthBook cache, then fall back to archived Statsig cache
   const config = getGlobalConfig()
   const gbCached = config.cachedGrowthBookFeatures?.[gate]
   if (gbCached !== undefined) {
     return Boolean(gbCached)
   }
-  // Fallback to Statsig cache for migration period
+  // Fallback to Statsig cache for archived-gate transition
   return config.cachedStatsigGates?.[gate] ?? false
 }
 /**

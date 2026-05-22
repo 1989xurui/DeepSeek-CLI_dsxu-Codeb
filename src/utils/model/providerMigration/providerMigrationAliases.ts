@@ -1,4 +1,4 @@
-export const PROVIDER_MIGRATION_MODEL_ALIASES = [
+export const ARCHIVED_MODEL_ALIASES = [
   'flash',
   'fast',
   'sonnet',
@@ -10,15 +10,22 @@ export const PROVIDER_MIGRATION_MODEL_ALIASES = [
   'opusplan',
 ] as const
 
-export const PROVIDER_MIGRATION_MODEL_FAMILY_ALIASES = [
+export const ARCHIVED_MODEL_FAMILY_ALIASES = [
   'sonnet',
   'opus',
   'haiku',
   'deepseek',
 ] as const
 
-export function isProviderMigrationPlanningRouteAlias(
+export const PROVIDER_MIGRATION_MODEL_ALIASES = ARCHIVED_MODEL_ALIASES
+export const PROVIDER_MIGRATION_MODEL_FAMILY_ALIASES =
+  ARCHIVED_MODEL_FAMILY_ALIASES
+
+export function isArchivedPlanningRouteAlias(
   modelSetting: string | null | undefined,
 ): boolean {
   return modelSetting === 'opusplan'
 }
+
+export const isProviderMigrationPlanningRouteAlias =
+  isArchivedPlanningRouteAlias

@@ -10,7 +10,7 @@ import type { CommandResultDisplay } from '../commands.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Box, Text, useInput } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
-import { queryProviderMigrationSmallModel } from '../utils/model/providerMigration/providerMigrationSmallModelQuery.js';
+import { queryArchivedSmallModel } from '../utils/model/providerMigration/providerMigrationSmallModelQuery.js';
 import { startsWithApiErrorPrefix } from '../services/api/errors.js';
 import type { Message } from '../types/message.js';
 import { checkAndRefreshOAuthTokenIfNeeded } from '../utils/auth.js';
@@ -19,7 +19,7 @@ import { logForDebugging } from '../utils/debug.js';
 import { env } from '../utils/env.js';
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../utils/envUtils.js';
 import { type GitRepoState, getGitState, getIsGit } from '../utils/git.js';
 import { getAuthHeaders, getUserAgent } from '../utils/http.js';
@@ -37,7 +37,7 @@ import TextInput from './TextInput.js';
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
 const GITHUB_ISSUES_REPO_URL = process.env.DSXU_FEEDBACK_ISSUES_URL ?? 'https://github.com/dsxu-code/dsxu-code/issues';
-const PROVIDER_MIGRATION_FEEDBACK_ENDPOINT = `https://api.${'anth' + 'ropic'}.com/api/${'cl' + 'aude'}_cli_feedback`;
+const ARCHIVED_FEEDBACK_ENDPOINT = `https://api.${'anth' + 'ropic'}.com/api/${'cl' + 'aude'}_cli_feedback`;
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];
@@ -56,13 +56,13 @@ type Props = {
   };
 };
 type Step = 'userInput' | 'consent' | 'submitting' | 'done';
-const PROVIDER_MIGRATION_API_KEY_PREFIX = ['sk', 'ant'].join('-');
-const PROVIDER_MIGRATION_API_KEY_WITH_QUOTES_RE = new RegExp(
-  `"(${PROVIDER_MIGRATION_API_KEY_PREFIX}[^\\s"']{24,})"`,
+const ARCHIVED_API_KEY_PREFIX = ['sk', 'ant'].join('-');
+const ARCHIVED_API_KEY_WITH_QUOTES_RE = new RegExp(
+  `"(${ARCHIVED_API_KEY_PREFIX}[^\\s"']{24,})"`,
   'g',
 );
-const PROVIDER_MIGRATION_API_KEY_RE = new RegExp(
-  `(?<![A-Za-z0-9"'])(${PROVIDER_MIGRATION_API_KEY_PREFIX}-?[A-Za-z0-9_-]{10,})(?![A-Za-z0-9"'])`,
+const ARCHIVED_API_KEY_RE = new RegExp(
+  `(?<![A-Za-z0-9"'])(${ARCHIVED_API_KEY_PREFIX}-?[A-Za-z0-9_-]{10,})(?![A-Za-z0-9"'])`,
   'g',
 );
 
@@ -88,11 +88,11 @@ export function redactSensitiveInfo(text: string): string {
 
   // Provider API keys with or without quotes
   // First handle the case with quotes
-  redacted = redacted.replace(PROVIDER_MIGRATION_API_KEY_WITH_QUOTES_RE, '"[REDACTED_API_KEY]"');
+  redacted = redacted.replace(ARCHIVED_API_KEY_WITH_QUOTES_RE, '"[REDACTED_API_KEY]"');
   // Then handle the cases without quotes - more general pattern
   redacted = redacted.replace(
   // eslint-disable-next-line custom-rules/no-lookbehind-regex -- .replace(re, string) on /bug path: no-match returns same string (Object.is)
-  PROVIDER_MIGRATION_API_KEY_RE, '[REDACTED_API_KEY]');
+  ARCHIVED_API_KEY_RE, '[REDACTED_API_KEY]');
 
   // AWS keys - AWSXXXX format - add the pattern we need for the test
   redacted = redacted.replace(/AWS key: "(AWS[A-Z0-9]{20,})"/g, 'AWS key: "[REDACTED_AWS_KEY]"');
@@ -460,8 +460,11 @@ export function createGitHubIssueUrl(feedbackId: string, title: string, descript
   return baseUrl + encodedPrefix + truncatedEncodedErrors + ellipsis + encodedSuffix + encodedNote;
 }
 async function generateTitle(description: string, abortSignal: AbortSignal): Promise<string> {
+  if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
+    return createFallbackTitle(description);
+  }
   try {
-    const response = await queryProviderMigrationSmallModel({
+    const response = await queryArchivedSmallModel({
       systemPrompt: asSystemPrompt(['Generate a concise, technical issue title (max 80 chars) for a public GitHub issue based on this bug report for DSXU Code.', 'DSXU Code is an agentic coding CLI that can use provider APIs and DSXU gateways.', 'The title should:', '- Include the type of issue [Bug] or [Feature Request] as the first thing in the title', '- Be concise, specific and descriptive of the actual problem', '- Use technical terminology appropriate for a software issue', '- For error messages, extract the key error (e.g., "Missing Tool Result Block" rather than the full message)', '- Be direct and clear for developers to understand the problem', '- If you cannot determine a clear issue, use "Bug Report: [brief description]"', '- Any LLM API errors should be described as provider API errors unless the provider is explicit', 'Your response will be directly used as the title of the Github issue, and as such should not contain any other commentary or explaination', 'Examples of good titles include: "[Bug] Auto-Compact triggers too soon", "[Bug] Provider API Error: Missing Tool Result Block", "[Bug] Error: Invalid Model Route"']),
       userPrompt: description,
       signal: abortSignal,
@@ -540,7 +543,7 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       success: false
     };
   }
-  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+  if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
     return {
       success: true
     };
@@ -560,7 +563,7 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       'User-Agent': getUserAgent(),
       ...authResult.headers
     };
-    const response = await axios.post(PROVIDER_MIGRATION_FEEDBACK_ENDPOINT, {
+    const response = await axios.post(ARCHIVED_FEEDBACK_ENDPOINT, {
       content: jsonStringify(data)
     }, {
       headers,

@@ -8,7 +8,11 @@ import {
 
 const root = process.cwd()
 const read = (path: string) => readFileSync(join(root, path), 'utf8')
-const localReferenceRoot = join(root, `\u539f\u4ee3\u7801${['cl', 'aude'].join('')}`)
+const configuredReferenceRoot = process.env.DSXU_REFERENCE_SRC_ROOT ?? 'D:\\\u6e90\u4ee3\u7801claude\\src'
+const legacyReferenceRoot = join(root, `\u539f\u4ee3\u7801${['cl', 'aude'].join('')}`)
+const localReferenceRoot = existsSync(join(configuredReferenceRoot, 'query.ts'))
+  ? configuredReferenceRoot
+  : legacyReferenceRoot
 
 describe('DSXU reference experience quality absorption contract', () => {
   test('tracks P1-P7 as one-mainline behavior absorption, not a second system', () => {

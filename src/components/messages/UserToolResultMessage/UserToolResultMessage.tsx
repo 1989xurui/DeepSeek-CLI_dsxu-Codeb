@@ -1,6 +1,7 @@
 import { c as _c } from "react/compiler-runtime";
 import type { ToolResultBlockParam } from 'src/types/providerSdk.js';
 import * as React from 'react';
+import { Box, Text } from '../../../ink.js';
 import type { Tools } from '../../../Tool.js';
 import type { NormalizedUserMessage, ProgressMessage } from '../../../types/message.js';
 import { type buildMessageLookups, CANCEL_MESSAGE, INTERRUPT_MESSAGE_FOR_TOOL_USE, REJECT_MESSAGE } from '../../../utils/messages.js';
@@ -8,7 +9,7 @@ import { UserToolCanceledMessage } from './UserToolCanceledMessage.js';
 import { UserToolErrorMessage } from './UserToolErrorMessage.js';
 import { UserToolRejectMessage } from './UserToolRejectMessage.js';
 import { UserToolSuccessMessage } from './UserToolSuccessMessage.js';
-import { useGetToolFromMessages } from './utils.js';
+import { buildDsxuToolResultCompactCard, type DsxuToolResultCompactCard, useGetToolFromMessages } from './utils.js';
 type Props = {
   param: ToolResultBlockParam;
   message: NormalizedUserMessage;
@@ -20,6 +21,13 @@ type Props = {
   width: number | string;
   isTranscriptMode?: boolean;
 };
+function withDsxuToolResultCompactCard(card: DsxuToolResultCompactCard | null, node: React.ReactNode): React.ReactNode {
+  if (!card) return node;
+  return <Box flexDirection="column">
+      <Text color={card.color} dimColor={card.dimColor} wrap="truncate">{card.text}</Text>
+      {node}
+    </Box>;
+}
 export function UserToolResultMessage(t0) {
   const $ = _c(28);
   const {
@@ -37,6 +45,10 @@ export function UserToolResultMessage(t0) {
   if (!toolUse) {
     return null;
   }
+  const dsxuToolResultCard = buildDsxuToolResultCompactCard({
+    param,
+    toolName: String(toolUse.tool.name ?? toolUse.toolUse.name ?? 'tool'),
+  });
   if (typeof param.content === "string" && param.content.startsWith(CANCEL_MESSAGE)) {
     let t1;
     if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
@@ -45,7 +57,7 @@ export function UserToolResultMessage(t0) {
     } else {
       t1 = $[0];
     }
-    return t1;
+    return withDsxuToolResultCompactCard(null, t1);
   }
   if (typeof param.content === "string" && param.content.startsWith(REJECT_MESSAGE) || param.content === INTERRUPT_MESSAGE_FOR_TOOL_USE) {
     const t1 = toolUse.toolUse.input as {
@@ -66,7 +78,7 @@ export function UserToolResultMessage(t0) {
     } else {
       t2 = $[9];
     }
-    return t2;
+    return withDsxuToolResultCompactCard(dsxuToolResultCard, t2);
   }
   if (param.is_error) {
     let t1;
@@ -82,7 +94,7 @@ export function UserToolResultMessage(t0) {
     } else {
       t1 = $[16];
     }
-    return t1;
+    return withDsxuToolResultCompactCard(dsxuToolResultCard, t1);
   }
   let t1;
   if ($[17] !== isTranscriptMode || $[18] !== lookups || $[19] !== message || $[20] !== progressMessagesForMessage || $[21] !== style || $[22] !== toolUse.tool || $[23] !== toolUse.toolUse.id || $[24] !== tools || $[25] !== verbose || $[26] !== width) {
@@ -101,5 +113,5 @@ export function UserToolResultMessage(t0) {
   } else {
     t1 = $[27];
   }
-  return t1;
+  return withDsxuToolResultCompactCard(dsxuToolResultCard, t1);
 }

@@ -8,7 +8,7 @@ import { DSXU_CONTROL_AUTH_BETA_HEADER } from '../../constants/oauth.js'
 import { getProviderClient } from '../../services/api/client.js'
 import { isProviderSubscriptionAccount } from '../auth.js'
 import { logForDebugging } from '../debug.js'
-import { getProviderMigrationHomeDir } from '../envUtils.js'
+import { getArchivedHomeDir } from '../envUtils.js'
 import { safeParseJSON } from '../json.js'
 import { lazySchema } from '../lazySchema.js'
 import { isEssentialTrafficOnly } from '../privacyLevel.js'
@@ -36,7 +36,7 @@ const CacheFileSchema = lazySchema(() =>
 export type ModelCapability = z.infer<ReturnType<typeof ModelCapabilitySchema>>
 
 function getCacheDir(): string {
-  return join(getProviderMigrationHomeDir(), 'cache')
+  return join(getArchivedHomeDir(), 'cache')
 }
 
 function getCachePath(): string {
@@ -57,7 +57,7 @@ function sortForMatching(models: ModelCapability[]): ModelCapability[] {
   )
 }
 
-// Keyed on cache path so tests that set provider-migration source config envs get a fresh read
+// Keyed on cache path so tests that set archived source config envs get a fresh read
 const loadCache = memoize(
   (path: string): ModelCapability[] | null => {
     try {

@@ -24,18 +24,18 @@ type SafeString = AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
 // binary ships from — nativeInstaller/download.ts:24 uses the raw GCS URL).
 // `{sha}.zip` is content-addressed so CDN can cache it indefinitely;
 // `latest` has Cache-Control: max-age=300 so CDN staleness is bounded.
-const PROVIDER_MIGRATION_DOWNLOAD_HOST = `downloads.${'clau' + 'de'}.ai`
-const PROVIDER_MIGRATION_RELEASE_PRODUCT = `${'clau' + 'de'}-code-releases`
-const PROVIDER_MIGRATION_OFFICIAL_MARKETPLACE = `${'clau' + 'de'}-plugins-official`
+const ARCHIVED_PROVIDER_DOWNLOAD_HOST = `downloads.${'clau' + 'de'}.ai`
+const ARCHIVED_PROVIDER_RELEASE_PRODUCT = `${'clau' + 'de'}-code-releases`
+const ARCHIVED_PROVIDER_OFFICIAL_MARKETPLACE = `${'clau' + 'de'}-plugins-official`
 
-// Provider-migration backend populates this prefix.
+// Archived backend populates this prefix.
 const GCS_BASE =
-  `https://${PROVIDER_MIGRATION_DOWNLOAD_HOST}/${PROVIDER_MIGRATION_RELEASE_PRODUCT}/plugins/${PROVIDER_MIGRATION_OFFICIAL_MARKETPLACE}`
+  `https://${ARCHIVED_PROVIDER_DOWNLOAD_HOST}/${ARCHIVED_PROVIDER_RELEASE_PRODUCT}/plugins/${ARCHIVED_PROVIDER_OFFICIAL_MARKETPLACE}`
 
 // Zip arc paths are seed-dir-relative under the official marketplace directory
 // so the titanium seed machinery can use the same zip. Strip this prefix when
 // extracting for a laptop install.
-const ARC_PREFIX = `marketplaces/${PROVIDER_MIGRATION_OFFICIAL_MARKETPLACE}/`
+const ARC_PREFIX = `marketplaces/${ARCHIVED_PROVIDER_OFFICIAL_MARKETPLACE}/`
 
 /**
  * Fetch the official marketplace from GCS and extract to installLocation.
@@ -162,7 +162,7 @@ export async function fetchOfficialMarketplaceFromGcs(
     // values below are static enums or a git SHA — not code/filepaths/PII.
     logEvent('tengu_plugin_remote_fetch', {
       source: 'marketplace_gcs' as SafeString,
-      host: PROVIDER_MIGRATION_DOWNLOAD_HOST as SafeString,
+      host: ARCHIVED_PROVIDER_DOWNLOAD_HOST as SafeString,
       is_official: true,
       outcome: outcome as SafeString,
       duration_ms: Math.round(performance.now() - start),

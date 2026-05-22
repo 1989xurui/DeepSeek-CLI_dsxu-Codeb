@@ -1,4 +1,4 @@
-// DSXU V18 ownership marker: LSP capability contract is owned by DSXU mainline.
+// LSP capability contract is owned by the DSXU mainline.
 
 export type LspMethod =
   | 'hover'

@@ -6,9 +6,21 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { ToolProtocolIntegration } from '../../tool-protocol-integration'
-import { ToolCallRequest, ToolExecutionContext } from '../../tool-protocol'
+import {
+  buildToolResultContractConsumptionBoard,
+  buildToolResultContractEvidence,
+  buildToolResultNormalizationEvidence,
+  ensureCanonicalToolCallResult,
+  isToolCallResult,
+  normalizeMcpToolCallResult,
+  normalizeProviderToolResultBlock,
+  normalizeToolResultAtToolGateBoundary,
+  ToolCallRequest,
+  ToolExecutionContext,
+} from '../../tool-protocol'
 import { FileEditAdapter } from '../../adapters/file-edit-adapter'
 import { BashAdapter } from '../../adapters/bash-adapter'
+import { EngineHarness } from '../../index'
 
 describe('并账一致性测试', () => {
   let integration: ToolProtocolIntegration
@@ -291,6 +303,269 @@ describe('并账一致性测试', () => {
 
       // 验证桥接适配器支持工具
       expect(bridgeAdapter.supports).toBeInstanceOf(Function)
+    })
+  })
+
+  describe('canonical ToolCallResult boundary normalization', () => {
+    test('normalizes provider tool_result blocks only at the Tool Gate boundary', () => {
+      const result = normalizeProviderToolResultBlock(
+        {
+          tool_use_id: 'toolu-provider-1',
+          content: '<tool_use_error>permission denied</tool_use_error>',
+          is_error: true,
+        },
+        'Bash',
+        Date.now(),
+      )
+
+      expect(isToolCallResult(result)).toBe(true)
+      expect(result.ok).toBe(false)
+      expect(result.error?.type).toBe('EXECUTION_FAILED')
+      expect(result.metadata.executorKind).toBe('legacy_adapter')
+      expect(result.metadata.usedBridge).toBe(true)
+      expect(result.structuredData?.boundaryKind).toBe('provider_message')
+
+      const evidence = buildToolResultNormalizationEvidence(result, 'provider_message')
+      expect(evidence).toMatchObject({
+        schemaVersion: 'dsxu.tool-result-normalization.v1',
+        owner: 'Tool Gate',
+        boundaryKind: 'provider_message',
+        canonical: true,
+        ok: false,
+      })
+      const contract = buildToolResultContractEvidence(result, 'provider_message')
+      expect(contract).toMatchObject({
+        schemaVersion: 'dsxu.tool-result-contract.v1',
+        canonicalResultSchema: 'dsxu.tool-call-result.v1',
+        runtimeEventSchema: 'dsxu.runtime-event.v1',
+        adapterBoundaryOnly: true,
+        canonical: true,
+      })
+    })
+
+    test('normalizes every legacy/provider/MCP shape through one Tool Gate boundary function', () => {
+      const provider = normalizeToolResultAtToolGateBoundary({
+        boundaryKind: 'provider_message',
+        result: {
+          tool_use_id: 'toolu-provider-boundary',
+          content: 'provider output',
+        },
+        toolName: 'Bash',
+        startTime: Date.now(),
+      })
+      const mcp = normalizeToolResultAtToolGateBoundary({
+        boundaryKind: 'mcp',
+        result: {
+          content: [{ type: 'text', text: 'mcp output' }],
+          structuredContent: { artifact: 'docs/out.md' },
+        },
+        toolName: 'mcp__docs__search',
+        startTime: Date.now(),
+      })
+      const legacy = normalizeToolResultAtToolGateBoundary({
+        boundaryKind: 'legacy',
+        result: {
+          toolUseId: 'toolu-legacy-boundary',
+          content: 'legacy output',
+          isError: false,
+        },
+        toolName: 'Read',
+        startTime: Date.now(),
+      })
+
+      for (const boundary of [provider, mcp, legacy]) {
+        expect(boundary.schemaVersion).toBe('dsxu.tool-gate-boundary-result.v1')
+        expect(boundary.owner).toBe('Tool Gate')
+        expect(boundary.result.schemaVersion).toBe('dsxu.tool-call-result.v1')
+        expect(isToolCallResult(boundary.result)).toBe(true)
+        expect(boundary.normalizationEvidence.canonical).toBe(true)
+        expect(boundary.contractEvidence.canonicalResultSchema).toBe('dsxu.tool-call-result.v1')
+        expect(boundary.contractEvidence.runtimeEventSchema).toBe('dsxu.runtime-event.v1')
+      }
+
+      expect(provider.boundaryKind).toBe('provider_message')
+      expect(mcp.boundaryKind).toBe('mcp')
+      expect(legacy.boundaryKind).toBe('legacy')
+    })
+
+    test('normalizes MCP results without making MCP a standalone runtime', () => {
+      const result = normalizeMcpToolCallResult(
+        {
+          content: [{ type: 'text', text: 'done' }],
+          structuredContent: { rows: 1 },
+          _meta: { server: 'docs-search' },
+        },
+        'MCPTool',
+        Date.now(),
+      )
+
+      expect(isToolCallResult(result)).toBe(true)
+      expect(result.ok).toBe(true)
+      expect(result.metadata.executorKind).toBe('external')
+      expect(result.metadata.usedBridge).toBe(true)
+      expect(result.structuredData?.boundaryKind).toBe('mcp')
+      expect(buildToolResultNormalizationEvidence(result, 'mcp').boundaryKind).toBe('mcp')
+      expect(ensureCanonicalToolCallResult(result).schemaVersion).toBe('dsxu.tool-call-result.v1')
+    })
+
+    test('proves all main consumers use canonical ToolCallResult instead of legacy result shapes', () => {
+      const result = normalizeProviderToolResultBlock(
+        {
+          tool_use_id: 'toolu-provider-success',
+          content: 'updated file and wrote artifact preview',
+        },
+        'FileEdit',
+        Date.now(),
+      )
+      const consumers = [
+        'work-state',
+        'ledger',
+        'recovery',
+        'tui',
+        'final-report',
+        'release-evidence',
+      ] as const
+      const board = buildToolResultContractConsumptionBoard({
+        result,
+        boundaryKind: 'provider_message',
+        consumers: consumers.map(consumer => ({
+          consumer,
+          owner: consumer,
+          canonicalResultSchema: 'dsxu.tool-call-result.v1',
+          runtimeEventSchema: 'dsxu.runtime-event.v1',
+          usesCanonicalResult: true,
+          evidenceIds: [`${consumer}:canonical-tool-result`],
+        })),
+      })
+
+      expect(board.status).toBe('PASS_TOOL_RESULT_CONTRACT_CONSUMPTION')
+      expect(board.readyConsumers).toEqual(consumers)
+      expect(board.missingConsumers).toEqual([])
+      expect(board.guards).toEqual([])
+      expect(board.compactPanelLines.join('\n')).toContain('ready=6/6')
+      expect(board.finalReportSection.status).toBe('ready')
+      expect(board.finalReportSection.evidence).toContain(
+        'release-evidence:canonical-tool-result',
+      )
+    })
+
+    test('blocks release evidence if a consumer still observes legacy tool result shape', () => {
+      const result = normalizeProviderToolResultBlock(
+        {
+          tool_use_id: 'toolu-provider-legacy',
+          content: 'legacy result',
+        },
+        'Bash',
+        Date.now(),
+      )
+      const board = buildToolResultContractConsumptionBoard({
+        result,
+        boundaryKind: 'provider_message',
+        requiredConsumers: ['work-state', 'ledger', 'release-evidence'],
+        consumers: [
+          {
+            consumer: 'work-state',
+            owner: 'Work-State',
+            canonicalResultSchema: 'dsxu.tool-call-result.v1',
+            runtimeEventSchema: 'dsxu.runtime-event.v1',
+            usesCanonicalResult: true,
+            evidenceIds: ['work-state:ok'],
+          },
+          {
+            consumer: 'ledger',
+            owner: 'Progress Ledger',
+            canonicalResultSchema: 'dsxu.tool-call-result.v1',
+            runtimeEventSchema: 'dsxu.runtime-event.v1',
+            usesCanonicalResult: true,
+            evidenceIds: ['ledger:ok'],
+          },
+          {
+            consumer: 'release-evidence',
+            owner: 'Evidence / Release Claim Binder',
+            canonicalResultSchema: 'dsxu.tool-call-result.v1',
+            runtimeEventSchema: 'dsxu.runtime-event.v1',
+            usesCanonicalResult: false,
+            legacyShapeObserved: true,
+            evidenceIds: ['release:legacy-shape'],
+          },
+        ],
+      })
+
+      expect(board.status).toBe('NEEDS_TOOL_RESULT_CONTRACT_CONSUMPTION_REVIEW')
+      expect(board.readyConsumers).toEqual(['work-state', 'ledger'])
+      expect(board.missingConsumers).toEqual(['release-evidence'])
+      expect(board.guards).toContain(
+        'release-evidence does not consume canonical ToolCallResult',
+      )
+      expect(board.guards).toContain(
+        'release-evidence still observes legacy tool result shape',
+      )
+      expect(board.finalReportSection.status).toBe('needs-evidence')
+    })
+  })
+
+  describe('Tool Protocol product-mainline boundary', () => {
+    test('keeps Tool Protocol out of the default product ToolBus surface', () => {
+      const engine = new EngineHarness({
+        llmCall: async () => ({ content: 'unused' } as any),
+        skills: { enabled: false },
+      })
+
+      const status = engine.getToolProtocolStatus()
+
+      expect(status.enabled).toBe(false)
+      expect(status.defaultMainline).toBe(false)
+      expect(status.owner).toBe('Tool Envelope / Tool Gate')
+      expect(status.productRuntime).toBe('ToolRegistry + Tool Gate')
+      expect(status.boundary).toContain('disabled by default')
+      expect(status.activeOnlyWhenExplicitlyEnabled).toBe(true)
+      expect(status.nativeToolsRegistered).toBe(0)
+      expect(status.bridgeToolsRegistered).toBe(0)
+    })
+
+    test('labels explicit Tool Protocol use as an owner evidence harness, not a second product ToolBus', () => {
+      const engine = new EngineHarness({
+        llmCall: async () => ({ content: 'unused' } as any),
+        skills: { enabled: false },
+      })
+
+      engine.enableToolProtocol()
+      const status = engine.getToolProtocolStatus()
+
+      expect(status.enabled).toBe(true)
+      expect(status.defaultMainline).toBe(false)
+      expect(status.owner).toBe('Tool Envelope / Tool Gate')
+      expect(status.productRuntime).toBe('ToolRegistry + Tool Gate')
+      expect(status.boundary).toContain('not a second product ToolBus')
+      expect(status.activeOnlyWhenExplicitlyEnabled).toBe(true)
+      expect(status.bridgeToolsRegistered).toBe(0)
+    })
+
+    test('legacy wrappers use a bounded fallback callId instead of crashing on missing toolUseId', async () => {
+      const fs = require('fs')
+      const os = require('os')
+      const path = require('path')
+      const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dsxu-tool-protocol-'))
+      try {
+        const bashTool = integration
+          .toLegacyToolDefinitions()
+          .find(tool => tool.name === 'Bash')
+
+        expect(bashTool).toBeDefined()
+        const result = await bashTool!.execute(
+          { command: 'echo "legacy wrapper ok"' },
+          {
+            cwd: testDir,
+            sessionId: 'legacy-wrapper-test',
+          },
+        )
+
+        expect(result.isError).toBe(false)
+        expect(String(result.content)).toContain('legacy wrapper ok')
+        expect(result.meta.protocolResult.metadata.executorKind).toBe('dsxu_native')
+      } finally {
+        fs.rmSync(testDir, { recursive: true, force: true })
+      }
     })
   })
 })

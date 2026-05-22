@@ -1,21 +1,20 @@
 /**
- * R5-30 Property-based test 自动生成 — 主入口
+ * R5-30 Property-based test main entry.
  */
 
 export * from './contract';
 export { generatePropertyTest, inferTemplates } from './templates';
 
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { PbtSuggestion, PbtResult, PbtConfig } from './contract';
 import { inferTemplates, generatePropertyTest } from './templates';
 
-/**
- * 分析文件，为每个纯函数生成 PBT 建议
- */
 export async function suggestProperties(
   filePath: string,
   config?: PbtConfig
 ): Promise<PbtSuggestion[]> {
-  // 读取源码
   let source: string;
   if (config?.mockSourceReader) {
     source = await config.mockSourceReader(filePath);
@@ -24,7 +23,6 @@ export async function suggestProperties(
     source = await fs.readFile(filePath, 'utf-8');
   }
 
-  // 提取函数名
   const funcPattern = /(?:export\s+)?(?:async\s+)?function\s+(\w+)/g;
   const constFuncPattern = /(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?\(/g;
 
@@ -38,7 +36,6 @@ export async function suggestProperties(
   const importPath = './' + filePath.replace(/\.\w+$/, '');
 
   for (const funcName of functions) {
-    // Purity check
     const isPure = config?.mockPurityCheck
       ? config.mockPurityCheck(funcName, source)
       : defaultPurityCheck(funcName, source);
@@ -62,9 +59,6 @@ export async function suggestProperties(
   return suggestions;
 }
 
-/**
- * 运行 PBT
- */
 export async function runPbt(
   testCode: string,
   config?: PbtConfig
@@ -75,20 +69,73 @@ export async function runPbt(
     return config.mockRunner(testCode, runs);
   }
 
-  // Real: write temp file + bun test (预留)
-  return {
-    passed: true,
-    runs,
-    error: 'Real PBT runner not implemented — use fast-check directly',
-  };
+  const cwd = config?.cwd ?? process.cwd();
+  const timeoutMs = config?.timeoutMs ?? 30_000;
+  const tempDir = await mkdtemp(join(tmpdir(), 'dsxu-pbt-'));
+  const testFile = join(tempDir, 'property.test.ts');
+
+  try {
+    await writeFile(testFile, testCode, 'utf-8');
+    const run = await runBunTest(testFile, cwd, timeoutMs, {
+      DSXU_PBT_RUNS: String(runs),
+    });
+
+    return {
+      passed: run.passed,
+      runs,
+      error: run.passed ? undefined : run.output,
+    };
+  } catch (err) {
+    return {
+      passed: false,
+      runs,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 }
 
-/** 简单纯度检查：无副作用关键字 */
+async function runBunTest(
+  testFile: string,
+  cwd: string,
+  timeoutMs: number,
+  env: Record<string, string>
+): Promise<{ passed: boolean; output: string }> {
+  const proc = Bun.spawn(['bun', 'test', testFile], {
+    cwd,
+    stdout: 'pipe',
+    stderr: 'pipe',
+    env: { ...process.env, ...env },
+  });
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      proc.kill();
+      reject(new Error(`PBT runner timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    const exitCode = await Promise.race([proc.exited, timeoutPromise]);
+    const [stdout, stderr] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ]);
+    return {
+      passed: exitCode === 0,
+      output: [stdout, stderr].filter(Boolean).join('\n').trim(),
+    };
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 function defaultPurityCheck(funcName: string, source: string): boolean {
-  // 提取函数体（简化）
   const pattern = new RegExp(`function\\s+${funcName}[^{]*\\{([\\s\\S]*?)\\n\\}`, 'm');
   const m = source.match(pattern);
-  if (!m) return true; // 保守：假设纯
+  if (!m) return true;
 
   const body = m[1];
   const impureSignals = ['console.', 'this.', 'process.', 'fs.', 'fetch(', 'Math.random', 'Date.now'];

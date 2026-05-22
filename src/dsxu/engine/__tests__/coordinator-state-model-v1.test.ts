@@ -15,6 +15,16 @@ import {
   // Agent 角色
   AgentRole,
   AGENT_ROLE_CONFIGS,
+  DSXU_PARITY_RULES,
+  RISK_BASED_RULES,
+  VERIFICATION_BASED_RULES,
+  recommendRoleForTask,
+  recommendRoleForTaskEnhanced,
+  isRoleSuitableForTask,
+  isRoleSuitableForTaskEnhanced,
+  applyRoleSelectionRules,
+  createSimpleRoleRouting,
+  createEnhancedRoleRouting,
 
   // 任务规划
   SubtaskType,
@@ -36,6 +46,7 @@ import {
   CoordinationPlan,
   AgentExecutionContext,
   AgentCapabilityProfile,
+  RoleExecutionConstraint,
   CoordinationCheckpoint,
   CoordinationSummary,
   CoordinationHealthState,
@@ -43,6 +54,7 @@ import {
   ContextDecisionState,
   ContextOverlapState,
   SharedContextSlice,
+  IntermediateResultEnvelope,
   AssignmentTrace,
   DecisionTrace,
   StateTransitionRecord,
@@ -50,6 +62,18 @@ import {
   // 生命周期协议
   TaskExecutionStatus,
   ForkStrategy,
+  ForkExecutionPlan,
+  BranchExecutionState,
+  IntermediateResult,
+  CollectedIntermediateResult,
+  MergeCandidate,
+  MergeResult,
+  AbortReason,
+  EscalationReason,
+  EscalationDecision,
+  LifecycleRecoveryHint,
+  BranchComparison,
+  LifecycleProtocolOutput,
   isTerminalTaskStatus
 } from '../coordinator-types-v1';
 

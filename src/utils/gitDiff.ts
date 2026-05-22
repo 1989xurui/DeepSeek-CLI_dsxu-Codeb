@@ -239,11 +239,11 @@ export function parseGitDiff(
         if (lineCount >= MAX_LINES_PER_FILE) {
           continue
         }
-        // Force a flat string copy to break V8 sliced string references.
-        // When split() creates lines, V8 creates "sliced strings" that reference
+    // Force a flat string copy to break sliced string references.
+    // When split() creates lines, JavaScript engines may keep references
         // the parent. This keeps the entire parent string (~MBs) alive as long as
         // any line is retained. Using '' + line forces a new flat string allocation,
-        // unlike slice(0) which V8 may optimize to return the same reference.
+    // unlike slice(0), which may optimize to return the same reference.
         currentHunk.lines.push('' + line)
         lineCount++
       }

@@ -40,7 +40,7 @@ export async function setupTokenHandler(root: Root): Promise<void> {
               </Box>}
             <ConsoleOAuthFlow onDone={() => {
             void resolve();
-          }} mode="setup-token" startingMessage="This provider-migration setup-token flow is isolated. DSXU Code uses DSXU_API_KEY / DEEPSEEK_API_KEY / DSXU_DEEPSEEK_API_KEY by default." />
+          }} mode="setup-token" startingMessage="This archived cloud setup-token flow is isolated. DSXU Code uses DSXU_API_KEY / DEEPSEEK_API_KEY / DSXU_DEEPSEEK_API_KEY by default." />
           </Box>
         </KeybindingSetup>
       </AppStateProvider>);
@@ -71,6 +71,27 @@ function DoctorWithPlugins(t0) {
 }
 export async function doctorHandler(root: Root): Promise<void> {
   logEvent('tengu_doctor_command', {});
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    const {
+      getDoctorDiagnostic
+    } = await import('../../utils/doctorDiagnostic.js');
+    const diagnostic = await getDoctorDiagnostic();
+    process.stdout.write(`${JSON.stringify({
+      product: 'DSXU Code',
+      status: 'PASS_DOCTOR_NON_INTERACTIVE_DIAGNOSTIC',
+      installationType: diagnostic.installationType,
+      version: diagnostic.version,
+      installationPath: diagnostic.installationPath,
+      invokedBinary: diagnostic.invokedBinary,
+      configInstallMethod: diagnostic.configInstallMethod,
+      packageManager: diagnostic.packageManager ?? null,
+      ripgrepStatus: diagnostic.ripgrepStatus,
+      warningCount: diagnostic.warnings.length,
+      warnings: diagnostic.warnings,
+      recommendation: diagnostic.recommendation ?? null
+    }, null, 2)}\n`);
+    process.exit(0);
+  }
   await new Promise<void>(resolve => {
     root.render(<AppStateProvider>
         <KeybindingSetup>

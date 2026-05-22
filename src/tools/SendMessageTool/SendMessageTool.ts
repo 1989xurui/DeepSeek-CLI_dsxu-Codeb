@@ -43,7 +43,7 @@ import { resumeAgentBackground } from '../AgentTool/resumeAgent.js'
 import { SEND_MESSAGE_TOOL_NAME } from './constants.js'
 import { DESCRIPTION, getPrompt } from './prompt.js'
 import { renderToolResultMessage, renderToolUseMessage } from './UI.js'
-const PROVIDER_MIGRATION_BRIDGE_FLAG = 'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
+const ARCHIVED_BRIDGE_FLAG = 'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
 
 const StructuredMessage = lazySchema(() =>
   z.discriminatedUnion('type', [
@@ -72,9 +72,9 @@ const inputSchema = lazySchema(() =>
       .string()
       .describe(
         feature('UDS_INBOX')
-          ? isProviderMigrationBridgeMessagingEnabled()
-            ? 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, "provider:<session-id>" for a DSXU provider peer, or "bridge:<session-id>" for an explicit provider-migration bridge peer'
-            : 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, or "provider:<session-id>" for a DSXU provider peer. Provider-migration bridge targets are disabled by default.'
+          ? isArchivedBridgeMessagingEnabled()
+            ? 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, "provider:<session-id>" for a DSXU provider peer, or "bridge:<session-id>" for an explicit archived bridge peer'
+            : 'Recipient: teammate name, "*" for broadcast, "uds:<socket-path>" for a local peer, or "provider:<session-id>" for a DSXU provider peer. Archived bridge targets are disabled by default.'
           : 'Recipient: teammate name, or "*" for broadcast to all teammates',
       ),
     summary: z
@@ -134,8 +134,8 @@ export type SendMessageToolOutput =
   | RequestOutput
   | ResponseOutput
 
-export function isProviderMigrationBridgeMessagingEnabled(): boolean {
-  return isEnvTruthy(process.env[PROVIDER_MIGRATION_BRIDGE_FLAG])
+export function isArchivedBridgeMessagingEnabled(): boolean {
+  return isEnvTruthy(process.env[ARCHIVED_BRIDGE_FLAG])
 }
 
 export function getDsxuSendMessageRuntimeProfile(): {
@@ -153,28 +153,28 @@ export function getDsxuSendMessageRuntimeProfile(): {
       'stopped agent resume',
       'UDS local peer',
       'DSXU provider peer',
-      'bridge migration peer (provider-migration flag only)',
+      'archived bridge peer (explicit flag only)',
     ],
     permissionPolicy:
-      'DSXU allows local teammate routing, uses provider: for DSXU-owned peer sessions, and keeps bridge: behind explicit provider migration approval.',
+      'DSXU allows local teammate routing, uses provider: for DSXU-owned peer sessions, and keeps bridge: behind explicit archived approval.',
     activationEvidence: [
       'messages to running local agents are queued for next tool round',
       'stopped agents are resumed through AgentTool/resumeAgent',
       'shutdown and plan approval messages use structured teammate mailbox protocol',
-      'provider: peers route through DSXU provider backend events, not the provider-migration bridge shell',
+      'provider: peers route through DSXU provider backend events, not the archived bridge shell',
     ],
   }
 }
 
-async function isProviderMigrationBridgeConnected(): Promise<boolean> {
-  if (!isProviderMigrationBridgeMessagingEnabled()) return false
+async function isArchivedBridgeConnected(): Promise<boolean> {
+  if (!isArchivedBridgeMessagingEnabled()) return false
   const { getReplBridgeHandle } = await import(
     '../../services/bridge/dsxuRemoteBridgeFacade.js'
   )
   return Boolean(getReplBridgeHandle()) && isReplBridgeActive()
 }
 
-async function postProviderMigrationBridgeMessage(
+async function postArchivedBridgeMessage(
   target: string,
   message: string,
 ): Promise<{ ok: boolean; error?: string }> {
@@ -595,7 +595,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         'swarm-control-message',
         'cross-session-message-when-approved',
       ],
-      permission: 'local allow; explicit ask/deny for provider or provider-migration bridge messaging',
+      permission: 'local allow; explicit ask/deny for provider or archived bridge messaging',
       evidence: [
         'inputSchema.to/message',
         'parseAddress route',
@@ -678,21 +678,21 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         }
       }
       if (addr.scheme === 'bridge') {
-        if (!isProviderMigrationBridgeMessagingEnabled()) {
+        if (!isArchivedBridgeMessagingEnabled()) {
           return {
             behavior: 'deny' as const,
             message:
-              'Provider-migration bridge messaging is disabled in the DSXU default mainline. Use local Agent/SendMessage continuation, or set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
+              'Archived bridge messaging is disabled in the DSXU default mainline. Use local Agent/SendMessage continuation, or set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated archived override work.',
             decisionReason: {
               type: 'safetyCheck',
-              reason: 'Provider-migration bridge messaging is disabled by default',
+              reason: 'Archived bridge messaging is disabled by default',
               classifierApprovable: false,
             },
           }
         }
         return {
           behavior: 'ask' as const,
-          message: `Send a message to provider-migration bridge session ${input.to}? It arrives as a user prompt on the receiving DSXU session (possibly another machine) via the configured DSXU provider-migration bridge provider.`,
+          message: `Send a message to archived bridge session ${input.to}? It arrives as a user prompt on the receiving DSXU session (possibly another machine) via the configured DSXU archived bridge provider.`,
           // safetyCheck (not mode) ...permissions.ts guards this before both
           // bypassPermissions (step 1g) and auto-mode's allowlist/classifier.
           // Cross-machine prompt injection must stay bypass-immune.
@@ -735,11 +735,11 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
         }
       }
       if (addr.scheme === 'bridge') {
-        if (!isProviderMigrationBridgeMessagingEnabled()) {
+        if (!isArchivedBridgeMessagingEnabled()) {
           return {
             result: false,
             message:
-              'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
+              'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated archived override work.',
             errorCode: 9,
           }
         }
@@ -754,9 +754,9 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
             errorCode: 9,
           }
         }
-        // Check the provider-migration bridge handle lazily so the DSXU default mainline
+        // Check the archived bridge handle lazily so the DSXU default mainline
         // does not load bridge modules unless a bridge target is explicit.
-        if (!(await isProviderMigrationBridgeConnected())) {
+        if (!(await isArchivedBridgeConnected())) {
           return {
             result: false,
             message:
@@ -865,18 +865,18 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
       if (typeof input.message === 'string') {
         const addr = parseAddress(input.to)
         if (addr.scheme === 'bridge') {
-          if (!isProviderMigrationBridgeMessagingEnabled()) {
+          if (!isArchivedBridgeMessagingEnabled()) {
             return {
               data: {
                 success: false,
                 message:
-                  'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated migration work.',
+                  'bridge: targets are disabled in the DSXU default mainline. Set DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE=1 only for isolated archived override work.',
               },
             }
           }
           // Re-check handle after permission approval; the bridge can drop
           // while the prompt is waiting.
-          if (!(await isProviderMigrationBridgeConnected())) {
+          if (!(await isArchivedBridgeConnected())) {
             return {
               data: {
                 success: false,
@@ -884,7 +884,7 @@ export const SendMessageTool: Tool<InputSchema, SendMessageToolOutput> =
               },
             }
           }
-          const result = await postProviderMigrationBridgeMessage(addr.target, input.message)
+          const result = await postArchivedBridgeMessage(addr.target, input.message)
           const preview = input.summary || truncate(input.message, 50)
           return {
             data: {

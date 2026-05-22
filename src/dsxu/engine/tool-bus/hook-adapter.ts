@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: tool-bus experiment file retained only because Windows ACL
+ * Legacy tool-bus experiment file retained only because Windows ACL
  * blocked physical removal after copying to _deleted_files.
  *
  * Hook系统适配器 - 将现有Hook系统适配到Tool Bus

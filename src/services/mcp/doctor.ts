@@ -1,6 +1,6 @@
 import {
-  PROVIDER_MIGRATION_CONFIG_SCOPE,
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  ARCHIVED_MCP_CONFIG_SCOPE,
+  ARCHIVED_MCP_TRANSPORT,
 } from '../../constants/providerMigrationProtocol.js'
 import type { ScopedMcpServerConfig } from './types.js'
 import { getDsxuMcpConfigRuntimeProfile } from './config.js'
@@ -10,7 +10,7 @@ export type McpDoctorServer = {
   name: string
   scope: string
   transport: string
-  owner: 'dsxu-mainline' | 'provider-migration-boundary' | 'internal-adapter'
+  owner: 'dsxu-mainline' | 'archived-boundary' | 'internal-adapter'
   endpoint?: string
   command?: string
   auth: 'none' | 'oauth' | 'headers' | 'oauth+headers'
@@ -47,18 +47,18 @@ export function getMcpServerDoctorSummary(
 ): McpDoctorServer {
   const transport = server.type ?? 'stdio'
   const notes: string[] = []
-  const isProviderMigration =
-    transport === PROVIDER_MIGRATION_MCP_TRANSPORT ||
-    server.scope === PROVIDER_MIGRATION_CONFIG_SCOPE
+  const isArchivedBoundary =
+    transport === ARCHIVED_MCP_TRANSPORT ||
+    server.scope === ARCHIVED_MCP_CONFIG_SCOPE
   const isInternal = transport === 'sse-ide' || transport === 'ws-ide'
   const owner = isInternal
     ? 'internal-adapter'
-    : isProviderMigration
-      ? 'provider-migration-boundary'
+    : isArchivedBoundary
+      ? 'archived-boundary'
       : 'dsxu-mainline'
 
-  if (isProviderMigration) {
-    notes.push('explicit provider-migration boundary; not default MCP owner')
+  if (isArchivedBoundary) {
+    notes.push('explicit archived boundary; not default MCP owner')
   }
   if (isInternal) {
     notes.push('internal adapter; not user-installed server')
@@ -131,8 +131,8 @@ export function buildMcpDoctorReport(params: {
     warnings.push('No MCP servers configured; install/status UX can only be smoke-tested')
     nextActions.push('Add a project or local MCP server and rerun mcp doctor for live registry/status evidence')
   }
-  if (serverSummaries.some(server => server.owner === 'provider-migration-boundary')) {
-    warnings.push('Provider-migration MCP boundary is present; verify it is explicitly enabled and not default owner')
+  if (serverSummaries.some(server => server.owner === 'archived-boundary')) {
+    warnings.push('Archived MCP boundary is present; verify it is explicitly enabled and not default owner')
   }
 
   return {

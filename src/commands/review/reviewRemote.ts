@@ -6,7 +6,7 @@
  *
  * TODO(#22051): pass useBundleMode once landed so local-only / uncommitted
  * repo state is captured. The GitHub-clone path (current) only works for
- * pushed branches on repos with a provider-migration GitHub app installed; DSXU mode uses local review fallback.
+ * pushed branches on repos with an archived GitHub app installed; DSXU mode uses local review fallback.
  */
 import type { ContentBlockParam } from 'src/types/providerSdk.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
@@ -31,7 +31,7 @@ import { teleportToRemote } from '../../utils/teleport.js'
 import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 // One-time session flag: once the user confirms overage billing via the
 // dialog, all subsequent /ultrareview invocations in this session proceed
-// without re-prompting in provider-migration mode.
+// without re-prompting in archived mode.
 let sessionOverageConfirmed = false
 export function confirmOverage(): void {
   sessionOverageConfirmed = true
@@ -122,7 +122,7 @@ export async function launchRemoteReview(
   // Synthetic DEFAULT_CODE_REVIEW_ENVIRONMENT_ID works without per-org CCR
   // setup, so no_remote_environment isn't a blocker. Server-side quota
   // consume at session creation routes billing: first N zero-rate, then
-  // provider-migration org-service-key (overage-only).
+  // archived org-service-key (overage-only).
   if (!eligibility.eligible) {
     const blockers = eligibility.errors.filter(
       e => e.type !== 'no_remote_environment',
@@ -149,7 +149,7 @@ export async function launchRemoteReview(
   const isPrNumber = /^\d+$/.test(prNumber)
   // Synthetic code_review env. Go taggedid.FromUUID(TagEnvironment,
   // UUID{...,0x02}) encodes with version prefix '01' ...NOT Python's
-  // provider-migration source tagged_id() format. Verified in prod.
+  // archived source tagged_id() format. Verified in prod.
   const CODE_REVIEW_ENV_ID = 'env_011111111111111111111113'
   // Lite-review bypasses bughunter.go entirely, so it doesn't see the
   // webhook's bug_hunter_config (different GB project). These env vars are
@@ -292,7 +292,7 @@ export async function launchRemoteReview(
   return [
     {
       type: 'text',
-      text: `Ultrareview launched for ${target} (~10...0 min, runs in the provider migration remote provider). Track: ${sessionUrl}${resolvedBillingNote} Findings arrive via task-notification. Briefly acknowledge the launch to the user without repeating the target or URL ...both are already visible in the tool output above.`,
+      text: `Ultrareview launched for ${target} (~10...0 min, runs in the archived remote provider). Track: ${sessionUrl}${resolvedBillingNote} Findings arrive via task-notification. Briefly acknowledge the launch to the user without repeating the target or URL ...both are already visible in the tool output above.`,
     },
   ]
 }
@@ -300,7 +300,7 @@ export function getDsxuReviewRemoteRuntimeProfile(): {
   command: '/ultrareview'
   runtime: 'DSXU Local Review Fallback'
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     command: '/ultrareview',
@@ -310,9 +310,9 @@ export function getDsxuReviewRemoteRuntimeProfile(): {
       'caller falls back to local DSXU review workflow when remote review is not used',
       'RemoteAgentTask remains available for DSXU-owned remote providers',
     ],
-    providerMigrationIsolation: [
-      'CCR teleport review is non-DSXU provider migration infrastructure',
-      'Provider migration GitHub app and Extra Usage billing paths do not run in DSXU runtime',
+    archivedIsolation: [
+      'CCR teleport review is non-DSXU archived infrastructure',
+      'Archived GitHub app and Extra Usage billing paths do not run in DSXU runtime',
     ],
   }
 }

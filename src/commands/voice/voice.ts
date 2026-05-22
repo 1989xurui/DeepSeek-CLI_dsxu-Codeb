@@ -18,13 +18,13 @@ export const call: LocalCommandCall = async () => {
   if (!isVoiceModeEnabled()) {
     // Differentiate: OAuth-less users get an auth hint, everyone else
     // gets nothing (command shouldn't be reachable when the kill-switch is on).
-    const isProviderMigrationAuthEnabled =
+    const isArchivedAuthEnabled =
       authUtils['is' + 'Anth' + 'ropicAuthEnabled']
-    if (!isProviderMigrationAuthEnabled()) {
+    if (!isArchivedAuthEnabled()) {
       return {
         type: 'text' as const,
         value:
-          'Voice mode is provider-migration-isolated in DSXU. Configure a DSXU voice provider before enabling it.',
+          'Voice mode is archived-cloud isolated in DSXU. Configure a DSXU voice provider before enabling it.',
       }
     }
     return {

@@ -1,4 +1,4 @@
-﻿import chalk from 'chalk'
+import chalk from 'chalk'
 import { exec } from 'child_process'
 import { execa } from 'execa'
 import { mkdir, stat } from 'fs/promises'
@@ -54,7 +54,7 @@ import {
   isEnvTruthy,
   isDsxuRuntimeMode,
   isRunningOnHomespace,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
 } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
 import { execSyncWithDefaults_DEPRECATED } from '../../utils/execFileNoThrow.js'
@@ -63,8 +63,8 @@ import { logError } from '../../utils/log.js'
 import { memoizeWithTTLAsync } from '../../utils/memoize.js'
 import { getSecureStorage } from '../../utils/secureStorage/index.js'
 import {
-  clearProviderMigrationApiKeyPrefetch,
-  getProviderMigrationApiKeyPrefetchResult,
+  clearArchivedApiKeyPrefetch,
+  getArchivedApiKeyPrefetchResult,
 } from '../../utils/secureStorage/keychainPrefetch.js'
 import {
   clearKeychainCache,
@@ -81,42 +81,42 @@ import { clearToolSchemaCache } from '../../utils/toolSchemaCache.js'
 
 /** Default TTL for API key helper cache in milliseconds (5 minutes) */
 const DEFAULT_API_KEY_HELPER_TTL = 5 * 60 * 1000
-const PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME = 'Cl' + 'aude'
-const PROVIDER_MIGRATION_CLOUD_TOKEN_SOURCE = ('clau' + 'de.ai') as const
-const PROVIDER_MIGRATION_SOURCE_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY'
+const ARCHIVED_SOURCE_PRODUCT_NAME = 'Cl' + 'aude'
+const ARCHIVED_CLOUD_TOKEN_SOURCE = ('clau' + 'de.ai') as const
+const ARCHIVED_SOURCE_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY'
 const DSXU_API_KEY_ENV = 'DSXU_API_KEY'
 const DEEPSEEK_API_KEY_ENV = 'DEEPSEEK_API_KEY'
 const DSXU_DEEPSEEK_API_KEY_ENV = 'DSXU_DEEPSEEK_API_KEY'
-const PROVIDER_MIGRATION_SOURCE_AUTH_TOKEN_ENV = 'ANTH' + 'ROPIC_AUTH_TOKEN'
-const PROVIDER_MIGRATION_SOURCE_UNIX_SOCKET_ENV = 'ANTH' + 'ROPIC_UNIX_SOCKET'
-const PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV = 'CL' + 'AUDE_CODE_OAUTH_TOKEN'
-const PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV =
+const ARCHIVED_SOURCE_AUTH_TOKEN_ENV = 'ANTH' + 'ROPIC_AUTH_TOKEN'
+const ARCHIVED_SOURCE_UNIX_SOCKET_ENV = 'ANTH' + 'ROPIC_UNIX_SOCKET'
+const ARCHIVED_SOURCE_OAUTH_TOKEN_ENV = 'CL' + 'AUDE_CODE_OAUTH_TOKEN'
+const ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV =
   'CL' + 'AUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
-const PROVIDER_MIGRATION_SOURCE_API_KEY_FD_ENV =
+const ARCHIVED_SOURCE_API_KEY_FD_ENV =
   'CL' + 'AUDE_CODE_API_KEY_FILE_DESCRIPTOR'
-const PROVIDER_MIGRATION_SOURCE_REMOTE_ENV = 'CL' + 'AUDE_CODE_REMOTE'
-const PROVIDER_MIGRATION_SOURCE_ENTRYPOINT_ENV = 'CL' + 'AUDE_CODE_ENTRYPOINT'
-const PROVIDER_MIGRATION_SOURCE_API_KEY_HELPER_TTL_ENV =
+const ARCHIVED_SOURCE_REMOTE_ENV = 'CL' + 'AUDE_CODE_REMOTE'
+const ARCHIVED_SOURCE_ENTRYPOINT_ENV = 'CL' + 'AUDE_CODE_ENTRYPOINT'
+const ARCHIVED_SOURCE_API_KEY_HELPER_TTL_ENV =
   'CL' + 'AUDE_CODE_API_KEY_HELPER_TTL_MS'
-const PROVIDER_MIGRATION_SOURCE_OTEL_HEADERS_HELPER_DEBOUNCE_ENV =
+const ARCHIVED_SOURCE_OTEL_HEADERS_HELPER_DEBOUNCE_ENV =
   'CL' + 'AUDE_CODE_OTEL_HEADERS_HELPER_DEBOUNCE_MS'
-const PROVIDER_MIGRATION_SOURCE_BEDROCK_ENV = 'CL' + 'AUDE_CODE_USE_BEDROCK'
-const PROVIDER_MIGRATION_SOURCE_VERTEX_ENV = 'CL' + 'AUDE_CODE_USE_VERTEX'
-const PROVIDER_MIGRATION_SOURCE_FOUNDRY_ENV = 'CL' + 'AUDE_CODE_USE_FOUNDRY'
-const PROVIDER_MIGRATION_CLOUD_OAUTH_STORAGE_KEY = `${'cl' + 'aude'}AiOauth`
-const PROVIDER_MIGRATION_SOURCE_TEAM_PREMIUM_RATE_LIMIT_TIER = `default_${'cl' + 'aude'}_max_5x`
+const ARCHIVED_SOURCE_BEDROCK_ENV = 'CL' + 'AUDE_CODE_USE_BEDROCK'
+const ARCHIVED_SOURCE_VERTEX_ENV = 'CL' + 'AUDE_CODE_USE_VERTEX'
+const ARCHIVED_SOURCE_FOUNDRY_ENV = 'CL' + 'AUDE_CODE_USE_FOUNDRY'
+const ARCHIVED_CLOUD_OAUTH_STORAGE_KEY = `${'cl' + 'aude'}AiOauth`
+const ARCHIVED_SOURCE_TEAM_PREMIUM_RATE_LIMIT_TIER = `default_${'cl' + 'aude'}_max_5x`
 
 /**
  * Managed desktop/remote sessions spawn the CLI with OAuth and should never
- * fall back to the user's provider-migration source config API-key settings. Those settings exist for
+ * fall back to the user's archived source config API-key settings. Those settings exist for
  * the user's terminal CLI, not managed sessions. Without this guard, a user
- * who runs the provider-migration source CLI in their terminal with an API key sees every managed session
+ * who runs the archived source CLI in their terminal with an API key sees every managed session
  * also use that key -and fail if it's stale/wrong-org.
  */
 function isManagedOAuthContext(): boolean {
   return (
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_REMOTE_ENV]) ||
-    process.env[PROVIDER_MIGRATION_SOURCE_ENTRYPOINT_ENV] === `cla${'ude'}-desktop`
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_REMOTE_ENV]) ||
+    process.env[ARCHIVED_SOURCE_ENTRYPOINT_ENV] === `cla${'ude'}-desktop`
   )
 }
 
@@ -126,37 +126,37 @@ export function isProviderAuthEnabled(): boolean {
   // --bare: API-key-only, never OAuth.
   if (isBareMode()) return false
 
-  // Provider migration remote: provider UNIX socket tunnels API calls through a
+  // Archived remote: provider UNIX socket tunnels API calls through a
   // local auth-injecting proxy. The launcher sets the provider OAuth token as a
   // placeholder iff the local side is a subscriber (so the remote includes the
   // oauth-2025 beta header to match what the proxy will inject). The remote's
-  // provider-migration source settings (apiKeyHelper, provider API-key env) MUST NOT
+  // archived source settings (apiKeyHelper, provider API-key env) MUST NOT
   // flip this -they'd cause a header mismatch with the proxy and a bogus
   // "invalid x-api-key" from the API. See src/ssh/sshAuthProxy.ts.
-  if (process.env[PROVIDER_MIGRATION_SOURCE_UNIX_SOCKET_ENV]) {
-    return !!process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV]
+  if (process.env[ARCHIVED_SOURCE_UNIX_SOCKET_ENV]) {
+    return !!process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV]
   }
 
   const is3P =
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_BEDROCK_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_VERTEX_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_FOUNDRY_ENV])
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_BEDROCK_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_VERTEX_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_FOUNDRY_ENV])
 
   // Check if user has configured an external API key source
   // This allows externally-provided API keys to work (without requiring proxy configuration)
   const settings = getSettings_DEPRECATED() || {}
   const apiKeyHelper = settings.apiKeyHelper
   const hasExternalAuthToken =
-    process.env[PROVIDER_MIGRATION_SOURCE_AUTH_TOKEN_ENV] ||
+    process.env[ARCHIVED_SOURCE_AUTH_TOKEN_ENV] ||
     apiKeyHelper ||
-    process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_FD_ENV]
+    process.env[ARCHIVED_SOURCE_API_KEY_FD_ENV]
 
   // Check if API key is from an external source (not managed by /login)
   const { source: apiKeySource } = getProviderApiKeyWithSource({
     skipRetrievingKeyFromApiKeyHelper: true,
   })
   const hasExternalApiKey =
-    apiKeySource === PROVIDER_MIGRATION_SOURCE_API_KEY_ENV ||
+    apiKeySource === ARCHIVED_SOURCE_API_KEY_ENV ||
     apiKeySource === DSXU_API_KEY_ENV ||
     apiKeySource === DEEPSEEK_API_KEY_ENV ||
     apiKeySource === DSXU_DEEPSEEK_API_KEY_ENV ||
@@ -191,17 +191,17 @@ export function getAuthTokenSource() {
   }
 
   if (
-    process.env[PROVIDER_MIGRATION_SOURCE_AUTH_TOKEN_ENV] &&
+    process.env[ARCHIVED_SOURCE_AUTH_TOKEN_ENV] &&
     !isManagedOAuthContext()
   ) {
     return {
-      source: PROVIDER_MIGRATION_SOURCE_AUTH_TOKEN_ENV as typeof PROVIDER_MIGRATION_SOURCE_AUTH_TOKEN_ENV,
+      source: ARCHIVED_SOURCE_AUTH_TOKEN_ENV as typeof ARCHIVED_SOURCE_AUTH_TOKEN_ENV,
       hasToken: true,
     }
   }
 
-  if (process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV]) {
-    return { source: PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV, hasToken: true }
+  if (process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV]) {
+    return { source: ARCHIVED_SOURCE_OAUTH_TOKEN_ENV, hasToken: true }
   }
 
   // Check for OAuth token from file descriptor (or its CCR disk fallback)
@@ -213,9 +213,9 @@ export function getAuthTokenSource() {
     // doesn't exist. Call sites fall through correctly -the new source is
     // !== 'none' (cli/handlers/auth.ts -oauth_token) and not in the
     // isEnvVarToken set (auth.ts:1844 -generic re-login message).
-    if (process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV]) {
+    if (process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV]) {
       return {
-        source: PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV,
+        source: ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV,
         hasToken: true,
       }
     }
@@ -237,14 +237,14 @@ export function getAuthTokenSource() {
     shouldUseProviderCloudAuth(oauthTokens?.scopes) &&
     oauthTokens?.accessToken
   ) {
-    return { source: PROVIDER_MIGRATION_CLOUD_TOKEN_SOURCE, hasToken: true }
+    return { source: ARCHIVED_CLOUD_TOKEN_SOURCE, hasToken: true }
   }
 
   return { source: 'none' as const, hasToken: false }
 }
 
 export type ApiKeySource =
-  | typeof PROVIDER_MIGRATION_SOURCE_API_KEY_ENV
+  | typeof ARCHIVED_SOURCE_API_KEY_ENV
   | typeof DSXU_API_KEY_ENV
   | typeof DEEPSEEK_API_KEY_ENV
   | typeof DSXU_DEEPSEEK_API_KEY_ENV
@@ -302,12 +302,12 @@ export function getProviderApiKeyWithSource(
   // lists. 3P (Bedrock/Vertex/Foundry) uses provider creds, not this path.
   if (isBareMode()) {
     if (
-      process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV] &&
-      !isPlaceholderApiKey(process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV])
+      process.env[ARCHIVED_SOURCE_API_KEY_ENV] &&
+      !isPlaceholderApiKey(process.env[ARCHIVED_SOURCE_API_KEY_ENV])
     ) {
       return {
-        key: process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV],
-        source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+        key: process.env[ARCHIVED_SOURCE_API_KEY_ENV],
+        source: ARCHIVED_SOURCE_API_KEY_ENV,
       }
     }
     if (getConfiguredApiKeyHelper()) {
@@ -321,19 +321,19 @@ export function getProviderApiKeyWithSource(
     return { key: null, source: 'none' }
   }
 
-  // On homespace, don't use the provider migration API-key env (use Console key instead)
+  // On homespace, don't use the archived API-key env (use Console key instead)
   const apiKeyEnv = isRunningOnHomespace()
     ? undefined
-    : isPlaceholderApiKey(process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV])
+    : isPlaceholderApiKey(process.env[ARCHIVED_SOURCE_API_KEY_ENV])
       ? undefined
-      : process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV]
+      : process.env[ARCHIVED_SOURCE_API_KEY_ENV]
 
   // Always check for direct environment variable in print mode.
   // This is useful for CI, etc.
   if (preferThirdPartyAuthentication() && apiKeyEnv) {
     return {
       key: apiKeyEnv,
-      source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+      source: ARCHIVED_SOURCE_API_KEY_ENV,
     }
   }
 
@@ -343,24 +343,24 @@ export function getProviderApiKeyWithSource(
     if (apiKeyFromFd) {
       return {
         key: apiKeyFromFd,
-        source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+        source: ARCHIVED_SOURCE_API_KEY_ENV,
       }
     }
 
     if (
       !apiKeyEnv &&
-      !process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV] &&
-      !process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV]
+      !process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV] &&
+      !process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV]
     ) {
       throw new Error(
-        `${PROVIDER_MIGRATION_SOURCE_API_KEY_ENV} or ${PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV} env var is required`,
+        `${ARCHIVED_SOURCE_API_KEY_ENV} or ${ARCHIVED_SOURCE_OAUTH_TOKEN_ENV} env var is required`,
       )
     }
 
     if (apiKeyEnv) {
       return {
         key: apiKeyEnv,
-        source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+        source: ARCHIVED_SOURCE_API_KEY_ENV,
       }
     }
 
@@ -379,7 +379,7 @@ export function getProviderApiKeyWithSource(
   ) {
     return {
       key: apiKeyEnv,
-      source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+      source: ARCHIVED_SOURCE_API_KEY_ENV,
     }
   }
 
@@ -388,7 +388,7 @@ export function getProviderApiKeyWithSource(
   if (apiKeyFromFd) {
     return {
       key: apiKeyFromFd,
-      source: PROVIDER_MIGRATION_SOURCE_API_KEY_ENV,
+      source: ARCHIVED_SOURCE_API_KEY_ENV,
     }
   }
 
@@ -425,7 +425,7 @@ export function getProviderApiKeyWithSource(
 /**
  * Get the configured apiKeyHelper from settings.
  * In bare mode, only the --settings flag source is consulted -apiKeyHelper
- * from provider-migration source config or project settings is ignored.
+ * from archived source config or project settings is ignored.
  */
 export function getConfiguredApiKeyHelper(): string | undefined {
   if (isBareMode()) {
@@ -504,11 +504,11 @@ export function isAwsCredentialExportFromProjectSettings(): boolean {
 
 /**
  * Calculate TTL in milliseconds for the API key helper cache
- * Uses the provider-migration source API-key helper TTL env var if set and valid,
+ * Uses the archived source API-key helper TTL env var if set and valid,
  * otherwise defaults to 5 minutes
  */
 export function calculateApiKeyHelperTTL(): number {
-  const envTtl = process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_HELPER_TTL_ENV]
+  const envTtl = process.env[ARCHIVED_SOURCE_API_KEY_HELPER_TTL_ENV]
 
   if (envTtl) {
     const parsed = parseInt(envTtl, 10)
@@ -516,7 +516,7 @@ export function calculateApiKeyHelperTTL(): number {
       return parsed
     }
     logForDebugging(
-      `Found ${PROVIDER_MIGRATION_SOURCE_API_KEY_HELPER_TTL_ENV} env var, but it was not a valid number. Got ${envTtl}`,
+      `Found ${ARCHIVED_SOURCE_API_KEY_HELPER_TTL_ENV} env var, but it was not a valid number. Got ${envTtl}`,
       { level: 'error' },
     )
   }
@@ -1131,7 +1131,7 @@ export const getApiKeyFromConfigOrMacOSKeychain = memoize(
       // keychainPrefetch.ts fires this read at main.tsx top-level in parallel
       // with module imports. If it completed, use that instead of spawning a
       // sync `security` subprocess here (~33ms).
-      const prefetch = getProviderMigrationApiKeyPrefetchResult()
+      const prefetch = getArchivedApiKeyPrefetchResult()
       if (prefetch) {
         if (prefetch.stdout) {
           return { key: prefetch.stdout, source: '/login managed key' }
@@ -1231,7 +1231,7 @@ export async function saveApiKey(apiKey: string): Promise<void> {
 
   // Clear memo cache
   getApiKeyFromConfigOrMacOSKeychain.cache.clear?.()
-  clearProviderMigrationApiKeyPrefetch()
+  clearArchivedApiKeyPrefetch()
 }
 
 export function isCustomApiKeyApproved(apiKey: string): boolean {
@@ -1254,7 +1254,7 @@ export async function removeApiKey(): Promise<void> {
 
   // Clear memo cache
   getApiKeyFromConfigOrMacOSKeychain.cache.clear?.()
-  clearProviderMigrationApiKeyPrefetch()
+  clearArchivedApiKeyPrefetch()
 }
 
 async function maybeRemoveApiKeyFromMacOSKeychain(): Promise<void> {
@@ -1287,9 +1287,9 @@ export function saveOAuthTokensIfNeeded(tokens: OAuthTokens): {
 
   try {
     const storageData = secureStorage.read() || {}
-    const existingOauth = storageData[PROVIDER_MIGRATION_CLOUD_OAUTH_STORAGE_KEY]
+    const existingOauth = storageData[ARCHIVED_CLOUD_OAUTH_STORAGE_KEY]
 
-    storageData[PROVIDER_MIGRATION_CLOUD_OAUTH_STORAGE_KEY] = {
+    storageData[ARCHIVED_CLOUD_OAUTH_STORAGE_KEY] = {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresAt: tokens.expiresAt,
@@ -1332,10 +1332,10 @@ export const getProviderOAuthTokens = memoize((): OAuthTokens | null => {
   if (isBareMode()) return null
 
   // Check for force-set OAuth token from environment variable
-  if (process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV]) {
+  if (process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV]) {
     // Return an inference-only token (unknown refresh and expiry)
     return {
-      accessToken: process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV],
+      accessToken: process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV],
       refreshToken: null,
       expiresAt: null,
       scopes: ['user:inference'],
@@ -1361,7 +1361,7 @@ export const getProviderOAuthTokens = memoize((): OAuthTokens | null => {
   try {
     const secureStorage = getSecureStorage()
     const storageData = secureStorage.read()
-    const oauthData = storageData?.[PROVIDER_MIGRATION_CLOUD_OAUTH_STORAGE_KEY]
+    const oauthData = storageData?.[ARCHIVED_CLOUD_OAUTH_STORAGE_KEY]
 
     if (!oauthData?.accessToken) {
       return null
@@ -1395,7 +1395,7 @@ let lastCredentialsMtimeMs = 0
 async function invalidateOAuthCacheIfDiskChanged(): Promise<void> {
   try {
     const { mtimeMs } = await stat(
-      join(getProviderMigrationHomeDir(), '.credentials.json'),
+      join(getArchivedHomeDir(), '.credentials.json'),
     )
     if (mtimeMs !== lastCredentialsMtimeMs) {
       lastCredentialsMtimeMs = mtimeMs
@@ -1410,7 +1410,7 @@ async function invalidateOAuthCacheIfDiskChanged(): Promise<void> {
   }
 }
 
-// In-flight dedup: when N provider migration proxy connectors hit 401 with the same
+// In-flight dedup: when N archived proxy connectors hit 401 with the same
 // token simultaneously (common at startup -#20930), only one should clear
 // caches and re-read the keychain. Without this, each call's clearOAuthTokenCache()
 // nukes readInFlight in macOsKeychainStorage and triggers a fresh spawn -
@@ -1476,7 +1476,7 @@ export async function getProviderOAuthTokensAsync(): Promise<OAuthTokens | null>
 
   // Env var and FD tokens are sync and don't hit the keychain
   if (
-    process.env[PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV] ||
+    process.env[ARCHIVED_SOURCE_OAUTH_TOKEN_ENV] ||
     getOAuthTokenFromFileDescriptor()
   ) {
     return getProviderOAuthTokens()
@@ -1485,7 +1485,7 @@ export async function getProviderOAuthTokensAsync(): Promise<OAuthTokens | null>
   try {
     const secureStorage = getSecureStorage()
     const storageData = await secureStorage.readAsync()
-    const oauthData = storageData?.[PROVIDER_MIGRATION_CLOUD_OAUTH_STORAGE_KEY]
+    const oauthData = storageData?.[ARCHIVED_CLOUD_OAUTH_STORAGE_KEY]
     if (!oauthData?.accessToken) {
       return null
     }
@@ -1557,13 +1557,13 @@ async function checkAndRefreshOAuthTokenIfNeededImpl(
   }
 
   // Tokens are still expired, try to acquire lock and refresh
-  const providerMigrationDir = getProviderMigrationHomeDir()
-  await mkdir(providerMigrationDir, { recursive: true })
+  const archivedDir = getArchivedHomeDir()
+  await mkdir(archivedDir, { recursive: true })
 
   let release
   try {
     logEvent('tengu_oauth_token_refresh_lock_acquiring', {})
-    release = await lockfile.lock(providerMigrationDir)
+    release = await lockfile.lock(archivedDir)
     logEvent('tengu_oauth_token_refresh_lock_acquired', {})
   } catch (err) {
     if ((err as { code?: string }).code === 'ELOCKED') {
@@ -1668,9 +1668,9 @@ export function is1PApiCustomer(): boolean {
 
   // Exclude Vertex, Bedrock, and Foundry customers
   if (
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_BEDROCK_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_VERTEX_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_FOUNDRY_ENV])
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_BEDROCK_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_VERTEX_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_FOUNDRY_ENV])
   ) {
     return false
   }
@@ -1763,7 +1763,7 @@ export function isTeamSubscriber(): boolean {
 export function isTeamPremiumSubscriber(): boolean {
   return (
     getSubscriptionType() === 'team' &&
-    getRateLimitTier() === PROVIDER_MIGRATION_SOURCE_TEAM_PREMIUM_RATE_LIMIT_TIER
+    getRateLimitTier() === ARCHIVED_SOURCE_TEAM_PREMIUM_RATE_LIMIT_TIER
   )
 }
 
@@ -1792,24 +1792,24 @@ export function getSubscriptionName(): string {
 
   switch (subscriptionType) {
     case 'enterprise':
-      return `${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME} Enterprise`
+      return `${ARCHIVED_SOURCE_PRODUCT_NAME} Enterprise`
     case 'team':
-      return `${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME} Team`
+      return `${ARCHIVED_SOURCE_PRODUCT_NAME} Team`
     case 'max':
-      return `${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME} Max`
+      return `${ARCHIVED_SOURCE_PRODUCT_NAME} Max`
     case 'pro':
-      return `${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME} Pro`
+      return `${ARCHIVED_SOURCE_PRODUCT_NAME} Pro`
     default:
-      return `${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME} API`
+      return `${ARCHIVED_SOURCE_PRODUCT_NAME} API`
   }
 }
 
 /** Check if using third-party services (Bedrock or Vertex or Foundry) */
 export function isUsing3PServices(): boolean {
   return !!(
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_BEDROCK_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_VERTEX_ENV]) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SOURCE_FOUNDRY_ENV])
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_BEDROCK_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_VERTEX_ENV]) ||
+    isEnvTruthy(process.env[ARCHIVED_SOURCE_FOUNDRY_ENV])
   )
 }
 
@@ -1852,7 +1852,7 @@ export function getOtelHeadersFromHelper(): Record<string, string> {
 
   // Return cached headers if still valid (debounce)
   const debounceMs = parseInt(
-    process.env[PROVIDER_MIGRATION_SOURCE_OTEL_HEADERS_HELPER_DEBOUNCE_ENV] ||
+    process.env[ARCHIVED_SOURCE_OTEL_HEADERS_HELPER_DEBOUNCE_ENV] ||
       DEFAULT_OTEL_HEADERS_DEBOUNCE_MS.toString(),
   )
   if (
@@ -1945,8 +1945,8 @@ export function getAccountInformation() {
   const { source: authTokenSource } = getAuthTokenSource()
   const accountInfo: UserAccountInfo = {}
   if (
-    authTokenSource === PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV ||
-    authTokenSource === PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV
+    authTokenSource === ARCHIVED_SOURCE_OAUTH_TOKEN_ENV ||
+    authTokenSource === ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV
   ) {
     accountInfo.tokenSource = authTokenSource
   } else if (isProviderSubscriptionAccount()) {
@@ -1961,7 +1961,7 @@ export function getAccountInformation() {
 
   // We don't know the organization if we're relying on an external API key or auth token
   if (
-    authTokenSource === PROVIDER_MIGRATION_CLOUD_TOKEN_SOURCE ||
+    authTokenSource === ARCHIVED_CLOUD_TOKEN_SOURCE ||
     apiKeySource === '/login managed key'
   ) {
     // Get organization name from OAuth account info
@@ -1972,7 +1972,7 @@ export function getAccountInformation() {
   }
   const email = getOauthAccountInfo()?.emailAddress
   if (
-    (authTokenSource === PROVIDER_MIGRATION_CLOUD_TOKEN_SOURCE ||
+    (authTokenSource === ARCHIVED_CLOUD_TOKEN_SOURCE ||
       apiKeySource === '/login managed key') &&
     email
   ) {
@@ -1997,10 +1997,10 @@ export type OrgValidationResult =
  * token's org (network error, missing profile data), validation fails.
  */
 export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
-  // Provider migration remote sessions: real auth lives on the local machine and is injected
+  // Archived remote sessions: real auth lives on the local machine and is injected
   // by the proxy. The placeholder token can't be validated against the profile
   // endpoint. The local side already ran this check before establishing the session.
-  if (process.env[PROVIDER_MIGRATION_SOURCE_UNIX_SOCKET_ENV]) {
+  if (process.env[ARCHIVED_SOURCE_UNIX_SOCKET_ENV]) {
     return { valid: true }
   }
 
@@ -2025,11 +2025,11 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
 
   // Always fetch the authoritative org UUID from the profile endpoint.
   // Even keychain-sourced tokens verify server-side: the cached org UUID
-  // in the provider-migration source config file is user-writable and cannot be trusted.
+  // in the archived source config file is user-writable and cannot be trusted.
   const { source } = getAuthTokenSource()
   const isEnvVarToken =
-    source === PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV ||
-    source === PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV
+    source === ARCHIVED_SOURCE_OAUTH_TOKEN_ENV ||
+    source === ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV
 
   const profile = await getOauthProfileFromOauthToken(tokens.accessToken)
   if (!profile) {
@@ -2052,9 +2052,9 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
 
   if (isEnvVarToken) {
     const envVarName =
-      source === PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV
-        ? PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_ENV
-        : PROVIDER_MIGRATION_SOURCE_OAUTH_TOKEN_FD_ENV
+      source === ARCHIVED_SOURCE_OAUTH_TOKEN_ENV
+        ? ARCHIVED_SOURCE_OAUTH_TOKEN_ENV
+        : ARCHIVED_SOURCE_OAUTH_TOKEN_FD_ENV
     return {
       valid: false,
       message:

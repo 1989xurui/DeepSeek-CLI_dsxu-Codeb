@@ -16,7 +16,7 @@ export type ToolCapabilityPoolName =
 export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinition[] {
   switch (name) {
     case 'core':
-      // V20: core tools are registered through engine-tool-adapter.ts over
+      // Core tools are registered through engine-tool-adapter.ts over
       // src/tools/* mature owners. The old builtin core pool is legacy
       // recovery/test surface and must not be injected through capability pools.
       return []
@@ -37,7 +37,7 @@ export function getToolCapabilityPool(name: ToolCapabilityPoolName): ToolDefinit
         AccessibilityTreeTool,
       ])
     case 'complete':
-      // V14 provider cleanup: complete only represents the DSXU-owned tool capability pool.
+      // Complete only represents the DSXU-owned tool capability pool.
       return getToolCapabilityPool('full_absorb')
     default:
       return []

@@ -154,7 +154,7 @@ async function loadAgentFromFile(
     // plugin agents. Plugins are third-party marketplace code; these fields
     // escalate what the agent can do beyond what the user approved at install
     // time. For this level of control, define the agent in .dsxu/agents/
-    // where the user explicitly wrote the frontmatter. Provider-migration agent paths
+    // where the user explicitly wrote the frontmatter. Archived agent paths
     // remain migration-compatible sources. (Note: plugins can
     // still ship hooks and MCP servers at the manifest level — that's the
     // install-time trust boundary. Per-agent declarations would let a single

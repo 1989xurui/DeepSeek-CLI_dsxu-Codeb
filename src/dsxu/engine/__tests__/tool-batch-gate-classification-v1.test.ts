@@ -178,4 +178,63 @@ describe('DSXU tool batch gate classification V1', () => {
       JSON.stringify(decision!.createMessage(assistantFor(verifyAgain)).message.content),
     ).toContain('tool_blocked_after_pass')
   })
+
+  test('classifies tool-after-CollectEvidence-PASS as finalization quality block', () => {
+    const readAfterEvidence = toolUse(
+      'Read',
+      { file_path: 'src/cart.ts' },
+      'read-after-evidence',
+    )
+    const decision = getDsxuToolBatchGateDecision({
+      messages: [
+        toolResult(
+          'collect-pass',
+          [
+            'CollectEvidence status: PASS',
+            'latest=native_test exit=0 signal=RunNativeTest status: pass',
+            'DSXU tool state: evidence_collected; semanticTool=CollectEvidence; next=final_answer.',
+          ].join('\n'),
+        ),
+      ],
+      toolUseBlocks: [readAfterEvidence],
+      block: readAfterEvidence,
+    })
+
+    expect(decision).toMatchObject({
+      owner: 'tool_lifecycle',
+      gateId: 'dsxu_post_pass_tool_gate',
+      gateKind: 'tool_batch',
+      gateClass: 'QUALITY_BLOCK',
+      reason: 'post_pass',
+      blocked: true,
+      nextAction: 'final_answer_after_verified_pass',
+    })
+    expect(
+      JSON.stringify(decision!.createMessage(assistantFor(readAfterEvidence)).message.content),
+    ).toContain('tool_blocked_after_pass')
+  })
+
+  test('does not classify tool-after-CollectEvidence-PARTIAL as verified final', () => {
+    const readAfterPartial = toolUse(
+      'Read',
+      { file_path: 'src/cart.ts' },
+      'read-after-partial',
+    )
+    const decision = getDsxuToolBatchGateDecision({
+      messages: [
+        toolResult(
+          'collect-partial',
+          [
+            'CollectEvidence status: PARTIAL',
+            'latest=native_test exit=1 signal=RunNativeTest status: fail',
+            'DSXU tool state: evidence_collected; semanticTool=CollectEvidence; next=repair_or_report_partial.',
+          ].join('\n'),
+        ),
+      ],
+      toolUseBlocks: [readAfterPartial],
+      block: readAfterPartial,
+    })
+
+    expect(decision?.gateId).not.toBe('dsxu_post_pass_tool_gate')
+  })
 })

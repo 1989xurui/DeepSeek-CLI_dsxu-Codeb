@@ -6,7 +6,7 @@ This batch executes the first V24 gates in evidence mode:
 
 1. V24 baseline audit.
 2. Runtime/stub redline.
-3. Claude 1902 experience-density rebaseline.
+3. Reference 1902 experience-density rebaseline.
 4. C2 experience acceptance matrix.
 5. DeepSeek runtime contract audit.
 6. Work-state timeline acceptance audit.
@@ -17,19 +17,19 @@ It does not delete files, clean the workspace, run final tests, commit, export, 
 
 | Item | Value |
 |---|---:|
-| Publish surface files | 2891 |
-| DSXU source files | 2650 |
-| Claude source files | 1902 |
-| git status --short | 2024 |
+| Publish surface files | 3043 |
+| DSXU source files | 2668 |
+| Reference source files | 1902 |
+| git status --short | 2353 |
 | staged paths | 2024 |
-| unstaged paths | 12 |
-| untracked paths | 0 |
+| unstaged paths | 217 |
+| untracked paths | 222 |
 
 ## Runtime / Stub Redline
 
 | Item | Value |
 |---|---:|
-| Redline rows | 7462 |
+| Redline rows | 7727 |
 | Status | OPEN_REDLINE_REVIEW_REQUIRED |
 
 The redline is review evidence, not automatic deletion. Any duplicate runtime or old compatibility path must be merged into the original owner or remain a replace/delete candidate.
@@ -44,25 +44,25 @@ The redline is review evidence, not automatic deletion. Any duplicate runtime or
 | tool-lifecycle | 758 | 7 | 704 | 11 | 36 | runtime_duplication_pressure_review:375 |
 | mcp-skill-registry | 538 | 7 | 521 | 5 | 5 | runtime_duplication_pressure_review:434 |
 | config-settings | 461 | 7 | 443 | 2 | 9 | runtime_duplication_pressure_review:280 |
-| api-contract-types | 85 | 5 | 80 | 0 | 0 | runtime_duplication_pressure_review:67 |
-| coding-workflow | 85 | 5 | 73 | 3 | 4 | runtime_duplication_pressure_review:27 |
+| api-contract-types | 87 | 5 | 82 | 0 | 0 | runtime_duplication_pressure_review:69 |
 | query-loop | 63 | 5 | 58 | 0 | 0 | runtime_duplication_pressure_review:45 |
 | hook-lifecycle | 36 | 5 | 31 | 0 | 0 | runtime_duplication_pressure_review:30 |
 | agent-task-lifecycle | 108 | 4 | 101 | 0 | 3 | runtime_duplication_pressure_review:90 |
-| release-doctor | 75 | 4 | 70 | 1 | 0 | runtime_duplication_pressure_review:69 |
+| coding-workflow | 84 | 4 | 73 | 3 | 4 | runtime_duplication_pressure_review:27 |
+| dsxu-engine-mainline | 940 | 3 | 901 | 24 | 12 | runtime_duplication_pressure_review:646 |
 
 ## C2 Experience Density
 
-| Item | Claude | DSXU |
+| Item | Reference | DSXU |
 |---|---:|---:|
-| Source files | 1902 | 2650 |
-| 12-category signal hits | 12786 | 18211 |
-| >=4 signal files | 1576 | 2191 |
-| >=6 signal files | 1228 | 1740 |
+| Source files | 1902 | 2668 |
+| 12-category signal hits | 12786 | 18379 |
+| >=4 signal files | 1576 | 2208 |
+| >=6 signal files | 1228 | 1757 |
 | Primary loops needing compressed/no-signal review | 0 | 0 |
 | Secondary loops needing compressed/no-signal review | 0 | 0 |
 
-Conclusion: DSXU has dense Claude-like signals, but V24 acceptance still requires real behavior evidence for each loop. Signal counts do not equal feature parity.
+Conclusion: DSXU has dense reference-like signals, but V24 acceptance still requires real behavior evidence for each loop. Signal counts do not equal feature parity.
 
 ## Contract Matrices
 
@@ -78,8 +78,8 @@ Conclusion: DSXU has dense Claude-like signals, but V24 acceptance still require
 - `D:\DSXU-code\docs\generated\DSXU_V24_BASELINE_AUDIT_20260515.csv`
 - `D:\DSXU-code\docs\generated\DSXU_V24_RUNTIME_STUB_REDLINE_20260515.json`
 - `D:\DSXU-code\docs\generated\DSXU_V24_RUNTIME_STUB_REDLINE_20260515.csv`
-- `D:\DSXU-code\docs\generated\DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.json`
-- `D:\DSXU-code\docs\generated\DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.csv`
+- `D:\DSXU-code\docs\generated\DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_20260515.json`
+- `D:\DSXU-code\docs\generated\DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_20260515.csv`
 - `D:\DSXU-code\docs\generated\DSXU_V24_C2_SECONDARY_LOOP_REBASELINE_20260515.csv`
 - `D:\DSXU-code\docs\generated\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json`
 - `D:\DSXU-code\docs\generated\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.csv`

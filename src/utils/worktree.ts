@@ -201,15 +201,52 @@ const GIT_NO_PROMPT_ENV = {
   GIT_TERMINAL_PROMPT: '0',
   GIT_ASKPASS: '',
 }
+const AGENT_WORKTREE_GIT_TIMEOUT_MS = 30_000
 
-const PROVIDER_MIGRATION_RUNTIME_DIR = '.' + ('cl' + 'aude')
-const PROVIDER_MIGRATION_INTERNAL_REPO = 'cl' + 'aude-cli-internal'
-const PROVIDER_MIGRATION_TMUX_ENV_PREFIX = `CL${'AUDE'}_CODE_TMUX_`
+type AgentWorktreeGitResult = {
+  stdout: string
+  stderr: string
+  code: number
+  error?: string
+}
+
+function execAgentWorktreeGitNoThrow(
+  args: string[],
+  {
+    cwd,
+    timeoutMs = AGENT_WORKTREE_GIT_TIMEOUT_MS,
+  }: {
+    cwd: string
+    timeoutMs?: number
+  },
+): AgentWorktreeGitResult {
+  const result = spawnSync(gitExe(), args, {
+    cwd,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      ...GIT_NO_PROMPT_ENV,
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: timeoutMs,
+    windowsHide: true,
+  })
+  return {
+    stdout: String(result.stdout ?? ''),
+    stderr: String(result.stderr ?? ''),
+    code: result.status ?? 1,
+    error: result.error ? errorMessage(result.error) : undefined,
+  }
+}
+
+const ARCHIVED_RUNTIME_DIR = '.' + ('cl' + 'aude')
+const ARCHIVED_INTERNAL_REPO = 'cl' + 'aude-cli-internal'
+const ARCHIVED_TMUX_ENV_PREFIX = `CL${'AUDE'}_CODE_TMUX_`
 
 function worktreesDir(repoRoot: string): string {
   return join(
     repoRoot,
-    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_RUNTIME_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_RUNTIME_DIR,
     'worktrees',
   )
 }
@@ -992,9 +1029,8 @@ export async function removeAgentWorktree(
 
   // Run from the main repo root, not the worktree (which we're about to delete)
   const { code: removeCode, stderr: removeError } =
-    await execFileNoThrowWithCwd(
-      gitExe(),
-      ['worktree', 'remove', '--force', worktreePath],
+    await execAgentWorktreeGitNoThrow(
+      ['--no-optional-locks', 'worktree', 'remove', '--force', worktreePath],
       { cwd: gitRoot },
     )
 
@@ -1012,9 +1048,10 @@ export async function removeAgentWorktree(
 
   // Delete the temporary worktree branch from the main repo
   const { code: deleteBranchCode, stderr: deleteBranchError } =
-    await execFileNoThrowWithCwd(gitExe(), ['branch', '-D', worktreeBranch], {
-      cwd: gitRoot,
-    })
+    await execAgentWorktreeGitNoThrow(
+      ['--no-optional-locks', 'branch', '-D', worktreeBranch],
+      { cwd: gitRoot },
+    )
 
   if (deleteBranchCode !== 0) {
     logForDebugging(
@@ -1039,7 +1076,7 @@ const EPHEMERAL_WORKTREE_PATTERNS = [
   // Historical wf-<idx> slugs from before workflowRunId disambiguation -kept so
   // the 30-day sweep still cleans up worktrees leaked by older builds.
   /^wf-\d+$/,
-  // Real old-control slugs are `bridge-${safeFilenameId(sessionId)}` in provider-migration source builds.
+  // Real old-control slugs are `bridge-${safeFilenameId(sessionId)}` in archived source builds.
   /^bridge-[A-Za-z0-9_]+(-[A-Za-z0-9_]+)*$/,
   // Template job worktrees: job-<templateName>-<8hex>. Prefix distinguishes
   // from user-named EnterWorktree slugs that happen to end in 8 hex.
@@ -1152,9 +1189,10 @@ export async function hasWorktreeChanges(
   headCommit: string,
 ): Promise<boolean> {
   const { code: statusCode, stdout: statusOutput } =
-    await execFileNoThrowWithCwd(gitExe(), ['status', '--porcelain'], {
-      cwd: worktreePath,
-    })
+    await execAgentWorktreeGitNoThrow(
+      ['--no-optional-locks', 'status', '--porcelain'],
+      { cwd: worktreePath },
+    )
   if (statusCode !== 0) {
     return true
   }
@@ -1163,9 +1201,8 @@ export async function hasWorktreeChanges(
   }
 
   const { code: revListCode, stdout: revListOutput } =
-    await execFileNoThrowWithCwd(
-      gitExe(),
-      ['rev-list', '--count', `${headCommit}..HEAD`],
+    await execAgentWorktreeGitNoThrow(
+      ['--no-optional-locks', 'rev-list', '--count', `${headCommit}..HEAD`],
       { cwd: worktreePath },
     )
   if (revListCode !== 0) {
@@ -1365,9 +1402,9 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
     DSXU_CODE_TMUX_SESSION: tmuxSessionName,
     DSXU_CODE_TMUX_PREFIX: tmuxPrefix,
     DSXU_CODE_TMUX_PREFIX_CONFLICTS: prefixConflicts ? '1' : '',
-    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}SESSION`]: tmuxSessionName,
-    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}PREFIX`]: tmuxPrefix,
-    [`${PROVIDER_MIGRATION_TMUX_ENV_PREFIX}PREFIX_CONFLICTS`]: prefixConflicts ? '1' : '',
+    [`${ARCHIVED_TMUX_ENV_PREFIX}SESSION`]: tmuxSessionName,
+    [`${ARCHIVED_TMUX_ENV_PREFIX}PREFIX`]: tmuxPrefix,
+    [`${ARCHIVED_TMUX_ENV_PREFIX}PREFIX_CONFLICTS`]: prefixConflicts ? '1' : '',
   }
 
   // Check if session already exists
@@ -1402,8 +1439,8 @@ export async function execIntoTmuxWorktree(args: string[]): Promise<{
 
   // For internal development builds, set up dev panes (watch + start).
   const isAnt = process.env.USER_TYPE === 'ant'
-  const isProviderMigrationInternalRepo = repoName === PROVIDER_MIGRATION_INTERNAL_REPO
-  const shouldSetupDevPanes = isAnt && isProviderMigrationInternalRepo && !sessionExists
+  const isArchivedInternalRepo = repoName === ARCHIVED_INTERNAL_REPO
+  const shouldSetupDevPanes = isAnt && isArchivedInternalRepo && !sessionExists
 
   if (shouldSetupDevPanes) {
     // Create detached session with DSXU in first pane.

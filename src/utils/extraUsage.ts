@@ -1,6 +1,6 @@
 import { isProviderSubscriptionAccount } from './auth.js'
 import { has1mContext } from './context.js'
-import { isProviderMigrationExtraUsageModel } from './model/providerMigration/providerMigrationModelCompat.js'
+import { isArchivedExtraUsageModel } from './model/providerMigration/providerMigrationModelCompat.js'
 
 export function isBilledAsExtraUsage(
   model: string | null,
@@ -15,5 +15,5 @@ export function isBilledAsExtraUsage(
     .toLowerCase()
     .replace(/\[1m\]$/, '')
     .trim()
-  return isProviderMigrationExtraUsageModel(m, isHighTier1mMerged)
+  return isArchivedExtraUsageModel(m, isHighTier1mMerged)
 }

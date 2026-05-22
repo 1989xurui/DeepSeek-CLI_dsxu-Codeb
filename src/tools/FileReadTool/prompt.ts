@@ -16,6 +16,7 @@ DSXU weak-model discipline:
 - When to use: use Read for exact local file contents, screenshots/images, notebooks, PDFs, and source evidence before analysis or edits.
 - When not to use: do not use Read for directories, filename discovery, content search, shell output, web pages, or MCP resources. If available, use Glob for file patterns and Grep for content search. Use Bash/PowerShell for commands, WebFetch for web pages, and ReadMcpResource for MCP resources only when those tools are available in the current turn.
 - Recovery after failure: if the path is a directory, use an available dedicated file discovery tool. If no discovery tool is available, use exact paths from the task prompt or report PARTIAL with the missing path evidence; do not switch to shell listing. If the file is too large, reread a targeted range; if the file is unchanged after a successful Edit/Write, do not repeat the edit and run verification next.
+- Code-mode cache hygiene: when a DSXU source-truth capsule already provides path/hash/anchors/excerpts, treat Read as fallback. For large source files, search or use the capsule anchor first, then read only a bounded offset/limit range near that anchor. Do not full-read large files merely to restate evidence already present in the capsule.
 - Weak-model anti-pattern: do not treat a stale or unchanged Read result as proof that a successful Edit/Write failed. Prefer command/test verification or a fresh targeted read only when you need different evidence.
 - Verification / evidence: cite file paths and line numbers from Read output when making claims about source code.`
 
@@ -76,6 +77,7 @@ export function getDsxuFileReadPromptRuntimeProfile(): {
       'directory reads are redirected to Bash ls rather than abusing file reads',
       'weak-model discipline separates Read from Glob, Grep, shell commands, web, and MCP resources',
       'unchanged read cache-hit results instruct the model to advance the cursor instead of repeating the same Read/Edit',
+      'code-mode source-truth capsules make large-file Read a bounded fallback path',
     ],
   }
 }

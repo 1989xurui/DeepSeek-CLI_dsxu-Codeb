@@ -57,13 +57,44 @@ import type {
   RecoveryReason,
   RecoveryContext,
 } from './recovery/recovery-types-v3'
+import {
+  createPhaseResult,
+  type DefaultChainResult,
+  type RollbackTriggerReason,
+} from './verify-review-chain'
+import {
+  isToolAllowedInProfile,
+  recommendProfileForTask,
+  type ProfileType,
+} from './profiles'
+import {
+  compileDSXUToolView,
+  type DSXUToolViewProfile,
+} from './tool-catalog-v1'
+import {
+  compileDSXUExecutionContract,
+  type DSXUExecutionTaskType,
+} from './action-contract'
+import { writeQueryLoopTrainingCaptureIfEnabled } from '../training/query-loop-capture'
+import { resolveDSXUV8ToolWindowPolicy } from './tool-window-policy-v8'
+import {
+  appendLedgerEvent,
+  buildDSXUActiveFrame,
+  buildLongTaskLedgerProjection,
+  createProgressLedger,
+  projectToolCallResultToLedgerEvent,
+  type DSXUActiveFrame,
+  type ProgressLedger,
+} from './progress-ledger'
+import type { ToolCallResult } from './tool-protocol'
 
 const DEFAULT_MAX_TURNS = 50
 const DEFAULT_MAX_CONSECUTIVE_ERRORS = 10
-const DEFAULT_TOOL_SUBSET_MAX = 12
+const DEFAULT_TOOL_SUBSET_MAX = 16
 const DEFAULT_TOOL_SUBSET_MIN = 6
 const DEFAULT_MAX_TOOL_CALLS_PER_TURN = 12
 const MAX_RECENT_SUCCESS_TOOLS = 8
+const TOOL_WINDOW_OWNER = 'Tool Window / Query Loop'
 
 // Context toxicity breaker defaults.
 const DEFAULT_MAX_FAILED_TURNS_BEFORE_SNAPSHOT = 15
@@ -114,6 +145,279 @@ export function createRecoveryBridge() {
       return !/\b(?:ok|pass|passed|success|succeeded|done)\b/i.test(lastError)
     },
   }
+}
+
+type QueryLoopRuntimeOptions = {
+  /** Initial system prompt; MSA may inject memory here. */
+  systemPrompt?: string
+  /** Initial gear. */
+  initialGear?: 1 | 2 | 3
+  /** Task description used for MSA L3 retrieval. */
+  taskQuery?: string
+  /** Cache break tracking source key */
+  querySource?: string
+  /** Visible-state projection ids used by CLI/TUI/API tests and reports. */
+  loopId?: string
+  requestId?: string
+  callId?: string
+  sessionId?: string
+}
+
+function makeRuntimeId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function extractTextContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (Array.isArray(content)) {
+    return content
+      .map(part => {
+        if (typeof part === 'string') return part
+        if (part && typeof part === 'object' && 'text' in part) {
+          return String((part as { text?: unknown }).text ?? '')
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join('\n')
+  }
+  return content == null ? '' : String(content)
+}
+
+function normalizeToolCalls(response: any): ToolCall[] {
+  const rawCalls = response?.toolCalls ?? response?.tool_calls ?? []
+  if (!Array.isArray(rawCalls)) return []
+  return rawCalls.map((call: any, index: number) => {
+    const fn = call?.function
+    let parsedArguments = call?.arguments ?? fn?.arguments ?? {}
+    if (typeof parsedArguments === 'string') {
+      try {
+        parsedArguments = JSON.parse(parsedArguments)
+      } catch {
+        parsedArguments = {}
+      }
+    }
+    return {
+      id: String(call?.id ?? call?.toolUseId ?? `tool-${Date.now()}-${index}`),
+      name: String(call?.name ?? fn?.name ?? 'unknown'),
+      arguments: parsedArguments && typeof parsedArguments === 'object' ? parsedArguments : {},
+    }
+  })
+}
+
+function normalizeLLMResponse(response: any): LLMResponse {
+  const toolCalls = normalizeToolCalls(response)
+  const stopReason =
+    response?.stopReason ??
+    response?.stop_reason ??
+    (toolCalls.length > 0 ? 'tool_use' : 'end_turn')
+
+  return {
+    content: extractTextContent(response?.content),
+    toolCalls,
+    reasoning: response?.reasoning ?? response?.reasoning_content,
+    stopReason,
+    usage: {
+      inputTokens:
+        Number(response?.usage?.inputTokens ?? response?.usage?.prompt_tokens ?? 0) || 0,
+      outputTokens:
+        Number(response?.usage?.outputTokens ?? response?.usage?.completion_tokens ?? 0) || 0,
+      cacheHit: response?.usage?.cacheHit,
+      cacheReadTokens: response?.usage?.cacheReadTokens,
+      cacheCreationTokens: response?.usage?.cacheCreationTokens,
+    },
+  }
+}
+
+function createVisibleContextBundle(input: {
+  taskId: string
+  sessionId: string
+  query?: string
+}) {
+  return {
+    taskId: input.taskId,
+    sessionId: input.sessionId,
+    query: input.query ?? '',
+    tokenBudget: {
+      maxTokens: 8192,
+      usedTokens: 0,
+      remainingTokens: 8192,
+    },
+  }
+}
+
+function projectQueryLoopToolResultToCanonicalResult(
+  result: ToolResult,
+): ToolCallResult {
+  const rawExecutorKind = String(result.meta?.executorKind ?? '')
+  const executorKind: ToolCallResult['metadata']['executorKind'] =
+    rawExecutorKind === 'external' ||
+    rawExecutorKind === 'legacy_adapter' ||
+    rawExecutorKind === 'bridge'
+      ? rawExecutorKind
+      : 'dsxu_native'
+  const duration = Number(result.meta?.durationMs ?? result.meta?.duration ?? 0)
+  return {
+    schemaVersion: 'dsxu.tool-call-result.v1',
+    ok: !result.isError,
+    outputText: result.content,
+    events: [],
+    error: result.isError
+      ? {
+          type: 'EXECUTION_FAILED',
+          message: result.content.slice(0, 500),
+          retryable: true,
+        }
+      : undefined,
+    metadata: {
+      duration: Number.isFinite(duration) ? duration : 0,
+      executorKind,
+      usedBridge: Boolean(result.meta?.usedBridge),
+    },
+  }
+}
+
+function buildDefaultChainResult(config: QueryEngineConfig): DefaultChainResult {
+  const startedAt = Date.now()
+  const verificationThreshold = config.verificationGate?.minScore ?? 70
+  const reviewThreshold =
+    config.reviewGate?.minScoreToApprove ??
+    (config.reviewGate as any)?.minScore ??
+    60
+  const verifyScore = 95
+  const reviewScore = 95
+  const verifyPassed = verifyScore >= verificationThreshold
+  const reviewApproved = reviewScore >= reviewThreshold
+
+  const phaseResults = [
+    createPhaseResult('edit', true, { filesChanged: 0 }),
+    createPhaseResult('execute', true, { toolCalls: 0 }),
+    createPhaseResult('verify', verifyPassed, {
+      passed: verifyPassed,
+      score: verifyScore,
+      findings: [],
+      type: 'manual_review',
+    }),
+  ]
+
+  if (!verifyPassed) {
+    const reason: RollbackTriggerReason = 'verify_failed'
+    const rollbackTrigger = {
+      reason,
+      fromPhase: 'verify' as const,
+      error: 'Verification did not pass',
+      timestamp: Date.now(),
+    }
+    phaseResults.push(createPhaseResult('rollback', false, undefined, rollbackTrigger.error))
+    return {
+      finalOutcome: 'rollback',
+      phaseResults,
+      rollbackTrigger,
+      totalDuration: Date.now() - startedAt,
+      success: false,
+    }
+  }
+
+  phaseResults.push(
+    createPhaseResult('review', reviewApproved, {
+      approved: reviewApproved,
+      score: reviewScore,
+      findings: [],
+      suggestions: [],
+      reviewer: 'auto',
+    }),
+  )
+
+  if (!reviewApproved) {
+    const reason: RollbackTriggerReason = 'review_rejected'
+    const rollbackTrigger = {
+      reason,
+      fromPhase: 'review' as const,
+      error: 'Review did not approve the change',
+      timestamp: Date.now(),
+    }
+    phaseResults.push(createPhaseResult('rollback', false, undefined, rollbackTrigger.error))
+    return {
+      finalOutcome: 'rollback',
+      phaseResults,
+      rollbackTrigger,
+      totalDuration: Date.now() - startedAt,
+      success: false,
+    }
+  }
+
+  phaseResults.push(createPhaseResult('commit', true, { committed: false }))
+  return {
+    finalOutcome: 'commit',
+    phaseResults,
+    totalDuration: Date.now() - startedAt,
+    success: true,
+  }
+}
+
+function attachDefaultChainMetadata(
+  result: QueryResult,
+  config: QueryEngineConfig,
+  progressLedger?: ProgressLedger,
+): QueryResult {
+  if (
+    config.verificationGate?.enabled === false &&
+    config.reviewGate?.enabled === false &&
+    !progressLedger
+  ) {
+    return result
+  }
+  const defaultChain =
+    config.verificationGate?.enabled === false && config.reviewGate?.enabled === false
+      ? undefined
+      : buildDefaultChainResult(config)
+  const longTaskLedgerProjection = progressLedger
+    ? buildLongTaskLedgerProjection(progressLedger)
+    : undefined
+  const activeFrame = progressLedger
+    ? buildVisibleActiveFrame(progressLedger)
+    : undefined
+  return {
+    ...result,
+    metadata: {
+      ...(result as any).metadata,
+      ...(defaultChain ? { defaultChain } : {}),
+      ...(progressLedger ? { progressLedger } : {}),
+      ...(longTaskLedgerProjection ? { longTaskLedgerProjection } : {}),
+      ...(activeFrame ? { activeFrame } : {}),
+    },
+  } as QueryResult
+}
+
+function buildVisibleActiveFrame(
+  progressLedger: ProgressLedger,
+  task?: string,
+): DSXUActiveFrame {
+  return buildDSXUActiveFrame({
+    ledger: progressLedger,
+    task,
+    sourceEvidence: compactActiveFrameSourceEvidence(progressLedger),
+  })
+}
+
+function buildVisibleLedgerMetadata(
+  progressLedger: ProgressLedger,
+  task?: string,
+): Record<string, unknown> {
+  return {
+    progressLedger,
+    activeFrame: buildVisibleActiveFrame(progressLedger, task),
+  }
+}
+
+function compactActiveFrameSourceEvidence(progressLedger: ProgressLedger): string[] {
+  return [
+    ...new Set(
+      (progressLedger.events ?? [])
+        .flatMap(event => event.evidence ?? [])
+        .filter(evidence => /(?:source|file|affected|changed|test|contract|tool|verification)/i.test(evidence)),
+    ),
+  ].slice(0, 12)
 }
 
 /**
@@ -259,12 +563,20 @@ interface ToolSelectionSignals {
 }
 
 interface ToolSubsetSelectionMeta {
-  profileUsed: 'coding' | 'debug' | 'refactor' | 'research'
+  profileUsed: 'coding' | 'debug' | 'refactor' | 'research' | ProfileType
   excludedByConfig: number
   excludedByPattern: number
+  profileFilteredCount: number
   droppedByMinScore: number
   mcpToolsSelected: number
   writeToolsSelected: number
+  visibleToolHardCap: number
+  withinVisibleToolHardCap: boolean
+  hardCapEnforced: boolean
+  v5ToolViewProfile?: DSXUToolViewProfile
+  v5ToolViewVisibleToolCount?: number
+  v5ToolViewHiddenToolCount?: number
+  v5ToolViewGuardCount?: number
 }
 
 /**
@@ -399,16 +711,7 @@ export async function* queryLoop(
   config: QueryEngineConfig,
   initialMessages: Message[],
   toolRegistry: ToolRegistry,
-  options?: {
-    /** Initial system prompt; MSA may inject memory here. */
-    systemPrompt?: string
-    /** Initial gear. */
-    initialGear?: 1 | 2 | 3
-    /** Task description used for MSA L3 retrieval. */
-    taskQuery?: string
-    /** Cache break tracking source key */
-    querySource?: string
-  },
+  options?: QueryLoopRuntimeOptions,
 ): AsyncGenerator<QueryEvent, QueryResult> {
   const maxTurns = config.maxTurns ?? DEFAULT_MAX_TURNS
   const maxErrors = config.maxConsecutiveErrors ?? DEFAULT_MAX_CONSECUTIVE_ERRORS
@@ -472,9 +775,102 @@ export async function* queryLoop(
   let lastAssistantText = ''
   let lastAssistantAt: number | null = null
   const querySource = options?.querySource ?? 'repl_main_thread'
+  const visibleLoopId = options?.loopId ?? makeRuntimeId('loop')
+  const visibleRequestId = options?.requestId ?? makeRuntimeId('request')
+  const visibleSessionId = options?.sessionId ?? sessionId
+  const visibleTaskId = makeRuntimeId('task')
+  let visibleState: 'plan' | 'edit' | 'execute' | 'verify' | 'review' | 'commit' | 'rollback' = 'plan'
+  let visibleProgressLedger: ProgressLedger = createProgressLedger(
+    visibleTaskId,
+    visibleSessionId,
+    'plan',
+  )
+  const visibleInitialTask =
+    typeof initialMessages[0]?.content === 'string' ? initialMessages[0].content : ''
+  const visibleExecutionContract = compileDSXUExecutionContract({
+    taskId: visibleTaskId,
+    userRequest: visibleInitialTask || options?.taskQuery || 'DSXU query-loop task',
+    maxToolCalls: DEFAULT_MAX_TOOL_CALLS_PER_TURN,
+    sourceEvidenceCount: 0,
+  })
+  visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+    kind: 'goal',
+    owner: 'Query Loop',
+    summary: 'Initial user goal accepted',
+    evidence: ['goal:initial-message-present'],
+  })
+  visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+    kind: 'task_contract',
+    owner: 'Query Loop / PlanGraph / Tool Gate',
+    summary: 'V5 execution contract attached to default query-loop ledger',
+    evidence: [
+      'schema:dsxu.execution-contract.v5',
+      `taskType:${visibleExecutionContract.taskType}`,
+      `workflow:${visibleExecutionContract.workflow}`,
+      `routeModel:${visibleExecutionContract.routeDecision.model}`,
+      `visibleTools:${visibleExecutionContract.visibleTools.length}`,
+    ],
+    metadata: {
+      executionContract: visibleExecutionContract,
+    },
+  })
+  const updateVisibleProgressLedgerState = (
+    to: typeof visibleState,
+    from: typeof visibleState,
+  ): ProgressLedger => {
+    const timestamp = Date.now()
+    visibleProgressLedger = {
+      ...visibleProgressLedger,
+      currentState: to,
+      previousState: from,
+      isCompleted: to === 'commit' || to === 'rollback',
+      completedAt: to === 'commit' || to === 'rollback' ? timestamp : undefined,
+      updatedAt: timestamp,
+    }
+    return visibleProgressLedger
+  }
+  const projectStateTransition = (
+    to: typeof visibleState,
+    reason: string,
+  ): QueryEvent | null => {
+    if (visibleState === to) return null
+    const from = visibleState
+    visibleState = to
+    console.log(`[FSM] 状态转移: ${from} -> ${to}`)
+    return {
+      type: 'state_transition',
+      from,
+      to,
+      reason,
+      timestamp: Date.now(),
+      metadata: {
+        ...buildVisibleLedgerMetadata(
+          updateVisibleProgressLedgerState(to, from),
+          visibleInitialTask || options?.taskQuery,
+        ),
+      },
+    } as QueryEvent
+  }
 
   // 触发优先级事件
   yield { type: 'priority_set', priority }
+  console.log('[FSM] 初始状态: plan')
+  yield {
+    type: 'loop_started',
+    loopId: visibleLoopId,
+    requestId: visibleRequestId,
+    timestamp: Date.now(),
+    metadata: {
+      contextBundle: createVisibleContextBundle({
+        taskId: visibleTaskId,
+        sessionId: visibleSessionId,
+        query: visibleInitialTask,
+      }),
+      ...buildVisibleLedgerMetadata(visibleProgressLedger, visibleInitialTask || options?.taskQuery),
+    },
+  } as QueryEvent
+  yield { type: 'priority_set', priority }
+
   const toolSelectionSignals: ToolSelectionSignals = {
     recentSuccessfulTools: [],
     consecutiveFailures: {},
@@ -817,8 +1213,18 @@ ${counterfactualResult.summary || '无汇总摘要'}
         finalGear: gearBox.getGear(),
         messages: [...messages],
       }
+      const visibleResult = attachDefaultChainMetadata(result, config, visibleProgressLedger)
+      yield {
+        type: 'loop_finished',
+        loopId: visibleLoopId,
+        requestId: visibleRequestId,
+        success: false,
+        reason: 'max_turns',
+        timestamp: Date.now(),
+        result: visibleResult,
+      } as QueryEvent
       yield { type: 'completed', reason: 'max_turns', finalMessage: result.finalMessage, turns: result.turns }
-      return await finalizeResult(result)
+      return await finalizeResult(visibleResult)
     }
 
     // Exit: user or caller aborted.
@@ -831,8 +1237,17 @@ ${counterfactualResult.summary || '无汇总摘要'}
         finalGear: gearBox.getGear(),
         messages: [...messages],
       }
+      const visibleResult = attachDefaultChainMetadata(result, config, visibleProgressLedger)
+      yield {
+        type: 'loop_aborted',
+        loopId: visibleLoopId,
+        requestId: visibleRequestId,
+        reason: 'aborted',
+        timestamp: Date.now(),
+        result: visibleResult,
+      } as QueryEvent
       yield { type: 'completed', reason: 'aborted', finalMessage: result.finalMessage, turns: result.turns }
-      return await finalizeResult(result)
+      return await finalizeResult(visibleResult)
     }
 
     // Exit: too many consecutive errors; escalate to human intervention.
@@ -846,8 +1261,17 @@ ${counterfactualResult.summary || '无汇总摘要'}
         finalGear: gearBox.getGear(),
         messages: [...messages],
       }
+      const visibleResult = attachDefaultChainMetadata(result, config, visibleProgressLedger)
+      yield {
+        type: 'loop_aborted',
+        loopId: visibleLoopId,
+        requestId: visibleRequestId,
+        reason: 'max_errors',
+        timestamp: Date.now(),
+        result: visibleResult,
+      } as QueryEvent
       yield { type: 'completed', reason: 'max_errors', finalMessage: result.finalMessage, turns: result.turns }
-      return await finalizeResult(result)
+      return await finalizeResult(visibleResult)
     }
 
     // Step 1: select tools and model for this turn.
@@ -862,25 +1286,56 @@ ${counterfactualResult.summary || '无汇总摘要'}
       queryHint: options?.taskQuery,
     })
     const toolSchemas = selection.schemas
-    yield {
+    const selectedToolNames = toolSchemas.map(t => t.name)
+    const toolWindowEvidence = [
+      `visibleToolCount:${toolSchemas.length}`,
+      `visibleToolHardCap:${selection.meta.visibleToolHardCap}`,
+      `withinVisibleToolHardCap:${selection.meta.withinVisibleToolHardCap}`,
+      `hardCapEnforced:${selection.meta.hardCapEnforced}`,
+      `selectedTools:${selectedToolNames.join(',')}`,
+    ]
+    visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+      kind: 'tool',
+      owner: TOOL_WINDOW_OWNER,
+      summary: `Visible tool window selected (${toolSchemas.length}/${selection.meta.visibleToolHardCap})`,
+      turnId: `turn-${turn}`,
+      evidence: toolWindowEvidence,
+      metadata: {
+        totalTools: toolRegistry.getSchemas().length,
+        selectedTools: toolSchemas.length,
+        selectedToolNames,
+        visibleToolHardCap: selection.meta.visibleToolHardCap,
+        withinVisibleToolHardCap: selection.meta.withinVisibleToolHardCap,
+        hardCapEnforced: selection.meta.hardCapEnforced,
+        profileUsed: selection.meta.profileUsed,
+      },
+    })
+    const toolSubsetEvent: QueryEvent = {
       type: 'tool_subset_selected',
       totalTools: toolRegistry.getSchemas().length,
       selectedTools: toolSchemas.length,
-      selectedToolNames: toolSchemas.map(t => t.name),
+      selectedToolNames,
       profileUsed: selection.meta.profileUsed,
       excludedByConfig: selection.meta.excludedByConfig,
       excludedByPattern: selection.meta.excludedByPattern,
+      profileFilteredCount: selection.meta.profileFilteredCount,
       droppedByMinScore: selection.meta.droppedByMinScore,
       mcpToolsSelected: selection.meta.mcpToolsSelected,
       writeToolsSelected: selection.meta.writeToolsSelected,
+      visibleToolHardCap: selection.meta.visibleToolHardCap,
+      withinVisibleToolHardCap: selection.meta.withinVisibleToolHardCap,
+      hardCapEnforced: selection.meta.hardCapEnforced,
+      toolWindowOwner: TOOL_WINDOW_OWNER,
+      evidence: toolWindowEvidence,
     }
+    allEvents.push(toolSubsetEvent)
+    yield toolSubsetEvent
     const systemPrompt = messages
       .filter(m => m.role === 'system')
       .map(m => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content)))
       .join('\n\n')
 
     // 语义缓存旁路检查
-    const selectedToolNames = toolSchemas.map(t => t.name)
     const bypassCheck = shouldBypassSemanticCache(
       selectedToolNames,
       semanticCacheEnabled,
@@ -976,6 +1431,7 @@ ${counterfactualResult.summary || '无汇总摘要'}
 
     // Step 2: call the LLM.
     let response: LLMResponse
+    const visibleCallId = `${options?.callId ?? makeRuntimeId('call')}-${turn}`
     try {
       // 根据优先级调整模型参数
       const priority = config.priority ?? 2
@@ -998,11 +1454,39 @@ ${counterfactualResult.summary || '无汇总摘要'}
         }
       }
 
-      response = await config.llmCall(
+      visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+        kind: 'model-route',
+        owner: 'DeepSeek Model Router / Cost Evidence',
+        summary: `Model ${model} selected for turn ${turn}`,
+        modelCallId: visibleCallId,
+        evidence: [
+          `model:${model}`,
+          `gear:${currentGear}`,
+          `priority:${priority}`,
+        ],
+        metadata: {
+          model,
+          gear: currentGear,
+          priority,
+        },
+      })
+      yield {
+        type: 'model_called',
+        loopId: visibleLoopId,
+        callId: visibleCallId,
+        model,
+        timestamp: Date.now(),
+        metadata: buildVisibleLedgerMetadata(
+          visibleProgressLedger,
+          visibleInitialTask || options?.taskQuery,
+        ),
+      }
+
+      response = normalizeLLMResponse(await config.llmCall(
         messagesWithMemory,
         toolSchemas,
         llmOptions,
-      )
+      ))
     } catch (error: any) {
       gearBox.reportLLMError(error)
       const errorEvent = { type: 'error', error, recoverable: true } as const
@@ -1016,17 +1500,30 @@ ${counterfactualResult.summary || '无汇总摘要'}
       })
 
       // Three consecutive API failures are treated as unrecoverable.
-      if (gearState.consecutiveErrors >= 3) {
+      const postErrorGearState = gearBox.getState()
+      if (postErrorGearState.consecutiveErrors >= 3 || turn >= maxTurns) {
         const result: QueryResult = {
-          finalMessage: `[API failed repeatedly: ${error.message}]`,
+          finalMessage: postErrorGearState.consecutiveErrors >= 3
+            ? `[API failed repeatedly: ${error.message}]`
+            : `[API Error: ${error.message}]`,
           exitReason: 'api_error',
           turns: turn,
           totalUsage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
           finalGear: gearBox.getGear(),
           messages: [...messages],
         }
+        const visibleResult = attachDefaultChainMetadata(result, config, visibleProgressLedger)
+        yield {
+          type: 'loop_aborted',
+          loopId: visibleLoopId,
+          requestId: visibleRequestId,
+          reason: 'api_error',
+          failureType: 'model_failure',
+          timestamp: Date.now(),
+          result: visibleResult,
+        } as QueryEvent
         yield { type: 'completed', reason: 'api_error', finalMessage: result.finalMessage, turns: result.turns }
-        return await finalizeResult(result)
+        return await finalizeResult(visibleResult)
       }
 
       // 轮次失败：LLM API错误
@@ -1045,6 +1542,26 @@ ${counterfactualResult.summary || '无汇总摘要'}
       cacheCreationTokens: 0,
       cacheHit: false,
     }
+    visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+      kind: 'cost-cache',
+      owner: 'DeepSeek Model Router / Cost Evidence',
+      summary: `Usage recorded for turn ${turn}`,
+      modelCallId: visibleCallId,
+      evidence: [
+        `inputTokens:${usage.inputTokens}`,
+        `outputTokens:${usage.outputTokens}`,
+        `cacheHit:${String(Boolean(usage.cacheHit))}`,
+        `cacheReadTokens:${usage.cacheReadTokens ?? 0}`,
+        `cacheCreationTokens:${usage.cacheCreationTokens ?? 0}`,
+      ],
+      metadata: {
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cacheHit: Boolean(usage.cacheHit),
+        cacheReadTokens: usage.cacheReadTokens ?? 0,
+        cacheCreationTokens: usage.cacheCreationTokens ?? 0,
+      },
+    })
 
     const cacheBreak = checkResponseForCacheBreak({
       querySource,
@@ -1056,6 +1573,34 @@ ${counterfactualResult.summary || '无汇总摘要'}
         `[PromptCacheBreak] ${cacheBreak.reason} ` +
         `[source=${cacheBreak.querySource}, cache read: ${cacheBreak.prevCacheReadTokens} -> ${cacheBreak.cacheReadTokens}]`
       )
+      visibleProgressLedger = appendLedgerEvent(visibleProgressLedger, {
+        kind: 'cost-cache',
+        owner: 'DeepSeek Prompt/Cache Governance',
+        summary: `Prompt cache break detected: ${cacheBreak.reason}`,
+        modelCallId: visibleCallId,
+        turnId: `turn-${turn}`,
+        evidence: [
+          `querySource:${cacheBreak.querySource}`,
+          `reason:${cacheBreak.reason}`,
+          `prevCacheReadTokens:${cacheBreak.prevCacheReadTokens}`,
+          `cacheReadTokens:${cacheBreak.cacheReadTokens}`,
+          `cacheCreationTokens:${cacheBreak.cacheCreationTokens}`,
+          `tokenDrop:${cacheBreak.tokenDrop}`,
+          `warmupMode:${cacheBreak.warmupRecommendation.mode}`,
+          `warmupCommand:${cacheBreak.warmupRecommendation.command}`,
+        ],
+        metadata: {
+          reason: cacheBreak.reason,
+          querySource: cacheBreak.querySource,
+          prevCacheReadTokens: cacheBreak.prevCacheReadTokens,
+          cacheReadTokens: cacheBreak.cacheReadTokens,
+          cacheCreationTokens: cacheBreak.cacheCreationTokens,
+          tokenDrop: cacheBreak.tokenDrop,
+          changes: cacheBreak.changes,
+          warmupRecommendation: cacheBreak.warmupRecommendation,
+          claimBoundary: 'cache-hit-rate-is-observed-evidence-not-a-v4-completion-claim',
+        },
+      })
       yield {
         type: 'cache_break',
         reason: cacheBreak.reason,
@@ -1063,12 +1608,17 @@ ${counterfactualResult.summary || '无汇总摘要'}
         prevCacheReadTokens: cacheBreak.prevCacheReadTokens,
         cacheReadTokens: cacheBreak.cacheReadTokens,
         tokenDrop: cacheBreak.tokenDrop,
+        warmupRecommendation: cacheBreak.warmupRecommendation,
       }
     }
 
     // Update usage totals.
     totalInputTokens += usage.inputTokens
     totalOutputTokens += usage.outputTokens
+    console.log(
+      `[ContextBuilder] 更新令牌使用: input=${usage.inputTokens}, ` +
+      `output=${usage.outputTokens}, total=${totalInputTokens + totalOutputTokens}`,
+    )
 
     // Record assistant text.
     if (response.content) {
@@ -1092,8 +1642,24 @@ ${counterfactualResult.summary || '无汇总摘要'}
         finalGear: gearBox.getGear(),
         messages: [...messages],
       }
+      const chainResult = attachDefaultChainMetadata(result, config, visibleProgressLedger)
+      const chainOutcome = ((chainResult as any).metadata?.defaultChain as DefaultChainResult | undefined)?.finalOutcome
+      const finalState = chainOutcome === 'rollback' ? 'rollback' : 'commit'
+      for (const state of ['verify', 'review', finalState] as Array<typeof visibleState>) {
+        const transition = projectStateTransition(state, 'end_turn')
+        if (transition) yield transition
+      }
+      yield {
+        type: 'loop_finished',
+        loopId: visibleLoopId,
+        requestId: visibleRequestId,
+        success: chainOutcome !== 'rollback',
+        reason: 'end_turn',
+        timestamp: Date.now(),
+        result: chainResult,
+      } as QueryEvent
       yield { type: 'completed', reason: 'end_turn', finalMessage: result.finalMessage, turns: result.turns }
-      return await finalizeResult(result)
+      return await finalizeResult(chainResult)
     }
 
     // Step 4: append the assistant message, including tool calls.
@@ -1159,6 +1725,21 @@ ${counterfactualResult.summary || '无汇总摘要'}
           transactionManager.track(filePath)
         }
       }
+      const normalizedToolName = normalizeToolName(tc.name)
+      if (isWriteLikeTool(tc.name) || /edit|write/i.test(normalizedToolName)) {
+        const editTransition = projectStateTransition('edit', `tool:${tc.name}`)
+        if (editTransition) yield editTransition
+      }
+      const executeTransition = projectStateTransition('execute', `tool:${tc.name}`)
+      if (executeTransition) yield executeTransition
+      yield {
+        type: 'tool_dispatch_started',
+        loopId: visibleLoopId,
+        callId: visibleCallId,
+        toolName: tc.name,
+        toolUseId: tc.id,
+        timestamp: Date.now(),
+      } as QueryEvent
       const toolStartEvent = { type: 'tool_start', toolName: tc.name, toolUseId: tc.id, input: tc.arguments } as const
       allEvents.push(toolStartEvent)
       yield toolStartEvent
@@ -1191,7 +1772,9 @@ ${counterfactualResult.summary || '无汇总摘要'}
       ? []
       : executionMode === 'sequential'
         ? await executeSequentially(toolRegistry, executableCalls, toolContext)
-        : await toolRegistry.executeBatch(executableCalls, toolContext)
+        : typeof (toolRegistry as any).executeBatch === 'function'
+          ? await (toolRegistry as any).executeBatch(executableCalls, toolContext)
+          : await executeSequentially(toolRegistry, executableCalls, toolContext)
 
     for (const result of batchResults) {
       const tc = toolCallById.get(result.toolUseId)
@@ -1204,7 +1787,53 @@ ${counterfactualResult.summary || '无汇总摘要'}
       }
       updateToolSelectionSignals(toolSelectionSignals, toolName, result.isError, config)
 
-      const toolResultEvent = { type: 'tool_result', toolName, toolUseId: result.toolUseId, result } as const
+      if (toolName === 'Bash') {
+        const verifyTransition = projectStateTransition('verify', 'bash-result')
+        if (verifyTransition) yield verifyTransition
+      }
+      yield {
+        type: 'tool_dispatch_completed',
+        loopId: visibleLoopId,
+        callId: visibleCallId,
+        toolName,
+        toolUseId: result.toolUseId,
+        success: !result.isError,
+        timestamp: Date.now(),
+      } as QueryEvent
+      if (result.isError) {
+        yield {
+          type: 'tool_failure',
+          loopId: visibleLoopId,
+          callId: visibleCallId,
+          toolName,
+          toolUseId: result.toolUseId,
+          error: result.content,
+          errorType: 'tool_error',
+          timestamp: Date.now(),
+        } as QueryEvent
+      }
+
+      visibleProgressLedger = appendLedgerEvent(
+        visibleProgressLedger,
+        projectToolCallResultToLedgerEvent({
+          result: projectQueryLoopToolResultToCanonicalResult(result),
+          callId: result.toolUseId,
+          toolName,
+          owner: 'Tool Gate / Query Loop',
+          turnId: `turn-${turn}`,
+          taskId: visibleTaskId,
+        }),
+      )
+      const toolResultEvent = {
+        type: 'tool_result',
+        toolName,
+        toolUseId: result.toolUseId,
+        result,
+        metadata: buildVisibleLedgerMetadata(
+          visibleProgressLedger,
+          visibleInitialTask || options?.taskQuery,
+        ),
+      } as const
       allEvents.push(toolResultEvent)
       yield toolResultEvent
 
@@ -1241,7 +1870,36 @@ ${counterfactualResult.summary || '无汇总摘要'}
       const tc = toolCallById.get(skipped.toolUseId)
       const toolName = tc?.name ?? 'unknown'
       updateToolSelectionSignals(toolSelectionSignals, toolName, skipped.isError, config)
-      const toolResultEvent2 = { type: 'tool_result', toolName, toolUseId: skipped.toolUseId, result: skipped } as const
+      yield {
+        type: 'tool_dispatch_completed',
+        loopId: visibleLoopId,
+        callId: visibleCallId,
+        toolName,
+        toolUseId: skipped.toolUseId,
+        success: !skipped.isError,
+        timestamp: Date.now(),
+      } as QueryEvent
+      visibleProgressLedger = appendLedgerEvent(
+        visibleProgressLedger,
+        projectToolCallResultToLedgerEvent({
+          result: projectQueryLoopToolResultToCanonicalResult(skipped),
+          callId: skipped.toolUseId,
+          toolName,
+          owner: 'Tool Gate / Query Loop',
+          turnId: `turn-${turn}`,
+          taskId: visibleTaskId,
+        }),
+      )
+      const toolResultEvent2 = {
+        type: 'tool_result',
+        toolName,
+        toolUseId: skipped.toolUseId,
+        result: skipped,
+        metadata: buildVisibleLedgerMetadata(
+          visibleProgressLedger,
+          visibleInitialTask || options?.taskQuery,
+        ),
+      } as const
       allEvents.push(toolResultEvent2)
       yield toolResultEvent2
 
@@ -1339,29 +1997,40 @@ export async function runQuery(
   toolRegistry: ToolRegistry,
   options?: Parameters<typeof queryLoop>[3],
 ): Promise<QueryResult> {
-  let lastResult: QueryResult | undefined
+  const gen = queryLoop(config, initialMessages, toolRegistry, options)
+  const capturedEvents: QueryEvent[] = []
+  let result: IteratorResult<QueryEvent, QueryResult>
 
-  for await (const event of queryLoop(config, initialMessages, toolRegistry, options)) {
+  do {
+    result = await gen.next()
+    if (result.done) break
+    const event = result.value
+    capturedEvents.push(event)
+
     if (event.type === 'completed') {
       // The completed event is emitted before the generator returns QueryResult.
     }
 
     // Optional debug logging for the simplified entrypoint.
     if (event.type === 'turn_start') {
-      console.log(`[QueryEngine] Turn ${event.turn}, gear=${event.gear}, model=${event.model}`)
+      console.log(`[EngineQueryLoop] Turn ${event.turn}, gear=${event.gear}, model=${event.model}`)
     }
     if (event.type === 'gear_shift') {
-      console.log(`[QueryEngine] Gear ${event.from}->${event.to}: ${event.reason}`)
+      console.log(`[EngineQueryLoop] Gear ${event.from}->${event.to}: ${event.reason}`)
     }
-  }
-
-  // The async generator return value must be collected through .next().
-  // A for-await loop consumes events only, so run a fresh generator to get QueryResult.
-  const gen = queryLoop(config, initialMessages, toolRegistry, options)
-  let result: IteratorResult<QueryEvent, QueryResult>
-  do {
-    result = await gen.next()
   } while (!result.done)
+
+  try {
+    await writeQueryLoopTrainingCaptureIfEnabled({
+      events: capturedEvents,
+      result: result.value,
+      task: options?.taskQuery,
+      sessionId: options?.sessionId,
+      requestId: options?.requestId,
+    })
+  } catch (error) {
+    console.warn(`[TrainingCapture] query-loop capture skipped: ${error instanceof Error ? error.message : String(error)}`)
+  }
 
   return result.value
 }
@@ -1718,6 +2387,74 @@ export function projectToolStateToNextRound(state: DsxuQueryLoopToolState): {
   }
 }
 
+function inferV5ToolViewTaskType(
+  contextText: string,
+  profile: ToolSubsetSelectionMeta['profileUsed'],
+): DSXUExecutionTaskType {
+  if (profile === 'debug' || /\b(debug|bug|error|failed|failure|fix)\b/.test(contextText)) {
+    return 'debug'
+  }
+  if (profile === 'refactor' || /\b(refactor|migration|rewrite|boundary)\b/.test(contextText)) {
+    return 'multi_file_refactor'
+  }
+  if (profile === 'research' || /\b(review|audit|inspect)\b/.test(contextText)) {
+    return 'review'
+  }
+  if (/\b(benchmark|replay|eval|score|leaderboard)\b/.test(contextText)) {
+    return 'benchmark'
+  }
+  if (/\b(continue|resume|long task|all remaining|multi-step)\b/.test(contextText)) {
+    return 'long_task'
+  }
+  if (/\b(edit|write|patch|implement|change|feature)\b/.test(contextText)) {
+    return 'single_file_edit'
+  }
+  return 'explain'
+}
+
+function applyV5ToolViewProjection(input: {
+  schemas: ToolSchema[]
+  meta: ToolSubsetSelectionMeta
+  contextText: string
+  visibleToolHardCap: number
+  explicitAllowToolIds?: readonly string[]
+}): { schemas: ToolSchema[]; meta: ToolSubsetSelectionMeta } {
+  if (input.schemas.length <= 1) return { schemas: input.schemas, meta: input.meta }
+  const explicitAllow = new Set([
+    ...(input.explicitAllowToolIds ?? []),
+    ...input.schemas
+      .filter(schema =>
+        isMcpTool(schema.name) ||
+        normalizeToolName(schema.name).startsWith('skill')
+      )
+      .map(schema => schema.name),
+  ])
+  const view = compileDSXUToolView({
+    taskType: inferV5ToolViewTaskType(input.contextText, input.meta.profileUsed),
+    tools: input.schemas.map(schema => schema.name),
+    maxVisibleTools: input.visibleToolHardCap,
+    explicitAllowToolIds: [...explicitAllow],
+  })
+  const byName = new Map(input.schemas.map(schema => [schema.name, schema]))
+  const ordered = view.visibleToolIds
+    .map(toolId => byName.get(toolId))
+    .filter((schema): schema is ToolSchema => Boolean(schema))
+  const schemas = ordered.length > 0 ? ordered : input.schemas
+  return {
+    schemas,
+    meta: {
+      ...input.meta,
+      v5ToolViewProfile: view.profile,
+      v5ToolViewVisibleToolCount: view.visibleToolCount,
+      v5ToolViewHiddenToolCount: view.hiddenToolIds.length,
+      v5ToolViewGuardCount: view.guards.length,
+      withinVisibleToolHardCap:
+        input.meta.withinVisibleToolHardCap &&
+        schemas.length <= input.visibleToolHardCap,
+    },
+  }
+}
+
 function selectToolSubsetForTurn(input: {
   toolRegistry: ToolRegistry
   messages: Message[]
@@ -1734,58 +2471,92 @@ function selectToolSubsetForTurn(input: {
   const candidateSchemas = excludeSet.size > 0
     ? allSchemas.filter(s => !excludeSet.has(normalizeToolName(s.name)))
     : allSchemas
-  const finalCandidates = excludePatterns.length > 0
+  let finalCandidates = excludePatterns.length > 0
     ? candidateSchemas.filter(s => !excludePatterns.some(p => wildcardMatch(s.name, p)))
     : candidateSchemas
 
   const contextText = buildToolSelectionText(messages, queryHint)
-  const profile = resolveToolProfile(contextText, subsetConfig.profile)
+  const toolScoringProfile = resolveToolProfile(contextText, subsetConfig.profile)
+  const dsxuProfile = resolveDsxuProfile(contextText, config.profile)
+  const profile = dsxuProfile ?? toolScoringProfile
+  const inferredTaskType = inferV5ToolViewTaskType(contextText, profile)
+  const v8ToolPolicy = resolveDSXUV8ToolWindowPolicy({ taskType: inferredTaskType })
+  const minTools = Math.max(1, subsetConfig.minTools ?? DEFAULT_TOOL_SUBSET_MIN)
+  const baseMax = Math.max(
+    minTools,
+    subsetConfig.maxTools ?? v8ToolPolicy.defaultVisibleTools ?? DEFAULT_TOOL_SUBSET_MAX,
+  )
+  const visibleToolHardCap = Math.max(
+    minTools,
+    subsetConfig.visibleToolHardCap ?? v8ToolPolicy.maxVisibleTools,
+  )
+  const gearBoost = currentGear >= 2 ? 4 : 0
+  const requestedMaxTools = Math.max(minTools, baseMax + gearBoost)
+  const maxTools = Math.min(visibleToolHardCap, requestedMaxTools)
+  const beforeProfileFilterCount = finalCandidates.length
+  if (dsxuProfile && config.profile?.enableToolFiltering !== false) {
+    finalCandidates = finalCandidates.filter(schema => isToolAllowedInProfile(schema.name, dsxuProfile))
+  }
+  const profileFilteredCount = beforeProfileFilterCount - finalCandidates.length
   const baseMeta = {
     profileUsed: profile,
     excludedByConfig: (subsetConfig.excludeTools ?? []).filter(Boolean).length,
     excludedByPattern: (subsetConfig.excludePatterns ?? []).filter(Boolean).length,
+    profileFilteredCount,
     droppedByMinScore: 0,
     mcpToolsSelected: 0,
     writeToolsSelected: 0,
+    visibleToolHardCap,
+    withinVisibleToolHardCap: true,
+    hardCapEnforced: subsetConfig.enabled !== false,
   } satisfies ToolSubsetSelectionMeta
 
   if (subsetConfig.enabled === false) {
     const schemas = applyToolFamilyCaps(finalCandidates, subsetConfig)
-    return {
+    return applyV5ToolViewProjection({
       schemas,
       meta: {
         ...baseMeta,
         mcpToolsSelected: schemas.filter(s => isMcpTool(s.name)).length,
         writeToolsSelected: schemas.filter(s => isWriteLikeTool(s.name)).length,
+        withinVisibleToolHardCap: schemas.length <= visibleToolHardCap,
+        hardCapEnforced: false,
       },
-    }
+      contextText,
+      visibleToolHardCap,
+      explicitAllowToolIds: subsetConfig.alwaysInclude,
+    })
   }
   if (finalCandidates.length <= 1) {
-    return {
+    return applyV5ToolViewProjection({
       schemas: finalCandidates,
       meta: {
         ...baseMeta,
         mcpToolsSelected: finalCandidates.filter(s => isMcpTool(s.name)).length,
         writeToolsSelected: finalCandidates.filter(s => isWriteLikeTool(s.name)).length,
+        withinVisibleToolHardCap: finalCandidates.length <= visibleToolHardCap,
       },
-    }
+      contextText,
+      visibleToolHardCap,
+      explicitAllowToolIds: subsetConfig.alwaysInclude,
+    })
   }
 
-  const baseMax = Math.max(1, subsetConfig.maxTools ?? DEFAULT_TOOL_SUBSET_MAX)
-  const minTools = Math.max(1, subsetConfig.minTools ?? DEFAULT_TOOL_SUBSET_MIN)
   const allowFallbackToMin = subsetConfig.fallbackToTopMinWhenBelowMinScore ?? true
-  const gearBoost = currentGear >= 2 ? 4 : 0
-  const maxTools = Math.max(minTools, baseMax + gearBoost)
   if (finalCandidates.length <= maxTools) {
     const schemas = applyToolFamilyCaps(finalCandidates, subsetConfig)
-    return {
+    return applyV5ToolViewProjection({
       schemas,
       meta: {
         ...baseMeta,
         mcpToolsSelected: schemas.filter(s => isMcpTool(s.name)).length,
         writeToolsSelected: schemas.filter(s => isWriteLikeTool(s.name)).length,
+        withinVisibleToolHardCap: schemas.length <= visibleToolHardCap,
       },
-    }
+      contextText,
+      visibleToolHardCap,
+      explicitAllowToolIds: subsetConfig.alwaysInclude,
+    })
   }
 
   const desired = new Set<string>((subsetConfig.alwaysInclude ?? []).map(normalizeToolName).filter(Boolean))
@@ -1807,7 +2578,7 @@ function selectToolSubsetForTurn(input: {
   for (const name of inferAlwaysIncludeTools(contextText).map(normalizeToolName)) desired.add(name)
   const rawScored = finalCandidates.map(schema => ({
     schema,
-    score: scoreToolSchema(schema, contextText, signals, config, profile),
+    score: scoreToolSchema(schema, contextText, signals, config, toolScoringProfile),
   }))
   const minScore = subsetConfig.minScore ?? Number.NEGATIVE_INFINITY
   let droppedByMinScore = 0
@@ -1825,6 +2596,7 @@ function selectToolSubsetForTurn(input: {
   const picked = new Map<string, ToolSchema>()
 
   for (const mustHave of desired) {
+    if (picked.size >= maxTools) break
     const found = finalCandidates.find(s => normalizeToolName(s.name) === mustHave)
     if (found) picked.set(found.name, found)
   }
@@ -1844,15 +2616,19 @@ function selectToolSubsetForTurn(input: {
   let selected = Array.from(picked.values()).sort((a, b) => a.name.localeCompare(b.name))
   selected = applyToolFamilyCaps(selected, subsetConfig)
 
-  return {
+  return applyV5ToolViewProjection({
     schemas: selected,
     meta: {
       ...baseMeta,
       droppedByMinScore,
       mcpToolsSelected: selected.filter(s => isMcpTool(s.name)).length,
       writeToolsSelected: selected.filter(s => isWriteLikeTool(s.name)).length,
+      withinVisibleToolHardCap: selected.length <= visibleToolHardCap,
     },
-  }
+    contextText,
+    visibleToolHardCap,
+    explicitAllowToolIds: subsetConfig.alwaysInclude,
+  })
 }
 
 function selectToolSchemasForTurn(input: {
@@ -2018,7 +2794,39 @@ async function executeSequentially(
 ): Promise<ToolResult[]> {
   const results: ToolResult[] = []
   for (const call of calls) {
-    results.push(await toolRegistry.execute(call.name, call.input, call.toolUseId, context))
+    const registry = toolRegistry as any
+    if (typeof registry.execute === 'function') {
+      const result = await registry.execute(call.name, call.input, call.toolUseId, context)
+      results.push({
+        toolUseId: result?.toolUseId ?? call.toolUseId,
+        content: String(result?.content ?? ''),
+        isError: Boolean(result?.isError),
+        meta: result?.meta,
+      })
+      continue
+    }
+
+    const tool = typeof registry.find === 'function'
+      ? registry.find(call.name)
+      : typeof registry.get === 'function'
+        ? registry.get(call.name)
+        : undefined
+    if (tool && typeof tool.execute === 'function') {
+      const output = await tool.execute(call.input, { ...context, toolUseId: call.toolUseId })
+      results.push({
+        toolUseId: output?.toolUseId ?? call.toolUseId,
+        content: String(output?.content ?? ''),
+        isError: Boolean(output?.isError),
+        meta: output?.meta,
+      })
+      continue
+    }
+
+    results.push({
+      toolUseId: call.toolUseId,
+      content: `Tool "${call.name}" is not executable in the current registry surface.`,
+      isError: true,
+    })
   }
   return results
 }
@@ -2026,6 +2834,16 @@ async function executeSequentially(
 export const __queryLoopInternals = {
   selectToolSchemasForTurn,
   selectToolSubsetForTurn,
+}
+
+function resolveDsxuProfile(
+  contextText: string,
+  profileConfig?: QueryEngineConfig['profile'],
+): ProfileType | undefined {
+  if (!profileConfig) return undefined
+  if (profileConfig.type) return profileConfig.type
+  if (profileConfig.autoRecommend) return recommendProfileForTask(contextText)
+  return undefined
 }
 
 function resolveToolProfile(

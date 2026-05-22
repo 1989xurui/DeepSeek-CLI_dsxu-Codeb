@@ -1,11 +1,11 @@
 {
   "schemaVersion": "dsxu.v20.p12-target-manifest-contract-board.v1",
-  "generatedAt": "2026-05-15T01:54:41.223Z",
+  "generatedAt": "2026-05-21T21:04:17.197Z",
   "repoRoot": "D:\\DSXU-code",
   "status": "CONTRACT_READY_TARGET_MANIFEST_STILL_REQUIRED",
   "workOrderCount": 14,
   "requiredMinimumPairedRawLogsForPass": 14,
-  "currentAcceptedTargetLogs": 0,
+  "currentAcceptedTargetLogs": 14,
   "didFabricateTargetLogs": false,
   "didImportTargetManifest": false,
   "rows": [

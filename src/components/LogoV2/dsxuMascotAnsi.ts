@@ -1,7 +1,8 @@
-// Hand-tuned 9x3 terminal mascot. The pixel grid is 9x6, rendered two
-// vertical pixels per terminal cell with upper-half blocks.
+// DSXU-owned blue pixel kitten avatar. The grid renders two vertical pixels
+// per terminal cell with upper-half blocks, matching the small startup avatar
+// style used in the DSXU TUI first screen.
 export type DsxuMascotAnsiVariant = {
-  readonly name: 'small'
+  readonly name: 'pixel-kitten'
   readonly width: number
   readonly height: number
   readonly lines: readonly string[]
@@ -51,15 +52,19 @@ function renderHalfBlocks(grid: readonly string[]): readonly string[] {
   return lines
 }
 
-const DSXU_MASCOT_ANSI_SMALL_LINES = renderHalfBlocks(DSXU_MASCOT_PIXELS)
+const DSXU_MASCOT_ANSI_PIXEL_KITTEN_LINES = renderHalfBlocks(DSXU_MASCOT_PIXELS)
 
 export const DSXU_MASCOT_ANSI_VARIANTS = [
-  { name: 'small', width: 9, height: 3, lines: DSXU_MASCOT_ANSI_SMALL_LINES },
+  {
+    name: 'pixel-kitten',
+    width: 9,
+    height: 3,
+    lines: DSXU_MASCOT_ANSI_PIXEL_KITTEN_LINES,
+  },
 ] as const satisfies readonly DsxuMascotAnsiVariant[]
 
 export const DSXU_MASCOT_ANSI_DEFAULT = DSXU_MASCOT_ANSI_VARIANTS[0]
 
-export function selectDsxuMascotAnsiVariant(maxWidth: number): DsxuMascotAnsiVariant {
-  void maxWidth
+export function selectDsxuMascotAnsiVariant(_maxWidth: number): DsxuMascotAnsiVariant {
   return DSXU_MASCOT_ANSI_DEFAULT
 }

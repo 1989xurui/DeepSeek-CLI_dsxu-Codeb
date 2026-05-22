@@ -3,7 +3,7 @@ import { getFeatureValue_CACHED_MAY_BE_STALE } from '../services/analytics/featu
 import { shouldIncludeFirstPartyOnlyBetas } from './betas.js'
 import { getDsxuCodeEnv, isEnvTruthy } from './envUtils.js'
 import { getInitialSettings } from './settings/settings.js'
-import { isProviderMigrationAdvisorCapableModel } from './model/providerMigration/providerMigrationAdvisorModel.js'
+import { isArchivedAdvisorCapableModel } from './model/providerMigration/providerMigrationAdvisorModel.js'
 
 // The SDK does not yet have types for advisor blocks.
 // TODO(hackyon): Migrate to the real provider SDK types when this feature ships publicly
@@ -88,12 +88,12 @@ export function getExperimentAdvisorModels():
 // @[MODEL LAUNCH]: Add the new model if it supports the advisor tool.
 // Checks whether the main loop model supports calling the advisor tool.
 export function modelSupportsAdvisor(model: string): boolean {
-  return isProviderMigrationAdvisorCapableModel(model)
+  return isArchivedAdvisorCapableModel(model)
 }
 
 // @[MODEL LAUNCH]: Add the new model if it can serve as an advisor model.
 export function isValidAdvisorModel(model: string): boolean {
-  return isProviderMigrationAdvisorCapableModel(model)
+  return isArchivedAdvisorCapableModel(model)
 }
 
 export function getInitialAdvisorSetting(): string | undefined {

@@ -62,7 +62,6 @@ import { TodoWriteTool } from './tools/TodoWriteTool/TodoWriteTool.js'
 import { ExitPlanModeV2Tool } from './tools/ExitPlanModeTool/ExitPlanModeV2Tool.js'
 import { TestingPermissionTool } from './tools/testing/TestingPermissionTool.js'
 import { GrepTool } from './tools/GrepTool/GrepTool.js'
-import { TungstenTool } from './tools/TungstenTool/TungstenTool.js'
 // Lazy require to break circular dependency: tools.ts -> TeamCreateTool/TeamDeleteTool -> ... -> tools.ts
 /* eslint-disable @typescript-eslint/no-require-imports */
 const getTeamCreateTool = () =>
@@ -92,14 +91,12 @@ import uniqBy from 'lodash-es/uniqBy.js'
 import { isToolSearchEnabledOptimistic } from './utils/toolSearch.js'
 import { isTodoV2Enabled } from './utils/tasks.js'
 // Dead code elimination: conditional import for DSXU_CODE_VERIFY_PLAN
-// with DSXU_CODE_VERIFY_PLAN retained only as a provider migration alias.
+// with DSXU_CODE_VERIFY_PLAN retained only as an archived alias.
 /* eslint-disable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
-const VerifyPlanExecutionTool =
-  process.env.DSXU_CODE_VERIFY_PLAN === 'true' ||
-  process.env.DSXU_CODE_VERIFY_PLAN === 'true'
-    ? require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
-        .VerifyPlanExecutionTool
-    : null
+const VerifyPlanExecutionTool = isDsxuCodeEnvTruthy('VERIFY_PLAN')
+  ? require('./tools/VerifyPlanExecutionTool/VerifyPlanExecutionTool.js')
+      .VerifyPlanExecutionTool
+  : null
 /* eslint-enable custom-rules/no-process-env-top-level, @typescript-eslint/no-require-imports */
 import { SYNTHETIC_OUTPUT_TOOL_NAME } from './tools/SyntheticOutputTool/SyntheticOutputTool.js'
 export {
@@ -147,7 +144,7 @@ const WorkflowTool = feature('WORKFLOW_SCRIPTS') || process.env.DSXU_CODE_MODE =
 import type { ToolPermissionContext } from './Tool.js'
 import { getDenyRuleForTool } from './utils/permissions/permissions.js'
 import { hasEmbeddedSearchTools } from './utils/embeddedTools.js'
-import { isEnvTruthy } from './utils/envUtils.js'
+import { isDsxuCodeEnvTruthy, isEnvTruthy } from './utils/envUtils.js'
 import { isPowerShellToolEnabled } from './utils/shell/shellToolUtils.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js'
@@ -289,7 +286,6 @@ export function getAllBaseTools(): Tools {
     ...(process.env.USER_TYPE === 'ant' || process.env.DSXU_CODE_MODE === '1'
       ? [ConfigTool]
       : []),
-    ...(process.env.USER_TYPE === 'ant' ? [TungstenTool] : []),
     ...(SuggestBackgroundPRTool ? [SuggestBackgroundPRTool] : []),
     ...(WebBrowserTool ? [WebBrowserTool] : []),
     ...(isTodoV2Enabled()
@@ -351,10 +347,7 @@ export function filterToolsByDenyRules<
 
 export const getTools = (permissionContext: ToolPermissionContext): Tools => {
   // Simple mode: only Bash, Read, and Edit tools
-  if (
-    isEnvTruthy(process.env.DSXU_CODE_SIMPLE) ||
-    isEnvTruthy(process.env.DSXU_CODE_SIMPLE)
-  ) {
+  if (isDsxuCodeEnvTruthy('SIMPLE')) {
     // --bare + REPL mode: REPL wraps Bash/Read/Edit/etc inside the VM, so
     // return REPL instead of the raw primitives. Matches the non-bare path
     // below which also hides REPL_ONLY_TOOLS when REPL is enabled.
@@ -382,9 +375,9 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
   }
 
   // Get all base tools and filter out special tools that get added conditionally
+  const exposeMcpHelperTools = isEnvTruthy(process.env.DSXU_CODE_EXPOSE_MCP_HELPER_TOOLS)
   const specialTools = new Set([
-    ListMcpResourcesTool.name,
-    ReadMcpResourceTool.name,
+    ...(exposeMcpHelperTools ? [] : [ListMcpResourcesTool.name, ReadMcpResourceTool.name]),
     SYNTHETIC_OUTPUT_TOOL_NAME,
   ])
 
@@ -492,7 +485,7 @@ export function getDsxuToolRegistryRuntimeProfile(): {
       .map(tool => tool.name),
     defaultMainlineToolNames: [...DSXU_DEFAULT_MAINLINE_TOOLS],
     explicitSidecarToolEnv: DSXU_EXPLICIT_TOOL_ENV,
-    simpleModeEnv: ['DSXU_CODE_SIMPLE', 'DSXU_CODE_SIMPLE legacy alias'],
+    simpleModeEnv: ['DSXU_CODE_SIMPLE', 'archived CODE_SIMPLE alias'],
     mcpAssemblyPolicy:
       'built-in tools are filtered by DSXU permission context, MCP tools are filtered by deny rules, and prompt-cache-stable sorting preserves built-in prefix ordering',
     activationEvidence: [

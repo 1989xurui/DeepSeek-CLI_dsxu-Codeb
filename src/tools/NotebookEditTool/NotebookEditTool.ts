@@ -5,7 +5,15 @@ import {
   fileHistoryTrackEdit,
 } from 'src/utils/fileHistory.js'
 import { z } from 'zod/v4'
+import {
+  buildPostMutationVerificationEnvelope,
+  formatPostMutationVerificationFailure,
+  formatPostMutationVerificationToolState,
+  summarizePostMutationVerificationEnvelope,
+} from '../../dsxu/engine/post-mutation-verification-envelope.js'
 import { buildTool, type ToolDef, type ToolUseContext } from '../../Tool.js'
+import { invokePostWriteTddGate } from '../../coordinator/tdd-gate/post-write-hook.js'
+import { invokeStaticAnalysisToolGate } from '../../services/static-analysis/tool-gate.js'
 import type { NotebookCell, NotebookContent } from '../../types/notebook.js'
 import { getCwd } from '../../utils/cwd.js'
 import { isENOENT } from '../../utils/errors.js'
@@ -81,6 +89,23 @@ export const outputSchema = lazySchema(() =>
     updated_file: z
       .string()
       .describe('The updated notebook content after modification'),
+    postMutationVerification: z.object({
+      schemaVersion: z.literal('dsxu.post-mutation-verification-summary.v1'),
+      owner: z.literal('Tool Gate / VerificationKernel'),
+      status: z.enum([
+        'READY_FOR_FOCUSED_CLAIM',
+        'NEEDS_FOCUSED_VERIFICATION',
+        'NEEDS_REVIEW',
+        'BLOCKED',
+      ]),
+      finalClaimAllowed: z.boolean(),
+      reviewRequired: z.boolean(),
+      blockingFailure: z.boolean(),
+      rollbackStrategy: z.enum(['restore-old-content', 'manual-review']),
+      nextAction: z.string(),
+      evidence: z.array(z.string()),
+      compactLine: z.string(),
+    }).optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>
@@ -102,6 +127,7 @@ export const NotebookEditTool = buildTool({
     evidence: [
       'inputSchema.notebook_path',
       'checkWritePermissionForTool',
+      'post-mutation verification envelope',
       'original_file/updated_file output',
       'cell_id/edit_mode output',
     ],
@@ -147,14 +173,17 @@ export const NotebookEditTool = buildTool({
     )
   },
   mapToolResultToToolResultBlockParam(
-    { cell_id, edit_mode, new_source, error },
+    { cell_id, edit_mode, new_source, error, postMutationVerification },
     toolUseID,
   ) {
+    const verificationState = postMutationVerification
+      ? `\n${formatPostMutationVerificationToolState(postMutationVerification)}`
+      : ''
     if (error) {
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: error,
+        content: `${error}${verificationState}`,
         is_error: true,
       }
     }
@@ -163,25 +192,25 @@ export const NotebookEditTool = buildTool({
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `Updated cell ${cell_id} with ${new_source}`,
+          content: `Updated cell ${cell_id} with ${new_source}${verificationState}`,
         }
       case 'insert':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `Inserted cell ${cell_id} with ${new_source}`,
+          content: `Inserted cell ${cell_id} with ${new_source}${verificationState}`,
         }
       case 'delete':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `Deleted cell ${cell_id}`,
+          content: `Deleted cell ${cell_id}${verificationState}`,
         }
       default:
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: 'Unknown edit mode',
+          content: `Unknown edit mode${verificationState}`,
         }
     }
   },
@@ -456,16 +485,57 @@ export const NotebookEditTool = buildTool({
         offset: undefined,
         limit: undefined,
       })
+
+      const staticGateResult = await invokeStaticAnalysisToolGate({
+        filePaths: [fullPath],
+        patchContent: updatedContent,
+      })
+      const tddGateResult = await invokePostWriteTddGate({
+        filePath: fullPath,
+        changeType: 'edit',
+        oldContent: content,
+        newContent: updatedContent,
+        repoRoot: getCwd(),
+      })
+      const verificationEnvelope = buildPostMutationVerificationEnvelope({
+        filePath: fullPath,
+        changeType: 'edit',
+        oldContent: content,
+        newContent: updatedContent,
+        gates: [
+          {
+            name: 'static-analysis',
+            status: staticGateResult.status,
+            blocking: staticGateResult.shouldBlock,
+            passed: staticGateResult.status !== 'FAIL',
+            issues: staticGateResult.issues,
+            error: staticGateResult.error,
+          },
+          {
+            name: 'post-mutation-verification',
+            status: tddGateResult.status,
+            blocking: tddGateResult.blocking,
+            passed: tddGateResult.passed,
+            durationMs: tddGateResult.durationMs,
+            error: tddGateResult.error,
+          },
+        ],
+      })
+      const postMutationVerification =
+        summarizePostMutationVerificationEnvelope(verificationEnvelope)
       const data = {
         new_source,
         cell_type: cell_type ?? 'code',
         language,
         edit_mode: edit_mode ?? 'replace',
         cell_id: new_cell_id || undefined,
-        error: '',
+        error: verificationEnvelope.blockingFailure
+          ? formatPostMutationVerificationFailure(verificationEnvelope)
+          : '',
         notebook_path: fullPath,
         original_file: content,
         updated_file: updatedContent,
+        postMutationVerification,
       }
       return {
         data,

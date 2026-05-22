@@ -45,9 +45,9 @@ V20 source-of-truth metadata lives on the existing `Tool` contract, not in a sec
 - `runtimeMetadata.permission`
 - `runtimeMetadata.evidence`
 - `runtimeMetadata.uiProjection`
-- `summarizeToolDefinitionV20(tool, input)`
+- `summarizeToolDefinitionOwner(tool, input)`
 
-High-risk tools must make their owner visible through this contract before release signoff. Current V20 metadata coverage includes Bash, PowerShell, MCPTool, RunNativeTest, FileRead, FileEdit, FileWrite, NotebookEdit, Grep, Glob, ListMcpResources, ReadMcpResource, McpAuth, SkillTool, ConfigTool, TodoWrite, TaskCreate, TaskGet, TaskList, TaskUpdate, TaskOutput, TaskStop, Agent, SendMessage, TeamCreate, TeamDelete, EnterPlanMode, ExitPlanMode, EnterWorktree, ExitWorktree, CronCreate, CronList, CronDelete, RemoteTrigger, ToolSearch, AskUserQuestion, Brief, LSP, WebFetch, WebSearch, Workflow, CollectEvidence, SyntheticOutput, TestingPermission, and the disabled Tungsten recovery stub.
+High-risk tools must make their owner visible through this contract before release signoff. Current V20 metadata coverage includes Bash, PowerShell, MCPTool, RunNativeTest, FileRead, FileEdit, FileWrite, NotebookEdit, Grep, Glob, ListMcpResources, ReadMcpResource, McpAuth, SkillTool, ConfigTool, TodoWrite, TaskCreate, TaskGet, TaskList, TaskUpdate, TaskOutput, TaskStop, Agent, SendMessage, TeamCreate, TeamDelete, EnterPlanMode, ExitPlanMode, EnterWorktree, ExitWorktree, CronCreate, CronList, CronDelete, RemoteTrigger, ToolSearch, AskUserQuestion, Brief, LSP, WebFetch, WebSearch, Workflow, CollectEvidence, SyntheticOutput, and TestingPermission. Historical disabled recovery stubs are not part of the public tool surface and must stay in owner/Git replace-delete review until explicitly signed off.
 
 ## V20 Regression Expectations
 

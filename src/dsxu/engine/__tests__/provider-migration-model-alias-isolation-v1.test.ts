@@ -47,7 +47,7 @@ describe('provider migration model alias isolation V1', () => {
     expect(clientSource.slice(dsxuBranch, providerSdkBranch)).toContain(
       'DeepSeekAdapter.transformRequest',
     )
-    expect(clientSource).toContain('isDSXUCodeMode() || !isProviderMigrationServiceShellAllowed()')
+    expect(clientSource).toContain('isDSXUCodeMode() || !isArchivedServiceShellAllowed()')
     expect(clientSource).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
 
     const facadeSource = readFileSync('src/services/api/dsxu-model.ts', 'utf8')
@@ -60,7 +60,7 @@ describe('provider migration model alias isolation V1', () => {
     expect(retrySource).toContain('function isPrimaryModelFallbackAllowed(model: string)')
     expect(retrySource).toContain('DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS')
     expect(retrySource).toContain("isDsxuCodeEnvTruthy('ALLOW_PROVIDER_MODEL_FALLBACKS')")
-    expect(retrySource).toContain('if (!isProviderMigrationServiceShellAllowed())')
+    expect(retrySource).toContain('if (!isArchivedServiceShellAllowed())')
     expect(retrySource).toContain('return false')
     expect(retrySource).toContain('Boolean(process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS)')
   })

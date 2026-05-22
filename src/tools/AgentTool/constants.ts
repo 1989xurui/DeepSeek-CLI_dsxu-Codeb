@@ -1,5 +1,5 @@
 export const AGENT_TOOL_NAME = 'Agent'
-// Provider-migration source wire alias retained for permission rules, hooks, and resumed sessions.
+// Archived source wire alias retained for permission rules, hooks, and resumed sessions.
 export const SOURCE_AGENT_TOOL_ALIAS_NAME = 'Task'
 export const VERIFICATION_AGENT_TYPE = 'verification'
 

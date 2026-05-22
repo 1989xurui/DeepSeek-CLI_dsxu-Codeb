@@ -25,5 +25,3 @@ export function clearDSXUSessionCaches(): DSXUSessionCacheControlResult {
 export function clearSessionCaches(): DSXUSessionCacheControlResult {
   return clearDSXUSessionCaches()
 }
-
-export type V15SessionCacheControlResult = DSXUSessionCacheControlResult

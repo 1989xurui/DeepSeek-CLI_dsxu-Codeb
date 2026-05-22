@@ -21,7 +21,7 @@ import { getDSXUCodeUserAgent } from '../userAgent.js'
 
 const PROVIDER_API_ORIGIN = `https://api.${'anth' + 'ropic'}.com`
 const METRICS_PATH = `/api/${'cl' + 'aude'}_code/metrics`
-const PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV = 'ANT_CL' + 'AUDE_CODE_METRICS_ENDPOINT'
+const ARCHIVED_METRICS_ENDPOINT_ENV = 'ANT_CL' + 'AUDE_CODE_METRICS_ENDPOINT'
 
 type DataPoint = {
   attributes: Record<string, string>
@@ -52,10 +52,10 @@ export class BigQueryMetricsExporter implements PushMetricExporter {
 
     if (
       process.env.USER_TYPE === 'ant' &&
-      process.env[PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV]
+      process.env[ARCHIVED_METRICS_ENDPOINT_ENV]
     ) {
       this.endpoint =
-        process.env[PROVIDER_MIGRATION_METRICS_ENDPOINT_ENV] + METRICS_PATH
+        process.env[ARCHIVED_METRICS_ENDPOINT_ENV] + METRICS_PATH
     } else {
       this.endpoint = defaultEndpoint
     }

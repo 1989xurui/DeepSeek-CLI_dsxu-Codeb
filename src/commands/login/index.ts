@@ -9,8 +9,8 @@ export default () =>
     description: isDsxuRuntimeMode()
       ? 'Configure DSXU model provider credentials'
       : hasProviderApiKeyAuth()
-        ? 'Switch provider migration accounts'
-        : 'Sign in with a provider migration account',
+        ? 'Switch archived cloud accounts'
+        : 'Sign in with an archived cloud account',
     isEnabled: () => !isEnvTruthy(process.env.DISABLE_LOGIN_COMMAND),
     load: () => import('./login.js'),
   }) satisfies Command
@@ -18,16 +18,16 @@ export default () =>
 export function getDsxuLoginCommandRuntimeProfile(): {
   runtime: 'DSXU Login Command'
   dsxuDescription: string
-  providerMigrationPolicy: string
+  archivedPolicy: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Login Command',
     dsxuDescription: 'Configure DSXU model provider credentials',
-    providerMigrationPolicy:
-      'Provider migration wording is kept only outside DSXU runtime mode',
+    archivedPolicy:
+      'Archived cloud wording is kept only outside DSXU runtime mode',
     activationEvidence: [
-      'DSXU runtime mode replaces provider migration sign-in description',
+      'DSXU runtime mode replaces archived cloud sign-in description',
       'DISABLE_LOGIN_COMMAND still disables the command globally',
       'command metadata remains the only login command owner surface',
     ],

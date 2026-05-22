@@ -24,7 +24,7 @@ import { subprocessEnv } from '../subprocessEnv.js'
 import { quote } from './shellQuote.js'
 const LITERAL_BACKSLASH = '\\'
 const SNAPSHOT_CREATION_TIMEOUT = 10000 // 10 seconds
-const PROVIDER_MIGRATION_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
+const ARCHIVED_RUNTIME_MARKER_ENV = `CL${'AUDE'}CODE`
 /**
  * Creates a shell function that invokes `binaryPath` with a specific argv[0].
  * This uses the bun-internal ARGV0 dispatch trick: the bun binary checks its
@@ -421,7 +421,7 @@ export const createAndSaveSnapshot = async (
             SHELL: binShell,
             GIT_EDITOR: 'true',
             DSXUCODE: '1',
-            [PROVIDER_MIGRATION_RUNTIME_MARKER_ENV]: '1',
+            [ARCHIVED_RUNTIME_MARKER_ENV]: '1',
           },
           timeout: SNAPSHOT_CREATION_TIMEOUT,
           maxBuffer: 1024 * 1024, // 1MB buffer

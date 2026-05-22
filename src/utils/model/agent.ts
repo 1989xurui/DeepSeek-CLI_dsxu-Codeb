@@ -7,14 +7,14 @@ import {
 import { getDsxuCodeEnv } from '../envUtils.js'
 import { isDSXUCodeMode, parseDSXUModelAlias, renderDSXUModelName } from './dsxuModel.js'
 import {
-  getAgentModel as getProviderMigrationAgentModel,
-  getAgentModelDisplay as getProviderMigrationAgentModelDisplay,
-  getAgentModelOptions as getProviderMigrationAgentModelOptions,
-  type AgentModelAlias as ProviderMigrationAgentModelAlias,
+  getAgentModel as getArchivedAgentModel,
+  getAgentModelDisplay as getArchivedAgentModelDisplay,
+  getAgentModelOptions as getArchivedAgentModelOptions,
+  type AgentModelAlias as ArchivedAgentModelAlias,
 } from './providerMigration/providerMigrationAgentModel.js'
 
 export const AGENT_MODEL_OPTIONS = DSXU_AGENT_MODEL_ALIASES
-export type AgentModelAlias = DsxuAgentModelAlias | ProviderMigrationAgentModelAlias
+export type AgentModelAlias = DsxuAgentModelAlias | ArchivedAgentModelAlias
 
 export type AgentModelOption = {
   value: AgentModelAlias
@@ -33,7 +33,7 @@ export function getAgentModel(
   permissionMode?: PermissionMode,
 ): string {
   if (!isDSXUCodeMode()) {
-    return getProviderMigrationAgentModel(
+    return getArchivedAgentModel(
       agentModel,
       parentModel,
       toolSpecifiedModel,
@@ -59,7 +59,7 @@ export function getAgentModel(
 
 export function getAgentModelDisplay(model: string | undefined): string {
   if (!isDSXUCodeMode()) {
-    return getProviderMigrationAgentModelDisplay(model)
+    return getArchivedAgentModelDisplay(model)
   }
   if (!model) return 'Inherit from parent (default)'
   if (model === 'inherit') return 'Inherit from parent'
@@ -68,7 +68,7 @@ export function getAgentModelDisplay(model: string | undefined): string {
 
 export function getAgentModelOptions(): AgentModelOption[] {
   if (!isDSXUCodeMode()) {
-    return getProviderMigrationAgentModelOptions()
+    return getArchivedAgentModelOptions()
   }
   return [
     {

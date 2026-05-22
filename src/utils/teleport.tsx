@@ -8,7 +8,7 @@ import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEve
 import { isPolicyAllowed } from 'src/services/policyLimits/index.js';
 import { z } from 'zod/v4';
 import { getProviderControlAccessToken } from '../services/auth/dsxuProviderControlAuth.js';
-import { queryProviderMigrationSmallModel } from './model/providerMigration/providerMigrationSmallModelQuery.js';
+import { queryArchivedSmallModel } from './model/providerMigration/providerMigrationSmallModelQuery.js';
 import { getTeleportErrors, TeleportError, type TeleportLocalErrorType } from '../components/TeleportError.js';
 import { getOauthConfig } from '../constants/oauth.js';
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js';
@@ -92,7 +92,7 @@ Example 3: {"title": "Improve performance of data processing script", "branch": 
 Here is the session description:
 <description>{description}</description>
 Please generate a title and branch name for this session.`;
-const PROVIDER_MIGRATION_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
+const ARCHIVED_OAUTH_TOKEN_ENV = `CL${'AUDE'}_CODE_OAUTH_TOKEN`
 type TitleAndBranch = {
   title: string;
   branchName: string;
@@ -116,7 +116,7 @@ export function getDsxuTeleportRuntimeProfile(): {
     releaseRiskControls: [
       'teleport is a remote session adapter, not a second local Agent orchestrator',
       'remote execution must still surface session logs, permission state, and archive behavior',
-      'provider-migration OAuth token env remains migration-only input',
+      'archived OAuth token env remains explicit archived input',
     ],
   }
 }
@@ -131,7 +131,7 @@ async function generateTitleAndBranch(description: string, signal: AbortSignal):
   const fallbackBranch = 'dsxu/task';
   try {
     const userPrompt = SESSION_TITLE_AND_BRANCH_PROMPT.replace('{description}', description);
-    const response = await queryProviderMigrationSmallModel({
+    const response = await queryArchivedSmallModel({
       systemPrompt: asSystemPrompt([]),
       userPrompt,
       outputFormat: {
@@ -778,7 +778,7 @@ export async function teleportToRemote(options: {
   /**
    * Per-session env vars merged into session_context.environment_variables.
    * Write-only at the API layer (stripped from Get/List responses). When
-   * environmentId is set, the provider-migration OAuth token is auto-injected from the
+   * environmentId is set, the archived OAuth token is auto-injected from the
    * caller's accessToken so the container's hook can hit inference (the
    * server only passes through what the caller sends; bughunter.go mints
    * its own, user sessions don't get one automatically).
@@ -854,7 +854,7 @@ export async function teleportToRemote(options: {
       };
       const envVars = {
         DSXU_CODE_OAUTH_TOKEN: accessToken,
-        [PROVIDER_MIGRATION_OAUTH_TOKEN_ENV]: accessToken,
+        [ARCHIVED_OAUTH_TOKEN_ENV]: accessToken,
         ...(options.environmentVariables ?? {})
       };
 

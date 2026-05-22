@@ -1,12 +1,12 @@
 {
   "schemaVersion": "dsxu.v20.acl-residue-closure-plan.v1",
-  "generatedAt": "2026-05-15T03:39:43.375Z",
+  "generatedAt": "2026-05-15T14:26:39.855Z",
   "repoRoot": "D:\\DSXU-code",
   "status": "PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME",
-  "residueCount": 4,
+  "residueCount": 7,
   "readyRows": 0,
   "permissionDeniedRows": 0,
-  "signedExternalRows": 4,
+  "signedExternalRows": 7,
   "didMutateFilesystem": false,
   "didStageGit": false,
   "rows": [
@@ -36,6 +36,27 @@
       "residueClass": "retired-adapter-tombstone",
       "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
       "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/engine/adapters/bridge-adapter.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-context-budget-v1-harness.ts",
+      "residueClass": "retired-wrapper-acl-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/integration/harness/v10-context-budget-v1-harness.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-longtask-stability-v1-harness.ts",
+      "residueClass": "retired-wrapper-acl-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/integration/harness/v10-longtask-stability-v1-harness.ts\"",
+      "requiresExplicitAuthorization": true
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-model-gateway-v1-harness.ts",
+      "residueClass": "retired-wrapper-acl-residue",
+      "status": "SIGNED_EXTERNAL_RESIDUE_NOT_PRODUCT_RUNTIME",
+      "commandPlan": "Remove-Item -LiteralPath \"src/dsxu/integration/harness/v10-model-gateway-v1-harness.ts\"",
       "requiresExplicitAuthorization": true
     }
   ],

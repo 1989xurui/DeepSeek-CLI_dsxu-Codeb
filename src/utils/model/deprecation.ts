@@ -1,11 +1,11 @@
 ﻿/**
  * Model deprecation utilities.
  *
- * Active source returns DSXU-safe public text. Provider-migration matching lives
- * behind the provider-migration boundary.
+ * Active source returns DSXU-safe public text. Archived matching lives
+ * behind the archived boundary.
  */
 
-import { getProviderMigrationDeprecatedModelInfo } from './providerMigration/providerMigrationDeprecation.js'
+import { getArchivedDeprecatedModelInfo } from './providerMigration/providerMigrationDeprecation.js'
 
 /**
  * Get a deprecation warning message for a model, or null if not deprecated.
@@ -17,7 +17,7 @@ export function getModelDeprecationWarning(
     return null
   }
 
-  const info = getProviderMigrationDeprecatedModelInfo(modelId)
+  const info = getArchivedDeprecatedModelInfo(modelId)
   if (!info.isDeprecated) {
     return null
   }

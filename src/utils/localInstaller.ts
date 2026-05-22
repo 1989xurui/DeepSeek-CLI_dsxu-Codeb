@@ -12,9 +12,9 @@ import { getFsImplementation } from './fsOperations.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
 
-const PROVIDER_MIGRATION_SOURCE_LOCAL_BIN = 'cl' + 'aude'
+const ARCHIVED_SOURCE_LOCAL_BIN = 'cl' + 'aude'
 const DSXU_LOCAL_BIN = 'dsxu-code'
-const PROVIDER_MIGRATION_SOURCE_LOCAL_INSTALL_SEGMENT = `/.${PROVIDER_MIGRATION_SOURCE_LOCAL_BIN}/local/node_modules/`
+const ARCHIVED_SOURCE_LOCAL_INSTALL_SEGMENT = `/.${ARCHIVED_SOURCE_LOCAL_BIN}/local/node_modules/`
 
 // Lazy getters: runtime config home is memoized and reads process.env.
 // Evaluating at module scope would capture the value before entrypoints like
@@ -24,7 +24,11 @@ function getLocalInstallDir(): string {
   return join(getRuntimeConfigHomeDir(), 'local')
 }
 export function getLocalDsxuPath(): string {
-  return join(getLocalInstallDir(), isDsxuRuntimeMode() ? DSXU_LOCAL_BIN : PROVIDER_MIGRATION_SOURCE_LOCAL_BIN)
+  return join(getLocalInstallDir(), getLocalExecutableName())
+}
+
+function getLocalExecutableName(): string {
+  return isDsxuRuntimeMode() ? DSXU_LOCAL_BIN : ARCHIVED_SOURCE_LOCAL_BIN
 }
 
 /**
@@ -34,7 +38,7 @@ export function isRunningFromLocalInstallation(): boolean {
   const execPath = process.argv[1] || ''
   return (
     execPath.includes('/.dsxu/local/node_modules/') ||
-    execPath.includes(PROVIDER_MIGRATION_SOURCE_LOCAL_INSTALL_SEGMENT)
+    execPath.includes(ARCHIVED_SOURCE_LOCAL_INSTALL_SEGMENT)
   )
 }
 
@@ -81,7 +85,7 @@ export async function ensureLocalPackageEnvironment(): Promise<boolean> {
     const wrapperPath = getLocalDsxuPath()
     const created = await writeIfMissing(
       wrapperPath,
-      `#!/bin/sh\nexec "${localInstallDir}/node_modules/.bin/${PROVIDER_MIGRATION_SOURCE_LOCAL_BIN}" "$@"`,
+      `#!/bin/sh\nexec "${localInstallDir}/node_modules/.bin/${getLocalExecutableName()}" "$@"`,
       0o755,
     )
     if (created) {
@@ -151,7 +155,7 @@ export async function installOrUpdateDsxuPackage(
 export async function localInstallationExists(): Promise<boolean> {
   try {
     await access(
-      join(getLocalInstallDir(), 'node_modules', '.bin', PROVIDER_MIGRATION_SOURCE_LOCAL_BIN),
+      join(getLocalInstallDir(), 'node_modules', '.bin', getLocalExecutableName()),
     )
     return true
   } catch {

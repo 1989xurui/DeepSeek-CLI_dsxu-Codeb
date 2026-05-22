@@ -50,14 +50,14 @@ import {
 import { sleep } from './sleep.js'
 import { jsonParse } from './slowOperations.js'
 
-const providerMigrationSourceIdeConfigDir = '.' + 'cla' + 'ude'
-const providerMigrationSourceIdeLockSubdir = 'ide'
-const providerMigrationSourceToken = 'anth' + 'ropic'
-const providerMigrationSourceIdeExtensionId = `${providerMigrationSourceToken}.cla${'ude'}-code`
-const providerMigrationSourceInternalIdeExtensionId = `${providerMigrationSourceToken}.cla${'ude'}-code-internal`
-const providerMigrationSourceIdeArtifactPath =
+const archivedSourceIdeConfigDir = '.' + 'cla' + 'ude'
+const archivedSourceIdeLockSubdir = 'ide'
+const archivedSourceToken = 'anth' + 'ropic'
+const archivedSourceIdeExtensionId = `${archivedSourceToken}.cla${'ude'}-code`
+const archivedSourceInternalIdeExtensionId = `${archivedSourceToken}.cla${'ude'}-code-internal`
+const archivedSourceIdeArtifactPath =
   'armorcode-' + 'cla' + 'ude-code-internal/cla' + 'ude-vscode-releases'
-const providerMigrationSourceIdeVsixName = (version: string) =>
+const archivedSourceIdeVsixName = (version: string) =>
   `cla${'ude'}-code-${version}-${Date.now()}.vsix`
 
 function isProcessRunning(pid: number): boolean {
@@ -306,7 +306,7 @@ export function getTerminalIdeType(): IdeType | null {
 }
 
 /**
- * Gets sorted IDE lockfiles from the runtime IDE directory plus provider migration locations
+ * Gets sorted IDE lockfiles from the runtime IDE directory plus archived locations
  * @returns Array of full lockfile paths sorted by modification time (newest first)
  */
 export async function getSortedIdeLockfiles(): Promise<string[]> {
@@ -488,7 +488,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
   if (windowsHome) {
     const converter = new WindowsToWSLConverter(process.env.WSL_DISTRO_NAME)
     const wslPath = converter.toLocalPath(windowsHome)
-    paths.push(resolve(wslPath, providerMigrationSourceIdeConfigDir, providerMigrationSourceIdeLockSubdir))
+    paths.push(resolve(wslPath, archivedSourceIdeConfigDir, archivedSourceIdeLockSubdir))
   }
 
   // Construct the path based on the standard Windows WSL locations
@@ -513,7 +513,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
       ) {
         continue // Skip system directories
       }
-      paths.push(join(usersDir, user.name, providerMigrationSourceIdeConfigDir, providerMigrationSourceIdeLockSubdir))
+      paths.push(join(usersDir, user.name, archivedSourceIdeConfigDir, archivedSourceIdeLockSubdir))
     }
   } catch (error: unknown) {
     if (isFsInaccessible(error)) {
@@ -860,8 +860,8 @@ export function hasAccessToIDEExtensionDiffFeature(
 
 const EXTENSION_ID =
   process.env.USER_TYPE === 'ant'
-    ? providerMigrationSourceInternalIdeExtensionId
-    : providerMigrationSourceIdeExtensionId
+    ? archivedSourceInternalIdeExtensionId
+    : archivedSourceIdeExtensionId
 
 export async function isIDEExtensionInstalled(
   ideType: IdeType,
@@ -905,7 +905,7 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
         await sleep(500)
         const result = await execFileNoThrowWithCwd(
           command,
-          ['--force', '--install-extension', providerMigrationSourceIdeExtensionId],
+          ['--force', '--install-extension', archivedSourceIdeExtensionId],
           {
             env: getInstallationEnv(),
           },
@@ -955,7 +955,7 @@ async function getInstalledVSCodeExtensionVersion(
   const lines = stdout?.split('\n') || []
   for (const line of lines) {
     const [extensionId, version] = line.split('@')
-    if (extensionId === providerMigrationSourceIdeExtensionId && version) {
+    if (extensionId === archivedSourceIdeExtensionId && version) {
       return version
     }
   }
@@ -1436,7 +1436,7 @@ async function installFromArtifactory(command: string): Promise<string> {
 
   // Fetch the version from artifactory
   const versionUrl =
-    `https://artifactory.infra.ant.dev/artifactory/${providerMigrationSourceIdeArtifactPath}/stable`
+    `https://artifactory.infra.ant.dev/artifactory/${archivedSourceIdeArtifactPath}/stable`
 
   try {
     const versionResponse = await axios.get(versionUrl, {
@@ -1451,10 +1451,10 @@ async function installFromArtifactory(command: string): Promise<string> {
     }
 
     // Download the .vsix file from artifactory
-    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/${providerMigrationSourceIdeArtifactPath}/${version}/${'cla' + 'ude'}-code.vsix`
+    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/${archivedSourceIdeArtifactPath}/${version}/${'cla' + 'ude'}-code.vsix`
     const tempVsixPath = join(
       os.tmpdir(),
-      providerMigrationSourceIdeVsixName(version),
+      archivedSourceIdeVsixName(version),
     )
 
     try {

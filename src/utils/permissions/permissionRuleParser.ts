@@ -15,10 +15,10 @@ const BRIEF_TOOL_NAME: string | null =
     : null
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// Maps provider-migration tool aliases to their current canonical names.
+// Maps archived tool aliases to their current canonical names.
 // When a tool is renamed, add old -> new here so permission rules,
 // hooks, and persisted wire names resolve to the canonical name.
-const PROVIDER_MIGRATION_TOOL_NAME_ALIASES: Record<string, string> = {
+const ARCHIVED_TOOL_NAME_ALIASES: Record<string, string> = {
   Task: AGENT_TOOL_NAME,
   KillShell: TASK_STOP_TOOL_NAME,
   AgentOutputTool: TASK_OUTPUT_TOOL_NAME,
@@ -28,16 +28,16 @@ const PROVIDER_MIGRATION_TOOL_NAME_ALIASES: Record<string, string> = {
     : {}),
 }
 
-export function normalizeProviderMigrationToolName(name: string): string {
-  return PROVIDER_MIGRATION_TOOL_NAME_ALIASES[name] ?? name
+export function normalizeArchivedToolName(name: string): string {
+  return ARCHIVED_TOOL_NAME_ALIASES[name] ?? name
 }
 
-export function getProviderMigrationToolNames(canonicalName: string): string[] {
+export function getArchivedToolNames(canonicalName: string): string[] {
   const result: string[] = []
-  for (const [providerMigrationAlias, canonical] of Object.entries(
-    PROVIDER_MIGRATION_TOOL_NAME_ALIASES,
+  for (const [archivedAlias, canonical] of Object.entries(
+    ARCHIVED_TOOL_NAME_ALIASES,
   )) {
-    if (canonical === canonicalName) result.push(providerMigrationAlias)
+    if (canonical === canonicalName) result.push(archivedAlias)
   }
   return result
 }
@@ -99,20 +99,20 @@ export function permissionRuleValueFromString(
   const openParenIndex = findFirstUnescapedChar(ruleString, '(')
   if (openParenIndex === -1) {
     // No parenthesis found - this is just a tool name
-    return { toolName: normalizeProviderMigrationToolName(ruleString) }
+    return { toolName: normalizeArchivedToolName(ruleString) }
   }
 
   // Find the last unescaped closing parenthesis
   const closeParenIndex = findLastUnescapedChar(ruleString, ')')
   if (closeParenIndex === -1 || closeParenIndex <= openParenIndex) {
     // No matching closing paren or malformed - treat as tool name
-    return { toolName: normalizeProviderMigrationToolName(ruleString) }
+    return { toolName: normalizeArchivedToolName(ruleString) }
   }
 
   // Ensure the closing paren is at the end
   if (closeParenIndex !== ruleString.length - 1) {
     // Content after closing paren - treat as tool name
-    return { toolName: normalizeProviderMigrationToolName(ruleString) }
+    return { toolName: normalizeArchivedToolName(ruleString) }
   }
 
   const toolName = ruleString.substring(0, openParenIndex)
@@ -120,18 +120,18 @@ export function permissionRuleValueFromString(
 
   // Missing toolName (e.g., "(foo)") is malformed - treat whole string as tool name
   if (!toolName) {
-    return { toolName: normalizeProviderMigrationToolName(ruleString) }
+    return { toolName: normalizeArchivedToolName(ruleString) }
   }
 
   // Empty content (e.g., "Bash()") or standalone wildcard (e.g., "Bash(*)")
   // should be treated as just the tool name (tool-wide rule)
   if (rawContent === '' || rawContent === '*') {
-    return { toolName: normalizeProviderMigrationToolName(toolName) }
+    return { toolName: normalizeArchivedToolName(toolName) }
   }
 
   // Unescape the content
   const ruleContent = unescapeRuleContent(rawContent)
-  return { toolName: normalizeProviderMigrationToolName(toolName), ruleContent }
+  return { toolName: normalizeArchivedToolName(toolName), ruleContent }
 }
 
 /**

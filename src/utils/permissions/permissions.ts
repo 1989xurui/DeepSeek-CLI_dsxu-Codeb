@@ -1084,7 +1084,7 @@ export async function checkRuleBasedPermissions(
   ) {
     return toolPermissionResult
   }
-  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, provider-migration source instruction dirs) are
+  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, archived source instruction dirs) are
   // bypass-immune ...they must prompt even when a PreToolUse hook returned
   // allow. checkPathSafetyForAutoEdit returns {type:'safetyCheck'} for these.
   if (
@@ -1181,7 +1181,7 @@ async function hasPermissionsToUseToolInner(
   ) {
     return toolPermissionResult
   }
-  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, provider-migration source instruction dirs) are
+  // 1g. Safety checks (e.g. .git/, .vscode/, shell configs, archived source instruction dirs) are
   // bypass-immune ...they must prompt even in bypassPermissions mode.
   // checkPathSafetyForAutoEdit returns {type:'safetyCheck'} for these paths.
   if (

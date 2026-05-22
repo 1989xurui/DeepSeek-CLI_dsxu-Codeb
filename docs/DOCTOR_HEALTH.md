@@ -38,9 +38,9 @@ Any future CLI doctor command must report the same owner boundaries as this docu
 - Tool requested without permission。
 - MCP server failed to spawn/connect/authenticate。
 - Plugin or skill schema invalid。
-- Provider-migration fallback requested without explicit gate。
+- Archived-provider fallback requested without explicit gate。
 - MCP registry disabled without release signoff。
-- MCP provider-migration boundary present without explicit owner review。
+- MCP archived boundary present without explicit owner review。
 - Evidence directory present but not release-exportable。
 - Git owner review not closed。
 - Clean export attempted before final gates。

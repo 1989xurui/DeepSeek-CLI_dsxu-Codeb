@@ -36,14 +36,14 @@ import { getEssentialTrafficOnlyReason } from './privacyLevel.js'
 import { getManagedFilePath } from './settings/managedPath.js'
 import type { ThemeSetting } from './theme.js'
 import {
-  PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY,
-  PROVIDER_MIGRATION_1M_MIGRATION_DONE_KEY,
-  PROVIDER_MIGRATION_EVERYDAY_MIGRATION_TIME_KEY,
-  PROVIDER_MIGRATION_HIGH_CAPACITY_MIGRATION_TIME_KEY,
-  PROVIDER_MIGRATION_PLAN_WELCOME_KEY,
-  PROVIDER_MIGRATION_PRO_MIGRATION_DONE_KEY,
-  PROVIDER_MIGRATION_PRO_MIGRATION_TIME_KEY,
-  getProviderMigrationMemoryFile,
+  ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY,
+  ARCHIVED_1M_MIGRATION_DONE_KEY,
+  ARCHIVED_EVERYDAY_MIGRATION_TIME_KEY,
+  ARCHIVED_HIGH_CAPACITY_MIGRATION_TIME_KEY,
+  ARCHIVED_PLAN_WELCOME_KEY,
+  ARCHIVED_PRO_MIGRATION_DONE_KEY,
+  ARCHIVED_PRO_MIGRATION_TIME_KEY,
+  getArchivedMemoryFile,
 } from './configProviderMigration.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -296,16 +296,16 @@ export type GlobalConfig = {
   // Memory usage tracking
   memoryUsageCount: number // Number of times user has added to memory
 
-  // Provider-migration 1M context compatibility configs
-  hasShownS1MWelcomeV2?: Record<string, boolean> // Whether the provider-migration 1M welcome message has been shown per org
-  // Cache of provider-migration 1M subscriber access per org - key is org ID
+  // Archived 1M context compatibility configs
+  hasShownS1MWelcomeV2?: Record<string, boolean> // Whether the archived 1M welcome message has been shown per org
+  // Cache of archived 1M subscriber access per org - key is org ID
   // hasAccess means "hasAccessAsDefault" but the old name is kept for backward
   // compatibility.
   s1mAccessCache?: Record<
     string,
     { hasAccess: boolean; hasAccessNotAsDefault?: boolean; timestamp: number }
   >
-  // Cache of provider-migration 1M PayG access per org - key is org ID
+  // Cache of archived 1M PayG access per org - key is org ID
   // hasAccess means "hasAccessAsDefault" but the old name is kept for backward
   // compatibility.
   s1mNonSubscriberAccessCache?: Record<
@@ -355,14 +355,14 @@ export type GlobalConfig = {
   voiceLangHintLastLanguage?: string // Resolved STT language code when the hint was last shown -reset count when it changes
   voiceFooterHintSeenCount?: number // Number of sessions the "hold X to speak" footer hint has been shown
 
-  // Provider-migration 1M merge notice tracking
-  [PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY]?: number // Number of times the provider-migration 1M merge notice has been shown
+  // Archived 1M merge notice tracking
+  [ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY]?: number // Number of times the archived 1M merge notice has been shown
 
   // Experiment enrollment notice tracking (keyed by experiment id)
   experimentNoticesSeenCount?: Record<string, number>
 
-  // Provider-migration plan-mode experiment config
-  [PROVIDER_MIGRATION_PLAN_WELCOME_KEY]?: Record<string, boolean> // Whether the provider-migration plan-mode welcome message has been shown per org
+  // Archived plan-mode experiment config
+  [ARCHIVED_PLAN_WELCOME_KEY]?: Record<string, boolean> // Whether the archived plan-mode welcome message has been shown per org
 
   // Queue usage tracking
   promptQueueUseCount: number // Number of times use has used the prompt queue
@@ -436,18 +436,18 @@ export type GlobalConfig = {
   // Idle-return dialog tracking
   idleReturnDismissed?: boolean // "Don't ask again" picked
 
-  // Provider-migration Pro model tracking
-  [PROVIDER_MIGRATION_PRO_MIGRATION_DONE_KEY]?: boolean
-  [PROVIDER_MIGRATION_PRO_MIGRATION_TIME_KEY]?: number
+  // Archived Pro model tracking
+  [ARCHIVED_PRO_MIGRATION_DONE_KEY]?: boolean
+  [ARCHIVED_PRO_MIGRATION_TIME_KEY]?: number
 
-  // Provider-migration 1M model tracking
-  [PROVIDER_MIGRATION_1M_MIGRATION_DONE_KEY]?: boolean
+  // Archived 1M model tracking
+  [ARCHIVED_1M_MIGRATION_DONE_KEY]?: boolean
 
-  // Provider-migration high-capability model tracking (shows one-time notif)
-  [PROVIDER_MIGRATION_HIGH_CAPACITY_MIGRATION_TIME_KEY]?: number
+  // Archived high-capability model tracking (shows one-time notif)
+  [ARCHIVED_HIGH_CAPACITY_MIGRATION_TIME_KEY]?: number
 
-  // Provider-migration everyday model tracking (pro/max/team premium)
-  [PROVIDER_MIGRATION_EVERYDAY_MIGRATION_TIME_KEY]?: number
+  // Archived everyday model tracking (pro/max/team premium)
+  [ARCHIVED_EVERYDAY_MIGRATION_TIME_KEY]?: number
 
   // Cached statsig gate values
   cachedStatsigGates: {
@@ -542,9 +542,6 @@ export type GlobalConfig = {
 
   // PR status footer configuration (feature-flagged via feature flag provider)
   prStatusFooterEnabled?: boolean // Show PR review status in footer (default: true)
-
-  // Tmux live panel visibility (dsxu internal, toggled via Enter on tmux pill)
-  tungstenPanelVisible?: boolean
 
   // Cached org-level fast mode status from the API.
   // Used to detect cross-session changes and notify users.
@@ -1797,28 +1794,28 @@ export function getMemoryPath(memoryType: MemoryType): string {
         getRuntimeConfigHomeDir(),
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getProviderMigrationMemoryFile(memoryType)!,
+          : getArchivedMemoryFile(memoryType)!,
       )
     case 'Local':
       return join(
         cwd,
         isDsxuRuntimeMode()
           ? DSXU_LOCAL_MEMORY_FILE
-          : getProviderMigrationMemoryFile(memoryType)!,
+          : getArchivedMemoryFile(memoryType)!,
       )
     case 'Project':
       return join(
         cwd,
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getProviderMigrationMemoryFile(memoryType)!,
+          : getArchivedMemoryFile(memoryType)!,
       )
     case 'Managed':
       return join(
         getManagedFilePath(),
         isDsxuRuntimeMode()
           ? DSXU_MEMORY_FILE
-          : getProviderMigrationMemoryFile(memoryType)!,
+          : getArchivedMemoryFile(memoryType)!,
       )
     case 'AutoMem':
       return getAutoMemEntrypoint()

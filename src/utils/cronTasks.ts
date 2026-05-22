@@ -1,5 +1,5 @@
 // Scheduled prompts, stored in <project>/.dsxu/scheduled_tasks.json in DSXU
-// runtime mode, with the provider-migration source path retained outside DSXU mode.
+// runtime mode, with the archived source path retained outside DSXU mode.
 //
 // Tasks come in two flavors:
 //   - One-shot (recurring: false/undefined) ...fire once, then auto-delete.
@@ -27,7 +27,7 @@ import { safeParseJSON } from './json.js'
 import { logError } from './log.js'
 import { jsonStringify } from './slowOperations.js'
 import { isDsxuRuntimeMode } from './envUtils.js'
-const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+const ARCHIVED_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 export type CronTask = {
   id: string
   /** 5-field cron string (local time) ...validated on write, re-validated on read. */
@@ -72,7 +72,7 @@ export type CronTask = {
 type CronFile = { tasks: CronTask[] }
 function getCronFileRel(): string {
   return join(
-    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_PROJECT_CONFIG_DIR,
     'scheduled_tasks.json',
   )
 }
@@ -166,7 +166,7 @@ export async function writeCronTasks(
 ): Promise<void> {
   const root = dir ?? getProjectRoot()
   await mkdir(
-    join(root, isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR),
+    join(root, isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_PROJECT_CONFIG_DIR),
     { recursive: true },
   )
   // Strip the runtime-only `durable` flag ...everything on disk is durable

@@ -35,7 +35,7 @@ import {
   getMainLoopModel,
   getUserSpecifiedModelSetting,
 } from '../../utils/model/model.js'
-import { isProviderMigrationPlanningRouteAlias } from '../../utils/model/providerMigration/providerMigrationAliases.js'
+import { isProviderMigrationPlanningRouteAlias as isArchivedPlanningRouteAlias } from '../../utils/model/providerMigration/providerMigrationAliases.js'
 import { getPlatform } from '../../utils/platform.js'
 import { isPluginInstalled } from '../../utils/plugins/installedPluginsManager.js'
 import { loadKnownMarketplacesConfigSafe } from '../../utils/plugins/marketplaceManager.js'
@@ -438,7 +438,7 @@ const externalTips: Tip[] = [
   {
     id: 'desktop-app',
     content: async () =>
-      'DSXU Desktop handoff is provider-migration-only. Use the DSXU Code CLI or configured DSXU workbench entrypoint.',
+      'DSXU Desktop handoff is archived-only. Use the DSXU Code CLI or configured DSXU workbench entrypoint.',
     cooldownSessions: 15,
     isRelevant: async () => false,
   },
@@ -480,7 +480,7 @@ const externalTips: Tip[] = [
       if (process.env.USER_TYPE === 'ant') return false
       const config = getGlobalConfig()
       const modelSetting = getUserSpecifiedModelSetting()
-      const hasPlanningRouteMode = isProviderMigrationPlanningRouteAlias(modelSetting)
+      const hasPlanningRouteMode = isArchivedPlanningRouteAlias(modelSetting)
       // Show reminder if they have planning route mode and haven't used plan mode recently (3+ days)
       const daysSinceLastUse = config.lastPlanModeUse
         ? (Date.now() - config.lastPlanModeUse) / (1000 * 60 * 60 * 24)

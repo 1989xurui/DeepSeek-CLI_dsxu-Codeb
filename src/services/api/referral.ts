@@ -9,7 +9,7 @@ import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
@@ -27,14 +27,14 @@ const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000
 // Track in-flight fetch to prevent duplicate API calls
 let fetchInProgress: Promise<ReferralEligibilityResponse | null> | null = null
 
-function isProviderMigrationAccountApiAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedAccountApiAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
-function assertProviderMigrationReferralApiAllowed(): void {
-  if (!isProviderMigrationAccountApiAllowed()) {
+function assertArchivedReferralApiAllowed(): void {
+  if (!isArchivedAccountApiAllowed()) {
     throw new Error(
-      'Provider-migration referral API is disabled on the DSXU default local mainline.',
+      'Archived referral API is disabled on the DSXU default local mainline.',
     )
   }
 }
@@ -42,7 +42,7 @@ function assertProviderMigrationReferralApiAllowed(): void {
 export async function fetchReferralEligibility(
   campaign: ReferralCampaign = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralEligibilityResponse> {
-  assertProviderMigrationReferralApiAllowed()
+  assertArchivedReferralApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -64,7 +64,7 @@ export async function fetchReferralEligibility(
 export async function fetchReferralRedemptions(
   campaign: string = `${'cl' + 'aude'}_code_guest_pass`,
 ): Promise<ReferralRedemptionsResponse> {
-  assertProviderMigrationReferralApiAllowed()
+  assertArchivedReferralApiAllowed()
   const { accessToken, orgUUID } = await prepareApiRequest()
 
   const headers = {
@@ -88,7 +88,7 @@ export async function fetchReferralRedemptions(
  */
 function shouldCheckForPasses(): boolean {
   return !!(
-    isProviderMigrationAccountApiAllowed() &&
+    isArchivedAccountApiAllowed() &&
     getOauthAccountInfo()?.organizationUuid &&
     isProviderSubscriptionAccount() &&
     getSubscriptionType() === 'max'

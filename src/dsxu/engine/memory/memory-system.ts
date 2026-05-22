@@ -1122,6 +1122,11 @@ export class MemorySystemImpl implements MemorySystem {
           newImportance = Math.max(newImportance, 70)
         }
 
+        if (newTags.length === 0) {
+          newTags.push(memory.type === 'extracted' ? 'general' : memory.type)
+          newImportance = Math.max(newImportance, 50)
+        }
+
         //
         if (newTags.length > 0 || newImportance !== memory.metadata.importance) {
           await this.updateMemory(memoryId, {

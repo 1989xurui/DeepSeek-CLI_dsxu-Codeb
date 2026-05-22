@@ -1,5 +1,5 @@
 /**
- * V14 FROZEN: zero-import middleware retained only because Windows ACL blocked
+ * Legacy zero-import middleware retained only because Windows ACL blocked
  * physical removal after copying to _deleted_files.
  *
  * 运行时探针中间件 - 动态运行时状态感知

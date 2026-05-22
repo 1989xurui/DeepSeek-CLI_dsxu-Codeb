@@ -4,7 +4,7 @@ import { Box, Text } from '../../ink.js';
 import { getAgentModelOptions } from '../../utils/model/agent.js';
 import { isDSXUCodeMode } from '../../utils/model/dsxuModel.js';
 import { Select } from '../CustomSelect/select.js';
-const PROVIDER_MIGRATION_DEFAULT_AGENT_MODEL = 'son' + 'net';
+const ARCHIVED_DEFAULT_AGENT_MODEL = 'son' + 'net';
 interface ModelSelectorProps {
   initialModel?: string;
   onComplete: (model?: string) => void;
@@ -37,7 +37,7 @@ export function ModelSelector(t0) {
     t1 = $[1];
   }
   const modelOptions = t1;
-  const defaultModel = initialModel ?? (isDSXUCodeMode() ? "inherit" : PROVIDER_MIGRATION_DEFAULT_AGENT_MODEL);
+  const defaultModel = initialModel ?? (isDSXUCodeMode() ? "inherit" : ARCHIVED_DEFAULT_AGENT_MODEL);
   let t2;
   if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
     t2 = <Box marginBottom={1}><Text dimColor={true}>Model determines the agent's reasoning capabilities and speed.</Text></Box>;

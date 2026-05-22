@@ -1,4 +1,4 @@
-// DSXU V18 ownership marker: instruction-file capability is owned by DSXU mainline.
+// Instruction-file capability is owned by the DSXU mainline.
 /**
  * Files are loaded in the following order:
  *
@@ -59,7 +59,6 @@ import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
 import {
   getDsxuConfigHomeDir,
-  getProviderMigrationHomeDir,
   isEnvTruthy,
 } from './envUtils.js'
 import { getErrnoCode } from './errors.js'
@@ -99,15 +98,15 @@ export const MAX_MEMORY_CHARACTER_COUNT = 40000
 const DSXU_INSTRUCTION_FILE = 'DSXU.md'
 const DSXU_LOCAL_INSTRUCTION_FILE = 'DSXU.local.md'
 const DSXU_RULES_DIR = '.dsxu'
-const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME = 'CL' + 'AUDE'
-const PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE = `${PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME}.md`
-const PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE = `${PROVIDER_MIGRATION_SOURCE_INSTRUCTION_BASENAME}.local.md`
-const PROVIDER_MIGRATION_SOURCE_RULES_DIR = '.' + ('cl' + 'aude')
-const PROVIDER_MIGRATION_INSTRUCTIONS_ENV =
+const ARCHIVED_SOURCE_INSTRUCTION_BASENAME = 'CL' + 'AUDE'
+const ARCHIVED_SOURCE_INSTRUCTION_FILE = `${ARCHIVED_SOURCE_INSTRUCTION_BASENAME}.md`
+const ARCHIVED_SOURCE_LOCAL_INSTRUCTION_FILE = `${ARCHIVED_SOURCE_INSTRUCTION_BASENAME}.local.md`
+const ARCHIVED_SOURCE_RULES_DIR = '.' + ('cl' + 'aude')
+const ARCHIVED_INSTRUCTIONS_ENV =
   'DSXU_ENABLE_PROVIDER_MIGRATION_INSTRUCTIONS'
 
-function providerMigrationInstructionsEnabled(): boolean {
-  return isEnvTruthy(process.env[PROVIDER_MIGRATION_INSTRUCTIONS_ENV])
+function archivedInstructionsEnabled(): boolean {
+  return isEnvTruthy(process.env[ARCHIVED_INSTRUCTIONS_ENV])
 }
 
 function getDsxuManagedInstructionDir(): string {
@@ -150,13 +149,13 @@ function getProjectInstructionFiles(dir: string): string[] {
     join(dir, DSXU_INSTRUCTION_FILE),
     join(dir, DSXU_RULES_DIR, DSXU_INSTRUCTION_FILE),
   ]
-  if (!providerMigrationInstructionsEnabled()) return dsxuFiles
+  if (!archivedInstructionsEnabled()) return dsxuFiles
   return [
-    join(dir, PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE),
+    join(dir, ARCHIVED_SOURCE_INSTRUCTION_FILE),
     join(
       dir,
-      PROVIDER_MIGRATION_SOURCE_RULES_DIR,
-      PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE,
+      ARCHIVED_SOURCE_RULES_DIR,
+      ARCHIVED_SOURCE_INSTRUCTION_FILE,
     ),
     ...dsxuFiles,
   ]
@@ -164,14 +163,14 @@ function getProjectInstructionFiles(dir: string): string[] {
 
 function getProjectRulesDirs(dir: string): string[] {
   const dsxuDirs = [join(dir, DSXU_RULES_DIR, 'rules')]
-  if (!providerMigrationInstructionsEnabled()) return dsxuDirs
-  return [join(dir, PROVIDER_MIGRATION_SOURCE_RULES_DIR, 'rules'), ...dsxuDirs]
+  if (!archivedInstructionsEnabled()) return dsxuDirs
+  return [join(dir, ARCHIVED_SOURCE_RULES_DIR, 'rules'), ...dsxuDirs]
 }
 
 function getLocalInstructionFiles(dir: string): string[] {
   const dsxuFiles = [join(dir, DSXU_LOCAL_INSTRUCTION_FILE)]
-  if (!providerMigrationInstructionsEnabled()) return dsxuFiles
-  return [join(dir, PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE), ...dsxuFiles]
+  if (!archivedInstructionsEnabled()) return dsxuFiles
+  return [join(dir, ARCHIVED_SOURCE_LOCAL_INSTRUCTION_FILE), ...dsxuFiles]
 }
 
 // File extensions that are allowed for @include directives
@@ -905,7 +904,7 @@ export const getMemoryFiles = memoize(
         conditionalRule: false,
       })),
     )
-    if (providerMigrationInstructionsEnabled()) {
+    if (archivedInstructionsEnabled()) {
       result.push(
         ...(await processMemoryFile(
           getMemoryPath('Managed'),
@@ -945,7 +944,7 @@ export const getMemoryFiles = memoize(
           conditionalRule: false,
         })),
       )
-      if (providerMigrationInstructionsEnabled()) {
+      if (archivedInstructionsEnabled()) {
         result.push(
           ...(await processMemoryFile(
             getMemoryPath('User'),
@@ -1294,7 +1293,7 @@ export type DsxuInstructionRuntimeStatus = {
   projectRulesDirs: string[]
   userRulesDir: string
   managedRulesDir: string
-  providerMigrationInstructions: 'disabled' | 'migration-only'
+  archivedInstructions: 'disabled' | 'migration-only'
 }
 
 export function getDsxuInstructionRuntimeStatus(
@@ -1307,7 +1306,7 @@ export function getDsxuInstructionRuntimeStatus(
     projectRulesDirs: getProjectRulesDirs(dir),
     userRulesDir: getDsxuUserRulesDir(),
     managedRulesDir: getDsxuManagedRulesDir(),
-    providerMigrationInstructions: providerMigrationInstructionsEnabled()
+    archivedInstructions: archivedInstructionsEnabled()
       ? 'migration-only'
       : 'disabled',
   }
@@ -1318,7 +1317,7 @@ export function getDsxuInstructionRuntimeProfile(
 ): DsxuInstructionRuntimeStatus & {
   runtime: 'DSXU Instruction Files'
   primaryInstructionFiles: readonly string[]
-  migrationFlag: string
+  archivedInstructionFlag: string
 } {
   return {
     runtime: 'DSXU Instruction Files',
@@ -1329,7 +1328,7 @@ export function getDsxuInstructionRuntimeProfile(
       `${DSXU_RULES_DIR}/${DSXU_INSTRUCTION_FILE}`,
       `${DSXU_RULES_DIR}/rules/*.md`,
     ],
-    migrationFlag: PROVIDER_MIGRATION_INSTRUCTIONS_ENV,
+    archivedInstructionFlag: ARCHIVED_INSTRUCTIONS_ENV,
   }
 }
 
@@ -1358,7 +1357,7 @@ export async function getManagedAndUserConditionalRules(
       false,
     )),
   )
-  if (providerMigrationInstructionsEnabled()) {
+  if (archivedInstructionsEnabled()) {
     result.push(
       ...(await processConditionedMdRules(
         targetPath,
@@ -1381,7 +1380,7 @@ export async function getManagedAndUserConditionalRules(
         true,
       )),
     )
-    if (providerMigrationInstructionsEnabled()) {
+    if (archivedInstructionsEnabled()) {
       result.push(
         ...(await processConditionedMdRules(
           targetPath,
@@ -1591,7 +1590,7 @@ export async function shouldShowDsxuInstructionExternalIncludesWarning(): Promis
 
 /**
  * Check if a file path is a DSXU instruction file (DSXU.md, DSXU.local.md, or .dsxu/rules/*.md).
- * Provider-migration instruction paths are recognized only when the explicit migration flag is enabled.
+ * Archived instruction paths are recognized only when the explicit migration flag is enabled.
  */
 export function isMemoryFilePath(filePath: string): boolean {
   const name = basename(filePath)
@@ -1607,11 +1606,11 @@ export function isMemoryFilePath(filePath: string): boolean {
     return true
   }
 
-  if (!providerMigrationInstructionsEnabled()) return false
+  if (!archivedInstructionsEnabled()) return false
 
   if (
-    name === PROVIDER_MIGRATION_SOURCE_INSTRUCTION_FILE ||
-    name === PROVIDER_MIGRATION_SOURCE_LOCAL_INSTRUCTION_FILE
+    name === ARCHIVED_SOURCE_INSTRUCTION_FILE ||
+    name === ARCHIVED_SOURCE_LOCAL_INSTRUCTION_FILE
   ) {
     return true
   }
@@ -1619,7 +1618,7 @@ export function isMemoryFilePath(filePath: string): boolean {
   if (
     name.endsWith('.md') &&
     filePath.includes(
-      `${sep}${PROVIDER_MIGRATION_SOURCE_RULES_DIR}${sep}rules${sep}`,
+      `${sep}${ARCHIVED_SOURCE_RULES_DIR}${sep}rules${sep}`,
     )
   ) {
     return true

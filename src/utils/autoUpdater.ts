@@ -20,7 +20,7 @@ import { logError } from './log.js'
 import { gte, lt } from './semver.js'
 import { getInitialSettings } from './settings/settings.js'
 import {
-  filterProviderMigrationSourceAliases,
+  filterArchivedSourceAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
@@ -470,7 +470,7 @@ export async function installGlobalPackage(
   }
 
   try {
-    await removeProviderMigrationSourceAliasesFromShellConfigs()
+    await removeArchivedSourceAliasesFromShellConfigs()
     // Check if we're using npm from Windows path in WSL
     if (!env.isRunningWithBun() && env.isNpmFromWindowsPath()) {
       logError(new Error('Windows NPM detected in WSL environment'))
@@ -533,10 +533,10 @@ To fix this issue:
 }
 
 /**
- * Remove provider-migration source aliases from shell configuration files.
+ * Remove archived source aliases from shell configuration files.
  * This helps clean up old installation methods when switching to native or npm global
  */
-async function removeProviderMigrationSourceAliasesFromShellConfigs(): Promise<void> {
+async function removeArchivedSourceAliasesFromShellConfigs(): Promise<void> {
   const configMap = getShellConfigPaths()
 
   // Process each shell config file
@@ -545,11 +545,11 @@ async function removeProviderMigrationSourceAliasesFromShellConfigs(): Promise<v
       const lines = await readFileLines(configFile)
       if (!lines) continue
 
-      const { filtered, hadAlias } = filterProviderMigrationSourceAliases(lines)
+      const { filtered, hadAlias } = filterArchivedSourceAliases(lines)
 
       if (hadAlias) {
         await writeFileLines(configFile, filtered)
-        logForDebugging(`Removed provider-migration source alias from ${configFile}`)
+        logForDebugging(`Removed archived source alias from ${configFile}`)
       }
     } catch (error) {
       // Don't fail the whole operation if one file can't be processed

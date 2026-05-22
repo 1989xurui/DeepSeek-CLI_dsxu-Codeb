@@ -83,7 +83,7 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v9-permission-usability-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/permission-usability.test.ts',
     reason: 'covers visible permission fallback and usability floor',
     required: true,
   },
@@ -113,12 +113,12 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-dirty-quarantine-ledger-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/dirty-quarantine-ledger.test.ts',
     reason: 'classifies dirty work into mainline, evidence, toolchain, quarantine, side-path, and unknown buckets without deleting or reverting files',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-open-source-package-gate-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/open-source-package-gate.test.ts',
     reason: 'prevents local scratch, external reference source, and legacy control/session/proxy shells from entering the tracked open-source package surface',
     required: true,
   },
@@ -128,7 +128,9 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/provider-migration-model-alias-isolation-v1.test.ts',
+    path:
+      'src/dsxu/engine/__tests__/provider' +
+      '-migration-model-alias-isolation-v1.test.ts',
     reason: 'keeps old model-family aliases hidden inside a DSXU compatibility parser instead of public UI/schema/evidence',
     required: true,
   },
@@ -139,7 +141,7 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
   },
   {
     path: 'src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts',
-    reason: 'keeps source-truth evidence, public release docs, and provider-migration review debt separated before packaging',
+    reason: 'keeps source-truth evidence, public release docs, and archived review debt separated before packaging',
     required: true,
   },
   {
@@ -178,7 +180,7 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-live-real-task-compare-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/live-real-task-compare.test.ts',
     reason: 'keeps focused live before/after comparison honest across tool calls, repeated verification, cache hit/miss, cost, and Pro/Flash ratio without running the broad 22-case suite',
     required: true,
   },
@@ -248,7 +250,7 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-agent-live-report-replay-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/agent-live-report-replay.test.ts',
     reason: 'proves live-report-derived Agent replay keeps only serial worker and parallel fanout while preserving lifecycle placement options and parent final evidence gates',
     required: true,
   },
@@ -318,72 +320,72 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-go-stop-decision-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/go-stop-decision.test.ts',
     reason: 'prevents config probes, dry runs, or partial evidence from being reported as public benchmark release evidence',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-benchmark-readiness-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/benchmark-readiness.test.ts',
     reason: 'aggregates real task, cost, route, and taxonomy signals without misreporting guarded internal readiness as a public benchmark',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-evidence-eval-pack-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/evidence-eval-pack.test.ts',
     reason: 'keeps E01/E02/E07 honest by generating baseline, ablation, Go/Stop, and mini-report evidence while blocking incomplete public score claims',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-stage-close-readiness-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/stage-close-readiness.test.ts',
     reason: 'keeps V18 stage-close decisions explicit so 22-case, Pro bare, and BenchMax are not run before required evidence is green',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-eval-baseline-manifest-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/eval-baseline-manifest.test.ts',
     reason: 'keeps Flash/Pro/DSXU/BenchMax baseline commands generated from one protocol so ordinary routed reports cannot be mislabeled as bare baselines',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-baseline-failure-reporter-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/baseline-failure-reporter.test.ts',
     reason: 'keeps E04 failure reporting able to classify Flash baseline drift, avoid wasteful Pro spend, and emit machine-readable next actions from live reports',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-code-terminal-10-runner-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/code-terminal-runner.test.ts',
     reason: 'keeps A16/B13 runner inputs explicit, Flash-first, and unable to claim Code-10 or Terminal-10 scores from dry plans',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-terminal-hit-rate-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/terminal-hit-rate.test.ts',
     reason: 'keeps B13 terminal evidence honest by classifying PowerShell over-probing, denied probes, no-output probes, and command-budget debt',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-controlled-failure-taxonomy-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts',
     reason: 'keeps benchmark readiness backed by controlled permission, timeout, validation, workspace, and repeated-verification failure taxonomy samples',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-real-task-route-plan-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/real-task-route-plan.test.ts',
     reason: 'keeps phase-level Pro/Flash routing explicit so low-risk execution can stay on Flash while recovery/review stays on Pro',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-route-cache-roi-smoke-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts',
     reason: 'keeps live report cacheByRouteReason and Pro ROI evidence from treating direct Pro success as saved-task evidence without same-case Flash attempt',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-prompt-prefix-cache-builder-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts',
     reason: 'keeps stable prompt prefix hashing separate from dynamic task state and flags timestamps, paths, trace ids, and random ids before they bust DeepSeek KV cache',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-prompt-prefix-cache-evidence-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts',
     reason: 'keeps query-loop prompt prefix evidence side-channel only: hashes and volatile findings are traced without leaking full prompt text or mutating provider prompts',
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-route-cache-dynamic-tail-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts',
     reason: 'keeps live route trace cache analysis split between cold-start misses and warm-turn cache risk without leaking prompt text into evidence',
     required: true,
   },
@@ -413,7 +415,7 @@ export const DSXU_RELEASE_GATE_TESTS: readonly ReleaseGateEntry[] = [
     required: true,
   },
   {
-    path: 'src/dsxu/engine/__tests__/v18-experience-live-report-ingest-v1.test.ts',
+    path: 'src/dsxu/engine/__tests__/experience-live-report-ingest.test.ts',
     reason: 'turns real live reports into safe ExperienceStore task snapshots, success fixes, failure patterns, verification commands, and cost route evidence without benchmark-answer leaks',
     required: true,
   },
@@ -493,5 +495,5 @@ export function classifyDsxuTestForGate(path: string): TestGateBucket {
 }
 
 export function getDsxuReleaseGateCommand(): string[] {
-  return ['bun', 'test', ...DSXU_RELEASE_GATE_TESTS.map(entry => entry.path)]
+  return ['bun', 'test', ...DSXU_RELEASE_GATE_TESTS.map(entry => `./${entry.path}`)]
 }

@@ -27,7 +27,7 @@ export type StatusNoticeDefinition = {
   render: (context: StatusNoticeContext) => React.ReactNode;
 };
 
-const getProviderMigrationAuthSource = () => `${'cl' + 'aude'}.ai`;
+const getArchivedProviderAuthSource = () => `${'cl' + 'aude'}.ai`;
 
 // Individual notice definitions
 const largeMemoryFilesNotice: StatusNoticeDefinition = {
@@ -52,8 +52,8 @@ const largeMemoryFilesNotice: StatusNoticeDefinition = {
       </>;
   }
 };
-const providerMigrationSubscriberExternalTokenNotice: StatusNoticeDefinition = {
-  id: 'provider-migration-external-token',
+const archivedProviderSubscriberExternalTokenNotice: StatusNoticeDefinition = {
+  id: 'archived-provider-external-token',
   type: 'warning',
   isActive: () => {
     const authTokenInfo = getAuthTokenSource();
@@ -127,13 +127,13 @@ const bothAuthMethodsNotice: StatusNoticeDefinition = {
         <Box flexDirection="column" marginLeft={3}>
           <Text color="warning">
             路 Trying to use{' '}
-            {authTokenInfo.source === getProviderMigrationAuthSource() ? 'DSXU cloud' : authTokenInfo.source}
+            {authTokenInfo.source === getArchivedProviderAuthSource() ? 'DSXU cloud' : authTokenInfo.source}
             ?{' '}
             {apiKeySource === 'PROVIDER_API_KEY' ? 'Unset the provider API key environment variable, or dsxu /logout then say "No" to the API key approval before login.' : apiKeySource === 'apiKeyHelper' ? 'Unset the apiKeyHelper setting.' : 'dsxu /logout'}
           </Text>
           <Text color="warning">
             路 Trying to use {apiKeySource}?{' '}
-            {authTokenInfo.source === getProviderMigrationAuthSource() ? 'dsxu /logout to sign out of DSXU cloud.' : `Unset the ${authTokenInfo.source} environment variable.`}
+            {authTokenInfo.source === getArchivedProviderAuthSource() ? 'dsxu /logout to sign out of DSXU cloud.' : `Unset the ${authTokenInfo.source} environment variable.`}
           </Text>
         </Box>
       </Box>;
@@ -191,7 +191,7 @@ const jetbrainsPluginNotice: StatusNoticeDefinition = {
 };
 
 // All notice definitions
-export const statusNoticeDefinitions: StatusNoticeDefinition[] = [largeMemoryFilesNotice, largeAgentDescriptionsNotice, providerMigrationSubscriberExternalTokenNotice, apiKeyConflictNotice, bothAuthMethodsNotice, jetbrainsPluginNotice];
+export const statusNoticeDefinitions: StatusNoticeDefinition[] = [largeMemoryFilesNotice, largeAgentDescriptionsNotice, archivedProviderSubscriberExternalTokenNotice, apiKeyConflictNotice, bothAuthMethodsNotice, jetbrainsPluginNotice];
 
 // Helper functions for external use
 export function getActiveNotices(context: StatusNoticeContext): StatusNoticeDefinition[] {

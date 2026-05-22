@@ -128,4 +128,29 @@ describe('R5-30 PBT — runPbt', () => {
     const result = await runPbt('test code', config);
     expect(result.runs).toBe(200);
   });
+
+  test('real runner executes passing Bun test code', async () => {
+    const result = await runPbt(`
+      import { test, expect } from 'bun:test';
+      test('property holds', () => {
+        expect(2 + 2).toBe(4);
+      });
+    `, { runs: 17, timeoutMs: 10_000 });
+
+    expect(result.passed).toBe(true);
+    expect(result.runs).toBe(17);
+    expect(result.error).toBeUndefined();
+  });
+
+  test('real runner reports failing Bun test output', async () => {
+    const result = await runPbt(`
+      import { test, expect } from 'bun:test';
+      test('property fails', () => {
+        expect(2 + 2).toBe(5);
+      });
+    `, { timeoutMs: 10_000 });
+
+    expect(result.passed).toBe(false);
+    expect(result.error ?? '').toContain('property fails');
+  });
 });

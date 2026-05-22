@@ -26,8 +26,8 @@ import {
 } from 'src/utils/messages.js'
 import {
   getDefaultMainLoopModelSetting,
-  getThirdPartyProviderMigrationFallbackModelSuggestion,
-  isProviderMigrationHighTierModelTarget,
+  getArchivedThirdPartyFallbackModelSuggestion,
+  isArchivedHighTierModelTarget,
 } from 'src/utils/model/model.js'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import {
@@ -55,11 +55,11 @@ import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mo
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
 
 export const API_ERROR_MESSAGE_PREFIX = 'API Error'
-const PROVIDER_MIGRATION_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY'
-const PROVIDER_MIGRATION_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL'
-const PROVIDER_MIGRATION_BETA_HEADER_NAME = 'anth' + 'ropic-beta'
-const PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX = 'anth' + 'ropic-ratelimit-unified-'
-const PROVIDER_MIGRATION_STATUS_HOST = 'status.' + 'anth' + 'ropic.com'
+const ARCHIVED_API_KEY_ENV = 'ANTH' + 'ROPIC_API_KEY'
+const ARCHIVED_MODEL_ENV = 'ANTH' + 'ROPIC_MODEL'
+const ARCHIVED_BETA_HEADER_NAME = 'anth' + 'ropic-beta'
+const ARCHIVED_RATE_LIMIT_HEADER_PREFIX = 'anth' + 'ropic-ratelimit-unified-'
+const ARCHIVED_STATUS_HOST = 'status.' + 'anth' + 'ropic.com'
 
 export function startsWithApiErrorPrefix(text: string): boolean {
   return (
@@ -477,11 +477,11 @@ export function getAssistantMessageFromError(
   ) {
     // Check if this is the new API with multiple rate limit headers
     const rateLimitType = error.headers?.get?.(
-      `${PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX}representative-claim`,
+      `${ARCHIVED_RATE_LIMIT_HEADER_PREFIX}representative-claim`,
     ) as RateLimitType | null
 
     const overageStatus = error.headers?.get?.(
-        `${PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX}overage-status`,
+        `${ARCHIVED_RATE_LIMIT_HEADER_PREFIX}overage-status`,
     ) as 'allowed' | 'allowed_warning' | 'rejected' | null
 
     // If we have the new headers, use the new message generation
@@ -495,7 +495,7 @@ export function getAssistantMessageFromError(
 
       // Extract rate limit information from headers
       const resetHeader = error.headers?.get?.(
-        `${PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX}reset`,
+        `${ARCHIVED_RATE_LIMIT_HEADER_PREFIX}reset`,
       )
       if (resetHeader) {
         limits.resetsAt = Number(resetHeader)
@@ -510,14 +510,14 @@ export function getAssistantMessageFromError(
       }
 
       const overageResetHeader = error.headers?.get?.(
-        `${PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX}overage-reset`,
+        `${ARCHIVED_RATE_LIMIT_HEADER_PREFIX}overage-reset`,
       )
       if (overageResetHeader) {
         limits.overageResetsAt = Number(overageResetHeader)
       }
 
       const overageDisabledReason = error.headers?.get?.(
-        `${PROVIDER_MIGRATION_RATE_LIMIT_HEADER_PREFIX}overage-disabled-reason`,
+        `${ARCHIVED_RATE_LIMIT_HEADER_PREFIX}overage-disabled-reason`,
       ) as OverageDisabledReason | null
       if (overageDisabledReason) {
         limits.overageDisabledReason = overageDisabledReason
@@ -560,7 +560,7 @@ export function getAssistantMessageFromError(
     const innerMessage = stripped.match(/"message"\s*:\s*"([^"]*)"/)?.[1]
     const detail = innerMessage || stripped
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) - ${detail || `this may be a temporary capacity issue - check ${PROVIDER_MIGRATION_STATUS_HOST}`}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: Request rejected (429) - ${detail || `this may be a temporary capacity issue - check ${ARCHIVED_STATUS_HOST}`}`,
       error: 'rate_limit',
     })
   }
@@ -654,7 +654,7 @@ export function getAssistantMessageFromError(
     error instanceof APIError &&
     error.status === 400 &&
     error.message.includes(AFK_MODE_BETA_HEADER) &&
-    error.message.includes(PROVIDER_MIGRATION_BETA_HEADER_NAME)
+    error.message.includes(ARCHIVED_BETA_HEADER_NAME)
   ) {
     return createAssistantAPIErrorMessage({
       content: 'Auto mode is unavailable for your plan',
@@ -746,7 +746,7 @@ export function getAssistantMessageFromError(
     error instanceof APIError &&
     error.status === 400 &&
     error.message.toLowerCase().includes('invalid model name') &&
-    isProviderMigrationHighTierModelTarget(model)
+    isArchivedHighTierModelTarget(model)
   ) {
     return createAssistantAPIErrorMessage({
       content:
@@ -760,13 +760,13 @@ export function getAssistantMessageFromError(
   // Ants using new or unknown org IDs that haven't been gated in.
   if (
     process.env.USER_TYPE === 'ant' &&
-    !process.env[PROVIDER_MIGRATION_MODEL_ENV] &&
+    !process.env[ARCHIVED_MODEL_ENV] &&
     error instanceof Error &&
     error.message.toLowerCase().includes('invalid model name')
   ) {
     // Get organization ID from config - only use OAuth account data when actively using OAuth
     const orgId = getOauthAccountInfo()?.organizationUuid
-    const baseMsg = `[DSXU internal] Your org isn't gated into the \`${model}\` model. Either run DSXU with \`${PROVIDER_MIGRATION_MODEL_ENV}=${getDefaultMainLoopModelSetting()}\``
+    const baseMsg = `[DSXU internal] Your org isn't gated into the \`${model}\` model. Either run DSXU with \`${ARCHIVED_MODEL_ENV}=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
       ? `${baseMsg} or share your orgId (${orgId}) in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
       : `${baseMsg} or reach out in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
@@ -801,8 +801,8 @@ export function getAssistantMessageFromError(
     // the env var. The three guards ensure we only blame the env var when it's
     // actually set and actually on the wire.
     if (
-      source === PROVIDER_MIGRATION_API_KEY_ENV &&
-      process.env[PROVIDER_MIGRATION_API_KEY_ENV] &&
+      source === ARCHIVED_API_KEY_ENV &&
+      process.env[ARCHIVED_API_KEY_ENV] &&
       !isProviderSubscriptionAccount()
     ) {
       const hasStoredOAuth = getProviderControlTokens()?.accessToken != null
@@ -833,7 +833,7 @@ export function getAssistantMessageFromError(
     // Check if the API key is from an external source
     const { source } = getProviderApiKeyWithSource()
     const isExternalSource =
-      source === PROVIDER_MIGRATION_API_KEY_ENV || source === 'apiKeyHelper'
+      source === ARCHIVED_API_KEY_ENV || source === 'apiKeyHelper'
 
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
@@ -898,7 +898,7 @@ export function getAssistantMessageFromError(
     error.message.toLowerCase().includes('model id')
   ) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
-    const fallbackSuggestion = getThirdPartyProviderMigrationFallbackModelSuggestion(model)
+    const fallbackSuggestion = getArchivedThirdPartyFallbackModelSuggestion(model)
     return createAssistantAPIErrorMessage({
       content: fallbackSuggestion
         ? `${API_ERROR_MESSAGE_PREFIX} (${model}): ${error.message}. Try ${switchCmd} to switch to ${fallbackSuggestion}.`
@@ -912,7 +912,7 @@ export function getAssistantMessageFromError(
   // For 3P users, suggest a specific fallback model they can try.
   if (error instanceof APIError && error.status === 404) {
     const switchCmd = getIsNonInteractiveSession() ? '--model' : '/model'
-    const fallbackSuggestion = getThirdPartyProviderMigrationFallbackModelSuggestion(model)
+    const fallbackSuggestion = getArchivedThirdPartyFallbackModelSuggestion(model)
     return createAssistantAPIErrorMessage({
       content: fallbackSuggestion
         ? `The model ${model} is not available on your deployment. Try ${switchCmd} to switch to ${fallbackSuggestion}, or ask your admin to enable this model.`

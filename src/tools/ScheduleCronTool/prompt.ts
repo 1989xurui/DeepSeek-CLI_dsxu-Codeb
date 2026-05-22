@@ -192,9 +192,9 @@ export function getDsxuCronPromptRuntimeProfile(): {
       CRON_LIST_TOOL_NAME,
     ],
     durablePath: getScheduledTasksPath(),
-    disableEnv: ['DSXU_CODE_DISABLE_CRON', 'DSXU_CODE_DISABLE_CRON provider-migration alias'],
+    disableEnv: ['DSXU_CODE_DISABLE_CRON', 'DSXU_CODE_DISABLE_CRON archived alias'],
     activationEvidence: [
-      'isKairosCronEnabled checks DSXU disable env before provider-migration alias',
+      'isKairosCronEnabled checks DSXU disable env before archived alias',
       'durable cron writes to .dsxu/scheduled_tasks.json in DSXU mode',
       'prompt differentiates session-only and durable task persistence',
       'recurring jobs include jitter and max-age guidance for long-running stability',

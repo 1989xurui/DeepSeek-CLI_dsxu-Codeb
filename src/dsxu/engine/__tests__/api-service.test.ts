@@ -219,7 +219,59 @@ describe('APIService', () => {
       )
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.tools).toEqual(tools)
+      expect(body.tools).toEqual([
+        {
+          type: 'function',
+          function: {
+            name: 'test',
+            description: '',
+            parameters: {},
+          },
+        },
+      ])
+    })
+
+    it('observes model switches by default without overriding the requested model', async () => {
+      const api = new APIService(baseConfig)
+      mockFetch
+        .mockResolvedValueOnce(okChatResponse('flash'))
+        .mockResolvedValueOnce(okChatResponse('pro'))
+
+      await api.callWithFallback([{ role: 'user', content: 'hi' }], [], 'deepseek-v4-flash', 8192)
+      await api.callWithFallback([{ role: 'user', content: 'hard' }], [], 'deepseek-v4-pro', 8192)
+
+      const secondBody = JSON.parse(mockFetch.mock.calls[1][1].body)
+      expect(secondBody.model).toBe('deepseek-v4-pro')
+      expect(api.getStickyModelRoutingSnapshot()).toMatchObject({
+        mode: 'observe',
+        model: 'deepseek-v4-flash',
+        lastRequestedModel: 'deepseek-v4-pro',
+        switchCount: 1,
+        lastDecision: 'observed',
+      })
+    })
+
+    it('can enforce session-sticky model routing when explicitly enabled', async () => {
+      const api = new APIService({
+        ...baseConfig,
+        stickyModelRouting: true,
+      })
+      mockFetch
+        .mockResolvedValueOnce(okChatResponse('flash'))
+        .mockResolvedValueOnce(okChatResponse('still flash'))
+
+      await api.callWithFallback([{ role: 'user', content: 'hi' }], [], 'deepseek-v4-flash', 8192)
+      await api.callWithFallback([{ role: 'user', content: 'hard' }], [], 'deepseek-v4-pro', 8192)
+
+      const secondBody = JSON.parse(mockFetch.mock.calls[1][1].body)
+      expect(secondBody.model).toBe('deepseek-v4-flash')
+      expect(api.getStickyModelRoutingSnapshot()).toMatchObject({
+        mode: 'enforce',
+        model: 'deepseek-v4-flash',
+        lastRequestedModel: 'deepseek-v4-pro',
+        switchCount: 1,
+        lastDecision: 'locked',
+      })
     })
   })
 

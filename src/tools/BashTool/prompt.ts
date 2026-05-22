@@ -49,7 +49,7 @@ export function getDsxuBashPromptRuntimeProfile(): {
     },
     backgroundDisableEnv: [
       'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
-      'provider-migration source disable-background-tasks alias',
+      'archived source disable-background-tasks alias',
     ],
     activationEvidence: [
       'prompt steers file read/edit/write/search to dedicated DSXU tools instead of shell',

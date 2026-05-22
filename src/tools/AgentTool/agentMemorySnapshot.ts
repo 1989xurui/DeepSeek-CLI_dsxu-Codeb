@@ -11,7 +11,7 @@ import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 const SNAPSHOT_BASE = 'agent-memory-snapshots'
 const SNAPSHOT_JSON = 'snapshot.json'
 const SYNCED_JSON = '.snapshot-synced.json'
-const PROVIDER_MIGRATION_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
+const ARCHIVED_PROJECT_CONFIG_DIR = '.' + 'cl' + 'aude'
 
 const snapshotMetaSchema = lazySchema(() =>
   z.object({
@@ -33,7 +33,7 @@ type SyncedMeta = z.infer<ReturnType<typeof syncedMetaSchema>>
 export function getSnapshotDirForAgent(agentType: string): string {
   return join(
     getCwd(),
-    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_PROJECT_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_PROJECT_CONFIG_DIR,
     SNAPSHOT_BASE,
     agentType,
   )

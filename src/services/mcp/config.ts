@@ -1,4 +1,4 @@
-import { feature } from 'bun:bundle'
+﻿import { feature } from 'bun:bundle'
 import { chmod, open, rename, stat, unlink } from 'fs/promises'
 import mapValues from 'lodash-es/mapValues.js'
 import memoize from 'lodash-es/memoize.js'
@@ -6,8 +6,8 @@ import { dirname, join, parse } from 'path'
 import { getPlatform } from 'src/utils/platform.js'
 import type { PluginError } from '../../types/plugin.js'
 import {
-  PROVIDER_MIGRATION_CONFIG_SCOPE,
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  ARCHIVED_MCP_CONFIG_SCOPE,
+  ARCHIVED_MCP_TRANSPORT,
 } from '../../constants/providerMigrationProtocol.js'
 import { getPluginErrorMessage } from '../../types/plugin.js'
 import { isDsxuBrowserProviderMCPServer } from '../../utils/dsxuBrowserProvider/common.js'
@@ -44,11 +44,11 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { fetchProviderMigrationMcpConfigsIfEligible } from './providerConnectorMigration.js'
+import { fetchArchivedMcpConfigsIfEligible } from './providerConnectorMigration.js'
 import {
   getDsxuMcpProviderRuntimePolicy,
   isDsxuMcpDefaultMode,
-  isProviderMigrationMcpEnabled,
+  isArchivedMcpEnabled,
 } from './dsxuProvider.js'
 import { expandEnvVarsInString } from './envExpansion.js'
 import {
@@ -65,12 +65,12 @@ import {
 } from './types.js'
 import { getProjectMcpServerStatus } from './utils.js'
 
-const PROVIDER_MIGRATION_VSCODE_SDK_SERVER_NAME = 'cl' + 'aude-vscode'
+const ARCHIVED_VSCODE_SDK_SERVER_NAME = 'cl' + 'aude-vscode'
 
 export function getDsxuMcpConfigRuntimeProfile(): {
   runtime: 'DSXU MCP Config'
   defaultProviderMode: boolean
-  providerMigrationMcpEnabled: boolean
+  archivedMcpEnabled: boolean
   providerPolicy: ReturnType<typeof getDsxuMcpProviderRuntimePolicy>
   configLayers?: readonly string[]
   activationEvidence?: readonly string[]
@@ -78,7 +78,7 @@ export function getDsxuMcpConfigRuntimeProfile(): {
   return {
     runtime: 'DSXU MCP Config',
     defaultProviderMode: isDsxuMcpDefaultMode(),
-    providerMigrationMcpEnabled: isProviderMigrationMcpEnabled(),
+    archivedMcpEnabled: isArchivedMcpEnabled(),
     providerPolicy: getDsxuMcpProviderRuntimePolicy(),
     configLayers: [
       '.mcp.json project config',
@@ -89,7 +89,7 @@ export function getDsxuMcpConfigRuntimeProfile(): {
       'DSXU provider defaults',
     ],
     activationEvidence: [
-      'DSXU default mode returns getDsxuCodeMcpConfigs without loading provider migration discovery',
+      'DSXU default mode returns getDsxuCodeMcpConfigs without loading archived discovery',
       'enterprise MCP config takes exclusive control over managed server loading',
       'writeMcpjsonFile uses atomic temp file, fsync, chmod preservation, and rename',
       'dedup signatures normalize command/url configs before plugin/server merge',
@@ -203,7 +203,7 @@ function getServerUrl(config: McpServerConfig): string | null {
 }
 
 /**
- * CCR proxy URL path markers. In remote sessions, provider migration connectors arrive
+ * CCR proxy URL path markers. In remote sessions, archived connectors arrive
  * via --mcp-config with URLs rewritten to route through the CCR/session-ingress
  * SHTTP proxy. The original vendor URL is preserved in the mcp_url query param
  * so the proxy knows where to forward. See api-go/ccr/internal/ccrshared/
@@ -258,7 +258,7 @@ export function getMcpServerSignature(config: McpServerConfig): string | null {
  * Manual wins over plugin; between plugins, first-loaded wins.
  *
  * Plugin servers are namespaced `plugin:name:server` so they never key-collide
- * with manual servers in the merge — this content-based check catches the case
+ * with manual servers in the merge 鈥?this content-based check catches the case
  * where both actually launch the same underlying process/connection.
  */
 export function dedupPluginMcpServers(
@@ -307,20 +307,20 @@ export function dedupPluginMcpServers(
 }
 
 /**
- * Filter provider migration connectors, dropping any whose signature matches an enabled
+ * Filter archived connectors, dropping any whose signature matches an enabled
  * manually-configured server. Manual wins: a user who wrote .mcp.json or ran
  * a DSXU MCP add command expressed higher intent than a connector toggled in a web UI.
  *
- * Connector keys are provider-migration prefixed so they never key-collide with
- * manual servers in the merge — this content-based check catches the case where
+ * Connector keys are archived-prefixed so they never key-collide with
+ * manual servers in the merge 鈥?this content-based check catches the case where
  * both point at the same underlying URL (e.g. `mcp__slack__*` and
  * another hosted connector hitting the same upstream URL.
  *
- * Only enabled manual servers count as dedup targets — a disabled manual server
+ * Only enabled manual servers count as dedup targets 鈥?a disabled manual server
  * mustn't suppress its connector twin, or neither runs.
  */
-export function dedupProviderMigrationMcpServers(
-  providerMigrationServers: Record<string, ScopedMcpServerConfig>,
+export function dedupArchivedMcpServers(
+  archivedConnectorServers: Record<string, ScopedMcpServerConfig>,
   manualServers: Record<string, ScopedMcpServerConfig>,
 ): {
   servers: Record<string, ScopedMcpServerConfig>
@@ -335,12 +335,12 @@ export function dedupProviderMigrationMcpServers(
 
   const servers: Record<string, ScopedMcpServerConfig> = {}
   const suppressed: Array<{ name: string; duplicateOf: string }> = []
-  for (const [name, config] of Object.entries(providerMigrationServers)) {
+  for (const [name, config] of Object.entries(archivedConnectorServers)) {
     const sig = getMcpServerSignature(config)
     const manualDup = sig !== null ? manualSigs.get(sig) : undefined
     if (manualDup !== undefined) {
       logForDebugging(
-        `Suppressing provider migration connector "${name}": duplicates manually-configured "${manualDup}"`,
+        `Suppressing archived connector "${name}": duplicates manually-configured "${manualDup}"`,
       )
       suppressed.push({ name, duplicateOf: manualDup })
       continue
@@ -388,7 +388,7 @@ function getMcpAllowlistSettings(): SettingsJson {
 
 /**
  * Get the settings to use for MCP server denylist policy.
- * Denylists always merge from all sources — users can always deny servers
+ * Denylists always merge from all sources 鈥?users can always deny servers
  * for themselves, even when allowManagedMcpServersOnly is set.
  */
 function getMcpDenylistSettings(): SettingsJson {
@@ -557,7 +557,7 @@ function isMcpServerAllowedByPolicy(
  * in getDsxuCodeMcpConfigs(): --mcp-config (main.tsx) and the mcp_set_servers
  * control message (print.ts, SDK V2 Query.setMcpServers()).
  *
- * SDK-type servers are exempt — they are SDK-managed transport placeholders,
+ * SDK-type servers are exempt 鈥?they are SDK-managed transport placeholders,
  * not CLI-managed connections. The CLI never spawns a process or opens a
  * network connection for them; tool calls route back to the SDK via
  * mcp_tool_call. URL/command-based allowlist entries are meaningless for them
@@ -569,7 +569,7 @@ function isMcpServerAllowedByPolicy(
  * args: string[] required), print.ts uses McpServerConfigForProcessTransport
  * (SDK wire type, args?: string[] optional). Both are structurally compatible
  * with what isMcpServerAllowedByPolicy actually reads (type/url/command/args)
- * — the policy check only reads, never requires any field to be present.
+ * 鈥?the policy check only reads, never requires any field to be present.
  * The `as McpServerConfig` widening is safe for that reason; the downstream
  * checks tolerate missing/undefined fields: `config` is optional, and
  * `getServerCommandArray` defaults `args` to `[]` via `?? []`.
@@ -645,7 +645,7 @@ function expandEnvVars(config: McpServerConfig): {
     case 'sdk':
       expanded = config
       break
-    case PROVIDER_MIGRATION_MCP_TRANSPORT:
+    case ARCHIVED_MCP_TRANSPORT:
       expanded = config
       break
   }
@@ -746,8 +746,8 @@ export async function addMcpConfig(
       throw new Error('Cannot add MCP server to scope: dynamic')
     case 'enterprise':
       throw new Error('Cannot add MCP server to scope: enterprise')
-    case PROVIDER_MIGRATION_CONFIG_SCOPE:
-      throw new Error('Cannot add MCP server to provider migration scope')
+    case ARCHIVED_MCP_CONFIG_SCOPE:
+      throw new Error('Cannot add MCP server to archived scope')
   }
 
   // Add based on scope
@@ -1101,11 +1101,11 @@ export function getMcpConfigByName(name: string): ScopedMcpServerConfig | null {
 }
 
 /**
- * Get DSXU/DSXU Code MCP configurations (excludes provider migration servers from the
- * returned set — they're fetched separately and merged by callers).
+ * Get DSXU/DSXU Code MCP configurations (excludes archived servers from the
+ * returned set 鈥?they're fetched separately and merged by callers).
  * This is fast: only local file reads; no awaited network calls on the
  * critical path. The optional extraDedupTargets promise (e.g. the in-flight
- * provider migration connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
+ * archived connector fetch) is awaited only after loadAllPluginsCacheOnly() completes,
  * so the two overlap rather than serialize.
  * @returns DSXU Code server configurations with appropriate scopes
  */
@@ -1136,7 +1136,7 @@ export async function getDsxuCodeMcpConfigsCore(
     return { servers: filtered, errors: [] }
   }
 
-  // Load other scopes — unless the managed policy locks MCP to plugin-only.
+  // Load other scopes 鈥?unless the managed policy locks MCP to plugin-only.
   // Unlike the enterprise-exclusive block above, this keeps plugin servers.
   const mcpLocked = isRestrictedToPluginOnly('mcp')
   const noServers: { servers: Record<string, ScopedMcpServerConfig> } = {
@@ -1212,9 +1212,9 @@ export async function getDsxuCodeMcpConfigsCore(
 
   // Dedup plugin servers against manually-configured ones (and each other).
   // Plugin server keys are namespaced `plugin:x:y` so they never collide with
-  // manual keys in the merge below — this content-based filter catches the case
+  // manual keys in the merge below 鈥?this content-based filter catches the case
   // where both would launch the same underlying process/connection.
-  // Only servers that will actually connect are valid dedup targets — a
+  // Only servers that will actually connect are valid dedup targets 鈥?a
   // disabled manual server mustn't suppress a plugin server, or neither runs
   // (manual is skipped by name at connection time; plugin was removed here).
   const extraTargets = await extraDedupTargets
@@ -1234,7 +1234,7 @@ export async function getDsxuCodeMcpConfigsCore(
     }
   }
   // Split off disabled/policy-blocked plugin servers so they don't win the
-  // first-plugin-wins race against an enabled duplicate — same invariant as
+  // first-plugin-wins race against an enabled duplicate 鈥?same invariant as
   // above. They're merged back after dedup so they still appear in /mcp
   // (policy filtering at the end of this function drops blocked ones).
   const enabledPluginServers: Record<string, ScopedMcpServerConfig> = {}
@@ -1255,7 +1255,7 @@ export async function getDsxuCodeMcpConfigsCore(
   )
   Object.assign(dedupedPluginServers, disabledPluginServers)
   // Surface suppressions in /plugin UI. Pushed AFTER the logError loop above
-  // so these don't go to the error log — they're informational, not errors.
+  // so these don't go to the error log 鈥?they're informational, not errors.
   for (const { name, duplicateOf } of suppressed) {
     // name is "plugin:${pluginName}:${serverName}" from addPluginScopeToServers
     const parts = name.split(':')
@@ -1294,7 +1294,7 @@ export async function getDsxuCodeMcpConfigsCore(
 /**
  * DSXU-named MCP config entrypoint. It intentionally reuses the mature local
  * MCP merge/dedup/policy implementation above, but exposes the DSXU provider
- * semantics so new code does not have to call a provider-migration-named API.
+ * semantics so new code does not have to call an archived-named API.
  */
 export async function getDsxuCodeMcpConfigs(
   dynamicServers: Record<string, ScopedMcpServerConfig> = {},
@@ -1309,7 +1309,7 @@ export async function getDsxuCodeMcpConfigs(
 }
 
 /**
- * Get all MCP configurations across all scopes, including provider migration servers.
+ * Get all MCP configurations across all scopes, including archived servers.
  * This may be slow due to network calls - use getDsxuCodeMcpConfigs() for fast startup.
  * @returns All server configurations with appropriate scopes
  */
@@ -1317,39 +1317,39 @@ export async function getAllMcpConfigs(): Promise<{
   servers: Record<string, ScopedMcpServerConfig>
   errors: PluginError[]
 }> {
-  if (isDsxuMcpDefaultMode() && !isProviderMigrationMcpEnabled()) {
+  if (isDsxuMcpDefaultMode() && !isArchivedMcpEnabled()) {
     logForDebugging(
       `DSXU MCP default mode active: ${JSON.stringify(getDsxuMcpProviderRuntimePolicy())}`,
     )
     return getDsxuCodeMcpConfigs()
   }
 
-  // In enterprise mode, don't load provider migration servers (enterprise has exclusive control)
+  // In enterprise mode, don't load archived servers (enterprise has exclusive control)
   if (doesEnterpriseMcpConfigExist()) {
     return getDsxuCodeMcpConfigs()
   }
 
-  // Kick off the provider migration fetch before getDsxuCodeMcpConfigs so it overlaps
-  // with loadAllPluginsCacheOnly() inside. Memoized — the awaited call below is a cache hit.
-  const providerMigrationPromise = fetchProviderMigrationMcpConfigsIfEligible()
+  // Kick off the archived fetch before getDsxuCodeMcpConfigs so it overlaps
+  // with loadAllPluginsCacheOnly() inside. Memoized 鈥?the awaited call below is a cache hit.
+  const archivedConnectorPromise = fetchArchivedMcpConfigsIfEligible()
   const { servers: dsxuCodeServers, errors } = await getDsxuCodeMcpConfigsCore(
     {},
-    providerMigrationPromise,
+    archivedConnectorPromise,
   )
-  const { allowed: providerMigrationMcpServers } = filterMcpServersByPolicy(
-    await providerMigrationPromise,
+  const { allowed: archivedMcpServers } = filterMcpServersByPolicy(
+    await archivedConnectorPromise,
   )
 
-  // Suppress provider migration connectors that duplicate an enabled manual server.
-  // Keys never collide (`slack` vs provider migration Slack) so the merge below
-  // won't catch this — need content-based dedup by URL signature.
-  const { servers: dedupedProviderMigration } = dedupProviderMigrationMcpServers(
-    providerMigrationMcpServers,
+  // Suppress archived connectors that duplicate an enabled manual server.
+  // Keys never collide (`slack` vs archived Slack) so the merge below
+  // won't catch this 鈥?need content-based dedup by URL signature.
+  const { servers: dedupedArchivedConnectors } = dedupArchivedMcpServers(
+    archivedMcpServers,
     dsxuCodeServers,
   )
 
-  // Merge with provider migration having lowest precedence
-  const servers = Object.assign({}, dedupedProviderMigration, dsxuCodeServers)
+  // Merge with archived configs having lowest precedence
+  const servers = Object.assign({}, dedupedArchivedConnectors, dsxuCodeServers)
 
   return { servers, errors }
 }
@@ -1560,11 +1560,11 @@ export function areMcpConfigsAllowedWithEnterpriseMcpConfig(
   configs: Record<string, ScopedMcpServerConfig>,
 ): boolean {
   // NOTE: While all SDK MCP servers should be safe from a security perspective,
-  // enterprise MCP config currently allows only the provider migration VS Code SDK server.
+  // enterprise MCP config currently allows only the archived VS Code SDK server.
   return Object.values(configs).every(
     c =>
       c.type === 'sdk' &&
-      c.name === PROVIDER_MIGRATION_VSCODE_SDK_SERVER_NAME,
+      c.name === ARCHIVED_VSCODE_SDK_SERVER_NAME,
   )
 }
 

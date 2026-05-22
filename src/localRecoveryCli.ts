@@ -2,13 +2,65 @@ import { readFileSync } from 'fs'
 import { createInterface } from 'readline'
 
 type OutputFormat = 'text' | 'json'
-const PROVIDER_MIGRATION_SOURCE_SDK_PACKAGE = `@${'anth' + 'ropic'}-ai/sdk`
-const PROVIDER_MIGRATION_AUTH_TOKEN_ENV =
-  `${'ANTH' + 'ROPIC'}_AUTH_TOKEN` as keyof NodeJS.ProcessEnv
 
-async function createProviderClient(options: Record<string, unknown>) {
-  const { default: ProviderClient } = await import(PROVIDER_MIGRATION_SOURCE_SDK_PACKAGE)
-  return new ProviderClient(options)
+type RecoveryMessage = {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
+type DeepSeekChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string
+    }
+  }>
+  [key: string]: unknown
+}
+
+function createDeepSeekRecoveryClient(options: {
+  apiKey: string
+  baseURL?: string
+  timeoutMs: number
+}) {
+  const baseURL = (options.baseURL ?? 'https://api.deepseek.com').replace(/\/+$/, '')
+  return {
+    async createChatCompletion(input: {
+      model: string
+      maxTokens: number
+      system?: string
+      messages: RecoveryMessage[]
+    }): Promise<DeepSeekChatCompletionResponse> {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), options.timeoutMs)
+      const messages = [
+        ...(input.system ? [{ role: 'system' as const, content: input.system }] : []),
+        ...input.messages,
+      ]
+
+      try {
+        const response = await fetch(`${baseURL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${options.apiKey}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: input.model,
+            max_tokens: input.maxTokens,
+            messages,
+          }),
+          signal: controller.signal,
+        })
+        const body = await response.text()
+        if (!response.ok) {
+          throw new Error(`DeepSeek recovery request failed ${response.status}: ${body.slice(0, 500)}`)
+        }
+        return JSON.parse(body) as DeepSeekChatCompletionResponse
+      } finally {
+        clearTimeout(timeout)
+      }
+    },
+  }
 }
 
 function printHelp(): void {
@@ -117,15 +169,7 @@ function getApiKeyFromEnv(): string | undefined {
   return (
     process.env.DSXU_API_KEY ||
     process.env.DEEPSEEK_API_KEY ||
-    process.env.DSXU_DEEPSEEK_API_KEY ||
-    process.env.PROVIDER_API_KEY
-  )
-}
-
-function getAuthTokenFromEnv(): string | undefined {
-  return (
-    process.env.DSXU_CODE_OAUTH_TOKEN ||
-    process.env[PROVIDER_MIGRATION_AUTH_TOKEN_ENV]
+    process.env.DSXU_DEEPSEEK_API_KEY
   )
 }
 
@@ -133,16 +177,15 @@ function getModelFromEnv(): string | undefined {
   return (
     process.env.DSXU_MODEL ||
     process.env.DEEPSEEK_MODEL ||
-    process.env.PROVIDER_DEFAULT_SONNET_MODEL ||
-    process.env.PROVIDER_MODEL
+    'deepseek-v4-flash'
   )
 }
 
 function getBaseUrlFromEnv(): string | undefined {
   return (
-    process.env.LITELLM_BASE_URL ||
     process.env.DEEPSEEK_BASE_URL ||
-    process.env.PROVIDER_BASE_URL ||
+    process.env.DSXU_DEEPSEEK_BASE_URL ||
+    process.env.DSXU_CODE_API_BASE_URL ||
     undefined
   )
 }
@@ -191,8 +234,7 @@ async function run(): Promise<void> {
   }
 
   const apiKey = getApiKeyFromEnv()
-  const authToken = getAuthTokenFromEnv()
-  if (!apiKey && !authToken) {
+  if (!apiKey) {
     process.stderr.write(
       'Error: set DSXU_API_KEY, DEEPSEEK_API_KEY, or DSXU_DEEPSEEK_API_KEY\n',
     )
@@ -208,17 +250,15 @@ async function run(): Promise<void> {
     return
   }
 
-  const client = await createProviderClient({
-    apiKey: apiKey ?? undefined,
-    authToken: authToken ?? undefined,
+  const client = createDeepSeekRecoveryClient({
+    apiKey,
     baseURL: getBaseUrlFromEnv(),
-    timeout: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
-    maxRetries: 0,
+    timeoutMs: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
   })
 
-  const response = await client.messages.create({
+  const response = await client.createChatCompletion({
     model,
-    max_tokens: 4096,
+    maxTokens: 4096,
     system: getSystemPrompt(parsed.systemPrompt, parsed.appendSystemPrompt),
     messages: [{ role: 'user', content: prompt }],
   })
@@ -228,10 +268,7 @@ async function run(): Promise<void> {
     return
   }
 
-  const text = response.content
-    .filter(block => block.type === 'text')
-    .map(block => block.text)
-    .join('\n')
+  const text = extractText(response)
 
   process.stdout.write(`${text}\n`)
 }
@@ -242,8 +279,7 @@ async function runInteractive(parsed: {
   appendSystemPrompt?: string
 }): Promise<void> {
   const apiKey = getApiKeyFromEnv()
-  const authToken = getAuthTokenFromEnv()
-  if (!apiKey && !authToken) {
+  if (!apiKey) {
     process.stderr.write(
       'Error: set DSXU_API_KEY, DEEPSEEK_API_KEY, or DSXU_DEEPSEEK_API_KEY\n',
     )
@@ -259,12 +295,10 @@ async function runInteractive(parsed: {
     return
   }
 
-  const client = await createProviderClient({
-    apiKey: apiKey ?? undefined,
-    authToken: authToken ?? undefined,
+  const client = createDeepSeekRecoveryClient({
+    apiKey,
     baseURL: getBaseUrlFromEnv(),
-    timeout: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
-    maxRetries: 0,
+    timeoutMs: parseInt(process.env.API_TIMEOUT_MS || String(600_000), 10),
   })
 
   const system = getSystemPrompt(parsed.systemPrompt, parsed.appendSystemPrompt)
@@ -299,16 +333,13 @@ async function runInteractive(parsed: {
 
     messages.push({ role: 'user', content: input })
     try {
-      const response = await client.messages.create({
+      const response = await client.createChatCompletion({
         model,
-        max_tokens: 4096,
+        maxTokens: 4096,
         system,
         messages,
       })
-      const text = response.content
-        .filter(block => block.type === 'text')
-        .map(block => block.text)
-        .join('\n')
+      const text = extractText(response)
       process.stdout.write(`dsxu> ${text}\n\n`)
       messages.push({ role: 'assistant', content: text })
     } catch (error) {
@@ -318,6 +349,11 @@ async function runInteractive(parsed: {
     }
     rl.prompt()
   }
+}
+
+function extractText(response: DeepSeekChatCompletionResponse): string {
+  const text = response.choices?.[0]?.message?.content
+  return typeof text === 'string' ? text : ''
 }
 
 void run().catch(error => {

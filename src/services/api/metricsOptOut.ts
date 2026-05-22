@@ -10,7 +10,7 @@ import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getDSXUCodeUserAgent } from '../../utils/userAgent.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 type MetricsEnabledResponse = {
   metrics_logging_enabled: boolean
@@ -25,11 +25,11 @@ const CACHE_TTL_MS = 60 * 60 * 1000
 // we skip the network entirely (no background refresh). This is what collapses
 // N print-mode invocations into ~1 API call/day.
 const DISK_CACHE_TTL_MS = 24 * 60 * 60 * 1000
-const PROVIDER_MIGRATION_API_HOST = `https://api.${'anth' + 'ropic'}.com`
+const ARCHIVED_PROVIDER_API_HOST = `https://api.${'anth' + 'ropic'}.com`
 const METRICS_ENABLED_PATH = `/api/${'cl' + 'aude'}_code/organizations/metrics_enabled`
 
-function shouldUseProviderMigrationMetricsOptOut(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function shouldUseArchivedMetricsOptOut(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 /**
@@ -46,7 +46,7 @@ async function _fetchMetricsEnabled(): Promise<MetricsEnabledResponse> {
     'User-Agent': getDSXUCodeUserAgent(),
     ...authResult.headers,
   }
-  const endpoint = `${PROVIDER_MIGRATION_API_HOST}${METRICS_ENABLED_PATH}`
+  const endpoint = `${ARCHIVED_PROVIDER_API_HOST}${METRICS_ENABLED_PATH}`
   const response = await axios.get<MetricsEnabledResponse>(endpoint, {
     headers,
     timeout: 5000,
@@ -121,7 +121,7 @@ async function refreshMetricsStatus(): Promise<MetricsStatus> {
  * an extra one during the 24h window is acceptable.
  */
 export async function checkMetricsEnabled(): Promise<MetricsStatus> {
-  if (!shouldUseProviderMigrationMetricsOptOut()) {
+  if (!shouldUseArchivedMetricsOptOut()) {
     return { enabled: false, hasError: false }
   }
 

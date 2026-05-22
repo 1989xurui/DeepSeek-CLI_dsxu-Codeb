@@ -41,7 +41,7 @@ const items: readonly NextStageProductizationItem[] = [
     dsxuLanding: [
       'scripts/benchmark/dsxu-mainline-benchmark.ts',
       'tmp/v8-live-fixtures',
-      'src/dsxu/engine/__tests__/next-stage-productization-contract-v1.test.ts',
+      'src/dsxu/engine/__tests__/next-stage-productization-contract.test.ts',
     ],
     productRequirement: [
       'multi-file bugfix edits a real fixture and reruns tests',
@@ -238,7 +238,7 @@ const items: readonly NextStageProductizationItem[] = [
       '.dsxu/ops/MAINLINE_LEDGER.md',
     ],
     productRequirement: [
-      'default CLI/TUI does not reference provider-migration shell',
+      'default CLI/TUI does not reference archived shell',
       'old control/session/auth/proxy shells are not model/tool/startup default paths',
       'legacy aliases require explicit legacy flags',
       'five smoke classes remain green after cleanup',

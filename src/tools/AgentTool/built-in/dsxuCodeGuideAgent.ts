@@ -3,7 +3,7 @@ import { SEND_MESSAGE_TOOL_NAME } from 'src/tools/SendMessageTool/constants.js'
 import { isUsing3PServices } from 'src/utils/auth.js'
 import { hasEmbeddedSearchTools } from 'src/utils/embeddedTools.js'
 import { getSettings_DEPRECATED } from 'src/utils/settings/settings.js'
-import { getProviderMigrationLightweightModelAlias } from '../../../utils/model/providerMigration/providerMigrationModelCompat.js'
+import { getArchivedLightweightModelAlias } from '../../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import { jsonStringify } from '../../../utils/slowOperations.js'
 import type {
   AgentDefinition,
@@ -12,10 +12,10 @@ import type {
 
 const DSXU_CODE_DOCS_MAP_URL = 'local:DSXU.md,.dsxu/,docs/'
 const DEEPSEEK_API_DOCS_URL = 'https://api-docs.deepseek.com/zh-cn/'
-const PROVIDER_MIGRATION_TOKEN = 'cl' + 'aude'
-const PROVIDER_MIGRATION_SOURCE_CODE_DOCS_MAP_URL =
-  `https://code.${PROVIDER_MIGRATION_TOKEN}.com/docs/en/${PROVIDER_MIGRATION_TOKEN}_code_docs_map.md`
-const PROVIDER_MIGRATION_SOURCE_API_DOCS_URL = `https://platform.${PROVIDER_MIGRATION_TOKEN}.com/llms.txt`
+const ARCHIVED_SOURCE_TOKEN = 'cl' + 'aude'
+const ARCHIVED_SOURCE_CODE_DOCS_MAP_URL =
+  `https://code.${ARCHIVED_SOURCE_TOKEN}.com/docs/en/${ARCHIVED_SOURCE_TOKEN}_code_docs_map.md`
+const ARCHIVED_SOURCE_API_DOCS_URL = `https://platform.${ARCHIVED_SOURCE_TOKEN}.com/llms.txt`
 const FILE_READ_TOOL_NAME = 'Read'
 const GLOB_TOOL_NAME = 'Glob'
 const GREP_TOOL_NAME = 'Grep'
@@ -56,16 +56,16 @@ function getDsxuCodeGuideBasePrompt(): string {
 
 - **DeepSeek API docs** (${DEEPSEEK_API_DOCS_URL}): Fetch this for model questions, including thinking mode, FIM completion, pricing, cache behavior, context length, JSON output, and chat-completions-compatible request shapes.
 
-- **Provider migration source docs** (${PROVIDER_MIGRATION_SOURCE_CODE_DOCS_MAP_URL}, ${PROVIDER_MIGRATION_SOURCE_API_DOCS_URL}): Use only for migration questions or when explicitly asked to compare/port provider-migration source behavior into DSXU. Do not route DSXU runtime decisions back to provider-migration source services.
+- **Archived source docs** (${ARCHIVED_SOURCE_CODE_DOCS_MAP_URL}, ${ARCHIVED_SOURCE_API_DOCS_URL}): Use only for migration questions or when explicitly asked to compare/port archived source behavior into DSXU. Do not route DSXU runtime decisions back to archived source services.
 
 **Approach:**
 1. Determine which domain the user's question falls into
-2. Prefer local DSXU project docs/source first; use ${WEB_FETCH_TOOL_NAME} for DeepSeek or provider migration docs only when needed
+2. Prefer local DSXU project docs/source first; use ${WEB_FETCH_TOOL_NAME} for DeepSeek or archived docs only when needed
 3. Identify the most relevant documentation URLs from the map
 4. Fetch the specific documentation pages
 5. Provide clear, actionable guidance based on official documentation
 6. Use ${WEB_SEARCH_TOOL_NAME} if docs don't cover the topic
-7. Reference local project files (DSXU.md, .dsxu/ directory, provider-migration source DSXU.md/.dsxu only during migration) when relevant using ${localSearchHint}
+7. Reference local project files (DSXU.md, .dsxu/ directory, archived source DSXU.md/.dsxu only during migration) when relevant using ${localSearchHint}
 
 **Guidelines:**
 - Always prioritize official documentation over assumptions
@@ -88,7 +88,7 @@ function getFeedbackGuideline(): string {
 
 export const DSXU_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
   agentType: DSXU_CODE_GUIDE_AGENT_TYPE,
-  whenToUse: `Use this agent when the user asks questions ("Can DSXU...", "Does DSXU...", "How do I...") about: (1) DSXU Code - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) DSXU Agent Runtime - custom agents, subagents, skills, evidence, resume, compact, MCP; (3) DSXU/DeepSeek API usage through DSXU. Use provider migration source docs only for migration/comparison. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed dsxu-code-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
+  whenToUse: `Use this agent when the user asks questions ("Can DSXU...", "Does DSXU...", "How do I...") about: (1) DSXU Code - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) DSXU Agent Runtime - custom agents, subagents, skills, evidence, resume, compact, MCP; (3) DSXU/DeepSeek API usage through DSXU. Use archived source docs only for migration/comparison. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed dsxu-code-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
   // Ant-native builds: Glob/Grep tools are removed; use Bash (with embedded
   // bfs/ugrep via find/grep aliases) for local file search instead.
   tools: hasEmbeddedSearchTools()
@@ -110,7 +110,7 @@ export const DSXU_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
   model:
     process.env.DSXU_CODE_MODE === '1'
       ? 'flash'
-      : getProviderMigrationLightweightModelAlias(),
+      : getArchivedLightweightModelAlias(),
   permissionMode: 'dontAsk',
   getSystemPrompt({ toolUseContext }) {
     const commands = toolUseContext.options.commands
@@ -129,7 +129,7 @@ export const DSXU_CODE_GUIDE_AGENT: BuiltInAgentDefinition = {
       )
     }
 
-    // 2. Custom agents from .dsxu/agents/ or provider-migration source migration agents
+    // 2. Custom agents from .dsxu/agents/ or archived source migration agents
     const customAgents =
       toolUseContext.options.agentDefinitions.activeAgents.filter(
         (a: AgentDefinition) => a.source !== 'built-in',
@@ -200,15 +200,15 @@ When answering questions, consider these configured features and proactively sug
 
 export function getDsxuCodeGuideRuntimeProfile(): {
   agentType: string
-  providerMigrationAgentType: string
+  archivedAgentType: string
   primaryDocs: readonly string[]
-  providerMigrationDocsPolicy: string
+  archivedDocsPolicy: string
 } {
   return {
     agentType: DSXU_CODE_GUIDE_AGENT_TYPE,
-    providerMigrationAgentType: 'dsxu-code-guide',
+    archivedAgentType: 'dsxu-code-guide',
     primaryDocs: [DSXU_CODE_DOCS_MAP_URL, DEEPSEEK_API_DOCS_URL],
-    providerMigrationDocsPolicy:
-      'provider migration source docs are allowed only for migration/comparison, never as DSXU runtime service routing',
+    archivedDocsPolicy:
+      'archived source docs are allowed only for migration/comparison, never as DSXU runtime service routing',
   }
 }

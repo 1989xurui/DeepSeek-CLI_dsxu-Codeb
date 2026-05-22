@@ -1,6 +1,6 @@
 {
   "schemaVersion": "dsxu.v24.work-state-timeline-acceptance.v1",
-  "generatedAt": "2026-05-15T05:27:32.610Z",
+  "generatedAt": "2026-05-16T15:36:55.636Z",
   "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
   "rows": [
     {
@@ -9,7 +9,7 @@
       "mechanism": "visible goal, plan, current step, and next action",
       "evidenceFiles": "src/screens/REPL.tsx; src/components/PromptInput/PromptInput.tsx; src/components/PromptInput/PromptInputFooter.tsx",
       "fileHitCount": 3,
-      "signalHitCount": 1407,
+      "signalHitCount": 1420,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "capture DSXU window or stream-json trace showing state transitions"
     },
@@ -19,7 +19,7 @@
       "mechanism": "visible tool execution and permission request state",
       "evidenceFiles": "src/components/permissions/PermissionRequest.tsx; src/tools/BashTool/BashTool.tsx; src/tools/PowerShellTool/PowerShellTool.tsx",
       "fileHitCount": 3,
-      "signalHitCount": 1812,
+      "signalHitCount": 1832,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "prove permission denial and recovery are visible in TUI/CLI timeline"
     },
@@ -29,7 +29,7 @@
       "mechanism": "visible failure owner, cause, verified facts, and recovery path",
       "evidenceFiles": "src/utils/conversationRecovery.ts; src/utils/errors.ts",
       "fileHitCount": 2,
-      "signalHitCount": 1683,
+      "signalHitCount": 1697,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "run failure-injection trace and verify no fake PASS"
     },
@@ -39,7 +39,7 @@
       "mechanism": "visible worker state and parent synthesis evidence",
       "evidenceFiles": "src/components/AgentProgressLine.tsx; src/tools/TaskCreateTool/TaskCreateTool.ts; src/tools/TaskOutputTool/TaskOutputTool.tsx",
       "fileHitCount": 3,
-      "signalHitCount": 1249,
+      "signalHitCount": 1264,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "run serial/parallel worker replay with parent evidence references"
     },
@@ -49,7 +49,7 @@
       "mechanism": "visible model, token, cache, route, and cost trend",
       "evidenceFiles": "src/commands/cost/cost.ts; src/commands/usage/usage.tsx; src/services/cache-stats.ts",
       "fileHitCount": 3,
-      "signalHitCount": 1509,
+      "signalHitCount": 1519,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "show cost/cache/route in CLI/TUI/stream-json task evidence"
     },
@@ -59,7 +59,7 @@
       "mechanism": "same work-state emitted through CLI/TUI/stream-json",
       "evidenceFiles": "src/cli/structuredIO.ts; src/cli/ndjsonSafeStringify.ts; src/utils/streamJsonStdoutGuard.ts",
       "fileHitCount": 3,
-      "signalHitCount": 1260,
+      "signalHitCount": 1274,
       "status": "SIGNAL_PRESENT_BEHAVIOR_EVIDENCE_REQUIRED",
       "requiredNextAction": "run a stream-json task and compare state with TUI evidence"
     }

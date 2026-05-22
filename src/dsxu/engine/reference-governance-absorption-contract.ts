@@ -213,7 +213,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
       'Bash, PowerShell, and file edits share one decision chain',
     ],
     evidence: [
-      'bun test src/dsxu/engine/__tests__/v9-permission-usability-v1.test.ts src/dsxu/engine/__tests__/permissions.test.ts',
+      'bun test src/dsxu/engine/__tests__/permission-usability.test.ts src/dsxu/engine/__tests__/permissions.test.ts',
       'benchmark gate: reference-governance-live-core',
     ],
     state: 'evidence_green',
@@ -429,7 +429,7 @@ const items: readonly DsxuGovernanceAbsorptionItem[] = [
     id: 'P6-3 Legacy Wording Classification',
     priority: 'P6',
     objective:
-      'Classify remaining provider-migration source control/session/auth/remote-managed wording so default paths do not imply the provider-migration shell is still active.',
+      'Classify remaining archived source control/session/auth/remote-managed wording so default paths do not imply the archived shell is still active.',
     referenceBehavior: ['old control shell', 'old session shell', 'old proxy shell', 'services/auth-compat', 'services/remoteManagedSettings'],
     dsxuLanding: [
       'src/dsxu/engine/provider-contract.ts',

@@ -18,7 +18,7 @@ function isAgentTeamsFlagSet(): boolean {
  *
  * Ant builds: always enabled.
  * External builds require both:
- * 1. Opt-in via DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS env var, provider-migration source
+ * 1. Opt-in via DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS env var, archived source
  *    migration alias, OR --agent-teams flag
  * 2. feature flag provider gate 'tengu_amber_flint' enabled (killswitch)
  */
@@ -50,17 +50,17 @@ export function isAgentSwarmsEnabled(): boolean {
 export function getDsxuAgentSwarmsRuntimeProfile(): {
   runtime: 'DSXU Agent Swarms Gate'
   primaryEnv: string
-  providerMigrationEnv: string
+  archivedEnv: string
   cliFlag: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Agent Swarms Gate',
     primaryEnv: 'DSXU_CODE_EXPERIMENTAL_AGENT_TEAMS',
-    providerMigrationEnv: 'provider-migration source migration alias',
+    archivedEnv: 'archived source migration alias',
     cliFlag: '--agent-teams',
     activationEvidence: [
-      'DSXU env opt-in is checked before the provider migration alias',
+      'DSXU env opt-in is checked before the archived alias',
       'external users still require the feature flag provider killswitch to be enabled',
       'ant/internal builds keep the historical always-on behavior',
     ],

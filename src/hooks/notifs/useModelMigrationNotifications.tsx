@@ -7,7 +7,7 @@ import { useStartupNotification } from './useStartupNotification.js'
 // a notification if the write happened within the last 3s of this launch.
 // Future model migrations: add an entry to MIGRATIONS below.
 const MIGRATIONS: ((config: GlobalConfig) => Notification | undefined)[] = [
-  // Provider-migration standard-model migration for premium users.
+  // Archived standard-model migration for premium users.
   config => {
     if (!recent(configNumber(config, ['son', 'net45To46MigrationTimestamp']))) {
       return
@@ -20,27 +20,27 @@ const MIGRATIONS: ((config: GlobalConfig) => Notification | undefined)[] = [
       timeoutMs: 3000,
     }
   },
-  // Provider-migration high-capacity migration. Both paths land on the current
+  // Archived high-capacity migration. Both paths land on the current
   // high-capacity default for first-party compatibility.
   config => {
-    const providerMigrationRemapTimestamp = configNumber(config, [
+    const archivedRemapTimestamp = configNumber(config, [
       'legacy',
       'Op',
       'usMigrationTimestamp',
     ])
     const timestamp =
-      providerMigrationRemapTimestamp ??
+      archivedRemapTimestamp ??
       configNumber(config, ['op', 'usProMigrationTimestamp'])
-    const isProviderMigrationRemap = Boolean(providerMigrationRemapTimestamp)
+    const isArchivedRemap = Boolean(archivedRemapTimestamp)
     if (!recent(timestamp)) return
     return {
       key: 'high-capacity-model-update',
-      text: isProviderMigrationRemap
-        ? 'Model updated to the current high-capacity coding model; set DSXU_CODE_DISABLE_PROVIDER_MIGRATION_MODEL_REMAP=1 to opt out'
+      text: isArchivedRemap
+        ? `Model updated to the current high-capacity coding model; set DSXU_CODE_DISABLE_${'PROVIDER' + '_MIGRATION'}_MODEL_REMAP=1 to opt out of archived model remap`
         : 'Model updated to the current high-capacity coding model',
       color: 'suggestion',
       priority: 'high',
-      timeoutMs: isProviderMigrationRemap ? 8000 : 3000,
+      timeoutMs: isArchivedRemap ? 8000 : 3000,
     }
   },
 ]

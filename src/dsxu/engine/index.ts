@@ -105,8 +105,8 @@ export { InjectDebugLoggerTool, CleanupDebugLoggerTool, HypothesisDebugTool, get
 export type { Hypothesis } from './debug-tools'
 export { ADR_TEMPLATES, getADRTemplateNames, selectADRTemplate, crossReview, runADRWorkflow, isArchitectureTask } from './adr-review'
 export type { ADRTemplate, ReviewResult } from './adr-review'
-export { BlastRadiusTool, buildDepGraph, computeBlastRadius, parseImports, parseExports, isTestFile, collectSourceFiles, quickBlastRadius } from './blast-radius'
-export type { DepGraph, DepNode, BlastResult } from './blast-radius'
+export { BlastRadiusTool, buildDepGraph, computeBlastRadius, buildDSXUSemanticCodeGraphEvidence, parseImports, parseExports, isTestFile, collectSourceFiles, quickBlastRadius } from './blast-radius'
+export type { DepGraph, DepNode, BlastResult, DSXUSemanticCodeGraphEvidence } from './blast-radius'
 export { AccessibilityTreeTool, parseHTMLToA11yTree, renderA11yTree, countA11yNodes, checkA11yIssues } from './accessibility-tree'
 export type { A11yNode } from './accessibility-tree'
 export { withRetry, isRetryableError, calculateDelay, RateLimiter, withRateLimitAndRetry } from './retry'
@@ -115,6 +115,88 @@ export { executeToolsParallel, ToolResultCache } from './parallel-tools'
 export type { ParallelConfig, ToolExecResult, ToolCacheConfig } from './parallel-tools'
 export { CostTracker, estimateCost, MODEL_PRICING } from './cost-tracker'
 export type { CostEntry, CostBudget, CostAlert, ModelPricing } from './cost-tracker'
+export {
+  buildDSXUWorkStateTimeline,
+  buildDSXURuntimeStateCard,
+  buildDSXUTaskEvidencePacket,
+  projectDSXUToolCallResultToWorkStateEvent,
+  projectDSXUPlanTemplateToWorkStateEvents,
+  summarizeDSXUWorkStateTimeline,
+} from './work-state-timeline'
+export {
+  buildDSXUActiveFrame,
+  appendLedgerEvent,
+  createProgressLedger,
+  projectDeepSeekRouteAdmissionToLedgerEvent,
+} from './progress-ledger'
+export {
+  compileDSXUExecutionContract,
+  validateDSXUExecutionContract,
+  projectDSXUExecutionContractToLedgerEvent,
+} from './action-contract'
+export {
+  buildToolCatalog,
+  compileDSXUToolView,
+} from './tool-catalog-v1'
+export {
+  buildDSXUV8LogicalToolWindow,
+  evaluateDSXUV8ToolWindowCount,
+  getDSXUV8ToolWindowPolicy,
+  resolveDSXUV8ToolWindowPolicy,
+  resolveDSXUV8ToolWindowProfile,
+} from './tool-window-policy-v8'
+export {
+  buildDSXUCapabilityRegistry,
+  compileDSXUCapabilityActivationPlan,
+  getDSXUCapabilityEntry,
+  resolveDSXUToolCapabilityExposure,
+} from './capability-registry'
+export {
+  buildDSXUPromptSectionPlan,
+} from './prompt-section-router'
+export type {
+  DSXUCapabilityActivationPlan,
+  DSXUCapabilityEntry,
+  DSXUCapabilityRegistry,
+} from './capability-registry'
+export type {
+  DSXUPromptSectionPlan,
+} from './prompt-section-router'
+export { buildDSXUFinalReportWorkStateTimeline } from './code-mode-surgical-loop'
+export { buildDSXUEditProofEnvelope } from './code-mode-surgical-loop'
+export type { DSXUEditProofEnvelope } from './code-mode-surgical-loop'
+export type {
+  DSXUWorkStateEvent,
+  DSXUWorkStateEventKind,
+  DSXUWorkStateRisk,
+  DSXUWorkStateStatus,
+  DSXUWorkStateTimeline,
+  DSXUWorkStateTimelineInput,
+  DSXURuntimeStateCard,
+  DSXURuntimeStateCardState,
+  DSXURuntimeRecoveryAction,
+  DSXUTaskEvidencePacket,
+} from './work-state-timeline'
+export type {
+  DSXUActiveFrame,
+  DeepSeekRouteAdmissionProjection,
+  ProgressLedger,
+  LongTaskLedgerEvent,
+} from './progress-ledger'
+export type {
+  DSXUExecutionContract,
+  DSXUExecutionContractInput,
+  DSXUExecutionTaskType,
+} from './action-contract'
+export type {
+  DSXUToolViewCompilerResult,
+} from './tool-catalog-v1'
+export type {
+  DSXUV8ToolWindowPolicy,
+  DSXUV8ToolWindowProfile,
+} from './tool-window-policy-v8'
+export { buildV5ReplayBank } from './real-task-replay-suite-v1'
+export type { V5ReplayBank, V5ReplayTraceEvidence } from './real-task-replay-suite-v1'
 // Bug Brain 碌录鲁枚
 export { BugBrain, defaultBugBrain } from './bug-brain/index'
 export { bugBrainHooks, quickRecordBug } from './bug-brain/integration'
@@ -198,8 +280,8 @@ import type { ToolCapabilityPoolName } from './tool-capability-pool'
 import { ToolProtocolIntegration } from './tool-protocol-integration'
 import type { MCPServerConnection } from '../../services/mcp/types'
 
-/** DSXU Query Engine high-level API. */
-export class QueryEngine {
+/** DSXU engine harness API. Product entry uses the root QueryEngine in src/QueryEngine.ts. */
+export class EngineHarness {
   private config: QueryEngineConfig
   private toolRegistry: ToolRegistry
   private mcpInitialized = false
@@ -271,26 +353,26 @@ export class QueryEngine {
       if (this.config.skills.autoRegister) {
         const skillTools = this.skillsAdapter.registerAllSkills()
         this.toolRegistry.registerAll(skillTools)
-        console.log(`[QueryEngine] Registered ${skillTools.length} skills`)
+        console.log(`[EngineHarness] Registered ${skillTools.length} skills`)
       }
     }
 
     // DSXU comment sanitized.
     if (this.config.speculation?.enabled) {
       this.speculationManager = createSpeculationManager(this.config.speculation)
-      console.log('[QueryEngine] Speculation system initialized')
+      console.log('[EngineHarness] Speculation system initialized')
     }
 
     // Mirror existing tools into the protocol integration when auto-bridge is enabled.
     if (this.config.toolProtocol?.enabled) {
       this.toolProtocolIntegration = new ToolProtocolIntegration()
-      console.log('[QueryEngine] Tool Protocol integration initialized')
+      console.log('[EngineHarness] Tool Protocol integration initialized')
     }
 
     // DSXU comment sanitized.
     if (this.config.lifecycleProtocol?.enabled) {
       this._lifecycleProtocolManager = createLifecycleProtocolManager(this.config.lifecycleProtocol)
-      console.log('[QueryEngine] Lifecycle Protocol Manager initialized')
+      console.log('[EngineHarness] Lifecycle Protocol Manager initialized')
     }
   }
 
@@ -303,7 +385,7 @@ export class QueryEngine {
       const { initBundledSkills } = require('../../skills/bundled/index.js')
       initBundledSkills()
     } catch (error: any) {
-      console.warn(`[QueryEngine] Failed to initialize skills system: ${error.message}`)
+      console.warn(`[EngineHarness] Failed to initialize skills system: ${error.message}`)
     }
   }
 
@@ -314,7 +396,7 @@ export class QueryEngine {
    */
   enableSkills(): this {
     if (this.skillsAdapter) {
-      console.log('[QueryEngine] Skills system already enabled')
+      console.log('[EngineHarness] Skills system already enabled')
       return this
     }
 
@@ -331,7 +413,7 @@ export class QueryEngine {
     if (this.config.skills.autoRegister) {
       const skillTools = this.skillsAdapter.registerAllSkills()
       this.toolRegistry.registerAll(skillTools)
-      console.log(`[QueryEngine] Registered ${skillTools.length} skills`)
+      console.log(`[EngineHarness] Registered ${skillTools.length} skills`)
     }
 
     return this
@@ -342,7 +424,7 @@ export class QueryEngine {
    */
   enableSpeculation(): this {
     if (this.speculationManager) {
-      console.log('[QueryEngine] Speculation system already enabled')
+      console.log('[EngineHarness] Speculation system already enabled')
       return this
     }
 
@@ -354,7 +436,7 @@ export class QueryEngine {
     }
 
     this.speculationManager = createSpeculationManager(this.config.speculation)
-    console.log('[QueryEngine] Speculation system enabled')
+    console.log('[EngineHarness] Speculation system enabled')
 
     return this
   }
@@ -364,7 +446,7 @@ export class QueryEngine {
    */
   enableToolProtocol(): this {
     if (this.toolProtocolIntegration) {
-      console.log('[QueryEngine] Tool Protocol system already enabled')
+      console.log('[EngineHarness] Tool Protocol system already enabled')
       return this
     }
 
@@ -376,7 +458,7 @@ export class QueryEngine {
     }
 
     this.toolProtocolIntegration = new ToolProtocolIntegration()
-    console.log('[QueryEngine] Tool Protocol system enabled')
+    console.log('[EngineHarness] Tool Protocol system enabled')
 
     // 脳脭露炉脳垄虏谩脭颅脡煤鹿陇戮脽
     if (this.config.toolProtocol.autoRegisterNativeTools) {
@@ -399,7 +481,7 @@ export class QueryEngine {
 
     // 脮芒脌茂驴脡脪脭脤铆录脫脭颅脡煤鹿陇戮脽碌脛脳垄虏谩脗脽录颅
     // DSXU comment sanitized.
-    console.log('[QueryEngine] Native tools registered to Tool Protocol')
+    console.log('[EngineHarness] Native tools registered to Tool Protocol')
   }
 
   /**
@@ -420,7 +502,7 @@ export class QueryEngine {
       }
     }
 
-    console.log(`[QueryEngine] Registered ${allTools.length} existing tools to Tool Protocol`)
+    console.log(`[EngineHarness] Registered ${allTools.length} existing tools to Tool Protocol`)
   }
 
   /**
@@ -432,9 +514,9 @@ export class QueryEngine {
     try {
       // DSXU comment sanitized.
       // this.toolProtocolIntegration.registerBridgeTool(tool.name, tool)
-      console.log(`[QueryEngine] Registered tool "${tool.name}" to Tool Protocol`)
+      console.log(`[EngineHarness] Registered tool "${tool.name}" to Tool Protocol`)
     } catch (error: any) {
-      console.warn(`[QueryEngine] Failed to register tool "${tool.name}" to Tool Protocol: ${error.message}`)
+      console.warn(`[EngineHarness] Failed to register tool "${tool.name}" to Tool Protocol: ${error.message}`)
     }
   }
 
@@ -443,7 +525,7 @@ export class QueryEngine {
    */
   disableSpeculation(): this {
     if (!this.speculationManager) {
-      console.log('[QueryEngine] Speculation system not enabled')
+      console.log('[EngineHarness] Speculation system not enabled')
       return this
     }
 
@@ -451,7 +533,7 @@ export class QueryEngine {
     if (this.config.speculation) {
       this.config.speculation.enabled = false
     }
-    console.log('[QueryEngine] Speculation system disabled')
+    console.log('[EngineHarness] Speculation system disabled')
 
     return this
   }
@@ -461,7 +543,7 @@ export class QueryEngine {
    */
   disableToolProtocol(): this {
     if (!this.toolProtocolIntegration) {
-      console.log('[QueryEngine] Tool Protocol system not enabled')
+      console.log('[EngineHarness] Tool Protocol system not enabled')
       return this
     }
 
@@ -469,7 +551,7 @@ export class QueryEngine {
     if (this.config.toolProtocol) {
       this.config.toolProtocol.enabled = false
     }
-    console.log('[QueryEngine] Tool Protocol system disabled')
+    console.log('[EngineHarness] Tool Protocol system disabled')
 
     return this
   }
@@ -483,7 +565,7 @@ export class QueryEngine {
     }
 
     this.speculationManager.registerStrategy(strategy)
-    console.log(`[QueryEngine] Registered speculation strategy: ${strategy.name}`)
+    console.log(`[EngineHarness] Registered speculation strategy: ${strategy.name}`)
 
     return this
   }
@@ -514,6 +596,11 @@ export class QueryEngine {
     if (!this.toolProtocolIntegration) {
       return {
         enabled: false,
+        defaultMainline: false,
+        owner: 'Tool Envelope / Tool Gate',
+        boundary: 'disabled by default; optional owner evidence harness only',
+        productRuntime: 'ToolRegistry + Tool Gate',
+        activeOnlyWhenExplicitlyEnabled: true,
         nativeToolsRegistered: 0,
         bridgeToolsRegistered: 0,
         config: this.config.toolProtocol || { enabled: false },
@@ -523,6 +610,11 @@ export class QueryEngine {
     // DSXU comment sanitized.
     return {
       enabled: true,
+      defaultMainline: false,
+      owner: 'Tool Envelope / Tool Gate',
+      boundary: 'explicit owner evidence harness; not a second product ToolBus',
+      productRuntime: 'ToolRegistry + Tool Gate',
+      activeOnlyWhenExplicitlyEnabled: true,
       nativeToolsRegistered: 0, // DSXU comment sanitized.
       bridgeToolsRegistered: 0, // DSXU comment sanitized.
       config: this.config.toolProtocol || { enabled: true },
@@ -558,7 +650,7 @@ export class QueryEngine {
    */
   disableSkills(): this {
     if (!this.skillsAdapter) {
-      console.log('[QueryEngine] Skills system not enabled')
+      console.log('[EngineHarness] Skills system not enabled')
       return this
     }
 
@@ -573,7 +665,7 @@ export class QueryEngine {
       this.config.skills.enabled = false
     }
 
-    console.log(`[QueryEngine] Disabled skills system, removed ${skillTools.length} skills`)
+    console.log(`[EngineHarness] Disabled skills system, removed ${skillTools.length} skills`)
     return this
   }
 
@@ -694,7 +786,7 @@ export class QueryEngine {
       this.skillsAdapter.updateConfig(this.config.skills)
     }
 
-    console.log(`[QueryEngine] Updated skills config:`, config)
+    console.log(`[EngineHarness] Updated skills config:`, config)
     return this
   }
 
@@ -712,7 +804,7 @@ export class QueryEngine {
       (summary) => this.addAgentSummary(summary)
     )
     this.toolRegistry.register(forkTool)
-    console.log('[QueryEngine] ForkAgent tool enabled')
+    console.log('[EngineHarness] ForkAgent tool enabled')
     return this
   }
 
@@ -850,7 +942,7 @@ export class QueryEngine {
    */
   addAgentSummary(summary: AgentSummary): void {
     this.agentSummaries.push(summary)
-    console.log(`[QueryEngine] Added agent summary: ${summary.forkId} (${summary.status})`)
+    console.log(`[EngineHarness] Added agent summary: ${summary.forkId} (${summary.status})`)
   }
 
   /**
@@ -923,7 +1015,7 @@ export class QueryEngine {
    */
   clearAgentSummaries(): void {
     this.agentSummaries = []
-    console.log('[QueryEngine] Cleared all agent summaries')
+    console.log('[EngineHarness] Cleared all agent summaries')
   }
 
   /** Run a rule-based reviewer on one run result/events. */
@@ -1014,7 +1106,7 @@ export class QueryEngine {
     }
   }
 
-  /** V14 DSXU-native bootstrap: enable control-plane hardening without DSXU bridges. */
+  /** DSXU-native bootstrap: enable control-plane hardening without DSXU bridges. */
   bootstrapFullAbsorb(options?: { aggressive?: boolean; importToolPool?: boolean }) {
     const aggressive = options?.aggressive ?? true
     if (aggressive) {
@@ -1052,9 +1144,9 @@ export class QueryEngine {
     const after = this.toolCount
     const status = this.buildFullAbsorbStatus()
     const actions = [
-      'use DSXU runtime trace instead of provider-migration full-absorb bridge',
+      'use DSXU runtime trace instead of archived full-absorb bridge',
       'route external executors through DSXU tool capability contract',
-      'validate with V14 residual and full absorption audits',
+      'validate with residual and full absorption audits',
     ]
     return {
       aggressive,
@@ -1070,9 +1162,9 @@ export class QueryEngine {
 
   getFullAbsorbActions() {
     return [
-      'use DSXU runtime trace instead of provider-migration full-absorb bridge',
+      'use DSXU runtime trace instead of archived full-absorb bridge',
       'route external executors through DSXU tool capability contract',
-      'validate with V14 residual and full absorption audits',
+      'validate with residual and full absorption audits',
     ]
   }
 
@@ -1117,7 +1209,7 @@ export class QueryEngine {
         'src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts',
         'src/dsxu/engine/__tests__/control-plane-v1.test.ts',
       ],
-      message: 'V14 uses DSXU-native control-plane execution; provider-migration full-absorb bridge is frozen.',
+      message: 'DSXU uses native control-plane execution; archived full-absorb bridge is frozen.',
     }
   }
 
@@ -1130,7 +1222,7 @@ export class QueryEngine {
     const report = this.executeFullAbsorbOnce(options)
     return {
       ...report,
-      providerMigrationBridges: [
+      archivedBridges: [
         {
           name: 'analytics',
           connected: false,
@@ -1333,7 +1425,6 @@ export {
 } from './dsxu-session-cache-control'
 export type {
   DSXUSessionCacheControlResult,
-  V15SessionCacheControlResult,
 } from './dsxu-session-cache-control'
 
 export {

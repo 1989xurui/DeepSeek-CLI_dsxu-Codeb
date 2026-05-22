@@ -8,8 +8,8 @@ import { get3PModelCapabilityOverride } from './model/modelSupportOverrides.js'
 import { getAPIProvider } from './model/providers.js'
 import { getSettingsWithErrors } from './settings/settings.js'
 import {
-  supportsProviderMigrationAdaptiveThinking,
-  supportsProviderMigrationThinking,
+  supportsArchivedAdaptiveThinking,
+  supportsArchivedThinking,
 } from './model/providerMigration/providerMigrationThinking.js'
 
 export type ThinkingConfig =
@@ -104,7 +104,7 @@ export function modelSupportsThinking(model: string): boolean {
   // launch DRI and research. This can greatly affect model quality and bashing.
   const canonical = getCanonicalName(model)
   const provider = getAPIProvider()
-  return supportsProviderMigrationThinking({
+  return supportsArchivedThinking({
     canonical,
     model,
     provider,
@@ -122,9 +122,9 @@ export function modelSupportsAdaptiveThinking(model: string): boolean {
     return supported3P
   }
   const canonical = getCanonicalName(model)
-  const providerMigrationSupport = supportsProviderMigrationAdaptiveThinking(canonical)
-  if (providerMigrationSupport !== undefined) {
-    return providerMigrationSupport
+  const archivedSupport = supportsArchivedAdaptiveThinking(canonical)
+  if (archivedSupport !== undefined) {
+    return archivedSupport
   }
   // IMPORTANT: Do not change adaptive thinking support without notifying the
   // model launch DRI and research. This can greatly affect model quality and

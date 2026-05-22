@@ -2,6 +2,16 @@ import type { ToolUseBlock } from 'src/types/providerSdk.js'
 import type { ToolResultBlockParam } from 'src/types/providerSdk.js'
 import { posix, win32 } from 'path'
 import type { Tool } from '../../Tool.js'
+import {
+  normalizeToolResultAtToolGateBoundary,
+  type ToolCallResult,
+  type ToolResultContractEvidence,
+} from '../../dsxu/engine/tool-protocol.js'
+import { projectToolCallResultToLedgerEvent } from '../../dsxu/engine/progress-ledger.js'
+import {
+  projectDSXUToolCallResultToWorkStateEvent,
+  type DSXUWorkStateEvent,
+} from '../../dsxu/engine/work-state-timeline.js'
 import { traceDsxuLifecycle } from '../../utils/dsxuLifecycleTrace.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
 import type { DsxuToolBatchGateDecision } from './dsxuToolBatchGate.js'
@@ -43,6 +53,13 @@ export type DsxuToolResultLifecycleMapping = {
   block: ToolResultBlockParam
   sizeBytes: number
   contentKind: 'empty' | 'text' | 'blocks' | 'other'
+}
+
+export type DsxuToolRuntimeEventBoundary = {
+  canonicalResult: ToolCallResult
+  contractEvidence: ToolResultContractEvidence
+  ledgerEvent: ReturnType<typeof projectToolCallResultToLedgerEvent>
+  workStateEvent: DSXUWorkStateEvent
 }
 
 function safelyBoolean(read: () => boolean): boolean {
@@ -171,6 +188,45 @@ export function mapDsxuToolResultForLifecycle<T>(
   }
 }
 
+export function buildDsxuToolRuntimeEventBoundary(input: {
+  toolUseID: string
+  toolName: string
+  mapping: DsxuToolResultLifecycleMapping
+  startTime?: number
+  owner?: string
+  turnId?: string
+  taskId?: string
+}): DsxuToolRuntimeEventBoundary {
+  const boundary = normalizeToolResultAtToolGateBoundary({
+    boundaryKind: 'provider_message',
+    result: input.mapping.block,
+    toolName: input.toolName,
+    startTime: input.startTime,
+  })
+  const canonicalResult = boundary.result
+  const owner = input.owner ?? 'Tool Gate'
+  return {
+    canonicalResult,
+    contractEvidence: boundary.contractEvidence,
+    ledgerEvent: projectToolCallResultToLedgerEvent({
+      result: canonicalResult,
+      callId: input.toolUseID,
+      toolName: input.toolName,
+      owner,
+      turnId: input.turnId,
+      taskId: input.taskId,
+    }),
+    workStateEvent: projectDSXUToolCallResultToWorkStateEvent({
+      result: canonicalResult,
+      callId: input.toolUseID,
+      toolName: input.toolName,
+      owner,
+      turnId: input.turnId,
+      taskId: input.taskId,
+    }),
+  }
+}
+
 export function traceDsxuToolLifecycleGateDecision(
   event: DsxuToolLifecycleGateTraceEvent,
   toolUse: ToolUseBlock,
@@ -250,5 +306,28 @@ export function traceDsxuToolLifecycleResultMapping(
     sizeBytes: mapping.sizeBytes,
     contentKind: mapping.contentKind,
     isError: mapping.block.is_error === true,
+  })
+}
+
+export function traceDsxuToolRuntimeEventBoundary(
+  toolUseID: string,
+  toolName: string,
+  boundary: DsxuToolRuntimeEventBoundary,
+): void {
+  traceDsxuLifecycle('tool_runtime_event_boundary', {
+    toolUseID,
+    toolName,
+    canonicalResultSchema: boundary.contractEvidence.canonicalResultSchema,
+    runtimeEventSchema: boundary.contractEvidence.runtimeEventSchema,
+    boundaryKind: boundary.contractEvidence.boundaryKind,
+    canonical: boundary.contractEvidence.canonical,
+    ok: boundary.contractEvidence.ok,
+    outputChars: boundary.contractEvidence.outputChars,
+    executorKind: boundary.contractEvidence.executorKind,
+    usedBridge: boundary.contractEvidence.usedBridge,
+    workStateStatus: boundary.workStateEvent.status,
+    ledgerKind: boundary.ledgerEvent.kind,
+    errorType: boundary.contractEvidence.errorType,
+    retryable: boundary.contractEvidence.retryable,
   })
 }

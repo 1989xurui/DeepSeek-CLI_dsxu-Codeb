@@ -8,8 +8,8 @@ process.env.COREPACK_ENABLE_AUTO_PIN = '0';
 
 const isDSXUCodeMode = process.env.DSXU_CODE_MODE === '1';
 const productName = isDSXUCodeMode ? 'DSXU Code' : 'DSXU Code';
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
-const PROVIDER_MIGRATION_BROWSER_MCP_FLAG = '--' + 'cla' + 'ude-in-chrome-mcp'
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE' + '_CODE'
+const ARCHIVED_BROWSER_MCP_FLAG = '--' + 'cla' + 'ude-in-chrome-mcp'
 
 // Set max heap size for child processes in CCR environments (containers have 16GB)
 // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level, custom-rules/safe-env-boolean-check
@@ -28,19 +28,19 @@ if (isDsxuCodeEnvTruthy('REMOTE')) {
 if (feature('ABLATION_BASELINE') && isDsxuCodeEnvTruthy('ABLATION_BASELINE')) {
   for (const k of [
     'DSXU_CODE_SIMPLE',
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_SIMPLE`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_SIMPLE`,
     'DSXU_CODE_DISABLE_THINKING',
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_THINKING`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_DISABLE_THINKING`,
     'DSXU_CODE_DISABLE_INTERLEAVED_THINKING',
     'DISABLE_INTERLEAVED_THINKING',
     'DSXU_CODE_DISABLE_COMPACT',
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_COMPACT`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_DISABLE_COMPACT`,
     'DSXU_CODE_DISABLE_AUTO_COMPACT',
     'DISABLE_AUTO_COMPACT',
     'DSXU_CODE_DISABLE_AUTO_MEMORY',
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_AUTO_MEMORY`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_DISABLE_AUTO_MEMORY`,
     'DSXU_CODE_DISABLE_BACKGROUND_TASKS',
-    `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_DISABLE_BACKGROUND_TASKS`,
+    `${ARCHIVED_CODE_ENV_PREFIX}_DISABLE_BACKGROUND_TASKS`,
   ]) {
     // eslint-disable-next-line custom-rules/no-top-level-side-effects, custom-rules/no-process-env-top-level
     process.env[k] ??= '1';
@@ -99,8 +99,8 @@ async function main(): Promise<void> {
     await runDsxuBrowserProviderMcpServer();
     return;
   }
-  if (process.argv[2] === PROVIDER_MIGRATION_BROWSER_MCP_FLAG) {
-    console.error('DSXU Code does not expose the provider-migration browser MCP path. Use --dsxu-browser-mcp or DSXU MCP/browser providers instead.');
+  if (process.argv[2] === ARCHIVED_BROWSER_MCP_FLAG) {
+    console.error('DSXU Code does not expose the archived browser MCP path. Use --dsxu-browser-mcp or DSXU MCP/browser providers instead.');
     process.exit(1);
   }
   if (process.argv[2] === '--chrome-native-host') {
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Fast-path for provider-migration remote-control aliases:
+  // Fast-path for archived remote-control aliases:
   // map old shell aliases to the DSXU provider contract in default mode.
   // feature() must stay inline for build-time dead code elimination;
   // isBridgeEnabled() checks the runtime feature flag provider gate.
@@ -276,7 +276,7 @@ async function main(): Promise<void> {
   // option building (not just inside the action handler).
   if (args.includes('--bare')) {
     process.env.DSXU_CODE_SIMPLE = '1';
-    process.env[`${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_SIMPLE`] = '1';
+    process.env[`${ARCHIVED_CODE_ENV_PREFIX}_SIMPLE`] = '1';
   }
 
   // No special flags detected, load and run the full CLI

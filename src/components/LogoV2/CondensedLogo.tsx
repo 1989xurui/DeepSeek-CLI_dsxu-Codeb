@@ -58,7 +58,7 @@ export function CondensedLogo(): ReactNode {
     ? textWidth - 1 - stringWidth(agentName) - 3
     : textWidth;
   const truncatedCwd = truncatePath(cwd, Math.max(cwdAvailableWidth, 10));
-  const cwdLine = agentName ? `@${agentName} 路 ${truncatedCwd}` : truncatedCwd;
+  const cwdLine = agentName ? `@${agentName} - ${truncatedCwd}` : truncatedCwd;
   const mascot = isFullscreenEnvEnabled() ? (
     <AnimatedDsxuMascot maxWidth={maxMascotWidth} />
   ) : (
@@ -80,7 +80,7 @@ export function CondensedLogo(): ReactNode {
               <Text dimColor={true}>{truncatedBilling}</Text>
             </>
           ) : (
-            <Text dimColor={true}>{truncatedModel} 路 {truncatedBilling}</Text>
+            <Text dimColor={true}>{truncatedModel} - {truncatedBilling}</Text>
           )}
           <Text dimColor={true}>{cwdLine}</Text>
           {showGuestPassesUpsell && <GuestPassesUpsell />}

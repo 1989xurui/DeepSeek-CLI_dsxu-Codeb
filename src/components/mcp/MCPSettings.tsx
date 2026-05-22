@@ -1,12 +1,12 @@
-import { c as _c } from "react/compiler-runtime";
+﻿import { c as _c } from "react/compiler-runtime";
 import React, { useEffect, useMemo } from 'react';
 import type { CommandResultDisplay } from '../../commands.js';
 import {
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
-  isProviderMigrationMcpTransport,
+  ARCHIVED_MCP_TRANSPORT,
+  isArchivedMcpTransport,
 } from '../../constants/providerMigrationProtocol.js';
 import { DsxuMcpAuthProvider } from '../../services/mcp/auth.js';
-import type { McpHTTPServerConfig, McpProviderMigrationProxyServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
+import type { McpArchivedProxyServerConfig, McpHTTPServerConfig, McpSSEServerConfig, McpStdioServerConfig } from '../../services/mcp/types.js';
 import { extractAgentMcpServers, filterToolsByServer } from '../../services/mcp/utils.js';
 import { useAppState } from '../../state/AppState.js';
 import { getSessionIngressAuthToken } from '../../utils/sessionIngressAuth.js';
@@ -76,7 +76,7 @@ export function MCPSettings(t0) {
           const scope = client_0.config.scope;
           const isSSE = client_0.config.type === "sse";
           const isHTTP = client_0.config.type === "http";
-          const isProviderMigrationConnector = isProviderMigrationMcpTransport(client_0.config.type);
+          const isArchivedConnector = isArchivedMcpTransport(client_0.config.type);
           let isAuthenticated = undefined;
           if (isSSE || isHTTP) {
             const authProvider = new DsxuMcpAuthProvider(client_0.name, client_0.config as McpSSEServerConfig | McpHTTPServerConfig);
@@ -90,12 +90,12 @@ export function MCPSettings(t0) {
             client: client_0,
             scope
           };
-          if (isProviderMigrationConnector) {
+          if (isArchivedConnector) {
             return {
               ...baseInfo,
-              transport: PROVIDER_MIGRATION_MCP_TRANSPORT,
+              transport: ARCHIVED_MCP_TRANSPORT,
               isAuthenticated: false,
-              config: client_0.config as McpProviderMigrationProxyServerConfig
+              config: client_0.config as McpArchivedProxyServerConfig
             };
           } else {
             if (isSSE) {
@@ -211,7 +211,7 @@ export function MCPSettings(t0) {
           t9 = $[25];
         }
         const serverTools_0 = t9;
-        const defaultTab = isProviderMigrationMcpTransport(viewState.server.transport) ? "Provider connector migration" : "DSXU Code";
+        const defaultTab = isArchivedMcpTransport(viewState.server.transport) ? "Archived connectors" : "DSXU Code";
         if (viewState.server.transport === "stdio") {
           let t10;
           if ($[26] !== viewState.server) {

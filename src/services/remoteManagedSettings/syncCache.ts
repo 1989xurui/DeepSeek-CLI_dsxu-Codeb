@@ -22,11 +22,11 @@ import {
 } from './syncCacheState.js'
 
 let cached: boolean | undefined
-const PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG =
+const ARCHIVED_REMOTE_SETTINGS_FLAG =
   'DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_SETTINGS'
 
-function isProviderMigrationRemoteSettingsOverrideEnabled(): boolean {
-  return process.env[PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG] === '1'
+function isArchivedRemoteSettingsOverrideEnabled(): boolean {
+  return process.env[ARCHIVED_REMOTE_SETTINGS_FLAG] === '1'
 }
 
 export function resetSyncCache(): void {
@@ -41,7 +41,7 @@ export function resetSyncCache(): void {
  * - Console users (API key): All eligible (must have actual key, not just apiKeyHelper)
  * - OAuth users with known subscriptionType: Only Enterprise/C4E and Team
  * - OAuth users with subscriptionType === null (externally-injected tokens via
- *   provider-migration source OAuth token / FD, or keychain tokens missing metadata): Eligible -? *   the API returns empty settings for ineligible orgs, so the cost of a false
+ *   archived source OAuth token / FD, or keychain tokens missing metadata): Eligible -? *   the API returns empty settings for ineligible orgs, so the cost of a false
  *   positive is one round-trip
  *
  * This is a pre-check to determine if we should query the API.
@@ -53,7 +53,7 @@ export function resetSyncCache(): void {
 export function isRemoteManagedSettingsEligible(): boolean {
   if (cached !== undefined) return cached
 
-  if (isDsxuRuntimeMode() && !isProviderMigrationRemoteSettingsOverrideEnabled()) {
+  if (isDsxuRuntimeMode() && !isArchivedRemoteSettingsOverrideEnabled()) {
     return (cached = setEligibility(false))
   }
 
@@ -84,8 +84,8 @@ export function isRemoteManagedSettingsEligible(): boolean {
   // that subprocess for the common case.
   const tokens = getProviderControlTokens()
 
-  // Externally-injected tokens via provider-migration source OAuth envs, CCR via
-  // provider-migration source OAuth token file descriptor, Agent SDK, CI) carry no
+  // Externally-injected tokens via archived source OAuth envs, CCR via
+  // archived source OAuth token file descriptor, Agent SDK, CI) carry no
   // subscriptionType metadata -?getProviderControlTokens() constructs them with
   // subscriptionType: null. The token itself is valid; let the API decide.
   // fetchRemoteManagedSettings handles 204/404 gracefully (returns {}), and
@@ -125,14 +125,14 @@ export function isRemoteManagedSettingsEligible(): boolean {
 export function getDsxuRemoteManagedSettingsRuntimeProfile() {
   return {
     runtime: 'DSXU Managed Settings Gate',
-    defaultBehavior: 'provider-migration remote managed settings are disabled in DSXU runtime',
-    providerMigrationOverride: `${PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG}=1`,
+    defaultBehavior: 'archived remote managed settings are disabled in DSXU runtime',
+    archivedRemoteSettingsOverride: `${ARCHIVED_REMOTE_SETTINGS_FLAG}=1`,
     providerTarget: 'DSXU Policy/Workspace Settings Provider',
     activationEvidence: [
-      'DSXU_CODE_MODE returns ineligible before provider-migration source/OAuth checks',
-      `${PROVIDER_MIGRATION_REMOTE_SETTINGS_FLAG}=1 remains accepted only as an explicit provider-migration override`,
+      'DSXU_CODE_MODE returns ineligible before archived source/OAuth checks',
+      `${ARCHIVED_REMOTE_SETTINGS_FLAG}=1 remains accepted only as an explicit archived override`,
       'local MDM/file settings remain available through the settings layer',
-      'remote policy sync must be reimplemented as DSXU Provider, not provider migration source',
+      'remote policy sync must be implemented as DSXU Provider, not archived source',
     ],
   }
 }

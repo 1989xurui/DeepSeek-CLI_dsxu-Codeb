@@ -78,7 +78,7 @@ export function isExtractModeActive(): boolean {
  * Returns the base directory for persistent memory storage.
  * Resolution order:
  *   1. DSXU_CODE_REMOTE_MEMORY_DIR env var (explicit DSXU override)
- *   2. DSXU_CODE_REMOTE_MEMORY_DIR env var (provider migration override)
+ *   2. DSXU_CODE_REMOTE_MEMORY_DIR env var (archived override)
  *   3. ~/.dsxu (default DSXU config home)
  */
 export function getMemoryBaseDir(): string {

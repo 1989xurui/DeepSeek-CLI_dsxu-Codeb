@@ -74,7 +74,7 @@ export type LockInfo = {
 // This is much shorter than the previous 30-day timeout but still allows
 // for edge cases like network filesystems where PID check might fail
 const FALLBACK_STALE_MS = 2 * 60 * 60 * 1000
-const PROVIDER_MIGRATION_NATIVE_PROCESS_NAME = 'cl' + 'aude'
+const ARCHIVED_NATIVE_PROCESS_NAME = 'cl' + 'aude'
 
 /**
  * Check if a process with the given PID is currently running
@@ -106,7 +106,7 @@ function isNativeCliProcess(pid: number, expectedExecPath: string): boolean {
 
   // If the PID matches our current process, we know it's valid
   // This handles test environments where the command might not contain the
-  // provider-migration source executable basename.
+  // archived source executable basename.
   if (pid === process.pid) {
     return true
   }
@@ -119,13 +119,13 @@ function isNativeCliProcess(pid: number, expectedExecPath: string): boolean {
       return true
     }
 
-    // Check if the command contains the provider-migration source executable basename or the
+    // Check if the command contains the archived source executable basename or the
     // expected exec path.
     const normalizedCommand = command.toLowerCase()
     const normalizedExecPath = expectedExecPath.toLowerCase()
 
     return (
-      normalizedCommand.includes(PROVIDER_MIGRATION_NATIVE_PROCESS_NAME) ||
+      normalizedCommand.includes(ARCHIVED_NATIVE_PROCESS_NAME) ||
       normalizedCommand.includes(normalizedExecPath)
     )
   } catch {

@@ -634,8 +634,8 @@ describe('DSXU engine tool adapter V2', () => {
     } as any, 'tool-agent-remote-1')
     const remoteText = toolResultText(remoteResult)
 
-    expect(remoteText).toContain('Provider-migration remote agent launched')
-    expect(remoteText).toContain('explicit DSXU provider-migration gate')
+    expect(remoteText).toContain('Archived remote agent launched')
+    expect(remoteText).toContain('explicit DSXU archived gate')
     expect(remoteText).toContain('Never fabricate or predict the remote agent result')
     expect(remoteText).not.toMatch(forbiddenVisibleText)
   })

@@ -5,7 +5,7 @@
  * isRemoteManagedSettingsEligible() reads two separate keychain entries
  * sequentially via sync execSync during applySafeConfigEnvironmentVariables():
  *   1. "DSXU Code-credentials" (OAuth tokens), about 32ms.
- *   2. "DSXU Code" (provider-migration source API key), about 33ms.
+ *   2. "DSXU Code" (archived source API key), about 33ms.
  * Sequential cost: about 65ms on every macOS startup.
  *
  * Firing both here lets the subprocesses run in parallel with the main.tsx
@@ -25,7 +25,7 @@ import { execFile } from 'child_process'
 import {
   isBareMode,
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../envUtils.js'
 import {
   CREDENTIALS_SERVICE_SUFFIX,
@@ -40,7 +40,7 @@ const KEYCHAIN_PREFETCH_TIMEOUT_MS = 10_000
 // sync spawn when the prefetch already landed. Distinguishing "not started" (null)
 // from "completed with no key" ({ stdout: null }) lets the sync reader only
 // trust a completed prefetch.
-let providerMigrationApiKeyPrefetch: { stdout: string | null } | null = null
+let archivedApiKeyPrefetch: { stdout: string | null } | null = null
 
 let prefetchPromise: Promise<void> | null = null
 
@@ -75,7 +75,7 @@ export function startKeychainPrefetch(): void {
     process.platform !== 'darwin' ||
     prefetchPromise ||
     isBareMode() ||
-    (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed())
+    (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed())
   ) {
     return
   }
@@ -86,18 +86,18 @@ export function startKeychainPrefetch(): void {
   const oauthSpawn = spawnSecurity(
     getMacOsKeychainStorageServiceName(CREDENTIALS_SERVICE_SUFFIX),
   )
-  const providerMigrationSpawn = spawnSecurity(
+  const archivedApiKeySpawn = spawnSecurity(
     getMacOsKeychainStorageServiceName(),
   )
 
-  prefetchPromise = Promise.all([oauthSpawn, providerMigrationSpawn]).then(
-    ([oauth, providerMigration]) => {
+  prefetchPromise = Promise.all([oauthSpawn, archivedApiKeySpawn]).then(
+    ([oauth, archivedApiKey]) => {
       // Timed-out prefetch: don't prime. Sync read/spawn will retry with its
       // own (longer) timeout. Priming null here would shadow a key that the
       // sync path might successfully fetch.
       if (!oauth.timedOut) primeKeychainCacheFromPrefetch(oauth.stdout)
-      if (!providerMigration.timedOut) {
-        providerMigrationApiKeyPrefetch = { stdout: providerMigration.stdout }
+      if (!archivedApiKey.timedOut) {
+        archivedApiKeyPrefetch = { stdout: archivedApiKey.stdout }
       }
     },
   )
@@ -116,16 +116,16 @@ export async function ensureKeychainPrefetchCompleted(): Promise<void> {
  * Consumed by getApiKeyFromConfigOrMacOSKeychain() in auth.ts before it
  * falls through to sync execSync. Returns null if prefetch hasn't completed.
  */
-export function getProviderMigrationApiKeyPrefetchResult(): {
+export function getArchivedApiKeyPrefetchResult(): {
   stdout: string | null
 } | null {
-  return providerMigrationApiKeyPrefetch
+  return archivedApiKeyPrefetch
 }
 
 /**
  * Clear prefetch result. Called alongside getApiKeyFromConfigOrMacOSKeychain
  * cache invalidation so a stale prefetch doesn't shadow a fresh write.
  */
-export function clearProviderMigrationApiKeyPrefetch(): void {
-  providerMigrationApiKeyPrefetch = null
+export function clearArchivedApiKeyPrefetch(): void {
+  archivedApiKeyPrefetch = null
 }

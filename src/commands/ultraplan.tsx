@@ -3,7 +3,7 @@ import { REMOTE_CONTROL_DISCONNECTED_MSG } from '../services/bridge/dsxuRemoteBr
 import type { Command } from '../commands.js';
 import { DIAMOND_OPEN } from '../constants/figures.js';
 import { getRemoteSessionUrl } from '../constants/product.js';
-import { getProviderMigrationUltraplanModel } from '../utils/model/providerMigration/providerMigrationUltraplanModel.js';
+import { getArchivedUltraplanModel } from '../utils/model/providerMigration/providerMigrationUltraplanModel.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../services/analytics/index.js';
 import type { AppState } from '../state/AppStateStore.js';
 import { checkRemoteAgentEligibility, formatPreconditionError, RemoteAgentTask, type RemoteAgentTaskState, registerRemoteAgentTask } from '../tasks/RemoteAgentTask/RemoteAgentTask.js';
@@ -29,7 +29,7 @@ export const CCR_TERMS_URL = 'https://docs.dsxu.local/dsxu-code-workflow';
 // load: the feature flag provider cache is empty at import and `/config` Gates can flip
 // it between invocations.
 function getUltraplanModel(): string {
-  return getProviderMigrationUltraplanModel();
+  return getArchivedUltraplanModel();
 }
 
 // prompt.txt is wrapped in <system-reminder> so the CCR browser hides

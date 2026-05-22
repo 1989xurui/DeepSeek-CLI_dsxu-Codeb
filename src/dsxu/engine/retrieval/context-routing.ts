@@ -1,8 +1,7 @@
-/**
- * Context Routing - 上下文路由实现 (F-2)
+﻿/**
+ * Context Routing - 涓婁笅鏂囪矾鐢卞疄鐜?(F-2)
  *
- * 将检索到的子图路由到不同的处理组件
- * 吸收上游 task/session/memory 路由机制
+ * 灏嗘绱㈠埌鐨勫瓙鍥捐矾鐢卞埌涓嶅悓鐨勫鐞嗙粍浠? * 鍚告敹涓婃父 task/session/memory 璺敱鏈哄埗
  */
 
 import type {
@@ -15,7 +14,7 @@ import type {
 import type { GraphRetrievalImpl } from './graph-retrieval'
 
 /**
- * 路由决策因素
+ * 璺敱鍐崇瓥鍥犵礌
  */
 export interface RoutingDecision {
   target: ContextRoutingTarget
@@ -25,24 +24,23 @@ export interface RoutingDecision {
 }
 
 /**
- * 路由配置
+ * 璺敱閰嶇疆
  */
 export interface RoutingConfig {
-  /** 默认路由目标 */
+  /** 榛樿璺敱鐩爣 */
   defaultTarget: ContextRoutingTarget
-  /** 最小相关性阈值 */
+  /** 鏈€灏忕浉鍏虫€ч槇鍊?*/
   minRelevanceThreshold: number
-  /** 最大节点数阈值 */
+  /** 鏈€澶ц妭鐐规暟闃堝€?*/
   maxNodeThreshold: number
-  /** 是否启用智能路由 */
+  /** 鏄惁鍚敤鏅鸿兘璺敱 */
   enableSmartRouting: boolean
-  /** 路由缓存时间（毫秒） */
+  /** 璺敱缂撳瓨鏃堕棿锛堟绉掞級 */
   routingCacheTTL: number
 }
 
 /**
- * 路由上下文
- */
+ * 璺敱涓婁笅鏂? */
 export interface RoutingContext {
   sessionId?: string
   taskId?: string
@@ -53,8 +51,7 @@ export interface RoutingContext {
 }
 
 /**
- * Context Routing 实现类
- */
+ * Context Routing 瀹炵幇绫? */
 export class ContextRoutingImpl {
   private graphRetrieval: GraphRetrievalImpl
   private config: RoutingConfig
@@ -68,7 +65,7 @@ export class ContextRoutingImpl {
       minRelevanceThreshold: 60,
       maxNodeThreshold: 50,
       enableSmartRouting: true,
-      routingCacheTTL: 300000, // 5分钟
+      routingCacheTTL: 300000, // 5鍒嗛挓
       ...config
     }
     this.routingCache = new Map()
@@ -76,62 +73,58 @@ export class ContextRoutingImpl {
   }
 
   /**
-   * 执行上下文路由
-   */
+   * 鎵ц涓婁笅鏂囪矾鐢?   */
   async routeContext(
     query: RetrievalQuery,
     context?: RoutingContext
   ): Promise<ContextRoutingBundle> {
-    const startTime = Date.now()
     const cacheKey = this.generateCacheKey(query, context)
 
-    // 检查缓存
-    if (this.routingCache.has(cacheKey)) {
-      const cached = this.routingCache.get(cacheKey)!
-      if (Date.now() - cached.timestamp < this.config.routingCacheTTL) {
-        console.log(`[ContextRouting] 使用缓存路由: ${cached.bundle.id}`)
-        return cached.bundle
-      }
+    const cached = this.routingCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < this.config.routingCacheTTL) {
+      console.log(`[ContextRouting] 使用缓存路由: ${cached.bundle.id}`)
+      this.routingHistory.push(cached.bundle)
+      return cached.bundle
     }
 
     console.log(`[ContextRouting] 执行路由: ${query.queryType}, 目标数: ${query.targetIds.length}`)
 
-    // 1. 执行检索
-    const subgraph = await this.graphRetrieval.retrieve(query)
+    let subgraph: RetrievedSubgraph
+    try {
+      subgraph = await (this.graphRetrieval as any).retrieve(query, { countCacheHit: false })
+    } catch (error) {
+      const bundle = this.createErrorBundle(query, error as Error, context)
+      this.routingHistory.push(bundle)
+      return bundle
+    }
 
-    // 2. 分析检索结果，做出路由决策
     const decision = await this.analyzeAndDecide(subgraph, query, context)
-
-    // 3. 创建路由包
     const bundle = this.createRoutingBundle(subgraph, decision, query, context)
 
-    // 4. 更新缓存和历史
     this.routingCache.set(cacheKey, {
       bundle,
       timestamp: Date.now()
     })
     this.routingHistory.push(bundle)
 
-    // 5. 记录路由日志
     console.log(`[ContextRouting] 路由完成: ${bundle.id} -> ${bundle.target} (优先级: ${bundle.priority})`)
 
     return bundle
   }
-
   /**
-   * 分析检索结果并做出路由决策
+   * 鍒嗘瀽妫€绱㈢粨鏋滃苟鍋氬嚭璺敱鍐崇瓥
    */
   private async analyzeAndDecide(
     subgraph: RetrievedSubgraph,
     query: RetrievalQuery,
     context?: RoutingContext
   ): Promise<RoutingDecision> {
-    // 基础分析
+    // 鍩虹鍒嗘瀽
     const stats = subgraph.statistics
     const avgRelevance = stats.avgRelevance
     const totalNodes = stats.totalNodes
 
-    // 智能路由决策
+    // 鏅鸿兘璺敱鍐崇瓥
     if (this.config.enableSmartRouting) {
       const smartDecision = await this.smartRoutingDecision(subgraph, query, context)
       if (smartDecision) {
@@ -139,12 +132,12 @@ export class ContextRoutingImpl {
       }
     }
 
-    // 默认路由规则
+    // 榛樿璺敱瑙勫垯
     return this.defaultRoutingDecision(subgraph, query, context)
   }
 
   /**
-   * 智能路由决策
+   * 鏅鸿兘璺敱鍐崇瓥
    */
   private async smartRoutingDecision(
     subgraph: RetrievedSubgraph,
@@ -155,49 +148,39 @@ export class ContextRoutingImpl {
     const avgRelevance = stats.avgRelevance
     const totalNodes = stats.totalNodes
 
-    // 1. 高相关性 + 小规模 -> Query Loop（快速处理）
-    if (avgRelevance >= 85 && totalNodes <= 10) {
+    if (query.queryType === 'task' || query.queryType === 'dependency' || query.queryType === 'hotspot' || query.queryType === 'context') {
       return {
-        target: 'query-loop',
-        priority: 9,
-        reason: '高相关性小规模检索，适合快速处理',
-        instructions: '快速处理高相关性小规模上下文'
+        target: 'context-builder',
+        priority: 7,
+        reason: `${query.queryType} query needs structured context before execution`,
+        instructions: 'Build source/context evidence before continuing.'
       }
     }
 
-    // 2. 包含验证相关节点 -> Verify Gate
-    const hasVerificationNodes = subgraph.nodes.some(node =>
-      node.node.type === 'test' ||
-      node.node.type === 'verification' ||
-      node.node.properties?.isTest === true ||
-      node.node.id.includes('test') ||
-      node.node.id.includes('Test')
-    )
+    const hasVerificationNodes = subgraph.nodes.some(node => this.isVerificationNode(node.node))
     if (hasVerificationNodes) {
       return {
         target: 'verify-gate',
         priority: 8,
-        reason: '包含测试或验证相关节点',
-        instructions: '进行验证和测试相关的处理'
+        reason: 'test or verification evidence detected',
+        instructions: 'Route to verification gate and preserve source/test evidence.'
       }
     }
 
-    // 3. 包含复杂结构 -> Context Builder
     const hasComplexStructure = subgraph.nodes.some(node =>
       node.node.type === 'class' ||
       node.node.type === 'interface' ||
       node.node.type === 'module'
     )
-    if (hasComplexStructure && totalNodes >= 5) {
+    if (hasComplexStructure && totalNodes >= 3) {
       return {
         target: 'context-builder',
         priority: 7,
-        reason: '包含复杂代码结构，需要构建完整上下文',
-        instructions: '构建完整的代码结构和依赖上下文'
+        reason: 'structured code graph needs context building',
+        instructions: 'Build complete code structure and dependency context.'
       }
     }
 
-    // 4. 包含错误或问题 -> Reviewer
     const hasErrorNodes = subgraph.nodes.some(node =>
       node.node.type === 'error' ||
       node.node.type === 'bug' ||
@@ -207,41 +190,48 @@ export class ContextRoutingImpl {
       return {
         target: 'reviewer',
         priority: 8,
-        reason: '包含错误或问题节点，需要审查',
-        instructions: '审查代码问题和潜在风险'
+        reason: 'error or bug node detected',
+        instructions: 'Review the failure evidence and choose a repair path.'
       }
     }
 
-    // 5. 根据查询类型路由
-    switch (query.queryType) {
-      case 'task':
-        return {
-          target: 'context-builder',
-          priority: 7,
-          reason: '任务相关查询，需要构建任务上下文',
-          instructions: '构建任务执行上下文'
-        }
-      case 'slice':
-        return {
-          target: 'query-loop',
-          priority: 6,
-          reason: '代码切片查询，适合快速分析',
-          instructions: '分析代码切片上下文'
-        }
-      case 'dependency':
-        return {
-          target: 'context-builder',
-          priority: 7,
-          reason: '依赖关系查询，需要构建依赖上下文',
-          instructions: '构建依赖关系上下文'
-        }
+    if (avgRelevance >= 85 && totalNodes <= 10) {
+      return {
+        target: 'query-loop',
+        priority: 9,
+        reason: 'high relevance small graph can be handled directly',
+        instructions: 'Process compact high-relevance context in the query loop.'
+      }
+    }
+
+    if (query.queryType === 'slice') {
+      return {
+        target: 'query-loop',
+        priority: 6,
+        reason: 'slice query is suitable for quick analysis',
+        instructions: 'Analyze the code slice context.'
+      }
     }
 
     return null
   }
 
+  private isVerificationNode(node: RetrievedSubgraph['nodes'][number]['node']): boolean {
+    if (node.type === 'test' || node.type === 'verification') return true
+    if (node.properties?.isTest === true || node.properties?.componentType === 'test') return true
+
+    const path = typeof node.properties?.path === 'string' ? node.properties.path : ''
+    const id = node.id ?? ''
+    const explicitTestPath = /(^|[\\/])(__tests__|tests|specs)([\\/]|$)|\.(test|spec)\.[jt]sx?$/i
+
+    return (
+      explicitTestPath.test(path) ||
+      explicitTestPath.test(id) ||
+      /(?:^|[A-Z])(?:Test|Spec)(?:[A-Z]|$)|(?:Test|Spec)(?:File|Component|Case|Suite)/.test(id)
+    )
+  }
   /**
-   * 默认路由决策
+   * 榛樿璺敱鍐崇瓥
    */
   private defaultRoutingDecision(
     subgraph: RetrievedSubgraph,
@@ -252,36 +242,32 @@ export class ContextRoutingImpl {
     const avgRelevance = stats.avgRelevance
     const totalNodes = stats.totalNodes
 
-    // 根据相关性阈值决定
     if (avgRelevance >= this.config.minRelevanceThreshold) {
       if (totalNodes > this.config.maxNodeThreshold) {
         return {
           target: 'context-builder',
           priority: 6,
-          reason: '高相关性大规模检索，需要构建完整上下文',
-          instructions: '构建大规模高相关性上下文'
-        }
-      } else {
-        return {
-          target: 'query-loop',
-          priority: 7,
-          reason: '高相关性适中规模，适合查询循环处理',
-          instructions: '处理高相关性上下文'
+          reason: 'high relevance large graph needs context building',
+          instructions: 'Build large high-relevance context.'
         }
       }
-    } else {
       return {
-        target: this.config.defaultTarget,
-        priority: 5,
-        reason: '默认路由规则',
-        instructions: '使用默认路由处理'
+        target: 'query-loop',
+        priority: 7,
+        reason: 'high relevance medium graph can enter query loop',
+        instructions: 'Process high-relevance context.'
       }
     }
-  }
 
+    return {
+      target: this.config.defaultTarget,
+      priority: 5,
+      reason: 'default routing rule',
+      instructions: 'Use default route.'
+    }
+  }
   /**
-   * 创建路由包
-   */
+   * 鍒涘缓璺敱鍖?   */
   private createRoutingBundle(
     subgraph: RetrievedSubgraph,
     decision: RoutingDecision,
@@ -306,13 +292,13 @@ export class ContextRoutingImpl {
   }
 
   /**
-   * 批量路由
+   * 鎵归噺璺敱
    */
   async batchRouteContext(
     queries: RetrievalQuery[],
     context?: RoutingContext
   ): Promise<ContextRoutingBundle[]> {
-    console.log(`[ContextRouting] 批量路由: ${queries.length} 个查询`)
+    console.log(`[ContextRouting] batch route: ${queries.length} queries`)
 
     const bundles: ContextRoutingBundle[] = []
 
@@ -321,8 +307,7 @@ export class ContextRoutingImpl {
         const bundle = await this.routeContext(query, context)
         bundles.push(bundle)
       } catch (error) {
-        console.error(`[ContextRouting] 路由失败: ${query.queryType}`, error)
-        // 创建错误路由包
+        console.error(`[ContextRouting] route failed: ${query.queryType}`, error)
         bundles.push(this.createErrorBundle(query, error as Error, context))
       }
     }
@@ -331,8 +316,7 @@ export class ContextRoutingImpl {
   }
 
   /**
-   * 创建错误路由包
-   */
+   * 鍒涘缓閿欒璺敱鍖?   */
   private createErrorBundle(
     query: RetrievalQuery,
     error: Error,
@@ -353,11 +337,11 @@ export class ContextRoutingImpl {
           maxRelevance: 0,
           retrievalTimeMs: 0
         },
-        summary: `路由错误: ${error.message}`,
+        summary: `璺敱閿欒: ${error.message}`,
         createdAt: Date.now()
       },
       priority: 1,
-      instructions: `处理路由错误: ${error.message}`,
+      instructions: `澶勭悊璺敱閿欒: ${error.message}`,
       metadata: {
         sessionId: context?.sessionId,
         taskId: context?.taskId,
@@ -368,22 +352,22 @@ export class ContextRoutingImpl {
   }
 
   /**
-   * 获取路由历史
+   * 鑾峰彇璺敱鍘嗗彶
    */
   getRoutingHistory(limit?: number): ContextRoutingBundle[] {
-    const history = [...this.routingHistory].reverse() // 最新的在前
+    const history = [...this.routingHistory].reverse() // 鏈€鏂扮殑鍦ㄥ墠
     return limit ? history.slice(0, limit) : history
   }
 
   /**
-   * 清空路由缓存
+   * 娓呯┖璺敱缂撳瓨
    */
   clearRoutingCache(): void {
     this.routingCache.clear()
   }
 
   /**
-   * 获取路由统计
+   * 鑾峰彇璺敱缁熻
    */
   getRoutingStats(): {
     totalRoutes: number
@@ -417,8 +401,7 @@ export class ContextRoutingImpl {
   }
 
   /**
-   * 生成缓存键
-   */
+   * 鐢熸垚缂撳瓨閿?   */
   private generateCacheKey(query: RetrievalQuery, context?: RoutingContext): string {
     const contextStr = context
       ? `${context.sessionId || ''}:${context.taskId || ''}:${context.currentFile || ''}`
@@ -428,7 +411,7 @@ export class ContextRoutingImpl {
 }
 
 /**
- * 工厂函数：创建 Context Routing 实例
+ * 宸ュ巶鍑芥暟锛氬垱寤?Context Routing 瀹炰緥
  */
 export function createContextRouting(
   graphRetrieval: GraphRetrievalImpl,
@@ -438,8 +421,7 @@ export function createContextRouting(
 }
 
 /**
- * 快速路由函数（简化版）
- */
+ * 蹇€熻矾鐢卞嚱鏁帮紙绠€鍖栫増锛? */
 export async function routeContextQuick(
   graphRetrieval: GraphRetrievalImpl,
   query: RetrievalQuery,

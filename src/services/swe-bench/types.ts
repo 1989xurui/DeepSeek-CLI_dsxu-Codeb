@@ -111,6 +111,10 @@ export interface SWEBenchResult {
     config?: Record<string, any>;
   };
 
+  /** DSXU claim boundary: this legacy service is internal evidence unless a real public benchmark manifest is supplied. */
+  publicBenchmarkClaimAllowed?: false;
+  claimBoundary?: string;
+
   /** 错误信息 */
   error?: {
     /** 错误类型 */

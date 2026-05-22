@@ -9,7 +9,7 @@ import { useStartupNotification } from './useStartupNotification.js';
 const MAX_SHOW_COUNT = 3;
 
 /**
- * Hook to check if the user has a provider-migration subscription on Console
+ * Hook to check if the user has an archived subscription on Console
  * but is not logged into it.
  */
 export function useCanSwitchToExistingSubscription() {
@@ -17,7 +17,7 @@ export function useCanSwitchToExistingSubscription() {
 }
 
 /**
- * Checks whether a provider-migration account can switch to a subscription
+ * Checks whether an archived account can switch to a subscription
  * login. DSXU runtime owns identity through the DSXU Provider and never shows
  * this migration hint.
  */

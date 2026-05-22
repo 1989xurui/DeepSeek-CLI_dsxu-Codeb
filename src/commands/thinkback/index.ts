@@ -5,7 +5,7 @@ import { isDsxuRuntimeMode } from '../../utils/envUtils.js'
 const thinkback = {
   type: 'local-jsx',
   name: 'think-back',
-  description: 'Provider-migration year-in-review plugin installer',
+  description: 'Archived year-in-review plugin installer',
   isEnabled: () =>
     !isDsxuRuntimeMode() &&
     checkStatsigFeatureGate_CACHED_MAY_BE_STALE('tengu_thinkback'),

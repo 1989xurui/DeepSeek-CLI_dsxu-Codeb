@@ -28,6 +28,8 @@ export interface PbtResult {
 
 export interface PbtConfig {
   runs?: number;           // 默认 100
+  timeoutMs?: number;      // real runner timeout, default 30000
+  cwd?: string;            // working directory for real runner
   /** Mock purity checker for G4 */
   mockPurityCheck?: (funcName: string, source: string) => boolean;
   /** Mock PBT runner for G4 */

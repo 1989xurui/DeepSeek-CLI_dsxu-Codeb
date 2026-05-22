@@ -119,13 +119,13 @@ import {
   isPluginZipCacheEnabled,
 } from './zipCache.js'
 const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
-const PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const ARCHIVED_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
 const PLUGIN_MANIFEST_DIRS = [
   DSXU_PLUGIN_MANIFEST_DIR,
-  PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR,
+  ARCHIVED_PLUGIN_MANIFEST_DIR,
 ] as const
-const PROVIDER_MIGRATION_CODE_REMOTE_ENV = 'CL' + 'AUDE' + '_CODE_REMOTE'
-const PROVIDER_MIGRATION_SYNC_PLUGIN_INSTALL_ENV =
+const ARCHIVED_CODE_REMOTE_ENV = 'CL' + 'AUDE' + '_CODE_REMOTE'
+const ARCHIVED_SYNC_PLUGIN_INSTALL_ENV =
   'CL' + 'AUDE' + '_CODE_SYNC_PLUGIN_INSTALL'
 function pluginManifestPath(root: string): string {
   return join(root, DSXU_PLUGIN_MANIFEST_DIR, 'plugin.json')
@@ -148,13 +148,13 @@ async function hasPluginManifest(root: string): Promise<boolean> {
 function isRemoteCliMode(): boolean {
   return (
     isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_CODE_REMOTE_ENV])
+    isEnvTruthy(process.env[ARCHIVED_CODE_REMOTE_ENV])
   )
 }
 function isSyncPluginInstallEnabled(): boolean {
   return (
     isEnvTruthy(process.env.DSXU_CODE_SYNC_PLUGIN_INSTALL) ||
-    isEnvTruthy(process.env[PROVIDER_MIGRATION_SYNC_PLUGIN_INSTALL_ENV])
+    isEnvTruthy(process.env[ARCHIVED_SYNC_PLUGIN_INSTALL_ENV])
   )
 }
 
@@ -163,21 +163,21 @@ export function getDsxuPluginLoaderRuntimeProfile(): {
   owner: 'DSXU Plugin Runtime'
   manifestDirs: readonly string[]
   sources: readonly string[]
-  providerMigrationPolicy: string
+  archivedSourcePolicy: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Plugin Loader',
     owner: 'DSXU Plugin Runtime',
-    manifestDirs: [DSXU_PLUGIN_MANIFEST_DIR, PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR],
+    manifestDirs: [DSXU_PLUGIN_MANIFEST_DIR, ARCHIVED_PLUGIN_MANIFEST_DIR],
     sources: [
       'marketplace-based plugins',
       'session-only --plugin-dir / SDK inline plugins',
       'built-in plugins',
       'managed plugin settings',
     ],
-    providerMigrationPolicy:
-      'provider-migration plugin manifests and env names are migration inputs; DSXU runtime owner remains pluginLoader/loadAllPlugins',
+    archivedSourcePolicy:
+      'archived plugin manifests and env names are migration inputs; DSXU runtime owner remains pluginLoader/loadAllPlugins',
     activationEvidence: [
       'loadAllPlugins merges marketplace, session-only, built-in, and managed plugins before exposing enabled components',
       'mergePluginSources applies override and managed-lock rules before runtime activation',
@@ -1325,7 +1325,7 @@ export async function createPluginFromPath(
     manifest, // Store full manifest for later use
     path: pluginPath, // Absolute path to plugin directory
     source, // Source identifier (e.g., "git:repo" or ".dsxu-plugin/name")
-    repository: source, // For provider-migration continuity with Plugin Repository
+    repository: source, // For archived continuity with Plugin Repository
     enabled, // Current enabled state
   }
   // Step 3: Auto-detect optional directories in parallel

@@ -78,7 +78,11 @@ export interface ToolEvent {
   data: Record<string, any>
 }
 
+export type ToolCallResultSchemaVersion = 'dsxu.tool-call-result.v1'
+export type DsxuRuntimeEventSchemaVersion = 'dsxu.runtime-event.v1'
+
 export interface ToolCallResult {
+  schemaVersion?: ToolCallResultSchemaVersion
   ok: boolean
   outputText: string
   structuredData?: Record<string, any>
@@ -90,6 +94,116 @@ export interface ToolCallResult {
     usedBridge: boolean
     toolSpec?: ToolSpec
   }
+}
+
+export type ToolResultBoundaryKind = 'native' | 'provider_message' | 'mcp' | 'legacy'
+
+export interface ToolResultNormalizationEvidence {
+  schemaVersion: 'dsxu.tool-result-normalization.v1'
+  owner: 'Tool Gate'
+  boundaryKind: ToolResultBoundaryKind
+  canonical: boolean
+  ok: boolean
+  outputChars: number
+  executorKind: ToolExecutorKind
+  usedBridge: boolean
+  errorType?: ToolErrorType
+  retryable?: boolean
+}
+
+export interface ToolResultContractEvidence {
+  schemaVersion: 'dsxu.tool-result-contract.v1'
+  owner: 'Tool Gate'
+  canonicalResultSchema: ToolCallResultSchemaVersion
+  runtimeEventSchema: DsxuRuntimeEventSchemaVersion
+  boundaryKind: ToolResultBoundaryKind
+  adapterBoundaryOnly: boolean
+  canonical: boolean
+  ok: boolean
+  outputChars: number
+  executorKind: ToolExecutorKind
+  usedBridge: boolean
+  errorType?: ToolErrorType
+  retryable?: boolean
+  rule: string
+}
+
+export type ToolResultContractConsumerName =
+  | 'work-state'
+  | 'ledger'
+  | 'recovery'
+  | 'tui'
+  | 'final-report'
+  | 'release-evidence'
+
+export interface ToolResultContractConsumerEvidence {
+  consumer: ToolResultContractConsumerName
+  owner: string
+  canonicalResultSchema?: ToolCallResultSchemaVersion
+  runtimeEventSchema?: DsxuRuntimeEventSchemaVersion
+  usesCanonicalResult: boolean
+  legacyShapeObserved?: boolean
+  evidenceIds: string[]
+}
+
+export interface ToolResultContractConsumptionBoard {
+  schemaVersion: 'dsxu.tool-result-contract-consumption.v1'
+  owner: 'Tool Gate'
+  status: 'PASS_TOOL_RESULT_CONTRACT_CONSUMPTION' | 'NEEDS_TOOL_RESULT_CONTRACT_CONSUMPTION_REVIEW'
+  contract: ToolResultContractEvidence
+  requiredConsumers: readonly ToolResultContractConsumerName[]
+  readyConsumers: readonly ToolResultContractConsumerName[]
+  missingConsumers: readonly ToolResultContractConsumerName[]
+  guards: readonly string[]
+  compactPanelLines: readonly string[]
+  finalReportSection: {
+    title: 'Tool Result Contract'
+    status: 'ready' | 'needs-evidence'
+    summary: readonly string[]
+    evidence: readonly string[]
+  }
+}
+
+export type ToolGateBoundaryToolResultInput =
+  | {
+      boundaryKind: 'native'
+      result: ToolCallResult
+    }
+  | {
+      boundaryKind: 'provider_message'
+      result: {
+        tool_use_id?: string
+        content?: unknown
+        is_error?: boolean
+      }
+      toolName: string
+      startTime?: number
+    }
+  | {
+      boundaryKind: 'mcp'
+      result: {
+        content?: unknown
+        isError?: boolean
+        structuredContent?: unknown
+        _meta?: unknown
+      }
+      toolName: string
+      startTime?: number
+    }
+  | {
+      boundaryKind: 'legacy'
+      result: { toolUseId: string; content: string; isError: boolean }
+      toolName: string
+      startTime: number
+    }
+
+export interface ToolGateBoundaryToolResult {
+  schemaVersion: 'dsxu.tool-gate-boundary-result.v1'
+  owner: 'Tool Gate'
+  boundaryKind: ToolResultBoundaryKind
+  result: ToolCallResult & { schemaVersion: ToolCallResultSchemaVersion }
+  normalizationEvidence: ToolResultNormalizationEvidence
+  contractEvidence: ToolResultContractEvidence
 }
 
 export type ToolGuardDecision =
@@ -317,6 +431,7 @@ export class ToolDispatcher {
 
           return {
             ...result,
+            schemaVersion: 'dsxu.tool-call-result.v1',
             metadata: {
               ...result.metadata,
               executorKind: executor.kind,
@@ -380,6 +495,7 @@ export class ToolDispatcher {
   ): ToolCallResult {
     const duration = Date.now() - startTime
     return {
+      schemaVersion: 'dsxu.tool-call-result.v1',
       ok: false,
       outputText: '工具调用失败: ' + error.message,
       events: [],
@@ -391,6 +507,246 @@ export class ToolDispatcher {
         toolSpec: undefined,
       },
     }
+  }
+}
+
+export function isToolCallResult(value: unknown): value is ToolCallResult {
+  if (!value || typeof value !== 'object') return false
+  const result = value as Partial<ToolCallResult>
+  return (
+    typeof result.ok === 'boolean' &&
+    typeof result.outputText === 'string' &&
+    Array.isArray(result.events) &&
+    !!result.metadata &&
+    typeof result.metadata === 'object' &&
+    typeof result.metadata.duration === 'number' &&
+    typeof result.metadata.executorKind === 'string' &&
+    typeof result.metadata.usedBridge === 'boolean'
+  )
+}
+
+export function buildToolResultNormalizationEvidence(
+  result: ToolCallResult,
+  boundaryKind: ToolResultBoundaryKind = 'native',
+): ToolResultNormalizationEvidence {
+  return {
+    schemaVersion: 'dsxu.tool-result-normalization.v1',
+    owner: 'Tool Gate',
+    boundaryKind,
+    canonical: true,
+    ok: result.ok,
+    outputChars: result.outputText.length,
+    executorKind: result.metadata.executorKind,
+    usedBridge: result.metadata.usedBridge,
+    errorType: result.error?.type,
+    retryable: result.error?.retryable,
+  }
+}
+
+export function ensureCanonicalToolCallResult(result: ToolCallResult): ToolCallResult & {
+  schemaVersion: ToolCallResultSchemaVersion
+} {
+  return {
+    ...result,
+    schemaVersion: 'dsxu.tool-call-result.v1',
+  }
+}
+
+export function buildToolResultContractEvidence(
+  result: ToolCallResult,
+  boundaryKind: ToolResultBoundaryKind = 'native',
+): ToolResultContractEvidence {
+  const canonical = ensureCanonicalToolCallResult(result)
+  return {
+    schemaVersion: 'dsxu.tool-result-contract.v1',
+    owner: 'Tool Gate',
+    canonicalResultSchema: canonical.schemaVersion,
+    runtimeEventSchema: 'dsxu.runtime-event.v1',
+    boundaryKind,
+    adapterBoundaryOnly: boundaryKind !== 'native',
+    canonical: isToolCallResult(canonical),
+    ok: canonical.ok,
+    outputChars: canonical.outputText.length,
+    executorKind: canonical.metadata.executorKind,
+    usedBridge: canonical.metadata.usedBridge,
+    errorType: canonical.error?.type,
+    retryable: canonical.error?.retryable,
+    rule:
+      'All provider, MCP, legacy, and bridge tool outputs must normalize to ToolCallResult at the DSXU Tool Gate before entering work-state, ledger, recovery, or release evidence.',
+  }
+}
+
+export function buildToolResultContractConsumptionBoard(input: {
+  result: ToolCallResult
+  boundaryKind?: ToolResultBoundaryKind
+  consumers: readonly ToolResultContractConsumerEvidence[]
+  requiredConsumers?: readonly ToolResultContractConsumerName[]
+}): ToolResultContractConsumptionBoard {
+  const requiredConsumers = input.requiredConsumers ?? [
+    'work-state',
+    'ledger',
+    'recovery',
+    'tui',
+    'final-report',
+    'release-evidence',
+  ]
+  const contract = buildToolResultContractEvidence(input.result, input.boundaryKind ?? 'native')
+  const consumerByName = new Map(input.consumers.map(consumer => [consumer.consumer, consumer]))
+  const readyConsumers = requiredConsumers.filter(name => {
+    const consumer = consumerByName.get(name)
+    return Boolean(
+      consumer &&
+      consumer.usesCanonicalResult &&
+      consumer.legacyShapeObserved !== true &&
+      consumer.canonicalResultSchema === contract.canonicalResultSchema &&
+      consumer.runtimeEventSchema === contract.runtimeEventSchema &&
+      consumer.evidenceIds.length > 0,
+    )
+  })
+  const missingConsumers = requiredConsumers.filter(name => !readyConsumers.includes(name))
+  const guards = [
+    ...requiredConsumers.flatMap(name => {
+      const consumer = consumerByName.get(name)
+      if (!consumer) return [`missing consumer:${name}`]
+      return [
+        consumer.usesCanonicalResult ? '' : `${name} does not consume canonical ToolCallResult`,
+        consumer.legacyShapeObserved ? `${name} still observes legacy tool result shape` : '',
+        consumer.canonicalResultSchema !== contract.canonicalResultSchema
+          ? `${name} canonical schema mismatch`
+          : '',
+        consumer.runtimeEventSchema !== contract.runtimeEventSchema
+          ? `${name} runtime event schema mismatch`
+          : '',
+        consumer.evidenceIds.length === 0 ? `${name} missing evidence ids` : '',
+      ].filter(Boolean)
+    }),
+  ]
+  const status = guards.length === 0
+    ? 'PASS_TOOL_RESULT_CONTRACT_CONSUMPTION'
+    : 'NEEDS_TOOL_RESULT_CONTRACT_CONSUMPTION_REVIEW'
+  const evidence = [
+    `contract:${contract.canonicalResultSchema}`,
+    `runtime:${contract.runtimeEventSchema}`,
+    `boundary:${contract.boundaryKind}`,
+    ...input.consumers.flatMap(consumer => consumer.evidenceIds),
+  ].filter(Boolean)
+  return {
+    schemaVersion: 'dsxu.tool-result-contract-consumption.v1',
+    owner: 'Tool Gate',
+    status,
+    contract,
+    requiredConsumers,
+    readyConsumers,
+    missingConsumers,
+    guards,
+    compactPanelLines: [
+      `ToolResultContract: ${status}`,
+      `Canonical: ${contract.canonicalResultSchema} | runtime=${contract.runtimeEventSchema}`,
+      `Consumers: ready=${readyConsumers.length}/${requiredConsumers.length} missing=${missingConsumers.join(',') || 'none'}`,
+      `Output: ok=${String(contract.ok)} chars=${contract.outputChars} boundary=${contract.boundaryKind}`,
+    ],
+    finalReportSection: {
+      title: 'Tool Result Contract',
+      status: status === 'PASS_TOOL_RESULT_CONTRACT_CONSUMPTION'
+        ? 'ready'
+        : 'needs-evidence',
+      summary: [
+        `status=${status}`,
+        `readyConsumers=${readyConsumers.length}/${requiredConsumers.length}`,
+        `missingConsumers=${missingConsumers.join(',') || 'none'}`,
+        `legacyShapeObserved=${String(input.consumers.some(consumer => consumer.legacyShapeObserved))}`,
+      ],
+      evidence: [...new Set(evidence)].slice(0, 30),
+    },
+  }
+}
+
+export function normalizeProviderToolResultBlock(
+  block: {
+    tool_use_id?: string
+    content?: unknown
+    is_error?: boolean
+  },
+  toolName: string,
+  startTime = Date.now(),
+): ToolCallResult {
+  const duration = Math.max(0, Date.now() - startTime)
+  const outputText = typeof block.content === 'string'
+    ? block.content
+    : JSON.stringify(block.content ?? '')
+  const isError = block.is_error === true || /<tool_use_error>/i.test(outputText)
+  return {
+    schemaVersion: 'dsxu.tool-call-result.v1',
+    ok: !isError,
+    outputText,
+    events: [],
+    error: isError
+      ? {
+          type: 'EXECUTION_FAILED',
+          message: outputText,
+          retryable: false,
+        }
+      : undefined,
+    structuredData: {
+      boundaryKind: 'provider_message',
+      toolUseId: block.tool_use_id,
+    },
+    metadata: {
+      duration,
+      executorKind: 'legacy_adapter',
+      usedBridge: true,
+      toolSpec: {
+        name: toolName,
+        description: 'provider tool_result normalized at DSXU Tool Gate boundary',
+        inputSchema: {},
+        capabilityTags: ['analysis'],
+        riskLevel: 'low',
+        executorKind: 'legacy_adapter',
+      },
+    },
+  }
+}
+
+export function normalizeMcpToolCallResult(
+  result: { content?: unknown; isError?: boolean; structuredContent?: unknown; _meta?: unknown },
+  toolName: string,
+  startTime = Date.now(),
+): ToolCallResult {
+  const duration = Math.max(0, Date.now() - startTime)
+  const outputText = typeof result.content === 'string'
+    ? result.content
+    : JSON.stringify(result.content ?? result.structuredContent ?? '')
+  const isError = result.isError === true
+  return {
+    schemaVersion: 'dsxu.tool-call-result.v1',
+    ok: !isError,
+    outputText,
+    structuredData: {
+      boundaryKind: 'mcp',
+      structuredContent: result.structuredContent,
+      meta: result._meta,
+    },
+    events: [],
+    error: isError
+      ? {
+          type: 'EXECUTION_FAILED',
+          message: outputText,
+          retryable: false,
+        }
+      : undefined,
+    metadata: {
+      duration,
+      executorKind: 'external',
+      usedBridge: true,
+      toolSpec: {
+        name: toolName,
+        description: 'MCP tool result normalized at DSXU Tool Gate boundary',
+        inputSchema: {},
+        capabilityTags: ['analysis'],
+        riskLevel: 'medium',
+        executorKind: 'external',
+      },
+    },
   }
 }
 
@@ -412,6 +768,7 @@ export function normalizeFromLegacyResult(
 ): ToolCallResult {
   const duration = Date.now() - startTime
   return {
+    schemaVersion: 'dsxu.tool-call-result.v1',
     ok: !legacyResult.isError,
     outputText: legacyResult.content,
     events: [],
@@ -428,5 +785,30 @@ export function normalizeFromLegacyResult(
         executorKind: 'legacy_adapter',
       },
     },
+  }
+}
+
+export function normalizeToolResultAtToolGateBoundary(
+  input: ToolGateBoundaryToolResultInput,
+): ToolGateBoundaryToolResult {
+  const canonicalResult = ensureCanonicalToolCallResult(
+    input.boundaryKind === 'native'
+      ? input.result
+      : input.boundaryKind === 'provider_message'
+        ? normalizeProviderToolResultBlock(input.result, input.toolName, input.startTime)
+        : input.boundaryKind === 'mcp'
+          ? normalizeMcpToolCallResult(input.result, input.toolName, input.startTime)
+          : normalizeFromLegacyResult(input.result, input.toolName, input.startTime),
+  )
+  return {
+    schemaVersion: 'dsxu.tool-gate-boundary-result.v1',
+    owner: 'Tool Gate',
+    boundaryKind: input.boundaryKind,
+    result: canonicalResult,
+    normalizationEvidence: buildToolResultNormalizationEvidence(
+      canonicalResult,
+      input.boundaryKind,
+    ),
+    contractEvidence: buildToolResultContractEvidence(canonicalResult, input.boundaryKind),
   }
 }

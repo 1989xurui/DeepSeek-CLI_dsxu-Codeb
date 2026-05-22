@@ -11,8 +11,8 @@ import { isEssentialTrafficOnly } from './privacyLevel.js'
 import { gt } from './semver.js'
 
 const MAX_RELEASE_NOTES_SHOWN = 5
-const PROVIDER_MIGRATION_SOURCE_TOKEN = 'cl' + 'aude'
-const PROVIDER_MIGRATION_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
+const ARCHIVED_SOURCE_TOKEN = 'cl' + 'aude'
+const ARCHIVED_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
 
 /**
  * We fetch the changelog from GitHub instead of bundling it with the build.
@@ -28,9 +28,9 @@ const PROVIDER_MIGRATION_SOURCE_ORG_TOKEN = 'anth' + 'ropics'
  * 3. Next time the user starts DSXU, the cached changelog is available immediately
  */
 export const CHANGELOG_URL =
-  `https://github.com/${PROVIDER_MIGRATION_SOURCE_ORG_TOKEN}/${PROVIDER_MIGRATION_SOURCE_TOKEN}-code/blob/main/CHANGELOG.md`
+  `https://github.com/${ARCHIVED_SOURCE_ORG_TOKEN}/${ARCHIVED_SOURCE_TOKEN}-code/blob/main/CHANGELOG.md`
 const RAW_CHANGELOG_URL =
-  `https://raw.githubusercontent.com/${PROVIDER_MIGRATION_SOURCE_ORG_TOKEN}/${PROVIDER_MIGRATION_SOURCE_TOKEN}-code/refs/heads/main/CHANGELOG.md`
+  `https://raw.githubusercontent.com/${ARCHIVED_SOURCE_ORG_TOKEN}/${ARCHIVED_SOURCE_TOKEN}-code/refs/heads/main/CHANGELOG.md`
 
 /**
  * Get the path for the cached changelog file.

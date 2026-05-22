@@ -239,7 +239,7 @@ export type FeatureFlagExperimentData = {
   experimentMetadata?: Record<string, unknown>
 }
 
-// Provider-migration production API only serves the "production" GrowthBook environment
+// Archived production API only serves the "production" GrowthBook environment
 // (see starling/starling/cli/cli.py DEFAULT_ENVIRONMENTS). Staging and
 // development environments are not exported to the prod API.
 function getEnvironmentForGrowthBook(): string {
@@ -401,7 +401,7 @@ export function initialize1PEventLogging(): void {
  *    exporter. Export failures go to disk at getCurrentBatchFilePath() which
  *    is keyed by module-level BATCH_UUID + sessionId ...unchanged across
  *    reinit ...so the NEW exporter's disk-backed retry picks them up.
- * 3. Swap to new provider/logger; provider-migration shutdown runs in background
+ * 3. Swap to new provider/logger; archived shutdown runs in background
  *    (buffer already drained, just cleanup).
  */
 export async function reinitialize1PEventLoggingIfConfigChanged(): Promise<void> {

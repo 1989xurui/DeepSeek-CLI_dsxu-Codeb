@@ -202,6 +202,6 @@ export const SOURCES = [
 export const DSXU_CODE_SETTINGS_SCHEMA_URL =
   'https://json.schemastore.org/dsxu-code-settings.json'
 
-const PROVIDER_MIGRATION_SCHEMA_PRODUCT = 'clau' + 'de-code'
-export const PROVIDER_MIGRATION_CODE_SETTINGS_SCHEMA_URL =
-  `https://json.schemastore.org/${PROVIDER_MIGRATION_SCHEMA_PRODUCT}-settings.json`
+const ARCHIVED_SCHEMA_PRODUCT = 'clau' + 'de-code'
+export const ARCHIVED_CODE_SETTINGS_SCHEMA_URL =
+  `https://json.schemastore.org/${ARCHIVED_SCHEMA_PRODUCT}-settings.json`

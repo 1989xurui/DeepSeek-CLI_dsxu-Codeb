@@ -3,16 +3,52 @@ import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const PROVIDER_ORG = '@' + 'anth' + 'ropic-ai'
 const PROVIDER_SDK_PACKAGE = `${PROVIDER_ORG}/sdk`
-const providerSdkModule = require(PROVIDER_SDK_PACKAGE)
+const providerSdkModule = (() => {
+  try {
+    return require(PROVIDER_SDK_PACKAGE) as Record<string, unknown>
+  } catch {
+    return {}
+  }
+})()
 
-const ProviderClient = providerSdkModule.default ?? providerSdkModule
+function makeProviderSdkErrorClass(name: string): typeof Error {
+  return class ProviderSdkFallbackError extends Error {
+    constructor(message = name, options?: ErrorOptions) {
+      super(message, options)
+      this.name = name
+    }
+  }
+}
 
-export const APIConnectionError = providerSdkModule.APIConnectionError
-export const APIConnectionTimeoutError = providerSdkModule.APIConnectionTimeoutError
-export const APIError = providerSdkModule.APIError
-export const APIUserAbortError = providerSdkModule.APIUserAbortError
-export const AuthenticationError = providerSdkModule.AuthenticationError
-export const NotFoundError = providerSdkModule.NotFoundError
+class ProviderSdkUnavailableClient {
+  constructor(public readonly options: ClientOptions = {}) {}
+
+  messages = {
+    create: async () => {
+      throw new Error(
+        'Optional archived provider SDK is not installed. DSXU Code default runtime uses the DeepSeek provider path; install the optional provider SDK only for explicit archived compatibility tests.',
+      )
+    },
+    stream: async () => {
+      throw new Error(
+        'Optional archived provider SDK is not installed. DSXU Code default runtime uses the DeepSeek provider path; install the optional provider SDK only for explicit archived compatibility tests.',
+      )
+    },
+  }
+}
+
+const ProviderClient = providerSdkModule.default ?? ProviderSdkUnavailableClient
+
+export const APIConnectionError =
+  providerSdkModule.APIConnectionError ?? makeProviderSdkErrorClass('APIConnectionError')
+export const APIConnectionTimeoutError =
+  providerSdkModule.APIConnectionTimeoutError ?? makeProviderSdkErrorClass('APIConnectionTimeoutError')
+export const APIError = providerSdkModule.APIError ?? makeProviderSdkErrorClass('APIError')
+export const APIUserAbortError =
+  providerSdkModule.APIUserAbortError ?? makeProviderSdkErrorClass('APIUserAbortError')
+export const AuthenticationError =
+  providerSdkModule.AuthenticationError ?? makeProviderSdkErrorClass('AuthenticationError')
+export const NotFoundError = providerSdkModule.NotFoundError ?? makeProviderSdkErrorClass('NotFoundError')
 
 export default ProviderClient
 
@@ -30,7 +66,7 @@ export type ClientOptions = {
 
 export type ProviderClientInstance = InstanceType<typeof ProviderClient>
 
-export const PROVIDER_MIGRATION_SDK_PACKAGES = {
+export const ARCHIVED_PROVIDER_SDK_PACKAGES = {
   bedrock: `${PROVIDER_ORG}/bedrock-sdk`,
   foundry: `${PROVIDER_ORG}/foundry-sdk`,
   vertex: `${PROVIDER_ORG}/vertex-sdk`,

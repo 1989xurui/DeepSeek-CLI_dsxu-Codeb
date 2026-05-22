@@ -3,7 +3,7 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import { saveGlobalConfig } from '../utils/config.js'
-import { isProviderMigrationModelRemapEnabled } from '../utils/model/model.js'
+import { isArchivedModelRemapEnabled } from '../utils/model/model.js'
 import { isDsxuRuntimeMode } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import {
@@ -41,7 +41,7 @@ export function migrateLegacyOpusToCurrent(): void {
     return
   }
 
-  if (!isProviderMigrationModelRemapEnabled()) {
+  if (!isArchivedModelRemapEnabled()) {
     return
   }
 

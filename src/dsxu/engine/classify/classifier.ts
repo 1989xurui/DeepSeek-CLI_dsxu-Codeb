@@ -1,7 +1,7 @@
 /**
  * Classifier - 分类器
  *
- * V8-2 Runtime Core: Memory/Context/Compact 承接层
+ * Runtime core: memory/context/compact ownership layer.
  *
  * 对话内容分类，支持记忆标签、任务类型、复杂度等维度
  */

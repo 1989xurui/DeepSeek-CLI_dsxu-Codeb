@@ -1,264 +1,116 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { existsSync } from 'fs';
-import { mkdtemp, rm } from 'fs/promises';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { SWEBenchRunner, createExampleTask, validateTask } from '../swe-bench/index.js';
-import type { SWEBenchTask, SWEBenchResult } from '../swe-bench/types.js';
+import { describe, expect, test } from 'bun:test'
+import { mkdtemp, rm } from 'fs/promises'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import {
+  createDefaultOutputPath,
+  createInternalSweSmokeTask,
+  generateDetailedReport,
+  runSweBenchInstances,
+  validateSweTask,
+} from '../eval/swe-bench/index'
+import type { SWEResult } from '../eval/swe-bench/contract'
 
-describe('SWEBenchRunner', () => {
-  let runner: SWEBenchRunner;
-  let exampleTask: SWEBenchTask;
-  let workspaceRoot: string;
+describe('legacy SWE owner migration evidence', () => {
+  test('uses the eval SWE owner for task construction and validation', () => {
+    const task = createInternalSweSmokeTask('legacy-migrated-001')
 
-  beforeEach(async () => {
-    workspaceRoot = await mkdtemp(join(tmpdir(), 'swe-bench-test-'));
-    runner = new SWEBenchRunner({
-      execution: {
-        workingDir: workspaceRoot,
-        timeout: 1000,
-        maxRetries: 1,
-        sandbox: false,
-      },
-      evaluation: {
-        verbose: false,
-        passThreshold: 80,
-        outputDir: join(workspaceRoot, 'results-out'),
-      },
-    });
+    expect(task.id).toBe('legacy-migrated-001')
+    expect(task.repo).toBe('dsxu/internal-smoke')
+    expect(task.languages).toContain('typescript')
+    expect(validateSweTask(task)).toEqual([])
+  })
 
-    exampleTask = createExampleTask('test-task-001');
-  });
+  test('rejects incomplete task evidence before it can become a release claim', () => {
+    const errors = validateSweTask({
+      id: '',
+      repo: 'dsxu/internal-smoke',
+      difficulty: 'easy',
+      languages: ['typescript'],
+      multiFile: false,
+    })
 
-  afterEach(async () => {
-    await rm(workspaceRoot, { recursive: true, force: true });
-  });
+    expect(errors).toContain('task id is required')
+    expect(errors).toContain('base commit is required')
+    expect(errors).toContain('problem statement is required')
+    expect(errors).toContain('test patch is required')
+  })
 
-  describe('构造函数', () => {
-    it('应该使用默认配置创建实例', () => {
-      const defaultRunner = new SWEBenchRunner();
-      expect(defaultRunner).toBeInstanceOf(SWEBenchRunner);
-    });
-
-    it('应该允许自定义配置', () => {
-      const customRunner = new SWEBenchRunner({
-        model: {
-          name: 'custom-model',
-          endpoint: 'http://custom.endpoint',
-          temperature: 0.5,
-          maxTokens: 4096,
-        },
-      });
-      expect(customRunner).toBeInstanceOf(SWEBenchRunner);
-    });
-  });
-
-  describe('任务验证', () => {
-    it('应该验证有效的任务', () => {
-      const errors = validateTask(exampleTask);
-      expect(errors).toHaveLength(0);
-    });
-
-    it('应该检测缺少ID的任务', () => {
-      const invalidTask = { ...exampleTask, id: '' };
-      const errors = validateTask(invalidTask as SWEBenchTask);
-      expect(errors).toContain('任务ID不能为空');
-    });
-
-    it('应该检测缺少标题的任务', () => {
-      const invalidTask = { ...exampleTask, title: '' };
-      const errors = validateTask(invalidTask as SWEBenchTask);
-      expect(errors).toContain('任务标题不能为空');
-    });
-
-    it('应该检测无效的超时时间', () => {
-      const invalidTask = { ...exampleTask, testSuite: { ...exampleTask.testSuite, timeout: 0 } };
-      const errors = validateTask(invalidTask as SWEBenchTask);
-      expect(errors).toContain('测试超时时间必须大于0');
-    });
-  });
-
-  describe('环境准备', () => {
-    it('应该创建工作目录结构', async () => {
-      await (runner as any).prepareEnvironment(exampleTask);
-
-      expect(existsSync(workspaceRoot)).toBe(true);
-      expect(existsSync(join(workspaceRoot, 'tasks'))).toBe(true);
-      expect(existsSync(join(workspaceRoot, 'results'))).toBe(true);
-      expect(existsSync(join(workspaceRoot, 'workspace'))).toBe(true);
-      expect(existsSync(join(workspaceRoot, 'workspace', exampleTask.id))).toBe(true);
-    });
-  });
-
-  describe('测试输出解析', () => {
-    it('应该解析包含通过和失败测试的输出', () => {
-      const output = `
-Running tests...
-test_calculate_average (tests.test_average.TestAverage) ... ok
-test_empty_list (tests.test_average.TestAverage) ... FAIL
-test_none_input (tests.test_average.TestAverage) ... skipped
-
-======================================================================
-FAIL: test_empty_list (tests.test_average.TestAverage)
-----------------------------------------------------------------------
-Ran 3 tests in 0.001s
-
-FAILED (failures=1, skipped=1)
-`;
-
-      const result = (runner as any).parseTestOutput(output);
-
-      expect(result.total).toBe(3);
-      expect(result.passed).toBe(1);
-      expect(result.failed).toBe(1);
-      expect(result.skipped).toBe(1);
-      expect(result.errors).toBe(0);
-    });
-
-    it('应该解析包含错误的输出', () => {
-      const output = `
-Running tests...
-test_calculate_average (tests.test_average.TestAverage) ... ERROR
-test_empty_list (tests.test_average.TestAverage) ... ok
-
-======================================================================
-ERROR: test_calculate_average (tests.test_average.TestAverage)
-----------------------------------------------------------------------
-Ran 2 tests in 0.001s
-
-FAILED (errors=1)
-`;
-
-      const result = (runner as any).parseTestOutput(output);
-
-      expect(result.total).toBe(2);
-      expect(result.passed).toBe(1);
-      expect(result.failed).toBe(0);
-      expect(result.skipped).toBe(0);
-      expect(result.errors).toBe(1);
-    });
-
-    it('应该处理空输出', () => {
-      const result = (runner as any).parseTestOutput('');
-      expect(result).toEqual({ total: 0, passed: 0, failed: 0, skipped: 0, errors: 0 });
-    });
-  });
-
-  describe('结果评估', () => {
-    it('应该评估通过的结果', () => {
-      const testResults = { total: 10, passed: 10, failed: 0, skipped: 0, errors: 0, output: '', duration: 1000 };
-      const evaluation = (runner as any).evaluateResult(exampleTask, testResults);
-      expect(evaluation.passed).toBe(true);
-      expect(evaluation.score).toBe(100);
-      expect(evaluation.failureReason).toBeUndefined();
-    });
-
-    it('应该评估失败的结果', () => {
-      const testResults = { total: 10, passed: 7, failed: 3, skipped: 0, errors: 0, output: '', duration: 1000 };
-      const evaluation = (runner as any).evaluateResult(exampleTask, testResults);
-      expect(evaluation.passed).toBe(false);
-      expect(evaluation.score).toBe(70);
-      expect(evaluation.failureReason).toContain('低于阈值');
-    });
-
-    it('应该处理要求所有测试通过的任务', () => {
-      const strictTask = { ...exampleTask, evaluation: { ...exampleTask.evaluation, requireAllTestsPass: true } };
-      const testResults = { total: 10, passed: 9, failed: 1, skipped: 0, errors: 0, output: '', duration: 1000 };
-      const evaluation = (runner as any).evaluateResult(strictTask, testResults);
-      expect(evaluation.passed).toBe(false);
-      expect(evaluation.score).toBe(90);
-    });
-
-    it('应该处理允许失败的任务', () => {
-      const lenientTask = { ...exampleTask, evaluation: { ...exampleTask.evaluation, requireAllTestsPass: false, maxFailures: 2 } };
-      const testResults = { total: 10, passed: 8, failed: 2, skipped: 0, errors: 0, output: '', duration: 1000 };
-      const evaluation = (runner as any).evaluateResult(lenientTask, testResults);
-      expect(evaluation.passed).toBe(true);
-      expect(evaluation.score).toBe(80);
-    });
-  });
-
-  describe('报告生成', () => {
-    it('应该生成正确的报告', () => {
-      const results: SWEBenchResult[] = [
+  test('runs internal smoke through the eval owner with public claims blocked', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsxu-swe-owner-migration-'))
+    try {
+      const output = await runSweBenchInstances(
         {
-          taskId: 'task-001',
-          status: 'completed',
-          testResults: { total: 10, passed: 10, failed: 0, skipped: 0, errors: 0, output: '', duration: 1000 },
-          evaluation: { passed: true, score: 100, metrics: {} },
-          execution: { startTime: '2024-01-01T00:00:00Z', endTime: '2024-01-01T00:00:01Z', duration: 1000, model: 'deepseek-v4-flash', config: {} },
+          instanceIds: ['legacy-migrated-001', 'legacy-migrated-002'],
+          timeoutMs: 1000,
+          model: 'deepseek-v4-flash',
+          mode: 'internal-smoke',
+          outputPath: join(dir, 'internal-smoke.json'),
         },
         {
-          taskId: 'task-002',
-          status: 'completed',
-          testResults: { total: 10, passed: 8, failed: 2, skipped: 0, errors: 0, output: '', duration: 1500 },
-          evaluation: { passed: false, score: 80, metrics: {}, failureReason: '测试通过率 80.0% 低于阈值 80%' },
-          execution: { startTime: '2024-01-01T00:00:00Z', endTime: '2024-01-01T00:00:01.5Z', duration: 1500, model: 'deepseek-v4-flash', config: {} },
+          mockRunner: async task => ({
+            taskId: task.id,
+            generatedPatch: task.goldPatch ?? '',
+            testsPassed: true,
+            passedTests: 1,
+            totalTests: 1,
+            durationMs: 1,
+          }),
         },
-      ];
+      )
 
-      const report = runner.generateReport(results);
-      expect(report).toContain('# SWE-bench 运行报告');
-      expect(report).toContain('总任务数: 2');
-      expect(report).toContain('通过数: 1');
-      expect(report).toContain('失败数: 1');
-      expect(report).toContain('通过率: 50.0%');
-      expect(report).toContain('task-001');
-      expect(report).toContain('task-002');
-    });
+      expect(output.owner).toBe('Evidence / benchmark / public challenge')
+      expect(output.mode).toBe('internal-smoke')
+      expect(output.publicBenchmarkClaimAllowed).toBe(false)
+      expect(output.claimBoundary).toContain('not a public SWE-bench score')
+      expect(output.passRate).toBe(1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 
-    it('应该处理空结果列表', () => {
-      const report = runner.generateReport([]);
-      expect(report).toContain('总任务数: 0');
-      expect(report).toContain('通过数: 0');
-      expect(report).toContain('失败数: 0');
-      expect(report).toContain('通过率: NaN%');
-    });
-  });
+  test('keeps report aggregation under the eval evidence owner', () => {
+    const easyTask = createInternalSweSmokeTask('easy-pass')
+    const hardTask = {
+      ...createInternalSweSmokeTask('hard-fail', 'real-benchmark'),
+      difficulty: 'hard' as const,
+      languages: ['typescript', 'python'],
+    }
+    const results: SWEResult[] = [
+      {
+        taskId: easyTask.id,
+        generatedPatch: easyTask.goldPatch ?? '',
+        testsPassed: true,
+        passedTests: 1,
+        totalTests: 1,
+        durationMs: 10,
+      },
+      {
+        taskId: hardTask.id,
+        generatedPatch: '',
+        testsPassed: false,
+        passedTests: 0,
+        totalTests: 1,
+        durationMs: 20,
+        error: 'failing test',
+      },
+    ]
 
-  describe('进度通知', () => {
-    it('应该调用进度回调', async () => {
-      const progressCallback = jest.fn();
+    const report = generateDetailedReport([easyTask, hardTask], results)
 
-      const mockRunner = {
-        ...runner,
-        prepareEnvironment: jest.fn().mockResolvedValue(undefined),
-        analyzeAndSolve: jest.fn().mockResolvedValue('solution'),
-        applySolution: jest.fn().mockResolvedValue(undefined),
-        runTests: jest.fn().mockResolvedValue({ total: 10, passed: 10, failed: 0, skipped: 0, errors: 0, output: '', duration: 1000 }),
-        evaluateResult: jest.fn().mockReturnValue({ passed: true, score: 100, metrics: {} }),
-        saveResult: jest.fn().mockResolvedValue(undefined),
-        loadTask: jest.fn().mockResolvedValue(exampleTask),
-      };
+    expect(report.passAt1).toBe(0.5)
+    expect(report.byDifficulty.easy.rate).toBe(1)
+    expect(report.byDifficulty.hard.rate).toBe(0)
+    expect(report.byLanguage.typescript.total).toBe(2)
+    expect(report.byLanguage.python.total).toBe(1)
+  })
 
-      try {
-        await (mockRunner as any).run({ task: exampleTask, onProgress: progressCallback });
-      } catch {
-        // ignore
-      }
-
-      expect(progressCallback).toHaveBeenCalled();
-    });
-  });
-});
-
-describe('工具函数', () => {
-  describe('createExampleTask', () => {
-    it('应该创建有效的示例任务', () => {
-      const task = createExampleTask();
-      expect(task.id).toBe('swe-bench-example-001');
-      expect(task.title).toBe('修复边界条件检查错误');
-      expect(task.description).toContain('calculate_average');
-      expect(task.repository.url).toBe('https://github.com/example/repo');
-      expect(task.testSuite.command).toBe('pytest tests/test_average.py');
-      expect(task.metadata.difficulty).toBe('easy');
-      expect(task.metadata.type).toBe('bug-fix');
-      expect(task.metadata.language).toBe('python');
-    });
-
-    it('应该允许自定义任务ID', () => {
-      const task = createExampleTask('custom-id-123');
-      expect(task.id).toBe('custom-id-123');
-    });
-  });
-});
+  test('keeps default output paths claim-safe by mode', () => {
+    expect(createDefaultOutputPath(new Date('2026-05-17T00:00:00Z'))).toContain(
+      'DSXU_SWE_INTERNAL_SMOKE_RESULTS_20260517.json',
+    )
+    expect(createDefaultOutputPath(new Date('2026-05-17T00:00:00Z'), 'real-benchmark')).toContain(
+      'DSXU_SWE_BENCH_RESULTS_20260517.json',
+    )
+  })
+})

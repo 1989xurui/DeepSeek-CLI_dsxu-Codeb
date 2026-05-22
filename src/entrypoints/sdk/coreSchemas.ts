@@ -9,9 +9,9 @@
 
 import { z } from 'zod/v4'
 import {
-  PROVIDER_MIGRATION_CHANNEL_CAPABILITY,
-  PROVIDER_MIGRATION_CONFIG_SCOPE,
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
+  ARCHIVED_CHANNEL_CAPABILITY,
+  ARCHIVED_MCP_CONFIG_SCOPE as ARCHIVED_CONFIG_SCOPE,
+  ARCHIVED_MCP_TRANSPORT,
 } from '../../constants/providerMigrationProtocol.js'
 import { lazySchema } from '../../utils/lazySchema.js'
 
@@ -153,19 +153,19 @@ export const McpServerConfigForProcessTransportSchema = lazySchema(() =>
   ]),
 )
 
-export const McpProviderMigrationProxyServerConfigSchema = lazySchema(() =>
+export const McpArchivedProxyServerConfigSchema = lazySchema(() =>
   z.object({
-    type: z.literal(PROVIDER_MIGRATION_MCP_TRANSPORT),
+    type: z.literal(ARCHIVED_MCP_TRANSPORT),
     url: z.string(),
     id: z.string(),
   }),
 )
 
-// Broader config type for status responses, including provider migration proxy output.
+// Broader config type for status responses, including archived proxy output.
 export const McpServerStatusConfigSchema = lazySchema(() =>
   z.union([
     McpServerConfigForProcessTransportSchema(),
-    McpProviderMigrationProxyServerConfigSchema(),
+    McpArchivedProxyServerConfigSchema(),
   ]),
 )
 
@@ -194,7 +194,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         .string()
         .optional()
         .describe(
-          `Configuration scope (e.g., project, user, local, ${PROVIDER_MIGRATION_CONFIG_SCOPE}, managed)`,
+          `Configuration scope (e.g., project, user, local, ${ARCHIVED_CONFIG_SCOPE}, managed)`,
         ),
       tools: z
         .array(
@@ -218,7 +218,7 @@ export const McpServerStatusSchema = lazySchema(() =>
         })
         .optional()
         .describe(
-          `@internal Server capabilities (available when connected). experimental['${PROVIDER_MIGRATION_CHANNEL_CAPABILITY}'] is only present if the server's plugin is on the approved channels allowlist; use its presence to decide whether to show an Enable-channel prompt.`,
+          `@internal Server capabilities (available when connected). experimental['${ARCHIVED_CHANNEL_CAPABILITY}'] is only present if the server's plugin is on the approved channels allowlist; use its presence to decide whether to show an Enable-channel prompt.`,
         ),
     })
     .describe('Status information for an MCP server connection.'),

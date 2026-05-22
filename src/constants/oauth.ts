@@ -76,7 +76,7 @@ export const CONSOLE_OAUTH_SCOPES = [
   REMOTE_SESSION_PROFILE_SCOPE,
 ] as const
 
-// Remote-session OAuth scopes for provider migration subscribers.
+// Remote-session OAuth scopes for archived subscriber sessions.
 export const REMOTE_SESSION_OAUTH_SCOPES = [
   REMOTE_SESSION_PROFILE_SCOPE,
   REMOTE_SESSION_INFERENCE_SCOPE,

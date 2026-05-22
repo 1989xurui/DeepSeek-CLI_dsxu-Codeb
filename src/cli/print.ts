@@ -130,13 +130,13 @@ import type {
 } from 'src/entrypoints/sdk/controlTypes.js'
 import type { PermissionMode as InternalPermissionMode } from 'src/types/permissions.js'
 import {
-  DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE,
-  DSXU_PROVIDER_MIGRATION_AUTH_SUBTYPE,
-  DSXU_PROVIDER_MIGRATION_AUTH_WAIT_SUBTYPE,
-  DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY,
-  DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT,
-  DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG,
-  dsxuProviderMigrationCodeEnv,
+  ARCHIVED_CONTROL_AUTH_CALLBACK_SUBTYPE as ARCHIVED_AUTH_CALLBACK_SUBTYPE,
+  ARCHIVED_CONTROL_AUTH_SUBTYPE as ARCHIVED_AUTH_SUBTYPE,
+  ARCHIVED_CONTROL_AUTH_WAIT_SUBTYPE as ARCHIVED_AUTH_WAIT_SUBTYPE,
+  ARCHIVED_CONTROL_CLOUD_CHANNEL_CAPABILITY as ARCHIVED_CLOUD_CHANNEL_CAPABILITY,
+  ARCHIVED_CONTROL_CLOUD_MCP_TRANSPORT as ARCHIVED_CLOUD_MCP_TRANSPORT,
+  ARCHIVED_CONTROL_OAUTH_REQUEST_FLAG as ARCHIVED_OAUTH_REQUEST_FLAG,
+  archivedControlCodeEnv as archivedCodeEnv,
 } from 'src/dsxu/control-plane/controlProviderMigrationProtocol.js'
 import { cwd } from 'process'
 import { getCwd } from 'src/utils/cwd.js'
@@ -335,7 +335,7 @@ import {
   isDsxuRuntimeMode,
   isEnvTruthy,
   isEnvDefinedFalsy,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../utils/envUtils.js'
 import { installPluginsForHeadless } from '../utils/plugins/headlessPluginInstall.js'
 import { refreshActivePlugins } from '../utils/plugins/refresh.js'
@@ -505,7 +505,7 @@ export async function runHeadless(
   if (
     process.env.USER_TYPE === 'ant' &&
     (isEnvTruthy(process.env.DSXU_CODE_EXIT_AFTER_FIRST_RENDER) ||
-      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('EXIT_AFTER_FIRST_RENDER')]))
+      isEnvTruthy(process.env[archivedCodeEnv('EXIT_AFTER_FIRST_RENDER')]))
   ) {
     process.stderr.write(
       `\nStartup time: ${Math.round(process.uptime() * 1000)}ms\n`,
@@ -522,7 +522,7 @@ export async function runHeadless(
   if (
     feature('DOWNLOAD_USER_SETTINGS') &&
     (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
+      isEnvTruthy(process.env[archivedCodeEnv('REMOTE')]) ||
       getIsRemoteMode())
   ) {
     void downloadUserSettings()
@@ -554,7 +554,7 @@ export async function runHeadless(
     proactiveModule &&
     !proactiveModule.isProactiveActive() &&
     (isEnvTruthy(process.env.DSXU_CODE_PROACTIVE) ||
-      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('PROACTIVE')]))
+      isEnvTruthy(process.env[archivedCodeEnv('PROACTIVE')]))
   ) {
     proactiveModule.activateProactive('command')
   }
@@ -871,7 +871,7 @@ export async function runHeadless(
   const transformToStreamlined =
     feature('STREAMLINED_OUTPUT') &&
     (isEnvTruthy(process.env.DSXU_CODE_STREAMLINED_OUTPUT) ||
-      isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('STREAMLINED_OUTPUT')])) &&
+      isEnvTruthy(process.env[archivedCodeEnv('STREAMLINED_OUTPUT')])) &&
     options.outputFormat === 'stream-json'
       ? createStreamlinedTransformer()
       : null
@@ -1186,7 +1186,7 @@ function runHeadlessStreaming(
   // Auto-resume interrupted turns on restart so CC continues from where it
   // left off without requiring the SDK to re-send the prompt.
   const resumeInterruptedTurnEnv =
-    process.env[dsxuProviderMigrationCodeEnv('RESUME_INTERRUPTED_TURN')]
+    process.env[archivedCodeEnv('RESUME_INTERRUPTED_TURN')]
   if (
     turnInterruptionState &&
     turnInterruptionState.kind !== 'none' &&
@@ -1539,7 +1539,7 @@ function runHeadlessStreaming(
   let controlSessionLastForwardedIndex = 0
 
   // Forward new messages from mutableMessages to the DSXU control session.
-  // Called incrementally during each turn (so provider-migration remote UI sees progress
+  // Called incrementally during each turn (so archived remote UI sees progress
   // and stays alive during permission waits) and again after the turn.
   //
   // writeMessages has its own UUID-based dedup (initialMessageUUIDs,
@@ -1667,9 +1667,9 @@ function runHeadlessStreaming(
           headers: connection.config.headers,
           oauth: connection.config.oauth,
         }
-      } else if (connection.config.type === DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT) {
+      } else if (connection.config.type === ARCHIVED_CLOUD_MCP_TRANSPORT) {
         config = {
-          type: DSXU_PROVIDER_MIGRATION_CLOUD_MCP_TRANSPORT,
+          type: ARCHIVED_CLOUD_MCP_TRANSPORT,
           url: connection.config.url,
           id: connection.config.id,
         }
@@ -1695,8 +1695,8 @@ function runHeadlessStreaming(
             }))
           : undefined
       // Capabilities passthrough with allowlist pre-filter. DSXU workbench
-      // reads experimental['dsxu/channel']; provider-migration IDE clients may still send
-      // provider-migration channel capability during migration.
+      // reads experimental['dsxu/channel']; archived IDE clients may still send
+      // archived channel capability during migration.
       // Enable-channel prompt - only echo it if channel_enable would
       // actually pass the allowlist. Not a security boundary (the
       // handler re-runs the full gate); just avoids dead buttons.
@@ -1708,12 +1708,12 @@ function runHeadlessStreaming(
       ) {
         const exp = { ...connection.capabilities.experimental }
         if (
-          (exp['dsxu/channel'] || exp[DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY]) &&
+          (exp['dsxu/channel'] || exp[ARCHIVED_CLOUD_CHANNEL_CAPABILITY]) &&
           (!isChannelsEnabled() ||
             !isChannelAllowlisted(connection.config.pluginSource))
         ) {
           delete exp['dsxu/channel']
-          delete exp[DSXU_PROVIDER_MIGRATION_CLOUD_CHANNEL_CAPABILITY]
+          delete exp[ARCHIVED_CLOUD_CHANNEL_CAPABILITY]
         }
         if (Object.keys(exp).length > 0) {
           capabilities = { experimental: exp }
@@ -1742,7 +1742,7 @@ function runHeadlessStreaming(
       await Promise.all([
         feature('DOWNLOAD_USER_SETTINGS') &&
         (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-          isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
+          isEnvTruthy(process.env[archivedCodeEnv('REMOTE')]) ||
           getIsRemoteMode())
           ? withDiagnosticsTiming('headless_user_settings_download', () =>
               downloadUserSettings(),
@@ -1765,13 +1765,13 @@ function runHeadlessStreaming(
 
   // Background plugin installation for all headless users
   // Installs marketplaces from extraKnownMarketplaces and missing enabled plugins
-  // provider-migration sync_plugin_install env=true: resolved in run() before the first
+  // archived sync_plugin_install env=true: resolved in run() before the first
   // query so plugins are guaranteed available on the first ask().
   let pluginInstallPromise: Promise<void> | null = null
   // --bare / SIMPLE: skip plugin install. Scripted calls don't add plugins
   // mid-session; the next interactive run reconciles.
   if (!isBareMode()) {
-    if (isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('SYNC_PLUGIN_INSTALL')])) {
+    if (isEnvTruthy(process.env[archivedCodeEnv('SYNC_PLUGIN_INSTALL')])) {
       pluginInstallPromise = installPluginsAndApplyMcpInBackground()
     } else {
       void installPluginsAndApplyMcpInBackground()
@@ -1786,7 +1786,7 @@ function runHeadlessStreaming(
   let currentAgents = agents
 
   // Clear all plugin-related caches, reload commands/agents/hooks.
-  // Called after provider-migration sync_plugin_install env completes (before first query)
+  // Called after archived sync_plugin_install env completes (before first query)
   // and after non-sync background install finishes.
   // refreshActivePlugins calls clearAllCaches() which is required because
   // loadAllPlugins() may have run during main.tsx startup BEFORE managed
@@ -1913,14 +1913,14 @@ function runHeadlessStreaming(
     await updateSdkMcp()
     headlessProfilerCheckpoint('after_updateSdkMcp')
 
-    // Resolve deferred plugin installation (provider-migration sync_plugin_install env).
+    // Resolve deferred plugin installation (archived sync_plugin_install env).
     // The promise was started eagerly so installation overlaps with other init.
     // Awaiting here guarantees plugins are available before the first ask().
-    // If the provider-migration sync plugin install timeout env is set, races against that
+    // If the archived sync plugin install timeout env is set, races against that
     // deadline and proceeds without plugins on timeout (logging an error).
     if (pluginInstallPromise) {
       const timeoutMs = parseInt(
-        process.env[dsxuProviderMigrationCodeEnv('SYNC_PLUGIN_INSTALL_TIMEOUT_MS')] || '',
+        process.env[archivedCodeEnv('SYNC_PLUGIN_INSTALL_TIMEOUT_MS')] || '',
         10,
       )
       if (timeoutMs > 0) {
@@ -1929,7 +1929,7 @@ function runHeadlessStreaming(
         if (result === 'timeout') {
           logError(
             new Error(
-              `provider-migration sync_plugin_install env: plugin installation timed out after ${timeoutMs}ms`,
+              `archived sync_plugin_install env: plugin installation timed out after ${timeoutMs}ms`,
             ),
           )
           logEvent('tengu_sync_plugin_install_timeout', {
@@ -2254,7 +2254,7 @@ function runHeadlessStreaming(
               },
             })) {
               // Forward messages to the DSXU control session incrementally (mid-turn) so
-              // provider-migration remote UI sees progress and the connection stays alive
+              // archived remote UI sees progress and the connection stays alive
               // while blocked on permission requests.
               forwardMessagesToControlSession()
 
@@ -2322,7 +2322,7 @@ function runHeadlessStreaming(
             options.promptSuggestions &&
             !isEnvDefinedFalsy(
               process.env.DSXU_CODE_ENABLE_PROMPT_SUGGESTION ??
-                process.env[dsxuProviderMigrationCodeEnv('ENABLE_PROMPT_SUGGESTION')],
+                process.env[archivedCodeEnv('ENABLE_PROMPT_SUGGESTION')],
             )
           ) {
             // TS narrows suggestionState to never in the while loop body;
@@ -2844,10 +2844,10 @@ function runHeadlessStreaming(
   // extension via handleAuthDone - mcp_reconnect.
   const oauthAuthPromises = new Map<string, Promise<void>>()
 
-  // In-flight provider-migration OAuth flow. DSXU keeps this as a
+  // In-flight archived OAuth flow. DSXU keeps this as a
   // migration-only remote provider contract; the default DeepSeek/DSXU path
   // uses DSXU provider keys and session ingress instead.
-  let providerMigrationOAuth: {
+  let archivedOAuth: {
     service: OAuthService
     flow: Promise<void>
   } | null = null
@@ -3115,7 +3115,7 @@ function runHeadlessStreaming(
             if (
               feature('DOWNLOAD_USER_SETTINGS') &&
               (isEnvTruthy(process.env.DSXU_CODE_REMOTE) ||
-                isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('REMOTE')]) ||
+                isEnvTruthy(process.env[archivedCodeEnv('REMOTE')]) ||
                 getIsRemoteMode())
             ) {
               // Re-pull user settings so enabledPlugins pushed from the
@@ -3561,15 +3561,15 @@ function runHeadlessStreaming(
               `No active OAuth flow for server: ${serverName}`,
             )
           }
-        } else if (message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_SUBTYPE) {
-          // Provider-migration OAuth over the control channel. The SDK client owns
+        } else if (message.request.subtype === ARCHIVED_AUTH_SUBTYPE) {
+          // Archived OAuth over the control channel. The SDK client owns
           // the user's browser (we're headless in -p mode); we hand back
           // both URLs and wait. Automatic URL - localhost listener catches
           // the redirect if the browser is on this host; manual URL - the
-          // success page shows "code#state" for the provider-migration OAuth callback.
-          const loginWithProviderMigrationCloud =
+          // success page shows "code#state" for the archived OAuth callback.
+          const loginWithArchivedCloud =
             (message.request as Record<string, unknown>)[
-              DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG
+              ARCHIVED_OAUTH_REQUEST_FLAG
             ] !== false
 
           // Clean up any prior flow. cleanup() closes the localhost listener
@@ -3577,10 +3577,10 @@ function runHeadlessStreaming(
           // pending (AuthCodeListener.close() does not reject) but its object
           // graph becomes unreachable once the server handle is released and
           // is GC'd - no fd or port is held.
-          providerMigrationOAuth?.service.cleanup()
+          archivedOAuth?.service.cleanup()
 
           logEvent('tengu_oauth_flow_start', {
-            loginWithProviderMigrationCloud: loginWithProviderMigrationCloud ?? true,
+            loginWithArchivedCloud: loginWithArchivedCloud ?? true,
           })
 
           const service = new OAuthService()
@@ -3603,7 +3603,7 @@ function runHeadlessStreaming(
                 urlResolver({ manualUrl, automaticUrl: automaticUrl! })
               },
               {
-                [DSXU_PROVIDER_MIGRATION_OAUTH_REQUEST_FLAG]: loginWithProviderMigrationCloud,
+                [ARCHIVED_OAUTH_REQUEST_FLAG]: loginWithArchivedCloud,
                 skipBrowserOpen: true,
               },
             )
@@ -3615,24 +3615,24 @@ function runHeadlessStreaming(
               // next API call re-reads keychain/file and works. No respawn.
               await installOAuthTokens(tokens)
               logEvent('tengu_oauth_success', {
-                loginWithProviderMigrationCloud: loginWithProviderMigrationCloud ?? true,
+                loginWithArchivedCloud: loginWithArchivedCloud ?? true,
               })
             })
             .finally(() => {
               service.cleanup()
-              if (providerMigrationOAuth?.service === service) {
-                providerMigrationOAuth = null
+              if (archivedOAuth?.service === service) {
+                archivedOAuth = null
               }
             })
 
-          providerMigrationOAuth = { service, flow }
+          archivedOAuth = { service, flow }
 
           // Attach the rejection handler before awaiting so a synchronous
           // startOAuthFlow failure doesn't surface as an unhandled rejection.
-          // The provider-migration OAuth callback handler re-awaits flow for the manual
+          // The archived OAuth callback handler re-awaits flow for the manual
           // path and surfaces the real error to the client.
           void flow.catch(err =>
-            logForDebugging(`provider_migration_oauth_authenticate flow ended: ${err}`, {
+            logForDebugging(`archived_oauth_authenticate flow ended: ${err}`, {
               level: 'info',
             }),
           )
@@ -3659,30 +3659,30 @@ function runHeadlessStreaming(
             sendControlResponseError(message, errorMessage(error))
           }
         } else if (
-          message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE ||
-          message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_WAIT_SUBTYPE
+          message.request.subtype === ARCHIVED_AUTH_CALLBACK_SUBTYPE ||
+          message.request.subtype === ARCHIVED_AUTH_WAIT_SUBTYPE
         ) {
-          if (!providerMigrationOAuth) {
+          if (!archivedOAuth) {
             sendControlResponseError(
               message,
-              'No active provider migration authenticate flow',
+              'No active archived authenticate flow',
             )
           } else {
             // Inject the manual code synchronously - must happen in stdin
-            // message order so a subsequent provider migration authenticate doesn't
+            // message order so a subsequent archived authenticate doesn't
             // replace the service before this code lands.
-            if (message.request.subtype === DSXU_PROVIDER_MIGRATION_AUTH_CALLBACK_SUBTYPE) {
-              providerMigrationOAuth.service.handleManualAuthCodeInput({
+            if (message.request.subtype === ARCHIVED_AUTH_CALLBACK_SUBTYPE) {
+              archivedOAuth.service.handleManualAuthCodeInput({
                 authorizationCode: message.request.authorizationCode,
                 state: message.request.state,
               })
             }
             // Detach the await - the stdin reader is serial and blocking
-            // here deadlocks the provider-migration OAuth wait path: flow may
-            // only resolve via a future provider-migration OAuth callback on stdin,
+            // here deadlocks the archived OAuth wait path: flow may
+            // only resolve via a future archived OAuth callback on stdin,
             // which can't be read while we're parked. Capture the binding;
-            // providerMigrationOAuth is nulled in flow's own .finally.
-            const { flow } = providerMigrationOAuth
+            // archivedOAuth is nulled in flow's own .finally.
+            const { flow } = archivedOAuth
             void flow.then(
               () => {
                 const accountInfo = getAccountInformation()
@@ -3809,7 +3809,7 @@ function runHeadlessStreaming(
         } else if (message.request.subtype === 'get_settings') {
           const currentAppState = getAppState()
           const model = getMainLoopModel()
-          // modelSupportsEffort gate matches provider-migration model adapter - applied.effort must
+          // modelSupportsEffort gate matches archived model adapter - applied.effort must
           // mirror what actually goes to the API, not just what's configured.
           const effort = modelSupportsEffort(model)
             ? resolveAppliedEffort(model, currentAppState.effortValue)
@@ -3944,7 +3944,7 @@ function runHeadlessStreaming(
           sendControlResponseSuccess(message)
         } else if (message.request.subtype === 'remote_control') {
           if (message.request.enabled) {
-            if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+            if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
               const { handleDsxuProviderAliasCommand } = await import(
                 'src/dsxu/engine/provider-alias.js'
               )
@@ -4202,7 +4202,7 @@ function runHeadlessStreaming(
       enqueue({
         mode: 'prompt' as const,
         // file_attachments rides the protobuf catchall from the web composer.
-        // The provider-migration attachment resolver is loaded only when such attachments
+        // The archived attachment resolver is loaded only when such attachments
         // exist so the DSXU default mainline does not eagerly import it.
         value: messageContent,
         uuid: message.uuid,
@@ -4750,7 +4750,7 @@ function handleSetPermissionMode(
  * handler that enqueues channel messages at priority:'next' - drainCommandQueue
  * picks them up between turns.
  *
- * Intentionally does NOT register the provider-migration channel/permission handler that
+ * Intentionally does NOT register the archived channel/permission handler that
  * useManageMCPConnections sets up for interactive mode. That handler resolves
  * a pending dialog inside handleInteractivePermission - but print.ts never
  * calls handleInteractivePermission. When SDK permission lands on 'ask', it
@@ -5147,7 +5147,7 @@ async function loadInitialMessages(
       }
 
       // Hydrate local transcript from remote before loading
-      if (isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('USE_CCR_V2')])) {
+      if (isEnvTruthy(process.env[archivedCodeEnv('USE_CCR_V2')])) {
         // Await restore alongside hydration so SSE catchup lands on
         // restored state, not a fresh default.
         const [, metadata] = await Promise.all([
@@ -5186,7 +5186,7 @@ async function loadInitialMessages(
         // For URL-based or CCR v2 resume, start with empty session (it was hydrated but empty)
         if (
           parsedSessionId.isUrl ||
-          isEnvTruthy(process.env[dsxuProviderMigrationCodeEnv('USE_CCR_V2')])
+          isEnvTruthy(process.env[archivedCodeEnv('USE_CCR_V2')])
         ) {
           // Execute SessionStart hooks for startup since we're starting a new session
           return {

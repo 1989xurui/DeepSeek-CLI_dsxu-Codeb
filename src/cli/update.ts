@@ -24,7 +24,7 @@ import {
 } from 'src/utils/nativeInstaller/index.js'
 import { getPackageManager } from 'src/utils/nativeInstaller/packageManagers.js'
 
-const PROVIDER_MIGRATION_SCOPE_PREFIX = '@' + 'anth' + 'ropic'
+const ARCHIVED_SCOPE_PREFIX = '@' + 'anth' + 'ropic'
 import { writeToStdout } from 'src/utils/process.js'
 import { gte } from 'src/utils/semver.js'
 import { getInitialSettings } from 'src/utils/settings/settings.js'
@@ -287,7 +287,7 @@ export async function update() {
     process.stderr.write('  • Corporate proxy/firewall blocking npm\n')
     if (
       MACRO.PACKAGE_URL &&
-      !MACRO.PACKAGE_URL.startsWith(PROVIDER_MIGRATION_SCOPE_PREFIX)
+      !MACRO.PACKAGE_URL.startsWith(ARCHIVED_SCOPE_PREFIX)
     ) {
       process.stderr.write(
         '  • Internal/development build not published to npm\n',

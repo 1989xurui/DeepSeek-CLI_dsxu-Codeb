@@ -8,12 +8,12 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'bun:test'
-import { QueryEngine } from '../index'
+import { EngineHarness } from '../index'
 import { createMockLLMCall } from '../llm-adapter'
 import { SkillsExecutor, SkillErrorCode } from '../skills-executor'
 
 describe('Skills Failure Path Tests', () => {
-  let engine: QueryEngine
+  let engine: EngineHarness
   let mockSkillsExecutor: any
 
   beforeEach(() => {
@@ -64,7 +64,7 @@ describe('Skills Failure Path Tests', () => {
       },
     ])
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,
@@ -128,7 +128,7 @@ describe('Skills Failure Path Tests', () => {
       },
     ])
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,
@@ -191,7 +191,7 @@ describe('Skills Failure Path Tests', () => {
       },
     ])
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,
@@ -273,7 +273,7 @@ describe('Skills Failure Path Tests', () => {
       },
     ])
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,
@@ -341,7 +341,7 @@ describe('Skills Failure Path Tests', () => {
       },
     ])
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,
@@ -427,7 +427,7 @@ describe('Skills Failure Path Tests', () => {
       ],
     })
 
-    engine = new QueryEngine({
+    engine = new EngineHarness({
       llmCall: mockLLM,
       skills: {
         enabled: true,

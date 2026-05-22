@@ -40,8 +40,8 @@ import { getInitialSettings } from '../../settings/settings.js'
  * Only betas in this list can be passed via SDK options.
  */
 const ALLOWED_SDK_BETAS = [CONTEXT_1M_BETA_HEADER]
-const providerMigrationSourceModelId = (family: string) => `cla${'ude'}-${family}`
-const providerMigrationBetasEnv = `ANTH${'ROPIC'}_BETAS`
+const archivedSourceModelId = (family: string) => `cla${'ude'}-${family}`
+const archivedBetasEnv = `ANTH${'ROPIC'}_BETAS`
 
 /**
  * Filter betas to only include those in the allowlist.
@@ -111,24 +111,24 @@ export function modelSupportsISP(model: string): boolean {
     return true
   }
   if (provider === 'firstParty') {
-    return !canonical.includes(providerMigrationSourceModelId('3-'))
+    return !canonical.includes(archivedSourceModelId('3-'))
   }
   return (
-    canonical.includes(providerMigrationSourceModelId('opus-4')) || canonical.includes(providerMigrationSourceModelId('sonnet-4'))
+    canonical.includes(archivedSourceModelId('opus-4')) || canonical.includes(archivedSourceModelId('sonnet-4'))
   )
 }
 
 function vertexModelSupportsWebSearch(model: string): boolean {
   const canonical = getCanonicalName(model)
-  // Web search only supported on provider-migration 4.x models on Vertex
+  // Web search only supported on archived 4.x models on Vertex
   return (
-    canonical.includes(providerMigrationSourceModelId('opus-4')) ||
-    canonical.includes(providerMigrationSourceModelId('sonnet-4')) ||
-    canonical.includes(providerMigrationSourceModelId('haiku-4'))
+    canonical.includes(archivedSourceModelId('opus-4')) ||
+    canonical.includes(archivedSourceModelId('sonnet-4')) ||
+    canonical.includes(archivedSourceModelId('haiku-4'))
   )
 }
 
-// Context management is supported on provider-migration 4.x models
+// Context management is supported on archived 4.x models
 export function modelSupportsContextManagement(model: string): boolean {
   const canonical = getCanonicalName(model)
   const provider = getAPIProvider()
@@ -136,12 +136,12 @@ export function modelSupportsContextManagement(model: string): boolean {
     return true
   }
   if (provider === 'firstParty') {
-    return !canonical.includes(providerMigrationSourceModelId('3-'))
+    return !canonical.includes(archivedSourceModelId('3-'))
   }
   return (
-    canonical.includes(providerMigrationSourceModelId('opus-4')) ||
-    canonical.includes(providerMigrationSourceModelId('sonnet-4')) ||
-    canonical.includes(providerMigrationSourceModelId('haiku-4'))
+    canonical.includes(archivedSourceModelId('opus-4')) ||
+    canonical.includes(archivedSourceModelId('sonnet-4')) ||
+    canonical.includes(archivedSourceModelId('haiku-4'))
   )
 }
 
@@ -154,12 +154,12 @@ export function modelSupportsStructuredOutputs(model: string): boolean {
     return false
   }
   return (
-    canonical.includes(providerMigrationSourceModelId('sonnet-4-6')) ||
-    canonical.includes(providerMigrationSourceModelId('sonnet-4-5')) ||
-    canonical.includes(providerMigrationSourceModelId('opus-4-1')) ||
-    canonical.includes(providerMigrationSourceModelId('opus-4-5')) ||
-    canonical.includes(providerMigrationSourceModelId('opus-4-6')) ||
-    canonical.includes(providerMigrationSourceModelId('haiku-4-5'))
+    canonical.includes(archivedSourceModelId('sonnet-4-6')) ||
+    canonical.includes(archivedSourceModelId('sonnet-4-5')) ||
+    canonical.includes(archivedSourceModelId('opus-4-1')) ||
+    canonical.includes(archivedSourceModelId('opus-4-5')) ||
+    canonical.includes(archivedSourceModelId('opus-4-6')) ||
+    canonical.includes(archivedSourceModelId('haiku-4-5'))
   )
 }
 
@@ -175,8 +175,8 @@ export function modelSupportsAutoMode(model: string): boolean {
     }
     // feature flag provider override: tengu_auto_mode_config.allowModels force-enables
     // auto mode for listed models, bypassing the denylist/allowlist below.
-    // Exact model IDs (e.g. providerMigrationSourceModelId('strudel-v6-p')) match only that model;
-    // canonical names (e.g. providerMigrationSourceModelId('strudel')) match the whole family.
+    // Exact model IDs match only that model;
+    // canonical names (e.g. archivedSourceModelId('strudel')) match the whole family.
     const config = getFeatureValue_CACHED_MAY_BE_STALE<{
       allowModels?: string[]
     }>('tengu_auto_mode_config', {})
@@ -189,14 +189,14 @@ export function modelSupportsAutoMode(model: string): boolean {
       return true
     }
     if (process.env.USER_TYPE === 'ant') {
-      // Denylist: block known-unsupported provider-migration source models, allow everything else (ant-internal models etc.)
-      if (m.includes(providerMigrationSourceModelId('3-'))) return false
-      // provider-migration source model *-4 not followed by -[6-9]: blocks bare -4, -4-YYYYMMDD, -4@, -4-0 thru -4-5
-      if (new RegExp(`${providerMigrationSourceModelId('(opus|sonnet|haiku)-4')}(?!-[6-9])`).test(m)) return false
+      // Denylist: block known-unsupported archived source models, allow everything else (ant-internal models etc.)
+      if (m.includes(archivedSourceModelId('3-'))) return false
+      // archived source model *-4 not followed by -[6-9]: blocks bare -4, -4-YYYYMMDD, -4@, -4-0 thru -4-5
+      if (new RegExp(`${archivedSourceModelId('(opus|sonnet|haiku)-4')}(?!-[6-9])`).test(m)) return false
       return true
     }
     // External allowlist (firstParty already checked above).
-    return new RegExp(`^${providerMigrationSourceModelId('(opus|sonnet)-4-6')}`).test(m)
+    return new RegExp(`^${archivedSourceModelId('(opus|sonnet)-4-6')}`).test(m)
   }
   return false
 }
@@ -349,7 +349,7 @@ export const getAllModelBetas = memoize((model: string): string[] => {
     betaHeaders.push(TOKEN_EFFICIENT_TOOLS_BETA_HEADER)
   }
 
-  // Add web search beta for Vertex provider-migration 4.x models only
+  // Add web search beta for Vertex archived 4.x models only
   if (provider === 'vertex' && vertexModelSupportsWebSearch(model)) {
     betaHeaders.push(WEB_SEARCH_BETA_HEADER)
   }
@@ -365,9 +365,9 @@ export const getAllModelBetas = memoize((model: string): string[] => {
 
   // If the provider migration source betas env is set, split it by commas and add to betaHeaders.
   // This is an explicit user opt-in, so honor it regardless of model.
-  if (process.env[providerMigrationBetasEnv]) {
+  if (process.env[archivedBetasEnv]) {
     betaHeaders.push(
-      ...process.env[providerMigrationBetasEnv].split(',')
+      ...process.env[archivedBetasEnv].split(',')
         .map(_ => _.trim())
         .filter(Boolean),
     )

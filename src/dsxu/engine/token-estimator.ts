@@ -6,7 +6,7 @@
  *   2. tiktoken cl100k_base（离线精确，需要加载 BPE 数据）
  *   3. 启发式估算（零依赖兜底，当前 proxy 使用的方式）
  *
- * V13 选择：先用启发式（已在 proxy 中验证），加精确度监控。
+ * Current choice: start with the validated proxy heuristic and monitor accuracy.
  * 当实际 vs 估算偏差 > 15% 时告警，提示升级到 tiktoken。
  *
  * 与 DSXU 的区别：

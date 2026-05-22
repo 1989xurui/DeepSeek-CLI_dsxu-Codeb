@@ -23,7 +23,7 @@ export interface ProfileConfig {
 
 export const PLAN_PROFILE: ProfileConfig = {
   type: 'plan',
-  displayName: 'Planner',
+  displayName: '规划者',
   description: 'High-effort read-only analysis and structured planning.',
   recommendedModel: 'deepseek-v4-pro',
   temperature: 0.3,
@@ -38,7 +38,7 @@ export const PLAN_PROFILE: ProfileConfig = {
 
 export const EDIT_PROFILE: ProfileConfig = {
   type: 'edit',
-  displayName: 'Coder',
+  displayName: '编码者',
   description: 'Low-latency code editing and patch generation.',
   recommendedModel: 'deepseek-v4-flash',
   temperature: 0.2,
@@ -54,7 +54,7 @@ export const EDIT_PROFILE: ProfileConfig = {
 
 export const REVIEW_PROFILE: ProfileConfig = {
   type: 'review',
-  displayName: 'Reviewer',
+  displayName: '审查者',
   description: 'Independent risk review, read-only verification, and regression detection.',
   recommendedModel: 'deepseek-v4-pro',
   temperature: 0.1,
@@ -69,7 +69,7 @@ export const REVIEW_PROFILE: ProfileConfig = {
 
 export const SESSION_PROFILE: ProfileConfig = {
   type: 'session',
-  displayName: 'Session Operator',
+  displayName: '会话操作者',
   description: 'Long-running task handoff, checkpointing, resume, and progress ledger maintenance.',
   recommendedModel: 'deepseek-v4-pro',
   temperature: 0.4,

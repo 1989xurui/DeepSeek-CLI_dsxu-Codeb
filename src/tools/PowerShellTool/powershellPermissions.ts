@@ -2,7 +2,7 @@
  * PowerShell-specific permission checking, adapted from bashPermissions.ts
  * for case-insensitive cmdlet matching.
  */
-import { resolve } from 'path'
+import { isAbsolute, relative, resolve } from 'path'
 import type { ToolPermissionContext, ToolUseContext } from '../../Tool.js'
 import type {
   PermissionDecisionReason,
@@ -65,6 +65,101 @@ const PARSE_INDEPENDENT_GET_LOCATION_FLAGS = new Set([
   '-stack',
   '-stackname',
 ])
+const PARSE_INDEPENDENT_SAFE_OUTPUT_CMDLETS = new Set([
+  'write-output',
+  'write-host',
+  'out-string',
+])
+const PARSE_INDEPENDENT_ASK_CMDLETS = new Set([
+  'invoke-expression',
+  'invoke-webrequest',
+  'invoke-restmethod',
+  'install-module',
+])
+const PARSE_INDEPENDENT_DESTRUCTIVE_CMDLETS = new Set([
+  'remove-item',
+  'clear-content',
+])
+const PARSE_INDEPENDENT_ACCEPT_EDITS_WRITE_CMDLETS = new Set([
+  'set-content',
+  'add-content',
+  'clear-content',
+])
+
+function stripPowerShellLiteralQuotes(value: string): string {
+  const trimmed = value.trim()
+  if (
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+  ) {
+    return trimmed.slice(1, -1)
+  }
+  return trimmed
+}
+
+function splitSimplePowerShellTokens(command: string): string[] {
+  const tokens: string[] = []
+  let current = ''
+  let quote: "'" | '"' | null = null
+
+  for (let index = 0; index < command.length; index++) {
+    const char = command[index]!
+    if (quote) {
+      current += char
+      if (char === quote) {
+        quote = null
+      }
+      continue
+    }
+    if (char === "'" || char === '"') {
+      quote = char
+      current += char
+      continue
+    }
+    if (/\s/.test(char)) {
+      if (current) {
+        tokens.push(current)
+        current = ''
+      }
+      continue
+    }
+    current += char
+  }
+  if (current) tokens.push(current)
+  return tokens
+}
+
+function maskPowerShellQuotedLiteralContent(command: string): string {
+  let masked = ''
+  let quote: "'" | '"' | null = null
+  for (let index = 0; index < command.length; index++) {
+    const char = command[index]!
+    if (quote) {
+      if (char === quote) {
+        quote = null
+        masked += char
+      } else {
+        masked += ' '
+      }
+      continue
+    }
+    if (char === "'" || char === '"') {
+      quote = char
+    }
+    masked += char
+  }
+  return masked
+}
+
+function normalizeSimpleCommandName(rawName: string): string {
+  return resolveToCanonical(stripModulePrefix(stripPowerShellLiteralQuotes(rawName)))
+}
+
+function hasFastPathUnsafeSyntax(segment: string): boolean {
+  const scan = maskPowerShellQuotedLiteralContent(segment)
+  return /[`$<>{}()[\]\r\n]/.test(scan) || /(?:^|[^-])(?:&&|\|\||\|)/.test(scan)
+}
+
 function isParseIndependentReadOnlyCommand(command: string): boolean {
   const trimmed = command.trim()
   if (!trimmed) return false
@@ -77,6 +172,234 @@ function isParseIndependentReadOnlyCommand(command: string): boolean {
     if (!part.startsWith('-')) return true
     return PARSE_INDEPENDENT_GET_LOCATION_FLAGS.has(part.toLowerCase())
   })
+}
+
+function isParseIndependentSafeOutputCommand(command: string): boolean {
+  const statements = command
+    .split(';')
+    .map(statement => statement.trim())
+    .filter(Boolean)
+  if (statements.length === 0) return false
+
+  return statements.every(statement => {
+    if (hasFastPathUnsafeSyntax(statement)) return false
+    const tokens = splitSimplePowerShellTokens(statement)
+    if (tokens.length === 0) return false
+    const canonical = normalizeSimpleCommandName(tokens[0]!)
+    if (!PARSE_INDEPENDENT_SAFE_OUTPUT_CMDLETS.has(canonical)) return false
+    return tokens.slice(1).every(token => {
+      const literal = stripPowerShellLiteralQuotes(token)
+      return literal.length <= 4_000 && !/[`$\r\n]/.test(literal)
+    })
+  })
+}
+
+function parseIndependentAskDecision(
+  command: string,
+): PermissionResult | null {
+  const commandForScan = maskPowerShellQuotedLiteralContent(command)
+  if (/(?<!\d)>{1,2}\s*(?!&)\S/.test(commandForScan)) {
+    return {
+      behavior: 'ask',
+      message:
+        'Command contains file redirections that could write to arbitrary paths',
+      suggestions: suggestionForExactCommand(command),
+    }
+  }
+
+  const statements = command
+    .split(/[;\r\n]+/)
+    .map(statement => statement.trim())
+    .filter(Boolean)
+  if (statements.length === 0) return null
+
+  for (const statement of statements) {
+    const tokens = splitSimplePowerShellTokens(statement)
+    const canonical = normalizeSimpleCommandName(tokens[0] ?? '')
+    if (PARSE_INDEPENDENT_ASK_CMDLETS.has(canonical)) {
+      const decisionReason: PermissionDecisionReason = {
+        type: 'other',
+        reason: `PowerShell command '${tokens[0] ?? canonical}' requires approval before execution.`,
+      }
+      return {
+        behavior: 'ask',
+        message: createPermissionRequestMessage(
+          POWERSHELL_TOOL_NAME,
+          decisionReason,
+        ),
+        decisionReason,
+        suggestions: suggestionForExactCommand(command),
+      }
+    }
+    if (PARSE_INDEPENDENT_DESTRUCTIVE_CMDLETS.has(canonical)) {
+      const decisionReason: PermissionDecisionReason = {
+        type: 'other',
+        reason: `PowerShell destructive command '${tokens[0] ?? canonical}' requires approval before execution.`,
+      }
+      return {
+        behavior: 'ask',
+        message: createPermissionRequestMessage(
+          POWERSHELL_TOOL_NAME,
+          decisionReason,
+        ),
+        decisionReason,
+        suggestions: suggestionForExactCommand(command),
+      }
+    }
+  }
+
+  if (/\b(?:powershell(?:\.exe)?|pwsh(?:\.exe)?)\s+-EncodedCommand\b/i.test(commandForScan)) {
+    const decisionReason: PermissionDecisionReason = {
+      type: 'other',
+      reason: 'Nested encoded PowerShell command requires approval.',
+    }
+    return {
+      behavior: 'ask',
+      message: createPermissionRequestMessage(
+        POWERSHELL_TOOL_NAME,
+        decisionReason,
+      ),
+      decisionReason,
+    }
+  }
+
+  if (/\b(?:iwr|wget|curl|invoke-webrequest|invoke-restmethod)\b/i.test(commandForScan) &&
+    /\b(?:iex|invoke-expression|sh|bash|powershell|pwsh)\b/i.test(commandForScan)) {
+    const decisionReason: PermissionDecisionReason = {
+      type: 'other',
+      reason: 'Download-and-execute PowerShell pattern requires approval.',
+    }
+    return {
+      behavior: 'ask',
+      message: createPermissionRequestMessage(
+        POWERSHELL_TOOL_NAME,
+        decisionReason,
+      ),
+      decisionReason,
+    }
+  }
+
+  return null
+}
+
+function parseIndependentSegmentRuleDecision(
+  command: string,
+  toolPermissionContext: ToolPermissionContext,
+): PermissionResult | null {
+  const segments = command
+    .split(/[;\r\n]+/)
+    .map(segment => segment.trim())
+    .filter(Boolean)
+  if (segments.length <= 1) return null
+
+  let firstAsk: PermissionResult | null = null
+  for (const segment of segments) {
+    const {
+      matchingDenyRules: segmentDenyRules,
+      matchingAskRules: segmentAskRules,
+    } = matchingRulesForInput({ command: segment }, toolPermissionContext, 'prefix')
+    if (segmentDenyRules[0] !== undefined) {
+      return {
+        behavior: 'deny',
+        message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${command} has been denied.`,
+        decisionReason: {
+          type: 'rule',
+          rule: segmentDenyRules[0],
+        },
+      }
+    }
+    if (firstAsk === null && segmentAskRules[0] !== undefined) {
+      firstAsk = {
+        behavior: 'ask',
+        message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME),
+        decisionReason: {
+          type: 'rule',
+          rule: segmentAskRules[0],
+        },
+      }
+    }
+  }
+  return firstAsk
+}
+
+function extractSimpleAcceptEditsPath(command: string): string | null {
+  if (/[;|&<>\r\n{}()[\]$`]/.test(command)) return null
+  const tokens = splitSimplePowerShellTokens(command)
+  if (tokens.length < 2) return null
+  const canonical = normalizeSimpleCommandName(tokens[0]!)
+  if (!PARSE_INDEPENDENT_ACCEPT_EDITS_WRITE_CMDLETS.has(canonical)) {
+    return null
+  }
+
+  for (let index = 1; index < tokens.length; index++) {
+    const raw = tokens[index]!
+    const lowered = raw.toLowerCase()
+    if (lowered === '-path' || lowered === '-literalpath') {
+      const next = tokens[index + 1]
+      return next ? stripPowerShellLiteralQuotes(next) : null
+    }
+    if (lowered.startsWith('-path:') || lowered.startsWith('-literalpath:')) {
+      return stripPowerShellLiteralQuotes(raw.slice(raw.indexOf(':') + 1))
+    }
+  }
+
+  const firstPositional = tokens.slice(1).find(token => !token.startsWith('-'))
+  return firstPositional ? stripPowerShellLiteralQuotes(firstPositional) : null
+}
+
+function normalizePermissionPathForCompare(path: string): string {
+  const resolved = resolve(path)
+  return process.platform === 'win32' ? resolved.toLowerCase() : resolved
+}
+
+function isPathWithin(base: string, target: string): boolean {
+  const normalizedBase = normalizePermissionPathForCompare(base)
+  const normalizedTarget = normalizePermissionPathForCompare(target)
+  if (normalizedBase === normalizedTarget) return true
+  const rel = relative(normalizedBase, normalizedTarget)
+  return Boolean(rel) && !rel.startsWith('..') && !isAbsolute(rel)
+}
+
+function isSensitiveDsxuInternalPath(path: string): boolean {
+  const normalized = normalizePermissionPathForCompare(path).replace(/[\\/]+/g, '/')
+  return normalized.includes('/.dsxu/')
+}
+
+function tryParseIndependentAcceptEditsMode(
+  input: PowerShellInput,
+  toolPermissionContext: ToolPermissionContext,
+): PermissionResult | null {
+  if (toolPermissionContext.mode !== 'acceptEdits') return null
+  const targetPath = extractSimpleAcceptEditsPath(input.command)
+  if (!targetPath) return null
+  const cwd = getCwd()
+  const resolvedTarget = resolve(cwd, targetPath)
+  if (isSensitiveDsxuInternalPath(resolvedTarget)) {
+    return {
+      behavior: 'deny',
+      message:
+        `${POWERSHELL_TOOL_NAME} cannot write inside .dsxu internal state through PowerShell acceptEdits. Use the owning DSXU state/evidence path instead.`,
+      decisionReason: {
+        type: 'other',
+        reason: 'PowerShell acceptEdits fast path denied write to .dsxu internal state.',
+      },
+    }
+  }
+  const allowedDirectories = [
+    cwd,
+    ...Array.from(toolPermissionContext.additionalWorkingDirectories.keys()),
+  ]
+  if (allowedDirectories.some(dir => isPathWithin(dir, resolvedTarget))) {
+    return {
+      behavior: 'allow',
+      updatedInput: input,
+      decisionReason: {
+        type: 'mode',
+        mode: 'acceptEdits',
+      },
+    }
+  }
+  return null
 }
 /**
  * Cmdlets that can place a file at a caller-specified path. The
@@ -707,26 +1030,107 @@ export async function powershellToolHasPermission(
       },
     }
   }
-  // Parse the command once and thread through all sub-functions
-  const parsed = await parsePowerShellCommand(command)
-  // SECURITY: Check deny/ask rules BEFORE parse validity check.
-  // Deny rules operate on the raw command string and don't need the parsed AST.
-  // This ensures explicit deny rules still block commands even when parsing fails.
-  // 1. Check exact match first
+
+  // Parse-independent rule pass. Explicit deny/ask rules and obvious unsafe
+  // patterns must win before any auto-allow fast path. This also keeps common
+  // shell permission tests from paying the native PowerShell AST spawn cost.
   const exactMatchResult = powershellToolCheckExactMatchPermission(
     input,
     toolPermissionContext,
   )
-  // Exact command was denied
   if (exactMatchResult.behavior === 'deny') {
     return exactMatchResult
   }
-  // 2. Check prefix/wildcard rules
   const { matchingDenyRules, matchingAskRules } = matchingRulesForInput(
     input,
     toolPermissionContext,
     'prefix',
   )
+  if (matchingDenyRules[0] !== undefined) {
+    return {
+      behavior: 'deny',
+      message: `Permission to use ${POWERSHELL_TOOL_NAME} with command ${command} has been denied.`,
+      decisionReason: {
+        type: 'rule',
+        rule: matchingDenyRules[0],
+      },
+    }
+  }
+
+  let preParseAskDecision: PermissionResult | null = null
+  const segmentRuleDecision = parseIndependentSegmentRuleDecision(
+    command,
+    toolPermissionContext,
+  )
+  if (segmentRuleDecision?.behavior === 'deny') {
+    return segmentRuleDecision
+  }
+  if (segmentRuleDecision?.behavior === 'ask') {
+    preParseAskDecision = segmentRuleDecision
+  }
+  if (matchingAskRules[0] !== undefined) {
+    preParseAskDecision = {
+      behavior: 'ask',
+      message: createPermissionRequestMessage(POWERSHELL_TOOL_NAME),
+      decisionReason: {
+        type: 'rule',
+        rule: matchingAskRules[0],
+      },
+    }
+  }
+  if (preParseAskDecision === null && containsVulnerableUncPath(command)) {
+    preParseAskDecision = {
+      behavior: 'ask',
+      message:
+        'Command contains a UNC path that could trigger network requests',
+    }
+  }
+
+  const fastAskDecision = parseIndependentAskDecision(command)
+  if (fastAskDecision !== null && preParseAskDecision === null) {
+    preParseAskDecision = fastAskDecision
+  }
+
+  const canResolvePreParseAskWithoutAst = !/[;|&\r\n{}()]/.test(command)
+  if (
+    preParseAskDecision !== null &&
+    (fastAskDecision !== null || canResolvePreParseAskWithoutAst)
+  ) {
+    return preParseAskDecision
+  }
+
+  if (isParseIndependentReadOnlyCommand(command) ||
+    isParseIndependentSafeOutputCommand(command)) {
+    return {
+      behavior: 'allow',
+      updatedInput: input,
+      decisionReason: {
+        type: 'other',
+        reason: 'Parse-independent read-only PowerShell command allowed.',
+      },
+    }
+  }
+
+  const acceptEditsFastPath = tryParseIndependentAcceptEditsMode(
+    input,
+    toolPermissionContext,
+  )
+  if (acceptEditsFastPath !== null) {
+    return acceptEditsFastPath
+  }
+
+  // Parse the command once and thread through all sub-functions for every
+  // complex command that cannot be proven safe by the narrow fast paths above.
+  const parsed = await parsePowerShellCommand(command)
+  // SECURITY: Check deny/ask rules BEFORE parse validity check.
+  // Deny rules operate on the raw command string and don't need the parsed AST.
+  // This ensures explicit deny rules still block commands even when parsing fails.
+  // 1. Check exact match first
+  // Exact command was denied
+  if (exactMatchResult.behavior === 'deny') {
+    return exactMatchResult
+  }
+  // 2. Check prefix/wildcard rules
   // 2a. Deny if command has a deny rule
   if (matchingDenyRules[0] !== undefined) {
     return {
@@ -745,7 +1149,6 @@ export async function powershellToolHasPermission(
   // fired. Now: store the ask, push into decisions[] after parse succeeds.
   // If parse fails, returned before the parse-error ask (preserves the
   // rule-attributed decisionReason when pwsh is unavailable).
-  let preParseAskDecision: PermissionResult | null = null
   if (matchingAskRules[0] !== undefined) {
     preParseAskDecision = {
       behavior: 'ask',
@@ -760,13 +1163,7 @@ export async function powershellToolHasPermission(
   // and leak NTLM/Kerberos credentials. DEFERRED into decisions[].
   // The raw-string UNC check must not early-return before sub-command deny
   // (step 4+). Same fix as 2b above.
-  if (preParseAskDecision === null && containsVulnerableUncPath(command)) {
-    preParseAskDecision = {
-      behavior: 'ask',
-      message:
-        'Command contains a UNC path that could trigger network requests',
-    }
-  }
+  // Already computed in the parse-independent rule pass above.
   // 2c. Exact allow rules short-circuit here ONLY when parsing failed AND
   // no pre-parse ask (2b prefix or UNC) is pending. Converting 2b/UNC from
   // early-return to deferred-assign meant 2c
@@ -1364,7 +1761,7 @@ export async function powershellToolHasPermission(
   // succeeded; 'application' means a script/executable path, not a cmdlet.
   // SECURITY: Same argLeaksValue gate as the per-subcommand loop below
   // (finding #32). Without it, `PowerShell(Write-Output:*)` exact-matches
-  // `Write-Output $env:DEEPSEEK_API_KEY` or provider-migration `$env:PROVIDER_API_KEY`,
+  // `Write-Output $env:DEEPSEEK_API_KEY` or archived `$env:PROVIDER_API_KEY`,
   // pushes allow to decisions[], and
   // reduce returns it before the per-subcommand gate ever runs. The
   // allSubCommands.every check ensures NO command in the statement leaks
@@ -1531,7 +1928,7 @@ export async function powershellToolHasPermission(
       // SECURITY: User allow rule asserts the cmdlet is safe, NOT that
       // arbitrary variable expansion through it is safe. A user who allows
       // PowerShell(Write-Output:*) did not intend to auto-allow
-  // `Write-Output $env:DEEPSEEK_API_KEY` or provider-migration `$env:PROVIDER_API_KEY`.
+  // `Write-Output $env:DEEPSEEK_API_KEY` or archived `$env:PROVIDER_API_KEY`.
   // Apply the same argLeaksValue
       // gate that protects the built-in allowlist path below ...rejects
       // Variable/Other/ScriptBlock/SubExpression elementTypes and colon-bound

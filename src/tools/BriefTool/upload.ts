@@ -1,7 +1,7 @@
 /**
  * Upload BriefTool attachments to private_api so web viewers can preview them.
  *
- * When the provider-migration bridge is explicitly active, attachment paths may
+ * When the archived bridge is explicitly active, attachment paths may
  * point to a remote machine and cannot be opened directly by a web viewer. Upload to
  * /api/oauth/file_upload, then stash the returned file_uuid alongside the
  * path. Web resolves file_uuid to a preview; desktop/local try path first.
@@ -56,7 +56,7 @@ function debug(msg: string): void {
  * Base URL for uploads. Must match the host the token is valid for.
  *
  * DSXU subprocess hosts can pass DSXU_BRIDGE_BASE_URL alongside their
- * bridge token. Provider-migration source cowork hosts pass PROVIDER_BASE_URL alongside
+ * bridge token. Archived source cowork hosts pass PROVIDER_BASE_URL alongside
  * DSXU_CODE_OAUTH_TOKEN. Prefer explicit DSXU bridge base URL first so staging
  * tokens do not hit the wrong provider API host and silently skip file_uuid
  * generation.
@@ -75,7 +75,7 @@ export function getDsxuBriefUploadRuntimeProfile(): {
   maxUploadBytes: number
   timeoutMs: number
   preferredBaseUrlEnv: readonly string[]
-  providerMigrationSourceBaseUrlEnv: readonly string[]
+  archivedSourceBaseUrlEnv: readonly string[]
   endpoint: string
 } {
   return {
@@ -83,7 +83,7 @@ export function getDsxuBriefUploadRuntimeProfile(): {
     maxUploadBytes: MAX_UPLOAD_BYTES,
     timeoutMs: UPLOAD_TIMEOUT_MS,
     preferredBaseUrlEnv: ['DSXU_BRIDGE_BASE_URL'],
-    providerMigrationSourceBaseUrlEnv: ['PROVIDER_BASE_URL'],
+    archivedSourceBaseUrlEnv: ['PROVIDER_BASE_URL'],
     endpoint: '/api/oauth/file_upload',
   }
 }

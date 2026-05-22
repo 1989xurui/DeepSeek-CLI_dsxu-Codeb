@@ -45,7 +45,7 @@ Expected GitHub release assets:
 - `git status --short` contains unsigned owner packets.
 - deletion-state paths are not reviewed.
 - ACL residues are not resolved or signed off.
-- provider-migration fallback is enabled by default.
+- archived-provider fallback is enabled by default.
 - MCP doctor reports `BLOCKED`, or reports `WARN` without explicit registry/server-scope signoff.
 - `.dsxu/trace` or `.dsxu/runs` are included in export.
 - `node_modules` is included in export.

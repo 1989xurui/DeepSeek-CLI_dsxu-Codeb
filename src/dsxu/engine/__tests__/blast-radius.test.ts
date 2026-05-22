@@ -9,6 +9,7 @@ import {
   parseExports,
   buildDepGraph,
   computeBlastRadius,
+  buildDSXUSemanticCodeGraphEvidence,
   isTestFile,
   collectSourceFiles,
   BlastRadiusTool,
@@ -272,6 +273,31 @@ describe('computeBlastRadius', () => {
     const result = computeBlastRadius(graph, [resolve(libPath)])
 
     expect(result.affectedTests.some(t => t.includes('math.test.ts'))).toBe(true)
+  })
+})
+
+describe('V5 Semantic Code Graph evidence', () => {
+  it('builds source evidence, dependency edges, and affected tests from the existing blast-radius owner', () => {
+    const source = join(TEST_DIR, 'cart.ts')
+    const dependent = join(TEST_DIR, 'checkout.ts')
+    const testFile = join(TEST_DIR, 'cart.test.ts')
+    writeFileSync(source, 'export function total() { return 1 }')
+    writeFileSync(dependent, "import { total } from './cart'\nexport const checkout = total")
+    writeFileSync(testFile, "import { total } from './cart'\ntotal()")
+
+    const evidence = buildDSXUSemanticCodeGraphEvidence({
+      projectRoot: TEST_DIR,
+      changedFiles: ['cart.ts'],
+    })
+
+    expect(evidence.schemaVersion).toBe('dsxu.semantic-code-graph.v5')
+    expect(evidence.owner).toBe('Semantic Code Graph / Source Truth Repair')
+    expect(evidence.status).toBe('PASS_SEMANTIC_CODE_GRAPH_READY')
+    expect(evidence.symbolCount).toBeGreaterThanOrEqual(2)
+    expect(evidence.dependencyEdgeCount).toBeGreaterThanOrEqual(2)
+    expect(evidence.affectedTests).toContain(resolve(testFile))
+    expect(evidence.sourceEvidence.join('\n')).toContain('affectedTests:')
+    expect(evidence.guards).toEqual([])
   })
 })
 

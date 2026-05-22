@@ -51,7 +51,7 @@ export function getDsxuPluginMcpRuntimeProfile(): {
     ],
     releaseRiskControls: [
       'plugin MCP is adapter input, not a standalone MCP runtime',
-      'provider-migration connector types pass through as explicit migration boundary only',
+      'archived connector types pass through as explicit migration boundary only',
       'plugin MCP errors are recorded on plugin errors instead of silently enabling servers',
     ],
   }
@@ -577,7 +577,7 @@ export function resolvePluginMcpEnvironment(
       break
     }
 
-    // For other types (sse-ide, ws-ide, sdk, provider-migration remote connector), pass through unchanged.
+    // For other types (sse-ide, ws-ide, sdk, archived remote connector), pass through unchanged.
     case 'sse-ide':
     case 'ws-ide':
     case 'sdk':

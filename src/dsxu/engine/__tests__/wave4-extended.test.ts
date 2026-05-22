@@ -31,7 +31,7 @@ describe('SystemPromptBuilder', () => {
   it('should build with default sections', () => {
     const builder = new SystemPromptBuilder()
     const prompt = builder.build()
-    expect(prompt).toContain('DSxu')
+    expect(prompt).toContain('DSXU')
     expect(prompt).toContain('tools')
   })
 
@@ -89,7 +89,7 @@ describe('SystemPromptBuilder', () => {
     builder.setDynamicContext('Current task info')
 
     const { l1Prefix, l2Dynamic } = builder.buildLayered()
-    expect(l1Prefix).toContain('DSxu')  // Base identity is cacheable
+    expect(l1Prefix).toContain('DSXU')  // Base identity is cacheable
     expect(l2Dynamic).toContain('Standard')  // Gear is dynamic
   })
 
@@ -126,7 +126,7 @@ describe('buildSystemPrompt', () => {
       toolNames: ['Read', 'Bash'],
       userRules: 'Use English only',
     })
-    expect(prompt).toContain('DSxu')
+    expect(prompt).toContain('DSXU')
     expect(prompt).toContain('Read')
     expect(prompt).toContain('English')
   })
@@ -287,7 +287,7 @@ describe('mergeConfig', () => {
 describe('loadConfig', () => {
   it('should return defaults when no config files exist', () => {
     const config = loadConfig(TEST_DIR)
-    expect(config.models.chatModel).toBe('deepseek-chat')
+    expect(config.models.chatModel).toBe('deepseek-v4-flash')
     expect(config.engine.maxTurns).toBe(50)
   })
 
@@ -301,7 +301,7 @@ describe('loadConfig', () => {
     const config = loadConfig(TEST_DIR)
     expect(config.engine.maxTurns).toBe(100)
     // Other defaults preserved
-    expect(config.models.chatModel).toBe('deepseek-chat')
+    expect(config.models.chatModel).toBe('deepseek-v4-flash')
   })
 
   it('should support .dsxu.json in project root', () => {

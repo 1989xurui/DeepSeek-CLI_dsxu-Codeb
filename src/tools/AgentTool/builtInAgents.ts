@@ -13,7 +13,7 @@ import {
 } from './built-in/verificationAgent.js'
 import type { AgentDefinition } from './loadAgentsDir.js'
 
-const PROVIDER_MIGRATION_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV =
+const ARCHIVED_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV =
   `CL${'AUDE'}_AGENT_SDK_DISABLE_BUILTIN_AGENTS`
 
 export function areExplorePlanAgentsEnabled(): boolean {
@@ -32,7 +32,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
   if (
     (isDsxuCodeEnvTruthy('AGENT_SDK_DISABLE_BUILTIN_AGENTS') ||
       isEnvTruthy(
-        process.env[PROVIDER_MIGRATION_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV],
+        process.env[ARCHIVED_AGENT_SDK_DISABLE_BUILTIN_AGENTS_ENV],
       )) &&
     getIsNonInteractiveSession()
   ) {
@@ -103,7 +103,7 @@ export function getDsxuBuiltInAgentsRuntimeProfile(): {
       'verification agent is part of the DSXU default mainline unless DSXU_CODE_DISABLE_VERIFICATION_AGENT is set',
     ],
     sourceAliases: [
-      'provider-migration source SDK/coordination env names are migration aliases only',
+      'archived source SDK/coordination env names are migration aliases only',
     ],
   }
 }

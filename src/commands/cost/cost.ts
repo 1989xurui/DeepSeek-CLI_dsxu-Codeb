@@ -36,7 +36,7 @@ export function getDsxuCostCommandRuntimeProfile(): {
   runtime: 'DSXU Cost Ledger'
   defaultProvider: 'DSXU/DeepSeek'
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     command: '/cost',
@@ -45,10 +45,10 @@ export function getDsxuCostCommandRuntimeProfile(): {
     activationEvidence: [
       'DSXU_CODE_MODE returns local DSXU cost text before provider subscription checks',
       'formatTotalCost remains the single session cost source',
-      'Provider migration subscriber limit messaging is bypassed in DSXU runtime',
+      'Archived subscriber limit messaging is bypassed in DSXU runtime',
     ],
-    providerMigrationIsolation: [
-      'DsxuLimits is read only in non-DSXU provider migration command mode',
+    archivedIsolation: [
+      'DsxuLimits is read only in non-DSXU archived command mode',
       'provider subscription state is not consulted for DSXU cost output',
     ],
   }

@@ -48,7 +48,7 @@ export type DSXUMCPCredentialFilter = (
 export const DSXU_PROVIDER_MIGRATION_BRIDGE_FLAG =
   'DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE'
 
-export type DSXUProviderMigrationBridgeOptIn = {
+export type DSXUArchivedBridgeOptIn = {
   enabled: boolean
   flagName: string
   reason: string
@@ -56,7 +56,7 @@ export type DSXUProviderMigrationBridgeOptIn = {
 
 export type DSXUProviderContract = {
   identity: DSXUProviderIdentity
-  providerMigrationBridge: DSXUProviderMigrationBridgeOptIn
+  archivedBridge: DSXUArchivedBridgeOptIn
   createRemoteSession(request: DSXURemoteSessionRequest): Promise<DSXURemoteSessionHandle>
   emitEvent(event: DSXUProviderEvent): void
   synchronizeTask?(event: Extract<DSXUProviderEvent, { type: 'task_synchronized' }>): void
@@ -79,10 +79,10 @@ export function createLocalDSXUProviderContract(
       mode: 'local',
       ...(overrides.identity ?? {}),
     },
-    providerMigrationBridge: {
+    archivedBridge: {
       enabled: false,
       flagName: DSXU_PROVIDER_MIGRATION_BRIDGE_FLAG,
-      reason: 'Provider-migration bridge/remote/OAuth shells are opt-in only and outside the default DSXU mainline.',
+      reason: 'Archived bridge/remote/OAuth shells are opt-in only and outside the default DSXU mainline.',
     },
     createRemoteSession:
       overrides.createRemoteSession ??
@@ -119,7 +119,7 @@ export function getDsxuProviderShellReplacementContract(): {
   sourceSemantics: readonly string[]
   dsxuOwnedLandingPoints: readonly string[]
   defaultPathRules: readonly string[]
-  providerMigrationOptInRules: readonly string[]
+  archivedBridgeOptInRules: readonly string[]
   archivalRequirements: readonly string[]
 } {
   return {
@@ -143,19 +143,19 @@ export function getDsxuProviderShellReplacementContract(): {
       'remote provider shells are blocked until a DSXU-owned remote session backend is configured',
       'MCP credentials are filtered by filterMcpCredentials before tool results can re-enter the model',
       'permission callbacks are explicit and deny-by-default',
-      'task_synchronized events are provider events, not a provider-migration bridge runtime',
+      'task_synchronized events are provider events, not an archived bridge runtime',
     ],
-    providerMigrationOptInRules: [
-      'providerMigrationBridge.enabled is false by default',
+    archivedBridgeOptInRules: [
+      'archivedBridge.enabled is false by default',
       'bridge targets require DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE',
-      'provider-migration source bridge aliases are accepted only as migration aliases',
+      'archived source bridge aliases are accepted only as migration aliases',
       'bridge, remote-control, OAuth, and remote-managed settings remain outside default DSXU_CODE_MODE',
     ],
     archivalRequirements: [
       'provider-shell-default-unreachable live benchmark is green',
       'real-mcp-resource-redaction live benchmark is green',
       'default CLI path test proves bridge/remote aliases are rejected',
-      'all provider-migration aliases either map to DSXU provider contract or require explicit provider-migration flags',
+      'all archived aliases either map to DSXU provider contract or require explicit archived flags',
     ],
   }
 }

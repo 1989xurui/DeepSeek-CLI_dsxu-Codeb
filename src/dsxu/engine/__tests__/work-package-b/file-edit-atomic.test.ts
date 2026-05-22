@@ -8,6 +8,19 @@ import { describe, test, expect, beforeEach, afterEach } from 'bun:test'
 import { FileEditAdapter } from '../../adapters/file-edit-adapter'
 import type { ToolCallRequest, ToolExecutionContext } from '../../tool-protocol'
 import { FileEditErrorType } from '../../adapters/file-edit-adapter'
+import { readdir } from 'fs/promises'
+import { join } from 'path'
+
+async function listTempArtifacts(dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+  return entries
+    .filter(entry => entry.isFile() && (
+      entry.name.endsWith('.tmp') ||
+      entry.name.endsWith('.temp') ||
+      entry.name.endsWith('~')
+    ))
+    .map(entry => join(dir, entry.name))
+}
 
 describe('Work Package B: FileEdit 原子性测试', () => {
   let adapter: FileEditAdapter
@@ -236,7 +249,7 @@ describe('Work Package B: FileEdit 原子性测试', () => {
     expect(result.ok).toBe(true)
 
     // 验证临时文件不存在
-    const tempFiles = await Bun.$`find ${testDir} -name "*.tmp" -o -name "*.temp" -o -name "*~"`.text()
-    expect(tempFiles.trim()).toBe('')
+    const tempFiles = await listTempArtifacts(testDir)
+    expect(tempFiles).toEqual([])
   })
 })

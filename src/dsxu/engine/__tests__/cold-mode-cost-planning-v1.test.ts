@@ -21,7 +21,7 @@ describe('Cold Mode Cost Planning V1', () => {
     expect(report.finalModelEvidence).toContain('cost_basis=cache_hit/cache_miss/output')
   })
 
-  test('escalates failed verification analysis to Pro while keeping repair Flash max', () => {
+  test('keeps failed verification analysis on Flash max before any Pro admission', () => {
     const normal = buildDSXUColdModePlanReport({
       scenario: 'normal_success',
       nodes: createDefaultColdModeNodes(),
@@ -39,10 +39,11 @@ describe('Cold Mode Cost Planning V1', () => {
     )
 
     expect(recovery.withinColdBudget).toBe(true)
-    expect(recovery.proHardNodeReasons).toContain('failed-verification-analysis:failed_verification_pro_thinking_max')
+    expect(recovery.proHardNodeReasons).toEqual([])
+    expect(recovery.nodes.find(node => node.id === 'failed-verification-analysis')?.decision.reason).toBe('failed_verification_flash_thinking_max')
     expect(recovery.nodes.find(node => node.id === 'recovery-repair')?.decision.reason).toBe('recovery_flash_thinking_max')
     expect(recovery.totalCostUsd).toBeLessThan(recovery.proOnlyCostUsd)
-    expect(recovery.finalModelEvidence).toContain('failed_verification_pro_thinking_max')
+    expect(recovery.finalModelEvidence).toContain('failed_verification_flash_thinking_max')
     expect(recovery.finalModelEvidence).toContain('recovery_flash_thinking_max')
   })
 })

@@ -77,7 +77,7 @@ const KAIROS_BRIEF_REFRESH_MS = 5 * 60 * 1000
  * tool is actually active in the current session.
  *
  * DSXU_CODE_BRIEF force-grants entitlement for dev/testing and bypasses the
- * feature-flag gate so you can test without being enrolled. Provider-migration source
+ * feature-flag gate so you can test without being enrolled. Archived source
  * env spelling is accepted only as migration input.
  * requires an opt-in action to activate (--brief, defaultView, etc.), but
  * the env var alone also sets userMsgOptIn via maybeActivateBrief().
@@ -109,7 +109,7 @@ export function isBriefEntitled(): boolean {
  *   - `/brief` slash command (brief.ts)
  *   - `/config` defaultView picker (Config.tsx)
  *   - SendUserMessage in `--tools` / SDK `tools` option (main.tsx)
- *   - DSXU_CODE_BRIEF / provider-migration source CODE_BRIEF env var (maybeActivateBrief ...dev/testing bypass)
+ *   - DSXU_CODE_BRIEF / archived source CODE_BRIEF env var (maybeActivateBrief ...dev/testing bypass)
  * Assistant mode (kairosActive) bypasses opt-in since its system prompt
  * hard-codes "you MUST use SendUserMessage" (systemPrompt.md:14).
  *
@@ -138,7 +138,7 @@ export function getDsxuBriefRuntimeProfile(): {
   runtime: 'DSXU Brief Tool'
   forceEnableEnv: readonly string[]
   activationSignals: readonly string[]
-  providerMigrationPolicy: string
+  archivedSourcePolicy: string
 } {
   return {
     runtime: 'DSXU Brief Tool',
@@ -150,8 +150,8 @@ export function getDsxuBriefRuntimeProfile(): {
       'Config defaultView picker',
       'SendUserMessage SDK/tool option',
     ],
-    providerMigrationPolicy:
-      'DSXU_CODE_BRIEF is the primary dev/test switch; provider-migration source CODE_BRIEF is migration input only',
+    archivedSourcePolicy:
+      'DSXU_CODE_BRIEF is the primary dev/test switch; archived source CODE_BRIEF is migration input only',
   }
 }
 export const BriefTool = buildTool({

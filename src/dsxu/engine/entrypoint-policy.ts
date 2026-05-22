@@ -49,7 +49,7 @@ export function evaluateDSXUEntrypointPolicy(input: DSXUEntrypointPolicyInput): 
   if (!defaultUsesDSXU) violations.push('package start does not use the DSXU Code direct entrypoint')
   if (!exposesDSXUBin) violations.push('package bin does not expose dsxu as the product command')
   if (!noDSXULoginRequired) violations.push('default launcher still configures provider/DSXU login path')
-  if (!providerMigrationRequiresExplicitFlag) violations.push('provider migration CLI path must be removed or require an explicit provider-migration flag')
+  if (!providerMigrationRequiresExplicitFlag) violations.push('archived CLI path must be removed or require an explicit archived flag')
 
   return {
     defaultProductName: input.packageJson.name ?? '',

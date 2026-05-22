@@ -21,6 +21,43 @@ export type SkillRegistryEntry = {
   skill: SkillDefinition
   priority: number
   registeredAt: string
+  ownerProof: SkillRegistryOwnerProof
+}
+
+export type SkillProviderKind = 'bundled' | 'mcp' | 'agent' | 'local'
+
+export type SkillProviderRegistration = {
+  providerId: string
+  kind: SkillProviderKind
+  owner: string
+  adapterBoundary: string
+  permissionBoundary: string
+  evidenceIds: string[]
+  claimsStandaloneRuntime?: boolean
+  registeredAt: string
+}
+
+export type SkillRegistryOwnerProof = {
+  registryOwner: 'MCP / Skill Registry'
+  skillOwner: string
+  providerId: string
+  providerKind: SkillProviderKind
+  adapterBoundary: string
+  toolGateBoundary: 'DSXU Tool Gate'
+  permissionBoundary: string
+  evidenceIds: string[]
+  claimsStandaloneRuntime: false
+}
+
+export type SkillRegistryOwnershipAudit = {
+  registryOwner: 'MCP / Skill Registry'
+  registeredSkills: number
+  registeredProviders: number
+  missingOwnerProof: string[]
+  missingProviderRegistration: string[]
+  standaloneRuntimeClaims: string[]
+  providersByKind: Record<SkillProviderKind, number>
+  toolGateBoundary: 'DSXU Tool Gate'
 }
 
 export type SkillSelectionContext = {
@@ -163,6 +200,10 @@ export type SkillGateContractInput = {
   input: Record<string, any>
   cwd: string
   sessionId: string
+  providerId?: string
+  providerKind?: SkillProviderKind
+  agentId?: string
+  evidenceIds?: string[]
 }
 
 type SkillGateProfile = {
@@ -176,6 +217,18 @@ type SkillGateProfile = {
 export class SkillRegistry {
   private readonly bundledSkills = new Map<string, BundledSkillRegistration>()
   private readonly skills = new Map<string, SkillRegistryEntry>()
+  private readonly providers = new Map<string, SkillProviderRegistration>()
+
+  constructor() {
+    this.registerProvider({
+      providerId: 'dsxu-local-skill-provider',
+      kind: 'local',
+      owner: 'MCP / Skill Registry',
+      adapterBoundary: 'DSXU Skill adapter boundary',
+      permissionBoundary: 'DSXU Tool Gate',
+      evidenceIds: ['skill-registry-default-provider'],
+    })
+  }
 
   registerBundledSkill(skill: BundledSkillRegistration): void {
     this.bundledSkills.set(skill.name, skill)
@@ -185,11 +238,76 @@ export class SkillRegistry {
     return this.bundledSkills.get(name)
   }
 
-  register(skill: SkillDefinition, priority = 0): SkillRegistryEntry {
+  registerProvider(input: Omit<SkillProviderRegistration, 'registeredAt'> & { registeredAt?: string }): SkillProviderRegistration {
+    const provider: SkillProviderRegistration = {
+      ...input,
+      registeredAt: input.registeredAt ?? new Date().toISOString(),
+      claimsStandaloneRuntime: input.claimsStandaloneRuntime === true,
+    }
+    this.providers.set(provider.providerId, provider)
+    return provider
+  }
+
+  registerMcpProvider(input: {
+    serverName: string
+    owner?: string
+    evidenceIds?: string[]
+  }): SkillProviderRegistration {
+    return this.registerProvider({
+      providerId: `mcp:${input.serverName}`,
+      kind: 'mcp',
+      owner: input.owner ?? 'MCP / Skill Registry',
+      adapterBoundary: 'DSXU MCP adapter boundary',
+      permissionBoundary: 'DSXU Tool Gate',
+      evidenceIds: input.evidenceIds ?? ['mcp-provider-registration'],
+    })
+  }
+
+  registerAgentProvider(input: {
+    agentId: string
+    owner?: string
+    evidenceIds?: string[]
+  }): SkillProviderRegistration {
+    return this.registerProvider({
+      providerId: `agent:${input.agentId}`,
+      kind: 'agent',
+      owner: input.owner ?? 'Agent Tool Lifecycle',
+      adapterBoundary: 'DSXU agent evidence envelope',
+      permissionBoundary: 'DSXU Tool Gate',
+      evidenceIds: input.evidenceIds ?? ['agent-provider-registration'],
+    })
+  }
+
+  getProvider(providerId: string): SkillProviderRegistration | undefined {
+    return this.providers.get(providerId)
+  }
+
+  listProviders(): SkillProviderRegistration[] {
+    return [...this.providers.values()]
+  }
+
+  register(skill: SkillDefinition, priority = 0, options?: {
+    providerId?: string
+    evidenceIds?: string[]
+  }): SkillRegistryEntry {
+    const providerId = options?.providerId ?? 'dsxu-local-skill-provider'
+    const provider = this.providers.get(providerId) ?? this.registerProvider({
+      providerId,
+      kind: providerId.startsWith('mcp:') ? 'mcp' : providerId.startsWith('agent:') ? 'agent' : 'local',
+      owner: 'MCP / Skill Registry',
+      adapterBoundary: providerId.startsWith('mcp:')
+        ? 'DSXU MCP adapter boundary'
+        : providerId.startsWith('agent:')
+          ? 'DSXU agent evidence envelope'
+          : 'DSXU Skill adapter boundary',
+      permissionBoundary: 'DSXU Tool Gate',
+      evidenceIds: ['implicit-provider-registration'],
+    })
     const entry: SkillRegistryEntry = {
       skill,
       priority,
       registeredAt: new Date().toISOString(),
+      ownerProof: buildSkillRegistryOwnerProof(skill, provider, options?.evidenceIds),
     }
 
     this.skills.set(skill.skillId, entry)
@@ -203,6 +321,84 @@ export class SkillRegistry {
   list(): SkillRegistryEntry[] {
     return [...this.skills.values()]
   }
+
+  buildOwnershipAudit(): SkillRegistryOwnershipAudit {
+    const providersByKind: Record<SkillProviderKind, number> = {
+      bundled: 0,
+      mcp: 0,
+      agent: 0,
+      local: 0,
+    }
+    const missingOwnerProof: string[] = []
+    const missingProviderRegistration: string[] = []
+    const standaloneRuntimeClaims: string[] = []
+
+    for (const provider of this.providers.values()) {
+      providersByKind[provider.kind] += 1
+      if (provider.claimsStandaloneRuntime) standaloneRuntimeClaims.push(provider.providerId)
+    }
+
+    for (const entry of this.skills.values()) {
+      if (!entry.ownerProof) {
+        missingOwnerProof.push(entry.skill.skillId)
+        continue
+      }
+      if (!this.providers.has(entry.ownerProof.providerId)) {
+        missingProviderRegistration.push(entry.skill.skillId)
+      }
+      if (entry.ownerProof.claimsStandaloneRuntime) {
+        standaloneRuntimeClaims.push(entry.skill.skillId)
+      }
+    }
+
+    return {
+      registryOwner: 'MCP / Skill Registry',
+      registeredSkills: this.skills.size,
+      registeredProviders: this.providers.size,
+      missingOwnerProof,
+      missingProviderRegistration,
+      standaloneRuntimeClaims,
+      providersByKind,
+      toolGateBoundary: 'DSXU Tool Gate',
+    }
+  }
+}
+
+function buildSkillRegistryOwnerProof(
+  skill: SkillDefinition,
+  provider: SkillProviderRegistration,
+  evidenceIds?: string[],
+): SkillRegistryOwnerProof {
+  return {
+    registryOwner: 'MCP / Skill Registry',
+    skillOwner: skill.metadata.owner || provider.owner,
+    providerId: provider.providerId,
+    providerKind: provider.kind,
+    adapterBoundary: provider.adapterBoundary,
+    toolGateBoundary: 'DSXU Tool Gate',
+    permissionBoundary: provider.permissionBoundary,
+    evidenceIds: [
+      ...new Set([
+        ...provider.evidenceIds,
+        ...(evidenceIds ?? []),
+        'skill-registry-owner-proof',
+      ]),
+    ],
+    claimsStandaloneRuntime: false,
+  }
+}
+
+export function validateSkillRegistryOwnershipAudit(audit: SkillRegistryOwnershipAudit): {
+  valid: boolean
+  violations: string[]
+} {
+  const violations: string[] = []
+  if (audit.registryOwner !== 'MCP / Skill Registry') violations.push('wrong_registry_owner')
+  if (audit.missingOwnerProof.length > 0) violations.push('missing_owner_proof')
+  if (audit.missingProviderRegistration.length > 0) violations.push('missing_provider_registration')
+  if (audit.standaloneRuntimeClaims.length > 0) violations.push('standalone_runtime_claim')
+  if (audit.toolGateBoundary !== 'DSXU Tool Gate') violations.push('missing_tool_gate_boundary')
+  return { valid: violations.length === 0, violations }
 }
 
 export function selectSkills(registry: SkillRegistry, input: SkillSelectionInput): SkillSelectionResult {
@@ -269,6 +465,9 @@ export function buildInvocationPlan(input: {
         `promptStack:${input.promptStackId}`,
         `bindings:${input.bindings.length}`,
         ...governanceContracts.map(contract => `governance:${contract.skillId}:${contract.status}`),
+        ...input.selected.selectedSkills.map(entry =>
+          `owner:${entry.skill.skillId}:${entry.ownerProof.registryOwner}:${entry.ownerProof.providerId}:${entry.ownerProof.toolGateBoundary}`,
+        ),
       ],
     },
     createdAt: new Date().toISOString(),
@@ -537,6 +736,14 @@ export function verifyContentConsistency(input: ContentConsistencyInput): Conten
 export function buildSkillToolGateDefinition(input: SkillGateContractInput): GateToolDefinition {
   const profile = buildSkillGateProfile(input.skillName)
   const inputFields = Array.from(new Set(['skillName', 'args', ...Object.keys(input.input)])).sort()
+  const providerKind = input.providerKind ?? (input.providerId?.startsWith('mcp:') ? 'mcp' : input.agentId ? 'agent' : 'local')
+  const providerId = input.providerId ?? (input.agentId ? `agent:${input.agentId}` : 'dsxu-local-skill-provider')
+  const evidenceIds = [
+    ...new Set([
+      ...(input.evidenceIds ?? []),
+      'skill-tool-gate-owner-proof',
+    ]),
+  ]
   return {
     toolId: `skill__${input.skillName}`,
     metadata: {
@@ -544,7 +751,7 @@ export function buildSkillToolGateDefinition(input: SkillGateContractInput): Gat
       description: `Skill execution: ${input.skillName}`,
       owner: 'MCP / Skill Registry',
       version: '1',
-      tags: ['skill', profile.kind, profile.readWriteClass, profile.sideEffectClass],
+      tags: ['skill', providerKind, providerId, profile.kind, profile.readWriteClass, profile.sideEffectClass],
     },
     capabilityTags: profile.capabilityTags,
     executionMode: 'sync',
@@ -559,6 +766,9 @@ export function buildSkillToolGateDefinition(input: SkillGateContractInput): Gat
       validationNotes: [
         `cwd:${input.cwd}`,
         `session:${input.sessionId}`,
+        `provider:${providerId}`,
+        `provider-kind:${providerKind}`,
+        `evidence:${evidenceIds.join('|')}`,
         `skill-kind:${profile.kind}`,
         'permission owner: tool-gate-v1',
       ],
@@ -570,6 +780,8 @@ export function buildSkillToolGateDefinition(input: SkillGateContractInput): Gat
       stabilityNotes: [
         'permission checked by tool-gate-v1',
         'skill execution remains owned by MCP / Skill Registry',
+        `provider registration: ${providerId}`,
+        `provider kind: ${providerKind}`,
         'tool result remains normalized as SkillExecutionResult',
       ],
     },
@@ -578,6 +790,11 @@ export function buildSkillToolGateDefinition(input: SkillGateContractInput): Gat
         id: 'skill-registry-owner',
         description: 'Skill execution must enter MCP / Skill Registry before command or prompt execution',
         requiresConfirmation: profile.permissionLevel !== 'safe',
+      },
+      {
+        id: 'skill-provider-registration',
+        description: `Skill provider ${providerId} (${providerKind}) must be registered as a DSXU adapter boundary, not as a standalone runtime`,
+        requiresConfirmation: providerKind !== 'local',
       },
       {
         id: 'tool-gate-permission-owner',
@@ -590,6 +807,7 @@ export function buildSkillToolGateDefinition(input: SkillGateContractInput): Gat
       properties: {
         skillName: { type: 'string', description: 'Registered skill identifier' },
         args: { type: 'string', description: 'Serialized skill invocation arguments' },
+        providerId: { type: 'string', description: 'DSXU skill provider registration id' },
       },
       required: ['skillName', 'args'],
       additionalProperties: true,

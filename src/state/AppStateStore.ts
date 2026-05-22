@@ -75,17 +75,117 @@ export type SpeculationState =
 export const IDLE_SPECULATION_STATE: SpeculationState = { status: 'idle' }
 export type FooterItem =
   | 'tasks'
-  | 'tmux'
   | 'bagel'
   | 'teams'
   | 'bridge'
   | 'companion'
+
+export type DsxuTrustVerificationState =
+  | 'not_run'
+  | 'running'
+  | 'pass'
+  | 'fail'
+  | 'blocked'
+
+export type DsxuTrustState = {
+  schemaVersion: 'dsxu.trust-state.v1'
+  updatedAt: number
+  route?: {
+    model: string
+    reason: string
+    workflowKind: string
+    role: string
+    estimatedCostUsd?: number
+    cacheHitRatePct?: number
+    proAdmissionState?: 'not_required' | 'requires_approval' | 'admitted' | 'blocked_missing_evidence'
+    proAdmissionReason?: string
+    approvalRequired?: boolean
+  }
+  verification: {
+    state: DsxuTrustVerificationState
+    reason: string
+    command?: string
+  }
+  recovery: {
+    state: string
+    requiredAction: string
+    canClaimComplete: boolean
+    reason: string
+  }
+  finalClaim: {
+    allowed: boolean
+    gateId?: string
+    nextAction: string
+  }
+  ledger?: {
+    state: string
+    taskId?: string
+    eventCount?: number
+    isResumable?: boolean
+    isCompleted?: boolean
+    resumePoint?: string
+    nextAction?: string
+    stall?: string
+    activeFrame?: {
+      status: 'ready' | 'review'
+      phase: string
+      risk: string
+      confirmedFactCount: number
+      openObligationCount: number
+      nextAllowedActions?: string[]
+      guardCount: number
+    }
+  }
+  agent?: {
+    activeCount: number
+    incompleteEvidence: boolean
+    runningCount?: number
+    completedCount?: number
+    failedCount?: number
+    scopes?: string[]
+    verification?: string
+    risk?: string
+  }
+  proof?: {
+    contract?: {
+      status: 'ready' | 'review'
+      taskType: string
+      workflow: string
+      risk: string
+      model: string
+      visibleToolCount: number
+      verificationLevel: string
+      guardCount: number
+      guards?: string[]
+    }
+    tool?: {
+      status: 'ready' | 'review'
+      readyConsumers: number
+      requiredConsumers: number
+      missingConsumers?: string[]
+      outputChars?: number
+      boundary?: string
+    }
+    runtime?: {
+      status: 'ready' | 'review'
+      presentKinds: number
+      requiredKinds: number
+      missingKinds?: string[]
+    }
+  }
+  health?: {
+    status: 'ok' | 'waiting' | 'stalled' | 'blocked'
+    reason: string
+  }
+}
+
 export type AppState = DeepImmutable<{
   settings: SettingsJson
   verbose: boolean
   mainLoopModel: ModelSetting
   mainLoopModelForSession: ModelSetting
   statusLineText: string | undefined
+  dsxuTrustState: DsxuTrustState | undefined
   expandedView: 'none' | 'tasks' | 'teammates'
   isBriefOnly: boolean
   // Optional - only present when ENABLE_AGENT_SWARMS is true (for dead code elimination)
@@ -223,22 +323,6 @@ export type AppState = DeepImmutable<{
   thinkingEnabled: boolean | undefined
   promptSuggestionEnabled: boolean
   sessionHooks: SessionHooksState
-  tungstenActiveSession?: {
-    sessionName: string
-    socketName: string
-    target: string // The tmux target (e.g., "session:window.pane")
-  }
-  tungstenLastCapturedTime?: number // Timestamp when frame was captured for model
-  tungstenLastCommand?: {
-    command: string // The command string to display (e.g., "Enter", "echo hello")
-    timestamp: number // When the command was sent
-  }
-  // Sticky tmux panel visibility ...mirrors globalConfig.tungstenPanelVisible for reactivity.
-  tungstenPanelVisible?: boolean
-  // Transient auto-hide at turn end ...separate from tungstenPanelVisible so the
-  // pill stays in the footer (user can reopen) but the panel content doesn't take
-  // screen space when idle. Cleared on next Tmux tool use or user toggle. NOT persisted.
-  tungstenPanelAutoHidden?: boolean
   // WebBrowser tool (codename bagel): pill visible in footer
   bagelActive?: boolean
   // WebBrowser tool: current page URL shown in pill label
@@ -464,6 +548,7 @@ export function getDefaultAppState(): AppState {
     mainLoopModel: null, // alias, full name (as with --model or env var), or null (default)
     mainLoopModelForSession: null,
     statusLineText: undefined,
+    dsxuTrustState: undefined,
     expandedView: 'none',
     isBriefOnly: false,
     showTeammateMessagePreview: false,

@@ -10,3 +10,12 @@ export {
   generateReport,
   generateDetailedReport,
 } from './bridge';
+export { SweBenchJudge, comparePatchSimilarity } from './judge';
+export {
+  createDefaultOutputPath,
+  createInternalSweSmokeTask,
+  normalizeSweBenchMode,
+  runSweBenchInstances,
+  type SweBenchRequestedMode,
+  type SweBenchRunMode,
+} from './runner';

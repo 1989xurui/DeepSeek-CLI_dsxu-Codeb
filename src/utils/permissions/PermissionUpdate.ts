@@ -24,7 +24,7 @@ import {
 } from './permissionRuleParser.js'
 import { addPermissionRulesToSettings } from './permissionsLoader.js'
 
-// Re-export for provider-migration import continuity
+// Re-export for archived import continuity
 export type { AdditionalWorkingDirectory, WorkingDirectorySource }
 
 export function extractRules(

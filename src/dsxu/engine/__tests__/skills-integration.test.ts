@@ -1,12 +1,12 @@
 /**
  * Skills系统集成测试
  *
- * 测试Skills适配器、QueryEngine集成和技能执行功能。
+ * 测试Skills适配器、EngineHarness集成和技能执行功能。
  */
 
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
 import { SkillsAdapter, createSkillsAdapter } from '../skills-adapter'
-import { QueryEngine } from '../index'
+import { EngineHarness } from '../index'
 import { createMockLLMCall } from '../llm-adapter'
 import type { ToolOutput } from '../types'
 
@@ -132,8 +132,8 @@ describe('Skills系统集成测试', () => {
     })
   })
 
-  describe('QueryEngine集成', () => {
-    let engine: QueryEngine
+  describe('EngineHarness集成', () => {
+    let engine: EngineHarness
 
     beforeEach(() => {
       const mockLLM = createMockLLMCall([
@@ -145,7 +145,7 @@ describe('Skills系统集成测试', () => {
         },
       ])
 
-      engine = new QueryEngine({
+      engine = new EngineHarness({
         llmCall: mockLLM,
         skills: {
           enabled: true,
@@ -155,8 +155,8 @@ describe('Skills系统集成测试', () => {
       })
     })
 
-    it('应该创建启用了Skills的QueryEngine', () => {
-      expect(engine).toBeInstanceOf(QueryEngine)
+    it('应该创建启用了Skills的EngineHarness', () => {
+      expect(engine).toBeInstanceOf(EngineHarness)
 
       // 检查Skills状态
       const status = engine.getSkillsStatus()
@@ -202,7 +202,7 @@ describe('Skills系统集成测试', () => {
   })
 
   describe('技能执行', () => {
-    let engine: QueryEngine
+    let engine: EngineHarness
 
     beforeEach(() => {
       const mockLLM = createMockLLMCall([
@@ -214,7 +214,7 @@ describe('Skills系统集成测试', () => {
         },
       ])
 
-      engine = new QueryEngine({
+      engine = new EngineHarness({
         llmCall: mockLLM,
         skills: {
           enabled: true,
@@ -278,7 +278,7 @@ describe('Skills系统集成测试', () => {
         },
       ])
 
-      const engine = new QueryEngine({
+      const engine = new EngineHarness({
         llmCall: mockLLM,
         skills: {
           enabled: true,

@@ -11,7 +11,7 @@ import { logError } from './log.js'
 import { getPlatform, SUPPORTED_PLATFORMS } from './platform.js'
 
 const DSXU_DESKTOP_MCP_CONFIG = 'dsxu_desktop_mcp_config.json'
-const PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG = 'dsxu_desktop_config.json'
+const ARCHIVED_DESKTOP_MCP_CONFIG = 'dsxu_desktop_config.json'
 
 export function getDsxuDesktopMcpImportRuntimeProfile(): {
   runtime: 'DSXU Desktop MCP Import'
@@ -24,7 +24,7 @@ export function getDsxuDesktopMcpImportRuntimeProfile(): {
     owner: 'DSXU MCP Config Intake Boundary',
     activationEvidence: [
       'desktop import reads DSXU desktop MCP config first',
-      'provider-migration desktop MCP config is accepted only as migration intake',
+      'archived desktop MCP config is accepted only as migration intake',
       'McpStdioServerConfigSchema validates imported server records',
       'unsupported platforms fail closed with an explicit error',
     ],
@@ -65,7 +65,7 @@ export async function getDesktopMcpConfigPath(): Promise<string> {
   }
 
   throw new Error(
-    'Could not find a DSXU desktop MCP config file. Create DSXU/dsxu_desktop_mcp_config.json or import a provider-migration desktop MCP config.',
+    'Could not find a DSXU desktop MCP config file. Create DSXU/dsxu_desktop_mcp_config.json or import an archived desktop MCP config.',
   )
 }
 
@@ -80,7 +80,7 @@ async function getWindowsDesktopMcpConfigCandidates(): Promise<string[]> {
     candidates.push(
       `/mnt/c${wslPath}/AppData/Roaming/DSXU/${DSXU_DESKTOP_MCP_CONFIG}`,
       // Migration-only fallback: import existing desktop MCP servers into DSXU.
-      `/mnt/c${wslPath}/AppData/Roaming/DSXU/${PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG}`,
+      `/mnt/c${wslPath}/AppData/Roaming/DSXU/${ARCHIVED_DESKTOP_MCP_CONFIG}`,
     )
   }
 
@@ -111,7 +111,7 @@ async function getWindowsDesktopMcpConfigCandidates(): Promise<string[]> {
           'AppData',
           'Roaming',
           'DSXU',
-          PROVIDER_MIGRATION_DESKTOP_MCP_CONFIG,
+          ARCHIVED_DESKTOP_MCP_CONFIG,
         ),
       )
     }

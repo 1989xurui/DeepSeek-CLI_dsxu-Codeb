@@ -45,10 +45,24 @@ export interface CacheBreakEvent {
   cachedTokens: number
 }
 
+export interface CacheMissWarmupEvent {
+  timestamp: string
+  mode: 'dry-run'
+  reason: string
+  consecutiveMisses: number
+  inputTokens: number
+  hitRate: number
+  command: string
+  claimBoundary: string
+  performanceBoundary: string
+}
+
 // ── 常量 ──
 
 const ALERT_THRESHOLD_CONSECUTIVE_MISSES = 5
 const ALERT_THRESHOLD_HIT_RATE = 0.3  // 低于 30% 告警
+const CACHE_MISS_WARMUP_THRESHOLD = 2
+const DEFAULT_CACHE_MISS_WARMUP_DEBOUNCE_MS = 60_000
 const DEEPSEEK_INPUT_PRICE = 0.14 / 1_000_000  // ¥0.14/M tokens
 const DEEPSEEK_CACHE_DISCOUNT = 0.9  // 缓存命中 90% 折扣
 
@@ -68,16 +82,24 @@ export class CacheMonitor {
   }
 
   private breakEvents: CacheBreakEvent[] = []
+  private cacheMissWarmupEvents: CacheMissWarmupEvent[] = []
   private l1Hash: string | null = null  // L1 前缀 hash
   private onAlert?: (event: CacheBreakEvent) => void
-  private onCacheMiss?: () => void // DSXU comment sanitized.
+  private onCacheMiss?: (event: CacheMissWarmupEvent) => void
+  private readonly cacheMissWarmupDebounceMs: number
+  private lastCacheMissWarmupAt = 0
 
   constructor(options?: {
     onAlert?: (event: CacheBreakEvent) => void
-    onCacheMiss?: () => void
+    onCacheMiss?: (event: CacheMissWarmupEvent) => void
+    cacheMissWarmupDebounceMs?: number
   }) {
     this.onAlert = options?.onAlert
     this.onCacheMiss = options?.onCacheMiss
+    this.cacheMissWarmupDebounceMs = Math.max(
+      0,
+      options?.cacheMissWarmupDebounceMs ?? DEFAULT_CACHE_MISS_WARMUP_DEBOUNCE_MS,
+    )
   }
 
   /**
@@ -97,6 +119,8 @@ export class CacheMonitor {
     if (isCacheHit) {
       this.stats.cacheHits++
       this.stats.consecutiveMisses = 0
+      this.lastCacheMissWarmupAt = 0
+      this.stats.hitRate = this.stats.cacheHits / this.stats.totalRequests
       // Prefer provider-reported cache read tokens; fallback to estimate.
       const estimatedCached = cacheReadTokens > 0
         ? cacheReadTokens
@@ -106,6 +130,7 @@ export class CacheMonitor {
     } else {
       this.stats.cacheMisses++
       this.stats.consecutiveMisses++
+      this.stats.hitRate = this.stats.cacheHits / this.stats.totalRequests
 
       // 连续 miss 检测
       if (this.stats.consecutiveMisses >= ALERT_THRESHOLD_CONSECUTIVE_MISSES) {
@@ -127,14 +152,34 @@ export class CacheMonitor {
         this.onAlert?.(event)
       }
 
-      // 触发缓存预热
-      if (this.stats.consecutiveMisses >= 2 && this.onCacheMiss) {
-        this.onCacheMiss()
+      // 触发缓存预热。这里必须节流：一旦接入真实 warmer，连续 miss 每轮预热
+      // 会把长任务的成本和延迟放大；命中后会重置节流窗口，允许新一轮 miss 立即补救。
+      if (this.stats.consecutiveMisses >= CACHE_MISS_WARMUP_THRESHOLD && this.onCacheMiss) {
+        const now = Date.now()
+        const canTrigger = this.lastCacheMissWarmupAt === 0 ||
+          now - this.lastCacheMissWarmupAt >= this.cacheMissWarmupDebounceMs
+
+        if (canTrigger) {
+          this.lastCacheMissWarmupAt = now
+          const event: CacheMissWarmupEvent = {
+            timestamp: new Date(now).toISOString(),
+            mode: 'dry-run',
+            reason: `连续 ${this.stats.consecutiveMisses} 次 cache miss，建议预热稳定前缀`,
+            consecutiveMisses: this.stats.consecutiveMisses,
+            inputTokens,
+            hitRate: this.stats.hitRate,
+            command: 'bun run cache:reality-run && bun run cache:live-ab',
+            claimBoundary:
+              'dry-run cache miss ledger only; no provider call, no synchronous warmup, no cache-hit improvement claim',
+            performanceBoundary:
+              'observability-only event; does not add model turns, tool calls, network calls, or latency to the active user turn',
+          }
+          this.cacheMissWarmupEvents.push(event)
+          this.onCacheMiss(event)
+        }
       }
     }
 
-    // 更新命中率
-    this.stats.hitRate = this.stats.cacheHits / this.stats.totalRequests
     this.stats.shouldAlert = this.stats.hitRate < ALERT_THRESHOLD_HIT_RATE && this.stats.totalRequests > 10
   }
 
@@ -196,6 +241,10 @@ export class CacheMonitor {
     return [...this.breakEvents]
   }
 
+  getCacheMissWarmupEvents(): CacheMissWarmupEvent[] {
+    return [...this.cacheMissWarmupEvents]
+  }
+
   /** 重置 */
   reset(): void {
     this.stats = {
@@ -210,5 +259,7 @@ export class CacheMonitor {
       shouldAlert: false,
     }
     this.breakEvents = []
+    this.cacheMissWarmupEvents = []
+    this.lastCacheMissWarmupAt = 0
   }
 }

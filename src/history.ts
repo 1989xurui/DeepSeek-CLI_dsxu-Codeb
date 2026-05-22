@@ -359,7 +359,7 @@ async function addToPromptHistory(
   void currentFlushPromise
 }
 export function addToHistory(command: HistoryEntry | string): void {
-  // Skip history when running in a tmux session spawned by DSXU Code's Tungsten tool.
+  // Skip history when running in a DSXU-managed terminal session.
   // This prevents verification/test sessions from polluting the user's real command history.
   if (isEnvTruthy(process.env.DSXU_CODE_SKIP_PROMPT_HISTORY)) {
     return

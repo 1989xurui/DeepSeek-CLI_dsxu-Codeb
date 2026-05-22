@@ -387,7 +387,7 @@ function createPluginCommand(
         // skills, so DSXU_PLUGIN_ROOT points to the plugin root while
         // DSXU_SKILL_DIR points to the individual skill's subdirectory.
         if (config.isSkillMode) {
-          const providerMigrationPrefix = 'CL' + 'AUDE'
+          const archivedPrefix = 'CL' + 'AUDE'
           const rawSkillDir = dirname(file.filePath)
           const skillDir =
             process.platform === 'win32'
@@ -396,7 +396,7 @@ function createPluginCommand(
           finalContent = finalContent
             .replace(/\$\{DSXU_SKILL_DIR\}/g, skillDir)
             .replace(
-              new RegExp(String.raw`\$\{${providerMigrationPrefix}_SKILL_DIR\}`, 'g'),
+              new RegExp(String.raw`\$\{${archivedPrefix}_SKILL_DIR\}`, 'g'),
               skillDir,
             )
         }

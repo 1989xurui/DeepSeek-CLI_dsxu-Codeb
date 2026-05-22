@@ -306,14 +306,14 @@ export function substitutePluginVariables(
   value: string,
   plugin: { path: string; source?: string },
 ): string {
-  const providerMigrationPrefix = 'CL' + 'AUDE'
+  const archivedPrefix = 'CL' + 'AUDE'
   const placeholderRegex = (name: string) =>
     new RegExp(String.raw`\$\{${name}\}`, 'g')
   const normalize = (p: string) =>
     process.platform === 'win32' ? p.replace(/\\/g, '/') : p
   let out = value
     .replace(placeholderRegex('DSXU_PLUGIN_ROOT'), () => normalize(plugin.path))
-    .replace(placeholderRegex(`${providerMigrationPrefix}_PLUGIN_ROOT`), () =>
+    .replace(placeholderRegex(`${archivedPrefix}_PLUGIN_ROOT`), () =>
       normalize(plugin.path),
     )
   // source can be absent (e.g. hooks where pluginRoot is a skill root without
@@ -324,7 +324,7 @@ export function substitutePluginVariables(
       .replace(placeholderRegex('DSXU_PLUGIN_DATA'), () =>
         normalize(getPluginDataDir(source)),
       )
-      .replace(placeholderRegex(`${providerMigrationPrefix}_PLUGIN_DATA`), () =>
+      .replace(placeholderRegex(`${archivedPrefix}_PLUGIN_DATA`), () =>
         normalize(getPluginDataDir(source)),
       )
   }

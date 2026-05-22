@@ -1,4 +1,4 @@
-import { getProviderMigrationDefaultTierModelId } from '../../../utils/model/providerMigration/providerMigrationModelCompat.js'
+import { getArchivedDefaultTierModelId } from '../../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
 const STATUSLINE_SYSTEM_PROMPT = `You are a status line setup agent for DSXU Code. Your job is to create or update the statusLine command in the user's DSXU Code settings.
@@ -142,7 +142,7 @@ export const STATUSLINE_SETUP_AGENT: BuiltInAgentDefinition = {
   model:
     process.env.DSXU_CODE_MODE === '1'
       ? 'inherit'
-      : getProviderMigrationDefaultTierModelId(),
+      : getArchivedDefaultTierModelId(),
   color: 'orange',
   getSystemPrompt: () => STATUSLINE_SYSTEM_PROMPT,
 }

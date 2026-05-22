@@ -83,3 +83,22 @@ export interface SWEBridgeConfig {
   /** Mock task loader：用于 G4 测试，跳过真实文件读取 */
   mockTaskLoader?: (subsetPath: string) => Promise<SWETask[]>;
 }
+
+export function validateSweTask(task: Partial<SWETask>): string[] {
+  const errors: string[] = [];
+
+  if (!task.id) errors.push('task id is required');
+  if (!task.repo) errors.push('repo is required');
+  if (!task.baseCommit) errors.push('base commit is required');
+  if (!task.problemStatement) errors.push('problem statement is required');
+  if (!task.difficulty || !['easy', 'medium', 'hard'].includes(task.difficulty)) {
+    errors.push('difficulty must be easy, medium, or hard');
+  }
+  if (!Array.isArray(task.languages) || task.languages.length === 0) {
+    errors.push('at least one language is required');
+  }
+  if (typeof task.multiFile !== 'boolean') errors.push('multiFile must be boolean');
+  if (!task.testPatch) errors.push('test patch is required');
+
+  return errors;
+}

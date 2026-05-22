@@ -70,6 +70,13 @@ describe('prompt-cache-break-detection', () => {
     expect(report).not.toBeNull()
     expect(report?.reason).toContain('model changed')
     expect(report?.tokenDrop).toBeGreaterThan(2_000)
+    expect(report?.warmupRecommendation).toMatchObject({
+      owner: 'DeepSeek route/cost/cache',
+      mode: 'dry-run-only',
+      command: 'bun run cache:reality-run --model deepseek-reasoner',
+      debounceMs: 60_000,
+    })
+    expect(report?.warmupRecommendation.claimBoundary).toContain('no provider call')
   })
 
   it('should not report break for tiny token drop', () => {
@@ -92,6 +99,30 @@ describe('prompt-cache-break-detection', () => {
       usage: mkUsage(18_500), // 1500 drop: below threshold
       sinceLastAssistantMs: 60_000,
     })
+    expect(report).toBeNull()
+  })
+
+  it('should not report break when the previous cache-read baseline is zero', () => {
+    recordPromptState({
+      querySource: 'repl_main_thread',
+      systemPrompt: 'Stable prompt',
+      toolSchemas: [TOOL_A],
+      model: 'deepseek-chat',
+    })
+    checkResponseForCacheBreak({ querySource: 'repl_main_thread', usage: mkUsage(0) })
+
+    recordPromptState({
+      querySource: 'repl_main_thread',
+      systemPrompt: 'Stable prompt changed',
+      toolSchemas: [TOOL_A],
+      model: 'deepseek-reasoner',
+    })
+    const report = checkResponseForCacheBreak({
+      querySource: 'repl_main_thread',
+      usage: mkUsage(0),
+      sinceLastAssistantMs: 60_000,
+    })
+
     expect(report).toBeNull()
   })
 
@@ -120,6 +151,32 @@ describe('prompt-cache-break-detection', () => {
     expect(report?.reason).toContain('possible 5min TTL expiry')
   })
 
+  it('should not echo unsafe model names into cache warmup commands', () => {
+    recordPromptState({
+      querySource: 'repl_main_thread',
+      systemPrompt: 'Stable prompt',
+      toolSchemas: [TOOL_A],
+      model: 'deepseek-chat',
+    })
+    checkResponseForCacheBreak({ querySource: 'repl_main_thread', usage: mkUsage(24_000) })
+
+    recordPromptState({
+      querySource: 'repl_main_thread',
+      systemPrompt: 'Stable prompt',
+      toolSchemas: [TOOL_A],
+      model: 'deepseek-chat; rm -rf .',
+    })
+    const report = checkResponseForCacheBreak({
+      querySource: 'repl_main_thread',
+      usage: mkUsage(8_000),
+      sinceLastAssistantMs: 60_000,
+    })
+
+    expect(report?.warmupRecommendation.command).toBe(
+      'bun run cache:reality-run --model deepseek-v4-flash',
+    )
+  })
+
   it('should skip break detection right after compaction notification', () => {
     recordPromptState({
       querySource: 'repl_main_thread',
@@ -144,4 +201,3 @@ describe('prompt-cache-break-detection', () => {
     expect(report).toBeNull()
   })
 })
-

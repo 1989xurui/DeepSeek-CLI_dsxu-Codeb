@@ -10,6 +10,19 @@ import {
   getLedgerSummary,
   isLedgerResumable,
   getResumePoint,
+  appendLedgerEvent,
+  buildDSXUActiveFrame,
+  buildDurableLedgerRecoveryProof,
+  buildLongTaskLedgerProjection,
+  buildRuntimeEventSchemaConsumptionProof,
+  decideStallRecovery,
+  projectFailureRecoveryDecision,
+  projectVerificationRecoveryDecision,
+  projectToolCallResultToLedgerEvent,
+  recordFailureRecoveryDecision,
+  recordVerificationRecoveryDecision,
+  recordStallDecision,
+  RECOVERY_DECISION_TABLE,
   type ProgressLedger,
   type LedgerEntryResult,
   type VerifySummary,
@@ -230,6 +243,7 @@ describe('Progress Ledger - 结构定义与基础函数', () => {
       expect(summary.isCompleted).toBe(false)
       expect(summary.stepCount).toBe(3)
       expect(summary.completedSteps).toBe(2)
+      expect(summary.eventCount).toBe(0)
       expect(summary.lastUpdated).toBe(ledgerWithSteps.updatedAt)
     })
   })
@@ -295,6 +309,409 @@ describe('Progress Ledger - 结构定义与基础函数', () => {
         timestamp: Date.now()
       })
       expect(getResumePoint(completedLedger)).toBe('commit')
+    })
+  })
+
+  describe('6. 长任务事件账本与停滞恢复决策', () => {
+    it('appendLedgerEvent() 应该把工具、验证、成本证据写入同一个任务账本', () => {
+      const ledger = createProgressLedger('task-long', 'session-long', 'execute')
+      const withToolEvent = appendLedgerEvent(ledger, {
+        kind: 'tool',
+        owner: 'Tool Gate',
+        summary: 'Edit completed with post-mutation envelope',
+        turnId: 'turn-1',
+        toolUseId: 'toolu-edit-1',
+        evidence: ['envelope:dsxu.post-mutation-verification.v1'],
+      })
+      const withCostEvent = appendLedgerEvent(withToolEvent, {
+        kind: 'cost-cache',
+        owner: 'DeepSeek Model Router / Cost Evidence',
+        summary: 'Flash route cost recorded',
+        modelCallId: 'model-call-1',
+        evidence: ['model:deepseek-v4-flash', 'costUsd:0.001'],
+      })
+
+      expect(withCostEvent.events?.length).toBe(2)
+      expect(withCostEvent.events?.[0].schemaVersion).toBe('dsxu.runtime-event.v1')
+      expect(withCostEvent.events?.[0].taskId).toBe('task-long')
+      expect(withCostEvent.events?.[0].toolUseId).toBe('toolu-edit-1')
+      expect(withCostEvent.events?.[1].modelCallId).toBe('model-call-1')
+      expect(getLedgerSummary(withCostEvent).eventCount).toBe(2)
+    })
+
+    it('decideStallRecovery() 应该把 no-progress 信号变成明确恢复动作', () => {
+      const decision = decideStallRecovery({
+        signals: [
+          {
+            kind: 'repeated_read',
+            count: 3,
+            severity: 'medium',
+            evidence: ['same file range read 3 times'],
+          },
+          {
+            kind: 'repeated_verification_failure',
+            count: 2,
+            severity: 'high',
+            evidence: ['bun test failed twice'],
+          },
+        ],
+      })
+
+      expect(decision.schemaVersion).toBe('dsxu.stall-recovery-decision.v1')
+      expect(decision.owner).toBe('Recovery / GearBox')
+      expect(decision.reason).toBe('repeated_verification_failure')
+      expect(decision.action).toBe('replan')
+      expect(decision.nextAction).toContain('failing assertion')
+      expect(decision.evidence).toContain('bun test failed twice')
+    })
+
+    it('RECOVERY_DECISION_TABLE should cover every stall signal with one default action', () => {
+      const signals = [
+        'repeated_read',
+        'no_diff',
+        'repeated_verification_failure',
+        'tool_failure',
+        'validation_failure',
+        'timeout',
+        'workspace_boundary',
+        'model_failure',
+        'context_pressure',
+        'cost_pressure',
+        'agent_timeout',
+        'permission_loop',
+        'tool_result_growth',
+      ]
+
+      expect(RECOVERY_DECISION_TABLE.map(row => row.signal)).toEqual(signals)
+      expect(RECOVERY_DECISION_TABLE.every(row => row.ledgerEventRequired)).toBe(true)
+      expect(RECOVERY_DECISION_TABLE.every(row => row.finalClaimAllowed === false)).toBe(true)
+    })
+
+    it('recordStallDecision() 应该让长任务可恢复而不是继续无进展循环', () => {
+      const ledger = createProgressLedger('task-stall', 'session-stall', 'verify')
+      const decision = decideStallRecovery({
+        signals: [
+          {
+            kind: 'permission_loop',
+            count: 2,
+            severity: 'critical',
+            evidence: ['same approval request repeated twice'],
+          },
+        ],
+      })
+      const updated = recordStallDecision(ledger, decision)
+
+      expect(updated.stallDecision?.action).toBe('ask-human')
+      expect(updated.resumeFrom).toBe('verify')
+      expect(isLedgerResumable(updated)).toBe(true)
+      expect(getLedgerSummary(updated).lastStallAction).toBe('ask-human')
+      expect(updated.events?.at(-1)?.kind).toBe('stall')
+    })
+
+    it('projectVerificationRecoveryDecision() should use one source for verification, recovery, ledger, and final claim', () => {
+      const ledger = createProgressLedger('task-verify-recovery', 'session-verify', 'verify')
+      const projection = projectVerificationRecoveryDecision({
+        verification: {
+          passed: false,
+          score: 52,
+          findings: [
+            {
+              severity: 'P1',
+              title: 'Focused test failed twice',
+              detail: 'cart.test.ts still fails',
+              suggestion: 'replan before final claim',
+            },
+          ],
+          timestamp: Date.now(),
+        },
+        onFailure: 'block',
+        failedAttemptsSinceProgress: 2,
+        command: 'bun test cart.test.ts',
+        taskId: 'task-verify-recovery',
+        turnId: 'turn-verify-1',
+      })
+
+      expect(projection.schemaVersion).toBe(
+        'dsxu.verification-recovery-projection.v1',
+      )
+      expect(projection.policy).toBe('blocking')
+      expect(projection.finalClaimAllowed).toBe(false)
+      expect(projection.verificationEvent).toMatchObject({
+        kind: 'verification',
+        owner: 'VerificationKernel',
+        taskId: 'task-verify-recovery',
+        turnId: 'turn-verify-1',
+      })
+      expect(projection.verificationEvent.evidence).toContain(
+        'schema:VerifySummary',
+      )
+      expect(projection.recoveryDecision).toMatchObject({
+        schemaVersion: 'dsxu.stall-recovery-decision.v1',
+        owner: 'Recovery / GearBox',
+        reason: 'repeated_verification_failure',
+        action: 'replan',
+      })
+
+      const updated = recordVerificationRecoveryDecision(ledger, projection)
+      expect(updated.verifySummary?.passed).toBe(false)
+      expect(updated.events?.map(event => event.kind)).toEqual([
+        'verification',
+        'recovery',
+        'stall',
+      ])
+      expect(getLedgerSummary(updated).lastStallAction).toBe('replan')
+      expect(buildLongTaskLedgerProjection(updated).finalClaimAllowed).toBe(false)
+    })
+
+    it('projectFailureRecoveryDecision() should route normalized failures through the same recovery table and ledger', () => {
+      const ledger = createProgressLedger('task-failure-recovery', 'session-failure', 'execute')
+      const permissionProjection = projectFailureRecoveryDecision({
+        error: new Error('permission denied by policy'),
+        blockedByPolicy: true,
+        operation: 'Bash',
+        taskId: 'task-failure-recovery',
+        turnId: 'turn-failure-1',
+        evidence: ['tool:Bash'],
+      })
+      const workspaceProjection = projectFailureRecoveryDecision({
+        error: new Error('workspace root boundary violation'),
+        operation: 'FileEdit',
+        taskId: 'task-failure-recovery',
+        turnId: 'turn-failure-2',
+      })
+
+      expect(permissionProjection.schemaVersion).toBe('dsxu.failure-recovery-projection.v1')
+      expect(permissionProjection.failure.category).toBe('permission')
+      expect(permissionProjection.recoveryDecision.reason).toBe('permission_loop')
+      expect(permissionProjection.recoveryDecision.action).toBe('ask-human')
+      expect(permissionProjection.finalClaimAllowed).toBe(false)
+      expect(workspaceProjection.failure.category).toBe('workspace')
+      expect(workspaceProjection.recoveryDecision.reason).toBe('workspace_boundary')
+      expect(workspaceProjection.recoveryDecision.action).toBe('abort')
+
+      const updated = recordFailureRecoveryDecision(ledger, permissionProjection)
+      expect(updated.events?.map(event => event.kind)).toEqual(['recovery', 'stall'])
+      expect(updated.stallDecision?.action).toBe('ask-human')
+      expect(isLedgerResumable(updated)).toBe(true)
+      expect(buildLongTaskLedgerProjection(updated).finalClaimAllowed).toBe(false)
+    })
+
+    it('buildLongTaskLedgerProjection() should project ledger/stall into TUI and final report state', () => {
+      let ledger = createProgressLedger('task-projection', 'session-projection', 'verify')
+      ledger = appendLedgerEvent(ledger, projectToolCallResultToLedgerEvent({
+        callId: 'toolu-verify-1',
+        toolName: 'Bash',
+        result: {
+          ok: false,
+          outputText: 'test failed',
+          events: [],
+          error: {
+            type: 'EXECUTION_FAILED',
+            message: 'test failed',
+            retryable: true,
+          },
+          metadata: {
+            duration: 42,
+            executorKind: 'dsxu_native',
+            usedBridge: false,
+          },
+        },
+      }))
+      const decision = decideStallRecovery({
+        signals: [
+          {
+            kind: 'repeated_verification_failure',
+            count: 2,
+            severity: 'high',
+            evidence: ['same focused test failed twice'],
+          },
+        ],
+      })
+      ledger = recordStallDecision(ledger, decision)
+
+      const projection = buildLongTaskLedgerProjection(ledger)
+
+      expect(projection.schemaVersion).toBe('dsxu.long-task-ledger-projection.v1')
+      expect(projection.tuiLines.join('\n')).toContain('LongTask: task=task-projection')
+      expect(projection.tuiLines.join('\n')).toContain('Stall: repeated_verification_failure -> replan')
+      expect(projection.finalReportSection.status).toBe('recoverable')
+      expect(projection.finalReportSection.summary.join('\n')).toContain('finalClaimAllowed=false')
+      expect(projection.finalReportSection.evidence).toContain('same focused test failed twice')
+      expect(projection.finalClaimAllowed).toBe(false)
+    })
+
+    it('buildDurableLedgerRecoveryProof() should prove failed verification resumes from the ledger instead of a side channel', () => {
+      let ledger = createProgressLedger('task-durable-proof', 'session-durable-proof', 'verify')
+      const projection = projectVerificationRecoveryDecision({
+        verification: {
+          passed: false,
+          score: 47,
+          findings: [
+            {
+              severity: 'P1',
+              title: 'Resize regression still fails',
+              detail: 'TUI viewport test failed after two attempts',
+              suggestion: 'replan around scroll anchoring before final claim',
+            },
+          ],
+          timestamp: Date.now(),
+        },
+        onFailure: 'block',
+        failedAttemptsSinceProgress: 2,
+        command: 'bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t resize',
+        owner: 'VerificationKernel',
+        evidence: ['tui-resize-regression:failed-twice'],
+      })
+      ledger = recordVerificationRecoveryDecision(ledger, projection)
+
+      const proof = buildDurableLedgerRecoveryProof(ledger)
+
+      expect(proof.schemaVersion).toBe('dsxu.durable-ledger-recovery-proof.v1')
+      expect(proof.status).toBe('PASS_DURABLE_LEDGER_RECOVERY_READY')
+      expect(proof.resumeSource).toBe('progress-ledger')
+      expect(proof.finalClaimAllowed).toBe(false)
+      expect(proof.guards).toEqual([])
+      expect(proof.tuiLine).toContain('resumeSource=progress-ledger')
+      expect(proof.finalReportSection.summary.join('\n')).toContain(
+        'finalClaimAllowed=false',
+      )
+      expect(proof.evidence).toContain('tui-resize-regression:failed-twice')
+    })
+
+    it('buildDSXUActiveFrame() should keep only current task memory and open obligations', () => {
+      let ledger = createProgressLedger('task-active-frame', 'session-active-frame', 'edit')
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'task_contract',
+        owner: 'Query Loop / PlanGraph / Tool Gate',
+        summary: 'single_file_edit plan_execute_verify via flash',
+        evidence: ['contract:execution-contract-active-frame'],
+        metadata: {
+          executionContract: {
+            goal: 'Patch checkout validation',
+            risk: 'medium',
+            visibleTools: ['Read', 'Edit', 'Bash', 'Grep'],
+            verificationLevel: 'affected_tests',
+            fallbackPolicy: 'retry',
+          },
+        },
+      })
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'source_evidence',
+        owner: 'Source Truth Repair',
+        summary: 'Read checkout owner source',
+        evidence: ['src/checkout.ts', 'src/checkout.test.ts', 'validation branch located'],
+        metadata: {
+          filesRead: ['src/checkout.ts', 'src/checkout.test.ts'],
+        },
+      })
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'edit_proof',
+        owner: 'Tool Gate',
+        summary: 'Scoped edit proof recorded',
+        evidence: ['edit-proof:checkout-validation'],
+        metadata: {
+          filesChanged: ['src/checkout.ts'],
+          openObligations: ['run affected checkout test'],
+        },
+      })
+
+      const frame = buildDSXUActiveFrame({ ledger })
+
+      expect(frame.schemaVersion).toBe('dsxu.active-frame.v5')
+      expect(frame.owner).toBe('PlanGraph / Work-State')
+      expect(frame.task).toBe('Patch checkout validation')
+      expect(frame.phase).toBe('edit')
+      expect(frame.confirmedFacts.length).toBeLessThanOrEqual(8)
+      expect(frame.filesRead).toEqual(['src/checkout.ts', 'src/checkout.test.ts'])
+      expect(frame.filesChanged).toEqual(['src/checkout.ts'])
+      expect(frame.openObligations).toEqual([
+        'verification required:affected_tests',
+        'run affected checkout test',
+      ])
+      expect(frame.nextAllowedActions).toEqual(expect.arrayContaining(['tool:Edit', 'record edit proof']))
+      expect(frame.guards).toEqual([])
+    })
+
+    it('buildRuntimeEventSchemaConsumptionProof() should require all default runtime event kinds in one ledger stream', () => {
+      let ledger = createProgressLedger('task-runtime-events', 'session-runtime-events', 'plan')
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'goal',
+        owner: 'Query Loop',
+        summary: 'Goal accepted',
+        evidence: ['goal:user-request'],
+      })
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'plan',
+        owner: 'PlanGraph',
+        summary: 'Plan created',
+        evidence: ['plan:owner-focused'],
+      })
+      ledger = appendLedgerEvent(ledger, projectToolCallResultToLedgerEvent({
+        callId: 'toolu-edit',
+        toolName: 'FileEdit',
+        result: {
+          ok: true,
+          outputText: 'edit applied',
+          events: [],
+          metadata: {
+            duration: 25,
+            executorKind: 'dsxu_native',
+            usedBridge: false,
+          },
+        },
+      }))
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'verification',
+        owner: 'VerificationKernel',
+        summary: 'Focused verification passed',
+        evidence: ['verify:focused-pass'],
+      })
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'recovery',
+        owner: 'Recovery / GearBox',
+        summary: 'No recovery needed',
+        evidence: ['recovery:none'],
+      })
+      ledger = appendLedgerEvent(ledger, {
+        kind: 'evidence',
+        owner: 'Evidence / Release Claim Binder',
+        summary: 'Final evidence packet linked',
+        evidence: ['evidence:final-report-section'],
+      })
+
+      const proof = buildRuntimeEventSchemaConsumptionProof({
+        events: ledger.events ?? [],
+      })
+
+      expect(proof.status).toBe('PASS_RUNTIME_EVENT_SCHEMA_CONSUMPTION')
+      expect(proof.missingKinds).toEqual([])
+      expect(proof.invalidEvents).toEqual([])
+      expect(proof.compactPanelLines.join('\n')).toContain('missing=none')
+      expect(proof.finalReportSection.status).toBe('ready')
+      expect(proof.finalReportSection.evidence).toContain(
+        'evidence:final-report-section',
+      )
+    })
+
+    it('buildRuntimeEventSchemaConsumptionProof() should expose missing event kinds instead of letting final evidence pass silently', () => {
+      const ledger = appendLedgerEvent(
+        createProgressLedger('task-runtime-gap', 'session-runtime-gap', 'verify'),
+        {
+          kind: 'verification',
+          owner: 'VerificationKernel',
+          summary: 'Focused verification exists without plan/tool evidence',
+          evidence: ['verify:orphan'],
+        },
+      )
+      const proof = buildRuntimeEventSchemaConsumptionProof({
+        events: ledger.events ?? [],
+        requiredKinds: ['plan', 'tool', 'verification', 'evidence'],
+      })
+
+      expect(proof.status).toBe('NEEDS_RUNTIME_EVENT_SCHEMA_CONSUMPTION_REVIEW')
+      expect(proof.missingKinds).toEqual(['plan', 'tool', 'evidence'])
+      expect(proof.guards).toContain('missing runtime event kind:plan')
+      expect(proof.finalReportSection.status).toBe('needs-evidence')
     })
   })
 })

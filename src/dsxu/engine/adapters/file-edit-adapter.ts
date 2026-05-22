@@ -509,6 +509,7 @@ export class FileEditAdapter implements ToolExecutor {
             // DSXU comment sanitized.
           }
         }
+        await this.cleanupStaleAdapterTempFiles(dir, tempSuffix)
 
         const duration = Date.now() - startTime
         return {
@@ -666,6 +667,7 @@ export class FileEditAdapter implements ToolExecutor {
       // Work Package B: unified path resolution.
       const path = await import('path')
       const absolutePath = path.resolve(context.cwd, input.file_path)
+      const displayFilePath = path.isAbsolute(input.file_path) ? input.file_path : absolutePath
 
       // DSXU comment sanitized.
       const normalizedInput = {
@@ -802,7 +804,7 @@ export class FileEditAdapter implements ToolExecutor {
         timestamp: Date.now(),
         data: {
           step: 'file_written',
-          filePath: input.file_path,
+          filePath: displayFilePath,
           size: newContent.length,
           atomicWrite: true,
           conflictDetected: atomicResult.conflictResult?.hasConflict || false
@@ -826,7 +828,7 @@ export class FileEditAdapter implements ToolExecutor {
       // 8. Build structured result.
       const duration = Date.now() - startTime
       const outputText = this.createSuccessOutput(
-        normalizedInput.file_path,
+        displayFilePath,
         fileExists,
         diff,
         selectedStrategy
@@ -835,7 +837,7 @@ export class FileEditAdapter implements ToolExecutor {
       // 生成文件编辑结果
       const fileEditResult: FileEditResult = {
         success: true,
-        filePath: normalizedInput.file_path,
+        filePath: displayFilePath,
         operation: fileExists ? 'update' : 'create',
         newSize: newContent.length,
         oldSize: oldContent?.length || 0,
@@ -892,7 +894,7 @@ export class FileEditAdapter implements ToolExecutor {
         ok: true,
         outputText,
         structuredData: {
-          filePath: normalizedInput.file_path,
+          filePath: displayFilePath,
           fileExisted: fileExists,
           newSize: newContent.length,
           oldSize: oldContent?.length || 0,
@@ -1095,6 +1097,9 @@ export class FileEditAdapter implements ToolExecutor {
     // If old_content === '', only allow it when the target file is empty.
     // Reject non-empty target files.
     if (input.old_content === '') {
+      if (input.create_if_missing && oldContent === input.new_content) {
+        return { allowed: true, meta: { actualOldString: '' } }
+      }
       if (oldContent.trim() !== '') {
         return {
           allowed: false,
@@ -1300,12 +1305,13 @@ export class FileEditAdapter implements ToolExecutor {
       `${'CL' + 'AUDE'}.md`, `.${'clau' + 'de'}/`, '.DS_Store', 'Thumbs.db'
     ]
 
-    const normalizedPath = input.file_path.toLowerCase()
+    const normalizedPath = input.file_path.replace(/\\/g, '/').toLowerCase()
     for (const sensitivePath of sensitivePaths) {
-      if (normalizedPath.includes(sensitivePath.toLowerCase())) {
+      const normalizedSensitivePath = sensitivePath.replace(/\\/g, '/').toLowerCase()
+      if (normalizedPath.includes(normalizedSensitivePath)) {
         return {
           allowed: false,
-          reason: `Editing sensitive file is blocked: ${sensitivePath}`
+          reason: `禁止修改敏感文件: ${sensitivePath}. Editing sensitive file is blocked.`
         }
       }
     }
@@ -1342,7 +1348,7 @@ export class FileEditAdapter implements ToolExecutor {
     if (!isInsideCwd) {
       return {
         allowed: false,
-        reason: `File path must be inside the current working directory: ${input.file_path}`
+        reason: `禁止修改敏感文件或工作区外路径: ${input.file_path}. File path must be inside the current working directory.`
       }
     }
 
@@ -1425,6 +1431,28 @@ export class FileEditAdapter implements ToolExecutor {
     // Network errors and temporary file locks can be retried.
     const retryableCodes = ['EAGAIN', 'EBUSY', 'ETIMEDOUT', 'ECONNRESET']
     return retryableCodes.includes(error.code)
+  }
+
+  private async cleanupStaleAdapterTempFiles(dir: string, tempSuffix: string): Promise<void> {
+    try {
+      const fs = await import('fs/promises')
+      const path = await import('path')
+      const entries = await fs.readdir(dir, { withFileTypes: true })
+      const now = Date.now()
+      const staleAfterMs = 5000
+      const tempPattern = new RegExp(`^\\..+\\.\\d+\\.\\d+${tempSuffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
+
+      await Promise.all(entries
+        .filter(entry => entry.isFile() && tempPattern.test(entry.name))
+        .map(async entry => {
+          const fullPath = path.join(dir, entry.name)
+          const stat = await fs.stat(fullPath).catch(() => undefined)
+          if (!stat || now - stat.mtimeMs < staleAfterMs) return
+          await fs.unlink(fullPath).catch(() => {})
+        }))
+    } catch {
+      // Best-effort cleanup only; file edit success must not depend on stale temp deletion.
+    }
   }
 
   /** Create error result. */

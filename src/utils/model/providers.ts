@@ -20,7 +20,7 @@ export function getAPIProviderForStatsig(): AnalyticsMetadata_I_VERIFIED_THIS_IS
 /**
  * Check if the provider base URL is a first-party API URL.
  * Returns true if not set (default API) or points to the first-party
- * API hosts accepted by the provider-migration transport boundary.
+ * API hosts accepted by the archived transport boundary.
  */
 export function isFirstPartyProviderBaseUrl(): boolean {
   const providerHost = 'anth' + 'ropic'

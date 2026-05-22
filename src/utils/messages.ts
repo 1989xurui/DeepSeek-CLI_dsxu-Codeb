@@ -152,7 +152,7 @@ import { formatFileSize } from './format.js'
 import { validateImagesForAPI } from './imageValidation.js'
 import { safeParseJSON } from './json.js'
 import { logError, logMCPDebug } from './log.js'
-import { normalizeProviderMigrationToolName } from './permissions/permissionRuleParser.js'
+import { normalizeArchivedToolName } from './permissions/permissionRuleParser.js'
 import {
   getPlanModeV2AgentCount,
   getPlanModeV2ExploreAgentCount,
@@ -1450,7 +1450,7 @@ function stripUnavailableToolReferencesFromUserMessage(
         if (!isToolReferenceBlock(c)) return false
         const toolName = (c as { tool_name?: string }).tool_name
         return (
-          toolName && !availableToolNames.has(normalizeProviderMigrationToolName(toolName))
+          toolName && !availableToolNames.has(normalizeArchivedToolName(toolName))
         )
       }),
   )
@@ -1470,7 +1470,7 @@ function stripUnavailableToolReferencesFromUserMessage(
           if (!isToolReferenceBlock(c)) return true
           const rawToolName = (c as { tool_name?: string }).tool_name
           if (!rawToolName) return true
-          const toolName = normalizeProviderMigrationToolName(rawToolName)
+          const toolName = normalizeArchivedToolName(rawToolName)
           const isAvailable = availableToolNames.has(toolName)
           if (!isAvailable) {
             logForDebugging(

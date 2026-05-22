@@ -35,10 +35,10 @@ import {
 } from './schemas.js'
 
 const DSXU_PLUGIN_MANIFEST_DIR = '.dsxu-plugin'
-const PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
+const ARCHIVED_PLUGIN_MANIFEST_DIR = '.clau' + 'de-plugin'
 const PLUGIN_MANIFEST_DIRS = [
   DSXU_PLUGIN_MANIFEST_DIR,
-  PROVIDER_MIGRATION_PLUGIN_MANIFEST_DIR,
+  ARCHIVED_PLUGIN_MANIFEST_DIR,
 ] as const
 
 // Type alias for V2 plugins map
@@ -87,7 +87,7 @@ export function getInstalledPluginsFilePath(): string {
 }
 
 /**
- * Get the path to the provider-migration installed_plugins_v2.json file.
+ * Get the path to the archived installed_plugins_v2.json file.
  * Used only during migration to consolidate into single file.
  */
 export function getInstalledPluginsV2FilePath(): string {
@@ -875,7 +875,7 @@ export function isPluginGloballyInstalled(pluginId: string): boolean {
  *
  * @param pluginId - Plugin ID in "plugin@marketplace" format
  * @param metadata - Installation metadata
- * @param scope - Installation scope (defaults to 'user' for provider-migration continuity)
+ * @param scope - Installation scope (defaults to 'user' for archived continuity)
  * @param projectPath - Project path (for project/local scopes)
  */
 export function addInstalledPlugin(

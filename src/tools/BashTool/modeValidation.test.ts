@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { getEmptyToolPermissionContext } from '../../Tool'
+import { getDsxuLaneReadOnlyShellViolation } from './BashTool'
 import { checkPermissionMode } from './modeValidation'
 
 const acceptEditsContext = () => ({
@@ -38,5 +39,20 @@ describe('BashTool acceptEdits mode validation', () => {
     )
 
     expect(result.behavior).toBe('passthrough')
+  })
+
+  test('evidence-lane read-only shell blocks file writes but allows verification redirection', () => {
+    const previous = process.env.DSXU_LANE_READONLY_SHELL
+    try {
+      process.env.DSXU_LANE_READONLY_SHELL = '1'
+
+      expect(getDsxuLaneReadOnlyShellViolation('bun test test/api.test.ts 2>&1')).toBeNull()
+      expect(getDsxuLaneReadOnlyShellViolation('printf "x" >> src/file.ts')).toContain('read-only shell gate')
+      expect(getDsxuLaneReadOnlyShellViolation('cat << EOF >> src/file.ts')).toContain('read-only shell gate')
+      expect(getDsxuLaneReadOnlyShellViolation('node -e "require(\'fs\').appendFileSync(\'x\', \'y\')"')).toContain('read-only shell gate')
+    } finally {
+      if (previous === undefined) delete process.env.DSXU_LANE_READONLY_SHELL
+      else process.env.DSXU_LANE_READONLY_SHELL = previous
+    }
   })
 })

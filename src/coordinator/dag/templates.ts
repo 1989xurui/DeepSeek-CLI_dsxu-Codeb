@@ -79,3 +79,33 @@ export function debateDag(): DagSpec {
     exit: 'verifier',
   };
 }
+
+/** Plan-Execute-Verify: explicit PEV gate for code-changing tasks. */
+export function planExecuteVerifyDag(): DagSpec {
+  return {
+    nodes: [
+      node('plan', 'planner', [], {
+        config: {
+          phase: 'plan',
+          requiredOutput: ['targetFiles', 'editIntent', 'verificationCommands'],
+        },
+      }),
+      node('execute', 'executor', ['plan'], {
+        config: {
+          phase: 'execute',
+          requirePlanMatch: true,
+          allowedWritesFrom: 'plan.targetFiles',
+        },
+      }),
+      node('verify', 'verifier', ['execute'], {
+        retryPolicy: { max: 0, backoffMs: 0 },
+        config: {
+          phase: 'verify',
+          gates: ['tdd-gate', 'static-analysis', 'declared-tests'],
+        },
+      }),
+    ],
+    entry: 'plan',
+    exit: 'verify',
+  };
+}

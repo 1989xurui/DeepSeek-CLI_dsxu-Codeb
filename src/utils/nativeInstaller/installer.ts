@@ -49,7 +49,7 @@ import * as lockfile from '../lockfile.js'
 import { logError } from '../log.js'
 import { gt, gte } from '../semver.js'
 import {
-  filterProviderMigrationSourceAliases,
+  filterArchivedSourceAliases,
   getShellConfigPaths,
   readFileLines,
   writeFileLines,
@@ -78,11 +78,11 @@ export const VERSION_RETENTION_COUNT = 2
 // allowing cleanup of abandoned locks from crashed processes within a reasonable time.
 const LOCK_STALE_MS = 7 * 24 * 60 * 60 * 1000
 const DSXU_NATIVE_STATE_NAME = 'dsxu'
-const PROVIDER_MIGRATION_NATIVE_PRODUCT = 'cl' + 'aude'
-const PROVIDER_MIGRATION_NATIVE_CONFIG_DIR = `.${PROVIDER_MIGRATION_NATIVE_PRODUCT}`
-const PROVIDER_MIGRATION_SOURCE_SCOPE = '@' + 'anth' + 'ropic-ai'
-const PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE = `${PROVIDER_MIGRATION_SOURCE_SCOPE}/${PROVIDER_MIGRATION_NATIVE_PRODUCT}-code`
-const PROVIDER_MIGRATION_NATIVE_PACKAGE_PREFIX = `${PROVIDER_MIGRATION_NATIVE_PRODUCT}-cli-native-`
+const ARCHIVED_NATIVE_PRODUCT = 'cl' + 'aude'
+const ARCHIVED_NATIVE_CONFIG_DIR = `.${ARCHIVED_NATIVE_PRODUCT}`
+const ARCHIVED_SOURCE_SCOPE = '@' + 'anth' + 'ropic-ai'
+const ARCHIVED_SOURCE_CODE_PACKAGE = `${ARCHIVED_SOURCE_SCOPE}/${ARCHIVED_NATIVE_PRODUCT}-code`
+const ARCHIVED_NATIVE_PACKAGE_PREFIX = `${ARCHIVED_NATIVE_PRODUCT}-cli-native-`
 
 export type SetupMessage = {
   message: string
@@ -116,8 +116,8 @@ export function getPlatform(): string {
 
 export function getBinaryName(platform: string): string {
   return platform.startsWith('win32')
-    ? `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.exe`
-    : PROVIDER_MIGRATION_NATIVE_PRODUCT
+    ? `${ARCHIVED_NATIVE_PRODUCT}.exe`
+    : ARCHIVED_NATIVE_PRODUCT
 }
 
 function getBaseDirectories() {
@@ -125,7 +125,7 @@ function getBaseDirectories() {
   const executableName = getBinaryName(platform)
   const stateDirName = isDsxuRuntimeMode()
     ? DSXU_NATIVE_STATE_NAME
-    : PROVIDER_MIGRATION_NATIVE_PRODUCT
+    : ARCHIVED_NATIVE_PRODUCT
 
   return {
     // Data directories (permanent storage)
@@ -342,10 +342,10 @@ async function installVersionFromPackage(
 ) {
   try {
     // Extract binary from npm package structure in staging
-    const nodeModulesDir = join(stagingPath, 'node_modules', PROVIDER_MIGRATION_SOURCE_SCOPE)
+    const nodeModulesDir = join(stagingPath, 'node_modules', ARCHIVED_SOURCE_SCOPE)
     const entries = await readdir(nodeModulesDir)
     const nativePackage = entries.find((entry: string) =>
-      entry.startsWith(PROVIDER_MIGRATION_NATIVE_PACKAGE_PREFIX),
+      entry.startsWith(ARCHIVED_NATIVE_PACKAGE_PREFIX),
     )
 
     if (!nativePackage) {
@@ -1000,20 +1000,20 @@ async function installLatestImpl(
   }
 
   // Installation succeeded (early return above covers failure). Mark as native
-  // and disable provider-migration source auto-updater to protect symlinks.
+  // and disable archived source auto-updater to protect symlinks.
   const config = getGlobalConfig()
   if (config.installMethod !== 'native') {
     saveGlobalConfig(current => ({
       ...current,
       installMethod: 'native',
-      // Disable provider-migration source auto-updater to prevent npm sessions from deleting native symlinks.
+      // Disable archived source auto-updater to prevent npm sessions from deleting native symlinks.
       // Native installations use NativeAutoUpdater instead, which respects native installation.
       autoUpdates: false,
       // Mark this as protection-based, not user preference
       autoUpdatesProtectedForNative: true,
     }))
     logForDebugging(
-      'Native installer: Set installMethod to "native" and disabled provider-migration source auto-updater for protection',
+      'Native installer: Set installMethod to "native" and disabled archived source auto-updater for protection',
     )
   }
 
@@ -1207,7 +1207,7 @@ export async function cleanupOldVersions(): Promise<void> {
       let cleanedCount = 0
       for (const file of files) {
         const oldExePattern = new RegExp(
-          `^${PROVIDER_MIGRATION_NATIVE_PRODUCT}\\.exe\\.old\\.\\d+$`,
+          `^${ARCHIVED_NATIVE_PRODUCT}\\.exe\\.old\\.\\d+$`,
         )
         if (!oldExePattern.test(file)) continue
         try {
@@ -1499,7 +1499,7 @@ export async function removeInstalledSymlink(): Promise<void> {
 }
 
 /**
- * Clean up old provider-migration source aliases from shell configuration files.
+ * Clean up old archived source aliases from shell configuration files.
  * Only handles alias removal, not PATH setup
  */
 export async function cleanupShellAliases(): Promise<SetupMessage[]> {
@@ -1511,16 +1511,16 @@ export async function cleanupShellAliases(): Promise<SetupMessage[]> {
       const lines = await readFileLines(configFile)
       if (!lines) continue
 
-      const { filtered, hadAlias } = filterProviderMigrationSourceAliases(lines)
+      const { filtered, hadAlias } = filterArchivedSourceAliases(lines)
 
       if (hadAlias) {
         await writeFileLines(configFile, filtered)
         messages.push({
-          message: `Removed provider-migration source alias from ${configFile}. Run: unalias ${PROVIDER_MIGRATION_NATIVE_PRODUCT}`,
+          message: `Removed archived source alias from ${configFile}. Run: unalias ${ARCHIVED_NATIVE_PRODUCT}`,
           userActionRequired: true,
           type: 'alias',
         })
-        logForDebugging(`Cleaned up provider-migration source alias from ${shellType} config`)
+        logForDebugging(`Cleaned up archived source alias from ${shellType} config`)
       }
     } catch (error) {
       logError(error)
@@ -1571,9 +1571,9 @@ async function manualRemoveNpmPackage(
 
     if (getPlatform().startsWith('win32')) {
       // Windows - only remove executables, not the package directory
-      const binCmd = join(globalPrefix, `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.cmd`)
-      const binPs1 = join(globalPrefix, `${PROVIDER_MIGRATION_NATIVE_PRODUCT}.ps1`)
-      const binExe = join(globalPrefix, PROVIDER_MIGRATION_NATIVE_PRODUCT)
+      const binCmd = join(globalPrefix, `${ARCHIVED_NATIVE_PRODUCT}.cmd`)
+      const binPs1 = join(globalPrefix, `${ARCHIVED_NATIVE_PRODUCT}.ps1`)
+      const binExe = join(globalPrefix, ARCHIVED_NATIVE_PRODUCT)
 
       if (await tryRemove(binCmd, 'bin script')) {
         manuallyRemoved = true
@@ -1588,7 +1588,7 @@ async function manualRemoveNpmPackage(
       }
     } else {
       // Unix/Mac - only remove symlink, not the package directory
-      const binSymlink = join(globalPrefix, 'bin', PROVIDER_MIGRATION_NATIVE_PRODUCT)
+      const binSymlink = join(globalPrefix, 'bin', ARCHIVED_NATIVE_PRODUCT)
 
       if (await tryRemove(binSymlink, 'bin symlink')) {
         manuallyRemoved = true
@@ -1675,8 +1675,8 @@ export async function cleanupNpmInstallations(): Promise<{
   const warnings: string[] = []
   let removed = 0
 
-  // Always attempt to remove the provider-migration source package.
-  const codePackageResult = await attemptNpmUninstall(PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE)
+  // Always attempt to remove the archived source package.
+  const codePackageResult = await attemptNpmUninstall(ARCHIVED_SOURCE_CODE_PACKAGE)
   if (codePackageResult.success) {
     removed++
     if (codePackageResult.warning) {
@@ -1687,7 +1687,7 @@ export async function cleanupNpmInstallations(): Promise<{
   }
 
   // Also attempt to remove MACRO.PACKAGE_URL if it's defined and different
-  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== PROVIDER_MIGRATION_SOURCE_CODE_PACKAGE) {
+  if (MACRO.PACKAGE_URL && MACRO.PACKAGE_URL !== ARCHIVED_SOURCE_CODE_PACKAGE) {
     const macroPackageResult = await attemptNpmUninstall(MACRO.PACKAGE_URL)
     if (macroPackageResult.success) {
       removed++
@@ -1702,7 +1702,7 @@ export async function cleanupNpmInstallations(): Promise<{
   // Check for local installation at the runtime config location.
   const localInstallDir = join(
     homedir(),
-    isDsxuRuntimeMode() ? '.dsxu' : PROVIDER_MIGRATION_NATIVE_CONFIG_DIR,
+    isDsxuRuntimeMode() ? '.dsxu' : ARCHIVED_NATIVE_CONFIG_DIR,
     'local',
   )
 

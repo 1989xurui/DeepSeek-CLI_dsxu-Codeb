@@ -1,6 +1,6 @@
 import reject from 'lodash-es/reject.js'
 import { z } from 'zod/v4'
-import { isProviderMigrationMcpTransport } from '../../constants/providerMigrationProtocol.js'
+import { isArchivedMcpTransport } from '../../constants/providerMigrationProtocol.js'
 import { performMCPOAuthFlow } from '../../services/mcp/auth.js'
 import {
   clearMcpAuthCache,
@@ -70,11 +70,11 @@ export function createMcpAuthTool(
         'mcp-server-reconnect',
         'mcp-tool-resource-swap',
       ],
-      permission: 'allow only for DSXU MCP auth pseudo-tool; provider-migration transport is unsupported',
+      permission: 'allow only for DSXU MCP auth pseudo-tool; archived transport is unsupported',
       evidence: [
         'serverName/config input',
         'OAuth URL output',
-        'provider-migration transport guard',
+        'archived transport guard',
         'reconnect result updates appState.mcp',
       ],
       uiProjection: 'MCP authentication URL and status message',
@@ -101,13 +101,13 @@ export function createMcpAuthTool(
       return { behavior: 'allow', updatedInput: input }
     },
     async call(_input, context) {
-      if (isProviderMigrationMcpTransport(config.type)) {
+      if (isArchivedMcpTransport(config.type)) {
         return {
           data: {
             status: 'unsupported' as const,
             message:
-              `Server "${serverName}" uses a provider-migration remote MCP connector shell that DSXU isolates from tool-triggered OAuth. ` +
-              `Use the DSXU MCP provider path, or enable the explicit provider migration flag and authenticate from /mcp.`,
+              `Server "${serverName}" uses an archived remote MCP connector shell that DSXU isolates from tool-triggered OAuth. ` +
+              `Use the DSXU MCP provider path, or enable the explicit archived flag and authenticate from /mcp.`,
           },
         }
       }
@@ -249,7 +249,7 @@ export function getDsxuMcpAuthToolRuntimeProfile(): {
       'createMcpAuthTool builds an MCP-prefixed authenticate tool for the target server',
       'call starts performMCPOAuthFlow with skipBrowserOpen and returns the authorization URL to the user',
       'background continuation reconnects the MCP server and replaces pseudo tools with real runtime tools',
-      'unsupported transports and provider-migration source connector shells return structured tool results instead of throwing raw errors',
+      'unsupported transports and archived source connector shells return structured tool results instead of throwing raw errors',
     ],
   }
 }

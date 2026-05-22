@@ -8,7 +8,7 @@ import pMap from 'p-map';
 import { cwd } from 'process';
 import React from 'react';
 import { MCPServerDesktopImportDialog } from '../../components/MCPServerDesktopImportDialog.js';
-import { isProviderMigrationMcpTransport } from '../../constants/providerMigrationProtocol.js';
+import { isArchivedMcpTransport } from '../../constants/providerMigrationProtocol.js';
 import { render } from '../../ink.js';
 import { KeybindingSetup } from '../../keybindings/KeybindingProviderSetup.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
@@ -176,7 +176,7 @@ export async function mcpListHandler(): Promise<void> {
       } else if (server.type === 'http') {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(`${name}: ${server.url} (HTTP) - ${status}`);
-      } else if (isProviderMigrationMcpTransport(server.type)) {
+      } else if (isArchivedMcpTransport(server.type)) {
         // biome-ignore lint/suspicious/noConsole:: intentional console output
         console.log(`${name}: ${server.url} - ${status}`);
       } else if (!server.type || server.type === 'stdio') {

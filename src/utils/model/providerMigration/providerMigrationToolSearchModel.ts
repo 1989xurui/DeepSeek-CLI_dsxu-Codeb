@@ -1,5 +1,5 @@
-const PROVIDER_MIGRATION_UNSUPPORTED_TOOL_REFERENCE_PATTERNS = ['haiku']
+const ARCHIVED_UNSUPPORTED_TOOL_REFERENCE_PATTERNS = ['haiku']
 
-export function getProviderMigrationUnsupportedToolReferencePatterns(): string[] {
-  return PROVIDER_MIGRATION_UNSUPPORTED_TOOL_REFERENCE_PATTERNS
+export function getArchivedUnsupportedToolReferencePatterns(): string[] {
+  return ARCHIVED_UNSUPPORTED_TOOL_REFERENCE_PATTERNS
 }

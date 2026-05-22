@@ -5,6 +5,8 @@ import {
   createLocalDSXUProviderContract,
   redactCredentialLikeValues,
 } from '../provider-contract'
+import { APIService } from '../api-service'
+import { DEEPSEEK_V4_FLASH_MODEL } from '../../../utils/model/deepseekV4Control'
 import {
   handleDsxuProviderAliasCommand,
   isDsxuProviderAliasCommand,
@@ -31,6 +33,82 @@ function listSourceFiles(dir: string): string[] {
 }
 
 describe('DSXU provider contract V1', () => {
+  test('APIService DeepSeek backend reuses the canonical DeepSeek chat completion body builder', async () => {
+    const originalFetch = globalThis.fetch
+    const captured: Array<{ url: string; body: any }> = []
+    globalThis.fetch = (async (input, init) => {
+      captured.push({
+        url: String(input),
+        body: JSON.parse(String(init?.body ?? '{}')),
+      })
+      return new Response(JSON.stringify({
+        choices: [{
+          message: { role: 'assistant', content: 'ok' },
+          finish_reason: 'stop',
+        }],
+        usage: {
+          prompt_tokens: 10,
+          completion_tokens: 2,
+          total_tokens: 12,
+        },
+      }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'x-request-id': 'dsxu-provider-contract-test',
+        },
+      })
+    }) as typeof fetch
+
+    try {
+      const service = new APIService({
+        deepseekKey: 'sk-test',
+        deepseekUrl: 'https://api.deepseek.com/v1',
+      })
+
+      const result = await service.callWithFallback(
+        [{ role: 'user', content: 'hello' }],
+        [{
+          type: 'function',
+          function: {
+            name: 'Read',
+            description: 'read a file',
+            parameters: {
+              type: 'object',
+              properties: { file_path: { type: 'string' } },
+              required: ['file_path'],
+            },
+          },
+        }],
+        DEEPSEEK_V4_FLASH_MODEL,
+        1024,
+      )
+
+      expect(result.backend).toBe('deepseek')
+      expect(captured).toHaveLength(1)
+      expect(captured[0].url).toBe('https://api.deepseek.com/v1/chat/completions')
+      expect(captured[0].body).toMatchObject({
+        model: DEEPSEEK_V4_FLASH_MODEL,
+        max_tokens: 1024,
+        thinking: { type: 'disabled' },
+        temperature: 1,
+      })
+      expect(captured[0].body.tools[0]).toMatchObject({
+        type: 'function',
+        function: {
+          name: 'Read',
+          parameters: {
+            type: 'object',
+            properties: { file_path: { type: 'string' } },
+            required: ['file_path'],
+          },
+        },
+      })
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
   test('defaults to local identity and blocks provider-migration remote shells', async () => {
     const events: unknown[] = []
     const provider = createLocalDSXUProviderContract({
@@ -39,8 +117,8 @@ describe('DSXU provider contract V1', () => {
 
     expect(provider.identity.providerId).toBe('dsxu-local')
     expect(provider.identity.mode).toBe('local')
-    expect(provider.providerMigrationBridge.enabled).toBe(false)
-    expect(provider.providerMigrationBridge.flagName).toBe('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
+    expect(provider.archivedBridge.enabled).toBe(false)
+    expect(provider.archivedBridge.flagName).toBe('DSXU_ENABLE_PROVIDER_MIGRATION_BRIDGE')
 
     const remote = await provider.createRemoteSession({
       sessionId: 'session-provider-v1',
@@ -319,29 +397,29 @@ describe('DSXU provider contract V1', () => {
     expect(cli).toContain('handleDsxuProviderAliasCommand')
     expect(cli).toContain("args[0] === 'remote-control'")
     expect(cli).toContain("args[0] === 'bridge'")
-    expect(cli).toContain('provider-migration browser MCP path')
+    expect(cli).toContain('archived browser MCP path')
     expect(cli).toContain('--dsxu-browser-mcp')
     expect(cli).not.toContain(['cli_DSXU_BROWSER_PROVIDER', 'mcp_path'].join('_'))
 
-    expect(init).toContain('shouldLoadProviderMigrationServiceShell')
-    expect(init).toContain('populateProviderMigrationOAuthAccountInfoIfAllowed')
+    expect(init).toContain('shouldLoadArchivedServiceShell')
+    expect(init).toContain('populateArchivedOAuthAccountInfoIfAllowed')
     expect(init).toContain('initializeRemoteManagedSettingsIfAllowed')
     expect(init).toContain("isEnvTruthy(getDsxuCodeEnv('REMOTE'))")
     expect(init).toContain('DSXU_CODE_REMOTE ignored on the default DSXU local mainline')
     expect(init).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
-    expect(init).toContain('provider migration upstream proxy shell is archived')
+    expect(init).toContain('archived upstream proxy shell is disabled')
     expect(init).not.toContain('../upstreamproxy/upstreamproxy.js')
     expect(mainEntry).toContain('function resolveStartupFilesApiBaseUrl()')
     expect(mainEntry).toContain("const dsxuBaseUrl = getDsxuCodeEnv('API_BASE_URL')")
-    expect(mainEntry).toContain('if (!shouldLoadProviderMigrationServiceShell()) return undefined')
-    expect(mainEntry).toContain('const PROVIDER_MIGRATION_CODE_ENV_PREFIX')
-    expect(mainEntry).toContain('const providerMigrationCodeEnv')
+    expect(mainEntry).toContain('if (!shouldLoadArchivedServiceShell()) return undefined')
+    expect(mainEntry).toContain('const ARCHIVED_CODE_ENV_PREFIX')
+    expect(mainEntry).toContain('const archivedCodeEnv')
     expect(mainEntry).not.toContain(['SOURCE', 'PROVIDER', 'CODE_ENV_PREFIX'].join('_'))
     expect(mainEntry).not.toContain(['source', 'ProviderCodeEnv'].join(''))
     expect(mainEntry).not.toContain('baseUrl: process.env[DSXU_PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL')
 
     expect(print).toContain("message.request.subtype === 'remote_control'")
-    expect(print).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
+    expect(print).toContain('isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()')
     expect(print).toContain("handleDsxuProviderAliasCommand")
     expect(print).toContain(
       "../services/bridge/dsxuRemoteBridgeFacade.js",
@@ -353,26 +431,26 @@ describe('DSXU provider contract V1', () => {
     expect(print).not.toContain('inboundAttachments.js')
 
     for (const source of [remoteIO, transportUtils, ccrClient]) {
-      expect(source).toContain('PROVIDER_MIGRATION_CODE_ENV_PREFIX')
+      expect(source).toContain('ARCHIVED_CODE_ENV_PREFIX')
       expect(source).not.toContain(['SOURCE', 'PROVIDER', 'CODE_ENV_PREFIX'].join('_'))
       expect(source).not.toContain(['source', 'ProviderCodeEnv'].join(''))
     }
     expect(remoteIO).toContain('DSXU_CODE_ENVIRONMENT_RUNNER_VERSION ??')
-    expect(remoteIO).toContain("providerMigrationCodeEnv('ENVIRONMENT_RUNNER_VERSION')")
-    expect(remoteIO).toContain('provider-migration transport fallback')
+    expect(remoteIO).toContain("archivedCodeEnv('ENVIRONMENT_RUNNER_VERSION')")
+    expect(remoteIO).toContain('archived transport fallback')
     expect(transportUtils).toContain('DSXU_CODE_USE_CCR_V2 ??')
-    expect(transportUtils).toContain("providerMigrationCodeEnv('USE_CCR_V2')")
-    expect(ccrClient).toContain('PROVIDER_MIGRATION_SOURCE_TOKEN')
-    expect(ccrClient).toContain('provider-migration worker epoch env accepted only for migration')
+    expect(transportUtils).toContain("archivedCodeEnv('USE_CCR_V2')")
+    expect(ccrClient).toContain('ARCHIVED_SOURCE_TOKEN')
+    expect(ccrClient).toContain('archived worker epoch env accepted only for migration')
     expect(ccrClient).toContain('DSXU_CODE_WORKER_EPOCH ??')
-    expect(authHandler).toContain('PROVIDER_MIGRATION_SOURCE_API_KEY_ENV')
-    expect(authHandler).toContain('provider-migration source API key env')
+    expect(authHandler).toContain('ARCHIVED_SOURCE_API_KEY_ENV')
+    expect(authHandler).toContain('archived source API key env')
     expect(authHandler).not.toContain(['SOURCE', 'PROVIDER', 'API_KEY_ENV'].join('_'))
-    expect(utilHandler).toContain('provider-migration setup-token flow is isolated')
+    expect(utilHandler).toContain('archived cloud setup-token flow is isolated')
     expect(utilHandler).not.toContain(['leg', 'acy setup-token'].join(''))
-    expect(installGithubCommand).toContain('Provider-migration only: old GitHub App setup')
+    expect(installGithubCommand).toContain('Archived GitHub App setup')
     expect(installGithubCommand).toContain('!isDsxuRuntimeMode()')
-    expect(installSlackCommand).toContain('Provider-migration Slack app setup')
+    expect(installSlackCommand).toContain('Archived Slack app setup')
     expect(installSlackCommand).toContain('!isDsxuRuntimeMode()')
     for (const commandIndexPath of providerMigrationOnlyCommandIndexes) {
       const source = readFileSync(join(root, commandIndexPath), 'utf8')
@@ -469,17 +547,24 @@ describe('DSXU provider contract V1', () => {
     expect(llmAdapter).not.toContain('OPENAI_API_KEY, or DSXU_OLLAMA_URL')
     const apiClient = readFileSync(join(root, 'src/services/api/client.ts'), 'utf8')
     expect(apiClient).toContain('function shouldUseDsxuDeepSeekClient()')
-    expect(apiClient).toContain('isDSXUCodeMode() || !isProviderMigrationServiceShellAllowed()')
+    expect(apiClient).toContain('isDSXUCodeMode() || !isArchivedServiceShellAllowed()')
     expect(apiClient).toContain('if (shouldUseDsxuDeepSeekClient())')
     expect(apiClient).toContain('DSXU_ALLOW_PROVIDER_MIGRATION_SERVICE_SHELL=1')
     expect(apiClient.indexOf('if (shouldUseDsxuDeepSeekClient())')).toBeLessThan(
       apiClient.indexOf('return new ProviderClient'),
     )
+    const localRecoveryCli = readFileSync(join(root, 'src/localRecoveryCli.ts'), 'utf8')
+    expect(localRecoveryCli).toContain('function createDeepSeekRecoveryClient')
+    expect(localRecoveryCli).toContain('/chat/completions')
+    expect(localRecoveryCli).toContain('deepseek-v4-flash')
+    expect(localRecoveryCli).not.toContain('ProviderClient')
+    expect(localRecoveryCli).not.toContain('ANTHROPIC')
+    expect(localRecoveryCli).not.toContain('@anthropic-ai/sdk')
     const retrySource = readFileSync(join(root, 'src/services/api/withRetry.ts'), 'utf8')
     expect(retrySource).toContain('function isPrimaryModelFallbackAllowed(model: string)')
     expect(retrySource).toContain('DSXU_ALLOW_PROVIDER_MODEL_FALLBACKS')
     expect(retrySource).toContain("isDsxuCodeEnvTruthy('ALLOW_PROVIDER_MODEL_FALLBACKS')")
-    expect(retrySource).toContain('if (!isProviderMigrationServiceShellAllowed())')
+    expect(retrySource).toContain('if (!isArchivedServiceShellAllowed())')
     expect(retrySource).toContain('isPrimaryModelFallbackAllowed(options.model)')
     const dsxuTransport = readFileSync(join(root, 'src/services/api/dsxuTransport.ts'), 'utf8')
     expect(dsxuTransport).toContain('function hasStartedStreamingToolState')
@@ -487,35 +572,35 @@ describe('DSXU provider contract V1', () => {
     expect(dsxuTransport).toContain('tool_state_started')
     expect(dsxuTransport).toContain('hasToolStateBeforeFallback ||')
     const filesApi = readFileSync(join(root, 'src/services/api/filesApi.ts'), 'utf8')
-    expect(filesApi).toContain('function isProviderMigrationFilesApiAllowed()')
+    expect(filesApi).toContain('function isArchivedFilesApiAllowed()')
     expect(filesApi).toContain('function resolveFilesApiBaseUrl(config: FilesApiConfig)')
     expect(filesApi).toContain('Configure DSXU_CODE_API_BASE_URL or pass FilesApiConfig.baseUrl')
     expect(filesApi).not.toContain('DEFAULT_PROVIDER_FILES_API_BASE_URL')
     expect(filesApi).not.toContain('Falls back to public API for standalone usage')
     const metricsOptOut = readFileSync(join(root, 'src/services/api/metricsOptOut.ts'), 'utf8')
-    expect(metricsOptOut).toContain('function shouldUseProviderMigrationMetricsOptOut()')
-    expect(metricsOptOut).toContain('if (!shouldUseProviderMigrationMetricsOptOut())')
+    expect(metricsOptOut).toContain('function shouldUseArchivedMetricsOptOut()')
+    expect(metricsOptOut).toContain('if (!shouldUseArchivedMetricsOptOut())')
     const apiLogging = readFileSync(join(root, 'src/services/api/logging.ts'), 'utf8')
-    expect(apiLogging).toContain('function getProviderMigrationEnvMetadata()')
-    expect(apiLogging).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
+    expect(apiLogging).toContain('function getArchivedEnvMetadata()')
+    expect(apiLogging).toContain('isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()')
     expect(apiLogging).not.toContain('function getProviderEnvMetadata()')
     const apiPreconnect = readFileSync(join(root, 'src/utils/apiPreconnect.ts'), 'utf8')
-    expect(apiPreconnect).toContain('isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()')
+    expect(apiPreconnect).toContain('isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()')
     const remoteManagedSettingsSync = readFileSync(
       join(root, 'src/services/remoteManagedSettings/syncCache.ts'),
       'utf8',
     )
     expect(remoteManagedSettingsSync).toContain('DSXU_ENABLE_PROVIDER_MIGRATION_REMOTE_SETTINGS')
-    expect(remoteManagedSettingsSync).toContain('provider-migration remote managed settings are disabled in DSXU runtime')
+    expect(remoteManagedSettingsSync).toContain('archived remote managed settings are disabled in DSXU runtime')
     const settingsSync = readFileSync(join(root, 'src/services/settingsSync/index.ts'), 'utf8')
-    expect(settingsSync).toContain('function isProviderMigrationSettingsSyncAllowed()')
-    expect(settingsSync).toContain('!isProviderMigrationSettingsSyncAllowed()')
+    expect(settingsSync).toContain('function isArchivedSettingsSyncAllowed()')
+    expect(settingsSync).toContain('!isArchivedSettingsSyncAllowed()')
     const teamMemorySync = readFileSync(join(root, 'src/services/teamMemorySync/index.ts'), 'utf8')
     expect(teamMemorySync).toContain('function isDsxuTeamMemorySyncConfigured()')
-    expect(teamMemorySync).toContain('!isProviderMigrationServiceShellAllowed()')
+    expect(teamMemorySync).toContain('!isArchivedServiceShellAllowed()')
     const fastMode = readFileSync(join(root, 'src/utils/fastMode.ts'), 'utf8')
-    expect(fastMode).toContain('function isProviderMigrationFastModeBackendAllowed()')
-    expect(fastMode).toContain('if (!isProviderMigrationFastModeBackendAllowed())')
+    expect(fastMode).toContain('function isArchivedFastModeBackendAllowed()')
+    expect(fastMode).toContain('if (!isArchivedFastModeBackendAllowed())')
     for (const accountApiPath of [
       'src/services/api/adminRequests.ts',
       'src/services/api/grove.ts',
@@ -525,7 +610,7 @@ describe('DSXU provider contract V1', () => {
       'src/services/api/usage.ts',
     ]) {
       const accountApiSource = readFileSync(join(root, accountApiPath), 'utf8')
-      expect(accountApiSource, accountApiPath).toContain('isProviderMigrationServiceShellAllowed')
+      expect(accountApiSource, accountApiPath).toContain('isArchivedServiceShellAllowed')
       expect(accountApiSource, accountApiPath).toContain('isDsxuRuntimeMode')
     }
   })

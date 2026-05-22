@@ -1,6 +1,15 @@
 import { dirname, isAbsolute, sep } from 'path'
 import { logEvent } from 'src/services/analytics/index.js'
+import {
+  buildPostMutationVerificationEnvelope,
+  buildPostMutationSemanticCodeGraphEvidence,
+  formatPostMutationVerificationFailure,
+  formatPostMutationVerificationToolState,
+  summarizePostMutationVerificationEnvelope,
+} from '../../dsxu/engine/post-mutation-verification-envelope.js'
+import { invokePostWriteTddGate } from '../../coordinator/tdd-gate/post-write-hook.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/featureFlags.js'
+import { invokeStaticAnalysisToolGate } from '../../services/static-analysis/tool-gate.js'
 import { diagnosticTracker } from '../../services/diagnosticTracking.js'
 import { clearDeliveredDiagnosticsForFile } from '../../services/lsp/LSPDiagnosticRegistry.js'
 import { getLspServerManager } from '../../services/lsp/manager.js'
@@ -205,6 +214,7 @@ function extractReturnedObjectKeys(source: string): Set<string> | null {
 }
 
 function getDsxuTestShapeEditViolation(
+  oldString: string,
   newString: string,
   toolUseContext: ToolUseContext,
 ): string | null {
@@ -224,9 +234,17 @@ function getDsxuTestShapeEditViolation(
     !/DSXU test-shape checkpoint/i.test(text)
   ) return null
   const expectedKeys = extractExpectedToEqualObjectKeys(text)
-  const returnKeys = extractReturnedObjectKeys(newString)
+  const changedString =
+    oldString.length > 0 && newString.includes(oldString)
+      ? newString.replace(oldString, '')
+      : null
+  if (changedString !== null && getReturnedObjectBody(changedString) === null) {
+    return null
+  }
+  const returnSource = changedString ?? newString
+  const returnKeys = extractReturnedObjectKeys(returnSource)
   const expectedEntries = extractExpectedToEqualObjectEntries(text)
-  const returnedEntries = extractReturnedObjectEntries(newString)
+  const returnedEntries = extractReturnedObjectEntries(returnSource)
   if (!expectedKeys || !returnKeys) return null
   const extraKeys = [...returnKeys].filter(key => !expectedKeys.has(key))
   const subtotalExpression = returnedEntries?.get('subtotal')
@@ -234,8 +252,8 @@ function getDsxuTestShapeEditViolation(
     extraKeys.length === 0 &&
     expectedEntries.has('subtotal') &&
     subtotalExpression === 'subtotal' &&
-    /\bconst\s+discounted\s*=/.test(newString) &&
-    /\bdiscounted\b[\s\S]{0,120}\b(?:tax|total)\b|\b(?:tax|total)\b[\s\S]{0,120}\bdiscounted\b/.test(newString)
+    /\bconst\s+discounted\s*=/.test(returnSource) &&
+    /\bdiscounted\b[\s\S]{0,120}\b(?:tax|total)\b|\b(?:tax|total)\b[\s\S]{0,120}\bdiscounted\b/.test(returnSource)
   ) {
     return appendDsxuEditPreflightState(
       'Edit preflight blocked this change because the latest exact toEqual({...}) assertion gives a concrete subtotal value, but the proposed return uses shorthand `subtotal` while a private `discounted` value drives tax/total. Map the returned key to the value that matches the assertion, for example `subtotal: discounted`, and keep `discounted` private unless it appears in the expected key list.',
@@ -381,6 +399,7 @@ export const FileEditTool = buildTool({
       }
     }
     const testShapeViolation = getDsxuTestShapeEditViolation(
+      old_string,
       new_string,
       toolUseContext,
     )
@@ -594,7 +613,7 @@ export const FileEditTool = buildTool({
         errorCode: 9,
       }
     }
-    // Additional validation for DSXU/provider-migration settings files
+    // Additional validation for DSXU/archived settings files
     const settingsValidationResult = validateInputForSettingsFileEdit(
       fullFilePath,
       file,
@@ -784,6 +803,76 @@ export const FileEditTool = buildTool({
       offset: undefined,
       limit: undefined,
     })
+    const staticGateResult = await invokeStaticAnalysisToolGate({
+      filePaths: [absoluteFilePath],
+      patchContent: patch,
+    })
+    if (staticGateResult.status === 'FAIL') {
+      logForDebugging(
+        `Static analysis tool gate failed for ${absoluteFilePath}: ${staticGateResult.error ?? 'unknown error'}`,
+      )
+    }
+
+    const semanticGraphEvidence = buildPostMutationSemanticCodeGraphEvidence({
+      repoRoot: getCwd(),
+      filePath: absoluteFilePath,
+    })
+    const semanticAffectedTests =
+      semanticGraphEvidence.semanticCodeGraph?.affectedTests ?? []
+
+    const tddGateResult = await invokePostWriteTddGate({
+      filePath: absoluteFilePath,
+      changeType: 'edit',
+      oldContent: originalFileContents,
+      newContent: updatedFile,
+      repoRoot: getCwd(),
+      existingTests: semanticAffectedTests.length > 0 ? [...semanticAffectedTests] : undefined,
+      currentPatch: patch,
+    })
+    if (tddGateResult.status === 'FAIL') {
+      logForDebugging(
+        `TDD post-edit gate failed for ${absoluteFilePath}: ${tddGateResult.error ?? 'unknown error'}`,
+      )
+      if (tddGateResult.blocking) {
+        logForDebugging(
+          `TDD post-edit gate requested blocking for ${absoluteFilePath}; building DSXU verification envelope`,
+        )
+      }
+    }
+    const verificationEnvelope = buildPostMutationVerificationEnvelope({
+      filePath: absoluteFilePath,
+      changeType: 'edit',
+      oldContent: originalFileContents,
+      newContent: updatedFile,
+      semanticCodeGraph: semanticGraphEvidence.semanticCodeGraph,
+      semanticCodeGraphError: semanticGraphEvidence.semanticCodeGraphError,
+      gates: [
+        {
+          name: 'static-analysis',
+          status: staticGateResult.status,
+          blocking: staticGateResult.shouldBlock,
+          passed: staticGateResult.status !== 'FAIL',
+          issues: staticGateResult.issues,
+          error: staticGateResult.error,
+        },
+        {
+          name: 'post-mutation-verification',
+          status: tddGateResult.status,
+          blocking: tddGateResult.blocking,
+          passed: tddGateResult.passed,
+          durationMs: tddGateResult.durationMs,
+          error: tddGateResult.error,
+        },
+      ],
+    })
+    logForDebugging(
+      `DSXU post-mutation verification for ${absoluteFilePath}: ${JSON.stringify(verificationEnvelope)}`,
+    )
+    if (verificationEnvelope.blockingFailure) {
+      throw new Error(formatPostMutationVerificationFailure(verificationEnvelope))
+    }
+    const postMutationVerification =
+      summarizePostMutationVerificationEnvelope(verificationEnvelope)
     // 7. Log events
     if (absoluteFilePath.endsWith(`${sep}DSXU.md`)) {
       logEvent('tengu_write_dsxu_instruction', {})
@@ -827,6 +916,7 @@ export const FileEditTool = buildTool({
       ...(shouldHandoffVerificationToParent(agentId, messages)
         ? { verificationHandoffToParent: true }
         : {}),
+      postMutationVerification,
       ...(gitDiff && { gitDiff }),
     }
     return {
@@ -834,7 +924,7 @@ export const FileEditTool = buildTool({
     }
   },
   mapToolResultToToolResultBlockParam(data: FileEditOutput, toolUseID) {
-    const { filePath, userModified, replaceAll } = data
+    const { filePath, userModified, replaceAll, postMutationVerification } = data
     const modifiedNote = userModified
       ? '.  The user modified your proposed changes before accepting them. '
       : ''
@@ -845,24 +935,27 @@ export const FileEditTool = buildTool({
     const nextToolState = data.verificationHandoffToParent
       ? 'planned_edit_or_parent_verification_handoff'
       : 'planned_edit_or_verify'
+    const verificationState = postMutationVerification
+      ? `\n${formatPostMutationVerificationToolState(postMutationVerification)}`
+      : ''
     if (data.alreadyAppliedNoop) {
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: `The requested edit for ${filePath} is already present, so no file write was performed. Do not repeat this Edit and do not attempt another Edit variant for this same file. Continue with the next planned file edit in a different already-read file, or run the smallest relevant verification command if no planned source edit remains. If this same file was your correction target and verification is still failing, report PARTIAL with the latest failing command instead of trying alternate old_string guesses.\nDSXU tool state: edit_already_applied; blocked=repeat_same_file_edit_variant,shell_write_fallback; next=planned_distinct_file_edit_or_verify_or_partial.`,
+      content: `The requested edit for ${filePath} is already present, so no file write was performed. Do not repeat this Edit and do not attempt another Edit variant for this same file. Continue with the next planned file edit in a different already-read file, or run the smallest relevant verification command if no planned source edit remains. If this same file was your correction target and verification is still failing, report PARTIAL with the latest failing command instead of trying alternate old_string guesses.\nDSXU tool state: edit_already_applied; blocked=repeat_same_file_edit_variant,shell_write_fallback; next=planned_distinct_file_edit_or_verify_or_partial.${verificationState}`,
     }
   }
     if (replaceAll) {
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: `The file ${filePath} has been updated${modifiedNote}. All occurrences were successfully replaced. Do not repeat the same Edit and do not Read this just-edited file merely to confirm the diff. ${nextAfterEdit} Read only for a different file, explicit same-file source-truth recovery before another edit, or after compact/resume source-truth recovery.${securityRegexCheckpoint}\nDSXU tool state: edit_applied; blocked=repeat_same_edit,shell_write_fallback,read_edited_file_to_confirm; next=${nextToolState}.`,
+        content: `The file ${filePath} has been updated${modifiedNote}. All occurrences were successfully replaced. Do not repeat the same Edit and do not Read this just-edited file merely to confirm the diff. ${nextAfterEdit} Read only for a different file, explicit same-file source-truth recovery before another edit, or after compact/resume source-truth recovery.${securityRegexCheckpoint}\nDSXU tool state: edit_applied; blocked=repeat_same_edit,shell_write_fallback,read_edited_file_to_confirm; next=${nextToolState}.${verificationState}`,
       }
     }
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: `The file ${filePath} has been updated successfully${modifiedNote}. The requested old_string has been replaced; do not repeat the same Edit and do not Read this just-edited file merely to confirm the diff. ${nextAfterEdit} Read only for a different file, explicit same-file source-truth recovery before another edit, or after compact/resume source-truth recovery.${securityRegexCheckpoint}\nDSXU tool state: edit_applied; blocked=repeat_same_edit,shell_write_fallback,read_edited_file_to_confirm; next=${nextToolState}.`,
+      content: `The file ${filePath} has been updated successfully${modifiedNote}. The requested old_string has been replaced; do not repeat the same Edit and do not Read this just-edited file merely to confirm the diff. ${nextAfterEdit} Read only for a different file, explicit same-file source-truth recovery before another edit, or after compact/resume source-truth recovery.${securityRegexCheckpoint}\nDSXU tool state: edit_applied; blocked=repeat_same_edit,shell_write_fallback,read_edited_file_to_confirm; next=${nextToolState}.${verificationState}`,
     }
   },
 } satisfies ToolDef<ReturnType<typeof inputSchema>, FileEditOutput>)

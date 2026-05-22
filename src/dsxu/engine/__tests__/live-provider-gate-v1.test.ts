@@ -5,7 +5,7 @@ import {
   evaluateLiveProviderGate,
   writeLiveProviderGateEvidence,
 } from '../../integration/harness/live-provider-gate-v1-harness'
-import { getV18LiveDeepSeekBenchmarkGate } from '../v18-live-deepseek-benchmark-gate'
+import { getV18LiveDeepSeekBenchmarkGate } from '../live-deepseek-benchmark-gate'
 
 describe('live provider gate V1', () => {
   test('reports blocked with evidence when provider credentials are absent', () => {

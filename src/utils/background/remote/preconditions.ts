@@ -17,11 +17,11 @@ import { getOAuthHeaders } from '../../teleport/api.js'
 import { fetchEnvironments } from '../../teleport/environments.js'
 
 /**
- * Checks if user needs to log in with the provider migration provider
+ * Checks if user needs to log in with the archived provider
  * Extracted from getTeleportErrors() in TeleportError.tsx
  * @returns true if login is required, false otherwise
  */
-export async function checkNeedsProviderMigrationLogin(): Promise<boolean> {
+export async function checkNeedsArchivedCloudLogin(): Promise<boolean> {
   if (isDsxuRuntimeMode()) return false
   if (!isProviderSubscriptionAccount()) {
     return false
@@ -248,12 +248,12 @@ export async function checkRepoForRemoteAccess(
 export function getDsxuRemotePreconditionsRuntimeProfile() {
   return {
     runtime: 'DSXU Remote Preconditions',
-    defaultBehavior: 'Provider migration OAuth/GitHub preconditions are bypassed in DSXU mode and replaced by DSXU provider/workspace readiness checks',
+    defaultBehavior: 'Archived OAuth/GitHub preconditions are bypassed in DSXU mode and replaced by DSXU provider/workspace readiness checks',
     providerTarget: 'DSXU Remote Session Provider',
     activationEvidence: [
-      'checkNeedsProviderMigrationLogin returns false in DSXU mode',
+      'checkNeedsArchivedCloudLogin returns false in DSXU mode',
       'checkHasRemoteEnvironment returns true for local/provider-backed DSXU mode',
-      'GitHub app/token sync probes do not call provider migration OAuth endpoints in DSXU mode',
+      'GitHub app/token sync probes do not call archived OAuth endpoints in DSXU mode',
       'git cleanliness, repo detection, and remote access semantics remain reusable for DSXU workflows',
     ],
   }

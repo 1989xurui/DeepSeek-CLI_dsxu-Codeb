@@ -10,7 +10,7 @@ import type { Tool, ToolUseContext } from '../../Tool.js'
 import type { BuiltInAgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import { runAgent } from '../../tools/AgentTool/runAgent.js'
 import { FILE_EDIT_TOOL_NAME } from '../../tools/FileEditTool/constants.js'
-import { getProviderMigrationDefaultTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
+import { getArchivedDefaultTierModelId } from '../../utils/model/providerMigration/providerMigrationModelCompat.js'
 import {
   FileReadTool,
   type Output as FileReadToolOutput,
@@ -105,7 +105,7 @@ function getMagicDocsAgent(): BuiltInAgentDefinition {
     model:
       process.env.DSXU_CODE_MODE === '1'
         ? 'flash'
-        : getProviderMigrationDefaultTierModelId(),
+        : getArchivedDefaultTierModelId(),
     source: 'built-in',
     baseDir: 'built-in',
     getSystemPrompt: () => '', // Will use override systemPrompt

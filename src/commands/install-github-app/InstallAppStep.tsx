@@ -26,7 +26,7 @@ export function InstallAppStep(t0) {
   useKeybinding("confirm:yes", onSubmit, t1);
   let t2;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box flexDirection="column" marginBottom={1}><Text bold={true}>Provider-migration GitHub App setup</Text></Box>;
+    t2 = <Box flexDirection="column" marginBottom={1}><Text bold={true}>Archived GitHub App setup</Text></Box>;
     $[1] = t2;
   } else {
     t2 = $[1];

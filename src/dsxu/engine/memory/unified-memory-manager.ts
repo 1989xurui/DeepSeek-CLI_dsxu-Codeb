@@ -1,11 +1,11 @@
 /**
- * V14 FROZEN: this old unified memory aggregation layer was replaced by
+ * Legacy unified memory aggregation layer replaced by
  * DSXU memory-refill-control plus context-discipline-control. It is retained
  * only because Windows ACL blocked physical removal.
  *
  * Unified Memory Manager - 统一记忆管理器
  *
- * V8-2 Runtime Core: Memory/Context/Compact 承接层
+ * Runtime core: memory/context/compact ownership layer.
  *
  * 统一管理所有记忆层级，提供与A接口（Session/Task）的集成
  */

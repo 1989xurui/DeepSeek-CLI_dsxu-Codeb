@@ -1,6 +1,6 @@
 import { feature } from 'bun:bundle'
 import { z } from 'zod/v4'
-import { PROVIDER_MIGRATION_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
+import { ARCHIVED_MCP_CONFIG_SCOPE as ARCHIVED_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
 import { SandboxSettingsSchema } from '../../entrypoints/sandboxTypes.js'
 import { getDsxuCodeEnv, isEnvTruthy } from '../envUtils.js'
 import { lazySchema } from '../lazySchema.js'
@@ -11,11 +11,11 @@ import {
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
 import {
   DSXU_CODE_SETTINGS_SCHEMA_URL,
-  PROVIDER_MIGRATION_CODE_SETTINGS_SCHEMA_URL,
+  ARCHIVED_CODE_SETTINGS_SCHEMA_URL,
 } from './constants.js'
 import { PermissionRuleSchema } from './permissionValidation.js'
 
-export const PROVIDER_MIGRATION_MEMORY_EXCLUDES_SETTING = `${'clau' + 'de'}MdExcludes`
+export const ARCHIVED_MEMORY_EXCLUDES_SETTING = `${'clau' + 'de'}MdExcludes`
 
 // Re-export hook schemas and types from the centralized location for settings migration.
 export {
@@ -264,7 +264,7 @@ export const SettingsSchema = lazySchema(() =>
       $schema: z
         .union([
           z.literal(DSXU_CODE_SETTINGS_SCHEMA_URL),
-          z.literal(PROVIDER_MIGRATION_CODE_SETTINGS_SCHEMA_URL),
+          z.literal(ARCHIVED_CODE_SETTINGS_SCHEMA_URL),
         ])
         .optional()
         .describe('JSON Schema reference for DSXU Code settings'),
@@ -550,7 +550,7 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'When set in managed settings, blocks non-plugin customization sources for the listed surfaces. ' +
             'Array form locks specific surfaces (e.g. ["skills", "hooks"]); `true` locks all four; `false` is an explicit no-op. ' +
-            'Blocked: ~/.dsxu/{surface}/, .dsxu/{surface}/ (project), provider-migration source config aliases, settings.json hooks, .mcp.json. ' +
+            'Blocked: ~/.dsxu/{surface}/, .dsxu/{surface}/ (project), archived source config aliases, settings.json hooks, .mcp.json. ' +
             'NOT blocked: managed (policySettings) sources, plugin-provided customizations. ' +
             'Composes with strictKnownMarketplaces for end-to-end admin control — plugins gated by ' +
             'marketplace allowlist, everything else blocked here.',
@@ -631,7 +631,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       // Force a specific login method: provider subscription auth or console billing.
       forceLoginMethod: z
-        .enum([PROVIDER_MIGRATION_CONFIG_SCOPE, 'console'])
+        .enum([ARCHIVED_CONFIG_SCOPE, 'console'])
         .optional()
         .describe(
           'Force a specific login method: provider subscription auth or console billing',
@@ -820,7 +820,7 @@ export const SettingsSchema = lazySchema(() =>
               .enum(['disable'])
               .optional()
               .describe(
-                'Prevent provider-migration source CLI protocol handler registration with the OS',
+                'Prevent archived source CLI protocol handler registration with the OS',
               ),
           }
         : {}),
@@ -835,7 +835,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Custom directory for plan files, relative to project root. ' +
-            'If not set, defaults to ~/.dsxu/plans/ with provider-migration source config fallback.',
+            'If not set, defaults to ~/.dsxu/plans/ with archived source config fallback.',
         ),
       ...(process.env.USER_TYPE === 'ant'
         ? {
@@ -895,7 +895,7 @@ export const SettingsSchema = lazySchema(() =>
           }
         : {}),
       // Teams/Enterprise opt-IN for channel notifications. Default OFF.
-      // MCP servers that declare the provider-migration source channel capability can push
+      // MCP servers that declare the archived source channel capability can push
       // inbound messages into the conversation; for managed orgs this only
       // works when explicitly enabled. Which servers can connect at all is
       // still governed by allowedMcpServers/deniedMcpServers. Not
@@ -907,7 +907,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Teams/Enterprise opt-in for channel notifications (MCP servers with the ' +
-            'provider-migration source channel capability pushing inbound messages). Default off. ' +
+            'archived source channel capability pushing inbound messages). Default off. ' +
             'Set true to allow; users then select servers via --channels.',
         ),
       // Org-level channel plugin allowlist. When set, REPLACES the
@@ -1063,12 +1063,12 @@ export const SettingsSchema = lazySchema(() =>
         .array(z.string())
         .optional()
         .describe(
-          'Glob patterns or absolute paths of DSXU.md / provider-migration source memory files to exclude from loading. ' +
+          'Glob patterns or absolute paths of DSXU.md / archived source memory files to exclude from loading. ' +
             'Patterns are matched against absolute file paths using picomatch. ' +
             'Only applies to User, Project, and Local memory types (Managed/policy files cannot be excluded). ' +
             'Examples: "/home/user/monorepo/DSXU.md", "**/code/DSXU.md", "**/some-dir/.dsxu/rules/**"',
         ),
-      [PROVIDER_MIGRATION_MEMORY_EXCLUDES_SETTING]: z.array(z.string()).optional(),
+      [ARCHIVED_MEMORY_EXCLUDES_SETTING]: z.array(z.string()).optional(),
       pluginTrustMessage: z
         .string()
         .optional()

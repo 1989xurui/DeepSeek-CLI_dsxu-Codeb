@@ -12,17 +12,17 @@ import { getFsImplementation } from './fsOperations.js'
 
 /**
  * Well-known token file locations for DSXU remote runtime. The provider
- * environment manager may still expose the provider-migration CCR location, so DSXU keeps
+ * environment manager may still expose the archived CCR location, so DSXU keeps
  * that path as an isolated fallback behind this adapter.
  */
-const PROVIDER_MIGRATION_REMOTE_USER = 'cl' + 'aude'
-const PROVIDER_MIGRATION_REMOTE_TOKEN_DIR = `/home/${PROVIDER_MIGRATION_REMOTE_USER}/.${PROVIDER_MIGRATION_REMOTE_USER}/remote`
+const ARCHIVED_REMOTE_USER = 'cl' + 'aude'
+const ARCHIVED_REMOTE_TOKEN_DIR = `/home/${ARCHIVED_REMOTE_USER}/.${ARCHIVED_REMOTE_USER}/remote`
 const DSXU_REMOTE_TOKEN_DIR =
   process.env.DSXU_REMOTE_TOKEN_DIR ?? '/home/dsxu/.dsxu/remote'
 const REMOTE_TOKEN_DIR =
   process.env.DSXU_CODE_MODE === '1'
     ? DSXU_REMOTE_TOKEN_DIR
-    : PROVIDER_MIGRATION_REMOTE_TOKEN_DIR
+    : ARCHIVED_REMOTE_TOKEN_DIR
 
 export const CCR_OAUTH_TOKEN_PATH = `${REMOTE_TOKEN_DIR}/.oauth_token`
 export const CCR_API_KEY_PATH = `${REMOTE_TOKEN_DIR}/.api_key`
@@ -91,7 +91,7 @@ export function readTokenFromWellKnownFile(
  * Shared FD-or-well-known-file credential reader.
  *
  * Priority order:
- *  1. File descriptor (provider-migration path) ...env var points at a pipe FD passed by
+ *  1. File descriptor (archived path) ...env var points at a pipe FD passed by
  *     the Go env-manager via cmd.ExtraFiles. Pipe is drained on first read
  *     and doesn't cross exec/tmux boundaries.
  *  2. Well-known file ...written by this function on successful FD read (and
@@ -145,7 +145,7 @@ function getCredentialFromFd({
         ? `/dev/fd/${fd}`
         : `/proc/self/fd/${fd}`
 
-    // eslint-disable-next-line custom-rules/no-sync-fs -- provider-migration FD path, read once at startup, caller is sync
+    // eslint-disable-next-line custom-rules/no-sync-fs -- archived FD path, read once at startup, caller is sync
     const token = fsOps.readFileSync(fdPath, { encoding: 'utf8' }).trim()
     if (!token) {
       logForDebugging(`File descriptor contained empty ${label}`, {
@@ -173,7 +173,7 @@ function getCredentialFromFd({
 
 /**
  * Get the remote-injected OAuth token. See getCredentialFromFd for FD-vs-disk
- * rationale. DSXU env is preferred; provider-migration env is a fallback.
+ * rationale. DSXU env is preferred; archived env is a fallback.
  */
 export function getOAuthTokenFromFileDescriptor(): string | null {
   return getCredentialFromFd({
@@ -187,7 +187,7 @@ export function getOAuthTokenFromFileDescriptor(): string | null {
 
 /**
  * Get the remote-injected API key. See getCredentialFromFd for FD-vs-disk
- * rationale. DSXU env is preferred; provider-migration env is a fallback.
+ * rationale. DSXU env is preferred; archived env is a fallback.
  */
 export function getApiKeyFromFileDescriptor(): string | null {
   return getCredentialFromFd({

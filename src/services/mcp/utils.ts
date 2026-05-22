@@ -5,7 +5,7 @@ import type { Command } from '../../commands.js'
 import type { AgentMcpServerInfo } from '../../components/mcp/types.js'
 import type { Tool } from '../../Tool.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
-import { PROVIDER_MIGRATION_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
+import { ARCHIVED_MCP_CONFIG_SCOPE } from '../../constants/providerMigrationProtocol.js'
 import { getCwd } from '../../utils/cwd.js'
 import { getGlobalDsxuFile } from '../../utils/env.js'
 import { isSettingSourceEnabled } from '../../utils/settings/constants.js'
@@ -30,9 +30,9 @@ import {
   type ServerResource,
 } from './types.js'
 
-const PROVIDER_MIGRATION_CONFIG_LABEL = 'Provider migration MCP config'
-const PROVIDER_MIGRATION_CONFIG_PATH_LABEL = 'Provider migration MCP'
-const PROVIDER_MIGRATION_NORMALIZED_SERVER_PREFIX = ('cl' + 'aude') + '_ai_'
+const ARCHIVED_MCP_CONFIG_LABEL = 'Archived MCP config'
+const ARCHIVED_MCP_CONFIG_PATH_LABEL = 'Archived MCP'
+const ARCHIVED_MCP_NORMALIZED_SERVER_PREFIX = ('cl' + 'aude') + '_ai_'
 
 /**
  * Filters tools by MCP server name
@@ -277,8 +277,8 @@ export function describeMcpConfigFilePath(scope: ConfigScope): string {
       return 'Dynamically configured'
     case 'enterprise':
       return getEnterpriseMcpFilePath()
-    case PROVIDER_MIGRATION_CONFIG_SCOPE:
-      return PROVIDER_MIGRATION_CONFIG_PATH_LABEL
+    case ARCHIVED_MCP_CONFIG_SCOPE:
+      return ARCHIVED_MCP_CONFIG_PATH_LABEL
     default:
       return scope
   }
@@ -296,8 +296,8 @@ export function getScopeLabel(scope: ConfigScope): string {
       return 'Dynamic config (from command line)'
     case 'enterprise':
       return 'Enterprise config (managed by your organization)'
-    case PROVIDER_MIGRATION_CONFIG_SCOPE:
-      return PROVIDER_MIGRATION_CONFIG_LABEL
+    case ARCHIVED_MCP_CONFIG_SCOPE:
+      return ARCHIVED_MCP_CONFIG_LABEL
     default:
       return scope
   }
@@ -431,13 +431,13 @@ export function getMcpServerScopeFromToolName(
   // Look up server config
   const serverConfig = getMcpConfigByName(mcpInfo.serverName)
 
-  // Fallback: provider migration servers have normalized names starting with the provider prefix
+  // Fallback: archived servers have normalized names starting with the provider prefix
   // but aren't in getMcpConfigByName (they're fetched async separately)
   if (
     !serverConfig &&
-    mcpInfo.serverName.startsWith(PROVIDER_MIGRATION_NORMALIZED_SERVER_PREFIX)
+    mcpInfo.serverName.startsWith(ARCHIVED_MCP_NORMALIZED_SERVER_PREFIX)
   ) {
-    return PROVIDER_MIGRATION_CONFIG_SCOPE
+    return ARCHIVED_MCP_CONFIG_SCOPE
   }
 
   return serverConfig?.scope ?? null
@@ -553,7 +553,7 @@ export function extractAgentMcpServers(
         needsAuth: false,
       })
     }
-  // Skip unsupported transport types (sdk, provider migration proxy, sse-ide, ws-ide)
+  // Skip unsupported transport types (sdk, archived proxy, sse-ide, ws-ide)
     // These are internal types not meant for agent MCP server display
   }
 

@@ -92,10 +92,45 @@ describe('FinalReport usage cost evidence V1', () => {
     expect(modelCostEvidence.proRoi?.proNodeCount).toBe(0)
     expect(modelCostEvidence.proRoi?.proRoiRatePct).toBe(0)
     expect(modelCostEvidence.routeReasons).toContain('plan:planning_flash_thinking_max')
-    expect(modelCostEvidence.routeReasons).toContain('code-patch:coding_flash_non_thinking')
+    expect(modelCostEvidence.routeReasons).toContain('code-patch:coding_flash_thinking_high')
     expect(modelCostEvidence.modelEvidence).toContain('deepseek-v4-flash')
     expect(finalReport.status).toBe('PASS')
     expect(finalReport.summary).toContain('Cost evidence')
+    expect(finalReport.summary).toContain('Work-state timeline')
+    expect(finalReport.workStateTimeline.status).toBe('PASS_WORK_STATE_TIMELINE_READY')
+    expect(finalReport.workStateTimeline.coverage.hasSourceTruth).toBe(true)
+    expect(finalReport.workStateTimeline.coverage.hasPermissionState).toBe(true)
+    expect(finalReport.workStateTimeline.coverage.hasCostState).toBe(true)
+    expect(finalReport.workStateTimeline.events.find(event => event.kind === 'cost')).toMatchObject({
+      owner: 'DeepSeek Model Router / Cost Evidence',
+      model: 'deepseek-v4-flash',
+      status: 'completed',
+    })
+    expect(finalReport.workStateTimeline.operatorSummary.join('\n')).toContain('route=planning_flash_thinking_max')
+  })
+
+  test('does not turn missing route cost evidence into a clean public timeline', () => {
+    const finalReport = buildDSXUFinalPatchReport({
+      goal: 'Missing cost evidence should stay visible',
+      changedFiles: ['src/cart.ts'],
+      tracePath: '.dsxu/trace/v26/missing-cost.json',
+      verification: {
+        command: ['bun', 'test', 'src/cart.test.ts'],
+        exitCode: 0,
+        stdout: '1 pass',
+        stderr: '0 fail',
+        passed: true,
+        failureType: 'UNKNOWN',
+      },
+      agentEvidence: ['worker:reviewer evidence accepted by parent'],
+      mcpEvidence: ['skill:lint registered through DSXU registry'],
+    })
+
+    expect(finalReport.status).toBe('PASS')
+    expect(finalReport.workStateTimeline.status).toBe('NEEDS_WORK_STATE_TIMELINE_EVIDENCE')
+    expect(finalReport.workStateTimeline.guards).toContain('model/cost/cache state is blocked')
+    expect(finalReport.workStateTimeline.events.find(event => event.id === 'final-report-agent-evidence')).toBeDefined()
+    expect(finalReport.workStateTimeline.events.find(event => event.id === 'final-report-mcp-skill-evidence')).toBeDefined()
   })
 
   test('records Pro ROI admission, prior Flash attempt, and save evidence', () => {
@@ -105,11 +140,11 @@ describe('FinalReport usage cost evidence V1', () => {
     }, 'https://api.deepseek.com', {
       dsxuRouteInput: { workflowKind: 'planning', role: 'planner' },
     })
-    const proRecovery = DeepSeekAdapter.resolveRequestPlanForBaseUrl({
+    const proHighRiskReview = DeepSeekAdapter.resolveRequestPlanForBaseUrl({
       model: 'deepseek-v4-flash',
       max_tokens: 65_536,
     }, 'https://api.deepseek.com', {
-      dsxuRouteInput: { workflowKind: 'failedVerification', role: 'reviewer', failedVerification: true },
+      dsxuRouteInput: { workflowKind: 'review', role: 'reviewer', riskLevel: 'high' },
     })
     const flashUsage = DeepSeekAdapter.normalizeUsage({
       model: flashPlan.requestedModel,
@@ -123,15 +158,15 @@ describe('FinalReport usage cost evidence V1', () => {
       dsxu_route_reason: flashPlan.routeReason,
     })
     const proUsage = DeepSeekAdapter.normalizeUsage({
-      model: proRecovery.requestedModel,
+      model: proHighRiskReview.requestedModel,
       usage: {
         prompt_tokens: 12000,
         completion_tokens: 1800,
         prompt_cache_hit_tokens: 3000,
         prompt_cache_miss_tokens: 9000,
       },
-      dsxu_model_evidence: proRecovery.modelEvidence,
-      dsxu_route_reason: proRecovery.routeReason,
+      dsxu_model_evidence: proHighRiskReview.modelEvidence,
+      dsxu_route_reason: proHighRiskReview.routeReason,
     })
     const modelCostEvidence = buildDSXUModelCostEvidenceFromUsage({
       scenario: 'pro_roi_after_flash_attempt',
@@ -141,11 +176,11 @@ describe('FinalReport usage cost evidence V1', () => {
         {
           nodeId: 'pro-failed-verification',
           usage: proUsage,
-          proAdmissionReason: 'failed verification after Flash plan',
+          proAdmissionReason: 'high-risk permission review after Flash plan',
           flashAttemptedBeforePro: true,
           flashAttemptNodeIds: ['flash-plan'],
           proSavedTask: true,
-          proSaveEvidence: 'verification passed after Pro diagnosis',
+          proSaveEvidence: 'permission review passed after Pro diagnosis',
         },
       ],
     })
@@ -174,12 +209,12 @@ describe('FinalReport usage cost evidence V1', () => {
       entries: [
         {
           nodeId: 'pro-failed-verification',
-          routeReason: 'failed_verification_pro_thinking_max',
-          proAdmissionReason: 'failed verification after Flash plan',
+          routeReason: 'high_risk_pro_thinking_max_requires_approval',
+          proAdmissionReason: 'high-risk permission review after Flash plan',
           flashAttemptedBeforePro: true,
           flashAttemptNodeIds: ['flash-plan'],
           proSavedTask: true,
-          proSaveEvidence: 'verification passed after Pro diagnosis',
+          proSaveEvidence: 'permission review passed after Pro diagnosis',
         },
       ],
     })

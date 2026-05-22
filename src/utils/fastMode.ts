@@ -20,7 +20,7 @@ import { logForDebugging } from './debug.js'
 import {
   isDsxuCodeEnvTruthy,
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from './envUtils.js'
 import {
   getDefaultMainLoopModelSetting,
@@ -41,18 +41,18 @@ import {
   handleProviderControlAuth401Error,
 } from '../services/auth/dsxuProviderControlAuth.js'
 import {
-  PROVIDER_MIGRATION_FAST_MODE_BACKEND_PATH,
+  ARCHIVED_FAST_MODE_BACKEND_PATH,
   DSXU_FAST_MODE_MODEL_DISPLAY,
-  getProviderMigrationFastModeModelAlias,
-  isProviderMigrationFastModeSupportedModel,
+  getArchivedFastModeModelAlias,
+  isArchivedFastModeSupportedModel,
 } from './model/providerMigration/providerMigrationFastMode.js'
 
 export function isFastModeEnabled(): boolean {
   return !isDsxuCodeEnvTruthy('DISABLE_FAST_MODE')
 }
 
-function isProviderMigrationFastModeBackendAllowed(): boolean {
-  return !isDsxuRuntimeMode() || isProviderMigrationServiceShellAllowed()
+function isArchivedFastModeBackendAllowed(): boolean {
+  return !isDsxuRuntimeMode() || isArchivedServiceShellAllowed()
 }
 
 export function isFastModeAvailable(): boolean {
@@ -159,7 +159,7 @@ export function getFastModeUnavailableReason(): string | null {
 export const FAST_MODE_MODEL_DISPLAY = DSXU_FAST_MODE_MODEL_DISPLAY
 
 export function getFastModeModel(): string {
-  return getProviderMigrationFastModeModelAlias()
+  return getArchivedFastModeModelAlias()
 }
 
 export function getInitialFastModeSetting(model: ModelSetting): boolean {
@@ -188,7 +188,7 @@ export function isFastModeSupportedByModel(
   }
   const model = modelSetting ?? getDefaultMainLoopModelSetting()
   const parsedModel = parseUserSpecifiedModel(model)
-  return isProviderMigrationFastModeSupportedModel(model, parsedModel)
+  return isArchivedFastModeSupportedModel(model, parsedModel)
 }
 
 // --- Fast mode runtime state ---
@@ -383,7 +383,7 @@ type FastModeResponse = {
 async function fetchFastModeStatus(
   auth: { accessToken: string } | { apiKey: string },
 ): Promise<FastModeResponse> {
-  const endpoint = `${getOauthConfig().BASE_API_URL}${PROVIDER_MIGRATION_FAST_MODE_BACKEND_PATH}`
+  const endpoint = `${getOauthConfig().BASE_API_URL}${ARCHIVED_FAST_MODE_BACKEND_PATH}`
   const headers: Record<string, string> =
     'accessToken' in auth
       ? {
@@ -425,7 +425,7 @@ export async function prefetchFastModeStatus(): Promise<void> {
     return
   }
 
-  if (!isProviderMigrationFastModeBackendAllowed()) {
+  if (!isArchivedFastModeBackendAllowed()) {
     return
   }
 

@@ -21,7 +21,7 @@ import {
   renderToolUseMessage,
   renderToolUseProgressMessage,
 } from './UI.js'
-import { isProviderMigrationWebSearchCapableModel } from '../../utils/model/providerMigration/providerMigrationWebSearchModel.js'
+import { isArchivedWebSearchCapableModel } from '../../utils/model/providerMigration/providerMigrationWebSearchModel.js'
 
 const inputSchema = lazySchema(() =>
   z.strictObject({
@@ -193,7 +193,7 @@ export const WebSearchTool = buildTool({
 
     // Enable for Vertex AI with supported web-search-capable models.
     if (provider === 'vertex') {
-      return isProviderMigrationWebSearchCapableModel(model)
+      return isArchivedWebSearchCapableModel(model)
     }
 
     // Foundry only ships models that already support Web Search

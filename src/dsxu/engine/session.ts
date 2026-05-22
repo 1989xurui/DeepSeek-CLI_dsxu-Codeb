@@ -8,7 +8,7 @@
  * 2. session-adapter.ts  - 模型适配层（摘要生成、记忆管理）
  * 3. session-output.ts   - 输出格式化层（报告生成、格式化输出）
  *
- * V8-1: 集成新的Runtime Core Session/Task模型
+ * Runtime Core: integrated Session/Task model.
  */
 
 import type { Message } from './types'
@@ -54,7 +54,7 @@ export type {
   SessionReport,
 } from './session-output'
 
-// === V8-1 Runtime Core 导出 ===
+// === Runtime Core exports ===
 
 // Session 模型
 export {
@@ -386,7 +386,7 @@ export type {
   DSXUSessionStateMachine as KairosSessionStateMachine,
 } from './session-os-control'
 
-// ===== V10-2D Coordinator Mainline Session State =====
+// ===== Coordinator Mainline Session State =====
 
 export interface MainlineSessionCoordinatorState {
   runtimeState: {
@@ -471,7 +471,7 @@ export function applyCoordinatorProtocolToSession(
   };
 }
 
-// ===== V10-3 Skills Session Mainline State =====
+// ===== Skills Session Mainline State =====
 
 export interface SkillPromptSessionState {
   taskId: string;
@@ -531,7 +531,7 @@ export function applySkillPromptToSession(
   };
 }
 
-// ===== V10-4 Tool Mainline Session State =====
+// ===== Tool Mainline Session State =====
 
 export interface ToolMainlineSessionState {
   taskId: string;
@@ -598,7 +598,7 @@ export function applyToolMainlineToSession(
   };
 }
 
-// ===== V10-2F Phase A Multi-Agent Session Bridge =====
+// ===== Phase A Multi-Agent Session Bridge =====
 export function attachMultiAgentStateToSession(
   current: MainlineSessionCoordinatorState,
   input: {
@@ -623,7 +623,7 @@ export function attachMultiAgentStateToSession(
   };
 }
 
-// ===== V10-2F Phase B Task Lifecycle Session Consumption =====
+// ===== Phase B Task Lifecycle Session Consumption =====
 export interface SessionTaskLifecycleState {
   activeTaskIds: string[];
   completedTaskIds: string[];
@@ -661,7 +661,7 @@ export function applyTaskLifecycleToSession(
   };
 }
 
-// ===== V10-2F Phase C Context Session State =====
+// ===== Phase C Context Session State =====
 export interface SessionContextWindowState {
   model: string;
   contextWindowSize: number;
@@ -692,7 +692,7 @@ export function applyContextWindowToSession(
   };
 }
 
-// ===== V10-2F Phase D Session Evidence Hook =====
+// ===== Phase D Session Evidence Hook =====
 export function recordSessionMainlineConsumption(input: {
   signalType: string;
   detail: string;

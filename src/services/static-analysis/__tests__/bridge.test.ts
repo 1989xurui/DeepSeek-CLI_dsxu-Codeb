@@ -3,12 +3,32 @@
  */
 
 import { StaticAnalysisBridge, createStaticAnalysisBridge } from '../bridge';
+import { buildStaticAnalysisToolGatePolicy, invokeStaticAnalysisToolGate } from '../tool-gate';
 
 describe('Static Analysis Bridge', () => {
   let bridge: StaticAnalysisBridge;
+  const savedEnv = new Map<string, string | undefined>();
+
+  beforeAll(() => {
+    for (const key of [
+      'DSXU_STATIC_ANALYSIS_TOOL_GATE',
+      'DSXU_STATIC_ANALYSIS_TOOL_GATE_BLOCKING',
+    ]) {
+      savedEnv.set(key, process.env[key]);
+    }
+  });
 
   beforeEach(() => {
     bridge = new StaticAnalysisBridge({ enabled: false });
+    process.env.DSXU_STATIC_ANALYSIS_TOOL_GATE = '';
+    process.env.DSXU_STATIC_ANALYSIS_TOOL_GATE_BLOCKING = '';
+  });
+
+  afterAll(() => {
+    for (const [key, value] of savedEnv) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   });
 
   test('应该使用默认配置', () => {
@@ -160,5 +180,99 @@ describe('Static Analysis Bridge', () => {
     const bridge = createStaticAnalysisBridge({ enabled: false });
     expect(bridge).toBeInstanceOf(StaticAnalysisBridge);
     expect(bridge.getOptions().enabled).toBe(false);
+  });
+
+  test('tool gate defaults to a visible advisory envelope instead of silent skip', async () => {
+    const result = await invokeStaticAnalysisToolGate({
+      filePaths: ['src/sample.ts'],
+      patchContent: 'export const sample = 1',
+    });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(result.shouldBlock).toBe(false);
+    expect(result.semantics).toBe('advisory-envelope');
+    expect(result.policy).toMatchObject({
+      enabled: true,
+      runAnalysis: false,
+      blocking: false,
+      riskLevel: 'normal',
+    });
+    expect(result.error).toContain('post-mutation advisory envelope');
+  });
+
+  test('tool gate escalates provider/tool risk paths to blocking static-analysis policy by default', () => {
+    const policy = buildStaticAnalysisToolGatePolicy([
+      'src/services/api/deepseek-adapter.ts',
+      'src/tools/FileEditTool/FileEditTool.ts',
+    ]);
+
+    expect(policy).toMatchObject({
+      enabled: true,
+      runAnalysis: true,
+      blocking: true,
+      riskLevel: 'risk-blocking',
+    });
+    expect(policy.matchedRule).toBe('provider-route-cost-cache');
+  });
+
+  test('tool gate blocks release claim source that keeps external parity tokens after mutation', async () => {
+    const externalModel = ['G', 'PT'].join('');
+    const referenceProduct = ['Cl', 'aude'].join('');
+    const percentToken = ['95', '%'].join('');
+
+    const result = await invokeStaticAnalysisToolGate({
+      filePaths: ['src/claim.ts'],
+      patchContent: [
+        'export function buildReadmeClaim(evidence: Evidence): string {',
+        `  const rejected = /${externalModel}|${referenceProduct}|${percentToken}/`,
+        '  if (evidence.targetManifest) return "DSXU internal evidence"',
+        '  return rejected.source',
+        '}',
+      ].join('\n'),
+    });
+
+    expect(result.status).toBe('FAIL');
+    expect(result.shouldBlock).toBe(true);
+    expect(result.policy).toMatchObject({
+      blocking: true,
+      riskLevel: 'risk-blocking',
+      matchedRule: 'release-claim-source-hygiene',
+    });
+    expect(result.error).toContain('[external-claim-token]');
+  });
+
+  test('tool gate ignores removed external parity tokens when post-mutation claim source is clean', async () => {
+    const externalModel = ['G', 'PT'].join('');
+
+    const result = await invokeStaticAnalysisToolGate({
+      filePaths: ['src/claim.ts'],
+      patchContent: [
+        '@@',
+        `-export function buildReadmeClaim() { return "${externalModel}" }`,
+        '+export function buildReadmeClaim() { return "DSXU internal evidence validated." }',
+      ].join('\n'),
+    });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(result.shouldBlock).toBe(false);
+    expect(result.semantics).toBe('advisory-envelope');
+  });
+
+  test('tool gate can still be explicitly disabled for boundary evidence', async () => {
+    process.env.DSXU_STATIC_ANALYSIS_TOOL_GATE = '0';
+
+    const result = await invokeStaticAnalysisToolGate({
+      filePaths: ['src/services/api/deepseek-adapter.ts'],
+      patchContent: 'export const sample = 1',
+    });
+
+    expect(result.status).toBe('SKIPPED');
+    expect(result.semantics).toBe('skipped');
+    expect(result.policy).toMatchObject({
+      enabled: false,
+      runAnalysis: false,
+      blocking: false,
+      riskLevel: 'risk-blocking',
+    });
   });
 });

@@ -55,6 +55,34 @@ const MAX_MOUNTED_ITEMS = 300
  */
 const SLIDE_STEP = 25
 const NOOP_UNSUB = () => {}
+
+export function getResizeFrozenRange(
+  isSticky: boolean,
+  freezeRenders: number,
+  previousRange: readonly [number, number] | null,
+): readonly [number, number] | null {
+  if (isSticky) return null
+  return freezeRenders > 0 ? previousRange : null
+}
+
+export type EffectiveStickyScrollSnapshot = {
+  isSticky: boolean
+  scrollTop: number
+  pendingDelta: number
+  viewportHeight: number
+  scrollHeight: number
+}
+
+export function isEffectivelyStickyScroll(
+  snapshot: EffectiveStickyScrollSnapshot,
+  toleranceRows = 2,
+): boolean {
+  if (snapshot.isSticky) return true
+  if (snapshot.pendingDelta < 0) return false
+  const maxScroll = Math.max(0, snapshot.scrollHeight - snapshot.viewportHeight)
+  return snapshot.scrollTop + snapshot.pendingDelta >= maxScroll - toleranceRows
+}
+
 export type VirtualScrollResult = {
   /** [startIndex, endIndex) half-open slice of items to render. */
   range: readonly [number, number]
@@ -196,7 +224,21 @@ export function useVirtualScroll(
     skipMeasurementRef.current = true
     freezeRendersRef.current = 2
   }
-  const frozenRange = freezeRendersRef.current > 0 ? prevRangeRef.current : null
+  const scrollHandle = scrollRef.current
+  const isSticky = scrollHandle
+    ? isEffectivelyStickyScroll({
+        isSticky: scrollHandle.isSticky(),
+        scrollTop: scrollHandle.getScrollTop(),
+        pendingDelta: scrollHandle.getPendingDelta(),
+        viewportHeight: scrollHandle.getViewportHeight(),
+        scrollHeight: scrollHandle.getScrollHeight(),
+      })
+    : true
+  const frozenRange = getResizeFrozenRange(
+    isSticky,
+    freezeRendersRef.current,
+    prevRangeRef.current,
+  )
   // List origin in content-wrapper coords. scrollTop is content-wrapper-
   // relative, but offsets[] are list-local (0 = first virtualized item).
   // Siblings that render BEFORE this list inside the ScrollBox ...Logo,
@@ -256,7 +298,6 @@ export function useVirtualScroll(
   // clear clamp" ...the same behavior as if we'd read scrollTop==maxScroll
   // directly, minus the instability. Default true: before the ref attaches,
   // assume bottom (sticky will pin us there on first Ink render).
-  const isSticky = scrollRef.current?.isSticky() ?? true
   // GC stale cache entries (compaction, /clear, screenToggleId bump). Only
   // runs when itemKeys identity changes ...scrolling doesn't touch keys.
   // itemRefs self-cleans via ref(null) on unmount.

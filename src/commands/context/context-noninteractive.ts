@@ -17,6 +17,10 @@ function shouldShowInternalContextBreakdown(): boolean {
   return process.env.USER_TYPE === 'ant' || process.env.DSXU_CODE_MODE === '1'
 }
 
+export function isContextAdvancedArgs(args: string | undefined): boolean {
+  return /(^|\s)--advanced(\s|$)|(^|\s)-a(\s|$)/.test(args ?? '')
+}
+
 /**
  * Shared data-collection path for `/context` (slash command) and the SDK
  * `get_context_usage` control request. Mirrors query.ts's pre-API transforms
@@ -81,17 +85,20 @@ export async function collectContextData(
 }
 
 export async function call(
-  _args: string,
+  args: string,
   context: ToolUseContext,
 ): Promise<{ type: 'text'; value: string }> {
   const data = await collectContextData(context)
   return {
     type: 'text' as const,
-    value: formatContextAsMarkdownTable(data),
+    value: formatContextAsMarkdownTable(data, isContextAdvancedArgs(args)),
   }
 }
 
-function formatContextAsMarkdownTable(data: ContextData): string {
+function formatContextAsMarkdownTable(
+  data: ContextData,
+  advanced = false,
+): string {
   const {
     categories,
     totalTokens,
@@ -207,7 +214,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (
     systemTools &&
     systemTools.length > 0 &&
-    shouldShowInternalContextBreakdown()
+    (advanced || shouldShowInternalContextBreakdown())
   ) {
     output += `### System Tools\n\n`
     output += `| Tool | Tokens |\n`
@@ -225,7 +232,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (
     deferredBuiltinTools &&
     deferredBuiltinTools.length > 0 &&
-    shouldShowInternalContextBreakdown()
+    (advanced || shouldShowInternalContextBreakdown())
   ) {
     output += `### Deferred System Tools\n\n`
     output += `| Tool | Loaded | Tokens |\n`
@@ -240,7 +247,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   if (
     systemPromptSections &&
     systemPromptSections.length > 0 &&
-    shouldShowInternalContextBreakdown()
+    (advanced || shouldShowInternalContextBreakdown())
   ) {
     output += `### System Prompt Sections\n\n`
     output += `| Section | Tokens |\n`
@@ -311,7 +318,7 @@ function formatContextAsMarkdownTable(data: ContextData): string {
   }
 
   // Message breakdown (dsxu internal)
-  if (messageBreakdown && shouldShowInternalContextBreakdown()) {
+  if (messageBreakdown && (advanced || shouldShowInternalContextBreakdown())) {
     output += `### Message Breakdown\n\n`
     output += `| Category | Tokens |\n`
     output += `|----------|--------|\n`

@@ -5,8 +5,19 @@
  * it is imported by release-gate tests in both Windows and WSL environments.
  */
 
-import type { GearState, StepGearBox, ToolResult } from './types'
-import type { RecoveryDecision } from './recovery/recovery-types-v3'
+import type {
+  GearState,
+  GearVerificationContext,
+  GearVerificationSummary,
+  StepGearBox,
+  ToolResult,
+} from './types'
+import type { RecoveryAction, RecoveryDecision, RecoveryReason } from './recovery/recovery-types-v3'
+import {
+  projectVerificationRecoveryDecision,
+  type StallRecoveryDecision,
+  type VerifySummary,
+} from './progress-ledger'
 import { DEEPSEEK_V4_FLASH_MODEL, DEEPSEEK_V4_PRO_MODEL } from '../../utils/model/deepseekV4Control'
 
 const GEAR_TIMEOUT = 5 * 60 * 1000
@@ -135,6 +146,54 @@ export function createGearBox(): StepGearBox {
     return !failPatterns.some(pattern => pattern.test(text))
   }
 
+  function decideVerificationRecovery(
+    summary: GearVerificationSummary,
+    context: GearVerificationContext = {},
+  ): RecoveryDecision | null {
+    if (summary.passed) return null
+
+    const attempts = Math.max(1, context.failedAttemptsSinceProgress ?? 1)
+    const policy = context.policy ?? 'block'
+    const firstFinding = summary.findings?.[0]
+    const missingEvidence =
+      firstFinding?.title.toLowerCase().includes('evidence') === true ||
+      firstFinding?.detail.toLowerCase().includes('no native verification') === true ||
+      firstFinding?.detail.toLowerCase().includes('missing') === true
+
+    const verification: VerifySummary = {
+      passed: summary.passed,
+      score: summary.score,
+      findings: summary.findings ?? [],
+      timestamp: Date.now(),
+    }
+    const projection = projectVerificationRecoveryDecision({
+      verification,
+      onFailure: policy,
+      failedAttemptsSinceProgress: attempts,
+      command: context.command,
+      owner: 'GearBox / VerificationKernel',
+      evidence: [
+        'source:RECOVERY_DECISION_TABLE',
+        missingEvidence ? 'missingEvidence:true' : 'missingEvidence:false',
+        firstFinding?.title ? `findingTitle:${firstFinding.title}` : '',
+      ].filter(Boolean),
+    })
+
+    if (!projection.recoveryDecision) {
+      return null
+    }
+
+    return stallDecisionToGearRecoveryDecision(projection.recoveryDecision, {
+      policy,
+      score: summary.score,
+      command: context.command,
+      attempts,
+      missingEvidence,
+      findingTitle: firstFinding?.title,
+      projectionSchema: projection.schemaVersion,
+    })
+  }
+
   return {
     getGear() {
       checkTimeout()
@@ -188,6 +247,23 @@ export function createGearBox(): StepGearBox {
       console.log(`[GearBox] test failed; consecutive=${state.consecutiveErrors}; gear=${state.gear}`)
     },
 
+    reportVerificationSummary(
+      summary: GearVerificationSummary,
+      context: GearVerificationContext = {},
+    ): RecoveryDecision | null {
+      this.reportTestResult(summary.passed)
+      if (summary.passed) {
+        state.lastRecoveryDecision = undefined
+        return null
+      }
+
+      const decision = decideVerificationRecovery(summary, context)
+      if (decision) {
+        this.applyRecoveryDecision(decision)
+      }
+      return decision
+    },
+
     reportLLMError(error: Error, callId?: string) {
       checkTimeout()
       state.consecutiveErrors++
@@ -207,6 +283,7 @@ export function createGearBox(): StepGearBox {
 
     applyRecoveryDecision(decision: RecoveryDecision): void {
       console.log(`[GearBox] recovery decision: ${decision.action} (${decision.reason}); confidence=${decision.confidence}`)
+      state.lastRecoveryDecision = decision
       adjustGearByRecoveryDecision(decision)
     },
 
@@ -215,7 +292,63 @@ export function createGearBox(): StepGearBox {
     },
   }
 }
-// ===== V10-2D Coordinator Signal Driven Gear Strategy =====
+
+function stallDecisionToGearRecoveryDecision(
+  decision: StallRecoveryDecision,
+  metadata: {
+    policy: NonNullable<GearVerificationContext['policy']>
+    score: number
+    command?: string
+    attempts: number
+    missingEvidence: boolean
+    findingTitle?: string
+    projectionSchema: string
+  },
+): RecoveryDecision {
+  return {
+    action: mapStallActionToGearAction(decision.action),
+    reason: mapStallReasonToGearReason(decision.reason),
+    confidence: decision.confidence,
+    retryCount: metadata.attempts,
+    maxRetries: 3,
+    message: decision.nextAction,
+    metadata: {
+      ...metadata,
+      sourceRecoveryDecisionTable: true,
+      stallDecision: decision,
+    },
+  }
+}
+
+function mapStallActionToGearAction(action: StallRecoveryDecision['action']): RecoveryAction {
+  if (action === 'flash-max' || action === 'pro-admission') {
+    return 'replan'
+  }
+  return action
+}
+
+function mapStallReasonToGearReason(reason: StallRecoveryDecision['reason']): RecoveryReason {
+  switch (reason) {
+    case 'repeated_verification_failure':
+      return 'verify-failure'
+    case 'tool_failure':
+    case 'timeout':
+      return 'tool-failure'
+    case 'context_pressure':
+      return 'context-insufficiency'
+    case 'model_failure':
+    case 'repeated_read':
+    case 'no_diff':
+    case 'validation_failure':
+    case 'workspace_boundary':
+    case 'cost_pressure':
+    case 'agent_timeout':
+    case 'permission_loop':
+    case 'tool_result_growth':
+      return 'repeated-failure'
+  }
+}
+// ===== Coordinator Signal Driven Gear Strategy =====
 
 export type CoordinatorGearSignal =
   | { type: 'fork'; payload: { runnableBranches: string[] } }
@@ -286,7 +419,7 @@ export function applyCoordinatorSignalToGearStrategy(
   };
 }
 
-// ===== V10-2F Phase A Coordinator Mode Gear Bridge =====
+// ===== Phase A Coordinator Mode Gear Bridge =====
 export function applyCoordinatorModeToGearStrategy(
   current: GearStrategyState,
   input: {
@@ -307,7 +440,7 @@ export function applyCoordinatorModeToGearStrategy(
   };
 }
 
-// ===== V10-2F Phase C Context Aware Gear Adjustment =====
+// ===== Phase C Context Aware Gear Adjustment =====
 export function applyContextSignalToGearStrategy(
   current: GearStrategyState,
   input: { contextUsedPercent: number; shouldCompact: boolean },
@@ -330,7 +463,7 @@ export function applyContextSignalToGearStrategy(
   return current;
 }
 
-// ===== V10-2F Phase D Gear Evidence Hook =====
+// ===== Phase D Gear Evidence Hook =====
 export function recordGearMainlineConsumption(input: {
   signalType: string;
   detail: string;

@@ -5,7 +5,7 @@ import { fileSuffixForOauthConfig } from '../constants/oauth.js'
 import { isRunningWithBun } from './bundledMode.js'
 import {
   getDsxuConfigHomeDir,
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
   isDsxuRuntimeMode,
   isEnvTruthy,
 } from './envUtils.js'
@@ -14,9 +14,9 @@ import { getFsImplementation } from './fsOperations.js'
 import { which } from './which.js'
 
 type Platform = 'win32' | 'darwin' | 'linux'
-const PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME = 'cl' + 'aude'
-const PROVIDER_MIGRATION_CONFIG_ENV = `CL${'AUDE'}_CONFIG_DIR`
-const PROVIDER_MIGRATION_HOST_PLATFORM_ENV = `CL${'AUDE'}_CODE_HOST_PLATFORM`
+const ARCHIVED_SOURCE_PRODUCT_NAME = 'cl' + 'aude'
+const ARCHIVED_CONFIG_ENV = `CL${'AUDE'}_CONFIG_DIR`
+const ARCHIVED_HOST_PLATFORM_ENV = `CL${'AUDE'}_CODE_HOST_PLATFORM`
 
 // Config and data paths
 export const getGlobalDsxuFile = memoize((): string => {
@@ -26,29 +26,29 @@ export const getGlobalDsxuFile = memoize((): string => {
       return dsxuConfigFile
     }
 
-    const providerMigrationConfigFile = join(
-      getProviderMigrationHomeDir(),
+    const archivedConfigFile = join(
+      getArchivedHomeDir(),
       '.config.json',
     )
-    if (getFsImplementation().existsSync(providerMigrationConfigFile)) {
-      return providerMigrationConfigFile
+    if (getFsImplementation().existsSync(archivedConfigFile)) {
+      return archivedConfigFile
     }
 
     const filename = `.dsxu${fileSuffixForOauthConfig()}.json`
     return join(process.env.DSXU_CONFIG_DIR || homedir(), filename)
   }
 
-  // Provider-migration source fallback.
+  // Archived source fallback.
   if (
     getFsImplementation().existsSync(
-      join(getProviderMigrationHomeDir(), '.config.json'),
+      join(getArchivedHomeDir(), '.config.json'),
     )
   ) {
-    return join(getProviderMigrationHomeDir(), '.config.json')
+    return join(getArchivedHomeDir(), '.config.json')
   }
 
-  const filename = `.${PROVIDER_MIGRATION_SOURCE_PRODUCT_NAME}${fileSuffixForOauthConfig()}.json`
-  return join(process.env[PROVIDER_MIGRATION_CONFIG_ENV] || homedir(), filename)
+  const filename = `.${ARCHIVED_SOURCE_PRODUCT_NAME}${fileSuffixForOauthConfig()}.json`
+  return join(process.env[ARCHIVED_CONFIG_ENV] || homedir(), filename)
 })
 
 const hasInternetAccess = memoize(async (): Promise<boolean> => {
@@ -366,7 +366,7 @@ export const env = {
  */
 export function getHostPlatformForAnalytics(): Platform {
   const override =
-    process.env.DSXU_CODE_HOST_PLATFORM ?? process.env[PROVIDER_MIGRATION_HOST_PLATFORM_ENV]
+    process.env.DSXU_CODE_HOST_PLATFORM ?? process.env[ARCHIVED_HOST_PLATFORM_ENV]
   if (override === 'win32' || override === 'darwin' || override === 'linux') {
     return override
   }

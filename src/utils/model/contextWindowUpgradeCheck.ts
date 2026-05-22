@@ -1,4 +1,4 @@
-import { getProviderMigrationContextUpgradeSuggestion } from './providerMigration/providerMigration1mAccess.js'
+import { getArchivedContextUpgradeSuggestion } from './providerMigration/providerMigration1mAccess.js'
 import { getUserSpecifiedModelSetting } from './model.js'
 
 // @[MODEL LAUNCH]: Add a branch for the new model if it supports a 1M context upgrade path.
@@ -12,7 +12,7 @@ function getAvailableUpgrade(): {
   multiplier: number
 } | null {
   const currentModelSetting = getUserSpecifiedModelSetting()
-  return getProviderMigrationContextUpgradeSuggestion(currentModelSetting)
+  return getArchivedContextUpgradeSuggestion(currentModelSetting)
 }
 
 /**

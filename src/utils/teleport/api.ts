@@ -17,9 +17,9 @@ const TELEPORT_RETRY_DELAYS = [2000, 4000, 8000, 16000] // 4 retries with expone
 const MAX_TELEPORT_RETRIES = TELEPORT_RETRY_DELAYS.length
 
 export const CCR_BYOC_BETA = 'ccr-byoc-2025-07-29'
-const PROVIDER_MIGRATION_SOURCE_TOKEN = 'anth' + 'ropic'
-const PROVIDER_MIGRATION_BETA_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-beta`
-const PROVIDER_MIGRATION_VERSION_HEADER = `${PROVIDER_MIGRATION_SOURCE_TOKEN}-version`
+const ARCHIVED_PROVIDER_SOURCE_TOKEN = 'anth' + 'ropic'
+const ARCHIVED_PROVIDER_BETA_HEADER = `${ARCHIVED_PROVIDER_SOURCE_TOKEN}-beta`
+const ARCHIVED_PROVIDER_VERSION_HEADER = `${ARCHIVED_PROVIDER_SOURCE_TOKEN}-version`
 
 /**
  * Checks if an axios error is a transient network error that should be retried
@@ -214,7 +214,7 @@ export async function fetchCodeSessionsFromSessionsAPI(): Promise<
   try {
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
+      [ARCHIVED_PROVIDER_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -280,7 +280,7 @@ export function getOAuthHeaders(accessToken: string): Record<string, string> {
   return {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
-    [PROVIDER_MIGRATION_VERSION_HEADER]: '2023-06-01',
+    [ARCHIVED_PROVIDER_VERSION_HEADER]: '2023-06-01',
   }
 }
 
@@ -297,7 +297,7 @@ export async function fetchSession(
   const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
   const headers = {
     ...getOAuthHeaders(accessToken),
-    [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
+    [ARCHIVED_PROVIDER_BETA_HEADER]: CCR_BYOC_BETA,
     'x-organization-uuid': orgUUID,
   }
 
@@ -372,7 +372,7 @@ export async function sendEventToRemoteSession(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}/events`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
+      [ARCHIVED_PROVIDER_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 
@@ -435,7 +435,7 @@ export async function updateSessionTitle(
     const url = `${getOauthConfig().BASE_API_URL}/v1/sessions/${sessionId}`
     const headers = {
       ...getOAuthHeaders(accessToken),
-      [PROVIDER_MIGRATION_BETA_HEADER]: CCR_BYOC_BETA,
+      [ARCHIVED_PROVIDER_BETA_HEADER]: CCR_BYOC_BETA,
       'x-organization-uuid': orgUUID,
     }
 

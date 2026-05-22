@@ -43,8 +43,8 @@ export async function handleDsxuProviderAliasCommand(
     cwd: options.cwd ?? process.cwd(),
     metadata: {
       alias: command,
-      providerMigrationBridgeEnabled: provider.providerMigrationBridge.enabled,
-      providerMigrationFlag: provider.providerMigrationBridge.flagName,
+      archivedBridgeEnabled: provider.archivedBridge.enabled,
+      archivedBridgeFlag: provider.archivedBridge.flagName,
     },
   })
 
@@ -56,7 +56,7 @@ export async function handleDsxuProviderAliasCommand(
       `DSXU provider alias "${command}" is blocked in the default local coding mainline.`,
       `Remote session status: ${remote.status}.`,
       remote.reason ? `Reason: ${remote.reason}` : undefined,
-      `Provider-migration bridge remains opt-in only via ${provider.providerMigrationBridge.flagName} for isolated migration work.`,
+      `Archived bridge remains opt-in only via ${provider.archivedBridge.flagName} for isolated migration work.`,
     ].filter(Boolean).join('\n'),
   }
 }

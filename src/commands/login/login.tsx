@@ -39,7 +39,7 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
       void refreshPolicyLimits();
       // Clear user data cache BEFORE feature flag provider refresh so it picks up fresh credentials
       resetUserCache();
-      // Refresh feature flag provider after login to get updated feature flags (e.g., for provider migration MCPs)
+      // Refresh feature flag provider after login to get updated feature flags (e.g., for archived MCPs)
       refreshFeatureFlagsAfterAuthChange();
       // Clear any stale trusted device token from a previous account before
       // re-enrolling -prevents sending the old token on bridge calls while
@@ -113,11 +113,11 @@ export function getDsxuLoginUiRuntimeProfile() {
   return {
     runtime: 'DSXU Login Command',
     defaultMode: 'local-provider-credentials',
-    isolatedProviderMigrationBoundary: 'ConsoleOAuthFlow / provider OAuth',
+    archivedProviderOAuthBoundary: 'ConsoleOAuthFlow / provider OAuth',
     activationEvidence: [
       'DSXU_CODE_MODE short-circuits OAuth UI',
       'signature-bearing messages are stripped when provider credentials change',
-      'cost state resets without invoking provider migration remote login',
+      'cost state resets without invoking archived remote login',
     ],
   }
 }

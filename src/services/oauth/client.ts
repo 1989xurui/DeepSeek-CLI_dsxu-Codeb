@@ -574,14 +574,14 @@ export function getDsxuOAuthClientRuntimeProfile() {
       'Provider OAuth helpers are not called by DSXU default login path',
     providerTarget: 'DSXU Identity Provider',
     migrationBoundary: [
-      'buildAuthUrl/exchangeCodeForTokens remain provider-migration-only helpers',
+      'buildAuthUrl/exchangeCodeForTokens remain archived-only helpers',
       'ConsoleOAuthFlow and login command isolate this client in DSXU_CODE_MODE',
       'future DSXU identity should implement provider credentials without first-party OAuth',
     ],
     activationEvidence: [
       'OAuth client has explicit DSXU boundary profile',
       'default login path returns local provider guidance before OAuthService construction',
-      'remote bridge initialization is gated by DSXU provider-migration bridge opt-in',
+      'remote bridge initialization is gated by DSXU archived bridge opt-in',
     ],
   }
 }

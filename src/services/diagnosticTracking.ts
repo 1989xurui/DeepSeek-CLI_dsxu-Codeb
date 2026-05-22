@@ -10,8 +10,8 @@ import { jsonParse } from '../utils/slowOperations.js'
 class DiagnosticsTrackingError extends DSXUError {}
 
 const MAX_DIAGNOSTICS_SUMMARY_CHARS = 4000
-const PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX = `_${'cl' + 'aude'}_fs_right:`
-const PROVIDER_MIGRATION_FS_LEFT_URI_PREFIX = `_${'cl' + 'aude'}_fs_left:`
+const ARCHIVED_FS_RIGHT_URI_PREFIX = `_${'cl' + 'aude'}_fs_right:`
+const ARCHIVED_FS_LEFT_URI_PREFIX = `_${'cl' + 'aude'}_fs_left:`
 
 export interface Diagnostic {
   message: string
@@ -40,7 +40,7 @@ export class DiagnosticTrackingService {
   private lastProcessedTimestamps: Map<string, number> = new Map()
 
   // Track which files have received right file diagnostics and if they've changed
-  // Map<normalizedPath, lastProviderMigrationRightFileDiagnostics>
+  // Map<normalizedPath, lastArchivedRightFileDiagnostics>
   private rightFileDiagnosticsState: Map<string, Diagnostic[]> = new Map()
 
   static getInstance(): DiagnosticTrackingService {
@@ -81,8 +81,8 @@ export class DiagnosticTrackingService {
     // Remove our protocol prefixes
     const protocolPrefixes = [
       'file://',
-      PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX,
-      PROVIDER_MIGRATION_FS_LEFT_URI_PREFIX,
+      ARCHIVED_FS_RIGHT_URI_PREFIX,
+      ARCHIVED_FS_LEFT_URI_PREFIX,
     ]
 
     let normalized = fileUri
@@ -184,7 +184,7 @@ export class DiagnosticTrackingService {
   }
 
   /**
-   * Get new diagnostics from file:// and provider-migration shadow-file URIs that aren't in the baseline.
+   * Get new diagnostics from file:// and archived shadow-file URIs that aren't in the baseline.
    * Only processes diagnostics for files that have been edited.
    */
   async getNewDiagnostics(): Promise<DiagnosticFile[]> {
@@ -213,15 +213,15 @@ export class DiagnosticTrackingService {
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
       .filter(file => file.uri.startsWith('file://'))
 
-    const diagnosticsForProviderMigrationRightUrisWithBaselinesMap = new Map<
+    const diagnosticsForArchivedRightUrisWithBaselinesMap = new Map<
       string,
       DiagnosticFile
     >()
     allDiagnosticFiles
       .filter(file => this.baseline.has(this.normalizeFileUri(file.uri)))
-      .filter(file => file.uri.startsWith(PROVIDER_MIGRATION_FS_RIGHT_URI_PREFIX))
+      .filter(file => file.uri.startsWith(ARCHIVED_FS_RIGHT_URI_PREFIX))
       .forEach(file => {
-        diagnosticsForProviderMigrationRightUrisWithBaselinesMap.set(
+        diagnosticsForArchivedRightUrisWithBaselinesMap.set(
           this.normalizeFileUri(file.uri),
           file,
         )
@@ -234,34 +234,34 @@ export class DiagnosticTrackingService {
       const normalizedPath = this.normalizeFileUri(file.uri)
       const baselineDiagnostics = this.baseline.get(normalizedPath) || []
 
-      // Get the provider-migration right-side shadow file if it exists
-      const providerMigrationRightFile =
-        diagnosticsForProviderMigrationRightUrisWithBaselinesMap.get(normalizedPath)
+      // Get the archived right-side shadow file if it exists
+      const archivedRightFile =
+        diagnosticsForArchivedRightUrisWithBaselinesMap.get(normalizedPath)
 
       // Determine which file to use based on the state of right file diagnostics
       let fileToUse = file
 
-      if (providerMigrationRightFile) {
+      if (archivedRightFile) {
         const previousRightDiagnostics =
           this.rightFileDiagnosticsState.get(normalizedPath)
 
-        // Use the provider-migration right-side shadow file if:
+        // Use the archived right-side shadow file if:
         // 1. We've never gotten right file diagnostics for this file (previousRightDiagnostics === undefined)
         // 2. OR the right file diagnostics have just changed
         if (
           !previousRightDiagnostics ||
           !this.areDiagnosticArraysEqual(
             previousRightDiagnostics,
-            providerMigrationRightFile.diagnostics,
+            archivedRightFile.diagnostics,
           )
         ) {
-          fileToUse = providerMigrationRightFile
+          fileToUse = archivedRightFile
         }
 
         // Update our tracking of right file diagnostics
         this.rightFileDiagnosticsState.set(
           normalizedPath,
-          providerMigrationRightFile.diagnostics,
+          archivedRightFile.diagnostics,
         )
       }
 

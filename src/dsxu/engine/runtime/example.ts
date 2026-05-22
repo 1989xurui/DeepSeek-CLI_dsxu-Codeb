@@ -149,6 +149,6 @@ runExample().catch(error => {
   process.exit(1)
 })
 /**
- * V14 FROZEN: runtime example file retained only because Windows ACL blocked
+ * Legacy runtime example file retained only because Windows ACL blocked
  * physical removal after copying to _deleted_files.
  */

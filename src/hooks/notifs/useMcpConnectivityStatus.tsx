@@ -1,10 +1,12 @@
-import { c as _c } from 'react/compiler-runtime'
+﻿import { c as _c } from 'react/compiler-runtime'
 import { useEffect } from 'react'
 import { useNotifications } from 'src/context/notifications.js'
 import { getIsRemoteMode } from '../../bootstrap/state.js'
-import { PROVIDER_MIGRATION_MCP_TRANSPORT } from '../../constants/providerMigrationProtocol.js'
+import {
+  ARCHIVED_MCP_TRANSPORT,
+} from '../../constants/providerMigrationProtocol.js'
 import { Text } from '../../ink.js'
-import { hasProviderMigrationMcpEverConnected } from '../../services/mcp/providerConnectorMigration.js'
+import { hasArchivedMcpEverConnected } from '../../services/mcp/providerConnectorMigration.js'
 import type { MCPServerConnection } from '../../services/mcp/types.js'
 
 type Props = {
@@ -25,17 +27,17 @@ export function useMcpConnectivityStatus({
       if (getIsRemoteMode()) return
 
       const failedLocalClients = mcpClients.filter(isFailedLocalClient)
-      const failedProviderMigrationClients = mcpClients.filter(isFailedProviderMigrationClient)
+      const failedArchivedClients = mcpClients.filter(isFailedArchivedClient)
       const needsAuthLocalServers = mcpClients.filter(isNeedsAuthLocalServer)
-      const needsAuthProviderMigrationServers = mcpClients.filter(
-        isNeedsAuthProviderMigrationServer,
+      const needsAuthArchivedServers = mcpClients.filter(
+        isNeedsAuthArchivedServer,
       )
 
       if (
         failedLocalClients.length === 0 &&
-        failedProviderMigrationClients.length === 0 &&
+        failedArchivedClients.length === 0 &&
         needsAuthLocalServers.length === 0 &&
-        needsAuthProviderMigrationServers.length === 0
+        needsAuthArchivedServers.length === 0
       ) {
         return
       }
@@ -56,14 +58,14 @@ export function useMcpConnectivityStatus({
         })
       }
 
-      if (failedProviderMigrationClients.length > 0) {
+      if (failedArchivedClients.length > 0) {
         addNotification({
-          key: 'mcp-provider-migration-failed',
+          key: 'mcp-archived-connector-failed',
           jsx: (
             <>
               <Text color="error">
-                {failedProviderMigrationClients.length} provider migration{' '}
-                {failedProviderMigrationClients.length === 1
+                {failedArchivedClients.length} archived{' '}
+                {failedArchivedClients.length === 1
                   ? 'connector'
                   : 'connectors'}{' '}
                 unavailable
@@ -94,14 +96,14 @@ export function useMcpConnectivityStatus({
         })
       }
 
-      if (needsAuthProviderMigrationServers.length > 0) {
+      if (needsAuthArchivedServers.length > 0) {
         addNotification({
-          key: 'mcp-provider-migration-needs-auth',
+          key: 'mcp-archived-connector-needs-auth',
           jsx: (
             <>
               <Text color="warning">
-                {needsAuthProviderMigrationServers.length} provider migration{' '}
-                {needsAuthProviderMigrationServers.length === 1
+                {needsAuthArchivedServers.length} archived{' '}
+                {needsAuthArchivedServers.length === 1
                   ? 'connector needs'
                   : 'connectors need'}{' '}
                 auth
@@ -125,26 +127,26 @@ export function useMcpConnectivityStatus({
   useEffect(effect, deps)
 }
 
-function isNeedsAuthProviderMigrationServer(client: MCPServerConnection): boolean {
+function isNeedsAuthArchivedServer(client: MCPServerConnection): boolean {
   return (
     client.type === 'needs-auth' &&
-    client.config.type === PROVIDER_MIGRATION_MCP_TRANSPORT &&
-    hasProviderMigrationMcpEverConnected(client.name)
+    client.config.type === ARCHIVED_MCP_TRANSPORT &&
+    hasArchivedMcpEverConnected(client.name)
   )
 }
 
 function isNeedsAuthLocalServer(client: MCPServerConnection): boolean {
   return (
     client.type === 'needs-auth' &&
-    client.config.type !== PROVIDER_MIGRATION_MCP_TRANSPORT
+    client.config.type !== ARCHIVED_MCP_TRANSPORT
   )
 }
 
-function isFailedProviderMigrationClient(client: MCPServerConnection): boolean {
+function isFailedArchivedClient(client: MCPServerConnection): boolean {
   return (
     client.type === 'failed' &&
-    client.config.type === PROVIDER_MIGRATION_MCP_TRANSPORT &&
-    hasProviderMigrationMcpEverConnected(client.name)
+    client.config.type === ARCHIVED_MCP_TRANSPORT &&
+    hasArchivedMcpEverConnected(client.name)
   )
 }
 
@@ -153,6 +155,6 @@ function isFailedLocalClient(client: MCPServerConnection): boolean {
     client.type === 'failed' &&
     client.config.type !== 'sse-ide' &&
     client.config.type !== 'ws-ide' &&
-    client.config.type !== PROVIDER_MIGRATION_MCP_TRANSPORT
+    client.config.type !== ARCHIVED_MCP_TRANSPORT
   )
 }

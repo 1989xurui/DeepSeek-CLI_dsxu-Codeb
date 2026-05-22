@@ -284,7 +284,7 @@ export async function microcompactMessages(
     }
   }
 
-  // Provider-migration microcompact path removed; tengu_cache_plum_violet is always true.
+  // Archived microcompact path removed; tengu_cache_plum_violet is always true.
   // For contexts where cached microcompact is not available (external builds,
   // non-ant users, unsupported models, sub-agents), no compaction happens here;
   // autocompact handles context pressure instead.

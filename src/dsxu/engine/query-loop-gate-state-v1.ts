@@ -54,6 +54,33 @@ export type DsxuPhase6GateCloseAudit = {
   phase12Residuals: readonly string[]
 }
 
+export type DsxuToolCallReadWriteClass =
+  | 'read-only'
+  | 'write-local'
+  | 'write-external'
+  | 'unknown'
+
+export type DsxuObservedToolCallForStormGate = {
+  toolName: string
+  input: Record<string, unknown>
+  readWriteClass: DsxuToolCallReadWriteClass
+  toolUseId?: string
+}
+
+export type DsxuToolStormRepairSignal =
+  | 'identical_tool_call_storm'
+  | 'mutating_tool_reset_read_window'
+
+export type DsxuToolStormGateResult = {
+  gateState: DsxuQueryLoopGateState | null
+  signals: readonly DsxuToolStormRepairSignal[]
+  blockedCallKey?: string
+  blockedToolName?: string
+  repeatedCount: number
+  threshold: number
+  evidence: readonly string[]
+}
+
 export const DSXU_TOOL_RESULT_AUTO_CONTINUE_GATE_STATE: DsxuQueryLoopGateState = {
   owner: 'query_loop',
   gateId: 'dsxu_tool_result_auto_continue_gate',
@@ -62,6 +89,91 @@ export const DSXU_TOOL_RESULT_AUTO_CONTINUE_GATE_STATE: DsxuQueryLoopGateState =
   blocked: false,
   completionBlocked: true,
   nextAction: 'submit_main_chain_continuation',
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function isMutatingToolCall(call: DsxuObservedToolCallForStormGate): boolean {
+  return call.readWriteClass === 'write-local' || call.readWriteClass === 'write-external'
+}
+
+function toolStormKey(call: DsxuObservedToolCallForStormGate): string {
+  return `${call.toolName}:${stableStringify(call.input)}`
+}
+
+export function buildDsxuIdenticalToolCallStormGate(input: {
+  calls: readonly DsxuObservedToolCallForStormGate[]
+  threshold?: number
+  windowSize?: number
+}): DsxuToolStormGateResult {
+  const threshold = Math.max(2, Math.floor(input.threshold ?? 3))
+  const windowSize = Math.max(threshold, Math.floor(input.windowSize ?? 6))
+  const recentReadKeys: string[] = []
+  const counts = new Map<string, number>()
+  const evidence: string[] = []
+  const signals: DsxuToolStormRepairSignal[] = []
+
+  for (const call of input.calls) {
+    if (isMutatingToolCall(call)) {
+      if (recentReadKeys.length > 0 || counts.size > 0) {
+        signals.push('mutating_tool_reset_read_window')
+        evidence.push(`mutation:${call.toolName} clears read-only duplicate window`)
+      }
+      recentReadKeys.length = 0
+      counts.clear()
+      continue
+    }
+
+    if (call.readWriteClass !== 'read-only') continue
+
+    const key = toolStormKey(call)
+    recentReadKeys.push(key)
+    while (recentReadKeys.length > windowSize) {
+      const removed = recentReadKeys.shift()
+      if (!removed) continue
+      const nextCount = (counts.get(removed) ?? 1) - 1
+      if (nextCount <= 0) counts.delete(removed)
+      else counts.set(removed, nextCount)
+    }
+
+    const count = (counts.get(key) ?? 0) + 1
+    counts.set(key, count)
+    evidence.push(`read:${call.toolName} count=${count} key=${key}`)
+    if (count >= threshold) {
+      signals.push('identical_tool_call_storm')
+      return {
+        gateState: buildDsxuToolBatchGateState({
+          gateId: 'dsxu_identical_tool_call_storm_gate',
+          gateClass: 'RECOVERY_BLOCK',
+          blocked: true,
+          nextAction: 'change_strategy_or_mutate_source_before_repeating_identical_tool_call',
+        }),
+        signals,
+        blockedCallKey: key,
+        blockedToolName: call.toolName,
+        repeatedCount: count,
+        threshold,
+        evidence,
+      }
+    }
+  }
+
+  return {
+    gateState: null,
+    signals,
+    repeatedCount: 0,
+    threshold,
+    evidence,
+  }
 }
 
 export function buildDsxuPostPassFinalizationGateState(

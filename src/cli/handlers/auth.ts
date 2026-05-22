@@ -9,6 +9,7 @@ import {
   logEvent,
 } from '../../services/analytics/index.js'
 import { getSSLErrorHint } from '../../services/api/errorUtils.js'
+import { saveApiKey } from '../../services/auth/dsxuProviderAuth.js'
 import { fetchAndStoreDsxuCodeFirstTokenDate } from '../../services/api/firstTokenDate.js'
 import {
   createAndStoreApiKey,
@@ -30,7 +31,7 @@ import {
   saveOAuthTokensIfNeeded,
   validateForceLoginOrg,
 } from '../../utils/auth.js'
-import { saveGlobalConfig } from '../../utils/config.js'
+import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { isRunningOnHomespace } from '../../utils/envUtils.js'
 import { errorMessage } from '../../utils/errors.js'
@@ -50,17 +51,110 @@ const hasDSXUModelGateway = (): boolean =>
     process.env.DEEPSEEK_API_KEY ||
       process.env.DSXU_API_KEY ||
       process.env.DSXU_DEEPSEEK_API_KEY ||
-      process.env.LITELLM_BASE_URL,
+      process.env.LITELLM_BASE_URL ||
+      getGlobalConfig().primaryApiKey,
   )
 
+const getDSXUModelGatewaySource = (): string | null =>
+  process.env.DSXU_API_KEY
+    ? 'DSXU_API_KEY'
+    : process.env.DEEPSEEK_API_KEY
+      ? 'DEEPSEEK_API_KEY'
+      : process.env.DSXU_DEEPSEEK_API_KEY
+        ? 'DSXU_DEEPSEEK_API_KEY'
+        : process.env.LITELLM_BASE_URL
+          ? 'LITELLM_BASE_URL'
+          : getGlobalConfig().primaryApiKey
+            ? 'DSXU managed local key'
+            : null
+
 const PROVIDER_SUBSCRIPTION_LOGIN_METHOD = 'cla' + 'udeai'
-const PROVIDER_MIGRATION_CLOUD_AUTH_SOURCE = 'cla' + 'ude.ai'
-const PROVIDER_MIGRATION_SOURCE_API_KEY_ENV =
+const ARCHIVED_CLOUD_AUTH_SOURCE = 'cla' + 'ude.ai'
+const ARCHIVED_SOURCE_API_KEY_ENV =
   ('ANTH' + 'ROPIC_API_KEY') as keyof NodeJS.ProcessEnv
-const PROVIDER_MIGRATION_OAUTH_REFRESH_TOKEN_ENV =
+const ARCHIVED_OAUTH_REFRESH_TOKEN_ENV =
   ('CLA' + 'UDE_CODE_OAUTH_REFRESH_TOKEN') as keyof NodeJS.ProcessEnv
-const PROVIDER_MIGRATION_OAUTH_SCOPES_ENV =
+const ARCHIVED_OAUTH_SCOPES_ENV =
   ('CLA' + 'UDE_CODE_OAUTH_SCOPES') as keyof NodeJS.ProcessEnv
+
+async function readStdinText(): Promise<string> {
+  const chunks: Buffer[] = []
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)))
+  }
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+async function readSecretLineFromTty(prompt: string): Promise<string> {
+  process.stdout.write(prompt)
+  const stdin = process.stdin
+  const previousRawMode = stdin.isRaw
+  stdin.setRawMode?.(true)
+  stdin.resume()
+
+  return await new Promise<string>((resolve, reject) => {
+    let value = ''
+
+    const cleanup = () => {
+      stdin.off('data', onData)
+      stdin.setRawMode?.(previousRawMode)
+      stdin.pause()
+    }
+
+    const onData = (chunk: Buffer) => {
+      for (const byte of chunk) {
+        if (byte === 3) {
+          cleanup()
+          process.stdout.write('\n')
+          reject(new Error('Cancelled API key setup.'))
+          return
+        }
+        if (byte === 13 || byte === 10) {
+          cleanup()
+          process.stdout.write('\n')
+          resolve(value.trim())
+          return
+        }
+        if (byte === 8 || byte === 127) {
+          if (value.length > 0) {
+            value = value.slice(0, -1)
+            process.stdout.write('\b \b')
+          }
+          continue
+        }
+        if (byte >= 32 && byte <= 126) {
+          value += String.fromCharCode(byte)
+          process.stdout.write('*')
+        }
+      }
+    }
+
+    stdin.on('data', onData)
+  })
+}
+
+async function saveDsxuModelApiKey(apiKey: string): Promise<void> {
+  const trimmed = apiKey.trim()
+  if (!trimmed) {
+    throw new Error('API key is empty.')
+  }
+  await saveApiKey(trimmed)
+  saveGlobalConfig(current => ({
+    ...current,
+    hasCompletedOnboarding: true,
+  }))
+}
+
+function writeDsxuModelAccessGuidance(): void {
+  process.stdout.write(
+    [
+      'DSXU Code uses DeepSeek/DSXU model access instead of provider cloud /login.',
+      'Configure DSXU model access with DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.',
+      'For interactive setup, run dsxu-code auth login in a terminal.',
+      'For scripts, pipe a key into: dsxu-code auth login --api-key-stdin',
+    ].join('\n') + '\n',
+  )
+}
 
 /**
  * Shared post-token-acquisition logic. Saves tokens, fetches profile/roles,
@@ -132,22 +226,51 @@ export async function authLogin({
   email,
   sso,
   console: useConsole,
+  apiKeyStdin,
   [PROVIDER_SUBSCRIPTION_LOGIN_METHOD]: providerSubscriptionLogin,
 }: {
   email?: string
   sso?: boolean
   console?: boolean
+  apiKeyStdin?: boolean
   [PROVIDER_SUBSCRIPTION_LOGIN_METHOD]?: boolean
 }): Promise<void> {
   if (isDSXUCodeMode()) {
-    process.stdout.write(
-      [
-        'DSXU Code does not use provider cloud /login.',
-        'Configure DSXU model access with DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.',
-        'Then run: dsxu-code',
-      ].join('\n') + '\n',
-    )
-    process.exit(0)
+    try {
+      if (apiKeyStdin) {
+        await saveDsxuModelApiKey(await readStdinText())
+        process.stdout.write(
+          'DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n',
+        )
+        process.exit(0)
+      }
+
+      if (hasDSXUModelGateway()) {
+        process.stdout.write(
+          `DSXU model access is already configured via ${getDSXUModelGatewaySource()}.\n`,
+        )
+        process.exit(0)
+      }
+
+      if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        writeDsxuModelAccessGuidance()
+        process.exit(0)
+      }
+
+      process.stdout.write('DSXU Code first-run model setup\n')
+      process.stdout.write(
+        'Default route: deepseek-v4-flash. Pro is only admitted for explicit high-risk review, recovery, or failed verification gates.\n',
+      )
+      const apiKey = await readSecretLineFromTty('Paste your DeepSeek API key: ')
+      await saveDsxuModelApiKey(apiKey)
+      process.stdout.write(
+        'DSXU model access saved. Run dsxu-code doctor to verify provider readiness and cost policy.\n',
+      )
+      process.exit(0)
+    } catch (err) {
+      process.stderr.write(`Model access setup failed: ${errorMessage(err)}\n`)
+      process.exit(1)
+    }
   }
 
   if (useConsole && providerSubscriptionLogin) {
@@ -160,7 +283,7 @@ export async function authLogin({
   const settings = getInitialSettings()
   // forceLoginMethod is a hard constraint (enterprise setting) and mirrors Console OAuth behavior.
   // Without it, --console selects Console; the provider subscription flag (or no flag)
-  // still enters the provider migration flow.
+  // still enters the archived cloud OAuth flow.
   const loginWithProviderCloud = settings.forceLoginMethod
     ? settings.forceLoginMethod === PROVIDER_SUBSCRIPTION_LOGIN_METHOD
     : !useConsole
@@ -168,12 +291,12 @@ export async function authLogin({
 
   // Fast path: if a refresh token is provided via env var, skip the browser
   // OAuth flow and exchange it directly for tokens.
-  const envRefreshToken = process.env[PROVIDER_MIGRATION_OAUTH_REFRESH_TOKEN_ENV]
+  const envRefreshToken = process.env[ARCHIVED_OAUTH_REFRESH_TOKEN_ENV]
   if (envRefreshToken) {
-    const envScopes = process.env[PROVIDER_MIGRATION_OAUTH_SCOPES_ENV]
+    const envScopes = process.env[ARCHIVED_OAUTH_SCOPES_ENV]
     if (!envScopes) {
       process.stderr.write(
-        'Provider migration OAuth scopes are required when using the provider OAuth refresh token env.\n' +
+        'Archived cloud OAuth scopes are required when using the archived OAuth refresh token env.\n' +
           'Set it to the space-separated scopes the refresh token was issued with\n' +
           '(e.g. "user:inference" or the full profile/inference/session/MCP scope set).\n',
       )
@@ -283,15 +406,7 @@ export async function authStatus(opts: {
             authMethod: 'dsxu_model_gateway',
             apiProvider: process.env.DSXU_MODEL_PROVIDER ?? 'deepseek',
             modelGateway: process.env.DSXU_MODEL_GATEWAY ?? 'direct',
-            apiKeySource: process.env.DSXU_API_KEY
-              ? 'DSXU_API_KEY'
-              : process.env.DEEPSEEK_API_KEY
-                ? 'DEEPSEEK_API_KEY'
-                : process.env.DSXU_DEEPSEEK_API_KEY
-                  ? 'DSXU_DEEPSEEK_API_KEY'
-                  : process.env.LITELLM_BASE_URL
-                    ? 'LITELLM_BASE_URL'
-                    : null,
+            apiKeySource: getDSXUModelGatewaySource(),
           },
           null,
           2,
@@ -304,7 +419,7 @@ export async function authStatus(opts: {
   const { source: authTokenSource, hasToken } = getAuthTokenSource()
   const { source: apiKeySource } = getProviderApiKeyWithSource()
   const hasApiKeyEnvVar =
-    !!process.env[PROVIDER_MIGRATION_SOURCE_API_KEY_ENV] && !isRunningOnHomespace()
+    !!process.env[ARCHIVED_SOURCE_API_KEY_ENV] && !isRunningOnHomespace()
   const oauthAccount = getOauthAccountInfo()
   const subscriptionType = getSubscriptionType()
   const using3P = isUsing3PServices()
@@ -315,13 +430,13 @@ export async function authStatus(opts: {
   let authMethod: string = 'none'
   if (using3P) {
     authMethod = 'third_party'
-  } else if (authTokenSource === PROVIDER_MIGRATION_CLOUD_AUTH_SOURCE) {
+  } else if (authTokenSource === ARCHIVED_CLOUD_AUTH_SOURCE) {
     authMethod = 'provider_cloud'
   } else if (authTokenSource === 'apiKeyHelper') {
     authMethod = 'api_key_helper'
   } else if (authTokenSource !== 'none') {
     authMethod = 'oauth_token'
-  } else if (apiKeySource === PROVIDER_MIGRATION_SOURCE_API_KEY_ENV || hasApiKeyEnvVar) {
+  } else if (apiKeySource === ARCHIVED_SOURCE_API_KEY_ENV || hasApiKeyEnvVar) {
     authMethod = 'api_key'
   } else if (apiKeySource === '/login managed key') {
     authMethod = 'provider_cloud'
@@ -351,7 +466,7 @@ export async function authStatus(opts: {
       }
     }
     if (!hasAuthProperty && hasApiKeyEnvVar) {
-      process.stdout.write('API key: provider-migration source API key env\n')
+      process.stdout.write('API key: archived source API key env\n')
     }
     if (!loggedIn) {
       process.stdout.write(
@@ -364,7 +479,7 @@ export async function authStatus(opts: {
       apiKeySource !== 'none'
         ? apiKeySource
         : hasApiKeyEnvVar
-          ? PROVIDER_MIGRATION_SOURCE_API_KEY_ENV
+          ? ARCHIVED_SOURCE_API_KEY_ENV
           : null
     const output: Record<string, string | boolean | null> = {
       loggedIn,

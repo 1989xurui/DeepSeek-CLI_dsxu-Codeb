@@ -104,11 +104,11 @@ export function getDsxuFileReadLimitsRuntimeProfile(): {
     defaultMaxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
     envOverrides: [
       'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS',
-      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS (provider migration alias)',
+      'DSXU_CODE_FILE_READ_MAX_OUTPUT_TOKENS (archived alias)',
     ],
     maxSizeSource: 'MAX_OUTPUT_SIZE gates total file size before reading',
     activationEvidence: [
-      'DSXU env override has priority over provider-migration env override',
+      'DSXU env override has priority over archived env override',
       'feature flag provider/file-limit override is validated field-by-field',
       'invalid/zero caps fall back to hardcoded safe defaults',
     ],

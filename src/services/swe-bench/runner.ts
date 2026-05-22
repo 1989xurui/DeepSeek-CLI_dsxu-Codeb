@@ -55,6 +55,9 @@ export class SWEBenchRunner {
         score: 0,
         metrics: {},
       },
+      publicBenchmarkClaimAllowed: false,
+      claimBoundary:
+        'DSXU internal SWE-shaped task runner only; public benchmark claims require fixed manifest, raw transcript, rubric, and release evidence.',
       execution: {
         startTime,
         model: this.config.model.name,
@@ -359,7 +362,8 @@ export class SWEBenchRunner {
     const failed = total - passed;
     const avgScore = total > 0 ? results.reduce((sum, r) => sum + r.evaluation.score, 0) / total : 0;
 
-    let report = '# SWE-bench 运行报告\n\n';
+    let report = '# DSXU internal SWE-shaped task runner report\n\n';
+    report += '> Claim boundary: internal harness evidence only. Do not use this report as a public SWE-bench score, external comparison, or release claim without fixed manifest, raw transcript, rubric, and paired evidence.\n\n';
     report += '## 概要\n';
     report += `- 总任务数: ${total}\n`;
     report += `- 通过数: ${passed}\n`;

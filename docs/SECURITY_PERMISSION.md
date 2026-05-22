@@ -29,7 +29,7 @@ These must require explicit permission or a documented owner gate:
 
 - Never print API keys in normal logs.
 - Prefer `DSXU_API_KEY`, `DEEPSEEK_API_KEY`, or `DSXU_DEEPSEEK_API_KEY`.
-- Provider-migration keys are not DSXU default runtime credentials.
+- Archived source keys are not DSXU default runtime credentials.
 - Diagnostic output should redact tokens and base64 credentials.
 
 ## Filesystem

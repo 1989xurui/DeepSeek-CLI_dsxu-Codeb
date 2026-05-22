@@ -895,7 +895,7 @@ async function performPluginUpdate({
     // Try to load manifest from plugin directory (for version info)
     let pluginManifest: PluginManifest | undefined
     const dsxuManifestPath = join(sourcePath, '.dsxu-plugin', 'plugin.json')
-    const providerMigrationManifestPath = join(
+    const archivedManifestPath = join(
       sourcePath,
       `.${'cl' + 'aude'}-plugin`,
       'plugin.json',
@@ -903,7 +903,7 @@ async function performPluginUpdate({
     const manifestPath = (await fs
       .stat(dsxuManifestPath)
       .then(() => dsxuManifestPath)
-      .catch(() => providerMigrationManifestPath))
+      .catch(() => archivedManifestPath))
     try {
       pluginManifest = await loadPluginManifest(
         manifestPath,

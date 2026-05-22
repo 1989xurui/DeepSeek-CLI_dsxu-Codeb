@@ -76,7 +76,7 @@ export const EXPLORE_AGENT: BuiltInAgentDefinition = {
   source: 'built-in',
   baseDir: 'built-in',
   // Explore inherits the DSXU parent model strategy. Speed/cost belongs in the
-  // DSXU model policy, not in provider-migration source-tier aliases.
+  // DSXU model policy, not in archived source-tier aliases.
   model: 'inherit',
   // Explore is a fast read-only search agent - it doesn't need commit/PR/lint
   // rules from DSXU.md. The main agent has full context and interprets results.

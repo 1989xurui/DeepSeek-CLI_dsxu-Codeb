@@ -16,7 +16,8 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { isProviderMigrationPromptCacheBreakDetectionExcludedModel } from '../../utils/model/providerMigration/providerMigrationPromptCacheEnv.js'
+import { recordCachePrefixRegistry } from '../cache-prefix-registry.js'
+import { isArchivedPromptCacheBreakDetectionExcludedModel } from '../../utils/model/providerMigration/providerMigrationPromptCacheEnv.js'
 
 function getCacheBreakDiffPath(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -135,16 +136,25 @@ export function getDsxuPromptCacheRuntimeProfile(): {
   diffDir: string
   trackedSources: readonly string[]
   minCacheMissTokens: number
-  providerMigrationPolicy: string
+  archivedSourcePolicy: string
 } {
   return {
     runtime: 'DSXU Prompt Cache Break Detection',
     diffDir: getPromptCacheDiffDir(),
     trackedSources: TRACKED_SOURCE_PREFIXES,
     minCacheMissTokens: MIN_CACHE_MISS_TOKENS,
-    providerMigrationPolicy:
+    archivedSourcePolicy:
       'Provider fields in snapshots are treated as wire/cache migration projection only; DSXU owns cache accounting and diff storage',
   }
+}
+
+type CacheWarmupRecommendation = {
+  owner: 'DeepSeek route/cost/cache'
+  mode: 'dry-run-only'
+  command: string
+  debounceMs: number
+  reason: string
+  claimBoundary: string
 }
 
 // Provider server-side prompt cache TTL thresholds to test. In DSXU mode this
@@ -156,9 +166,9 @@ export function getDsxuPromptCacheRuntimeProfile(): {
 const CACHE_TTL_5MIN_MS = 5 * 60 * 1000
 export const CACHE_TTL_1HOUR_MS = 60 * 60 * 1000
 
-// Models to exclude from cache break detection through hidden provider-migration policy.
+// Models to exclude from cache break detection through hidden archived policy.
 function isExcludedModel(model: string): boolean {
-  return isProviderMigrationPromptCacheBreakDetectionExcludedModel(model)
+  return isArchivedPromptCacheBreakDetectionExcludedModel(model)
 }
 
 /**
@@ -207,6 +217,25 @@ function computeHash(data: unknown): number {
   }
   // Fallback for non-Bun runtimes (e.g. Node.js via npm global install)
   return djb2Hash(str)
+}
+
+function safeModelForCommand(model: string): string {
+  return /^[A-Za-z0-9._:-]+$/.test(model) ? model : 'deepseek-v4-flash'
+}
+
+function buildCacheWarmupRecommendation(input: {
+  model: string
+  tokenDrop: number
+}): CacheWarmupRecommendation {
+  return {
+    owner: 'DeepSeek route/cost/cache',
+    mode: 'dry-run-only',
+    command: `bun run cache:reality-run --model ${safeModelForCommand(input.model)}`,
+    debounceMs: 60_000,
+    reason: `cache read dropped by ${input.tokenDrop} tokens; run a hash-only dry-run reality check before any live warmup`,
+    claimBoundary:
+      'recommendation only; no provider call and no cache-hit improvement claim until cache:reality-run live A/B passes',
+  }
 }
 
 /** MCP tool names are user-controlled (server config) and may leak filepaths.
@@ -323,6 +352,14 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
     const effortStr = effortValue === undefined ? '' : String(effortValue)
     const extraBodyHash =
       extraBodyParams === undefined ? 0 : computeHash(extraBodyParams)
+    recordCachePrefixRegistry({
+      querySource,
+      workflowKind: querySource,
+      model,
+      stablePrefixHash: String(systemHash),
+      toolSchemaHash: String(toolsHash),
+      cacheEpochHash: [model, systemHash, toolsHash, globalCacheStrategy, effortStr].join(':'),
+    })
 
     const prev = previousStateBySource.get(key)
 
@@ -617,6 +654,18 @@ export async function checkResponseForCacheBreak(
     } else {
       reason = 'unknown cause'
     }
+    const warmupRecommendation = buildCacheWarmupRecommendation({
+      model: state.model,
+      tokenDrop,
+    })
+    const cachePrefixRegistry = recordCachePrefixRegistry({
+      querySource,
+      workflowKind: querySource,
+      model: state.model,
+      stablePrefixHash: String(state.systemHash),
+      toolSchemaHash: String(state.toolsHash),
+      cacheEpochHash: [state.model, state.systemHash, state.toolsHash, state.globalCacheStrategy, state.effortValue].join(':'),
+    })
 
     logEvent('tengu_prompt_cache_break', {
       systemPromptChanged: changes?.systemPromptChanged ?? false,
@@ -672,6 +721,16 @@ export async function checkResponseForCacheBreak(
       lastAssistantMsgOver1hAgo,
       requestId: (requestId ??
         '') as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      warmupMode:
+        warmupRecommendation.mode as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      warmupCommand:
+        warmupRecommendation.command as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      warmupClaimBoundary:
+        warmupRecommendation.claimBoundary as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      cachePrefixRegistryStatus:
+        cachePrefixRegistry.status as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      cachePrefixRegistryLane:
+        cachePrefixRegistry.lane as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
 
     // Write diff file for ant debugging via --debug. The path is included in
@@ -686,7 +745,7 @@ export async function checkResponseForCacheBreak(
     }
 
     const diffSuffix = diffPath ? `, diff: ${diffPath}` : ''
-    const summary = `[PROMPT CACHE BREAK] ${reason} [source=${querySource}, call #${state.callCount}, cache read: ${prevCacheRead}  ->  ${cacheReadTokens}, creation: ${cacheCreationTokens}${diffSuffix}]`
+    const summary = `[PROMPT CACHE BREAK] ${reason} [source=${querySource}, call #${state.callCount}, cache read: ${prevCacheRead}  ->  ${cacheReadTokens}, creation: ${cacheCreationTokens}${diffSuffix}, warmup=${warmupRecommendation.mode}, registry=${cachePrefixRegistry.status}]`
 
     logForDebugging(summary, { level: 'warn' })
 

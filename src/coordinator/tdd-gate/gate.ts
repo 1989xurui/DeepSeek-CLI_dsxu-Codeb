@@ -1,5 +1,5 @@
 /**
- * R5-21 TDD Gate 主函数
+ * R5-21 TDD Gate main entry.
  */
 
 import type { TDDContext, TDDGateConfig, TDDGateResult } from './contract';
@@ -7,27 +7,22 @@ import { generateTestSpec } from './generator';
 import { runRedPhase, runGreenPhase } from './runner';
 
 /**
- * 完整 TDD 门：generateTestSpec → runRedPhase → runGreenPhase
- *
- * 红阶段失败 → 整体失败，不进绿阶段
- * 绿阶段失败 → 整体失败
- * 两阶段都成功 → passed=true
+ * Full TDD gate: generateTestSpec -> runRedPhase -> runGreenPhase.
  */
 export async function tddGate(
   context: TDDContext,
-  config?: Partial<TDDGateConfig>
+  config?: Partial<TDDGateConfig>,
 ): Promise<TDDGateResult> {
   const startTime = Date.now();
 
   try {
-    // 1. 生成测试
+    // 1. Generate a test specification.
     const testSpec = await generateTestSpec(context, config);
 
-    // 2. 红阶段
+    // 2. Red phase.
     const redResult = await runRedPhase(testSpec, config);
 
     if (!redResult.success) {
-      // 红阶段失败 → 不进绿阶段
       return {
         passed: false,
         redPhase: redResult,
@@ -36,7 +31,7 @@ export async function tddGate(
       };
     }
 
-    // 3. 绿阶段
+    // 3. Green phase.
     const greenResult = await runGreenPhase(testSpec, config);
 
     return {
@@ -46,7 +41,6 @@ export async function tddGate(
       durationMs: Date.now() - startTime,
       error: greenResult.success ? undefined : (greenResult.error || 'Green phase failed'),
     };
-
   } catch (err) {
     return {
       passed: false,

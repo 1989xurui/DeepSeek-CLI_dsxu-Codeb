@@ -1,26 +1,26 @@
 {
   "schemaVersion": "dsxu.v24.baseline-audit.v1",
-  "generatedAt": "2026-05-15T05:27:01.026Z",
+  "generatedAt": "2026-05-16T15:36:23.314Z",
   "repoRoot": "D:\\DSXU-code",
-  "claudeSourceRoot": "D:\\源代码claude\\src",
-  "claudeSourceExists": true,
+  "referenceSourceRoot": "D:\\源代码claude\\src",
+  "referenceSourceExists": true,
   "sourceCounts": {
-    "publishSurfaceFiles": 2891,
-    "dsxuSourceFiles": 2650,
-    "claudeSourceFiles": 1902
+    "publishSurfaceFiles": 3043,
+    "dsxuSourceFiles": 2668,
+    "referenceSourceFiles": 1902
   },
   "topDirs": {
     "dsxu": [
+      "dsxu:612",
       "utils:604",
-      "dsxu:598",
-      "components:391",
-      "services:216",
+      "components:392",
+      "services:218",
       "commands:208",
       "tools:202",
       "hooks:104",
       "ink:96"
     ],
-    "claude": [
+    "reference": [
       "utils:564",
       "components:389",
       "commands:207",
@@ -32,13 +32,13 @@
     ]
   },
   "gitStatusShort": {
-    "total": 2024,
+    "total": 2353,
     "staged": 2024,
-    "unstaged": 12,
-    "untracked": 0,
-    "modified": 1780,
-    "deleted": 420,
-    "renamed": 326
+    "unstaged": 217,
+    "untracked": 222,
+    "modified": 1889,
+    "deleted": 587,
+    "renamed": 394
   },
   "v20Evidence": {
     "finalPreflight": {
@@ -66,7 +66,7 @@
     {
       "gate": "v20-final-preflight",
       "status": "PASS",
-      "count": 2005,
+      "count": 2353,
       "requiredNextAction": "keep as inherited release baseline; V24 cannot claim 95 from this alone"
     },
     {

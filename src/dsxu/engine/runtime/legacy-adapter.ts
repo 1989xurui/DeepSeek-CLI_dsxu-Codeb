@@ -234,6 +234,6 @@ export function createLegacySessionStoreAdapter(
 ): LegacySessionStore {
   return new LegacySessionStoreAdapter(persist, baseDir)
 }
-// V14 FROZEN: this legacy adapter has been copied to
+// Legacy adapter copied to
 // src/dsxu/_deleted_files/legacy-freeze/legacy-adapter.ts.
 // It must not be imported by DSXU mainline code.

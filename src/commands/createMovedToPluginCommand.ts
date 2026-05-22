@@ -55,7 +55,7 @@ export function createMovedToPluginCommand({
 
 3. If the DSXU plugin marketplace is not configured in this environment, use the built-in fallback flow only when it is explicitly available.
 
-Do not attempt to run the command through the provider-migration source marketplace.`,
+Do not attempt to run the command through the archived source marketplace.`,
           },
         ]
       }
@@ -71,7 +71,7 @@ Do not attempt to run the command through the provider-migration source marketpl
 
 2. After installation, use /${pluginName}:${pluginCommand} to run this command
 
-3. For more information, see the provider-migration source marketplace README for ${pluginName}.
+3. For more information, see the archived source marketplace README for ${pluginName}.
 
 Do not attempt to run the command. Simply inform the user about the plugin installation.`,
           },
@@ -86,18 +86,18 @@ Do not attempt to run the command. Simply inform the user about the plugin insta
 export function getDsxuMovedToPluginCommandRuntimeProfile(): {
   runtime: 'DSXU Plugin Command Migration'
   dsxuInstallTemplate: string
-  providerMigrationPolicy: string
+  archivedPolicy: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Plugin Command Migration',
     dsxuInstallTemplate:
       'dsxu plugin install <plugin>@dsxu-code-marketplace then /<plugin>:<command>',
-    providerMigrationPolicy:
-      'Provider-migration source marketplace prompt is kept only outside DSXU runtime for historical migration projection',
+    archivedPolicy:
+      'Archived source marketplace prompt is kept only outside DSXU runtime for historical migration projection',
     activationEvidence: [
       'DSXU_CODE_MODE=1 forces DSXU plugin instructions',
-      'provider-migration source plugin install is not emitted in DSXU runtime mode',
+      'archived source plugin install is not emitted in DSXU runtime mode',
       'private-marketplace fallback remains available for non-DSXU builds',
     ],
   }

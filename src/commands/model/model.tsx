@@ -12,9 +12,9 @@ import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 import { clearFastModeCooldown, isFastModeAvailable, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
 import { MODEL_ALIASES } from '../../utils/model/aliases.js';
 import {
-  isProviderMigrationCoding1mUnavailable,
-  isProviderMigrationExtraUsageMergeEnabled,
-  isProviderMigrationHighCapacity1mUnavailable,
+  isArchivedCoding1mUnavailable,
+  isArchivedExtraUsageMergeEnabled,
+  isArchivedHighCapacity1mUnavailable,
 } from '../../utils/model/providerMigration/providerMigration1mAccess.js';
 import { getDefaultMainLoopModelSetting, renderDefaultModelSetting } from '../../utils/model/model.js';
 import { isModelAllowed } from '../../utils/model/modelAllowlist.js';
@@ -76,7 +76,7 @@ function ModelPickerWrapper(t0) {
           }
         }
       }
-      if (isBilledAsExtraUsage(model, wasFastModeToggledOn === true, isProviderMigrationExtraUsageMergeEnabled())) {
+      if (isBilledAsExtraUsage(model, wasFastModeToggledOn === true, isArchivedExtraUsageMergeEnabled())) {
         message = message + " - Billed as extra usage";
       }
       if (wasFastModeToggledOn === false) {
@@ -221,7 +221,7 @@ function SetModelAndClose({
           wasFastModeToggledOn = true;
         }
       }
-      if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isProviderMigrationExtraUsageMergeEnabled())) {
+      if (isBilledAsExtraUsage(modelValue, wasFastModeToggledOn === true, isArchivedExtraUsageMergeEnabled())) {
         message += ` - Billed as extra usage`;
       }
       if (wasFastModeToggledOn === false) {
@@ -238,10 +238,10 @@ function isKnownAlias(model: string): boolean {
   return (MODEL_ALIASES as readonly string[]).includes(model.toLowerCase().trim());
 }
 function isHighCapacity1mUnavailable(model: string): boolean {
-  return isProviderMigrationHighCapacity1mUnavailable(model);
+  return isArchivedHighCapacity1mUnavailable(model);
 }
 function isCoding1mUnavailable(model: string): boolean {
-  return isProviderMigrationCoding1mUnavailable(model);
+  return isArchivedCoding1mUnavailable(model);
 }
 function ShowModelAndClose(t0) {
   const {

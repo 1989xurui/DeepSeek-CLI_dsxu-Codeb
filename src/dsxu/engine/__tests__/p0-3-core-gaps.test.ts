@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { QueryEngine } from '../index'
+import { EngineHarness } from '../index'
 import { createMockLLMCall } from '../llm-adapter'
 import { SessionStore, SessionSummaryManager, AgentSummaryManager } from '../session'
 import { SpeculationManager, ToolCallSpeculationStrategy, type SpeculationStrategy, type SpeculationContext, type SpeculationOptions, type SpeculationPlan, type SpeculationResult } from '../speculation'
@@ -216,7 +216,7 @@ describe('P0-3 Core Gaps闭环测试', () => {
     })
   })
 
-  describe('QueryEngine集成测试', () => {
+  describe('EngineHarness集成测试', () => {
     it('应该启用和禁用Speculation系统', () => {
       const mockLLM = createMockLLMCall([
         {
@@ -227,7 +227,7 @@ describe('P0-3 Core Gaps闭环测试', () => {
         },
       ])
 
-      const engine = new QueryEngine({
+      const engine = new EngineHarness({
         llmCall: mockLLM,
         speculation: {
           enabled: false,
@@ -262,7 +262,7 @@ describe('P0-3 Core Gaps闭环测试', () => {
         },
       ])
 
-      const engine = new QueryEngine({
+      const engine = new EngineHarness({
         llmCall: mockLLM,
         speculation: { enabled: true },
       })

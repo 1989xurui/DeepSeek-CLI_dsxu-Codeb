@@ -86,7 +86,7 @@ async function createWorkflowFile(
         ...context,
       })
       throw new Error(
-        `Failed to create workflow file ${workflowPath}: A DSXU/provider-migration source workflow file already exists in this repository. Please remove it first or update it manually.`,
+        `Failed to create workflow file ${workflowPath}: A DSXU/archived source workflow file already exists in this repository. Please remove it first or update it manually.`,
       )
     }
 
@@ -101,7 +101,7 @@ async function createWorkflowFile(
       '\n\nNeed help? Common issues:\n' +
       '- Permission denied -> Run: gh auth refresh -h github.com -s repo,workflow\n' +
       '- Not authorized -> Ensure you have admin access to the repository\n' +
-      '- For manual setup -> Visit: DSXU GitHub workflow template or provider-migration source action docs'
+      '- For manual setup -> Visit: DSXU GitHub workflow template or archived setup docs'
 
     throw new Error(
       `Failed to create workflow file ${workflowPath}: ${createFileResult.stderr}${helpText}`,
@@ -274,7 +274,7 @@ export async function setupGitHubActions(
           '\n\nNeed help? Common issues:\n' +
           '- Permission denied -> Run: gh auth refresh -h github.com -s repo\n' +
           '- Not authorized -> Ensure you have admin access to the repository\n' +
-          '- For manual setup -> Visit: DSXU GitHub workflow template or provider-migration source action docs'
+          '- For manual setup -> Visit: DSXU GitHub workflow template or archived setup docs'
 
         throw new Error(
           `Failed to set API key secret: ${setSecretResult.stderr || 'Unknown error'}${helpText}`,

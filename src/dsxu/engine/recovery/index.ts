@@ -1,41 +1,20 @@
 /**
- * Recovery Planner 主导出文件
- * F-4M 任务：v3 Recovery Planner 并主链收口
+ * Recovery Planner mainline export.
  *
- * 当前主实现：v3 Recovery Planner
- * 旧版本保留为 legacy，不推荐新代码使用
+ * Product and engine callers use the v3 recovery surface only. Historical
+ * v2 files remain addressable by direct test/harness imports, but they are
+ * not re-exported from this mainline barrel.
  */
 
 import { RecoveryIntegrationV3 } from './recovery-integration-v3'
 
-// ==================== V3 主实现导出 ====================
-// 当前 Recovery 主实现，F-4Z 隔离实现已验证
-
-// 首先导出类型（避免冲突）
 export type { RecoveryReason, RecoveryAction, RecoveryDecision, RecoveryContext } from './recovery-types-v3'
-
-// 然后导出实现
 export { RecoveryPlannerV3 } from './recovery-planner-v3'
 export { RecoveryIntegrationV3 } from './recovery-integration-v3'
-
-// 导出默认实例别名（v3版本）
 export { RecoveryIntegrationV3 as RecoveryIntegration } from './recovery-integration-v3'
 export { RecoveryPlannerV3 as RecoveryPlanner } from './recovery-planner-v3'
 
-// ==================== Legacy 导出（保留但不推荐） ====================
-// 以下为旧版本，仅用于兼容现有代码
-// 新代码应使用上面的 v3 导出
-export * from './recovery-types-v2'
-export * from './recovery-planner-v2'
-export * from './recovery-integration-v2'
-
-export * from './types'
-export * from './recovery-planner'
-export * from './integration'
-
-// 旧版本默认实例（标记为 legacy）
-export { recoveryFactory } from './integration'
-// ===== V10-2D Coordinator Recovery Consumption Bridge =====
+// ===== Coordinator Recovery Consumption Bridge =====
 
 export interface CoordinatorRecoveryInput {
   branchFailures: Array<{ branchId: string; reason: string }>;
@@ -84,7 +63,7 @@ export function consumeCoordinatorSignalsForRecovery(input: CoordinatorRecoveryI
   return { action: 'continue', reasons: ['no-recovery-trigger'], suggestions: ['continue execution'], severity: 'low' };
 }
 
-// ===== V10-3 Skills/Prompt Recovery Consumption =====
+// ===== Skills/Prompt Recovery Consumption =====
 
 export interface SkillPromptRecoveryInput {
   skillFailures: Array<{ skillId: string; reason: string }>;
@@ -128,7 +107,7 @@ export function consumeSkillPromptForRecovery(input: SkillPromptRecoveryInput): 
   return { action: 'continue', severity: 'low', suggestions: ['continue mainline execution'], trace: ['no-recovery-trigger'] };
 }
 
-// ===== V10-4 Tool Mainline Recovery =====
+// ===== Tool Mainline Recovery =====
 
 export interface ToolMainlineRecoveryInput {
   failures: Array<{ toolId: string; class: 'transient' | 'deterministic' | 'permission' | 'conflict' | 'unknown'; summary: string }>;
@@ -179,7 +158,7 @@ export function consumeToolMainlineForRecovery(input: ToolMainlineRecoveryInput)
   return { action: 'continue', severity: 'low', suggestions: ['continue tool orchestration'], decisionTrace: ['no-recovery-trigger'] };
 }
 
-// ===== V10-2F Phase A Failure Signal Bridge =====
+// ===== Phase A Failure Signal Bridge =====
 export function feedFailureSignalsToRecovery(input: {
   abortSignals: Array<{ branchId: string; reason: string }>;
   escalationSignals: Array<{ decisionId: string; priority: 'low' | 'medium' | 'high' | 'critical' }>;
@@ -201,7 +180,7 @@ export function feedFailureSignalsToRecovery(input: {
   return { severity: 'low', action: 'continue', reasons: reasons.length ? reasons : ['no-failure-signal'] };
 }
 
-// ===== V10-2F Phase B Task Lifecycle Recovery Consumption =====
+// ===== Phase B Task Lifecycle Recovery Consumption =====
 export function consumeTaskLifecycleForRecovery(input: {
   taskEvents: Array<{ taskId: string; status: 'running' | 'completed' | 'failed' | 'stopped'; summary: string }>;
 }): {
@@ -220,7 +199,7 @@ export function consumeTaskLifecycleForRecovery(input: {
   return { action: 'continue', reasons: ['task-lifecycle-healthy'] };
 }
 
-// ===== V10-2F Phase D Recovery Evidence Hook =====
+// ===== Phase D Recovery Evidence Hook =====
 export function recordRecoveryMainlineConsumption(input: {
   signalType: string;
   detail: string;

@@ -84,6 +84,38 @@ const outputSchema = lazySchema(() =>
       .optional()
       .describe('Whether a delegated worker should hand verification back to the parent instead of running it locally'),
     gitDiff: gitDiffSchema().optional(),
+    postMutationVerification: z.object({
+      schemaVersion: z.literal('dsxu.post-mutation-verification-summary.v1'),
+      owner: z.literal('Tool Gate / VerificationKernel'),
+      status: z.enum([
+        'READY_FOR_FOCUSED_CLAIM',
+        'NEEDS_FOCUSED_VERIFICATION',
+        'NEEDS_REVIEW',
+        'BLOCKED',
+      ]),
+      finalClaimAllowed: z.boolean(),
+      reviewRequired: z.boolean(),
+      blockingFailure: z.boolean(),
+      rollbackStrategy: z.enum(['restore-old-content', 'manual-review']),
+      editProof: z.object({
+        schemaVersion: z.literal('dsxu.edit-proof-envelope.v5'),
+        claimAllowed: z.boolean(),
+        verification: z.enum(['pass', 'fail', 'not_run']),
+        guardCount: z.number(),
+      }),
+      semanticCodeGraph: z.object({
+        schemaVersion: z.literal('dsxu.semantic-code-graph.v5'),
+        status: z.enum([
+          'PASS_SEMANTIC_CODE_GRAPH_READY',
+          'NEEDS_SEMANTIC_CODE_GRAPH_REVIEW',
+        ]),
+        affectedTestCount: z.number(),
+        guardCount: z.number(),
+      }).optional(),
+      nextAction: z.string(),
+      evidence: z.array(z.string()),
+      compactLine: z.string(),
+    }).optional(),
   }),
 )
 type OutputSchema = ReturnType<typeof outputSchema>

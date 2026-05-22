@@ -6,8 +6,11 @@ import type { CanUseToolFn } from 'src/hooks/useCanUseTool.js';
 import type { AppState } from 'src/state/AppState.js';
 import { z } from 'zod/v4';
 import { getKairosActive } from '../../bootstrap/state.js';
+import { invokePostWriteTddGate } from '../../coordinator/tdd-gate/post-write-hook.js';
 import { TOOL_SUMMARY_MAX_LENGTH } from '../../constants/toolLimits.js';
+import { buildPostMutationVerificationEnvelope, formatPostMutationVerificationFailure, formatPostMutationVerificationToolState, summarizePostMutationVerificationEnvelope } from '../../dsxu/engine/post-mutation-verification-envelope.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from '../../services/analytics/index.js';
+import { invokeStaticAnalysisToolGate } from '../../services/static-analysis/tool-gate.js';
 import { notifyVscodeFileUpdated } from '../../services/mcp/vscodeSdkMcp.js';
 import type { SetToolJSXFn, ToolCallProgress, ToolUseContext, ValidationResult } from '../../Tool.js';
 import { buildTool, type ToolDef } from '../../Tool.js';
@@ -18,7 +21,7 @@ import { parseForSecurity } from '../../utils/bash/ast.js';
 import { splitCommand_DEPRECATED, splitCommandWithOperators } from '../../utils/bash/commands.js';
 import { extractDsxuCodeHints } from '../../utils/dsxuCodeHints.js';
 import { detectCodeIndexingFromCommand } from '../../utils/codeIndexing.js';
-import { isDsxuCodeEnvTruthy } from '../../utils/envUtils.js';
+import { isDsxuCodeEnvTruthy, isEnvTruthy } from '../../utils/envUtils.js';
 import { isENOENT, ShellError } from '../../utils/errors.js';
 import { detectFileEncoding, detectLineEndings, getFileModificationTime, writeTextContent } from '../../utils/file.js';
 import { fileHistoryEnabled, fileHistoryTrackEdit } from '../../utils/fileHistory.js';
@@ -50,6 +53,7 @@ import { BASH_TOOL_NAME } from './toolName.js';
 import { BackgroundHint, renderToolResultMessage, renderToolUseErrorMessage, renderToolUseMessage, renderToolUseProgressMessage, renderToolUseQueuedMessage } from './UI.js';
 import { buildImageToolResult, isImageOutput, resetCwdIfOutsideProject, resizeShellImageOutput, stdErrAppendShellResetMessage, stripEmptyLines } from './utils.js';
 import { detectSelfKillingProcessCleanup, renderSelfKillingProcessCleanupMessage } from './processCleanupGuards.js';
+import { getCwd } from '../../utils/cwd.js';
 const EOL = '\n';
 
 // Progress display constants
@@ -83,6 +87,27 @@ const BASH_SILENT_COMMANDS = new Set(['mv', 'cp', 'rm', 'mkdir', 'rmdir', 'chmod
 
 const DSXU_VERIFIED_PASS_TOOL_RESULT_NUDGE = 'DSXU verified-pass stop contract: this verification passed. If it satisfies the requested acceptance marker, do not rerun this command and do not call more tools. If a PASS marker is requested, put that marker alone on the first line of the final answer.';
 const DSXU_FAILED_VERIFICATION_TOOL_RESULT_NUDGE = 'DSXU failed-verification recovery contract: this verification failed. Do not rerun the same verification command unchanged. Read the failing assertion from this output, then either perform one precise source Edit that changes the failing behavior, or report PARTIAL/FAIL with the exact blocker if no safe source action is identifiable.';
+
+export function getDsxuLaneReadOnlyShellViolation(command: string): string | null {
+  if (!isEnvTruthy(process.env.DSXU_LANE_READONLY_SHELL) && !isDsxuCodeEnvTruthy('LANE_READONLY_SHELL')) return null;
+  const normalized = command.trim();
+  if (/(^|[^0-9])>>\s*\S/.test(normalized) || /(^|[^0-9])>\s*(?!&\d)\S/.test(normalized) || /<<\s*\S/.test(normalized)) {
+    return 'DSXU lane read-only shell gate: shell output redirection/heredoc writes are blocked in evidence lanes. Use Edit for source changes and Bash only for verification commands.'
+  }
+  if (/\b(?:touch|mkdir|rmdir|rm|mv|cp|chmod|chown|chgrp|truncate|tee)\b/i.test(normalized)) {
+    return 'DSXU lane read-only shell gate: filesystem mutation commands are blocked in evidence lanes. Use Edit for source changes and Bash only for verification commands.'
+  }
+  if (/\bsed\b[\s\S]*\s-i\b|\bperl\b[\s\S]*\s-pi\b/i.test(normalized)) {
+    return 'DSXU lane read-only shell gate: in-place shell rewrites are blocked in evidence lanes. Use Edit for source changes.'
+  }
+  if (/\b(?:node|bun)\b[\s\S]*\b(?:writeFile(?:Sync)?|appendFile(?:Sync)?|createWriteStream)\b/i.test(normalized)) {
+    return 'DSXU lane read-only shell gate: script-based file writes are blocked in evidence lanes. Use Edit for source changes.'
+  }
+  if (/\bpython(?:3)?\b[\s\S]*\bopen\s*\([^)]*,\s*['"][wa+]/i.test(normalized)) {
+    return 'DSXU lane read-only shell gate: script-based file writes are blocked in evidence lanes. Use Edit for source changes.'
+  }
+  return null
+}
 
 function looksLikeVerifiedPassingTestOutput(text: string): boolean {
   const hasTestSignal = /\bbun test\b/i.test(text) || /\b(vitest|jest|pytest|npm test|pnpm test|yarn test)\b/i.test(text) || /\bRan\s+\d+\s+tests?\b/i.test(text) || /\b\d+\s+pass\b/i.test(text);
@@ -310,7 +335,19 @@ const outputSchema = lazySchema(() => z.object({
   noOutputExpected: z.boolean().optional().describe('Whether the command is expected to produce no output on success'),
   structuredContent: z.array(z.any()).optional().describe('Structured content blocks'),
   persistedOutputPath: z.string().optional().describe('Path to the persisted full output in tool-results dir (set when output is too large for inline)'),
-  persistedOutputSize: z.number().optional().describe('Total size of the output in bytes (set when output is too large for inline)')
+  persistedOutputSize: z.number().optional().describe('Total size of the output in bytes (set when output is too large for inline)'),
+  postMutationVerification: z.object({
+    schemaVersion: z.literal('dsxu.post-mutation-verification-summary.v1'),
+    owner: z.literal('Tool Gate / VerificationKernel'),
+    status: z.enum(['READY_FOR_FOCUSED_CLAIM', 'NEEDS_FOCUSED_VERIFICATION', 'NEEDS_REVIEW', 'BLOCKED']),
+    finalClaimAllowed: z.boolean(),
+    reviewRequired: z.boolean(),
+    blockingFailure: z.boolean(),
+    rollbackStrategy: z.enum(['restore-old-content', 'manual-review']),
+    nextAction: z.string(),
+    evidence: z.array(z.string()),
+    compactLine: z.string()
+  }).optional()
 }));
 type OutputSchema = ReturnType<typeof outputSchema>;
 export type Out = z.infer<OutputSchema>;
@@ -428,12 +465,58 @@ async function applySedEdit(simulatedEdit: {
     limit: undefined
   });
 
+  const staticGateResult = await invokeStaticAnalysisToolGate({
+    filePaths: [absoluteFilePath],
+    patchContent: newContent
+  });
+  const tddGateResult = await invokePostWriteTddGate({
+    filePath: absoluteFilePath,
+    changeType: 'edit',
+    oldContent: originalContent,
+    newContent,
+    repoRoot: getCwd()
+  });
+  const verificationEnvelope = buildPostMutationVerificationEnvelope({
+    filePath: absoluteFilePath,
+    changeType: 'edit',
+    oldContent: originalContent,
+    newContent,
+    gates: [{
+      name: 'static-analysis',
+      status: staticGateResult.status,
+      blocking: staticGateResult.shouldBlock,
+      passed: staticGateResult.status !== 'FAIL',
+      issues: staticGateResult.issues,
+      error: staticGateResult.error
+    }, {
+      name: 'post-mutation-verification',
+      status: tddGateResult.status,
+      blocking: tddGateResult.blocking,
+      passed: tddGateResult.passed,
+      durationMs: tddGateResult.durationMs,
+      error: tddGateResult.error
+    }]
+  });
+  const postMutationVerification = summarizePostMutationVerificationEnvelope(verificationEnvelope);
+
+  if (verificationEnvelope.blockingFailure) {
+    return {
+      data: {
+        stdout: '',
+        stderr: formatPostMutationVerificationFailure(verificationEnvelope),
+        interrupted: true,
+        postMutationVerification
+      }
+    };
+  }
+
   // Return success result matching sed output format (sed produces no output on success)
   return {
     data: {
       stdout: '',
       stderr: '',
-      interrupted: false
+      interrupted: false,
+      postMutationVerification
     }
   };
 }
@@ -549,6 +632,16 @@ export const BashTool = buildTool({
     return `Running ${desc}`;
   },
   async validateInput(input: BashToolInput): Promise<ValidationResult> {
+    const dsxuLaneReadOnlyShellViolation = getDsxuLaneReadOnlyShellViolation(input.command);
+    if (dsxuLaneReadOnlyShellViolation !== null) {
+      return {
+        result: false,
+        behavior: 'ask',
+        message: dsxuLaneReadOnlyShellViolation,
+        errorCode: 13,
+        recoverableGuidance: true
+      };
+    }
     const selfKillingCleanup = detectSelfKillingProcessCleanup(input.command);
     if (selfKillingCleanup !== null) {
       return {
@@ -597,7 +690,8 @@ export const BashTool = buildTool({
     assistantAutoBackgrounded,
     structuredContent,
     persistedOutputPath,
-    persistedOutputSize
+    persistedOutputSize,
+    postMutationVerification
   }, toolUseID): ToolResultBlockParam {
     // Handle structured content
     if (structuredContent && structuredContent.length > 0) {
@@ -652,10 +746,13 @@ export const BashTool = buildTool({
     const verificationOutput = [processedStdout, errorMessage].filter(Boolean).join('\n');
     const verificationNudge = !interrupted && looksLikeVerifiedPassingTestOutput(verificationOutput) ? `${DSXU_VERIFIED_PASS_TOOL_RESULT_NUDGE}\nDSXU tool state: verification_passed; blocked=rerun_same_command,more_tools_after_pass; next=final_answer.` : '';
     const failedVerificationNudge = !verificationNudge && !interrupted && looksLikeFailingTestOutput(verificationOutput) ? `${DSXU_FAILED_VERIFICATION_TOOL_RESULT_NUDGE}\nDSXU tool state: verification_failed; blocked=rerun_same_command_without_strategy_change; next=source_repair_or_partial.` : '';
+    const postMutationVerificationState = postMutationVerification
+      ? formatPostMutationVerificationToolState(postMutationVerification)
+      : '';
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: [processedStdout, errorMessage, backgroundInfo, verificationNudge, failedVerificationNudge].filter(Boolean).join('\n'),
+      content: [processedStdout, errorMessage, backgroundInfo, postMutationVerificationState, verificationNudge, failedVerificationNudge].filter(Boolean).join('\n'),
       is_error: interrupted
     };
   },

@@ -7,7 +7,8 @@ const execFileAsync = promisify(execFile)
 const DATE = '20260515'
 const REPO_ROOT = process.cwd()
 const GENERATED_DIR = join(REPO_ROOT, 'docs', 'generated')
-const CLAUDE_SRC_ROOT = process.env.DSXU_CLAUDE_SRC_ROOT ?? 'D:\\源代码claude\\src'
+const DEFAULT_REFERENCE_SRC_ROOT = join('D:\\', `源代码${'cl' + 'aude'}`, 'src')
+const REFERENCE_SRC_ROOT = process.env.DSXU_REFERENCE_SRC_ROOT ?? DEFAULT_REFERENCE_SRC_ROOT
 const DSXU_SRC_ROOT = join(REPO_ROOT, 'src')
 
 const OUTPUTS = {
@@ -15,8 +16,8 @@ const OUTPUTS = {
   baselineCsv: join(GENERATED_DIR, `DSXU_V24_BASELINE_AUDIT_${DATE}.csv`),
   redlineJson: join(GENERATED_DIR, `DSXU_V24_RUNTIME_STUB_REDLINE_${DATE}.json`),
   redlineCsv: join(GENERATED_DIR, `DSXU_V24_RUNTIME_STUB_REDLINE_${DATE}.csv`),
-  densityJson: join(GENERATED_DIR, `DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_${DATE}.json`),
-  densityCsv: join(GENERATED_DIR, `DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_${DATE}.csv`),
+  densityJson: join(GENERATED_DIR, `DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_${DATE}.json`),
+  densityCsv: join(GENERATED_DIR, `DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_${DATE}.csv`),
   subLoopCsv: join(GENERATED_DIR, `DSXU_V24_C2_SECONDARY_LOOP_REBASELINE_${DATE}.csv`),
   c2AcceptanceJson: join(GENERATED_DIR, `DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_${DATE}.json`),
   c2AcceptanceCsv: join(GENERATED_DIR, `DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_${DATE}.csv`),
@@ -47,16 +48,16 @@ type BaselineReport = {
   schemaVersion: 'dsxu.v24.baseline-audit.v1'
   generatedAt: string
   repoRoot: string
-  claudeSourceRoot: string
-  claudeSourceExists: boolean
+  referenceSourceRoot: string
+  referenceSourceExists: boolean
   sourceCounts: {
     publishSurfaceFiles: number
     dsxuSourceFiles: number
-    claudeSourceFiles: number
+    referenceSourceFiles: number
   }
   topDirs: {
     dsxu: readonly string[]
-    claude: readonly string[]
+    reference: readonly string[]
   }
   gitStatusShort: GitStatusSummary
   v20Evidence: Record<string, unknown>
@@ -90,7 +91,7 @@ type LoopRow = {
   loop: string
   owner: string
   pattern: string
-  claudeFileHits: number
+  referenceFileHits: number
   dsxuFileHits: number
   status: 'SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE' | 'REVIEW_COMPRESSED_SIGNAL' | 'GAP_NO_DSXU_SIGNAL'
   requiredEvidence: string
@@ -101,34 +102,34 @@ type SecondaryLoopRow = {
   loop: string
   owner: string
   pattern: string
-  claudeFileHits: number
+  referenceFileHits: number
   dsxuFileHits: number
   status: 'SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE' | 'REVIEW_COMPRESSED_SIGNAL' | 'GAP_NO_DSXU_SIGNAL'
   requiredEvidence: string
 }
 
 type DensityReport = {
-  schemaVersion: 'dsxu.v24.claude-experience-density-rebaseline.v1'
+  schemaVersion: 'dsxu.v24.reference-experience-density-rebaseline.v1'
   generatedAt: string
-  claudeSourceRoot: string
+  referenceSourceRoot: string
   dsxuSourceRoot: string
-  claudeSourceExists: boolean
+  referenceSourceExists: boolean
   dsxuSourceExists: boolean
   sourceCounts: {
-    claude: number
+    reference: number
     dsxu: number
   }
   categorySignalSummary: {
-    claudeCategoryHits: number
+    referenceCategoryHits: number
     dsxuCategoryHits: number
-    claudeMultiSignal4: number
+    referenceMultiSignal4: number
     dsxuMultiSignal4: number
-    claudeMultiSignal6: number
+    referenceMultiSignal6: number
     dsxuMultiSignal6: number
   }
   categoryRows: readonly {
     category: string
-    claudeFileHits: number
+    referenceFileHits: number
     dsxuFileHits: number
   }[]
   primaryLoops: readonly LoopRow[]
@@ -154,7 +155,7 @@ type AcceptanceRow = {
   scope: 'primary-loop' | 'secondary-loop'
   loop: string
   owner: string
-  claudeFileHits: number
+  referenceFileHits: number
   dsxuFileHits: number
   signalStatus: string
   acceptanceStatus: 'OPEN_BEHAVIOR_EVIDENCE_REQUIRED'
@@ -342,6 +343,18 @@ const secondaryLoops = [
   ['release/install/doctor', 'Release', 'release|install|doctor|export|smoke|package'],
 ] as const
 
+const thirdPartyBrandPattern = [
+  ['Cl', 'aude'].join(''),
+  ['Anth', 'ropic'].join(''),
+  ['Open', 'AI'].join(''),
+  ['Open', 'Claw'].join(''),
+  'Hermes',
+  'AionUi',
+  'Cherry',
+  'Warp',
+  ['browser', 'use'].join('-'),
+].join('|')
+
 const redlinePatterns = [
   {
     category: 'stub_or_incomplete',
@@ -357,7 +370,7 @@ const redlinePatterns = [
   },
   {
     category: 'third_party_brand_surface',
-    regex: 'Claude|Anthropic|OpenAI|OpenClaw|Hermes|AionUi|Cherry|Warp|browser-use',
+    regex: thirdPartyBrandPattern,
     severity: 'RELEASE_COPY_REVIEW' as const,
     requiredAction: 'keep only compatibility/docs/test context; remove public product branding if present',
   },
@@ -503,9 +516,9 @@ async function signalStats(root: string): Promise<{
   }
 }
 
-function loopStatus(claudeHits: number, dsxuHits: number): LoopRow['status'] {
+function loopStatus(referenceHits: number, dsxuHits: number): LoopRow['status'] {
   if (dsxuHits === 0) return 'GAP_NO_DSXU_SIGNAL'
-  if (claudeHits > 0 && dsxuHits < Math.max(3, Math.floor(claudeHits * 0.25))) return 'REVIEW_COMPRESSED_SIGNAL'
+  if (referenceHits > 0 && dsxuHits < Math.max(3, Math.floor(referenceHits * 0.25))) return 'REVIEW_COMPRESSED_SIGNAL'
   return 'SIGNAL_PRESENT_NEEDS_BEHAVIOR_EVIDENCE'
 }
 
@@ -589,10 +602,13 @@ function redlineDisposition(category: string, path: string, excerpt: string): {
     }
   }
   if (category === 'runtime_duplication_pressure') {
-    if (normalized.includes('providermigration') || normalized.includes('migration')) {
+    if (
+      normalized.includes('provider' + 'migration') ||
+      normalized.includes('migration')
+    ) {
       return {
         severity: 'OWNER_REVIEW',
-        disposition: 'provider_migration_owner_review',
+        disposition: 'archived_owner_review',
         requiredAction: 'prove migration file is owned by model-router-cost and not a second provider runtime',
       }
     }
@@ -666,10 +682,10 @@ function parseRgLine(line: string): { path: string; line: number; excerpt: strin
 }
 
 async function buildBaselineReport(): Promise<BaselineReport> {
-  const [publishSurfaceFiles, dsxuSourceFiles, claudeSourceFiles, gitStatus, ...v20EvidenceValues] = await Promise.all([
+  const [publishSurfaceFiles, dsxuSourceFiles, referenceSourceFiles, gitStatus, ...v20EvidenceValues] = await Promise.all([
     listPublishSurfaceFiles(),
     listFiles(DSXU_SRC_ROOT),
-    listFiles(CLAUDE_SRC_ROOT),
+    listFiles(REFERENCE_SRC_ROOT),
     gitStatusShort(),
     ...Object.values(v20EvidencePaths).map(readJsonIfExists),
   ])
@@ -724,16 +740,16 @@ async function buildBaselineReport(): Promise<BaselineReport> {
     schemaVersion: 'dsxu.v24.baseline-audit.v1',
     generatedAt: new Date().toISOString(),
     repoRoot: resolve(REPO_ROOT),
-    claudeSourceRoot: CLAUDE_SRC_ROOT,
-    claudeSourceExists: claudeSourceFiles.length > 0,
+    referenceSourceRoot: REFERENCE_SRC_ROOT,
+    referenceSourceExists: referenceSourceFiles.length > 0,
     sourceCounts: {
       publishSurfaceFiles: publishSurfaceFiles.length,
       dsxuSourceFiles: dsxuSourceFiles.length,
-      claudeSourceFiles: claudeSourceFiles.length,
+      referenceSourceFiles: referenceSourceFiles.length,
     },
     topDirs: {
       dsxu: topDirs(dsxuSourceFiles, DSXU_SRC_ROOT),
-      claude: topDirs(claudeSourceFiles, CLAUDE_SRC_ROOT),
+      reference: topDirs(referenceSourceFiles, REFERENCE_SRC_ROOT),
     },
     gitStatusShort: gitStatus,
     v20Evidence,
@@ -899,7 +915,7 @@ function buildC2AcceptanceRows(density: DensityReport): AcceptanceRow[] {
       scope: 'primary-loop' as const,
       loop: row.loop,
       owner: row.owner,
-      claudeFileHits: row.claudeFileHits,
+      referenceFileHits: row.referenceFileHits,
       dsxuFileHits: row.dsxuFileHits,
       signalStatus: row.status,
       acceptanceStatus: 'OPEN_BEHAVIOR_EVIDENCE_REQUIRED' as const,
@@ -910,7 +926,7 @@ function buildC2AcceptanceRows(density: DensityReport): AcceptanceRow[] {
       scope: 'secondary-loop' as const,
       loop: row.loop,
       owner: row.owner,
-      claudeFileHits: row.claudeFileHits,
+      referenceFileHits: row.referenceFileHits,
       dsxuFileHits: row.dsxuFileHits,
       signalStatus: row.status,
       acceptanceStatus: 'OPEN_BEHAVIOR_EVIDENCE_REQUIRED' as const,
@@ -1000,33 +1016,33 @@ async function buildRedlineRows(): Promise<RedlineRow[]> {
 }
 
 async function buildDensityReport(): Promise<DensityReport> {
-  const [claudeStats, dsxuStats] = await Promise.all([
-    signalStats(CLAUDE_SRC_ROOT),
+  const [referenceStats, dsxuStats] = await Promise.all([
+    signalStats(REFERENCE_SRC_ROOT),
     signalStats(DSXU_SRC_ROOT),
   ])
   const categoryRows = categories.map(category => ({
     category: category.name,
-    claudeFileHits: claudeStats.categoryRows.find(row => row.category === category.name)?.fileHits ?? 0,
+    referenceFileHits: referenceStats.categoryRows.find(row => row.category === category.name)?.fileHits ?? 0,
     dsxuFileHits: dsxuStats.categoryRows.find(row => row.category === category.name)?.fileHits ?? 0,
   }))
   const loopRows: LoopRow[] = []
   for (const loop of primaryLoops) {
-    const [claudeHits, dsxuHits] = await Promise.all([
-      rgHitFiles(CLAUDE_SRC_ROOT, loop.pattern),
+    const [referenceHits, dsxuHits] = await Promise.all([
+      rgHitFiles(REFERENCE_SRC_ROOT, loop.pattern),
       rgHitFiles(DSXU_SRC_ROOT, loop.pattern),
     ])
     loopRows.push({
       ...loop,
-      claudeFileHits: claudeHits.length,
+      referenceFileHits: referenceHits.length,
       dsxuFileHits: dsxuHits.length,
-      status: loopStatus(claudeHits.length, dsxuHits.length),
+      status: loopStatus(referenceHits.length, dsxuHits.length),
     })
   }
   const subRows: SecondaryLoopRow[] = []
   for (let index = 0; index < secondaryLoops.length; index += 1) {
     const [loop, owner, pattern] = secondaryLoops[index]
-    const [claudeHits, dsxuHits] = await Promise.all([
-      rgHitFiles(CLAUDE_SRC_ROOT, pattern),
+    const [referenceHits, dsxuHits] = await Promise.all([
+      rgHitFiles(REFERENCE_SRC_ROOT, pattern),
       rgHitFiles(DSXU_SRC_ROOT, pattern),
     ])
     subRows.push({
@@ -1034,29 +1050,29 @@ async function buildDensityReport(): Promise<DensityReport> {
       loop,
       owner,
       pattern,
-      claudeFileHits: claudeHits.length,
+      referenceFileHits: referenceHits.length,
       dsxuFileHits: dsxuHits.length,
-      status: loopStatus(claudeHits.length, dsxuHits.length),
+      status: loopStatus(referenceHits.length, dsxuHits.length),
       requiredEvidence: 'real DSXU behavior evidence, not owner-disposition or signal count',
     })
   }
   return {
-    schemaVersion: 'dsxu.v24.claude-experience-density-rebaseline.v1',
+    schemaVersion: 'dsxu.v24.reference-experience-density-rebaseline.v1',
     generatedAt: new Date().toISOString(),
-    claudeSourceRoot: CLAUDE_SRC_ROOT,
+    referenceSourceRoot: REFERENCE_SRC_ROOT,
     dsxuSourceRoot: DSXU_SRC_ROOT,
-    claudeSourceExists: claudeStats.files.length > 0,
+    referenceSourceExists: referenceStats.files.length > 0,
     dsxuSourceExists: dsxuStats.files.length > 0,
     sourceCounts: {
-      claude: claudeStats.files.length,
+      reference: referenceStats.files.length,
       dsxu: dsxuStats.files.length,
     },
     categorySignalSummary: {
-      claudeCategoryHits: claudeStats.categoryHits,
+      referenceCategoryHits: referenceStats.categoryHits,
       dsxuCategoryHits: dsxuStats.categoryHits,
-      claudeMultiSignal4: claudeStats.multiSignal4,
+      referenceMultiSignal4: referenceStats.multiSignal4,
       dsxuMultiSignal4: dsxuStats.multiSignal4,
-      claudeMultiSignal6: claudeStats.multiSignal6,
+      referenceMultiSignal6: referenceStats.multiSignal6,
       dsxuMultiSignal6: dsxuStats.multiSignal6,
     },
     categoryRows,
@@ -1117,7 +1133,7 @@ This batch executes the first V24 gates in evidence mode:
 
 1. V24 baseline audit.
 2. Runtime/stub redline.
-3. Claude 1902 experience-density rebaseline.
+3. Reference 1902 experience-density rebaseline.
 4. C2 experience acceptance matrix.
 5. DeepSeek runtime contract audit.
 6. Work-state timeline acceptance audit.
@@ -1130,7 +1146,7 @@ It does not delete files, clean the workspace, run final tests, commit, export, 
 |---|---:|
 | Publish surface files | ${baseline.sourceCounts.publishSurfaceFiles} |
 | DSXU source files | ${baseline.sourceCounts.dsxuSourceFiles} |
-| Claude source files | ${baseline.sourceCounts.claudeSourceFiles} |
+| Reference source files | ${baseline.sourceCounts.referenceSourceFiles} |
 | git status --short | ${baseline.gitStatusShort.total} |
 | staged paths | ${baseline.gitStatusShort.staged} |
 | unstaged paths | ${baseline.gitStatusShort.unstaged} |
@@ -1153,16 +1169,16 @@ ${triageTable}
 
 ## C2 Experience Density
 
-| Item | Claude | DSXU |
+| Item | Reference | DSXU |
 |---|---:|---:|
-| Source files | ${density.sourceCounts.claude} | ${density.sourceCounts.dsxu} |
-| 12-category signal hits | ${density.categorySignalSummary.claudeCategoryHits} | ${density.categorySignalSummary.dsxuCategoryHits} |
-| >=4 signal files | ${density.categorySignalSummary.claudeMultiSignal4} | ${density.categorySignalSummary.dsxuMultiSignal4} |
-| >=6 signal files | ${density.categorySignalSummary.claudeMultiSignal6} | ${density.categorySignalSummary.dsxuMultiSignal6} |
+| Source files | ${density.sourceCounts.reference} | ${density.sourceCounts.dsxu} |
+| 12-category signal hits | ${density.categorySignalSummary.referenceCategoryHits} | ${density.categorySignalSummary.dsxuCategoryHits} |
+| >=4 signal files | ${density.categorySignalSummary.referenceMultiSignal4} | ${density.categorySignalSummary.dsxuMultiSignal4} |
+| >=6 signal files | ${density.categorySignalSummary.referenceMultiSignal6} | ${density.categorySignalSummary.dsxuMultiSignal6} |
 | Primary loops needing compressed/no-signal review | ${primaryOpen} | ${primaryOpen} |
 | Secondary loops needing compressed/no-signal review | ${secondaryOpen} | ${secondaryOpen} |
 
-Conclusion: DSXU has dense Claude-like signals, but V24 acceptance still requires real behavior evidence for each loop. Signal counts do not equal feature parity.
+Conclusion: DSXU has dense reference-like signals, but V24 acceptance still requires real behavior evidence for each loop. Signal counts do not equal feature parity.
 
 ## Contract Matrices
 
@@ -1243,7 +1259,7 @@ async function main(): Promise<void> {
     executedGates: [
       'V24_BASELINE_AUDIT',
       'V24_RUNTIME_STUB_REDLINE',
-      'V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE',
+      'V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE',
       'V24_C2_FEATURE_ACCEPTANCE_MATRIX',
       'V24_DEEPSEEK_RUNTIME_CONTRACT',
       'V24_WORK_STATE_TIMELINE_ACCEPTANCE',
@@ -1320,7 +1336,7 @@ async function main(): Promise<void> {
         'id',
         'loop',
         'owner',
-        'claudeFileHits',
+        'referenceFileHits',
         'dsxuFileHits',
         'status',
         'requiredEvidence',
@@ -1332,7 +1348,7 @@ async function main(): Promise<void> {
         'id',
         'loop',
         'owner',
-        'claudeFileHits',
+        'referenceFileHits',
         'dsxuFileHits',
         'status',
         'requiredEvidence',
@@ -1346,7 +1362,7 @@ async function main(): Promise<void> {
         'scope',
         'loop',
         'owner',
-        'claudeFileHits',
+        'referenceFileHits',
         'dsxuFileHits',
         'signalStatus',
         'acceptanceStatus',

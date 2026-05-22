@@ -1,23 +1,35 @@
 {
   "schemaVersion": "dsxu.v20.owner-git-mutation-preflight.v1",
-  "generatedAt": "2026-05-15T03:39:41.691Z",
+  "generatedAt": "2026-05-21T23:04:46.595Z",
   "repoRoot": "D:\\DSXU-code",
   "status": "PASS_READY_FOR_RELEASE_CLOSURE",
   "gitStatusShort": {
-    "total": 2005,
-    "modified": 1650,
-    "deleted": 116,
-    "untracked": 0
+    "total": 2949,
+    "modified": 1370,
+    "deleted": 164,
+    "untracked": 737
   },
-  "registerRows": 1893,
+  "registerRows": 1949,
   "registerAlignedToGitStatus": false,
   "postStageIndexVerified": true,
   "stageExecutionStatus": "STAGED_OWNER_GIT_PACKETS",
   "stagedCommandCount": 58,
   "failedCommandCount": 0,
   "totalPlannedPathCount": 1893,
-  "unregisteredPathCount": 154,
+  "unregisteredPathCount": 1041,
   "unregisteredPaths": [
+    {
+      "statusCode": "M",
+      "path": "bunfig.toml"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/DSXU_V24_EXECUTION_BATCH_20260515.md"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/DSXU_V24_EXECUTION_PLAN_20260515.md"
+    },
     {
       "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.csv"
@@ -27,7 +39,7 @@
       "path": "docs/generated/DSXU_V20_ACL_RESIDUE_CLOSURE_PLAN_20260515.json"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_ACL_RESIDUE_PREFLIGHT_20260515.csv"
     },
     {
@@ -43,7 +55,7 @@
       "path": "docs/generated/DSXU_V20_ACL_RESIDUE_REVIEW_SUMMARY_20260515.json"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_ACL_RESIDUE_SIGNOFF_20260515.csv"
     },
     {
@@ -59,11 +71,11 @@
       "path": "docs/generated/DSXU_V20_BATCH_CLOSURE_BOARD_SUMMARY_20260514.json"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_BLOCKER_ACTION_BOARD_20260515.json"
     },
     {
@@ -107,7 +119,7 @@
       "path": "docs/generated/DSXU_V20_CLAUDE_SRC_FILE_AUDIT_20260514.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.csv"
     },
     {
@@ -115,11 +127,11 @@
       "path": "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_CLOSURE_BATCH_RUN_20260515.json"
     },
     {
@@ -195,11 +207,11 @@
       "path": "docs/generated/DSXU_V20_HIGH_RISK_RUNTIME_OWNER_REVIEW_SUMMARY_20260514.json"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_LIVE_CACHE_PREFIX_SMOKE_20260515.json"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_LIVE_PROVIDER_GATE_20260515.json"
     },
     {
@@ -251,7 +263,7 @@
       "path": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_OWNER_GIT_AUTHORIZATION_BOARD_20260515.json"
     },
     {
@@ -259,11 +271,11 @@
       "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_COMMAND_PLAN_20260515.json"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_OWNER_GIT_MUTATION_PREFLIGHT_20260515.csv"
     },
     {
@@ -283,7 +295,7 @@
       "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260514.csv"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_OWNER_GIT_REVIEW_REGISTER_20260515.csv"
     },
     {
@@ -303,7 +315,7 @@
       "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_EXECUTION_20260515.json"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_OWNER_GIT_STAGE_PLAN_20260515.csv"
     },
     {
@@ -387,7 +399,7 @@
       "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.csv"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "docs/generated/DSXU_V20_P12_TARGET_MANIFEST_CONTRACT_BOARD_20260515.json"
     },
     {
@@ -447,11 +459,11 @@
       "path": "docs/generated/DSXU_V20_RELEASE_SURFACE_OWNER_EXECUTION_SUMMARY_20260514.json"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.csv"
     },
     {
-      "statusCode": "AM",
+      "statusCode": "A",
       "path": "docs/generated/DSXU_V20_SIX_STAGE_TEST_PLAN_20260515.json"
     },
     {
@@ -459,16 +471,208 @@
       "path": "docs/generated/DSXU_V20_SOURCE_CLEANUP_REGISTER_20260514.csv"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_BASELINE_AUDIT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_BASELINE_AUDIT_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_C2_SECONDARY_LOOP_REBASELINE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_DEEPSEEK_RUNTIME_CONTRACT_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_DEEPSEEK_RUNTIME_CONTRACT_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_EXECUTION_BATCH_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_REDLINE_OWNER_PACKET_TRIAGE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_REDLINE_OWNER_PACKET_TRIAGE_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_RUNTIME_STUB_REDLINE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_RUNTIME_STUB_REDLINE_20260515.json"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_WORK_STATE_TIMELINE_ACCEPTANCE_20260515.csv"
+    },
+    {
+      "statusCode": "AM",
+      "path": "docs/generated/DSXU_V24_WORK_STATE_TIMELINE_ACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "AM",
       "path": "scripts/dsxu-live-cache-prefix-smoke.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "scripts/dsxu-live-provider-gate.ts"
+    },
+    {
+      "statusCode": "AM",
+      "path": "scripts/dsxu-v24-execution-batch.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/components/LogoV2/dsxuMascotAnsi.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/dag/__tests__/dag.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/dag/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/dag/persist.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/dag/runner.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/dag/templates.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/tdd-gate/contract.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/tdd-gate/extractor.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/tdd-gate/gate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/tdd-gate/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/coordinator/tdd-gate/runner.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/abc-end-to-end.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/benchmark-runner-route-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/blast-radius.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/code-mode-surgical-loop-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/coding-pack-integration.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/cold-mode-cost-planning-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/coordinator-state-model-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/direct-connect-and-query-contract-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/experience-store-expanded-replay-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/experience-store-replay-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/experience-store-smooth-resume-pack-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/file-edit-surgical-loop-v19.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/gear-box.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/kairos-session-snapshot-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/live-provider-gate-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/p0-3-core-gaps.test.ts"
     },
     {
       "statusCode": "M",
       "path": "src/dsxu/engine/__tests__/phase12-reference-semantic-exam-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/prompt-cache-break-detection.test.ts"
     },
     {
       "statusCode": "R",
@@ -476,22 +680,554 @@
     },
     {
       "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/quality-gate-mainline-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/query-message-shape-guard-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/real-task-replay-suite-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/recovery-planner.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/semantic-tool-layer-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/skills-failure-path.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/skills-integration.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/tool-batch-gate-classification-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/tool-catalog-v1-clean.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v12-prompt-governance-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-agent-live-report-replay-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-baseline-failure-reporter-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-benchmark-readiness-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-code-terminal-10-runner-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-controlled-failure-taxonomy-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-eval-baseline-manifest-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-evidence-eval-pack-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-experience-live-report-ingest-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-go-stop-decision-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-live-real-task-compare-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-prompt-prefix-cache-builder-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-prompt-prefix-cache-evidence-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-real-task-route-plan-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-route-cache-dynamic-tail-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-route-cache-roi-smoke-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-stage-close-readiness-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v18-terminal-hit-rate-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v8-agent-long-run-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v8-memory-resume-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v8-real-mcp-server-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v8-stop-hook-runtime-v1.test.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/__tests__/v9-permission-usability-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/verify-gate.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/wave2.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/wave4-extended.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/work-package-9a-c/verify-review-chain-integration.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/work-package-b/file-edit-atomic.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/work-package-i/query-loop-progress-ledger.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/__tests__/wsl-workspace-health-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/adapters/bash-adapter.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/adapters/file-edit-adapter.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/blast-radius.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/brief/brief-generator.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/cache-monitor.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/classify/classifier.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/code-mode-surgical-loop.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/compact/compact-pipeline.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/coordinator-types-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/dsxu-session-cache-control.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/forked-agent.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/gear-box.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/graph/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/lsp-tool.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/memory-context-compact/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/memory/memory-system.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/memory/unified-memory-manager.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/middlewares/lsp-gate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/middlewares/metrics-error.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/middlewares/runtime-trace.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/middlewares/sanitize.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/phase12-experience-oracle.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/profiles/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/prompt-cache-break-detection.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/query-loop-gate-state-v1.ts"
+    },
+    {
+      "statusCode": "MM",
       "path": "src/dsxu/engine/query-loop.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "M",
+      "path": "src/dsxu/engine/raw-evidence-readiness-register-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/real-task-replay-suite-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/recovery/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/recovery/recovery-planner.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/release-surface-source-policy-review-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/retrieval/context-routing.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/retrieval/graph-retrieval.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/retrieval/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/runtime/example.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/runtime/legacy-adapter.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/session-os-control.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/session.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/system-prompt.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/token-estimator.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-bus/hook-adapter.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-bus/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-bus/middleware.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-bus/types.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-evidence-pack-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-protocol-integration.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-protocol.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-registry-v1.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/tool-registry.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v15-dsxu-retirement-plan.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-baseline-failure-reporter.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-benchmark-readiness.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-code-terminal-10-runner.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-controlled-failure-taxonomy.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-eval-baseline-manifest.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-evidence-eval-pack.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-experience-live-report-ingest.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-five-task-release-gate.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-go-stop-decision.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-live-deepseek-benchmark-gate.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-live-real-task-compare.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-prompt-prefix-cache-builder.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-prompt-prefix-cache-evidence.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-real-task-route-plan.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-route-cache-dynamic-tail.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-route-cache-roi-smoke.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-semantic-tool-trace.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-semantic-tools.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-shell-gate.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-skill-goal-trigger.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-stage-close-readiness.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/engine/v18-terminal-hit-rate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/verify-gate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/engine/workspace-policy.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/compact-multilevel-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/context-hygiene-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/experience-store-expanded-replay-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/experience-store-replay-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/experience-store-smooth-resume-pack-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/session-memory-mainline-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/v10-context-budget-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/v10-longtask-stability-v1-harness.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/dsxu/integration/harness/v10-model-gateway-v1-harness.ts"
+    },
+    {
+      "statusCode": "D",
+      "path": "src/dsxu/integration/harness/v18-agent-live-report-replay-v1-harness.ts"
+    },
+    {
+      "statusCode": "RM",
       "path": "src/migrations/dsxuLegacyModelMigrations.ts -> src/migrations/providerMigrationModelMigrations.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "M",
+      "path": "src/services/__tests__/swe-bench.test.ts"
+    },
+    {
+      "statusCode": "RM",
       "path": "src/services/analytics/growthbook.ts -> src/services/analytics/featureFlags.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/api/deepseek-adapter-cache-prefix-v1.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/api/deepseek-fim.ts"
     },
     {
       "statusCode": "R",
       "path": "src/utils/billing.ts -> src/services/auth/dsxuBillingAccess.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/auth/legacyProviderAuth.ts -> src/services/auth/dsxuProviderAuth.ts"
     },
     {
@@ -507,7 +1243,7 @@
       "path": "src/dsxu/engine/provider-backend/local-provider-backend.ts -> src/services/bridge/dsxuLocalProviderBackend.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/engine/provider-backend/dsxu-provider-compat.ts -> src/services/bridge/dsxuRemoteBridgeFacade.ts"
     },
     {
@@ -523,11 +1259,39 @@
       "path": "src/dsxu/engine/provider-backend/dsxu-remote-permission-bridge.ts -> src/services/bridge/remotePermissionProjection.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "M",
+      "path": "src/services/cache-stats.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/cache-stats.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/eval/swe-bench/bridge.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/eval/swe-bench/contract.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/eval/swe-bench/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/lsp/contract.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/lsp/manager.ts"
+    },
+    {
+      "statusCode": "AM",
       "path": "src/services/mcp/__tests__/doctor.test.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/services/mcp/legacyRemoteMcpProvider.ts -> src/services/mcp/providerConnectorMigration.ts"
     },
     {
@@ -539,15 +1303,71 @@
       "path": "src/dsxu/legacy/testing/legacyProviderRateLimitClaim.ts -> src/services/mockRateLimitsProviderMigration/providerMigrationRateLimitClaim.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "M",
+      "path": "src/services/mutation/__tests__/mutation.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/mutation/contract.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/mutation/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/pbt/__tests__/pbt.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/pbt/contract.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/pbt/index.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/static-analysis/__tests__/bridge.test.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/swe-bench/runner.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/swe-bench/types.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/tools/dsxuToolBatchGate.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/services/tools/toolLifecycle.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/tools/EnterPlanModeTool/prompt.ts"
+    },
+    {
+      "statusCode": "RM",
       "path": "src/tools/RemoteTriggerTool/legacyRemoteTriggerProvider.ts -> src/tools/RemoteTriggerTool/providerMigrationRemoteTriggerProvider.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "M",
+      "path": "src/tools/RunNativeTestTool/semanticVerificationMessages.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/utils/model/deepseekV4Control.ts"
+    },
+    {
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProvider1mAccess.ts -> src/utils/model/providerMigration/providerMigration1mAccess.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderAdvisorModel.ts -> src/utils/model/providerMigration/providerMigrationAdvisorModel.ts"
     },
     {
@@ -555,11 +1375,11 @@
       "path": "src/dsxu/legacy/model/legacyProviderAgentModel.ts -> src/utils/model/providerMigration/providerMigrationAgentModel.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderAliases.ts -> src/utils/model/providerMigration/providerMigrationAliases.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderBetas.ts -> src/utils/model/providerMigration/providerMigrationBetas.ts"
     },
     {
@@ -567,35 +1387,35 @@
       "path": "src/dsxu/legacy/model/legacyProviderContext.ts -> src/utils/model/providerMigration/providerMigrationContext.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderContextWindowManager.ts -> src/utils/model/providerMigration/providerMigrationContextWindowManager.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderDeprecation.ts -> src/utils/model/providerMigration/providerMigrationDeprecation.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderEffort.ts -> src/utils/model/providerMigration/providerMigrationEffort.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderFastMode.ts -> src/utils/model/providerMigration/providerMigrationFastMode.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationInsightsModel.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderModel.ts -> src/utils/model/providerMigration/providerMigrationModel.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationModelAllowlist.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationModelCompat.ts"
     },
     {
@@ -603,36 +1423,2764 @@
       "path": "src/dsxu/legacy/model/legacyProviderModelConfigs.ts -> src/utils/model/providerMigration/providerMigrationModelConfigs.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderModelOptions.ts -> src/utils/model/providerMigration/providerMigrationModelOptions.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationPromptCacheEnv.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderSmallModelQuery.ts -> src/utils/model/providerMigration/providerMigrationSmallModelQuery.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderThinking.ts -> src/utils/model/providerMigration/providerMigrationThinking.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationToolSearchModel.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderUltraplanModel.ts -> src/utils/model/providerMigration/providerMigrationUltraplanModel.ts"
     },
     {
-      "statusCode": "R",
+      "statusCode": "RM",
       "path": "src/dsxu/legacy/model/legacyProviderUsageLimit.ts -> src/utils/model/providerMigration/providerMigrationUsageLimit.ts"
     },
     {
-      "statusCode": "A",
+      "statusCode": "AM",
       "path": "src/utils/model/providerMigration/providerMigrationWebSearchModel.ts"
+    },
+    {
+      "statusCode": "M",
+      "path": "src/utils/transcriptSearch.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "LICENSE"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/BENCHMARK.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DEEPSEEK_V4_CAPABILITIES.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_ARCHIVE_WATCHLIST_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_BRAND_COMPAT_RISK_BOARD_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_CACHE_HIT_CLOSURE_20260521_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_CAPABILITY_ACCEPTANCE_AUDIT_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_CAPABILITY_COST_CROSSWALK_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_CAPABILITY_TRUTH_MATRIX_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_COMMAND_CATALOG_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_DAG_OWNER_REVIEW_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_DEEPSEEK_COST_QUALITY_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_DELETE_REVIEW_BOARD_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_DOCS_TRUTH_REGISTRY_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_DOC_SIGNAL_EXTRACTION_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_EXTERNAL_BENCHMARK_ADAPTER_PROOF_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache-visible-product-timeline-release-claim-evidence-binder.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_release-claim-evidence-binder.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_KARPATHY_SKILLS_ABSORPTION_PLAN_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_LEGACY_SWE_OWNER_REVIEW_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_OPTIMIZATION_FOR_CODEX_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_PIPELINE_SUPPORT_OWNER_REVIEW_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_PROMPT_INPUT_ALLOWLIST_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_RAW_API_VS_DSXU_AB_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_REASONIX_DEEPSEEK_ABSORPTION_GATE_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_REFERENCE_MECHANISM_AUDIT_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_REFERENCE_SCENARIO_BACKLOG_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_REFERENCE_SCENARIO_CONVERGENCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_ROOT_TDD_OWNER_REVIEW_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_RUNTIME_REACHABILITY_MAP_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_SCENARIO_REPLAY_BANK_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_SOURCE_CACHE_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_TERMINAL_LIVE_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_TRAINING_DATA_FLYWHEEL_MASTER_PLAN_20260520_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_TRAINING_PIPELINE_RUNBOOK_20260520_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_TRAINING_TRAJECTORY_EXECUTION_PLAN_20260520_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_TUNGSTEN_DISABLED_TOOL_OWNER_REVIEW_20260517.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V1_CORE_EXECUTION_PLAN_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V1_CORE_EXECUTION_PLAN_20260518_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V1_OPTIMIZATION_PLAN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_GITHUB_OPEN_SOURCE_LAUNCH_PACK_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_SECTION_4_5_EXPERIENCE_LOOP_AUDIT_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_SENIOR_CODING_WINDOW_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_MASTER_PLAN_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_NAMING_GOVERNANCE_BOARD_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V26_REFERENCE_EXPERIENCE_REVERSE_ANALYSIS_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V2_EXECUTION_PLAN_20260518_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V2_FINALIZATION_CLOSEOUT_20260521_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V3_CACHE_FIRST_EXECUTION_PLAN_20260518_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V3_CACHE_FIRST_FOLLOWUP_TRACKER_20260521_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V3_FINALIZATION_GATE_TRACKER_20260521_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V3_RELEASE_CLAIM_BLOCKER_TRACKER_20260521_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_COMPLEXITY_RISK_REGISTER_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_CONSOLIDATION_EXECUTION_PLAN_20260518_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_FEATURE_OWNER_MAP_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_FOCUSED_REAUDIT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_FREEZE_REGISTER_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_REAL_TASK_HIT_RATE_PACK_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V4_SCRIPT_SURFACE_MAP_20260518.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_EXECUTION_PLAN_20260519_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_CLAIM_BOUNDARY_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_EXPERIENCE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_MAINLINE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_PHASE0_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_RELEASE_GATES_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_PHASE0_REPLAY_REGRESSION_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V5_REPLAY_BANK_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_CONTEXT_PRESSURE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_COST_TO_VERIFIED_COMPLETION_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_DEEPSEEK_NATIVE_ENGINEERING_RUNTIME_20260519_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_DEEPSEEK_PROVIDER_PROBE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_EXECUTION_PLAN_20260519_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_HIT_RATE_REPORT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_INDEPENDENT_COMPLETION_AUDIT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_LEDGER_RESUME_SMOKE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_LIVE_TOOL_CALL_REPLAY_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_OWNER_CLEANUP_CHECK_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_PROMPT_DIET_REPORT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_PTY_TUI_ACCEPTANCE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_REPLAY_BANK_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V6_TUI_SNAPSHOT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_COMPLETION_AUDIT_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_DELETE_REVIEW_REPLACEMENT_EVIDENCE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_FINAL_CLOSURE_BOARD_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_OWNER_FOCUSED_EVIDENCE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_REMAINING_EVIDENCE_QUEUE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_SAFETY_GATE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_SAFE_CONSOLIDATION_AND_SIGNAL_ABSORPTION_20260519_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V7_SCENARIO_REPLAY_LAYER_EVIDENCE_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_ADAPTIVE_ENGINEERING_RUNTIME_20260519_CN.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_CN_SCENARIO_REPLAY_20260520.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_DEFAULT_CHAIN_REACHABILITY_20260520.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_LONG_TASK_LEDGER_REPLAY_20260520.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_V8_TOOL_WINDOW_AB_20260519.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/DSXU_VISIBLE_STATE_ACCEPTANCE_20260516.md"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/assets/"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/evidence/"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_ARCHIVE_WATCHLIST_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_BRAND_COMPAT_RISK_BOARD_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CACHE_HIT_CLOSURE_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CACHE_LIVE_AB.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CACHE_LIVE_AB_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CACHE_REALITY_RUN_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_ACCEPTANCE_AUDIT_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_ACCEPTANCE_AUDIT_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_COST_CROSSWALK_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_COST_CROSSWALK_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_TRUTH_MATRIX_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_CAPABILITY_TRUTH_MATRIX_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_COMMAND_CATALOG_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DAG_OWNER_REVIEW_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DEEPSEEK_COST_QUALITY_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DEEPSEEK_COST_QUALITY_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DELETE_REVIEW_BOARD_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DOCS_TRUTH_REGISTRY_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DOCS_TRUTH_REGISTRY_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DOC_SIGNAL_EXTRACTION_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_DOC_SIGNAL_EXTRACTION_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EXTERNAL_BENCHMARK_ADAPTER_PROOF_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_EXTERNAL_BENCHMARK_ADAPTER_PROOF_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_HARD_ENGINEERING_BENCHMARK_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache-visible-product-timeline-release-claim-evidence-binder.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_release-claim-evidence-binder.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_KARPATHY_SKILLS_ABSORPTION_AUDIT_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_KARPATHY_SKILLS_ABSORPTION_AUDIT_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_KARPATHY_SKILLS_MECHANISM_MATRIX_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_LEGACY_SWE_OWNER_REVIEW_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PIPELINE_SUPPORT_OWNER_REVIEW_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PROMPT_INPUT_ALLOWLIST_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_COLLECTION_PACK_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN10_MCP_OVERLAY_LEDGER_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN11_MCP_OVERLAY_PERMISSION_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN12_MCP_OVERLAY_AUTH_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN13_DYNAMIC_OVERLAY_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN14_MCP_RESOURCE_TOOLS_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN15_MCP_REGISTRY_NAMES_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN16_MCP_HELPER_VISIBLE_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN17_MCP_BLOCKED_RUBRIC_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN18_FINAL_14_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN19_PRODUCT_MCP_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN20_FINAL_14_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN21_TIMEOUT_FOUR_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN22_V8_HTML_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN23_V8_RUNTIME_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN24_V8_CLEAN_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN25_V8_FIXTURE_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN26_V8_PATH_EVIDENCE_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN27_MCP_NO_RESOURCE_STOP_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN28_AGENT_PLANNING_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN29_V8_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN30_FULL_14_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN31_THREE_FIXES_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN32_FULL_14_CURRENT_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN33_READ_EDIT_CACHE_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN34_READ_EDIT_CACHE_GOLDEN_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN35_COMPACT_AND_GOLDEN_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN36_COMPACT_STRICT_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN37_FULL_14_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN38_TWO_REFIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN39_TWO_REFIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN40_TWO_REFIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN41_TWO_REFIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN42_COMPACT_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN43_FULL_14_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN44_AGENT_CONTRACT_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN45_AGENT_TIGHT_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN46_AGENT_FAILURE_CORRECTION_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN47_FULL_14_AGENT_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN4_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN5_MUTATION_TOOL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN6_OVERLAY_FIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN7_MCP_OVERLAY_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN8_MCP_OVERLAY_USER_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN9_MCP_OVERLAY_KEYS_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_RERUN48_REMAINING_16_TO_30_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_RERUN49_FIX7_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_RERUN50_REVIEW_TO_FIX_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_RERUN51_FIX7_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_API_BASELINE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_API_BASELINE_REMAINING_16_RERUN51_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_API_BASELINE_RERUN47_FULL_14_AGENT_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_FULL_30_RERUN51_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_IMPORT_REPORT_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_IMPORT_REPORT_FULL_30_RERUN51_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_IMPORT_REPORT_RERUN47_FULL_14_AGENT_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_IMPORT_REPORT_RERUN47_FULL_14_AGENT_FINAL_AFTER_RAW_API_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_RERUN47_FULL_14_AGENT_FINAL_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_RERUN47_FULL_14_AGENT_FINAL_AFTER_RAW_API_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_RAW_API_VS_DSXU_AB_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_CRITICAL_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_SUMMARY_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_DEEPSEEK_ABSORPTION_GATE_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_P0_PERFORMANCE_SMOKE_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_PERFORMANCE_IMPACT_MATRIX_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_PERFORMANCE_IMPACT_SUMMARY_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_SOURCE_FILE_COVERAGE_20260517.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REASONIX_SOURCE_FILE_COVERAGE_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_MECHANISM_AUDIT_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_MECHANISM_AUDIT_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_SCENARIO_BACKLOG_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_SCENARIO_BACKLOG_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_SCENARIO_CONVERGENCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_REFERENCE_SCENARIO_CONVERGENCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_ROOT_TDD_OWNER_REVIEW_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_RUNTIME_REACHABILITY_MAP_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SCENARIO_REPLAY_BANK_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SOURCE_CACHE_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SOURCE_CACHE_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SWE_BENCH_RESULTS_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SWE_BENCH_RESULTS_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SWE_INTERNAL_SMOKE_RESULTS_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SWE_INTERNAL_SMOKE_RESULTS_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_SWE_INTERNAL_SMOKE_RESULTS_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TERMINAL_LIVE_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TERMINAL_LIVE_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_ABLATION_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_DATA_FLYWHEEL_ACCEPTANCE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_DATA_FLYWHEEL_V2_RUN_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_DATA_PACK_MANIFEST_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_DSXU_DIR_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_DSXU_DIR_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_EVIDENCE_DASHBOARD_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_FINAL_RUN_SUMMARY_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_GOLDEN_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_GOLDEN_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_PREFERENCE_PAIRS_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_REPLAY_RUN_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_REPLAY_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_REPLAY_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_TRAJECTORY_ACCEPTANCE_CHECKLIST_20260520.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_TRAJECTORY_SCHEMA_DRAFT_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_TRAJECTORY_SCORE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_TRAJECTORY_VALIDATE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_V1_RUN_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_V1_RUN_LOGS_20260520/"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TRAINING_V2_DATASET_MANIFEST_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_TUNGSTEN_DISABLED_TOOL_OWNER_REVIEW_20260517.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_REVIEW_INPUT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_REVIEW_INPUT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_GITHUB_OPEN_SOURCE_LAUNCH_PACK_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_REVIEW_INPUT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_REFERENCE_EXPERIENCE_DENSITY_REBASELINE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_SECTION_4_5_EXPERIENCE_LOOP_AUDIT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_SECTION_4_5_EXPERIENCE_LOOP_AUDIT_REVIEW_INPUT_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_SENIOR_CODING_WINDOW_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_NAMING_GOVERNANCE_BOARD_20260515.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_NAMING_GOVERNANCE_BOARD_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_REFERENCE_EXPERIENCE_REVERSE_ANALYSIS_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V26_REFERENCE_EXPERIENCE_REVERSE_ANALYSIS_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FAILURE_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN18_FINAL_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN20_FINAL_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN30_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN32_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN4_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_14_NONPASS_FINALIZATION_RERUN_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_FINALIZATION_CLOSEOUT_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_RUNTIME_TRUST_EVIDENCE_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V2_TIMEOUT_FOUR_RERUN21_MATRIX_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V3_CACHE_FIRST_FOLLOWUP_TRACKER_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V3_FINALIZATION_GATE_TRACKER_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V3_RELEASE_CLAIM_BLOCKER_TRACKER_20260521.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_COMPLEXITY_RISK_REGISTER_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_CONSOLIDATION_STATUS_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_FEATURE_OWNER_MAP_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_FREEZE_REGISTER_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_REAL_TASK_HIT_RATE_PACK_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_REAL_TASK_HIT_RATE_PACK_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V4_SCRIPT_SURFACE_MAP_20260518.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_NATIVE_REPLAY_SUBSET_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_CLAIM_BOUNDARY_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_EXPERIENCE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_MAINLINE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_PHASE0_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_RELEASE_GATES_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_PHASE0_REPLAY_REGRESSION_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V5_REPLAY_BANK_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_CONTEXT_PRESSURE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_COST_TO_VERIFIED_COMPLETION_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_DEEPSEEK_PROVIDER_PROBE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_HIT_RATE_REPORT_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_LEDGER_RESUME_SMOKE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_LIVE_TOOL_CALL_REPLAY_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_OWNER_CLEANUP_CHECK_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_OWNER_CLEANUP_CHECK_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_PROMPT_DIET_REPORT_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_PTY_TUI_ACCEPTANCE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_REPLAY_BANK_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V6_TUI_SNAPSHOT_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_COMPLETION_AUDIT_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_DELETE_REVIEW_REPLACEMENT_EVIDENCE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_FINAL_CLOSURE_BOARD_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_OWNER_FOCUSED_EVIDENCE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_REMAINING_EVIDENCE_QUEUE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_SAFETY_GATE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V7_SCENARIO_REPLAY_LAYER_EVIDENCE_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_CN_SCENARIO_REPLAY_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_COMPLETION_AUDIT_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_DEFAULT_CHAIN_REACHABILITY_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_LONG_TASK_LEDGER_REPLAY_20260520.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_TOOL_WINDOW_AB_20260519.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_V8_TOOL_WINDOW_AB_20260519.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_VISIBLE_STATE_ACCEPTANCE_20260516.csv"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/generated/DSXU_VISIBLE_STATE_ACCEPTANCE_20260516.json"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/product/"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/release/"
+    },
+    {
+      "statusCode": "??",
+      "path": "docs/training/"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-archive-watchlist.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-brand-compat-risk-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-cache-hit-closure.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-cache-live-ab.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-cache-prefix-export.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-cache-reality-run.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-cache-warm.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-capability-acceptance-audit.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-capability-cost-crosswalk.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-capability-truth-matrix.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-command-catalog.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-dag-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-deepseek-cost-quality-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-delete-review-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-doc-signal-extraction.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-docs-truth-registry.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-evidence-dashboard.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-external-benchmark-adapter-proof.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-hard-engineering-benchmark.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-legacy-swe-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-pipeline-support-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-prompt-input-allowlist.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-public-challenge-ablation-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-public-comparable-benchmark-manifest.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-public-comparable-dsxu-lane.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-public-comparable-raw-api-baseline.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-public-comparable-raw-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-raw-api-vs-dsxu-ab.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-reasonix-deepseek-absorption-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-reference-mechanism-audit.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-reference-scenario-backlog.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-reference-scenario-convergence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-root-tdd-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-runtime-health.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-runtime-reachability-map.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-scenario-replay-bank.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-source-cache-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-swe-bench-runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-terminal-live-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-ablation.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-capture.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-dashboard.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-dataset-manifest.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-export-runtime.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-export.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-generate-golden.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-generate-replay.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-live-provider-capture.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-preference.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-query-loop-capture-smoke.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-query-loop-reachability.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-replay.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-score.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-v1-runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-v2-runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-training-validate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-tungsten-disabled-tool-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-c2-1902-full-evidence-join.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-c2-loop-real-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-clean-export-artifact.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-completed-reacceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-complex-task-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-fresh-install-release-smoke.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-github-open-source-launch-pack.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-interactive-tui-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-live-acceptance-router.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-product-benchmark-data-pack.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-public-challenge-package.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-section45-experience-loop-audit.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-senior-coding-window.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v24-six-stage-final-tests.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v26-c2-capability-loss-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v26-c2-owner-implementation-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v26-c2-public-claim-closure.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v26-naming-governance-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v26-reference-experience-reverse-analysis.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v3-release-claim-blocker-tracker.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v4-real-task-hit-rate-pack.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v5-native-replay-subset.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v5-phase0-runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v5-replay-bank.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-context-pressure.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-cost-to-verified-completion.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-hit-rate-report.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-ledger-resume-smoke.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-live-provider-probe.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-live-tool-call-replay.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-owner-cleanup-check.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-owner-review-decisions.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-prompt-diet-report.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-pty-tui-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-replay-bank.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v6-tui-snapshot.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-completion-audit.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-delete-review-replacement-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-final-closure-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-owner-focused-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-remaining-evidence-queue.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-safety-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v7-scenario-replay-layer-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v8-cn-scenario-replay.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v8-default-chain-reachability.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v8-live-provider-smoke.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v8-long-task-ledger-replay.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-v8-tool-window-ab.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "scripts/dsxu-visible-state-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/commands/context/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/LogoV2/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/PromptInput/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/messages/UserToolResultMessage/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/messages/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/components/shell/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/coordinator/tdd-gate/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/coordinator/tdd-gate/post-write-hook.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/action-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/active-frame-ledger.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/agent-live-report-replay.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/agent-long-run.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/agent-mcp-skill-ownership-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/baseline-failure-reporter.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/benchmark-readiness.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/brand-compat-risk-board.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/capability-registry.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/code-mode-source-cache-governor.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/code-terminal-runner.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/context-cache-strategy.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/context-pressure-matrix.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/deepseek-cost-quality-board.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/deepseek-tool-repair-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/dirty-quarantine-ledger.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/eval-baseline-manifest.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/evidence-eval-pack.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/execution-contract-compiler.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/experience-live-report-ingest.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/extension-runtime-owner.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/external-benchmark-adapter-proof-board.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/external-integration-owner.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/file-edit-surgical-loop.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/go-stop-decision.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/goal-roadmap-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/live-real-task-compare.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/mainline-completion-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/memory-resume.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/model-capability-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/model-router-cost-policy.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/open-source-package-gate.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/p12-target-reference-manifest-autodiscovery.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/permission-usability.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/post-mutation-verification-envelope.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/product-build-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/product-core-guard.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/productization-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/prompt-governance-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/prompt-section-router.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/proof-carrying-edit.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/public-challenge-ablation-board.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/public-doc-truth.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/real-gap-acceptance.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/real-mcp-server.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/real-task-route-plan.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/reasonix-cache-hardening.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/reasonix-deepseek-absorption-gate.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/recovery-decision-table.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/reference-absorption-completion-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/reference-behavior-productization-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/replace-delete-owner-review.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/skill-mcp-expert-layer.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/stage-close-readiness.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/stop-hook-runtime.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/strict-tool-schema-gateway.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/terminal-hit-rate.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/tool-definition-owner.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/tool-evidence-pack-v1.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/tool-view-compiler.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/tool-window-ab-contract.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/ui-shell-contract-registry.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v4-edit-lifecycle.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v5-default-chain-focused.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-agent-role-tool-window.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-cn-intent-classifier.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-expert-context-activation.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-failure-driven-model-upgrade.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-long-task-work-memory.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-profile-tool-window-policy.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-route-contract-consistency.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/v8-tool-output-artifact-budget.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/visible-shared-owner.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/agent-mcp-skill-boundary-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/analyzers/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/baseline-failure-reporter.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/benchmark-readiness.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/brand-compat-risk-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/capability-registry.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/code-terminal-runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/context-budget-v1.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/context-pressure-matrix.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/controlled-failure-taxonomy.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/cost-cache-live-task-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/data-sources/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/deepseek-cost-quality-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/dsxu-retirement-plan.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/eval-baseline-manifest.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/evidence-eval-pack.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/experience-live-report-ingest.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/external-benchmark-adapter-proof-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/five-task-release-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/full-absorb-executor.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/full-absorb.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/go-stop-decision.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/goal-roadmap-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/live-deepseek-benchmark-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/live-real-task-compare.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/mainline-completion-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/model-capability-v1.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/model-gateway-v1.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/model-public-surface-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/open-source-package-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/opportunity-discovery.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/p12-target-reference-manifest-autodiscovery.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/post-mutation-verification-envelope.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/product-build-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/productization-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/prompt-prefix-cache-builder.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/prompt-prefix-cache-evidence.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/prompt-section-router.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/proprietary-code-risk-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/provider-service-shell-policy.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/public-challenge-ablation-board.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/public-surface-clean-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/real-gap-acceptance.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/real-task-route-plan.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/reasonix-cache-hardening.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/reasonix-deepseek-absorption-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/reference-absorption-completion-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/reference-behavior-productization-contract.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/release-provenance-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/replace-delete-owner-review.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/reporters/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/route-cache-dynamic-tail.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/route-cache-roi-smoke.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/semantic-tool-trace.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/semantic-tools.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/shell-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/skill-goal-trigger.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/stage-close-readiness.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/task-analyzer.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/terminal-hit-rate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/tool-catalog-v1.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/tool-window-ab-v8.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/tool-window-policy-v8.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/engine/work-state-timeline.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/hitl/index.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/integration/harness/agent-live-report-replay-harness.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/integration/index.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/msa/embedding-ollama.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/msa/index.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/msa/l3-archive.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/training/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/dsxu/tuning/index.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/hooks/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/ink/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/__tests__/cache-live-ab.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/__tests__/cache-prefix-registry.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/__tests__/cache-warmer.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/api/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/api/deepseek-trajectory-store.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/api/deepseek-trajectory-store.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/cache-live-ab.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/cache-prefix-registry.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/cache-warmer.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/contextCollapse/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/eval/swe-bench/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/eval/swe-bench/judge.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/eval/swe-bench/runner.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/health/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/services/static-analysis/tool-gate.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/tools/AgentTool/__tests__/"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/tools/AgentTool/agentToolSchemas.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/tools/__tests__/tool-permission-owner-gate.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "src/tools/__tests__/tool-registry-simple-mode.test.ts"
+    },
+    {
+      "statusCode": "??",
+      "path": "test/html.test.js"
     }
   ],
   "ownerAcceptedOrConditionalPaths": 1746,

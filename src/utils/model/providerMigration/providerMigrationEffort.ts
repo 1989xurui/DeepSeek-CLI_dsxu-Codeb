@@ -9,15 +9,15 @@ import {
 } from '../antModels.js'
 import { parseUserSpecifiedModel } from './providerMigrationModel.js'
 
-export type ProviderMigrationEffortValue = EffortLevel | number
+export type ArchivedEffortValue = EffortLevel | number
 
-export type ProviderMigrationDefaultEffortConfig = {
+export type ArchivedDefaultEffortConfig = {
   enabled: boolean
   dialogTitle: string
   dialogDescription: string
 }
 
-const PROVIDER_MIGRATION_DEFAULT_EFFORT_CONFIG_DEFAULT: ProviderMigrationDefaultEffortConfig = {
+const ARCHIVED_DEFAULT_EFFORT_CONFIG_DEFAULT: ArchivedDefaultEffortConfig = {
   enabled: true,
   dialogTitle: 'We recommend medium effort',
   dialogDescription:
@@ -28,11 +28,11 @@ function normalizedModel(model: string): string {
   return model.toLowerCase()
 }
 
-export function isProviderMigrationInternalUser(): boolean {
+export function isArchivedInternalUser(): boolean {
   return process.env.USER_TYPE === 'ant'
 }
 
-export function getProviderMigrationModelEffortSupport(
+export function getArchivedModelEffortSupport(
   model: string,
 ): boolean | undefined {
   const supported3P = get3PModelCapabilityOverride(model, 'effort')
@@ -51,11 +51,11 @@ export function getProviderMigrationModelEffortSupport(
   return undefined
 }
 
-export function getProviderMigrationDefaultModelEffortSupport(): boolean {
+export function getArchivedDefaultModelEffortSupport(): boolean {
   return getAPIProvider() === 'firstParty'
 }
 
-export function getProviderMigrationModelMaxEffortSupport(
+export function getArchivedModelMaxEffortSupport(
   model: string,
 ): boolean | undefined {
   const supported3P = get3PModelCapabilityOverride(model, 'max_effort')
@@ -65,20 +65,20 @@ export function getProviderMigrationModelMaxEffortSupport(
   if (normalizedModel(model).includes('opus-4-6')) {
     return true
   }
-  if (isProviderMigrationInternalUser() && resolveAntModel(model)) {
+  if (isArchivedInternalUser() && resolveAntModel(model)) {
     return true
   }
   return undefined
 }
 
-export function canPersistProviderMigrationMaxEffort(): boolean {
-  return isProviderMigrationInternalUser()
+export function canPersistArchivedMaxEffort(): boolean {
+  return isArchivedInternalUser()
 }
 
-export function convertProviderMigrationNumericEffortToLevel(
+export function convertArchivedNumericEffortToLevel(
   value: number,
 ): EffortLevel | undefined {
-  if (!isProviderMigrationInternalUser()) {
+  if (!isArchivedInternalUser()) {
     return undefined
   }
   if (value <= 50) return 'low'
@@ -87,34 +87,34 @@ export function convertProviderMigrationNumericEffortToLevel(
   return 'max'
 }
 
-export function getProviderMigrationInternalNumericEffortDescription(
+export function getArchivedInternalNumericEffortDescription(
   value: number,
 ): string | undefined {
-  if (!isProviderMigrationInternalUser()) {
+  if (!isArchivedInternalUser()) {
     return undefined
   }
   return `[DSXU-INTERNAL] Numeric effort value of ${value}`
 }
 
-export function getProviderMigrationMaxEffortDescription(): string {
+export function getArchivedMaxEffortDescription(): string {
   return 'Maximum capability with deepest reasoning'
 }
 
-export function getProviderMigrationDefaultEffortConfig(): ProviderMigrationDefaultEffortConfig {
+export function getArchivedDefaultEffortConfig(): ArchivedDefaultEffortConfig {
   const config = getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_grey_step2',
-    PROVIDER_MIGRATION_DEFAULT_EFFORT_CONFIG_DEFAULT,
+    ARCHIVED_DEFAULT_EFFORT_CONFIG_DEFAULT,
   )
   return {
-    ...PROVIDER_MIGRATION_DEFAULT_EFFORT_CONFIG_DEFAULT,
+    ...ARCHIVED_DEFAULT_EFFORT_CONFIG_DEFAULT,
     ...config,
   }
 }
 
-export function getProviderMigrationDefaultEffortForInternalModel(
+export function getArchivedDefaultEffortForInternalModel(
   model: string,
-): ProviderMigrationEffortValue | undefined {
-  if (!isProviderMigrationInternalUser()) {
+): ArchivedEffortValue | undefined {
+  if (!isArchivedInternalUser()) {
     return undefined
   }
 
@@ -137,15 +137,15 @@ export function getProviderMigrationDefaultEffortForInternalModel(
   return undefined
 }
 
-export function getProviderMigrationDefaultEffortForKnownModel(
+export function getArchivedDefaultEffortForKnownModel(
   model: string,
-): ProviderMigrationEffortValue | undefined {
+): ArchivedEffortValue | undefined {
   if (normalizedModel(model).includes('opus-4-6')) {
     if (isProSubscriber()) {
       return 'medium'
     }
     if (
-      getProviderMigrationDefaultEffortConfig().enabled &&
+      getArchivedDefaultEffortConfig().enabled &&
       (isMaxSubscriber() || isTeamSubscriber())
     ) {
       return 'medium'
@@ -154,7 +154,32 @@ export function getProviderMigrationDefaultEffortForKnownModel(
   return undefined
 }
 
-export function isProviderMigrationDefaultEffortCalloutModel(model: string): boolean {
+export function isArchivedDefaultEffortCalloutModel(model: string): boolean {
   const parsed = parseUserSpecifiedModel(model)
   return normalizedModel(parsed).includes('opus-4-6')
 }
+
+export type ProviderMigrationEffortValue = ArchivedEffortValue
+export type ProviderMigrationDefaultEffortConfig = ArchivedDefaultEffortConfig
+export const isProviderMigrationInternalUser = isArchivedInternalUser
+export const getProviderMigrationModelEffortSupport =
+  getArchivedModelEffortSupport
+export const getProviderMigrationDefaultModelEffortSupport =
+  getArchivedDefaultModelEffortSupport
+export const getProviderMigrationModelMaxEffortSupport =
+  getArchivedModelMaxEffortSupport
+export const canPersistProviderMigrationMaxEffort = canPersistArchivedMaxEffort
+export const convertProviderMigrationNumericEffortToLevel =
+  convertArchivedNumericEffortToLevel
+export const getProviderMigrationInternalNumericEffortDescription =
+  getArchivedInternalNumericEffortDescription
+export const getProviderMigrationMaxEffortDescription =
+  getArchivedMaxEffortDescription
+export const getProviderMigrationDefaultEffortConfig =
+  getArchivedDefaultEffortConfig
+export const getProviderMigrationDefaultEffortForInternalModel =
+  getArchivedDefaultEffortForInternalModel
+export const getProviderMigrationDefaultEffortForKnownModel =
+  getArchivedDefaultEffortForKnownModel
+export const isProviderMigrationDefaultEffortCalloutModel =
+  isArchivedDefaultEffortCalloutModel

@@ -24,7 +24,7 @@ export class ToolRegistryV1 {
     return entry;
   }
 
-  registerRuntimeTools(runtimeTools: RuntimeToolDefinition[], owner = 'duxu-mainline', version = '1.0.0'): ToolRegistryEntry[] {
+  registerRuntimeTools(runtimeTools: RuntimeToolDefinition[], owner = 'dsxu-mainline', version = '1.0.0'): ToolRegistryEntry[] {
     const entries: ToolRegistryEntry[] = [];
     for (const runtimeTool of runtimeTools) {
       entries.push(this.register(convertRuntimeToolToV1(runtimeTool, owner, version), true));
@@ -155,7 +155,7 @@ export function validateInputByContract(tool: ToolDefinition, input: Record<stri
   return { valid: issues.length === 0, issues };
 }
 
-export function convertRuntimeToolToV1(runtimeTool: RuntimeToolDefinition, owner = 'duxu-mainline', version = '1.0.0'): ToolDefinition {
+export function convertRuntimeToolToV1(runtimeTool: RuntimeToolDefinition, owner = 'dsxu-mainline', version = '1.0.0'): ToolDefinition {
   const normalizedId = runtimeTool.name.trim();
   const description = runtimeTool.description || normalizedId;
   const required = Array.isArray(runtimeTool.inputSchema?.required) ? runtimeTool.inputSchema.required : [];

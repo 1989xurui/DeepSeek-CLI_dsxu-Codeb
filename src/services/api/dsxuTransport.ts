@@ -212,9 +212,9 @@ import {
 } from '../../utils/model/model.js'
 import type { DeepSeekV4RouteInput } from '../../utils/model/deepseekV4Control.js'
 import {
-  isProviderMigrationDefaultCodingPromptCachingDisabled,
-  isProviderMigrationDefaultHighCapacityPromptCachingDisabled,
-  isProviderMigrationSmallFastPromptCachingDisabled,
+  isArchivedDefaultCodingPromptCachingDisabled,
+  isArchivedDefaultHighCapacityPromptCachingDisabled,
+  isArchivedSmallFastPromptCachingDisabled,
 } from '../../utils/model/providerMigration/providerMigrationPromptCacheEnv.js'
 import {
   startSessionActivity,
@@ -349,19 +349,19 @@ export function getPromptCachingEnabled(model: string): boolean {
   if (isEnvTruthy(process.env.DISABLE_PROMPT_CACHING)) return false
 
   // Check if we should disable for small/fast model
-  if (isProviderMigrationSmallFastPromptCachingDisabled()) {
+  if (isArchivedSmallFastPromptCachingDisabled()) {
     const smallFastModel = getSmallFastModel()
     if (model === smallFastModel) return false
   }
 
   // Check if we should disable for default coding model
-  if (isProviderMigrationDefaultCodingPromptCachingDisabled()) {
+  if (isArchivedDefaultCodingPromptCachingDisabled()) {
     const defaultSonnet = getDefaultSonnetModel()
     if (model === defaultSonnet) return false
   }
 
   // Check if we should disable for default high-capacity model
-  if (isProviderMigrationDefaultHighCapacityPromptCachingDisabled()) {
+  if (isArchivedDefaultHighCapacityPromptCachingDisabled()) {
     const defaultOpus = getDefaultOpusModel()
     if (model === defaultOpus) return false
   }
@@ -2599,7 +2599,7 @@ async function* queryModel(
       // If the streaming failure was itself a 529, count it toward the
       // consecutive-529 budget so total 529s-before-model-fallback is the
       // same whether the overload was hit in streaming or non-streaming mode.
-      // This is a provider-migration carryover fix for upstream issue 1513
+      // This is an archived carryover fix for upstream issue 1513
       // Instrumentation: proves executeNonStreamingRequest was entered (vs. the
       // fallback event firing but the call itself hanging at dispatch).
       logForDiagnosticsNoPII('info', 'cli_nonstreaming_fallback_started')

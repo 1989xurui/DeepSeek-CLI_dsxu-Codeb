@@ -30,12 +30,12 @@ describe('benchmark runner route wiring V1', () => {
     expect(getBenchmarkRouteExpectation({ category: 'bugfix' })).toMatchObject({
       workflowKind: 'bugfix',
       expectedModel: 'deepseek-v4-flash',
-      routeReason: 'coding_flash_non_thinking',
+      routeReason: 'coding_flash_thinking_high',
     })
     expect(getBenchmarkRouteExpectation({ category: 'feature' })).toMatchObject({
       workflowKind: 'feature',
       expectedModel: 'deepseek-v4-flash',
-      routeReason: 'coding_flash_non_thinking',
+      routeReason: 'coding_flash_thinking_high',
     })
     expect(getBenchmarkRouteExpectation({ category: 'review' })).toMatchObject({
       workflowKind: 'review',

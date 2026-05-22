@@ -5,10 +5,10 @@
  * Team memory is scoped per-repo (identified by git remote hash) and shared
  * across all authenticated org members.
  *
- * API contract (provider-migration source service #250711 + #283027):
- *   GET  provider-migration team-memory path?repo={owner/repo}            -> TeamMemoryData (includes entryChecksums)
- *   GET  provider-migration team-memory path?repo={owner/repo}&view=hashes -> metadata + entryChecksums only (no entry bodies)
- *   PUT  provider-migration team-memory path?repo={owner/repo}            -> upload entries (upsert semantics)
+ * API contract (archived source service #250711 + #283027):
+ *   GET  archived team-memory path?repo={owner/repo}            -> TeamMemoryData (includes entryChecksums)
+ *   GET  archived team-memory path?repo={owner/repo}&view=hashes -> metadata + entryChecksums only (no entry bodies)
+ *   PUT  archived team-memory path?repo={owner/repo}            -> upload entries (upsert semantics)
  *   404 = no data exists yet
  *
  * Sync semantics:
@@ -53,8 +53,8 @@ import {
   isFirstPartyProviderBaseUrl,
 } from '../../utils/model/providers.js'
 import {
+  isArchivedServiceShellAllowed,
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import { sleep } from '../../utils/sleep.js'
 import { jsonStringify } from '../../utils/slowOperations.js'
@@ -74,7 +74,7 @@ import {
 } from './types.js'
 
 const TEAM_MEMORY_SYNC_TIMEOUT_MS = 30_000
-// Per-entry size cap -> server default from provider-migration source service #293258.
+// Per-entry size cap -> server default from archived source service #293258.
 // Pre-filtering oversized entries saves bandwidth: the structured 413 for
 // this case doesn't give us anything to learn (one file is just too big).
 const MAX_FILE_SIZE_BYTES = 250_000
@@ -94,9 +94,9 @@ const MAX_FILE_SIZE_BYTES = 250_000
 const MAX_PUT_BODY_BYTES = 200_000
 const MAX_RETRIES = 3
 const MAX_CONFLICT_RETRIES = 2
-const PROVIDER_MIGRATION_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
+const ARCHIVED_CODE_API_SEGMENT = `${'cla' + 'ude'}_code`
 const DSXU_TEAM_MEMORY_PATH = '/api/dsxu_code/team_memory'
-const PROVIDER_MIGRATION_TEAM_MEMORY_PATH = `/api/${PROVIDER_MIGRATION_CODE_API_SEGMENT}/team_memory`
+const ARCHIVED_TEAM_MEMORY_PATH = `/api/${ARCHIVED_CODE_API_SEGMENT}/team_memory`
 
 function getDsxuTeamMemoryBaseUrl(): string | undefined {
   return process.env.DSXU_TEAM_MEMORY_SYNC_URL || process.env.TEAM_MEMORY_SYNC_URL
@@ -125,7 +125,7 @@ export type SyncState = {
   serverChecksums: Map<string, string>
   /**
    * Server-enforced max_entries cap, learned from a structured 413 response
-   * (provider-migration source service #293258 adds error_code + extra_details.max_entries).
+   * (archived source service #293258 adds error_code + extra_details.max_entries).
    * Stays null until a 413 is observed -> the server's cap is GB-tunable
    * per-org so there is no correct client-side default.  While null,
    * readLocalTeamMemory sends everything and lets the server be
@@ -144,7 +144,7 @@ export function createSyncState(): SyncState {
 
 /**
  * Compute `sha256:<hex>` over the UTF-8 bytes of the given content.
- * Format matches the server's entryChecksums values (provider-migration source service #283027)
+ * Format matches the server's entryChecksums values (archived source service #283027)
  * so local-vs-server comparison works by direct string equality.
  */
 export function hashContent(content: string): string {
@@ -168,7 +168,7 @@ function isUsingOAuth(): boolean {
   if (
     isDsxuRuntimeMode() &&
     !isDsxuTeamMemorySyncConfigured() &&
-    !isProviderMigrationServiceShellAllowed()
+    !isArchivedServiceShellAllowed()
   ) {
     return false
   }
@@ -189,7 +189,7 @@ function getTeamMemorySyncEndpoint(repoSlug: string): string {
     getDsxuTeamMemoryBaseUrl() || getOauthConfig().BASE_API_URL
   const path = isDsxuRuntimeMode()
     ? DSXU_TEAM_MEMORY_PATH
-    : PROVIDER_MIGRATION_TEAM_MEMORY_PATH
+    : ARCHIVED_TEAM_MEMORY_PATH
   return `${baseUrl}${path}?repo=${encodeURIComponent(repoSlug)}`
 }
 
@@ -335,7 +335,7 @@ async function fetchTeamMemoryOnce(
  * Fetch only per-key checksums + metadata (no entry bodies).
  * Used for cheap serverChecksums refresh during 412 conflict resolution -> avoids
  * downloading ~300KB of content just to learn which keys changed.
- * Requires provider-migration source service #283027 deployed; on failure the caller fails the
+ * Requires archived source service #283027 deployed; on failure the caller fails the
  * push and the watcher retries on the next edit.
  */
 async function fetchTeamMemoryHashes(
@@ -365,7 +365,7 @@ async function fetchTeamMemoryHashes(
       response.data?.checksum || response.headers['etag']?.replace(/^"|"$/g, '')
     const entryChecksums = response.data?.entryChecksums
 
-    // Requires provider-migration source service #283027. If entryChecksums is missing,
+    // Requires archived source service #283027. If entryChecksums is missing,
     // treat as a probe failure -> caller fails the push; watcher retries.
     if (!entryChecksums || typeof entryChecksums !== 'object') {
       return {
@@ -552,7 +552,7 @@ async function uploadTeamMemory(
     let serverErrorCode: 'team_memory_too_many_entries' | undefined
     let serverMaxEntries: number | undefined
     let serverReceivedEntries: number | undefined
-    // Parse structured 413 (provider-migration source service #293258). The server's
+    // Parse structured 413 (archived source service #293258). The server's
     // RequestTooLargeException includes error_code + extra_details with
     // the effective max_entries (may be GB-tuned per-org). Cache it so
     // the next push trims to the right value.
@@ -661,7 +661,7 @@ async function readLocalTeamMemory(maxEntries: number | null): Promise<{
   await walkDir(teamDir)
 
   // Truncate only if we've LEARNED a cap from the server (via a structured
-  // 413's extra_details.max_entries -> provider-migration source service #293258).  The
+  // 413's extra_details.max_entries -> archived source service #293258).  The
   // server's entry-count cap is GB-tunable per-org via
   // server-side team-memory limit data; we have no way to know it in advance.
   // Before the first 413 we send everything and let the server be
@@ -793,17 +793,17 @@ export function getDsxuTeamMemorySyncRuntimeProfile(): {
   runtime: 'DSXU Team Memory Sync'
   defaultAvailable: boolean
   endpointPath: string
-  providerMigrationEndpointPath: string
+  archivedEndpointPath: string
   activationEvidence: readonly string[]
 } {
   return {
     runtime: 'DSXU Team Memory Sync',
     defaultAvailable: isTeamMemorySyncAvailable(),
     endpointPath: '/api/dsxu_code/team_memory',
-    providerMigrationEndpointPath: PROVIDER_MIGRATION_TEAM_MEMORY_PATH,
+    archivedEndpointPath: ARCHIVED_TEAM_MEMORY_PATH,
     activationEvidence: [
       'DSXU mode resolves the sync endpoint through DSXU_TEAM_MEMORY_SYNC_URL and /api/dsxu_code/team_memory',
-      'provider-migration source endpoint remains available only outside DSXU runtime or through explicit migration configuration',
+      'archived source endpoint remains available only outside DSXU runtime or through explicit migration configuration',
       'pull writes validated team memory keys through teamMemPaths traversal checks',
       'push uses hashes and byte-batched deltas to avoid resending unchanged memory entries',
     ],
@@ -880,7 +880,7 @@ export async function pullTeamMemory(
   const responseChecksums = result.data.content.entryChecksums
 
   // Refresh serverChecksums from server-provided per-key hashes.
-  // Requires provider-migration source service #283027 -> if the response lacks entryChecksums
+  // Requires archived source service #283027 -> if the response lacks entryChecksums
   // (pre-deploy server), serverChecksums stays empty and the next push uploads
   // everything; it self-corrects on push success.
   state.serverChecksums.clear()
@@ -1092,7 +1092,7 @@ export async function pushTeamMemory(
 
     if (!result.conflict) {
       // If the server returned a structured 413 with its effective
-      // max_entries (provider-migration source service #293258), cache it so the next push
+      // max_entries (archived source service #293258), cache it so the next push
       // trims to the right cap. The server may GB-tune this per-org.
       // This push still fails -> re-trimming mid-push would require re-reading
       // local entries and re-computing the delta, and we'd need
@@ -1163,7 +1163,7 @@ export async function pushTeamMemory(
     // pushed with identical content.
     const probe = await fetchTeamMemoryHashes(state, repoSlug)
     if (!probe.success || !probe.entryChecksums) {
-      // Requires provider-migration source service #283027. A transient probe failure here is
+      // Requires archived source service #283027. A transient probe failure here is
       // fine: the push is failed and the watcher will retry on the next edit.
       logPush(startTime, {
         success: false,

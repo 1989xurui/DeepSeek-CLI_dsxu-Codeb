@@ -1,4 +1,4 @@
-// MCP runtime is DSXU-owned; provider migration service shells are explicit migration paths only.
+﻿// MCP runtime is DSXU-owned; archived service shells are explicit migration paths only.
 import { feature } from 'bun:bundle'
 import type {
   Base64ImageSource,
@@ -44,11 +44,11 @@ import pMap from 'p-map'
 import { getOriginalCwd, getSessionId } from '../../bootstrap/state.js'
 import type { Command } from '../../commands.js'
 import {
-  PROVIDER_MIGRATION_MCP_TRANSPORT,
-  PROVIDER_MIGRATION_META_ALWAYS_LOAD,
-  PROVIDER_MIGRATION_META_SEARCH_HINT,
-  isProviderMigrationMcpTransport,
-  providerMigrationMcpEvent,
+  ARCHIVED_MCP_META_ALWAYS_LOAD,
+  ARCHIVED_MCP_META_SEARCH_HINT,
+  ARCHIVED_MCP_TRANSPORT,
+  archivedMcpEvent,
+  isArchivedMcpTransport,
 } from '../../constants/providerMigrationProtocol.js'
 import { getOauthConfig } from '../../constants/oauth.js'
 import { PRODUCT_URL } from '../../constants/product.js'
@@ -139,11 +139,11 @@ import {
   hasMcpDiscoveryButNoToken,
   wrapFetchWithStepUpDetection,
 } from './auth.js'
-import { markProviderMigrationMcpConnected } from './providerConnectorMigration.js'
+import { markArchivedMcpConnected } from './providerConnectorMigration.js'
 import { getAllMcpConfigs, isMcpServerDisabled } from './config.js'
 import {
-  getProviderMigrationMcpDisabledReason,
-  isProviderMigrationMcpEnabled,
+  getArchivedMcpDisabledReason,
+  isArchivedMcpEnabled,
 } from './dsxuProvider.js'
 import { getMcpServerHeaders } from './headersHelper.js'
 import { SdkControlClientTransport } from './SdkControlTransport.js'
@@ -269,10 +269,10 @@ import { jsonParse, jsonStringify } from '../../utils/slowOperations.js'
 const MCP_AUTH_CACHE_TTL_MS = 15 * 60 * 1000 // 15 min
 const DSXU_IDE_AUTHORIZATION_HEADER =
   'X-' + 'Cl' + 'aude-Code-Ide-Authorization'
-const PROVIDER_MIGRATION_SHELL_PREFIX_ENV = 'CL' + 'AUDE_CODE_SHELL_PREFIX'
-const PROVIDER_MIGRATION_SDK_MCP_NO_PREFIX_ENV =
+const ARCHIVED_SHELL_PREFIX_ENV = 'CL' + 'AUDE_CODE_SHELL_PREFIX'
+const ARCHIVED_SDK_MCP_NO_PREFIX_ENV =
   'CL' + 'AUDE_AGENT_SDK_MCP_NO_PREFIX'
-const PROVIDER_MIGRATION_TOOL_USE_ID_META = 'clau' + 'decode/toolUseId'
+const ARCHIVED_TOOL_USE_ID_META = 'clau' + 'decode/toolUseId'
 type McpAuthCacheData = Record<string, { timestamp: number }>
 
 function getMcpAuthCachePath(): string {
@@ -357,7 +357,7 @@ function mcpBaseUrlAnalytics(serverRef: ScopedMcpServerConfig): {
 function handleRemoteAuthFailure(
   name: string,
   serverRef: ScopedMcpServerConfig,
-  transportType: 'sse' | 'http' | typeof PROVIDER_MIGRATION_MCP_TRANSPORT,
+  transportType: 'sse' | 'http' | typeof ARCHIVED_MCP_TRANSPORT,
 ): MCPServerConnection {
   logEvent('tengu_mcp_server_needs_auth', {
     transportType:
@@ -367,7 +367,7 @@ function handleRemoteAuthFailure(
   const label: Record<typeof transportType, string> = {
     sse: 'SSE',
     http: 'HTTP',
-    [PROVIDER_MIGRATION_MCP_TRANSPORT]: 'provider migration connector',
+    [ARCHIVED_MCP_TRANSPORT]: 'archived connector',
   }
   logMCPDebug(
     name,
@@ -378,21 +378,21 @@ function handleRemoteAuthFailure(
 }
 
 /**
- * Fetch wrapper for isolated provider migration connector connections. Attaches the OAuth bearer
+ * Fetch wrapper for isolated archived connector connections. Attaches the OAuth bearer
  * token and retries once on 401 via handleOAuth401Error (force-refresh).
  *
  * The provider API path has this retry (withRetry.ts, grove.ts) to handle
  * memoize-cache staleness and clock drift. Without the same here, a single
- * stale token mass-401s every provider migration connector and sticks them all in the
+ * stale token mass-401s every archived connector and sticks them all in the
  * 15-min needs-auth cache.
  */
-export function createProviderMigrationProxyFetch(innerFetch: FetchLike): FetchLike {
+export function createArchivedConnectorProxyFetch(innerFetch: FetchLike): FetchLike {
   return async (url, init) => {
     const doRequest = async () => {
       await checkAndRefreshOAuthTokenIfNeeded()
       const currentTokens = getProviderControlTokens()
       if (!currentTokens) {
-        throw new Error('No provider migration OAuth token available')
+        throw new Error('No archived OAuth token available')
       }
       // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
       const headers = new Headers(init?.headers)
@@ -417,7 +417,7 @@ export function createProviderMigrationProxyFetch(innerFetch: FetchLike): FetchL
     // downstream service genuinely needs auth (the common case: 30+ servers
     // with "MCP server requires authentication but no OAuth token configured").
     const tokenChanged = await handleOAuth401Error(sentToken).catch(() => false)
-    logEvent(providerMigrationMcpEvent('proxy_401'), {
+    logEvent(archivedMcpEvent('proxy_401'), {
       tokenChanged:
         tokenChanged as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
     })
@@ -882,28 +882,28 @@ export const connectToServer = memoize(
         logMCPDebug(name, `HTTP transport created successfully`)
       } else if (serverRef.type === 'sdk') {
         throw new Error('SDK servers should be handled in print.ts')
-      } else if (isProviderMigrationMcpTransport(serverRef.type)) {
-        if (!isProviderMigrationMcpEnabled()) {
-          throw new Error(getProviderMigrationMcpDisabledReason())
+      } else if (isArchivedMcpTransport(serverRef.type)) {
+        if (!isArchivedMcpEnabled()) {
+          throw new Error(getArchivedMcpDisabledReason())
         }
 
         logMCPDebug(
           name,
-          `Initializing provider migration connector transport for server ${serverRef.id}`,
+          `Initializing archived connector transport for server ${serverRef.id}`,
         )
 
         const tokens = getProviderControlTokens()
         if (!tokens) {
-          throw new Error('No provider migration OAuth token found')
+          throw new Error('No archived OAuth token found')
         }
 
         const oauthConfig = getOauthConfig()
         const proxyUrl = `${oauthConfig.MCP_PROXY_URL}${oauthConfig.MCP_PROXY_PATH.replace('{server_id}', serverRef.id)}`
 
-        logMCPDebug(name, `Using provider migration connector proxy at ${proxyUrl}`)
+        logMCPDebug(name, `Using archived connector proxy at ${proxyUrl}`)
 
         // eslint-disable-next-line eslint-plugin-n/no-unsupported-features/node-builtins
-        const fetchWithAuth = createProviderMigrationProxyFetch(globalThis.fetch)
+        const fetchWithAuth = createArchivedConnectorProxyFetch(globalThis.fetch)
 
         const proxyOptions = getProxyFetchOptions()
         const transportOptions: StreamableHTTPClientTransportOptions = {
@@ -922,7 +922,7 @@ export const connectToServer = memoize(
           new URL(proxyUrl),
           transportOptions,
         )
-        logMCPDebug(name, `provider migration connector transport created successfully`)
+        logMCPDebug(name, `archived connector transport created successfully`)
       } else if (
         (serverRef.type === 'stdio' || !serverRef.type) &&
         isDsxuBrowserProviderMCPServer(name)
@@ -964,8 +964,8 @@ export const connectToServer = memoize(
         logMCPDebug(name, `In-process Computer Use MCP server started`)
       } else if (serverRef.type === 'stdio' || !serverRef.type) {
         const finalCommand =
-          process.env[PROVIDER_MIGRATION_SHELL_PREFIX_ENV] || serverRef.command
-        const finalArgs = process.env[PROVIDER_MIGRATION_SHELL_PREFIX_ENV]
+          process.env[ARCHIVED_SHELL_PREFIX_ENV] || serverRef.command
+        const finalArgs = process.env[ARCHIVED_SHELL_PREFIX_ENV]
           ? [[serverRef.command, ...serverRef.args].join(' ')]
           : serverRef.args
         transport = new StdioClientTransport({
@@ -1143,19 +1143,19 @@ export const connectToServer = memoize(
             return handleRemoteAuthFailure(name, serverRef, 'http')
           }
         } else if (
-          isProviderMigrationMcpTransport(serverRef.type) &&
+          isArchivedMcpTransport(serverRef.type) &&
           error instanceof Error
         ) {
           logMCPDebug(
             name,
-            `provider migration connector connection failed after ${elapsed}ms: ${error.message}`,
+            `archived connector connection failed after ${elapsed}ms: ${error.message}`,
           )
           logMCPError(name, error)
 
           // StreamableHTTPError has a `code` property with the HTTP status
           const errorCode = (error as Error & { code?: number }).code
           if (errorCode === 401) {
-            return handleRemoteAuthFailure(name, serverRef, PROVIDER_MIGRATION_MCP_TRANSPORT)
+            return handleRemoteAuthFailure(name, serverRef, ARCHIVED_MCP_TRANSPORT)
           }
         } else if (
           serverRef.type === 'sse-ide' ||
@@ -1335,7 +1335,7 @@ export const connectToServer = memoize(
         // and close the transport so pending tool calls reject and the next
         // call reconnects with a fresh session ID.
         if (
-          (transportType === 'http' || isProviderMigrationMcpTransport(transportType)) &&
+          (transportType === 'http' || isArchivedMcpTransport(transportType)) &&
           isMcpSessionExpiredError(error)
         ) {
           logMCPDebug(
@@ -1354,7 +1354,7 @@ export const connectToServer = memoize(
         if (
           transportType === 'sse' ||
           transportType === 'http' ||
-          isProviderMigrationMcpTransport(transportType)
+          isArchivedMcpTransport(transportType)
         ) {
           // The SDK's StreamableHTTP transport fires this after exhausting its
           // own SSE reconnect attempts (default maxRetries: 2) - but it never
@@ -1781,7 +1781,7 @@ export const fetchToolsForClient = memoizeWithLRU(
       // Check if we should skip the mcp__ prefix for SDK MCP servers
       const skipPrefix =
         client.config.type === 'sdk' &&
-        isEnvTruthy(process.env[PROVIDER_MIGRATION_SDK_MCP_NO_PREFIX_ENV])
+        isEnvTruthy(process.env[ARCHIVED_SDK_MCP_NO_PREFIX_ENV])
 
       // Convert MCP tools to our Tool format
       return toolsToProcess
@@ -1798,12 +1798,12 @@ export const fetchToolsForClient = memoizeWithLRU(
             // a newline here would inject orphan lines into the deferred-tool
             // list (formatDeferredToolLine joins on '\n').
             searchHint:
-              typeof tool._meta?.[PROVIDER_MIGRATION_META_SEARCH_HINT] === 'string'
-                ? tool._meta[PROVIDER_MIGRATION_META_SEARCH_HINT]
+              typeof tool._meta?.[ARCHIVED_MCP_META_SEARCH_HINT] === 'string'
+                ? tool._meta[ARCHIVED_MCP_META_SEARCH_HINT]
                     .replace(/\s+/g, ' ')
                     .trim() || undefined
                 : undefined,
-            alwaysLoad: tool._meta?.[PROVIDER_MIGRATION_META_ALWAYS_LOAD] === true,
+            alwaysLoad: tool._meta?.[ARCHIVED_MCP_META_ALWAYS_LOAD] === true,
             async description() {
               return tool.description ?? ''
             },
@@ -1860,7 +1860,7 @@ export const fetchToolsForClient = memoizeWithLRU(
             ) {
               const toolUseId = extractToolUseId(parentMessage)
               const meta = toolUseId
-                ? { [PROVIDER_MIGRATION_TOOL_USE_ID_META]: toolUseId }
+                ? { [ARCHIVED_TOOL_USE_ID_META]: toolUseId }
                 : {}
 
               // Emit progress when tool starts
@@ -2183,8 +2183,8 @@ export async function reconnectMcpServerImpl(
       }
     }
 
-    if (isProviderMigrationMcpTransport(config.type)) {
-      markProviderMigrationMcpConnected(name)
+    if (isArchivedMcpTransport(config.type)) {
+      markArchivedMcpConnected(name)
     }
 
     const supportsResources = !!client.capabilities?.resources
@@ -2326,7 +2326,7 @@ export async function getMcpToolsCommandsAndResources(
       // Each probe is a network round-trip for connect-401 plus OAuth
       // discovery, and print mode awaits the whole batch (main.tsx:3503).
       if (
-        (isProviderMigrationMcpTransport(config.type) ||
+        (isArchivedMcpTransport(config.type) ||
           config.type === 'http' ||
           config.type === 'sse') &&
         ((await isMcpAuthCached(name)) ||
@@ -2356,8 +2356,8 @@ export async function getMcpToolsCommandsAndResources(
         return
       }
 
-      if (isProviderMigrationMcpTransport(config.type)) {
-        markProviderMigrationMcpConnected(name)
+      if (isArchivedMcpTransport(config.type)) {
+        markArchivedMcpConnected(name)
       }
 
       const supportsResources = !!client.capabilities?.resources
@@ -3158,7 +3158,7 @@ async function callMCPTool({
           errorDetails = firstContent.text
         }
       } else if ('error' in result) {
-        // Fallback for provider-migration error format
+        // Fallback for archived error format
         errorDetails = String(result.error)
       }
       logMCPError(name, errorDetails)
@@ -3240,7 +3240,7 @@ async function callMCPTool({
         'code' in e &&
         (e as Error & { code?: number }).code === -32000 &&
         e.message.includes('Connection closed') &&
-        (config.type === 'http' || isProviderMigrationMcpTransport(config.type))
+        (config.type === 'http' || isArchivedMcpTransport(config.type))
       if (isSessionExpired || isConnectionClosedOnHttp) {
         logMCPDebug(
           name,

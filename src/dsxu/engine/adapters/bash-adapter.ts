@@ -792,7 +792,7 @@ export class BashAdapter implements ToolExecutor {
         decision: 'block',
         findings,
         riskLevel: SecurityRiskLevel.BLOCK,
-        reason: `Detected ${blockingFindings.length} blocking safety issue(s)`,
+        reason: `检测到高危命令: Detected ${blockingFindings.length} blocking safety issue(s)`,
         metadata: {
           blockingCount: blockingFindings.length,
           criticalFindings: blockingFindings.filter(f => f.severity === 'critical').length
@@ -1004,7 +1004,7 @@ export class BashAdapter implements ToolExecutor {
     }
 
     if (success) {
-      output += 'Command succeeded'
+      output += '命令执行成功\nCommand succeeded'
     } else {
       output += 'Command failed'
     }

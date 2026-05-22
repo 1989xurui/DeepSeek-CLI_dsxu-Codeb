@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { buildToolCatalog } from '../tool-catalog-v1';
+import { buildToolCatalog, compileDSXUToolView } from '../tool-catalog-v1';
 import { createToolRegistryV1 } from '../tool-registry-v1';
 import type { ToolDefinition } from '../tool-types-v1';
 
@@ -127,5 +127,35 @@ describe('V10-4 Phase A - tool catalog skeleton', () => {
     ]);
     expect(merged.some((x) => x.toolId === 'tool-extra')).toBeTrue();
     expect(merged.filter((x) => x.toolId === 'tool-read').length).toBe(1);
+  });
+
+  test('14. compiles a V5 task-level tool view without exposing frozen/searchable tools', () => {
+    const view = compileDSXUToolView({
+      taskType: 'multi_file_refactor',
+      tools: [
+        'Read',
+        'Grep',
+        'Edit',
+        'Bash',
+        'Todo',
+        'MCPDocs',
+        'SkillRunner',
+        'SwarmCoordinator',
+        'Replay',
+        'Evidence',
+        'Write',
+        'GitDiff',
+        'Glob',
+      ],
+    });
+
+    expect(view.schemaVersion).toBe('dsxu.tool-view.v5');
+    expect(view.owner).toBe('Tool Gate');
+    expect(view.profile).toBe('multi_file_refactor');
+    expect(view.visibleToolCount).toBeLessThanOrEqual(24);
+    expect(view.visibleToolIds.slice(0, 5)).toEqual(['Read', 'Grep', 'Glob', 'Edit', 'Write']);
+    expect(view.hiddenToolIds).toEqual(expect.arrayContaining(['MCPDocs', 'SkillRunner', 'SwarmCoordinator']));
+    expect(view.guards).toEqual([]);
+    expect(view.evidence.join('\n')).toContain('visibleToolCount:');
   });
 });

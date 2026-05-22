@@ -112,7 +112,7 @@ export function OAuthFlowStep({
         timersRef.current.add(timer_0);
       }, {
         loginWithDSXUAi: true,
-        // Provider-migration token path only
+        // Archived token path only
         inferenceOnly: true,
         expiresIn: 365 * 24 * 60 * 60 // 1 year
       });

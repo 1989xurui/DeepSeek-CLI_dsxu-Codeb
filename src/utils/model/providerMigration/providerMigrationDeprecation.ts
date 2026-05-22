@@ -1,27 +1,29 @@
 import { type APIProvider, getAPIProvider } from '../providers.js'
 
-type ProviderMigrationDeprecatedModelInfo = {
+type ArchivedDeprecatedModelInfo = {
   isDeprecated: true
   modelName: string
   retirementDate: string
 }
 
-type ProviderMigrationNotDeprecatedInfo = {
+type ArchivedNotDeprecatedInfo = {
   isDeprecated: false
 }
 
-export type ProviderMigrationDeprecationInfo =
-  | ProviderMigrationDeprecatedModelInfo
-  | ProviderMigrationNotDeprecatedInfo
+export type ArchivedDeprecationInfo =
+  | ArchivedDeprecatedModelInfo
+  | ArchivedNotDeprecatedInfo
 
-type ProviderMigrationDeprecationEntry = {
+export type ProviderMigrationDeprecationInfo = ArchivedDeprecationInfo
+
+type ArchivedDeprecationEntry = {
   retirementDates: Record<APIProvider, string | null>
 }
 
-const providerMigrationSourceModelId = (family: string) => `cla${'ude'}-${family}`
+const archivedSourceModelId = (family: string) => `cla${'ude'}-${family}`
 
-const PROVIDER_MIGRATION_DEPRECATED_MODELS: Record<string, ProviderMigrationDeprecationEntry> = {
-  [providerMigrationSourceModelId('3-opus')]: {
+const ARCHIVED_DEPRECATED_MODELS: Record<string, ArchivedDeprecationEntry> = {
+  [archivedSourceModelId('3-opus')]: {
     retirementDates: {
       firstParty: 'January 5, 2026',
       bedrock: 'January 15, 2026',
@@ -29,7 +31,7 @@ const PROVIDER_MIGRATION_DEPRECATED_MODELS: Record<string, ProviderMigrationDepr
       foundry: 'January 5, 2026',
     },
   },
-  [providerMigrationSourceModelId('3-7-sonnet')]: {
+  [archivedSourceModelId('3-7-sonnet')]: {
     retirementDates: {
       firstParty: 'February 19, 2026',
       bedrock: 'April 28, 2026',
@@ -37,7 +39,7 @@ const PROVIDER_MIGRATION_DEPRECATED_MODELS: Record<string, ProviderMigrationDepr
       foundry: 'February 19, 2026',
     },
   },
-  [providerMigrationSourceModelId('3-5-haiku')]: {
+  [archivedSourceModelId('3-5-haiku')]: {
     retirementDates: {
       firstParty: 'February 19, 2026',
       bedrock: null,
@@ -47,13 +49,13 @@ const PROVIDER_MIGRATION_DEPRECATED_MODELS: Record<string, ProviderMigrationDepr
   },
 }
 
-export function getProviderMigrationDeprecatedModelInfo(
+export function getArchivedDeprecatedModelInfo(
   modelId: string,
-): ProviderMigrationDeprecationInfo {
+): ArchivedDeprecationInfo {
   const lowercaseModelId = modelId.toLowerCase()
   const provider = getAPIProvider()
 
-  for (const [key, value] of Object.entries(PROVIDER_MIGRATION_DEPRECATED_MODELS)) {
+  for (const [key, value] of Object.entries(ARCHIVED_DEPRECATED_MODELS)) {
     const retirementDate = value.retirementDates[provider]
     if (!lowercaseModelId.includes(key) || !retirementDate) {
       continue
@@ -67,3 +69,6 @@ export function getProviderMigrationDeprecatedModelInfo(
 
   return { isDeprecated: false }
 }
+
+export const getProviderMigrationDeprecatedModelInfo =
+  getArchivedDeprecatedModelInfo

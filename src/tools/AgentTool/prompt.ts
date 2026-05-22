@@ -59,7 +59,7 @@ export function formatAgentLine(agent: AgentDefinition): string {
  * description changes cause a full tool-schema cache bust.
  *
  * Override with DSXU_CODE_AGENT_LIST_IN_MESSAGES=true/false for testing.
- * The provider-migration source agent-list env remains a migration alias.
+ * The archived source agent-list env remains a migration alias.
  */
 export function shouldInjectAgentListInMessages(): boolean {
   const override = getDsxuCodeEnv('AGENT_LIST_IN_MESSAGES')
@@ -115,7 +115,7 @@ export function getDsxuAgentPromptRuntimeProfile(
     ],
     activationEvidence: [
       'getPrompt renders DSXU Agent tool instructions from runtime agent definitions',
-      'shouldInjectAgentListInMessages supports DSXU env override before provider-migration source alias',
+      'shouldInjectAgentListInMessages supports DSXU env override before archived source alias',
       'formatAgentLine exposes tool allow/deny scope to the model',
       'fork, background, worktree, remote, and continuation guidance control agent scheduling behavior',
     ],

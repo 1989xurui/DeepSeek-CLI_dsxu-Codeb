@@ -11,6 +11,7 @@ import {
 } from '../dsxu-direct-connect-session'
 import {
   buildDsxuAgentFinalGateNudge,
+  buildDsxuToolRuntimeTrustProof,
   buildDsxuRecoveryGateState,
   buildDsxuRecoveryState,
   buildDsxuQueryLoopStateTraceSnapshot,
@@ -286,6 +287,37 @@ describe('DSXU direct connect and query contract V1', () => {
         nextAction: 'inspect_wait_or_report_background_task_status',
       },
     })
+  })
+
+  test('query-loop live trust proof stays compact and derives from the latest tool result', () => {
+    const proof = buildDsxuToolRuntimeTrustProof([
+      createAssistantMessage({
+        content: [
+          {
+            type: 'tool_use',
+            id: 'toolu-proof',
+            name: 'Bash',
+            input: { command: 'bun test src/example.test.ts' },
+          },
+        ],
+      }),
+      createUserMessage({
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'toolu-proof',
+            content: 'schemaVersion=dsxu.runtime-event.v1\ncanonicalToolResult=true\noutputFile=tmp/run.log',
+          },
+        ],
+      }),
+    ])
+
+    expect(proof?.tool?.status).toBe('ready')
+    expect(proof?.tool?.readyConsumers).toBe(3)
+    expect(proof?.tool?.requiredConsumers).toBe(3)
+    expect(proof?.runtime?.status).toBe('ready')
+    expect(proof?.runtime?.presentKinds).toBe(2)
+    expect(proof?.runtime?.requiredKinds).toBe(2)
   })
 
   test('query-loop recovery cursor states classify agent and baseline gates in one view', () => {
@@ -1575,6 +1607,8 @@ describe('DSXU direct connect and query contract V1', () => {
       expect(eventText).toContain('DSXU final usage evidence: model=deepseek-v4-flash')
       expect(eventText).toContain('usage=unavailable')
       expect(eventText).toContain('missing=zero_token_usage')
+      expect(eventText).toContain('work_state_timeline_status=NEEDS_WORK_STATE_TIMELINE_EVIDENCE')
+      expect(eventText).toContain('work_state_guards=model/cost/cache state is blocked')
     } finally {
       if (previousTraceFile === undefined) delete process.env.DSXU_ROUTE_TRACE_FILE
       else process.env.DSXU_ROUTE_TRACE_FILE = previousTraceFile
@@ -1638,6 +1672,7 @@ describe('DSXU direct connect and query contract V1', () => {
     expect(captured.systemPromptText).toContain('reason=planning_flash_thinking_max')
     expect(eventText).toContain('DSXU final usage evidence: model=deepseek-v4-flash')
     expect(eventText).toContain('usage=unavailable')
+    expect(eventText).toContain('work_state_timeline_status=NEEDS_WORK_STATE_TIMELINE_EVIDENCE')
   })
 
   test('query loop live harness proves thrown failures clean up assistant tool_use with synthetic tool_result', async () => {

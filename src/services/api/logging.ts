@@ -32,7 +32,7 @@ import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
 import { consumeInvokingRequestId } from '../../utils/agentContext.js'
 import {
   isDsxuRuntimeMode,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from '../../utils/envUtils.js'
 import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
@@ -97,11 +97,11 @@ const GATEWAY_FINGERPRINTS: Partial<
 }
 
 // Gateways that use provider-owned domains (not self-hosted), so the
-// provider migration base URL hostname is a reliable signal even without a
+// archived base URL hostname is a reliable signal even without a
 // distinctive response header.
-const PROVIDER_MIGRATION_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
-const PROVIDER_MIGRATION_MODEL_ENV = `${'ANTH' + 'ROPIC'}_MODEL`
-const PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV = `${'ANTH' + 'ROPIC'}_SMALL_FAST_MODEL`
+const ARCHIVED_BASE_URL_ENV = `${'ANTH' + 'ROPIC'}_BASE_URL`
+const ARCHIVED_MODEL_ENV = `${'ANTH' + 'ROPIC'}_MODEL`
+const ARCHIVED_SMALL_FAST_MODEL_ENV = `${'ANTH' + 'ROPIC'}_SMALL_FAST_MODEL`
 
 const GATEWAY_HOST_SUFFIXES: Partial<Record<KnownGateway, string[]>> = {
   // https://docs.databricks.com/aws/en/ai-gateway/
@@ -146,25 +146,25 @@ function detectGateway({
   return undefined
 }
 
-function getProviderMigrationEnvMetadata() {
-  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+function getArchivedEnvMetadata() {
+  if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
     return {}
   }
 
   return {
-    ...(process.env[PROVIDER_MIGRATION_BASE_URL_ENV]
+    ...(process.env[ARCHIVED_BASE_URL_ENV]
       ? {
-          baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          baseUrl: process.env[ARCHIVED_BASE_URL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env[PROVIDER_MIGRATION_MODEL_ENV]
+    ...(process.env[ARCHIVED_MODEL_ENV]
       ? {
-          envModel: process.env[PROVIDER_MIGRATION_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envModel: process.env[ARCHIVED_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...(process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV]
+    ...(process.env[ARCHIVED_SMALL_FAST_MODEL_ENV]
       ? {
-          envSmallFastModel: process.env[PROVIDER_MIGRATION_SMALL_FAST_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          envSmallFastModel: process.env[ARCHIVED_SMALL_FAST_MODEL_ENV] as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
   }
@@ -237,7 +237,7 @@ export function logAPIQuery({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getProviderMigrationEnvMetadata(),
+    ...getArchivedEnvMetadata(),
   })
 }
 
@@ -283,7 +283,7 @@ export function logAPIError({
   const gateway = detectGateway({
     headers:
       error instanceof APIError && error.headers ? error.headers : headers,
-    baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV],
+    baseUrl: process.env[ARCHIVED_BASE_URL_ENV],
   })
 
   const errStr = getErrorMessage(error)
@@ -370,7 +370,7 @@ export function logAPIError({
             previousRequestId as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         }
       : {}),
-    ...getProviderMigrationEnvMetadata(),
+    ...getArchivedEnvMetadata(),
   })
 
   // Log API error event for OTLP
@@ -580,7 +580,7 @@ function logAPISuccess({
         }
       : {}),
     ...(isPostCompaction ? { isPostCompaction } : {}),
-    ...getProviderMigrationEnvMetadata(),
+    ...getArchivedEnvMetadata(),
     timeSinceLastApiCallMs,
   })
 
@@ -649,7 +649,7 @@ export function logAPISuccessAndDuration({
 }): void {
   const gateway = detectGateway({
     headers,
-    baseUrl: process.env[PROVIDER_MIGRATION_BASE_URL_ENV],
+    baseUrl: process.env[ARCHIVED_BASE_URL_ENV],
   })
 
   let textContentLength: number | undefined

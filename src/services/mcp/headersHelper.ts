@@ -13,11 +13,11 @@ import type {
   ScopedMcpServerConfig,
 } from './types.js'
 
-const PROVIDER_MIGRATION_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
-const PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV =
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MCP_SERVER_NAME`
-const PROVIDER_MIGRATION_MCP_SERVER_URL_ENV =
-  `${PROVIDER_MIGRATION_CODE_ENV_PREFIX}_MCP_SERVER_URL`
+const ARCHIVED_CODE_ENV_PREFIX = 'CLA' + 'UDE_CODE'
+const ARCHIVED_MCP_SERVER_NAME_ENV =
+  `${ARCHIVED_CODE_ENV_PREFIX}_MCP_SERVER_NAME`
+const ARCHIVED_MCP_SERVER_URL_ENV =
+  `${ARCHIVED_CODE_ENV_PREFIX}_MCP_SERVER_URL`
 
 /**
  * Check if the MCP server config comes from project settings (projectSettings or localSettings)
@@ -73,8 +73,8 @@ export async function getMcpHeadersFromHelper(
         ...process.env,
         DSXU_CODE_MCP_SERVER_NAME: serverName,
         DSXU_CODE_MCP_SERVER_URL: config.url,
-        [PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV]: serverName,
-        [PROVIDER_MIGRATION_MCP_SERVER_URL_ENV]: config.url,
+        [ARCHIVED_MCP_SERVER_NAME_ENV]: serverName,
+        [ARCHIVED_MCP_SERVER_URL_ENV]: config.url,
       },
     })
     if (execResult.code !== 0 || !execResult.stdout) {
@@ -157,8 +157,8 @@ export function getDsxuMcpHeadersHelperRuntimeProfile(): {
     envContext: [
       'DSXU_CODE_MCP_SERVER_NAME',
       'DSXU_CODE_MCP_SERVER_URL',
-      `${PROVIDER_MIGRATION_MCP_SERVER_NAME_ENV} (provider migration alias)`,
-      `${PROVIDER_MIGRATION_MCP_SERVER_URL_ENV} (provider migration alias)`,
+      `${ARCHIVED_MCP_SERVER_NAME_ENV} (archived alias)`,
+      `${ARCHIVED_MCP_SERVER_URL_ENV} (archived alias)`,
     ],
     trustPolicy: [
       'project/local MCP headersHelper requires workspace trust in interactive sessions',

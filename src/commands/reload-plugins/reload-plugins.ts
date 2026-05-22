@@ -72,11 +72,11 @@ export function getDsxuReloadPluginsRuntimeProfile(): {
     command: '/reload-plugins',
     remoteEnv: [
       'DSXU_CODE_REMOTE',
-      'DSXU_CODE_REMOTE provider-migration alias',
+      'DSXU_CODE_REMOTE archived alias',
       'remote mode runtime state',
     ],
     activationEvidence: [
-      'DSXU_CODE_REMOTE is checked before the provider-migration DSXU_CODE_REMOTE alias',
+      'DSXU_CODE_REMOTE is checked before the archived DSXU_CODE_REMOTE alias',
       'reloads active plugins through refreshActivePlugins and updates AppState',
       'refresh result reports plugin, skill, agent, hook, MCP, and LSP counts',
       'remote user settings can be redownloaded before plugin cache sweep',

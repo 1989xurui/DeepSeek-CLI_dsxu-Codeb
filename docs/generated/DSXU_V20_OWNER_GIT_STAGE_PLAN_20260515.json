@@ -1,6 +1,6 @@
 {
   "schemaVersion": "dsxu.v20.owner-git-stage-plan.v1",
-  "generatedAt": "2026-05-15T03:39:42.299Z",
+  "generatedAt": "2026-05-20T00:00:39.743Z",
   "repoRoot": "D:\\DSXU-code",
   "status": "STAGED_BY_OWNER_GIT_EXECUTION",
   "sourcePreflightStatus": "PASS_READY_FOR_RELEASE_CLOSURE",
@@ -76,7 +76,7 @@
         "V20-OGR-07-provider-migration-model-cost"
       ],
       "pathCount": 71,
-      "deletedInGitStatus": 42,
+      "deletedInGitStatus": 41,
       "stageReady": true,
       "paths": [
         "src/constants/legacyProviderProtocol.ts",

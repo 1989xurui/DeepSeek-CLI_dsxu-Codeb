@@ -8,7 +8,7 @@ import type {
 } from '../../types/permissions.js'
 import { lazySchema } from '../lazySchema.js'
 
-// Re-export for provider-migration import continuity
+// Re-export for archived import continuity
 export type {
   PermissionBehavior,
   PermissionRule,

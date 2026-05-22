@@ -1,4 +1,5 @@
 import type { LLMResponse, ToolSchema } from './types'
+import { recordCachePrefixRegistry, type CachePrefixRegistryEvent } from '../../services/cache-prefix-registry'
 
 const MAX_TRACKED_SOURCES = 10
 const MIN_CACHE_MISS_TOKENS = 2_000
@@ -60,6 +61,17 @@ export interface CacheBreakReport {
   cacheCreationTokens: number
   tokenDrop: number
   changes: PromptStateChanges | null
+  warmupRecommendation: CacheWarmupRecommendation
+  cachePrefixRegistry: CachePrefixRegistryEvent
+}
+
+export interface CacheWarmupRecommendation {
+  owner: 'DeepSeek route/cost/cache'
+  mode: 'dry-run-only'
+  command: string
+  debounceMs: number
+  reason: string
+  claimBoundary: string
 }
 
 type PendingChanges = PromptStateChanges & {
@@ -184,6 +196,25 @@ function checkTokenEstimatorIntegration(report: CacheBreakReport): void {
   }
 }
 
+function buildCacheWarmupRecommendation(input: {
+  model: string
+  tokenDrop: number
+}): CacheWarmupRecommendation {
+  return {
+    owner: 'DeepSeek route/cost/cache',
+    mode: 'dry-run-only',
+    command: `bun run cache:reality-run --model ${safeModelForCommand(input.model)}`,
+    debounceMs: 60_000,
+    reason: `cache read dropped by ${input.tokenDrop} tokens; run a hash-only dry-run reality check before any live warmup`,
+    claimBoundary:
+      'recommendation only; no provider call and no cache-hit improvement claim until cache:reality-run live A/B passes',
+  }
+}
+
+function safeModelForCommand(model: string): string {
+  return /^[A-Za-z0-9._:-]+$/.test(model) ? model : 'deepseek-v4-flash'
+}
+
 export function recordPromptState(snapshot: PromptStateSnapshot): void {
   const key = snapshot.querySource
   if (!key) return
@@ -198,6 +229,14 @@ export function recordPromptState(snapshot: PromptStateSnapshot): void {
   const betas = [...(snapshot.betas ?? [])].sort()
   const effortValue = snapshot.effortValue === undefined ? '' : String(snapshot.effortValue)
   const extraBodyHash = snapshot.extraBodyParams === undefined ? 0 : computeHash(snapshot.extraBodyParams)
+  recordCachePrefixRegistry({
+    querySource: key,
+    workflowKind: key,
+    model: snapshot.model,
+    stablePrefixHash: String(systemHash),
+    toolSchemaHash: String(toolsHash),
+    cacheEpochHash: [snapshot.model, systemHash, toolsHash, cacheStrategy, effortValue].join(':'),
+  })
 
   const prev = previousStateBySource.get(key)
   if (!prev) {
@@ -350,6 +389,16 @@ export function checkResponseForCacheBreak(input: CacheBreakCheckInput): CacheBr
     return null
   }
 
+  if (prevCacheRead <= 0) {
+    logCacheBreakDetection('Skipping cache break detection without a positive cache-read baseline', {
+      querySource: input.querySource,
+      prevCacheRead,
+      cacheReadTokens,
+    })
+    state.pendingChanges = null
+    return null
+  }
+
   const tokenDrop = prevCacheRead - cacheReadTokens
   const relativeDrop = cacheReadTokens / prevCacheRead
 
@@ -377,6 +426,18 @@ export function checkResponseForCacheBreak(input: CacheBreakCheckInput): CacheBr
     cacheReadTokens,
     cacheCreationTokens,
     tokenDrop,
+    warmupRecommendation: buildCacheWarmupRecommendation({
+      model: state.model,
+      tokenDrop,
+    }),
+    cachePrefixRegistry: recordCachePrefixRegistry({
+      querySource: input.querySource,
+      workflowKind: input.querySource,
+      model: state.model,
+      stablePrefixHash: String(state.systemHash),
+      toolSchemaHash: String(state.toolsHash),
+      cacheEpochHash: [state.model, state.systemHash, state.toolsHash, state.cacheStrategy, state.effortValue].join(':'),
+    }),
     changes: state.pendingChanges
       ? {
           systemPromptChanged: state.pendingChanges.systemPromptChanged,

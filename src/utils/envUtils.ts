@@ -2,22 +2,22 @@ import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { join } from 'path'
 import {
-  getProviderMigrationCodeEnv,
-  getProviderMigrationConfigHomeDir,
-  getProviderMigrationVertexRegionForModel,
-  isProviderMigrationCodeSimpleEnvTruthy,
-  isProviderMigrationServiceShellAllowed as isProviderMigrationServiceShellAllowedFromEnv,
-  shouldProviderMigrationMaintainProjectWorkingDir,
+  getArchivedCodeEnv,
+  getArchivedConfigHomeDir,
+  getArchivedVertexRegionForModel,
+  isArchivedCodeSimpleEnvTruthy,
+  isArchivedServiceShellAllowed as isArchivedServiceShellAllowedFromEnv,
+  shouldArchivedMaintainProjectWorkingDir,
 } from './envCompat.js'
 
 // Memoized: 150+ callers, many on hot paths. Keyed off the config env so
 // tests that change the env var get a fresh value without explicit cache.clear.
-export const getDSXUConfigHomeDir = getProviderMigrationConfigHomeDir
+export const getDSXUConfigHomeDir = getArchivedConfigHomeDir
 
-export const getProviderMigrationHomeDir = getDSXUConfigHomeDir
+export const getArchivedHomeDir = getDSXUConfigHomeDir
 
-// DSXU-owned config home. Provider migration config can still be read by explicit
-// migration paths, but new DSXU runtime state and instruction files should
+// DSXU-owned config home. Archived config can still be read by explicit
+// archived paths, but new DSXU runtime state and instruction files should
 // resolve through this directory.
 export const getDsxuConfigHomeDir = memoize(
   (): string => {
@@ -31,7 +31,7 @@ export const getDsxuConfigHomeDir = memoize(
 export function getRuntimeConfigHomeDir(): string {
   return isDsxuRuntimeMode()
     ? getDsxuConfigHomeDir()
-    : getProviderMigrationConfigHomeDir()
+    : getArchivedConfigHomeDir()
 }
 
 export function getTeamsDir(): string {
@@ -61,14 +61,14 @@ export function isDsxuRuntimeMode(): boolean {
   return isEnvTruthy(process.env.DSXU_CODE_MODE)
 }
 
-export function isProviderMigrationServiceShellAllowed(): boolean {
-  return isProviderMigrationServiceShellAllowedFromEnv()
+export function isArchivedServiceShellAllowed(): boolean {
+  return isArchivedServiceShellAllowedFromEnv()
 }
 
 export function getDsxuCodeEnv(name: string): string | undefined {
   return (
     process.env[`DSXU_CODE_${name}`] ??
-    getProviderMigrationCodeEnv(name)
+    getArchivedCodeEnv(name)
   )
 }
 
@@ -100,7 +100,7 @@ export function isEnvDefinedFalsy(
 export function isBareMode(): boolean {
   return (
     isDsxuCodeEnvTruthy('SIMPLE') ||
-    isProviderMigrationCodeSimpleEnvTruthy() ||
+    isArchivedCodeSimpleEnvTruthy() ||
     process.argv.includes('--bare')
   )
 }
@@ -147,12 +147,12 @@ export function getDefaultVertexRegion(): string {
 
 /**
  * Check if bash commands should maintain project working directory (reset to original after each command)
- * @returns true if DSXU or provider migration bash cwd env is set to a truthy value
+ * @returns true if DSXU or archived bash cwd env is set to a truthy value
  */
 export function shouldMaintainProjectWorkingDir(): boolean {
   return (
     isDsxuCodeEnvTruthy('BASH_MAINTAIN_PROJECT_WORKING_DIR') ||
-    shouldProviderMigrationMaintainProjectWorkingDir()
+    shouldArchivedMaintainProjectWorkingDir()
   )
 }
 
@@ -197,5 +197,5 @@ export function isInProtectedNamespace(): boolean {
 export function getVertexRegionForModel(
   model: string | undefined,
 ): string | undefined {
-  return getProviderMigrationVertexRegionForModel(model, getDefaultVertexRegion())
+  return getArchivedVertexRegionForModel(model, getDefaultVertexRegion())
 }

@@ -16,27 +16,27 @@ import { lazySchema } from '../lazySchema.js'
  * Official marketplace names that are reserved for DSXU official use.
  * These names are allowed ONLY for official marketplaces and blocked for third parties.
  */
-const PROVIDER_MIGRATION_VENDOR_PREFIX = 'clau' + 'de'
-const PROVIDER_MIGRATION_VENDOR_ORG = 'anth' + 'ropic'
-const PROVIDER_MIGRATION_GITHUB_ORG = 'anth' + 'ropics'
+const ARCHIVED_VENDOR_PREFIX = 'clau' + 'de'
+const ARCHIVED_VENDOR_ORG = 'anth' + 'ropic'
+const ARCHIVED_GITHUB_ORG = 'anth' + 'ropics'
 const DSXU_OFFICIAL_GITHUB_ORG = 'dsxu-code'
 const OFFICIAL_MARKETPLACE_TOKENS = [
   'dsxu',
   'dsxu-code',
-  PROVIDER_MIGRATION_VENDOR_PREFIX,
-  PROVIDER_MIGRATION_VENDOR_ORG,
+  ARCHIVED_VENDOR_PREFIX,
+  ARCHIVED_VENDOR_ORG,
 ]
-const OFFICIAL_GITHUB_ORGS = [DSXU_OFFICIAL_GITHUB_ORG, PROVIDER_MIGRATION_GITHUB_ORG]
+const OFFICIAL_GITHUB_ORGS = [DSXU_OFFICIAL_GITHUB_ORG, ARCHIVED_GITHUB_ORG]
 
 export const ALLOWED_OFFICIAL_MARKETPLACE_NAMES = new Set([
   'dsxu-code-marketplace',
   'dsxu-code-plugins',
   'dsxu-plugins-official',
-  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-code-marketplace`,
-  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-code-plugins`,
-  `${PROVIDER_MIGRATION_VENDOR_PREFIX}-plugins-official`,
-  `${PROVIDER_MIGRATION_VENDOR_ORG}-marketplace`,
-  `${PROVIDER_MIGRATION_VENDOR_ORG}-plugins`,
+  `${ARCHIVED_VENDOR_PREFIX}-code-marketplace`,
+  `${ARCHIVED_VENDOR_PREFIX}-code-plugins`,
+  `${ARCHIVED_VENDOR_PREFIX}-plugins-official`,
+  `${ARCHIVED_VENDOR_ORG}-marketplace`,
+  `${ARCHIVED_VENDOR_ORG}-plugins`,
   'agent-skills',
   'life-sciences',
   'knowledge-work-plugins',

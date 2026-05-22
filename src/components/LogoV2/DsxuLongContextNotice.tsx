@@ -3,13 +3,13 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { UP_ARROW } from '../../constants/figures.js';
 import { Box, Text } from '../../ink.js';
-import { PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY } from '../../utils/configProviderMigration.js';
+import { ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY } from '../../utils/configProviderMigration.js';
 import { isDsxuLongContextDefaultEnabled } from '../../utils/model/providerMigration/providerMigrationModel.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { AnimatedAsterisk } from './AnimatedAsterisk.js';
 const MAX_SHOW_COUNT = 6;
 export function shouldShowDsxuLongContextNotice(): boolean {
-  return isDsxuLongContextDefaultEnabled() && (getGlobalConfig()[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) < MAX_SHOW_COUNT;
+  return isDsxuLongContextDefaultEnabled() && (getGlobalConfig()[ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) < MAX_SHOW_COUNT;
 }
 export function DsxuLongContextNotice() {
   const $ = _c(4);
@@ -21,14 +21,14 @@ export function DsxuLongContextNotice() {
       if (!show) {
         return;
       }
-      const newCount = (getGlobalConfig()[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) + 1;
+      const newCount = (getGlobalConfig()[ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) + 1;
       saveGlobalConfig(prev => {
-        if ((prev[PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) >= newCount) {
+        if ((prev[ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY] ?? 0) >= newCount) {
           return prev;
         }
         return {
           ...prev,
-          [PROVIDER_MIGRATION_1M_MERGE_NOTICE_COUNT_KEY]: newCount
+          [ARCHIVED_1M_MERGE_NOTICE_COUNT_KEY]: newCount
         };
       });
     };

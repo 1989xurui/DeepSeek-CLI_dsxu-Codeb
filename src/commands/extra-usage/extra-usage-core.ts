@@ -130,7 +130,7 @@ export function getDsxuExtraUsageRuntimeProfile(): {
   command: '/extra-usage'
   runtime: 'DSXU Provider Usage Guard'
   activationEvidence: readonly string[]
-  providerMigrationIsolation: readonly string[]
+  archivedIsolation: readonly string[]
 } {
   return {
     command: '/extra-usage',
@@ -140,7 +140,7 @@ export function getDsxuExtraUsageRuntimeProfile(): {
       'DSXU users are directed to /cost and DSXU model settings',
       'no provider usage URL is opened in DSXU runtime',
     ],
-    providerMigrationIsolation: [
+    archivedIsolation: [
       'provider admin/settings usage URLs are runtime-gated outside DSXU mode',
       'provider admin request APIs are bypassed in DSXU runtime',
     ],

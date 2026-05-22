@@ -6,16 +6,27 @@
  * through adapters; built-in engine tools are only fallback implementations.
  */
 
-import type { ToolDefinition, ToolSchema, ToolResult, ToolContext } from './types'
+import type {
+  ToolDefinition,
+  ToolSchema,
+  ToolResult,
+  ToolContext,
+  ToolOwnershipMetadata,
+  ToolRegistryProviderKind,
+} from './types'
 
 const MAINLINE_RUNTIME_CONTEXT = Symbol.for('dsxu.engine.mainlineRuntimeContext')
 
 export class ToolRegistry {
   private tools: Map<string, ToolDefinition> = new Map()
   private schemaCache: Map<string, ToolSchema> = new Map()
+  private ownership: Map<string, ToolOwnershipMetadata> = new Map()
 
-  register(tool: ToolDefinition): void {
+  register(tool: ToolDefinition, ownership?: Partial<ToolOwnershipMetadata>): void {
+    const proof = normalizeToolOwnership(tool, ownership)
+    tool.ownership = proof
     this.tools.set(tool.name, tool)
+    this.ownership.set(tool.name, proof)
     this.schemaCache.delete(tool.name)
   }
 
@@ -25,6 +36,50 @@ export class ToolRegistry {
 
   find(name: string): ToolDefinition | undefined {
     return this.tools.get(name)
+  }
+
+  getOwnership(name: string): ToolOwnershipMetadata | undefined {
+    return this.ownership.get(name)
+  }
+
+  listOwnership(): ToolOwnershipMetadata[] {
+    return [...this.ownership.values()].sort((a, b) => a.providerId.localeCompare(b.providerId))
+  }
+
+  buildOwnershipAudit(): {
+    registryOwner: 'DSXU Tool Registry'
+    registeredTools: number
+    missingOwnership: string[]
+    providerKinds: Record<ToolRegistryProviderKind, number>
+    permissionBoundary: 'DSXU Tool Gate'
+    runtimeBoundary: 'DSXU query-loop tool execution'
+  } {
+    const providerKinds: Record<ToolRegistryProviderKind, number> = {
+      mainline: 0,
+      mcp: 0,
+      agent: 0,
+      skill: 0,
+      fallback: 0,
+    }
+    const missingOwnership: string[] = []
+
+    for (const name of this.tools.keys()) {
+      const proof = this.ownership.get(name)
+      if (!proof) {
+        missingOwnership.push(name)
+        continue
+      }
+      providerKinds[proof.providerKind] += 1
+    }
+
+    return {
+      registryOwner: 'DSXU Tool Registry',
+      registeredTools: this.tools.size,
+      missingOwnership,
+      providerKinds,
+      permissionBoundary: 'DSXU Tool Gate',
+      runtimeBoundary: 'DSXU query-loop tool execution',
+    }
   }
 
   getSchemas(filter?: (tool: ToolDefinition) => boolean): ToolSchema[] {
@@ -77,7 +132,10 @@ export class ToolRegistry {
         toolUseId,
         content: output.content,
         isError: output.isError ?? false,
-        meta: output.meta,
+        meta: {
+          ...output.meta,
+          toolOwnership: this.ownership.get(name),
+        },
       }
     } catch (error: any) {
       return {
@@ -137,10 +195,79 @@ export class ToolRegistry {
     const existed = this.tools.has(name)
     if (existed) {
       this.tools.delete(name)
+      this.ownership.delete(name)
       this.schemaCache.delete(name)
     }
     return existed
   }
+}
+
+function normalizeToolOwnership(
+  tool: ToolDefinition,
+  override?: Partial<ToolOwnershipMetadata>,
+): ToolOwnershipMetadata {
+  const providerKind = override?.providerKind ?? tool.ownership?.providerKind ?? inferProviderKind(tool.name)
+  const ownerId =
+    override?.ownerId ??
+    tool.ownership?.ownerId ??
+    (providerKind === 'mcp'
+      ? 'mcp-skill-registry-owner'
+      : providerKind === 'agent'
+        ? 'agent-tool-lifecycle-owner'
+        : providerKind === 'skill'
+          ? 'mcp-skill-registry-owner'
+          : 'query-loop-tool-gate-owner')
+  const providerId =
+    override?.providerId ??
+    tool.ownership?.providerId ??
+    (providerKind === 'mcp'
+      ? `mcp:${tool.name}`
+      : providerKind === 'agent'
+        ? `agent:${tool.name}`
+        : providerKind === 'skill'
+          ? `skill:${tool.name}`
+          : `mainline:${tool.name}`)
+
+  return {
+    ownerId,
+    providerId,
+    providerKind,
+    registryOwner: 'DSXU Tool Registry',
+    adapterBoundary:
+      override?.adapterBoundary ??
+      tool.ownership?.adapterBoundary ??
+      (providerKind === 'mcp'
+        ? 'DSXU MCP adapter boundary'
+        : providerKind === 'agent'
+          ? 'DSXU agent evidence envelope'
+          : providerKind === 'skill'
+            ? 'DSXU Skill adapter boundary'
+            : 'DSXU mainline tool adapter boundary'),
+    permissionBoundary:
+      override?.permissionBoundary ??
+      tool.ownership?.permissionBoundary ??
+      'DSXU Tool Gate',
+    runtimeBoundary:
+      override?.runtimeBoundary ??
+      tool.ownership?.runtimeBoundary ??
+      'DSXU query-loop tool execution',
+    evidenceIds: [
+      ...new Set([
+        ...(tool.ownership?.evidenceIds ?? []),
+        ...(override?.evidenceIds ?? []),
+        'tool-registry-owner-proof',
+      ]),
+    ],
+    registeredAt: override?.registeredAt ?? tool.ownership?.registeredAt ?? new Date().toISOString(),
+  }
+}
+
+function inferProviderKind(name: string): ToolRegistryProviderKind {
+  const normalized = name.toLowerCase()
+  if (normalized.startsWith('mcp__') || normalized.includes('mcp')) return 'mcp'
+  if (normalized.includes('agent') || normalized.includes('fork')) return 'agent'
+  if (normalized.includes('skill')) return 'skill'
+  return 'mainline'
 }
 
 function sortKeysDeep(value: any): any {

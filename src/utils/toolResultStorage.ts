@@ -303,11 +303,11 @@ async function maybePersistLargeToolResult(
     return toolResultBlock
   }
 
-  const size = contentSize(content)
+  const pressureSize = getDeepSeekToolResultPressureSize(content)
 
   // Use tool-specific threshold if provided, otherwise fall back to global limit
   const threshold = persistenceThreshold ?? MAX_TOOL_RESULT_BYTES
-  if (size <= threshold) {
+  if (pressureSize <= threshold) {
     return toolResultBlock
   }
 
@@ -325,6 +325,7 @@ async function maybePersistLargeToolResult(
     toolName: sanitizeToolNameForAnalytics(toolName),
     originalSizeBytes: result.originalSize,
     persistedSizeBytes: message.length,
+    tokenPressureSizeBytes: pressureSize,
     estimatedOriginalTokens: Math.ceil(result.originalSize / BYTES_PER_TOKEN),
     estimatedPersistedTokens: Math.ceil(message.length / BYTES_PER_TOKEN),
     thresholdUsed: threshold,
@@ -392,6 +393,97 @@ export type ContentReplacementState = {
   replacements: Map<string, string>
 }
 
+export type ToolResultBudgetProfile =
+  | 'explain'
+  | 'search'
+  | 'single_file_edit'
+  | 'normal_coding'
+  | 'debug'
+  | 'review'
+  | 'multi_file_refactor'
+  | 'long_task'
+  | 'benchmark'
+  | 'provider_security_release'
+  | 'pro_expert'
+
+export type ToolResultBudgetDecision = {
+  schemaVersion: 'dsxu.tool-result-budget.v8'
+  owner: 'Tool Gate / Tool Result Contract'
+  profile: ToolResultBudgetProfile
+  limitChars: number
+  configuredLimitChars: number
+  profileLimitChars: number
+  contextPressure: 'normal' | 'high' | 'critical'
+  evidence: string[]
+}
+
+const TOOL_RESULT_BUDGET_PROFILE_LIMITS: Record<ToolResultBudgetProfile, number> = {
+  explain: 48_000,
+  search: 80_000,
+  single_file_edit: 120_000,
+  normal_coding: 140_000,
+  debug: 140_000,
+  review: 120_000,
+  multi_file_refactor: 160_000,
+  long_task: 160_000,
+  benchmark: 120_000,
+  provider_security_release: 120_000,
+  pro_expert: MAX_TOOL_RESULTS_PER_MESSAGE_CHARS,
+}
+
+function normalizeToolResultBudgetProfile(
+  profile: string | undefined,
+): ToolResultBudgetProfile {
+  if (!profile) return 'normal_coding'
+  if (profile in TOOL_RESULT_BUDGET_PROFILE_LIMITS) {
+    return profile as ToolResultBudgetProfile
+  }
+  return 'normal_coding'
+}
+
+export function resolveToolResultBudgetDecision(input: {
+  profile?: string
+  contextPressurePct?: number
+  configuredLimitChars?: number
+} = {}): ToolResultBudgetDecision {
+  const profile = normalizeToolResultBudgetProfile(input.profile)
+  const configuredLimitChars =
+    input.configuredLimitChars ?? MAX_TOOL_RESULTS_PER_MESSAGE_CHARS
+  const pressurePct =
+    typeof input.contextPressurePct === 'number' && Number.isFinite(input.contextPressurePct)
+      ? input.contextPressurePct
+      : 0
+  const contextPressure =
+    pressurePct >= 95 ? 'critical' : pressurePct >= 85 ? 'high' : 'normal'
+  const profileLimitChars = TOOL_RESULT_BUDGET_PROFILE_LIMITS[profile]
+  const pressureLimitChars =
+    contextPressure === 'critical'
+      ? Math.min(profileLimitChars, 80_000)
+      : contextPressure === 'high'
+        ? Math.min(profileLimitChars, 120_000)
+        : profileLimitChars
+  const limitChars = Math.max(
+    PREVIEW_SIZE_BYTES * 2,
+    Math.min(configuredLimitChars, pressureLimitChars),
+  )
+  return {
+    schemaVersion: 'dsxu.tool-result-budget.v8',
+    owner: 'Tool Gate / Tool Result Contract',
+    profile,
+    limitChars,
+    configuredLimitChars,
+    profileLimitChars,
+    contextPressure,
+    evidence: [
+      `profile:${profile}`,
+      `limitChars:${limitChars}`,
+      `configuredLimitChars:${configuredLimitChars}`,
+      `profileLimitChars:${profileLimitChars}`,
+      `contextPressure:${contextPressure}`,
+    ],
+  }
+}
+
 export function createContentReplacementState(): ContentReplacementState {
   return { seenIds: new Set(), replacements: new Map() }
 }
@@ -418,19 +510,30 @@ export function cloneContentReplacementState(
  * check: feature flag provider's cache returns `cached !== undefined ? cached : default`,
  * so a flag served as null/string/NaN leaks through.
  */
-export function getPerMessageBudgetLimit(): number {
+function getConfiguredPerMessageBudgetLimit(): number {
   const override = getFeatureValue_CACHED_MAY_BE_STALE<number | null>(
     'tengu_hawthorn_window',
     null,
   )
-  if (
+  return (
     typeof override === 'number' &&
     Number.isFinite(override) &&
     override > 0
-  ) {
-    return override
-  }
-  return MAX_TOOL_RESULTS_PER_MESSAGE_CHARS
+      ? override
+      : MAX_TOOL_RESULTS_PER_MESSAGE_CHARS
+  )
+}
+
+export function getPerMessageBudgetLimit(input: {
+  profile?: string
+  contextPressurePct?: number
+} = {}): number {
+  const configuredLimitChars = getConfiguredPerMessageBudgetLimit()
+  return resolveToolResultBudgetDecision({
+    profile: input.profile,
+    contextPressurePct: input.contextPressurePct,
+    configuredLimitChars,
+  }).limitChars
 }
 
 /**
@@ -450,7 +553,7 @@ export function provisionContentReplacementState(
 ): ContentReplacementState | undefined {
   const enabled = getFeatureValue_CACHED_MAY_BE_STALE(
     'tengu_hawthorn_steeple',
-    false,
+    true,
   )
   if (!enabled) return undefined
   if (initialMessages) {
@@ -533,6 +636,30 @@ function contentSize(
  * blocks. tool_use always precedes its tool_result (model calls, then result
  * arrives), so by the time budget enforcement sees a result, its name is known.
  */
+export function estimateDeepSeekToolResultTokens(
+  content: NonNullable<ToolResultBlockParam['content']>,
+): number {
+  const measureText = (text: string): number => {
+    const cjkChars = (text.match(/[\u3400-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]/g) ?? []).length
+    const nonCjkChars = Math.max(0, text.length - cjkChars)
+    return Math.ceil(cjkChars + nonCjkChars / BYTES_PER_TOKEN)
+  }
+
+  if (typeof content === 'string') return measureText(content)
+  return content.reduce((sum, block) => {
+    return sum + (block.type === 'text' ? measureText(block.text) : 0)
+  }, 0)
+}
+
+export function getDeepSeekToolResultPressureSize(
+  content: NonNullable<ToolResultBlockParam['content']>,
+): number {
+  return Math.max(
+    contentSize(content),
+    estimateDeepSeekToolResultTokens(content) * BYTES_PER_TOKEN,
+  )
+}
+
 function buildToolNameMap(messages: Message[]): Map<string, string> {
   const map = new Map<string, string>()
   for (const message of messages) {
@@ -770,6 +897,7 @@ export async function enforceToolResultBudget(
   messages: Message[],
   state: ContentReplacementState,
   skipToolNames: ReadonlySet<string> = new Set(),
+  budgetInput: { profile?: string; contextPressurePct?: number } = {},
 ): Promise<{
   messages: Message[]
   newlyReplaced: ToolResultReplacementRecord[]
@@ -783,7 +911,12 @@ export async function enforceToolResultBudget(
   // Resolve once per call. A mid-session flag change only affects FRESH
   // messages (prior decisions are frozen via seenIds/replacements), so
   // prompt cache for already-seen content is preserved regardless.
-  const limit = getPerMessageBudgetLimit()
+  const budgetDecision = resolveToolResultBudgetDecision({
+    profile: budgetInput.profile,
+    contextPressurePct: budgetInput.contextPressurePct,
+    configuredLimitChars: getConfiguredPerMessageBudgetLimit(),
+  })
+  const limit = budgetDecision.limitChars
 
   // Walk each API-level message group independently. For previously-processed messages
   // (all IDs in seenIds) this just re-applies cached replacements. For the
@@ -899,6 +1032,9 @@ export async function enforceToolResultBudget(
       messagesOverBudget,
       replacedSizeBytes: replacedSize,
       reapplied: reappliedCount,
+      dsxuBudgetProfile: budgetDecision.profile,
+      dsxuBudgetLimitChars: budgetDecision.limitChars,
+      dsxuBudgetContextPressure: budgetDecision.contextPressure,
     })
   }
 
@@ -926,9 +1062,10 @@ export async function applyToolResultBudget(
   state: ContentReplacementState | undefined,
   writeToTranscript?: (records: ToolResultReplacementRecord[]) => void,
   skipToolNames?: ReadonlySet<string>,
+  budgetInput?: { profile?: string; contextPressurePct?: number },
 ): Promise<Message[]> {
   if (!state) return messages
-  const result = await enforceToolResultBudget(messages, state, skipToolNames)
+  const result = await enforceToolResultBudget(messages, state, skipToolNames, budgetInput)
   if (result.newlyReplaced.length > 0) {
     writeToTranscript?.(result.newlyReplaced)
   }

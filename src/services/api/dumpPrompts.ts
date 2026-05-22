@@ -3,7 +3,7 @@ import { promises as fs } from 'fs'
 import { dirname, join } from 'path'
 import { getSessionId } from 'src/bootstrap/state.js'
 import {
-  getProviderMigrationHomeDir,
+  getArchivedHomeDir,
   getDsxuConfigHomeDir,
   isDsxuRuntimeMode,
 } from '../../utils/envUtils.js'
@@ -61,7 +61,7 @@ export function addApiRequestToCache(requestData: unknown): void {
 
 export function getDumpPromptsPath(agentIdOrSessionId?: string): string {
   return join(
-    isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getProviderMigrationHomeDir(),
+    isDsxuRuntimeMode() ? getDsxuConfigHomeDir() : getArchivedHomeDir(),
     'dump-prompts',
     `${agentIdOrSessionId ?? getSessionId()}.jsonl`,
   )
@@ -85,7 +85,7 @@ export function getDsxuDumpPromptsRuntimeProfile(): {
     hardening: [
       'fingerprint avoids repeated large prompt serialization on unchanged tool/system shape',
       'streaming responses are cloned and parsed best-effort as async evidence',
-      'provider migration config path is not used when DSXU_CODE_MODE=1',
+      'archived config path is not used when DSXU_CODE_MODE=1',
     ],
   }
 }

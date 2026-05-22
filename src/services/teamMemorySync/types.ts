@@ -2,7 +2,7 @@
  * Team Memory Sync Types
  *
  * Zod schemas and types for the repo-scoped team memory sync API.
- * Based on the DSXU team-memory provider contract. Provider-migration source API
+ * Based on the DSXU team-memory provider contract. Archived source API
  * shapes are retained only as migration-compatible wire schemas.
  */
 
@@ -26,7 +26,7 @@ export const TeamMemoryContentSchema = lazySchema(() =>
 
 /**
  * Full response from GET /api/dsxu_code/team_memory.
- * Provider-migration source team-memory endpoint may be accepted only during migration.
+ * Archived source team-memory endpoint may be accepted only during migration.
  */
 export const TeamMemoryDataSchema = lazySchema(() =>
   z.object({
@@ -175,7 +175,7 @@ export function getDsxuTeamMemorySyncTypesRuntimeProfile(): {
     ],
     activationEvidence: [
       'DSXU team memory uses DSXU endpoint naming as the canonical contract',
-      'provider-migration source endpoint is documented as migration-only',
+      'archived source endpoint is documented as migration-only',
       'types preserve conflict/checksum/error semantics for resume/refill',
     ],
   }

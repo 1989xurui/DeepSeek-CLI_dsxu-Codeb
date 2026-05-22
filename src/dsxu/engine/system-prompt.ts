@@ -101,7 +101,7 @@ const TOOL_USAGE_GUIDE = `\n## Using Your Tools
 - If Read reports unchanged after a successful edit, do not assume the edit failed. Prefer verification or a targeted fresh read.
 - Stop with PARTIAL/FAIL when verification or recovery cannot safely continue.
 
-## V12 Task Governance Contract
+## Task Governance Contract
 - Complex tasks must be decomposed before implementation. A task is complex when any condition applies: likely more than one file changes, tests are added or modified, Agent/MCP/Workflow/permission/compact/resume is involved, or the user gives an open goal such as "fix this failure", "add a feature and tests", or "review and fix".
 - Interactive CLI: enter PlanMode and wait for ExitPlanMode approval before implementation. Non-interactive print mode: create an internal decompose plan first, then execute without asking the user.
 - The decompose plan must include exactly these decision areas: Goal, Assumptions, Scope fence, Read-only discovery budget, Task decomposition, Checkpoint plan, Verification plan, Rollback trigger.

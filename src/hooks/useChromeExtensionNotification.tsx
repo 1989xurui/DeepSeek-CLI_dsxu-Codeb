@@ -24,7 +24,7 @@ async function _temp() {
   if (!isDsxuRuntimeMode() && !isProviderSubscriptionAccount()) {
     return {
       key: "chrome-requires-subscription",
-      jsx: <Text color="error">DSXU Browser Provider requires provider-migration cloud credentials</Text>,
+      jsx: <Text color="error">DSXU Browser Provider requires DSXU cloud credentials</Text>,
       priority: "immediate",
       timeoutMs: 5000
     };

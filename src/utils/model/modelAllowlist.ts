@@ -3,8 +3,8 @@ import { isModelAlias, isModelFamilyAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'
 import { resolveOverriddenModel } from './modelStrings.js'
 import {
-  hasProviderMigrationModelPrefix,
-  withProviderMigrationModelPrefix,
+  hasArchivedModelPrefix,
+  withArchivedModelPrefix,
 } from './providerMigration/providerMigrationModelAllowlist.js'
 
 /**
@@ -37,7 +37,7 @@ function prefixMatchesModel(modelName: string, prefix: string): boolean {
 
 /**
  * Check if a model matches a version-prefix entry in the allowlist.
- * Supports shorthand by mapping it to the hidden provider migration model prefix.
+ * Supports shorthand by mapping it to the hidden archived model prefix.
  * Resolves input aliases before matching.
  */
 function modelMatchesVersionPrefix(model: string, entry: string): boolean {
@@ -50,10 +50,10 @@ function modelMatchesVersionPrefix(model: string, entry: string): boolean {
   if (prefixMatchesModel(resolvedModel, entry)) {
     return true
   }
-  // Try with the hidden provider migration model prefix for migration allowlists.
+  // Try with the hidden archived model prefix for migration allowlists.
   if (
-    !hasProviderMigrationModelPrefix(entry) &&
-    prefixMatchesModel(resolvedModel, withProviderMigrationModelPrefix(entry))
+    !hasArchivedModelPrefix(entry) &&
+    prefixMatchesModel(resolvedModel, withArchivedModelPrefix(entry))
   ) {
     return true
   }

@@ -21,6 +21,15 @@ describe('Progress Ledger 接入 query-loop 验证', () => {
       tool_calls: []
     }),
     cwd: '/tmp/test',
+    sessionSummary: {
+      enabled: false,
+    },
+    sessionMemory: {
+      enabled: false,
+    },
+    memoryExtraction: {
+      enabled: false,
+    },
     fileHistory: {
       getFileHistory: () => [],
       recordFileChange: () => {},
@@ -63,8 +72,10 @@ describe('Progress Ledger 接入 query-loop 验证', () => {
           // 验证 progress ledger 在 metadata 中
           expect(event.metadata).toBeDefined()
           expect(event.metadata?.progressLedger).toBeDefined()
+          expect(event.metadata?.activeFrame).toBeDefined()
 
           const ledger = event.metadata?.progressLedger as ProgressLedger
+          const activeFrame = event.metadata?.activeFrame as any
 
           // 验证必需字段存在
           expect(ledger.taskId).toBeDefined()
@@ -78,6 +89,8 @@ describe('Progress Ledger 接入 query-loop 验证', () => {
           expect(ledger.currentState).toBe('plan')
           expect(ledger.previousState).toBeNull()
           expect(ledger.isCompleted).toBe(false)
+          expect(activeFrame.schemaVersion).toBe('dsxu.active-frame.v5')
+          expect(activeFrame.guards).not.toContain('missing task_contract ledger event')
 
           console.log(`[测试1] 观测到 progress ledger:`, {
             taskId: ledger.taskId,
@@ -241,6 +254,118 @@ describe('Progress Ledger 接入 query-loop 验证', () => {
       // 验证收集到了事件
       expect(collectedEvents.length).toBeGreaterThan(0)
       expect(collectedEvents.some(e => e.type === 'loop_started')).toBe(true)
+    })
+    it('query-loop tool_result metadata carries canonical tool/runtime events in the progress ledger', async () => {
+      let callCount = 0
+      const registry = {
+        getAll: () => [],
+        get: () => undefined,
+        has: (name: string) => name === 'Bash',
+        register: () => {},
+        unregister: () => {},
+        clear: () => {},
+        size: 1,
+        getSchemas: () => [
+          {
+            name: 'Bash',
+            description: 'Run a focused verification command',
+            inputSchema: {
+              type: 'object',
+              properties: { command: { type: 'string' } },
+              required: ['command'],
+            },
+          },
+        ],
+        execute: async (_name: string, _input: Record<string, any>, toolUseId: string) => ({
+          toolUseId,
+          content: 'PASS durable ledger verification',
+          isError: false,
+          meta: {
+            durationMs: 7,
+            executorKind: 'dsxu_native',
+            usedBridge: false,
+          },
+        }),
+      }
+      const config: QueryLoopConfig = {
+        ...minimalConfig,
+        maxTurns: 2,
+        llmCall: async () => {
+          callCount += 1
+          if (callCount === 1) {
+            return {
+              content: [{ type: 'text', text: 'I will run verification.' }],
+              tool_calls: [
+                {
+                  id: 'tool-ledger-1',
+                  type: 'function',
+                  function: {
+                    name: 'Bash',
+                    arguments: JSON.stringify({ command: 'bun test ledger' }),
+                  },
+                },
+              ],
+              usage: {
+                inputTokens: 120,
+                outputTokens: 24,
+                cacheHit: true,
+                cacheReadTokens: 90,
+                cacheCreationTokens: 12,
+              },
+            }
+          }
+          return {
+            content: [{ type: 'text', text: 'Done.' }],
+            tool_calls: [],
+            usage: {
+              inputTokens: 80,
+              outputTokens: 8,
+              cacheHit: true,
+              cacheReadTokens: 70,
+              cacheCreationTokens: 0,
+            },
+          }
+        },
+      }
+
+      const events = queryLoop(
+        config,
+        [{ role: 'user', content: 'verify durable tool ledger event' }],
+        registry as any,
+        {
+          sessionId: 'session-tool-ledger',
+          requestId: 'request-tool-ledger',
+        },
+      )
+
+      let toolResultEvent: QueryEvent | undefined
+      for await (const event of events) {
+        if (event.type === 'tool_result') {
+          toolResultEvent = event
+          break
+        }
+      }
+
+      expect(toolResultEvent?.type).toBe('tool_result')
+      const ledger = (toolResultEvent as any).metadata?.progressLedger as ProgressLedger
+      const activeFrame = (toolResultEvent as any).metadata?.activeFrame as any
+      expect(ledger.taskId).toBeDefined()
+      expect(activeFrame.schemaVersion).toBe('dsxu.active-frame.v5')
+      expect(activeFrame.phase).toBeDefined()
+      expect(ledger.sessionId).toBe('session-tool-ledger')
+      expect(ledger.events?.some(event => event.kind === 'goal')).toBe(true)
+      expect(ledger.events?.some(event => event.kind === 'model-route')).toBe(true)
+      expect(ledger.events?.some(event => event.kind === 'cost-cache')).toBe(true)
+      const toolEvent = ledger.events?.find(
+        event => event.kind === 'tool' && event.toolUseId === 'tool-ledger-1',
+      )
+      expect(toolEvent).toBeDefined()
+      expect(toolEvent?.schemaVersion).toBe('dsxu.runtime-event.v1')
+      expect(toolEvent?.owner).toBe('Tool Gate / Query Loop')
+      expect(toolEvent?.toolUseId).toBe('tool-ledger-1')
+      expect(toolEvent?.evidence).toContain('schema:ToolCallResult')
+      expect(toolEvent?.evidence).toContain('tool:Bash')
+      expect(toolEvent?.evidence).toContain('ok:true')
     })
   })
 })

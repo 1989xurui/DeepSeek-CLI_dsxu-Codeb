@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname, join, resolve } from 'path'
-import { writeV19LiveProviderCacheEvidenceSummary } from '../src/dsxu/engine/v19-cost-cache-live-task-evidence'
+import { writeV19LiveProviderCacheEvidenceSummary } from '../src/dsxu/engine/cost-cache-live-task-evidence'
 
 const GENERATED_DIR = join(process.cwd(), 'docs', 'generated')
 const OUTPUT_JSON_PATH = join(GENERATED_DIR, 'DSXU_V20_LIVE_CACHE_PREFIX_SMOKE_20260515.json')

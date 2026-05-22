@@ -14,7 +14,7 @@
  * settings.json env vars and TLS/proxy state are already applied.
  *
  * Skipped when:
- * - DSXU runtime is active and provider-migration service shell is not explicit.
+ * - DSXU runtime is active and archived service shell is not explicit.
  * - proxy/mTLS/unix socket is configured.
  * - Bedrock/Vertex/Foundry use a different endpoint and auth path.
  */
@@ -24,18 +24,18 @@ import {
   getDsxuCodeEnv,
   isDsxuRuntimeMode,
   isEnvTruthy,
-  isProviderMigrationServiceShellAllowed,
+  isArchivedServiceShellAllowed,
 } from './envUtils.js'
 
 let fired = false
-const PROVIDER_MIGRATION_BASE_URL_ENV =
+const ARCHIVED_BASE_URL_ENV =
   ('ANTH' + 'ROPIC_BASE_URL') as keyof NodeJS.ProcessEnv
 
 export function preconnectProviderApi(): void {
   if (fired) return
   fired = true
 
-  if (isDsxuRuntimeMode() && !isProviderMigrationServiceShellAllowed()) {
+  if (isDsxuRuntimeMode() && !isArchivedServiceShellAllowed()) {
     return
   }
 
@@ -65,7 +65,7 @@ export function preconnectProviderApi(): void {
   // provider base URL env + USE_STAGING_OAUTH + USE_LOCAL_OAUTH in one lookup.
   // NODE_EXTRA_CA_CERTS no longer skips preconnect because init.ts applied it first.
   const baseUrl =
-    process.env[PROVIDER_MIGRATION_BASE_URL_ENV] || getOauthConfig().BASE_API_URL
+    process.env[ARCHIVED_BASE_URL_ENV] || getOauthConfig().BASE_API_URL
 
   // Fire and forget. HEAD means no response body; the connection is eligible
   // for keep-alive pool reuse immediately after headers arrive. 10s timeout
