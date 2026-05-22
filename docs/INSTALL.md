@@ -62,7 +62,7 @@ The installer:
 - adds that shim directory to the user PATH if missing;
 - opens the DSXU CLI in a UTF-8 terminal so first-time users immediately see the welcome and DeepSeek key setup flow.
 
-For most Windows users, this is the recommended default: install once on Windows, then launch `DSXU Code` from the desktop. DSXU does not force every Windows user into WSL and does not create a WSL desktop shortcut on machines without a ready distro unless the user explicitly asks for it.
+For most Windows users, this is the recommended default: install once on Windows, then launch `DSXU Code` from the desktop. The installer prefers Windows Terminal and, when it is missing, tries to install Microsoft Windows Terminal with `winget`. If Windows Terminal still cannot be used, launchers force `DSXU_ASCII_TUI=1` so classic console output stays readable instead of showing broken Unicode/CJK glyphs. DSXU does not force every Windows user into WSL and does not create a WSL desktop shortcut on machines without a ready distro unless the user explicitly asks for it.
 
 Optional WSL bootstrap:
 
@@ -84,6 +84,14 @@ For CI or smoke tests that must not open an interactive terminal:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoLaunch
 ```
 
+If an enterprise image blocks automatic Windows Terminal installation:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoWindowsTerminalInstall
+```
+
+This keeps install deterministic and uses ASCII TUI fallback in old console windows. For the best Chinese/Unicode UI, install Windows Terminal and rerun the desktop shortcut.
+
 安装脚本会：
 
 - 切换 UTF-8，避免中文和边框乱码；
@@ -95,7 +103,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps
 - 如果 PATH 缺失，会把该 shim 目录加入用户 PATH；
 - 安装完成后自动打开 DSXU CLI 界面，让首次用户直接看到欢迎页和 DeepSeek key 配置流程。
 
-对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。没有 WSL distro 的机器不会默认创建 WSL 桌面入口，避免用户误点后停在 WSL 配置提示。
+对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。安装器会优先使用 Windows Terminal；如果缺失，会尝试通过 `winget` 安装 Microsoft Windows Terminal。仍不可用时，启动器会强制 `DSXU_ASCII_TUI=1`，让老控制台保持可读，避免中文/Unicode 边框变方块。没有 WSL distro 的机器不会默认创建 WSL 桌面入口，避免用户误点后停在 WSL 配置提示。
 
 如果希望安装器顺手检查或安装 WSL：
 
@@ -116,6 +124,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoLaunch
 ```
+
+如果企业镜像不允许自动安装 Windows Terminal：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -NoWindowsTerminalInstall
+```
+
+此时仍可运行，但老控制台会进入 ASCII TUI 降级模式；中文/Unicode 最佳体验仍建议安装 Windows Terminal 后重新打开桌面快捷方式。
 
 If Bun is not installed, install it first:
 
@@ -275,6 +291,7 @@ The Windows launcher sets:
 - `LANG=zh_CN.UTF-8`;
 - `LC_ALL=zh_CN.UTF-8`;
 - color-capable terminal defaults.
+- `DSXU_ASCII_TUI=1` when Windows Terminal is unavailable, so old console windows stay readable.
 
 If an old terminal still renders poorly, open Windows Terminal and launch DSXU from there.
 

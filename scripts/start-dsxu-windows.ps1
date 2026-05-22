@@ -41,6 +41,10 @@ Set-Location -LiteralPath $repoRoot
 Set-DsxuUtf8Console
 Add-DsxuBunPath
 
+if (-not $env:WT_SESSION -and -not (Get-Command wt.exe -ErrorAction SilentlyContinue)) {
+  $env:DSXU_ASCII_TUI = if ($env:DSXU_ASCII_TUI) { $env:DSXU_ASCII_TUI } else { "1" }
+}
+
 $env:DSXU_CODE_MODE = "1"
 $env:DSXU_PRODUCT_NAME = if ($env:DSXU_PRODUCT_NAME) { $env:DSXU_PRODUCT_NAME } else { "DSXU Code" }
 $env:DSXU_MODEL_PROVIDER = if ($env:DSXU_MODEL_PROVIDER) { $env:DSXU_MODEL_PROVIDER } else { "deepseek" }

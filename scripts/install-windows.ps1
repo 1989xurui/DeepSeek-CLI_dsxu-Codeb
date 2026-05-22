@@ -6,6 +6,7 @@ param(
   [switch]$NoDesktopShortcut,
   [switch]$NoWslShortcut,
   [switch]$CreateWslShortcut,
+  [switch]$NoWindowsTerminalInstall,
   [switch]$NoPathShim,
   [switch]$NoLaunch,
   [switch]$InstallVsCodeExtension
@@ -54,6 +55,31 @@ function Get-DsxuWslDistro {
   return $null
 }
 
+function Get-DsxuWindowsTerminal {
+  return Get-Command wt.exe -ErrorAction SilentlyContinue
+}
+
+function Install-DsxuWindowsTerminalIfMissing {
+  if (Get-DsxuWindowsTerminal) { return }
+  if ($NoWindowsTerminalInstall) {
+    Write-Warning "[DSXU] Windows Terminal was not found. The launcher will use ASCII fallback mode in classic console."
+    return
+  }
+  $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+  if (-not $winget) {
+    Write-Warning "[DSXU] Windows Terminal was not found and winget is unavailable. The launcher will use ASCII fallback mode in classic console."
+    return
+  }
+
+  Write-Host "[DSXU] Windows Terminal was not found. Installing Microsoft Windows Terminal with winget..."
+  & $winget.Source install --id Microsoft.WindowsTerminal -e --accept-package-agreements --accept-source-agreements --disable-interactivity
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "[DSXU] Windows Terminal install failed with exit code $LASTEXITCODE. The launcher will use ASCII fallback mode in classic console."
+    return
+  }
+  Write-Host "[DSXU] Windows Terminal install finished. If Windows does not expose wt.exe immediately, reopen PowerShell and launch DSXU Code again."
+}
+
 function Ensure-DsxuWsl([string]$DistroName) {
   if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
     throw "[DSXU] wsl.exe was not found. Enable WSL from an elevated PowerShell: wsl --install -d $DistroName"
@@ -100,7 +126,7 @@ function New-DsxuShortcut(
 
 function New-DsxuDesktopShortcut([string]$ResolvedRepoRoot) {
   $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
-  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+  $wt = Get-DsxuWindowsTerminal
 
   if ($wt) {
     $target = $wt.Source
@@ -120,7 +146,7 @@ function New-DsxuWslDesktopShortcut([string]$ResolvedRepoRoot) {
     return
   }
 
-  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+  $wt = Get-DsxuWindowsTerminal
   if ($wt) {
     $target = $wt.Source
     $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
@@ -165,7 +191,7 @@ function Start-DsxuCliWindow([string]$ResolvedRepoRoot) {
     return
   }
 
-  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+  $wt = Get-DsxuWindowsTerminal
   if ($wt) {
     $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
     Start-Process -FilePath $wt.Source -ArgumentList $arguments | Out-Null
@@ -183,6 +209,8 @@ Set-Location -LiteralPath $resolvedRepoRoot
 if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
   throw "[DSXU] Bun was not found. Install Bun first: powershell -c `"irm https://bun.sh/install.ps1 | iex`", reopen PowerShell, then rerun scripts\install-windows.ps1."
 }
+
+Install-DsxuWindowsTerminalIfMissing
 
 if ($InstallWsl) {
   Ensure-DsxuWsl $WslDistro
@@ -225,5 +253,6 @@ Write-Host ""
 Write-Host "[DSXU] Install complete."
 Write-Host "[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code"
 Write-Host "[DSXU] Windows default is the native DSXU Code shortcut. WSL is optional and never required for first launch."
+Write-Host "[DSXU] Windows Terminal is recommended for Chinese/Unicode TUI. Classic console falls back to ASCII TUI mode."
 Write-Host "[DSXU] First launch without a key opens the DeepSeek key setup flow."
 Write-Host "[DSXU] Optional VS Code adapter: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-vscode-extension.ps1"

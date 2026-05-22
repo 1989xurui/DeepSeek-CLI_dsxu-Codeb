@@ -158,9 +158,10 @@ async function staticChecks(): Promise<StaticCheck[]> {
       rootInstall.includes('$installParams') &&
       rootInstall.includes('InstallWsl') &&
       rootInstall.includes('CreateWslShortcut') &&
+      rootInstall.includes('NoWindowsTerminalInstall') &&
       rootInstall.includes('NoLaunch')
-      ? pass('root-install-dispatcher', 'root install.ps1 dispatches Windows install, optional WSL, and no-launch smoke mode')
-      : fail('root-install-dispatcher', 'root install.ps1 is missing Windows/Unix dispatch, optional WSL, or no-launch mode'),
+      ? pass('root-install-dispatcher', 'root install.ps1 dispatches Windows install, optional WSL, Windows Terminal policy, and no-launch smoke mode')
+      : fail('root-install-dispatcher', 'root install.ps1 is missing Windows/Unix dispatch, optional WSL, Windows Terminal policy, or no-launch mode'),
   )
   checks.push(
     rootShellInstall.includes('scripts/install.sh') &&
@@ -179,6 +180,13 @@ async function staticChecks(): Promise<StaticCheck[]> {
     startCmd.includes('chcp 65001')
       ? pass('root-start-cmd-utf8', 'root Windows launcher switches code page to UTF-8')
       : fail('root-start-cmd-utf8', 'root Windows launcher does not set UTF-8 code page'),
+  )
+  checks.push(
+    startCmd.includes('DSXU_ASCII_TUI') &&
+      startCmd.includes('Windows Terminal was not detected') &&
+      winStart.includes('DSXU_ASCII_TUI')
+      ? pass('windows-classic-console-ascii-fallback', 'Windows launchers force ASCII TUI fallback when classic console cannot render Chinese/Unicode safely')
+      : fail('windows-classic-console-ascii-fallback', 'Windows launchers do not protect classic console users from Unicode/CJK mojibake'),
   )
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
@@ -206,11 +214,14 @@ async function staticChecks(): Promise<StaticCheck[]> {
       winInstall.includes('DSXU Code\\bin') &&
       winInstall.includes('InstallWsl') &&
       winInstall.includes('CreateWslShortcut') &&
+      winInstall.includes('NoWindowsTerminalInstall') &&
       winInstall.includes('NoLaunch') &&
       winInstall.includes('Start-DsxuCliWindow') &&
-      winInstall.includes('wsl.exe --install -d')
-      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, and auto-opens CLI')
-      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, optional WSL path, PATH shim, or auto-open CLI path'),
+      winInstall.includes('wsl.exe --install -d') &&
+      winInstall.includes('Microsoft.WindowsTerminal') &&
+      winInstall.includes('winget')
+      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, Windows Terminal path, and auto-opens CLI')
+      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, optional WSL path, PATH shim, Windows Terminal path, or auto-open CLI path'),
   )
   checks.push(
     winInstall.includes('WSL shortcut skipped') &&

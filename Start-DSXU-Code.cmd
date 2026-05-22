@@ -14,6 +14,12 @@ if "%DSXU_FORCE_CONHOST%"=="" if "%WT_SESSION%"=="" (
   )
 )
 
+if "%WT_SESSION%"=="" (
+  if "%DSXU_ASCII_TUI%"=="" set "DSXU_ASCII_TUI=1"
+  echo [DSXU] Windows Terminal was not detected. Using ASCII TUI fallback in classic console.
+  echo [DSXU] For Chinese/Unicode UI, install Windows Terminal or rerun install.ps1.
+)
+
 if not exist "%DSXU_REPO_ROOT%scripts\start-dsxu-windows.ps1" (
   echo [DSXU] Missing scripts\start-dsxu-windows.ps1
   echo [DSXU] Please reinstall from the GitHub release package or source checkout.

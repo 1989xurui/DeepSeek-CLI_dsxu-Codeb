@@ -144,7 +144,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 
 根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建 Windows 原生桌面快捷方式 `DSXU Code`，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。安装完成后会自动打开 DSXU CLI 界面，让首次用户直接看到欢迎页和 DeepSeek key 配置流程。启动器会自动设置 UTF-8，避免中文和边框乱码。
 
-默认推荐路径是 Windows 一键安装后直接从桌面 `DSXU Code` 进入。DSXU 不会默认强装 WSL，也不会在没有可用 WSL distro 的机器上默认创建 WSL 桌面入口；如果用户习惯 Linux 工具链，可以用 `-InstallWsl` 或 `-CreateWslShortcut` 显式开启。
+默认推荐路径是 Windows 一键安装后直接从桌面 `DSXU Code` 进入。安装器会优先使用 Windows Terminal；如果机器没有 Windows Terminal，会尝试通过 `winget` 安装 Microsoft Windows Terminal。极端情况下无法安装时，DSXU 会自动启用 ASCII TUI 降级，避免老控制台把中文/边框显示成方块。DSXU 不会默认强装 WSL，也不会在没有可用 WSL distro 的机器上默认创建 WSL 桌面入口；如果用户习惯 Linux 工具链，可以用 `-InstallWsl` 或 `-CreateWslShortcut` 显式开启。
 
 如果还没有 Bun：
 
@@ -173,6 +173,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoDependencie
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoLaunch
 ```
+
+如果你所在环境不能自动安装 Windows Terminal：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoWindowsTerminalInstall
+```
+
+这时仍可运行，但老控制台会进入 ASCII TUI 降级模式；中文体验建议安装 Windows Terminal 后重新打开桌面快捷方式。
 
 ### macOS / Linux / WSL
 
@@ -278,7 +286,7 @@ bun run ide:vscode-smoke
 
 ### 乱码修复
 
-如果看到中文、边框或欢迎界面乱码，优先使用 `Start-DSXU-Code.cmd`、桌面快捷方式或 Windows Terminal。DSXU 的 Windows 启动器会设置 `chcp 65001`、PowerShell UTF-8 输出、`LANG=zh_CN.UTF-8` 和 `LC_ALL=zh_CN.UTF-8`。不要用旧 cmd 手动执行 `bun run dsxu-code` 作为日常入口。
+如果看到中文、边框或欢迎界面乱码，优先使用 `Start-DSXU-Code.cmd`、桌面快捷方式或 Windows Terminal。DSXU 的 Windows 启动器会设置 `chcp 65001`、PowerShell UTF-8 输出、`LANG=zh_CN.UTF-8` 和 `LC_ALL=zh_CN.UTF-8`。如果检测不到 Windows Terminal，会自动设置 `DSXU_ASCII_TUI=1`，让老控制台至少保持可读。不要用旧 cmd 手动执行 `bun run dsxu-code` 作为日常入口。
 
 Print-mode 任务：
 
