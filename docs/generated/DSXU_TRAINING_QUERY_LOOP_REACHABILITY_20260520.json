@@ -1,0 +1,223 @@
+{
+  "schemaVersion": "dsxu.training-query-loop-reachability.v1",
+  "generatedAt": "2026-05-20T09:45:52.577Z",
+  "datasetKind": "query_loop_reachability_probe",
+  "publicClaimAllowed": false,
+  "probe": {
+    "sessionId": "training-query-loop-reachability-session",
+    "requestId": "training-query-loop-reachability-request",
+    "task": "Read a source file summary and run verification through query-loop.",
+    "eventCount": 28,
+    "eventTypes": [
+      "priority_set",
+      "loop_started",
+      "tool_subset_selected",
+      "turn_start",
+      "model_called",
+      "llm_response",
+      "state_transition",
+      "tool_dispatch_started",
+      "tool_start",
+      "tool_dispatch_completed",
+      "tool_result",
+      "test_detected",
+      "loop_finished",
+      "completed"
+    ],
+    "requiredEventTypesPresent": true,
+    "resultExitReason": "end_turn"
+  },
+  "validation": {
+    "schemaVersion": "dsxu.training-validation.v1",
+    "status": "accepted",
+    "errors": [],
+    "antiCheatFindings": [],
+    "hardGateViolations": []
+  },
+  "score": {
+    "schemaVersion": "dsxu.training-score.v1",
+    "status": "scored",
+    "scores": {
+      "taskSuccessScore": 100,
+      "complexCodingScore": 75,
+      "longTaskScore": 80,
+      "verificationEvidenceScore": 100,
+      "recoveryScore": 80,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 90,
+      "sees": 90
+    },
+    "capsApplied": [],
+    "validationErrors": []
+  },
+  "trajectory": {
+    "schemaVersion": "dsxu.training-trajectory.v1",
+    "generatedAt": "2026-05-20T09:45:52.576Z",
+    "task": {
+      "taskId": "training-query-loop-reachability-session:training-query-loop-reachability-request",
+      "category": "query-loop-reachability",
+      "intent": "Read a source file summary and run verification through query-loop.",
+      "riskLevel": "low",
+      "acceptanceCriteria": [
+        "query-loop emits required runtime events",
+        "tool result is paired",
+        "verification command evidence is present"
+      ],
+      "claimScope": "internal"
+    },
+    "intentUnderstanding": {
+      "interpretedGoal": "Read a source file summary and run verification through query-loop.",
+      "constraints": [
+        "mock provider only",
+        "no raw source body storage",
+        "no public benchmark claim"
+      ],
+      "explicitNoEdit": false,
+      "missingInfo": [],
+      "riskClassification": "low"
+    },
+    "stateTrace": [
+      {
+        "state": "plan",
+        "allowedTransition": true,
+        "transitionReason": "initial state",
+        "attemptCount": 1
+      },
+      {
+        "state": "plan",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      }
+    ],
+    "toolTrace": [
+      {
+        "toolUseId": "reach-read-1",
+        "toolName": "Read",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "allow",
+        "resultPaired": true,
+        "outputChars": 85,
+        "ok": true,
+        "outputHash": "375ca884e8bbc21a"
+      },
+      {
+        "toolUseId": "reach-bash-1",
+        "toolName": "Bash",
+        "readonly": false,
+        "concurrencyGroup": "default",
+        "permissionDecision": "allow",
+        "resultPaired": true,
+        "outputChars": 73,
+        "ok": true,
+        "outputHash": "63e02160c4a5bd53"
+      }
+    ],
+    "sourceTruth": {
+      "filesRead": [
+        "src/dsxu/engine/query-loop.ts"
+      ],
+      "rangesRead": [
+        "src/dsxu/engine/query-loop.ts:summary-only"
+      ],
+      "readFreshness": "fresh",
+      "staleReadDetected": false,
+      "sourceBodyStored": false,
+      "evidenceHashes": [
+        "ef7cbc8cc8ac93e2",
+        "898e9e2b3a0d436c"
+      ]
+    },
+    "verification": {
+      "commands": [
+        "bun test src/dsxu/training/__tests__/query-loop-reachability.test.ts"
+      ],
+      "passed": true,
+      "claimBound": true,
+      "localizedFeedbackPresent": false,
+      "artifactPaths": [
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json"
+      ]
+    },
+    "contextMemory": {
+      "goalPreserved": true,
+      "resumePoint": "query-loop-finished",
+      "openObligations": [],
+      "compactOccurred": false,
+      "sourceRereadAfterResume": false
+    },
+    "costRoute": {
+      "model": "deepseek-v4-flash",
+      "routeReason": "query-loop-reachability-probe",
+      "estimatedCostUsd": 0,
+      "cacheHitInputTokens": 1520,
+      "cacheMissInputTokens": 380,
+      "proAdmissionJustified": false
+    },
+    "antiCheat": {
+      "oracleLeakFlag": false,
+      "solutionArtifactFlag": false,
+      "oldReportFlag": false,
+      "testOnlyFixFlag": false,
+      "publicClaimAllowed": false
+    },
+    "communication": {
+      "userVisibleSummary": "Verification passed. Query-loop reachability evidence was captured.",
+      "verifiedFacts": [
+        "query-loop emitted required event sequence",
+        "verification command passed"
+      ],
+      "unverifiedRisks": [],
+      "overclaimDetected": false
+    },
+    "outcome": {
+      "status": "success",
+      "finalClaim": "query-loop reachability probe produced a valid training trajectory",
+      "verified": true,
+      "publicClaimAllowed": false
+    },
+    "scores": {
+      "taskSuccessScore": 100,
+      "complexCodingScore": 75,
+      "longTaskScore": 80,
+      "verificationEvidenceScore": 100,
+      "recoveryScore": 80,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 90,
+      "sees": 90
+    }
+  },
+  "rule": "This artifact proves query-loop event reachability to the training trajectory schema with mocked provider/tool evidence. It is not a live provider benchmark or a public model quality claim."
+}

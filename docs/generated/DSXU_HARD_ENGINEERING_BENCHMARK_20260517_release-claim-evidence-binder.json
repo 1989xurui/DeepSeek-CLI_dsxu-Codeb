@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "dsxu.hard-engineering-benchmark.v1",
+  "generatedAt": "2026-05-19T00:36:17.553Z",
+  "status": "PASS_DSXU_HARD_ENGINEERING_LIFT",
+  "totalTasks": 1,
+  "rawPassRatePct": 0,
+  "dsxuPassRatePct": 100,
+  "rawAverageScore": 60,
+  "dsxuAverageScore": 100,
+  "rawTotalCostUSD": 0.00029988000000000004,
+  "dsxuTotalCostUSD": 0.017873884000000003,
+  "public90Allowed": false,
+  "externalBenchmarkClaimAllowed": false,
+  "chartPath": "docs/assets/dsxu-hard-engineering-benchmark.svg",
+  "claimBoundary": "This is a DSXU-owned hard internal benchmark inspired by public benchmark task shapes. It is not a SWE-bench, Terminal-Bench, OSWorld, or tau-bench score.",
+  "taskFilter": "release-claim-evidence-binder",
+  "tasks": [
+    {
+      "id": "release-claim-evidence-binder",
+      "lane": "release-evidence",
+      "title": "Repair release claim evidence binding and no-overclaim README output",
+      "sourceFixtureHash": "f856c2b65a8d9c3387b19c675f2f65a7ba7154264bfbf820af5441ba6609fe8d",
+      "expectedSignals": [
+        "evidence binding",
+        "target manifest gate",
+        "no parity overclaim",
+        "claim limited README"
+      ],
+      "raw": {
+        "pass": false,
+        "score": 60,
+        "durationMs": 5039,
+        "costUSD": 0.00029988000000000004,
+        "appliedFiles": [
+          "src/claim.ts"
+        ],
+        "applyErrors": [
+          "blocked non-src replacement: tests/claim.public.test.ts"
+        ],
+        "responsePath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-2026-05-19T00-33-44-438Z.json",
+        "finalTestExitCode": 1,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-final-test-2026-05-19T00-33-49-482Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-final-test-2026-05-19T00-33-49-482Z.stderr.log"
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "durationMs": 147823,
+        "costUSD": 0.017873884000000003,
+        "tracePath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-2026-05-19T00-33-49-610Z.jsonl",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 8,
+          "Bash": 3,
+          "Edit": 2
+        },
+        "finalTestExitCode": 0,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-final-test-2026-05-19T00-36-17-436Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-final-test-2026-05-19T00-36-17-436Z.stderr.log",
+        "verificationSignals": [
+          "evidence binding",
+          "target manifest gate",
+          "no parity overclaim",
+          "claim limited README"
+        ]
+      }
+    }
+  ]
+}

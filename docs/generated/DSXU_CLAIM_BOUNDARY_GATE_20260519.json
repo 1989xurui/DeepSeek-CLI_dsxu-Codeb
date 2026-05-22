@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "dsxu.v7.claim-boundary-gate.v1",
+  "generatedAt": "2026-05-20T09:11:17.378Z",
+  "status": "PASS_DSXU_CLAIM_BOUNDARY_GATE",
+  "sourceReachabilityPath": "docs/generated/DSXU_RUNTIME_REACHABILITY_MAP_20260519.json",
+  "sourceReplayBankPath": "docs/generated/DSXU_SCENARIO_REPLAY_BANK_20260519.json",
+  "summary": {
+    "candidates": 5,
+    "publicAllowed": 0,
+    "c3BelowPublicAllowed": 0,
+    "public90Allowed": false,
+    "externalBenchmarkReady": false
+  },
+  "blockers": [],
+  "candidates": [
+    {
+      "id": "V7-CLAIM-C0-DESIGN-GOAL",
+      "level": "C0",
+      "statement": "DSXU has a DeepSeek-first engineering runtime design goal.",
+      "evidence": [
+        "DSXU V6/V7 docs"
+      ],
+      "publicAllowed": false,
+      "boundary": "Internal design goal only."
+    },
+    {
+      "id": "V7-CLAIM-C1-SOURCE-OWNERS",
+      "level": "C1",
+      "statement": "DSXU has named source owners for mainline, release, legacy, evidence, and delete-review rows.",
+      "evidence": [
+        "DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.json"
+      ],
+      "publicAllowed": false,
+      "boundary": "Source owner evidence is not a capability result."
+    },
+    {
+      "id": "V7-CLAIM-C3-REACHABILITY",
+      "level": "C3",
+      "statement": "0 owner rows have R3/R4 reachability evidence.",
+      "evidence": [
+        "DSXU_RUNTIME_REACHABILITY_MAP_20260519.json"
+      ],
+      "publicAllowed": false,
+      "boundary": "Internal capability candidate; public wording still needs live/raw evidence per claim."
+    },
+    {
+      "id": "V7-CLAIM-C4-LIVE-DEEPSEEK",
+      "level": "C4",
+      "statement": "0 replay cases require live DeepSeek evidence.",
+      "evidence": [
+        "DSXU_V6_LIVE_TOOL_CALL_REPLAY_20260519.json"
+      ],
+      "publicAllowed": false,
+      "boundary": "Allowed only as live provider/tool-call proof, not external benchmark or 90% score."
+    },
+    {
+      "id": "V7-CLAIM-C5-EXTERNAL-BENCHMARK",
+      "level": "C5",
+      "statement": "External comparable benchmark victory or 90%+ public claim.",
+      "evidence": [],
+      "publicAllowed": false,
+      "boundary": "Blocked until fixed manifest, paired target raw transcript, tool trace, cost/cache metrics, and rubric exist."
+    }
+  ]
+}

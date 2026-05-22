@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "dsxu.training-final-run-summary.v1",
+  "generatedAt": "2026-05-20T06:05:31.832Z",
+  "trainingPipeline": {
+    "v1Status": "PASS",
+    "stepCount": 23,
+    "passedGates": 13,
+    "failedGates": [],
+    "publicClaimAllowed": false
+  },
+  "liveProvider": {
+    "status": "PASS_LIVE_PROVIDER_CAPTURE",
+    "model": "deepseek-chat",
+    "baseUrlHost": "api.deepseek.com",
+    "recordCount": 4,
+    "requestCount": 1,
+    "validationStatus": "accepted",
+    "scoreStatus": "scored",
+    "datasetValidationStatus": "PASS",
+    "scoreAverageSees": 84,
+    "publicClaimAllowed": false,
+    "liveProviderClaimAllowed": false
+  },
+  "dashboard": {
+    "evidenceCompletenessScore": 67,
+    "publicClaimAllowed": false,
+    "allowedInternalClaims": [
+      "offline-training-pipeline",
+      "internal-replay-calibration",
+      "query-loop-training-reachability",
+      "live-provider-smoke"
+    ],
+    "blockedClaims": [
+      "public-benchmark-claim",
+      "superiority-claim"
+    ],
+    "missingClaims": []
+  },
+  "dataPack": {
+    "fileCount": 25,
+    "presentCount": 25,
+    "parseOkCount": 25,
+    "missing": [],
+    "publicClaimAllowed": false
+  },
+  "executedCommands": {
+    "trainingV1": "PASS",
+    "liveProviderCapture": "PASS_LIVE_PROVIDER_CAPTURE",
+    "liveProviderValidate": "PASS",
+    "trainingTests": "41 pass / 0 fail",
+    "trainingDashboard": "PASS",
+    "evidenceDashboard": "PASS but release-blocked",
+    "fullBunTest": "FAIL 3047 pass / 1 skip / 8 fail",
+    "sixStageFinal": "TIMEOUT >15min",
+    "seniorCodingWindow": "TIMEOUT >15min"
+  },
+  "knownFailures": [
+    "capability-registry visible tool view below V8 minimum of 8",
+    "query-loop selectedTools 16 exceeds expected hard cap <=12",
+    "training query-loop reachability imports query-loop outside allowed owner scope",
+    "release risk gate BLOCKED_EVIDENCED",
+    "public surface gate BLOCKED_EVIDENCED",
+    "phase 10 focused-close audit blocked because public surface gate blocked",
+    "tool catalog first visible tools changed: Read,Grep,Glob,Edit,Write vs expected Read,Grep,Edit,Bash,Todo",
+    "progress-ledger now emits recovery event between verification and stall; test expected only verification,stall"
+  ],
+  "publicClaimAllowed": false
+}

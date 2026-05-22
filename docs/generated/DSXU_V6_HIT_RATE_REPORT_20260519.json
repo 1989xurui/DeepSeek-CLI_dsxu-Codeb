@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "dsxu.v6.hit-rate-report.v1",
+  "generatedAt": "2026-05-19T23:01:27.664Z",
+  "owner": "Replay Bank / Evidence",
+  "status": "PASS_V6_INTERNAL_REPLAY_HIT_RATE_GATE",
+  "publicClaimStatus": "BLOCKED_PUBLIC_EXTERNAL_CLAIM",
+  "claimBoundary": "This is an internal DSXU replay contract hit-rate gate. It may support DSXU internal V6 readiness, but it is not a public external benchmark, not a real live-model ability score, and not a claim that DSXU beats named external proprietary coding assistants without paired external raw evidence.",
+  "sourceReplayBankPath": "docs/generated/DSXU_V6_REPLAY_BANK_20260519.json",
+  "thresholds": {
+    "minFinalPassPct": 90,
+    "minVerifyRunPct": 95,
+    "minToolHitPct": 90,
+    "minRecoverySuccessPct": 80,
+    "minProJustifiedPct": 95
+  },
+  "metrics": {
+    "caseCount": 100,
+    "finalPassRatePct": 100,
+    "verifyRequiredRunRatePct": 100,
+    "falseClaimCount": 0,
+    "infiniteLoopCount": 0,
+    "toolHitRatePct": 100,
+    "recoverySuccessRatePct": 100,
+    "proAdmissionCount": 9,
+    "proEscalationJustifiedPct": 100,
+    "totalCostUsd": 0.08352,
+    "averageCostUsd": 0.000835,
+    "averageWallClockMs": 36725,
+    "averageCacheHitRatePct": 80.7,
+    "totalToolResultChars": 144400
+  },
+  "blockers": [],
+  "dataStillNeeded": [
+    "External target/reference paired raw transcripts are still required before any public external comparison claim.",
+    "Live provider/TUI acceptance must rerun before release if route, tool, prompt, or TUI owners change.",
+    "Cache hit rate remains an observed optimization metric; publish exact values only."
+  ]
+}

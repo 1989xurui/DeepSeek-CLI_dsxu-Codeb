@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "dsxu.final-localized-feedback.v10",
+  "generatedAt": "2026-05-20T08:50:42.569Z",
+  "owner": "VerificationKernel / Recovery / GearBox",
+  "status": "PASS_V10_FINAL_LOCALIZED_FEEDBACK",
+  "publicClaimAllowed": false,
+  "envelope": {
+    "schemaVersion": "dsxu.localized-feedback-envelope.v10",
+    "owner": "VerificationKernel / Recovery / GearBox",
+    "status": "ready",
+    "command": "bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+    "failedAttemptsSinceProgress": 2,
+    "findingCount": 2,
+    "focusedFindingTitles": [
+      "tool result backflow breaks cache locality",
+      "missing focused verification rerun"
+    ],
+    "localizedFiles": [
+      "src/dsxu/engine/route-cache-dynamic-tail.ts",
+      "src/dsxu/engine/prompt-prefix-cache-builder.ts"
+    ],
+    "feedbackLines": [
+      "command: bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+      "score: 58; failedAttempts: 2",
+      "top finding: P1 tool result backflow breaks cache locality",
+      "local detail: large read output is repeatedly returned to the dynamic prompt tail",
+      "repair hint: store the long output as artifact and keep a bounded preview in the next turn",
+      "localized files: src/dsxu/engine/route-cache-dynamic-tail.ts, src/dsxu/engine/prompt-prefix-cache-builder.ts",
+      "next action: artifact the large tool result, rebuild source capsule, then rerun focused verification"
+    ],
+    "nextAction": "artifact the large tool result, rebuild source capsule, then rerun focused verification",
+    "evidence": [
+      "localizedFeedback:ready",
+      "findingCount:2",
+      "localizedFiles:2",
+      "feedbackLines:7",
+      "v10:M1",
+      "owner:VerificationKernel / Recovery / GearBox"
+    ]
+  },
+  "ledgerEventCount": 3,
+  "feedbackEvent": {
+    "schemaVersion": "dsxu.runtime-event.v1",
+    "kind": "recovery",
+    "owner": "VerificationKernel / Recovery / GearBox",
+    "summary": "Localized feedback envelope ready (2 findings)",
+    "evidence": [
+      "localizedFeedback:ready",
+      "findingCount:2",
+      "localizedFiles:2",
+      "feedbackLines:7",
+      "v10:M1"
+    ],
+    "metadata": {
+      "localizedFeedback": {
+        "schemaVersion": "dsxu.localized-feedback-envelope.v10",
+        "owner": "VerificationKernel / Recovery / GearBox",
+        "status": "ready",
+        "command": "bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+        "failedAttemptsSinceProgress": 2,
+        "findingCount": 2,
+        "focusedFindingTitles": [
+          "tool result backflow breaks cache locality",
+          "missing focused verification rerun"
+        ],
+        "localizedFiles": [
+          "src/dsxu/engine/route-cache-dynamic-tail.ts",
+          "src/dsxu/engine/prompt-prefix-cache-builder.ts"
+        ],
+        "feedbackLines": [
+          "command: bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+          "score: 58; failedAttempts: 2",
+          "top finding: P1 tool result backflow breaks cache locality",
+          "local detail: large read output is repeatedly returned to the dynamic prompt tail",
+          "repair hint: store the long output as artifact and keep a bounded preview in the next turn",
+          "localized files: src/dsxu/engine/route-cache-dynamic-tail.ts, src/dsxu/engine/prompt-prefix-cache-builder.ts",
+          "next action: read the failing assertion, change strategy, and rerun focused verification"
+        ],
+        "nextAction": "read the failing assertion, change strategy, and rerun focused verification",
+        "evidence": [
+          "localizedFeedback:ready",
+          "findingCount:2",
+          "localizedFiles:2",
+          "feedbackLines:7",
+          "v10:M1"
+        ]
+      },
+      "finalClaimAllowed": false
+    },
+    "eventId": "event-1779267042568-p2whnvcca0k",
+    "taskId": "v10-localized-feedback",
+    "timestamp": 1779267042568
+  },
+  "blockers": [],
+  "rule": "Localized feedback is a compact recovery envelope for failed verification. It is written to the existing ledger and does not create another recovery runtime."
+}

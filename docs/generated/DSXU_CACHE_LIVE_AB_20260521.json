@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "dsxu.cache-live-ab.v1",
+  "owner": "DeepSeek route/cost/cache",
+  "generatedAt": "2026-05-21T04:43:05.896Z",
+  "status": "PASS_CACHE_LIVE_AB",
+  "mode": "live",
+  "didCallProvider": true,
+  "publicClaimAllowed": false,
+  "claimBoundary": "live cache A/B evidence for one repeated stable prefix only; supports internal tuning, not public model-quality or benchmark claims",
+  "model": "deepseek-v4-flash",
+  "baseUrl": "https://api.deepseek.com/v1",
+  "prefixHash": "9c54e02b6ba96ca2",
+  "prefixChars": 23849,
+  "prefixApproxTokens": 5963,
+  "roundsRequested": 3,
+  "observations": [
+    {
+      "round": 1,
+      "responseOk": true,
+      "status": 200,
+      "inputTokens": 4883,
+      "outputTokens": 1,
+      "cacheHitInputTokens": 0,
+      "cacheMissInputTokens": 4883,
+      "cacheHitRatePct": 0
+    },
+    {
+      "round": 2,
+      "responseOk": true,
+      "status": 200,
+      "inputTokens": 4883,
+      "outputTokens": 1,
+      "cacheHitInputTokens": 4864,
+      "cacheMissInputTokens": 19,
+      "cacheHitRatePct": 99.6
+    },
+    {
+      "round": 3,
+      "responseOk": true,
+      "status": 200,
+      "inputTokens": 4883,
+      "outputTokens": 1,
+      "cacheHitInputTokens": 4864,
+      "cacheMissInputTokens": 19,
+      "cacheHitRatePct": 99.6
+    }
+  ],
+  "firstHitRatePct": 0,
+  "lastHitRatePct": 99.6,
+  "hitRateDeltaPct": 99.6,
+  "blockers": []
+}

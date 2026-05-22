@@ -1,0 +1,5 @@
+"case","status","allowed","path","requestedOffset","requestedLimit","recommendedOffset","recommendedLimit","estimatedApproxTokens","reason"
+"full-read","BLOCK_FULL_FILE_READ","false","src/checkout.ts","","","1","160","5745","Large source already has a source-truth capsule; fallback Read must be anchor-bounded instead of full-file."
+"unlocated-range","BLOCK_UNLOCATED_LARGE_READ","false","src/checkout.ts","1","160","1","160","1760","Large-source fallback Read requires prior Grep/anchor/source-capsule locator evidence."
+"bounded-range","ALLOW_BOUNDED_READ","true","src/checkout.ts","1","160","1","160","1760","Bounded fallback Read is compatible with source capsule and DeepSeek cache hygiene."
+"over-budget","BLOCK_OVER_BUDGET_READ","false","src/checkout.ts","1","400","1","160","4400","Fallback Read exceeds DSXU code-mode cache hygiene budget."

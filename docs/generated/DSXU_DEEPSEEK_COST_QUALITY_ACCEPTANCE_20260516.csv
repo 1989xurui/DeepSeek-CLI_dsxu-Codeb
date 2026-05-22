@@ -1,0 +1,5 @@
+"id","source","solved","turns","flashTurnRatioPct","proTurnRatioPct","cacheHitRatePct","totalCostUsd","proOnlyCostUsd","savingsVsProOnlyPct","claimStatus","cacheClaimStatus","public90ClaimStatus"
+"v19_phase5_fresh_non22_bugfix_recovery","controlled-local-harness","true","4","75","25","85.3","0.00381858","0.007122038","46.4","ALLOWED","ALLOWED","TREND_ONLY"
+"v19_phase5_flash_only_success_non22_feature","controlled-local-harness","true","3","100","0","86.5","0.00106624","0.00317695","66.4","ALLOWED","ALLOWED","TREND_ONLY"
+"public-challenge-flash-review","public-challenge","true","1","100","0","66.8","0.008998237","0.027519028","67.3","TREND_ONLY","TREND_ONLY","BLOCKED"
+"v19_phase5_live_provider_cache_prefix_billing","live-provider","true","2","100","0","98.7","0.000023912","0.00005481","56.4","ALLOWED","ALLOWED","TREND_ONLY"

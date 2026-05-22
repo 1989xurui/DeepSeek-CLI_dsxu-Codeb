@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "dsxu.training-fixture.v1",
+  "fixtureId": "G1-02",
+  "category": "basic-edit",
+  "description": "basic-edit positive verified trajectory",
+  "expected": {
+    "validationStatus": "accepted",
+    "seesRange": [
+      75,
+      100
+    ]
+  },
+  "trajectory": {
+    "schemaVersion": "dsxu.training-trajectory.v1",
+    "generatedAt": "2026-05-20T09:45:50.505Z",
+    "task": {
+      "taskId": "G1-02",
+      "category": "basic-edit",
+      "intent": "Golden positive sample for basic-edit",
+      "riskLevel": "medium",
+      "acceptanceCriteria": [
+        "expected validation status matches",
+        "expected SEES range matches"
+      ],
+      "claimScope": "internal"
+    },
+    "intentUnderstanding": {
+      "interpretedGoal": "Golden sample G1-02",
+      "constraints": [],
+      "explicitNoEdit": false,
+      "missingInfo": [],
+      "riskClassification": "medium"
+    },
+    "stateTrace": [
+      {
+        "state": "plan",
+        "allowedTransition": true,
+        "transitionReason": "initial state",
+        "attemptCount": 1
+      },
+      {
+        "state": "retrieve",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "retrieve",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "verify",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "final",
+        "previousState": "verify",
+        "allowedTransition": true,
+        "transitionReason": "verified positive sample",
+        "attemptCount": 1
+      }
+    ],
+    "toolTrace": [
+      {
+        "toolUseId": "G1-02-tool-1",
+        "toolName": "Read",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "allow",
+        "resultPaired": true,
+        "outputChars": 29,
+        "ok": true,
+        "outputHash": "b15726ba492b03fd"
+      }
+    ],
+    "sourceTruth": {
+      "filesRead": [
+        "src/example.ts"
+      ],
+      "rangesRead": [
+        "src/example.ts:1-80"
+      ],
+      "readFreshness": "fresh",
+      "staleReadDetected": false,
+      "sourceBodyStored": false,
+      "evidenceHashes": [
+        "1fca4a13662df2a4"
+      ]
+    },
+    "verification": {
+      "commands": [
+        "bun test src/example.test.ts"
+      ],
+      "passed": true,
+      "claimBound": true,
+      "localizedFeedbackPresent": false,
+      "artifactPaths": []
+    },
+    "contextMemory": {
+      "goalPreserved": true,
+      "resumePoint": "current-turn",
+      "openObligations": [
+        "build golden sample plan"
+      ],
+      "compactOccurred": false,
+      "sourceRereadAfterResume": false
+    },
+    "costRoute": {
+      "model": "deepseek-v4-flash",
+      "routeReason": "golden-fixture",
+      "estimatedCostUsd": 0.0001,
+      "cacheHitInputTokens": 100,
+      "cacheMissInputTokens": 20,
+      "proAdmissionJustified": false
+    },
+    "antiCheat": {
+      "oracleLeakFlag": false,
+      "solutionArtifactFlag": false,
+      "oldReportFlag": false,
+      "testOnlyFixFlag": false,
+      "publicClaimAllowed": true
+    },
+    "communication": {
+      "userVisibleSummary": "verified golden sample",
+      "verifiedFacts": [
+        "verification passed"
+      ],
+      "unverifiedRisks": [],
+      "overclaimDetected": false
+    },
+    "outcome": {
+      "status": "success",
+      "finalClaim": "verified golden sample",
+      "verified": true,
+      "publicClaimAllowed": false
+    },
+    "scores": {
+      "taskSuccessScore": 100,
+      "complexCodingScore": 60,
+      "longTaskScore": 60,
+      "verificationEvidenceScore": 100,
+      "recoveryScore": 80,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 90,
+      "sees": 84
+    }
+  }
+}

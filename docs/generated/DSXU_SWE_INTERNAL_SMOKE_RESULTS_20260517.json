@@ -1,0 +1,187 @@
+{
+  "generatedAt": "2026-05-17T23:41:08.888Z",
+  "owner": "Evidence / benchmark / public challenge",
+  "mode": "internal-smoke",
+  "claimBoundary": "internal harness smoke only; not a public SWE-bench score or external comparison claim",
+  "publicBenchmarkClaimAllowed": false,
+  "model": "deepseek-v4-flash",
+  "timeoutMs": 60000,
+  "total": 5,
+  "pass": 5,
+  "fail": 0,
+  "timeout": 0,
+  "crash": 0,
+  "passRate": 1,
+  "records": [
+    {
+      "task": {
+        "id": "sample1",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample1",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample1",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "sample1",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    },
+    {
+      "task": {
+        "id": "sample2",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample2",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample2",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "sample2",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    },
+    {
+      "task": {
+        "id": "sample3",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample3",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample3",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "sample3",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    },
+    {
+      "task": {
+        "id": "sample4",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample4",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample4",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "sample4",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    },
+    {
+      "task": {
+        "id": "sample5",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample5",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample5",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "sample5",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    }
+  ]
+}

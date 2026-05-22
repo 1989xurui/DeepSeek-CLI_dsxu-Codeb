@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "dsxu.v2.runtime-trust-evidence.v1",
+  "status": "PASS_V2_RUNTIME_TRUST_EVIDENCE",
+  "generatedAt": "2026-05-18T09:44:00.000Z",
+  "claimBoundary": "V2 runtime trust evidence proves focused owner behavior only. It does not raise scoreFloor and does not create public benchmark or external comparison claims.",
+  "owners": [
+    "TUI visible-state projection",
+    "Query Loop / Progress Ledger",
+    "Tool Gate / Query Loop"
+  ],
+  "evidence": {
+    "realTuiTrustProof": {
+      "status": "PASS",
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"keeps DSXU trust proof\"",
+      "assertions": 21,
+      "durationMs": 19860,
+      "signals": [
+        "EvidenceLine visible",
+        "DSXU trust line visible",
+        "ledger compact line visible",
+        "agent compact line visible",
+        "proof compact line visible after PTY resize",
+        "proof flood guard false",
+        "mojibake false"
+      ]
+    },
+    "realTuiPermissionResize": {
+      "status": "PASS",
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"keeps permission review\"",
+      "assertions": 20,
+      "durationMs": 21937,
+      "signals": [
+        "permission dialog visible",
+        "permission dialog border visible",
+        "proceed question visible",
+        "dialog visible after PTY resize",
+        "dialog border visible after PTY resize"
+      ]
+    },
+    "realTuiScrollbackResize": {
+      "status": "PASS",
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"preserves a middle scrollback\"",
+      "assertions": 17,
+      "durationMs": 22453,
+      "signals": [
+        "middle scrollback anchor preserved",
+        "top anchor false after resize",
+        "tail anchor false after resize",
+        "sticky bottom not forced while reading middle content"
+      ]
+    },
+    "queryLoopDurableLedger": {
+      "status": "PASS",
+      "command": "bun test src/dsxu/engine/__tests__/work-package-i/query-loop-progress-ledger.test.ts",
+      "assertions": 31,
+      "signals": [
+        "tool_result metadata carries progressLedger",
+        "goal runtime event present",
+        "model-route runtime event present",
+        "cost-cache runtime event present",
+        "tool runtime event uses dsxu.runtime-event.v1",
+        "tool event evidence contains schema:ToolCallResult"
+      ]
+    }
+  },
+  "publicClaimAllowed": false,
+  "publicClaimReason": "Focused V2 owner evidence only; public comparable raw evidence and release claim blocker remain unresolved.",
+  "scoreFloor": 72
+}

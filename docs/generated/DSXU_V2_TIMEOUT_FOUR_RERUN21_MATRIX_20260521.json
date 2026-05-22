@@ -1,0 +1,58 @@
+[
+  {
+    "id": "v8-real-review-fix",
+    "pass": false,
+    "status": "PARTIAL_DSXU_LANE_CAPTURED",
+    "exit": 124,
+    "json": false,
+    "declared": null,
+    "expected": "PASS",
+    "outcomeOk": true,
+    "tools": 8,
+    "cache": 0,
+    "wall": 90173,
+    "snippet": ""
+  },
+  {
+    "id": "tool-prompt-read-edit-cache-golden",
+    "pass": true,
+    "status": "PASS_DSXU_LANE_CAPTURED",
+    "exit": 0,
+    "json": true,
+    "declared": "PASS",
+    "expected": "PASS",
+    "outcomeOk": true,
+    "tools": 11,
+    "cache": 55.9,
+    "wall": 50946,
+    "snippet": "The cursor state shows `verified_passed_ready_final` with a hard final gate. The test passed. I will produce the final JSON now. ```json {\"caseId\":\"tool-prompt-read-edit-cache-golden\",\"status\":\"PASS\",\"evidence\":[\"Read golden-fixtures.test.ts: 2 tests validati"
+  },
+  {
+    "id": "mutation-tool-prompt-read-edit-cache-live",
+    "pass": false,
+    "status": "PARTIAL_DSXU_LANE_CAPTURED",
+    "exit": 124,
+    "json": false,
+    "declared": null,
+    "expected": "PASS",
+    "outcomeOk": true,
+    "tools": 12,
+    "cache": 0,
+    "wall": 90116,
+    "snippet": ""
+  },
+  {
+    "id": "mutation-real-mcp-resource-guided-fix-live",
+    "pass": false,
+    "status": "PARTIAL_DSXU_LANE_CAPTURED",
+    "exit": 124,
+    "json": false,
+    "declared": null,
+    "expected": "PASS",
+    "outcomeOk": true,
+    "tools": 12,
+    "cache": 0,
+    "wall": 90150,
+    "snippet": ""
+  }
+]

@@ -1,0 +1,1944 @@
+{
+  "summary": {
+    "schemaVersion": "dsxu.capability-cost-crosswalk.v1",
+    "generatedAt": "2026-05-16T05:39:46.137Z",
+    "capabilityWorkbookSource": "C:\\Users\\h\\Downloads\\DSXU_CLI_V8*_V9.xlsx",
+    "totalRows": 82,
+    "passRows": 70,
+    "deferredRows": 12,
+    "publicClaimAllowedRows": 47,
+    "byLayer": {
+      "baseline-workflow": 23,
+      "direct-cost": 12,
+      "indirect-cost": 21,
+      "eval-proof": 14,
+      "deferred-gap": 12
+    },
+    "publicChallengeScoreFloor": 72,
+    "publicChallengeCacheHitRatePct": 65.4,
+    "publicChallengeToolResultChars": 0,
+    "decision": "Historical capability/cost claims are usable only when tied to DSXU owner evidence plus latest public challenge route/cost/cache/trajectory evidence; deferred rows remain blocked."
+  },
+  "rows": [
+    {
+      "id": "S00",
+      "domain": "product-scope",
+      "capability": "DSXU CLI = DeepSeek V4 Code/Terminal orchestration enhancer",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "S00 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "S01",
+      "domain": "product-mode",
+      "capability": "Cold Mode",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "S01 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M01",
+      "domain": "model-adapter",
+      "capability": "DeepSeek V4 Flash/Pro Adapter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "M01 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M02",
+      "domain": "model-adapter",
+      "capability": "Thinking Mode / Effort control",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "M02 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M03",
+      "domain": "model-adapter",
+      "capability": "ReasoningStateManager",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "M03 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M04",
+      "domain": "model-adapter",
+      "capability": "Tool Calls support",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "M04 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M05",
+      "domain": "model-adapter",
+      "capability": "JSON Output mode",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "M05 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "M06",
+      "domain": "model-adapter",
+      "capability": "Context Cache hit planning",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Keeps stable prefix/cache planning visible; the current mainline now wires no-Read source capsule and cache attribution into public challenge.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "M06 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C01",
+      "domain": "core-runtime",
+      "capability": "CLI Main Chain",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "C01 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C03",
+      "domain": "core-runtime",
+      "capability": "Task Timeline Renderer",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C03 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C04",
+      "domain": "core-runtime",
+      "capability": "PermissionGate",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C04 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C05",
+      "domain": "core-runtime",
+      "capability": "IntentRouter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C05 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C07",
+      "domain": "core-runtime",
+      "capability": "ContextCompiler",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Compiles source truth into compact capsules so DeepSeek Flash does not repeatedly ingest full files.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C07 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C08",
+      "domain": "core-runtime",
+      "capability": "TokenFirewall",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Limits large tool-result feedback and forces raw-read fallback to be bounded and attributable.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C08 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C09",
+      "domain": "core-runtime",
+      "capability": "CostRouter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Keeps Flash as default and admits Pro only with explicit route evidence.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C09 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C10",
+      "domain": "core-runtime",
+      "capability": "PlanGraph",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C10 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C11",
+      "domain": "core-runtime",
+      "capability": "ToolBus",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C11 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C12",
+      "domain": "core-runtime",
+      "capability": "VerificationKernel",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C12 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C13",
+      "domain": "core-runtime",
+      "capability": "Snapshot/Rollback",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C13 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C14",
+      "domain": "core-runtime",
+      "capability": "FailureTaxonomy",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C14 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C15",
+      "domain": "core-runtime",
+      "capability": "TraceLogger",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C15 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C16",
+      "domain": "core-runtime",
+      "capability": "CostReporter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Turns usage/cache/cost into reportable product metrics instead of hidden logs.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C16 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A01",
+      "domain": "code-mode",
+      "capability": "RepoProbe",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A01 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A02",
+      "domain": "code-mode",
+      "capability": "RepoIndex",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A02 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A03",
+      "domain": "code-mode",
+      "capability": "LSP/AST Locator",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A03 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A04",
+      "domain": "code-mode",
+      "capability": "Error Parser",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A04 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A05",
+      "domain": "code-mode",
+      "capability": "Bug Locator Ensemble",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A05 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A06",
+      "domain": "code-mode",
+      "capability": "CodeContextPack",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A06 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A07",
+      "domain": "code-mode",
+      "capability": "Patch Planner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A07 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A08",
+      "domain": "code-mode",
+      "capability": "Unified Diff Generator",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A08 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A09",
+      "domain": "code-mode",
+      "capability": "Patch Applier",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A09 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A10",
+      "domain": "code-mode",
+      "capability": "Test Runner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A10 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A11",
+      "domain": "code-mode",
+      "capability": "Code RepairLoop",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A11 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A15",
+      "domain": "code-mode",
+      "capability": "FinalPatchReport",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A15 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A16",
+      "domain": "code-mode",
+      "capability": "Internal Code-10/30 Runner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A16 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B01",
+      "domain": "terminal-mode",
+      "capability": "ShellStateManager",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B01 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B02",
+      "domain": "terminal-mode",
+      "capability": "EnvironmentProbe",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B02 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B03",
+      "domain": "terminal-mode",
+      "capability": "CommandPlanner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B03 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B04",
+      "domain": "terminal-mode",
+      "capability": "SafeShellExecutor",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B04 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B05",
+      "domain": "terminal-mode",
+      "capability": "OutputSummarizer",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B05 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B06",
+      "domain": "terminal-mode",
+      "capability": "FileSystemState",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B06 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B07",
+      "domain": "terminal-mode",
+      "capability": "CommandVerifier",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B07 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B08",
+      "domain": "terminal-mode",
+      "capability": "ScriptSynthesizer",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B08 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B09",
+      "domain": "terminal-mode",
+      "capability": "Terminal FailureRepairLoop",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B09 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B10",
+      "domain": "terminal-mode",
+      "capability": "TimeoutGuard",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B10 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B11",
+      "domain": "terminal-mode",
+      "capability": "ArtifactChecker",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "B11 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B12",
+      "domain": "terminal-mode",
+      "capability": "TerminalBench Subset Adapter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B12 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B13",
+      "domain": "terminal-mode",
+      "capability": "Internal Terminal-10/30 Runner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B13 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "B14",
+      "domain": "terminal-mode",
+      "capability": "TerminalResultPackager",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Tool/terminal lifecycle owner",
+      "ownerEvidence": [
+        "src/Tool.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/services/tools/toolOrchestration.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "B14 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E01",
+      "domain": "evaluation-reporting",
+      "capability": "Baseline Runner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E01 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E02",
+      "domain": "evaluation-reporting",
+      "capability": "Ablation Runner",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E02 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E03",
+      "domain": "evaluation-reporting",
+      "capability": "Cost Eval Reporter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E03 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E04",
+      "domain": "evaluation-reporting",
+      "capability": "Failure Reporter",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E04 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E05",
+      "domain": "evaluation-reporting",
+      "capability": "Trace Collector",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E05 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E06",
+      "domain": "evaluation-reporting",
+      "capability": "Go/Stop Decision",
+      "sheet": "must",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E06 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "R01",
+      "domain": "benchmark-map",
+      "capability": "Terminal-Bench 2.0",
+      "sheet": "must",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "R01 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "R02",
+      "domain": "benchmark-map",
+      "capability": "Internal Code-30",
+      "sheet": "must",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "R02 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "S02",
+      "domain": "product-mode",
+      "capability": "BenchMax Mode",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "S02 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "M07",
+      "domain": "model-adapter",
+      "capability": "FIM local completion",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "DeepSeek runtime / model-cost-cache owner",
+      "ownerEvidence": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/utils/model/deepseekV4Control.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "M07 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C02",
+      "domain": "core-runtime",
+      "capability": "Interactive Session",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C02 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C06",
+      "domain": "core-runtime",
+      "capability": "SkillRouter core edition",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C06 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C17",
+      "domain": "core-runtime",
+      "capability": "LocalMemory Lite",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C17 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "C18",
+      "domain": "core-runtime",
+      "capability": "Anti-Rationalization Guard",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Query loop / work-state / runtime owner",
+      "ownerEvidence": [
+        "src/QueryEngine.ts",
+        "src/query.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "C18 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A12",
+      "domain": "code-mode",
+      "capability": "RegressionGuard Lite",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "indirect-cost",
+      "contribution": "Reduces wasted turns through visible state, permission gating, verification, repair loops, and bounded context.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A12 can support a DSXU-owned indirect-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A13",
+      "domain": "code-mode",
+      "capability": "Patch Candidate Search",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "A13 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A14",
+      "domain": "code-mode",
+      "capability": "Pro Reviewer",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "direct-cost",
+      "contribution": "Directly reduces spend or controls expensive model/tool behavior in the main workflow.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+        "docs/generated/DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+        ".dsxu/trace/v24-public-challenge-package/*.trajectory.jsonl"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A14 can support a DSXU-owned direct-cost claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "A17",
+      "domain": "code-mode",
+      "capability": "SWE Smoke Runner",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Code-mode repair / patch / verification owner",
+      "ownerEvidence": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "A17 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "E07",
+      "domain": "evaluation-reporting",
+      "capability": "Mini Report Generator",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "E07 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "R03",
+      "domain": "benchmark-map",
+      "capability": "SWE Pro",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "R03 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "R04",
+      "domain": "benchmark-map",
+      "capability": "SWE Verified",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "R04 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "R05",
+      "domain": "benchmark-map",
+      "capability": "BFCL V4",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "R05 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "R06",
+      "domain": "benchmark-map",
+      "capability": "BrowseComp-Lite",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "R06 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "R07",
+      "domain": "benchmark-map",
+      "capability": "OSWorld-Lite",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "R07 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "R08",
+      "domain": "benchmark-map",
+      "capability": "Toolathlon",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "eval-proof",
+      "contribution": "Proves cost/quality with raw traces, public challenge runs, ablation, and go/stop reports.",
+      "dsxuOwner": "Evidence / benchmark / public challenge owner",
+      "ownerEvidence": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json"
+      ],
+      "publicClaimAllowed": true,
+      "publicClaim": "R08 can support a DSXU-owned eval-proof claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "PZ01",
+      "domain": "paused-module",
+      "capability": "OpenClaw Adapter",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ01 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "PZ02",
+      "domain": "paused-module",
+      "capability": "Hermes Adapter",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ02 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "PZ03",
+      "domain": "paused-module",
+      "capability": "BrowserExecutor",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ03 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "PZ04",
+      "domain": "paused-module",
+      "capability": "DesktopExecutor",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ04 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "PZ05",
+      "domain": "paused-module",
+      "capability": "Application templates",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ05 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "PZ06",
+      "domain": "paused-module",
+      "capability": "VS Code plugin/API platform",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ06 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    },
+    {
+      "id": "PZ07",
+      "domain": "paused-module",
+      "capability": "Multi-Agent Swarm/Coordinator",
+      "sheet": "later",
+      "historicalStatus": "PASS",
+      "costLayer": "baseline-workflow",
+      "contribution": "Supports the coding/terminal workflow; useful as product capability, but not a standalone cost optimization claim.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ07 can support a DSXU-owned baseline-workflow claim when cited with owner evidence and latest live/public-challenge metrics.",
+      "releaseUse": "Allowed as DSXU-owned release-candidate capability evidence; public benchmark superiority still requires fixed raw comparison."
+    },
+    {
+      "id": "PZ08",
+      "domain": "paused-module",
+      "capability": "Voice/Buddy/Team/Bridge",
+      "sheet": "later",
+      "historicalStatus": "DEFERRED_NOT_PASS",
+      "costLayer": "deferred-gap",
+      "contribution": "Not counted as PASS; remains a raw-evidence or product-surface gap.",
+      "dsxuOwner": "Deferred ecosystem boundary owner",
+      "ownerEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "src/dsxu/engine/public-surface-clean-gate.ts"
+      ],
+      "ownerEvidenceExists": true,
+      "liveEvidence": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md#deferred-gap"
+      ],
+      "publicClaimAllowed": false,
+      "publicClaim": "PZ08 must stay out of PASS/product-claim copy until raw evidence or product implementation closes the deferred gap.",
+      "releaseUse": "Blocked from release claims except as an explicitly deferred roadmap/gap item."
+    }
+  ]
+}

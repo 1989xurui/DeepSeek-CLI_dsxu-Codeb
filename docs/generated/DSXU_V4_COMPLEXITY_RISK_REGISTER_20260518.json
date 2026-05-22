@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "dsxu.v4.complexity-risk-register.v1",
+  "generatedAt": "2026-05-19T02:12:00.813Z",
+  "status": "PASS_DSXU_V4_COMPLEXITY_RISK_REGISTER_READY",
+  "entries": [
+    {
+      "riskId": "V4-R01",
+      "risk": "Second provider request body builder can drift from DeepSeek thinking/tool contract.",
+      "riskClass": "second-provider",
+      "currentOwner": "Provider Plan owner",
+      "activeSignals": [
+        "src/services/api/deepseek-adapter.ts",
+        "src/dsxu/engine/api-service.ts",
+        "src/dsxu/engine/model-gateway-v1.ts"
+      ],
+      "status": "open",
+      "requiredAction": "P1 must prove all DeepSeek chat/tool/thinking bodies route through canonical owner helper.",
+      "stage": "P1"
+    },
+    {
+      "riskId": "V4-R02",
+      "risk": "Legacy ToolBus and canonical ToolCallResult can coexist as competing contracts.",
+      "riskClass": "second-toolbus",
+      "currentOwner": "Tool Envelope owner",
+      "activeSignals": [
+        "src/dsxu/engine/tool-protocol.ts",
+        "src/dsxu/engine/tool-bus",
+        "src/services/tools/toolLifecycle.ts"
+      ],
+      "status": "watch",
+      "requiredAction": "P4 must keep legacy/provider/MCP shapes normalized at Tool Gate before ledger/recovery/TUI.",
+      "stage": "P4"
+    },
+    {
+      "riskId": "V4-R03",
+      "risk": "Swarm/forked agent paths can become a second agent orchestrator.",
+      "riskClass": "second-agent",
+      "currentOwner": "Agent Evidence Handoff owner",
+      "activeSignals": [
+        "src/tools/AgentTool",
+        "src/utils/swarm",
+        "src/utils/forkedAgent.ts"
+      ],
+      "status": "contained",
+      "requiredAction": "P6 must keep agent modes to serial worker or disjoint fanout evidence packets.",
+      "stage": "P6"
+    },
+    {
+      "riskId": "V4-R04",
+      "risk": "TUI can render separate local state instead of consuming work-state/ledger evidence.",
+      "riskClass": "second-tui",
+      "currentOwner": "Trust UI owner",
+      "activeSignals": [
+        "src/screens/REPL.tsx",
+        "src/components/PromptInput",
+        "src/components/messages",
+        "src/query.ts"
+      ],
+      "status": "open",
+      "requiredAction": "P7 must prove TUI/CLI/stream-json/final report consume the same compact projection.",
+      "stage": "P7"
+    },
+    {
+      "riskId": "V4-R05",
+      "risk": "Multiple prompt stacks can inflate prompt and break DeepSeek prefix cache.",
+      "riskClass": "prompt-stack",
+      "currentOwner": "DeepSeek route/cost/cache owner",
+      "activeSignals": [
+        "src/dsxu/engine/prompt-prefix-cache-builder.ts",
+        "src/dsxu/engine/prompt-processing-v1.ts",
+        "src/dsxu/engine/system-prompt-builder-v1.ts"
+      ],
+      "status": "open",
+      "requiredAction": "P2 must lock stable prefix, move volatile runtime facts to dynamic tail, and explain cache epoch changes.",
+      "stage": "P2"
+    },
+    {
+      "riskId": "V4-R06",
+      "risk": "Package script surface is too large for public product claims.",
+      "riskClass": "script-surface",
+      "currentOwner": "Evidence / release claim binder owner",
+      "activeSignals": [
+        "package.json",
+        "scripts/dsxu-command-catalog.ts"
+      ],
+      "status": "contained",
+      "requiredAction": "P0 command catalog classifies product-runtime, validation, release-only, owner-review, live-provider, historical evidence, and utilities.",
+      "stage": "P0"
+    },
+    {
+      "riskId": "V4-R07",
+      "risk": "Mock/internal smoke can be promoted into a public 90/95 or formal benchmark claim.",
+      "riskClass": "claim-inflation",
+      "currentOwner": "Evidence / release claim binder owner",
+      "activeSignals": [
+        "scripts/dsxu-evidence-dashboard.ts",
+        "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260518.json",
+        "README.md"
+      ],
+      "status": "open",
+      "requiredAction": "P8 must require comparable raw transcript, tool trace, cost/cache, and failure-recovery evidence before public claim.",
+      "stage": "P8"
+    },
+    {
+      "riskId": "V4-R08",
+      "risk": "Recovery variants can disagree on retry/replan/rollback/abort.",
+      "riskClass": "second-runtime",
+      "currentOwner": "Recovery Decision owner",
+      "activeSignals": [
+        "src/dsxu/engine/gear-box.ts",
+        "src/dsxu/engine/recovery",
+        "src/query.ts"
+      ],
+      "status": "open",
+      "requiredAction": "P5 must expose one Recovery Decision Table and write decisions into ledger/TUI/final report.",
+      "stage": "P5"
+    },
+    {
+      "riskId": "V4-R09",
+      "risk": "Verification can remain advisory while final answer says PASS.",
+      "riskClass": "second-runtime",
+      "currentOwner": "Verification Envelope owner",
+      "activeSignals": [
+        "src/coordinator/tdd-gate/post-write-hook.ts",
+        "src/services/static-analysis/tool-gate.ts",
+        "src/dsxu/engine/post-mutation-verification-envelope.ts"
+      ],
+      "status": "open",
+      "requiredAction": "P3 must make mutation verification envelope visible and final claim gate reject unverified PASS.",
+      "stage": "P3"
+    }
+  ],
+  "rule": "Complexity risks are controlled by folding work into the existing V4 product core owners. A risk marked contained still requires later-stage focused acceptance before release claims."
+}

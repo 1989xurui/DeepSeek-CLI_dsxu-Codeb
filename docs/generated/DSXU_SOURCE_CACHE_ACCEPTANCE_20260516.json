@@ -1,0 +1,210 @@
+{
+  "schemaVersion": "dsxu.source-cache-acceptance.v1",
+  "generatedAt": "2026-05-19T23:07:08.779Z",
+  "status": "PASS_SOURCE_CACHE_ACCEPTANCE",
+  "fixtureRoot": "C:\\Users\\h\\AppData\\Local\\Temp\\dsxu-source-cache-acceptance-YzenQm",
+  "contextPack": {
+    "capsuleCount": 2,
+    "rawChars": 23169,
+    "packedChars": 1360,
+    "estimatedInputTokens": 340,
+    "compressionRatio": 0.059,
+    "toolResultCharsAvoided": 21809,
+    "cacheHygieneStatus": "SOURCE_CAPSULE_RISK",
+    "noReadDefault": true,
+    "guards": [
+      "src/checkout.ts:fallback Read requires locator and bounded range"
+    ]
+  },
+  "capsules": [
+    {
+      "capsuleId": "source:1f362fe62b414700",
+      "path": "src/checkout.ts",
+      "sha256": "af150e60a66d650f0f6b315a1f2f53fbdd8d95daf4bf082222101812a052cc46",
+      "lineCount": 531,
+      "bytes": 22979,
+      "anchorCount": 6,
+      "riskTags": [
+        "large-file",
+        "bounded-excerpt",
+        "fallback-read-must-be-range-limited"
+      ],
+      "fallbackReadPolicy": {
+        "mode": "source-capsule-first",
+        "requiresLocatorBeforeLargeRead": true,
+        "maxLinesPerRead": 160,
+        "maxApproxTokensPerRead": 8000,
+        "largeFileLineThreshold": 260,
+        "noReadDefault": true
+      }
+    },
+    {
+      "capsuleId": "source:8ef1e97bba8fbcff",
+      "path": "src/checkout.test.ts",
+      "sha256": "55e0b45ec53b3b3f9735f4105702cc688d7acc760bf86ee47d751e655d454446",
+      "lineCount": 6,
+      "bytes": 190,
+      "anchorCount": 4,
+      "riskTags": [
+        "test-source"
+      ],
+      "fallbackReadPolicy": {
+        "mode": "source-capsule-first",
+        "requiresLocatorBeforeLargeRead": true,
+        "maxLinesPerRead": 160,
+        "maxApproxTokensPerRead": 8000,
+        "largeFileLineThreshold": 260,
+        "noReadDefault": true
+      }
+    }
+  ],
+  "readFallbackDecisions": {
+    "fullReadDecision": {
+      "allowed": false,
+      "status": "BLOCK_FULL_FILE_READ",
+      "path": "src/checkout.ts",
+      "capsuleId": "source:1f362fe62b414700",
+      "recommendedOffset": 1,
+      "recommendedLimit": 160,
+      "estimatedApproxTokens": 5745,
+      "maxApproxTokensPerRead": 8000,
+      "reason": "Large source already has a source-truth capsule; fallback Read must be anchor-bounded instead of full-file.",
+      "evidence": [
+        "capsule:source:1f362fe62b414700",
+        "path:src/checkout.ts",
+        "lines:531",
+        "estimatedApproxTokens:5745",
+        "maxApproxTokensPerRead:8000"
+      ]
+    },
+    "unlocatedRangeDecision": {
+      "allowed": false,
+      "status": "BLOCK_UNLOCATED_LARGE_READ",
+      "path": "src/checkout.ts",
+      "capsuleId": "source:1f362fe62b414700",
+      "requestedOffset": 1,
+      "requestedLimit": 160,
+      "recommendedOffset": 1,
+      "recommendedLimit": 160,
+      "estimatedApproxTokens": 1760,
+      "maxApproxTokensPerRead": 8000,
+      "reason": "Large-source fallback Read requires prior Grep/anchor/source-capsule locator evidence.",
+      "evidence": [
+        "capsule:source:1f362fe62b414700",
+        "path:src/checkout.ts",
+        "lines:531",
+        "estimatedApproxTokens:1760",
+        "maxApproxTokensPerRead:8000"
+      ]
+    },
+    "boundedRangeDecision": {
+      "allowed": true,
+      "status": "ALLOW_BOUNDED_READ",
+      "path": "src/checkout.ts",
+      "capsuleId": "source:1f362fe62b414700",
+      "requestedOffset": 1,
+      "requestedLimit": 160,
+      "recommendedOffset": 1,
+      "recommendedLimit": 160,
+      "estimatedApproxTokens": 1760,
+      "maxApproxTokensPerRead": 8000,
+      "reason": "Bounded fallback Read is compatible with source capsule and DeepSeek cache hygiene.",
+      "evidence": [
+        "capsule:source:1f362fe62b414700",
+        "path:src/checkout.ts",
+        "lines:531",
+        "estimatedApproxTokens:1760",
+        "maxApproxTokensPerRead:8000"
+      ]
+    },
+    "overBudgetDecision": {
+      "allowed": false,
+      "status": "BLOCK_OVER_BUDGET_READ",
+      "path": "src/checkout.ts",
+      "capsuleId": "source:1f362fe62b414700",
+      "requestedOffset": 1,
+      "requestedLimit": 400,
+      "recommendedOffset": 1,
+      "recommendedLimit": 160,
+      "estimatedApproxTokens": 4400,
+      "maxApproxTokensPerRead": 8000,
+      "reason": "Fallback Read exceeds DSXU code-mode cache hygiene budget.",
+      "evidence": [
+        "capsule:source:1f362fe62b414700",
+        "path:src/checkout.ts",
+        "lines:531",
+        "estimatedApproxTokens:4400",
+        "maxApproxTokensPerRead:8000"
+      ]
+    }
+  },
+  "promptPrefix": {
+    "firstOk": true,
+    "secondOk": true,
+    "stablePrefixHashUnchanged": true,
+    "dynamicTailHashChanged": true,
+    "stablePrefixApproxTokens": 415,
+    "dynamicTailApproxTokens": 18,
+    "cacheMissBudgetTokens": 8000,
+    "volatileFindingCount": 0
+  },
+  "impactRadar": {
+    "status": "IMPACT_RADAR_READY",
+    "changedFiles": [
+      "src/checkout.ts"
+    ],
+    "directDependents": [
+      "src/checkout.test.ts"
+    ],
+    "transitiveDependents": [],
+    "affectedTests": [
+      "src/checkout.test.ts"
+    ],
+    "totalAffected": 2,
+    "riskLevel": "low",
+    "recommendedVerification": [
+      "bun",
+      "test",
+      "src/checkout.test.ts"
+    ],
+    "evidence": [
+      "changed:src/checkout.ts",
+      "directDependents:1",
+      "transitiveDependents:0",
+      "affectedTests:src/checkout.test.ts",
+      "riskLevel:low",
+      "verification:bun test src/checkout.test.ts"
+    ]
+  },
+  "evidenceDrivenReview": {
+    "status": "EVIDENCE_REVIEW_READY",
+    "findingCount": 5,
+    "releaseClaimAllowed": true,
+    "sourceTruthCapsuleIds": [
+      "source:1f362fe62b414700",
+      "source:8ef1e97bba8fbcff"
+    ],
+    "verificationCommand": [
+      "bun",
+      "test",
+      "src/checkout.test.ts"
+    ],
+    "evidence": [
+      "goal:repair checkout coupon subtotal bug",
+      "capsule:source:1f362fe62b414700",
+      "capsule:source:8ef1e97bba8fbcff",
+      "changed:src/checkout.ts",
+      "directDependents:1",
+      "transitiveDependents:0",
+      "affectedTests:src/checkout.test.ts",
+      "riskLevel:low",
+      "verification:bun test src/checkout.test.ts",
+      "verification:bun test src/checkout.test.ts:true"
+    ]
+  },
+  "releaseClaimBoundary": {
+    "codeModeSourceCapsuleClaimAllowed": true,
+    "deepseekCacheHitClaimAllowed": false,
+    "note": "This proves DSXU-owned source/cache mechanics and bounded Read fallback, not a live provider cache-hit percentage."
+  }
+}

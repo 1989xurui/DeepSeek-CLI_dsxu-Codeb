@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "dsxu.v5.phase0.runner.v1",
+  "generatedAt": "2026-05-19T04:16:21.251Z",
+  "suite": "replay-regression",
+  "status": "PASS_V5_PHASE0_SUITE",
+  "purpose": "Promote failed real-task cases into V5 replay regression blockers instead of hiding them behind average pass rate.",
+  "owner": "Replay Bank / Evidence owner",
+  "commandCount": 1,
+  "passedCommandCount": 1,
+  "failedCommandCount": 0,
+  "timedOutCommandCount": 0,
+  "durationMs": 1120,
+  "maxDurationMs": 180000,
+  "withinDurationBudget": true,
+  "results": [
+    {
+      "id": "v5-strict-replay-bank-intake",
+      "suite": "replay-regression",
+      "owner": "Replay Bank / Evidence owner",
+      "command": "bun run scripts/dsxu-v5-replay-bank.ts",
+      "timeoutMs": 180000,
+      "liveProvider": false,
+      "claimBoundary": "replay-regression",
+      "exitCode": 0,
+      "passed": true,
+      "timedOut": false,
+      "durationMs": 1116,
+      "stdoutPath": ".dsxu/trace/v5-phase0/replay-regression/1779164181265-v5-strict-replay-bank-intake-bun-run-scripts-dsxu-v5-replay-bank-ts.stdout.log",
+      "stderrPath": ".dsxu/trace/v5-phase0/replay-regression/1779164181265-v5-strict-replay-bank-intake-bun-run-scripts-dsxu-v5-replay-bank-ts.stderr.log",
+      "stdoutTail": "{\n  \"status\": \"PASS_V5_REPLAY_BANK_REQUIRED_SUBSET\",\n  \"sourceCaseCount\": 20,\n  \"bankCaseCount\": 20,\n  \"acceptedCount\": 20,\n  \"nativeV5ReadyCount\": 20,\n  \"projectedLegacyCaseCount\": 0,\n  \"requiredSubsetReady\": true,\n  \"fullReleaseReady\": false,\n  \"blockers\": [],\n  \"outputJson\": \"docs/generated/DSXU_V5_REPLAY_BANK_20260519.json\",\n  \"outputMd\": \"docs/DSXU_V5_REPLAY_BANK_20260519.md\"\n}",
+      "stderrTail": ""
+    }
+  ],
+  "replayRegressionAssessment": {
+    "status": "PASS_REPLAY_REGRESSION",
+    "caseCount": 20,
+    "passCount": 20,
+    "failedCaseIds": [],
+    "acceptedCount": 20,
+    "nativeV5ReadyCount": 20,
+    "requiredSubsetReady": true,
+    "fullReleaseReady": false,
+    "claimBoundary": "This intake uses native V5 internal replay traces for V5 default-chain acceptance only. It is not a public benchmark score and cannot be used as a 90% external-comparison claim without paired public raw evidence.",
+    "blockers": []
+  },
+  "blockers": [],
+  "deferredFullReleaseCommands": [],
+  "outputJson": "docs/generated/DSXU_V5_PHASE0_REPLAY_REGRESSION_20260519.json",
+  "outputMd": "docs/DSXU_V5_PHASE0_REPLAY_REGRESSION_20260519.md",
+  "traceDir": ".dsxu/trace/v5-phase0/replay-regression",
+  "rule": "V5 Phase 0 only aggregates existing owner tests/evidence. It does not add a product runtime, provider, ToolBus, permission layer, agent layer, or public benchmark claim."
+}

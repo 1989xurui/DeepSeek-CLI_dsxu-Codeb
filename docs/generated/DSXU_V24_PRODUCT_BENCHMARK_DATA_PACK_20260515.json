@@ -1,0 +1,457 @@
+{
+  "schemaVersion": "dsxu.v24.product-benchmark-data-pack.v1",
+  "generatedAt": "2026-05-17T03:17:52.105Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_PRODUCT_BENCHMARK_DEMO_DATA_PACK_READY",
+  "final95ClaimAllowed": false,
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proWasRunInSeniorWindow": false,
+    "noSecondRuntime": true,
+    "comparisonRule": "Use fixed DSXU evidence and public replay tasks; do not claim external superiority without comparable target raw logs."
+  },
+  "benchmarkCatalog": {
+    "packs": [
+      "mainline-completion",
+      "mainline-real-long-task-harness",
+      "mainline-stop-hook-runtime",
+      "mainline-session-memory-resume",
+      "background-governance-v5",
+      "query-loop-mainline",
+      "tool-permission-mainline",
+      "agent-evidence-mainline",
+      "reference-experience-quality",
+      "reference-experience-quality-live",
+      "reference-governance-productization",
+      "reference-governance-live-core",
+      "mutation-product-grade-live",
+      "productization",
+      "productization-release-gate",
+      "v11-100-point-roadmap",
+      "v11-100-point-roadmap-live",
+      "v11-open-project-pack-readiness-live",
+      "product-real-live-suite",
+      "product-reality-hardening",
+      "product-reality-hardening-live",
+      "high-pressure-reference-absorption",
+      "high-pressure-reference-absorption-live",
+      "high-pressure-product-gap-delta-live",
+      "goal-driven-optimization",
+      "goal-driven-selected-live"
+    ],
+    "caseCount": 98,
+    "categoryCounts": {
+      "permission": 18,
+      "feature": 17,
+      "recovery": 34,
+      "agent": 15,
+      "bugfix": 4,
+      "review": 10
+    },
+    "routeCounts": {
+      "deepseek-v4-pro": 4,
+      "deepseek-v4-flash": 94
+    },
+    "fixedPublicTaskCount": 10,
+    "fixedPublicTasks": [
+      {
+        "id": "permission-deny-replan",
+        "category": "permission",
+        "expectedModel": "deepseek-v4-pro",
+        "workflowKind": "review",
+        "routeReason": "high_risk_pro_thinking_max_requires_approval",
+        "requiresBaseline": false,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "grep-glob-tool-choice",
+        "category": "feature",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "feature",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": false,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-multifile-bugfix-live",
+        "category": "bugfix",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "bugfix",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-multistep-feature-live",
+        "category": "feature",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "feature",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-review-fix-live",
+        "category": "review",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "review",
+        "routeReason": "review_flash_thinking_max",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-compact-resume-edit-live",
+        "category": "recovery",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "recovery",
+        "routeReason": "recovery_flash_thinking_max",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-agent-worker-longrun-live",
+        "category": "agent",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "planning",
+        "routeReason": "recovery_flash_thinking_max",
+        "requiresBaseline": false,
+        "allowedTools": "TaskCreate,SendMessage,TaskUpdate"
+      },
+      {
+        "id": "product-real-mcp-task-live",
+        "category": "feature",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "feature",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "product-reality-large-feature-live",
+        "category": "feature",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "feature",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": true,
+        "allowedTools": "default-mainline-tool-gate"
+      },
+      {
+        "id": "experience-programmer-ux-live",
+        "category": "feature",
+        "expectedModel": "deepseek-v4-flash",
+        "workflowKind": "feature",
+        "routeReason": "coding_flash_thinking_high",
+        "requiresBaseline": false,
+        "allowedTools": "default-mainline-tool-gate"
+      }
+    ]
+  },
+  "productMetrics": {
+    "seniorWindowElapsedMs": 1835055,
+    "seniorWindowDsxuRunCount": 17,
+    "seniorWindowSustainedReviewRounds": 15,
+    "seniorWindowFinalTestPassed": true,
+    "seniorWindowFlashCostUSD": 0.3239343576000001,
+    "c2ReferenceFiles": 1902,
+    "c2ProductSpecificFiles": 594,
+    "c2SharedUtilityFiles": 278,
+    "c2LoopRowsPassed": 51,
+    "c2PublicClaimBoundaryClosed": true,
+    "c2PublicClaimBoundaryRowsClosed": 914,
+    "c2ReferenceParityClaimAllowed": false,
+    "c2OwnerImplementationAcceptancePass": true,
+    "c2OwnerImplementedTestedRows": 1096,
+    "c2OwnerAdaptedExcludedRows": 601,
+    "c2OwnerNoLossBaselineRows": 205,
+    "c2OwnerNeedsRealCodeTestRows": 0,
+    "deepSeekTrajectoryReviewCount": 3,
+    "deepSeekTrajectoryReviewTotal": 3,
+    "publicChallengeAblationPass": true,
+    "publicChallengeAblationScoreFloor": "72->72",
+    "publicChallengeAblationCostUSD": "0.0716986596->0.0106172808",
+    "publicChallengeAblationCostSavingsPct": 85.2,
+    "publicChallengeAblationCacheHitRatePct": "45.5->65.3",
+    "publicChallengeAblationReadToolCalls": "28->0",
+    "publicChallengeAblationToolResultChars": "316381->0",
+    "publicChallengeAblationHighCacheRoiAllowed": false,
+    "finalPreflightPass": true,
+    "finalPreflightGitStatusTotal": 2403,
+    "cleanExportPreflightReady": true,
+    "sixStageFinalTestsPassed": true,
+    "cleanExportArtifactCreated": true,
+    "cleanExportZipPath": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-16T15-28-23-581Z.zip",
+    "cleanExportZipSha256": "b1388b134122808a4092bbfec1dd83ba2bc8c453a3e3f85c807875107ef81b33",
+    "freshInstallSmokePassed": true
+  },
+  "evidence": [
+    {
+      "id": "public-challenge",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+      "status": "PASS_PUBLIC_CHALLENGE_PACKAGE_READY",
+      "pass": true,
+      "metrics": {
+        "scoreFloor": 72,
+        "totalFlashCostUSD": 0.008998236800000002
+      }
+    },
+    {
+      "id": "public-challenge-ablation",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json",
+      "status": "PASS_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "senior-coding-window",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+      "pass": true,
+      "metrics": {
+        "totalFlashCostUSD": 0.3239343576000001,
+        "proWasRun": false,
+        "continuousWindowSatisfied": true,
+        "dsxuRunCount": 17,
+        "sustainedReviewRounds": 15,
+        "finalTestPassed": true
+      }
+    },
+    {
+      "id": "c2-1902-evidence-join",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json",
+      "status": "MISSING",
+      "pass": false,
+      "metrics": {
+        "referenceFiles": 1902,
+        "productSpecificFiles": 594,
+        "sharedUtilityFiles": 278
+      }
+    },
+    {
+      "id": "c2-loop-real-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+      "pass": true,
+      "metrics": {
+        "c2PassedRows": 51,
+        "c2OpenRows": 0
+      }
+    },
+    {
+      "id": "c2-public-claim-closure",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json",
+      "status": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "c2-owner-implementation-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "interactive-tui-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "completed-reacceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "complex-task-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLEX_TASK_ACCEPTANCE_PACK_READY",
+      "pass": true,
+      "metrics": {
+        "scoreFloor": 72,
+        "totalFlashCostUSD": 0.0140029288,
+        "proWasRun": false
+      }
+    },
+    {
+      "id": "clean-export-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "pass": true,
+      "metrics": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false
+      }
+    },
+    {
+      "id": "six-stage-final-tests",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json",
+      "status": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "clean-export-artifact",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json",
+      "status": "PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "fresh-install-release-smoke",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json",
+      "status": "PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+      "pass": true,
+      "metrics": {}
+    },
+    {
+      "id": "final-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_FINAL_PREFLIGHT_20260515.json",
+      "status": "PASS",
+      "pass": true,
+      "metrics": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false
+      }
+    },
+    {
+      "id": "evidence-dashboard",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_EVIDENCE_DASHBOARD_20260517.json",
+      "status": "MISSING",
+      "pass": false,
+      "metrics": {
+        "scoreFloor": 72
+      }
+    }
+  ],
+  "comparisonRows": [
+    {
+      "dimension": "fixed benchmark catalog",
+      "fixedEvidence": "scripts/benchmark/dsxu-mainline-benchmark.ts",
+      "dsxuResult": "26 packs / 98 cases / 10 selected public demo tasks",
+      "publicClaim": "DSXU ships a fixed, replayable benchmark/task catalog instead of ad hoc demos.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "senior coding window",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "dsxuResult": "30.58 min, 17 DSXU runs, final fixture test pass=true",
+      "publicClaim": "DSXU completed one real 30-45 minute Flash-first coding window with failed-to-passing test evidence.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "reference 1902 experience-loop absorption",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+      "dsxuResult": "1902/1902 owner-mapped; C2 loop matrix 51/51 pass; 914 public-claim boundary rows closed; owner acceptance: implemented+tested=1096, adapted/excluded=601, no-loss baseline=205",
+      "publicClaim": "DSXU translates reference senior-programmer loops into DSXU-owned generic experience loops; it does not claim reference-product parity.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "TUI/operator experience",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "dsxuResult": "interactive replay pass with permission, recovery, compact resume, background task, and model progress evidence",
+      "publicClaim": "DSXU keeps work state visible to the operator during real TUI flows.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "Flash-first cost routing",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+      "dsxuResult": "senior window cost USD=0.3239343576000001; Pro used=false; benchmark route rows flash=94, pro=4",
+      "publicClaim": "DSXU defaults to DeepSeek V4 Flash and requires explicit evidence before Pro.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "DeepSeek trajectory evidence",
+      "fixedEvidence": "src/services/api/deepseek-trajectory-store.ts; src/services/api/deepseek-trajectory-store.test.ts; public challenge Flash review trajectory files",
+      "dsxuResult": "redacted trajectory store is connected to DeepSeekAdapter; public challenge Flash reviews with trajectory paths=3/3",
+      "publicClaim": "DSXU can audit DeepSeek request plan, message/tool-result structure, thinking/tool snapshots, usage, cache, route, and request id without leaking raw prompt or keys.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "public challenge ablation cost/cache",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json",
+      "dsxuResult": "same-task scoreFloor 72->72; cost USD 0.0716986596->0.0106172808; cache hit 45.5%->65.3%; Read calls 28->0; toolResultChars 316381->0",
+      "publicClaim": "DSXU has same-task ablation evidence that source capsule/no-Read/route latch/tool-result hygiene reduces cost and tool-result bloat without lowering the public challenge score floor.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "release/export readiness",
+      "fixedEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json",
+      "dsxuResult": "six-stage pass, clean export artifact created, fresh install smoke pass, zip=D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-16T15-28-23-581Z.zip",
+      "publicClaim": "Clean export, six-stage tests, and fresh install smoke are evidence-gated release readiness signals.",
+      "claimStatus": "ALLOWED"
+    },
+    {
+      "dimension": "external benchmark superiority",
+      "fixedEvidence": "requires independent target/public baseline logs",
+      "dsxuResult": "not claimed by this pack",
+      "publicClaim": "No superiority claim until comparable external raw logs exist.",
+      "claimStatus": "BLOCKED"
+    }
+  ],
+  "demoScenarios": [
+    {
+      "id": "DEMO-01",
+      "name": "Senior coding repair with failed-to-passing tests",
+      "commandOrArtifact": "bun run v24:senior-coding-window",
+      "requiredEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "READY_WITH_RAW_EVIDENCE"
+    },
+    {
+      "id": "DEMO-02",
+      "name": "Operator-visible TUI state replay",
+      "commandOrArtifact": "bun run v24:interactive-tui-acceptance",
+      "requiredEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "READY_WITH_RAW_EVIDENCE"
+    },
+    {
+      "id": "DEMO-03",
+      "name": "C2 1902 owner/loop absorption evidence",
+      "commandOrArtifact": "bun run v24:c2-1902-evidence-join && bun run v24:c2-loop-acceptance && bun run v26:c2-public-claim-closure && bun run v26:c2-owner-implementation-acceptance",
+      "requiredEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+      "status": "READY_WITH_RAW_EVIDENCE"
+    },
+    {
+      "id": "DEMO-04",
+      "name": "Fixed public benchmark task catalog",
+      "commandOrArtifact": "bun scripts/benchmark/dsxu-mainline-benchmark.ts",
+      "requiredEvidence": "98 case catalog plus selected public tasks in this pack",
+      "status": "READY_AS_REPLAY"
+    },
+    {
+      "id": "DEMO-05",
+      "name": "Claim guard and release preflight",
+      "commandOrArtifact": "bun run v24:public-challenge && bun run public-challenge:ablation && bun run clean-export:preflight",
+      "requiredEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json; D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "READY_WITH_RAW_EVIDENCE"
+    },
+    {
+      "id": "DEMO-06",
+      "name": "Clean export artifact and fresh install smoke",
+      "commandOrArtifact": "bun run test:six-stage-final && bun run release:clean-export-artifact && bun run release:fresh-install-smoke",
+      "requiredEvidence": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json; D:\\DSXU-code\\docs\\generated\\DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json",
+      "status": "READY_WITH_RAW_EVIDENCE"
+    }
+  ],
+  "claimGuard": {
+    "allowed": [
+      "DSXU ships a fixed, replayable benchmark/task catalog instead of ad hoc demos.",
+      "DSXU completed one real 30-45 minute Flash-first coding window with failed-to-passing test evidence.",
+      "DSXU translates reference senior-programmer loops into DSXU-owned generic experience loops; it does not claim reference-product parity.",
+      "DSXU keeps work state visible to the operator during real TUI flows.",
+      "DSXU defaults to DeepSeek V4 Flash and requires explicit evidence before Pro.",
+      "DSXU can audit DeepSeek request plan, message/tool-result structure, thinking/tool snapshots, usage, cache, route, and request id without leaking raw prompt or keys.",
+      "DSXU has same-task ablation evidence that source capsule/no-Read/route latch/tool-result hygiene reduces cost and tool-result bloat without lowering the public challenge score floor.",
+      "Clean export, six-stage tests, and fresh install smoke are evidence-gated release readiness signals."
+    ],
+    "guarded": [],
+    "blocked": [
+      "No superiority claim until comparable external raw logs exist."
+    ]
+  },
+  "remainingHardOrder": [
+    "public95 claim still requires scoreFloor >= 95 and fixed raw public challenge data"
+  ]
+}

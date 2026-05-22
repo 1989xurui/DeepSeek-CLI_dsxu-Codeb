@@ -1,0 +1,20 @@
+[FSM] 初始状态: plan
+[ContextBuilder] 更新令牌使用: input=1200, output=160, total=1360
+[FSM] 状态转移: plan -> execute
+[FSM] 状态转移: execute -> edit
+[FSM] 状态转移: edit -> execute
+[FSM] 状态转移: execute -> verify
+[GearBox] test passed; reset to gear 1
+[ContextBuilder] 更新令牌使用: input=700, output=90, total=2150
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit
+{
+  "schemaVersion": "dsxu.training-query-loop-reachability.v1",
+  "output": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+  "validationStatus": "accepted",
+  "scoreStatus": "scored",
+  "eventCount": 28,
+  "requiredEventTypesPresent": true,
+  "exitReason": "end_turn",
+  "publicClaimAllowed": false
+}

@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "dsxu.training-fixture.v1",
+  "fixtureId": "G3-07",
+  "category": "verification",
+  "description": "verification negative: final success without verification binding",
+  "expected": {
+    "validationStatus": "rejected",
+    "hardGateViolations": [
+      "false_pass"
+    ],
+    "seesRange": [
+      0,
+      80
+    ]
+  },
+  "trajectory": {
+    "schemaVersion": "dsxu.training-trajectory.v1",
+    "generatedAt": "2026-05-20T09:45:50.510Z",
+    "task": {
+      "taskId": "G3-07",
+      "category": "verification",
+      "intent": "Golden sample G3-07",
+      "riskLevel": "medium",
+      "acceptanceCriteria": [
+        "expected validation status matches",
+        "expected SEES range matches"
+      ],
+      "claimScope": "internal"
+    },
+    "intentUnderstanding": {
+      "interpretedGoal": "Golden sample G3-07",
+      "constraints": [],
+      "explicitNoEdit": false,
+      "missingInfo": [],
+      "riskClassification": "medium"
+    },
+    "stateTrace": [
+      {
+        "state": "plan",
+        "allowedTransition": true,
+        "transitionReason": "initial state",
+        "attemptCount": 1
+      },
+      {
+        "state": "retrieve",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "retrieve",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "verify",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      }
+    ],
+    "toolTrace": [
+      {
+        "toolUseId": "G3-07-tool-1",
+        "toolName": "Read",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "allow",
+        "resultPaired": true,
+        "outputChars": 29,
+        "ok": true,
+        "outputHash": "b509fc57118bc4bb"
+      }
+    ],
+    "sourceTruth": {
+      "filesRead": [
+        "src/example.ts"
+      ],
+      "rangesRead": [
+        "src/example.ts:1-80"
+      ],
+      "readFreshness": "fresh",
+      "staleReadDetected": false,
+      "sourceBodyStored": false,
+      "evidenceHashes": [
+        "df2b6692ef0483a3"
+      ]
+    },
+    "verification": {
+      "commands": [
+        "bun test src/example.test.ts"
+      ],
+      "passed": true,
+      "claimBound": false,
+      "localizedFeedbackPresent": false,
+      "artifactPaths": []
+    },
+    "contextMemory": {
+      "goalPreserved": true,
+      "resumePoint": "current-turn",
+      "openObligations": [
+        "build golden sample plan"
+      ],
+      "compactOccurred": false,
+      "sourceRereadAfterResume": false
+    },
+    "costRoute": {
+      "model": "deepseek-v4-flash",
+      "routeReason": "golden-fixture",
+      "estimatedCostUsd": 0.0001,
+      "cacheHitInputTokens": 100,
+      "cacheMissInputTokens": 20,
+      "proAdmissionJustified": false
+    },
+    "antiCheat": {
+      "oracleLeakFlag": false,
+      "solutionArtifactFlag": false,
+      "oldReportFlag": false,
+      "testOnlyFixFlag": false,
+      "publicClaimAllowed": true
+    },
+    "communication": {
+      "userVisibleSummary": "verified golden sample",
+      "verifiedFacts": [
+        "verification passed"
+      ],
+      "unverifiedRisks": [],
+      "overclaimDetected": true
+    },
+    "outcome": {
+      "status": "success",
+      "finalClaim": "verified golden sample",
+      "verified": true,
+      "publicClaimAllowed": false
+    },
+    "scores": {
+      "taskSuccessScore": 100,
+      "complexCodingScore": 60,
+      "longTaskScore": 60,
+      "verificationEvidenceScore": 70,
+      "recoveryScore": 80,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 40,
+      "sees": 77
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "dsxu.v8.live-provider-smoke.v1",
+  "generatedAt": "2026-05-20T08:50:43.641Z",
+  "owner": "DeepSeek Provider Contract",
+  "mode": "dry-run",
+  "status": "PASS_V8_PROVIDER_SMOKE_CONTRACT",
+  "publicClaimAllowed": false,
+  "checks": [
+    {
+      "id": "model",
+      "status": "PASS",
+      "evidence": [
+        "model=deepseek-v4-flash"
+      ]
+    },
+    {
+      "id": "thinking",
+      "status": "PASS",
+      "evidence": [
+        "thinking=enabled"
+      ]
+    },
+    {
+      "id": "reasoning-content",
+      "status": "PASS",
+      "evidence": [
+        "assistant.reasoning_content present"
+      ]
+    },
+    {
+      "id": "tool-round-trip",
+      "status": "PASS",
+      "evidence": [
+        "assistant.tool_calls and tool result are projected"
+      ]
+    },
+    {
+      "id": "usage-stream",
+      "status": "PASS",
+      "evidence": [
+        "include_usage=true"
+      ]
+    },
+    {
+      "id": "strict-tool-schema",
+      "status": "PASS",
+      "evidence": [
+        "additionalProperties=false"
+      ]
+    }
+  ],
+  "blockers": [],
+  "rule": "This smoke validates DeepSeek API contract shape and optional one-call Flash availability only. It is not a benchmark, not a model-quality claim, and not a public 90/95 claim."
+}

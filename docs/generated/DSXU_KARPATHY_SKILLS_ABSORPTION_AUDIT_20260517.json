@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "dsxu.karpathy-skills-absorption-audit.v1",
+  "generatedAt": "2026-05-17",
+  "externalRepoLocalPath": "D:/DSXU-external-analysis/andrej-karpathy-skills",
+  "sourceFilesReviewed": [
+    "README.md",
+    "README.zh.md",
+    "CLAUDE.md",
+    "EXAMPLES.md",
+    "CURSOR.md",
+    "skills/karpathy-guidelines/SKILL.md",
+    ".cursor/rules/karpathy-guidelines.mdc",
+    ".claude-plugin/marketplace.json"
+  ],
+  "decision": {
+    "fitForDSXU": true,
+    "fitType": "behavioral-discipline-absorption",
+    "notFitType": "primary-skill-runtime-or-public-brand-feature",
+    "summary": "Suitable as DSXU-owned senior coding discipline: assumptions, tradeoffs, simplicity/no-second-runtime, surgical scope, and success criteria. Not suitable as a copied Skill/plugin/runtime."
+  },
+  "rows": [
+    {
+      "externalSignal": "Think Before Coding",
+      "dsxuOwner": "Query loop / Tool Gate / Work-State",
+      "dsxuFiles": [
+        "src/dsxu/engine/action-contract.ts",
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/goal-roadmap-contract.ts"
+      ],
+      "status": "partial-existing",
+      "absorptionDecision": "Absorb as DSXU Action Contract discipline, not as a new skill runtime.",
+      "hardGap": "Assumptions, ambiguity, tradeoffs, and pushback are not yet mandatory visible-state fields before nontrivial mutation.",
+      "nextExecution": "Extend existing Action Contract and work-state projection with assumption/tradeoff/success-criteria evidence."
+    },
+    {
+      "externalSignal": "Simplicity First",
+      "dsxuOwner": "Product Core Guard / owner boundary / replace-delete review",
+      "dsxuFiles": [
+        "src/dsxu/engine/workspace-policy.ts",
+        "src/dsxu/engine/replace-delete-owner-review.ts",
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md"
+      ],
+      "status": "partial-existing",
+      "absorptionDecision": "Translate simplicity into DSXU-owned no-second-runtime, no speculative layer, no duplicate owner discipline.",
+      "hardGap": "Current guard protects product core paths, but does not yet score speculative abstraction or owner duplication on every change.",
+      "nextExecution": "Add speculative-abstraction and duplicate-runtime smell checks to existing owner/review evidence, not a new linter runtime."
+    },
+    {
+      "externalSignal": "Surgical Changes",
+      "dsxuOwner": "Code-mode surgical loop / blast radius / post-mutation verification",
+      "dsxuFiles": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/blast-radius.ts",
+        "src/dsxu/engine/post-mutation-verification-envelope.ts"
+      ],
+      "status": "implemented-partial",
+      "absorptionDecision": "Keep existing DSXU surgical loop, strengthen changed-line-to-user-request obligation.",
+      "hardGap": "DSXU has scope fences and post-mutation evidence, but final report does not always prove every touched file maps to request/owner/test.",
+      "nextExecution": "Add touched-file scope ledger to final patch report and work-state timeline."
+    },
+    {
+      "externalSignal": "Goal-Driven Execution",
+      "dsxuOwner": "VerificationKernel / GoStop / release test gate",
+      "dsxuFiles": [
+        "src/dsxu/engine/verify-gate.ts",
+        "src/dsxu/engine/go-stop-decision.ts",
+        "src/dsxu/engine/release-test-gate.ts",
+        "src/dsxu/engine/post-mutation-verification-envelope.ts"
+      ],
+      "status": "implemented-partial",
+      "absorptionDecision": "Keep DSXU verification ladder; require explicit success criteria before multi-step mutation and public claim.",
+      "hardGap": "Success criteria exist in several gates, but are not uniformly required at task start for all complex coding paths.",
+      "nextExecution": "Add success-criteria field and missing-success-criteria guard to Action Contract/work-state/final report."
+    },
+    {
+      "externalSignal": "Brand/Product Surface Risk",
+      "dsxuOwner": "Public docs / release claim binder",
+      "dsxuFiles": [
+        "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+        "README.md"
+      ],
+      "status": "risk-managed-needed",
+      "absorptionDecision": "Do not expose Karpathy/Claude/Cursor names as DSXU product feature names; use neutral internal analysis only.",
+      "hardGap": "External files contain brand/product wording and install flows that are not DSXU-owned.",
+      "nextExecution": "Public README/docs must describe DSXU senior-coding discipline in DSXU terms and cite no borrowed brand claims."
+    },
+    {
+      "externalSignal": "Skill Runtime Fit",
+      "dsxuOwner": "MCP / Skill Registry only as optional external inspiration",
+      "dsxuFiles": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts"
+      ],
+      "status": "not-fit-as-runtime",
+      "absorptionDecision": "Do not install as primary DSXU Skill. It is a guideline source, not a runtime capability.",
+      "hardGap": "Adding it as a skill would create priority/conflict ambiguity and product-surface branding risk.",
+      "nextExecution": "Convert into DSXU-owned Action Contract policy pack; no plugin install, no CLAUDE.md import, no Cursor rule copy."
+    }
+  ],
+  "publicClaimBoundary": [
+    "May claim DSXU has a source-truth/scope/verification discipline only after code/test/live evidence is bound.",
+    "Must not claim DSXU includes Karpathy/Claude/Cursor plugin behavior.",
+    "Must not use simplicity as an excuse for lightweight or incomplete verification."
+  ]
+}

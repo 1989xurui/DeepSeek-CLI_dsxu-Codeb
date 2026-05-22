@@ -1,0 +1,39 @@
+bun test v1.3.11 (af24e281)
+[FSM] 初始状态: plan
+[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash
+[ContextBuilder] 更新令牌使用: input=800, output=120, total=920
+[FSM] 状态转移: plan -> execute
+[FSM] 状态转移: execute -> edit
+[FSM] 状态转移: edit -> execute
+[FSM] 状态转移: execute -> verify
+[GearBox] test passed; reset to gear 1
+[EngineQueryLoop] Turn 2, gear=1, model=deepseek-v4-flash
+[ContextBuilder] 更新令牌使用: input=320, output=48, total=1288
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit
+[FSM] 初始状态: plan
+[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash
+[ContextBuilder] 更新令牌使用: input=320, output=48, total=368
+[FSM] 状态转移: plan -> verify
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit
+[FSM] 初始状态: plan
+[ContextBuilder] 更新令牌使用: input=1200, output=160, total=1360
+[FSM] 状态转移: plan -> execute
+[FSM] 状态转移: execute -> edit
+[FSM] 状态转移: edit -> execute
+[FSM] 状态转移: execute -> verify
+[GearBox] test passed; reset to gear 1
+[ContextBuilder] 更新令牌使用: input=700, output=90, total=2150
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit
+[FSM] 初始状态: plan
+[ContextBuilder] 更新令牌使用: input=1200, output=160, total=1360
+[FSM] 状态转移: plan -> execute
+[FSM] 状态转移: execute -> edit
+[FSM] 状态转移: edit -> execute
+[FSM] 状态转移: execute -> verify
+[GearBox] test passed; reset to gear 1
+[ContextBuilder] 更新令牌使用: input=700, output=90, total=2150
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "dsxu.v26.c2-public-claim-closure.v1",
+  "generatedAt": "2026-05-15T22:54:05.513Z",
+  "status": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+  "inputs": {
+    "capabilityLossBoardCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.csv",
+    "capabilityLossBoardJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.json",
+    "finalSignoffCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_20260515.csv",
+    "finalSignoffSummary": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_SUMMARY_20260515.json",
+    "loopAcceptance": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+    "densityRebaseline": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLAUDE_EXPERIENCE_DENSITY_REBASELINE_20260515.json"
+  },
+  "outputs": {
+    "json": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json",
+    "csv": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.csv",
+    "markdown": "D:\\DSXU-code\\docs\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.md"
+  },
+  "gates": {
+    "finalSignoffPass": true,
+    "loopAcceptancePass": true,
+    "densityNoLowerThanReference": true,
+    "referenceFeatureParityClaimAllowed": false,
+    "dsxuGenericExperienceClaimAllowed": true
+  },
+  "totals": {
+    "boardRows": 1902,
+    "priorBlockedPublicClaimRows": 914,
+    "closedPublicClaimBoundaryRows": 914,
+    "openPublicClaimBoundaryRows": 0
+  },
+  "counts": {
+    "byV26ClosureState": {
+      "CLOSED_PRODUCT_SPECIFIC_EXCLUDED_OR_DSXU_ADAPTED": 594,
+      "CLOSED_SHARED_UTILITY_BASELINE_NO_LOSS": 201,
+      "CLOSED_SHARED_UTILITY_IMPORTED_KEEP": 73,
+      "CLOSED_REVIEW_CANDIDATE_NAMED_OWNER": 35,
+      "CLOSED_REVIEW_CANDIDATE_EXCLUDED_OR_ADAPTED": 7,
+      "CLOSED_SHARED_UTILITY_REFERENCE_ONLY_NO_LOSS": 4
+    },
+    "byOwnerPacket": {
+      "V20-OGR-06-ui-tui-visible-state": 253,
+      "V20-OGR-12-shared-platform-utilities": 242,
+      "V20-OGR-03-tool-permission-lifecycle": 101,
+      "V20-OGR-04-mcp-skill-plugin-registry": 96,
+      "V20-OGR-07-provider-migration-model-cost": 90,
+      "V20-OGR-08-cli-command-transport": 60,
+      "V20-OGR-05-agent-task-lifecycle": 34,
+      "V20-OGR-09-dsxu-engine-mainline": 21,
+      "V20-OGR-10-entry-query-tool-composition": 17
+    },
+    "byRiskPriority": {
+      "P1": 494,
+      "P0": 170,
+      "P2": 135,
+      "P3": 115
+    },
+    "byFinalDecision": {
+      "C2_PRODUCT_SPECIFIC_REFERENCE_EXCLUDED_OR_ADAPTED": 594,
+      "C2_SHARED_UTILITY_BASELINE_PRESENT_NO_NEW_ABSORPTION": 201,
+      "C2_SHARED_UTILITY_KEEP_WITH_IMPORT_USE_EVIDENCE": 73,
+      "C2_REVIEW_CANDIDATE_MAPPED_TO_NAMED_OWNER": 35,
+      "C2_REVIEW_CANDIDATE_EXCLUDED_OR_ADAPTED_BY_OWNER": 7,
+      "C2_SHARED_UTILITY_NOT_IMPORTED_TO_DSXU_NO_ABSORPTION": 4
+    }
+  },
+  "rules": [
+    "This closes C2 public-claim boundaries, not reference-product feature parity.",
+    "DSXU may claim DSXU-owned generic experience loops only when loop acceptance, final signoff, and owner evidence are cited.",
+    "Product-specific, branded, subscription, marketplace, or proprietary reference behavior remains excluded/adapted and must not be copied.",
+    "Shared utilities may be cited only as imported DSXU helpers or no-loss baseline evidence according to final owner signoff."
+  ],
+  "remainingForFinal95": [
+    "public challenge scoreFloor >= 95 with fixed raw task data",
+    "same-task external/target raw transcript evidence before any superiority claim"
+  ]
+}

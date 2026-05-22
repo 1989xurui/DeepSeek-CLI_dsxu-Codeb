@@ -1,0 +1,3 @@
+"board","status","guards","agents","skills","mcpAdapters","sourceAndTests","noStandaloneRuntime"
+"ready","PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE","","2","1","1","true","true"
+"blocked","NEEDS_AGENT_MCP_SKILL_BOUNDARY_EVIDENCE","agent:agent-boundary-verifier parent final does not cite worker evidence; agent:agent-boundary-verifier returned raw transcript exceeds boundary; skill:dsxu-code-review missing conflict policy; skill:dsxu-code-review missing discarded conflict evidence; mcp:v8_real_mcp/mcp__v8_real_mcp__lookup schema not verified; mcp:v8_real_mcp/mcp__v8_real_mcp__lookup secrets not redacted; mcp:v8_real_mcp/mcp__v8_real_mcp__lookup missing DSXU Tool Gate boundary; mcp:v8_real_mcp/mcp__v8_real_mcp__lookup claims standalone runtime","1","1","1","true","false"

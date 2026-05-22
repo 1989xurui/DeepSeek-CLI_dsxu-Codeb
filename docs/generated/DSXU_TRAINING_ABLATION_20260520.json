@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "dsxu.training-ablation.v1",
+  "generatedAt": "2026-05-20T09:45:51.522Z",
+  "datasetKind": "internal_synthetic_replay",
+  "publicClaimAllowed": false,
+  "replaySampleCount": 300,
+  "expectedMatchedCount": 300,
+  "expectedMismatchedCount": 0,
+  "groups": [
+    {
+      "id": "A0",
+      "label": "no trajectory rules",
+      "falsePass": 12,
+      "repeatedFailure": 18,
+      "toolMisuse": 10,
+      "longTaskResumeSuccess": 0.72,
+      "costToVerifiedCompletionMultiplier": 1,
+      "averageSees": 65
+    },
+    {
+      "id": "A1",
+      "label": "trajectory rules",
+      "falsePass": 5,
+      "repeatedFailure": 12,
+      "toolMisuse": 8,
+      "longTaskResumeSuccess": 0.8,
+      "costToVerifiedCompletionMultiplier": 1.08,
+      "averageSees": 73
+    },
+    {
+      "id": "A2",
+      "label": "trajectory rules + localized feedback",
+      "falsePass": 3,
+      "repeatedFailure": 7,
+      "toolMisuse": 6,
+      "longTaskResumeSuccess": 0.84,
+      "costToVerifiedCompletionMultiplier": 1.12,
+      "averageSees": 78
+    },
+    {
+      "id": "A3",
+      "label": "trajectory rules + localized feedback + agent evidence",
+      "falsePass": 2,
+      "repeatedFailure": 5,
+      "toolMisuse": 4,
+      "longTaskResumeSuccess": 0.87,
+      "costToVerifiedCompletionMultiplier": 1.16,
+      "averageSees": 81
+    },
+    {
+      "id": "A4",
+      "label": "full validator blocking",
+      "falsePass": 0,
+      "repeatedFailure": 3,
+      "toolMisuse": 2,
+      "longTaskResumeSuccess": 0.9,
+      "costToVerifiedCompletionMultiplier": 1.18,
+      "averageSees": 83
+    }
+  ],
+  "status": "PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE",
+  "hardGates": {
+    "replaySampleCountAtLeast300": true,
+    "groupsA0ToA4Present": true,
+    "finalFalsePassZero": true,
+    "finalLongTaskResumeAtLeast85": true,
+    "finalCostWithinBaseline120": true,
+    "expectedMatchesAllSamples": true
+  },
+  "rule": "This report is an internal synthetic replay baseline. It must not be used as a public benchmark or live provider score."
+}

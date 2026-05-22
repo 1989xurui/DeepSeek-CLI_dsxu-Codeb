@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "dsxu.v4.freeze-register.v1",
+  "generatedAt": "2026-05-19T02:12:00.813Z",
+  "status": "PASS_DSXU_V4_FREEZE_REGISTER_READY",
+  "entries": [
+    {
+      "id": "V4-FRZ-01",
+      "capability": "Voting / consensus panel",
+      "defaultStatus": "frozen",
+      "productCore": "agent-evidence",
+      "ownerFiles": [
+        "src/coordinator/voting"
+      ],
+      "allowedUse": "Historical evidence or explicit research-only owner review.",
+      "blockedUse": "Default coding workflow, public capability claim, or automatic model debate.",
+      "action": "Keep out of default chain; reduce any needed disagreement to Pro admission evidence."
+    },
+    {
+      "id": "V4-FRZ-02",
+      "capability": "Forked agent counterfactual branch",
+      "defaultStatus": "default-disabled",
+      "productCore": "agent-evidence",
+      "ownerFiles": [
+        "src/utils/forkedAgent.ts",
+        "src/tools/AgentTool/forkSubagent.ts"
+      ],
+      "allowedUse": "Explicit AgentTool worker/fanout with owner scope and evidence packet.",
+      "blockedUse": "Autonomous branch tree, hidden second query loop, or parent PASS without evidence.",
+      "action": "Fold accepted use into Agent Evidence Handoff; freeze branch fantasy paths."
+    },
+    {
+      "id": "V4-FRZ-03",
+      "capability": "Swarm / team mesh",
+      "defaultStatus": "default-disabled",
+      "productCore": "agent-evidence",
+      "ownerFiles": [
+        "src/utils/swarm",
+        "src/screens/REPL.tsx"
+      ],
+      "allowedUse": "Existing compatibility code only when explicitly enabled and permission-visible.",
+      "blockedUse": "Default coding runtime, manager mesh, agent-of-agents, or public swarm claim.",
+      "action": "Keep default route to serial worker or disjoint fanout evidence."
+    },
+    {
+      "id": "V4-FRZ-04",
+      "capability": "Legacy ToolBus",
+      "defaultStatus": "frozen",
+      "productCore": "tool-envelope",
+      "ownerFiles": [
+        "src/dsxu/engine/tool-bus",
+        "src/dsxu/engine/__tests__/wave5-telemetry.test.ts"
+      ],
+      "allowedUse": "Historical tests and owner-review migration evidence.",
+      "blockedUse": "New tool caller or second tool runtime.",
+      "action": "All new outputs must normalize to ToolCallResult at Tool Gate."
+    },
+    {
+      "id": "V4-FRZ-05",
+      "capability": "Multiple recovery planner variants",
+      "defaultStatus": "frozen",
+      "productCore": "recovery-decision",
+      "ownerFiles": [
+        "src/dsxu/engine/recovery/recovery-planner.ts",
+        "src/dsxu/engine/recovery/recovery-planner-v3.ts"
+      ],
+      "allowedUse": "Compatibility tests proving mainline export points at the accepted decision table.",
+      "blockedUse": "Parallel recovery stacks with conflicting retry/replan decisions.",
+      "action": "P5 owns consolidation into one Recovery Decision Table."
+    },
+    {
+      "id": "V4-FRZ-06",
+      "capability": "Multiple prompt stacks",
+      "defaultStatus": "frozen",
+      "productCore": "provider-plan",
+      "ownerFiles": [
+        "src/dsxu/engine/prompt-stack-v1.ts",
+        "src/dsxu/engine/prompt-processing-v1.ts",
+        "src/dsxu/engine/system-prompt-builder-v1.ts"
+      ],
+      "allowedUse": "Source evidence for prompt slimming and cache-safe discipline.",
+      "blockedUse": "Layered prompt accumulation in default query path.",
+      "action": "P2 owns stable prefix / dynamic tail; prompt policy belongs in runtime gates."
+    },
+    {
+      "id": "V4-FRZ-07",
+      "capability": "MCP/Skill standalone runtime",
+      "defaultStatus": "default-disabled",
+      "productCore": "agent-evidence",
+      "ownerFiles": [
+        "src/commands/mcp",
+        "src/dsxu/engine/skills-adapter.ts"
+      ],
+      "allowedUse": "Registry-governed tool boundary through DSXU Tool Gate.",
+      "blockedUse": "External server or skill owning runtime, permission, or provider routing.",
+      "action": "P6 keeps MCP/Skill as registry/tool boundary with owner proof."
+    },
+    {
+      "id": "V4-FRZ-08",
+      "capability": "Background provider cache warmer",
+      "defaultStatus": "default-disabled",
+      "productCore": "provider-plan",
+      "ownerFiles": [
+        "src/services/cache-warmer.ts",
+        "scripts/dsxu-cache-warm.ts"
+      ],
+      "allowedUse": "Dry-run or explicit long-session operator action.",
+      "blockedUse": "Startup background DeepSeek calls or hidden cost generation.",
+      "action": "Keep dry-run default until P2 has performance evidence."
+    },
+    {
+      "id": "V4-FRZ-09",
+      "capability": "Internal smoke as public benchmark",
+      "defaultStatus": "release-gated",
+      "productCore": "trust-ui",
+      "ownerFiles": [
+        "scripts/dsxu-swe-bench-runner.ts",
+        "scripts/dsxu-evidence-dashboard.ts"
+      ],
+      "allowedUse": "Internal regression and dashboard input with smoke label.",
+      "blockedUse": "Formal SWE-bench or external victory claim without raw paired evidence.",
+      "action": "P8 final claim gate controls public wording."
+    },
+    {
+      "id": "V4-FRZ-10",
+      "capability": "Generic package entrypoint expansion",
+      "defaultStatus": "owner-review-only",
+      "productCore": "trust-ui",
+      "ownerFiles": [
+        "package.json",
+        "scripts/dsxu-command-catalog.ts"
+      ],
+      "allowedUse": "Owner-reviewed mainline alias, release-only command, or internal evidence command.",
+      "blockedUse": "New product surface without owner classification.",
+      "action": "P0 command catalog must classify every script and block claim leakage."
+    }
+  ],
+  "rule": "Frozen capabilities may only appear through explicit owner review, compatibility evidence, or release-gated proof. They must not become default coding workflow, GitHub public claims, or hidden second runtimes."
+}

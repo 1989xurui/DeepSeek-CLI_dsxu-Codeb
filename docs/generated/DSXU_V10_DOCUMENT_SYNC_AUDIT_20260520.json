@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "dsxu.v10.three-doc-sync-audit",
+  "generatedAt": "2026-05-20T09:10:40.314Z",
+  "owner": "Evidence / Release Claim Binder",
+  "status": "PASS_V10_THREE_DOC_SYNC_AUDIT",
+  "publicClaimAllowed": false,
+  "docs": [
+    {
+      "doc": "mergedReleasePlan",
+      "path": "D:\\DSXU-code\\docs\\DSXU_V10_FINAL_REALITY_MERGED_RELEASE_PLAN_20260520_CN.md",
+      "exists": true,
+      "checks": [
+        {
+          "id": "core-discipline",
+          "needle": "V10 三文档同步核心纪律",
+          "pass": true
+        },
+        {
+          "id": "point-to-plane",
+          "needle": "以点带面",
+          "pass": true
+        },
+        {
+          "id": "no-fake-completion",
+          "needle": "不能伪造 PASS",
+          "pass": true
+        },
+        {
+          "id": "paired-raw-boundary",
+          "needle": "paired raw DSXU + target",
+          "pass": true
+        },
+        {
+          "id": "evidence-level-boundary",
+          "needle": "internal replay 不等于公开 benchmark",
+          "pass": true
+        },
+        {
+          "id": "references-final-reality-subdoc",
+          "needle": "DSXU_FINAL_REALITY_RUN_PLAN_20260520_CN.md",
+          "pass": true
+        },
+        {
+          "id": "references-signal-subdoc",
+          "needle": "DSXU_V10_COMPOSER_CLAUDE_SIGNAL_ABSORPTION_PLAN_20260520_CN.md",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "doc": "finalRealityRunPlan",
+      "path": "D:\\DSXU-code\\docs\\DSXU_FINAL_REALITY_RUN_PLAN_20260520_CN.md",
+      "exists": true,
+      "checks": [
+        {
+          "id": "core-discipline",
+          "needle": "V10 三文档同步核心纪律",
+          "pass": true
+        },
+        {
+          "id": "point-to-plane",
+          "needle": "以点带面",
+          "pass": true
+        },
+        {
+          "id": "no-fake-completion",
+          "needle": "不能伪造 PASS",
+          "pass": true
+        },
+        {
+          "id": "paired-raw-boundary",
+          "needle": "paired raw DSXU + target",
+          "pass": true
+        },
+        {
+          "id": "evidence-level-boundary",
+          "needle": "internal replay 不等于公开 benchmark",
+          "pass": true
+        },
+        {
+          "id": "references-merged-total-doc",
+          "needle": "DSXU_V10_FINAL_REALITY_MERGED_RELEASE_PLAN_20260520_CN.md",
+          "pass": true
+        }
+      ]
+    },
+    {
+      "doc": "composerClaudeSignalPlan",
+      "path": "D:\\DSXU-code\\docs\\DSXU_V10_COMPOSER_CLAUDE_SIGNAL_ABSORPTION_PLAN_20260520_CN.md",
+      "exists": true,
+      "checks": [
+        {
+          "id": "core-discipline",
+          "needle": "V10 三文档同步核心纪律",
+          "pass": true
+        },
+        {
+          "id": "point-to-plane",
+          "needle": "以点带面",
+          "pass": true
+        },
+        {
+          "id": "no-fake-completion",
+          "needle": "不能伪造 PASS",
+          "pass": true
+        },
+        {
+          "id": "paired-raw-boundary",
+          "needle": "paired raw DSXU + target",
+          "pass": true
+        },
+        {
+          "id": "evidence-level-boundary",
+          "needle": "internal replay 不等于公开 benchmark",
+          "pass": true
+        },
+        {
+          "id": "references-merged-total-doc",
+          "needle": "DSXU_V10_FINAL_REALITY_MERGED_RELEASE_PLAN_20260520_CN.md",
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "blockers": [],
+  "rule": "V10 execution must keep the merged total plan and both source subplans synchronized before any release story or public claim update."
+}

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "dsxu.training-trajectory.v1",
+  "generatedAt": "2026-05-20T09:45:50.055Z",
+  "task": {
+    "taskId": "dsxu-training-trajectory-dry-run",
+    "category": "training-exporter",
+    "intent": "Export a redacted DSXU runtime evidence trajectory.",
+    "riskLevel": "low",
+    "acceptanceCriteria": [
+      "schema validates",
+      "source bodies are not stored",
+      "tool result is paired"
+    ],
+    "claimScope": "internal"
+  },
+  "intentUnderstanding": {
+    "interpretedGoal": "Build a read-only trajectory from DSXU runtime evidence.",
+    "constraints": [
+      "no default query-loop change",
+      "no source body storage"
+    ],
+    "explicitNoEdit": false,
+    "missingInfo": [],
+    "riskClassification": "low"
+  },
+  "stateTrace": [
+    {
+      "state": "plan",
+      "allowedTransition": true,
+      "transitionReason": "initial state",
+      "attemptCount": 1
+    },
+    {
+      "state": "retrieve",
+      "previousState": "plan",
+      "allowedTransition": true,
+      "transitionReason": "projected from runtime event",
+      "attemptCount": 1
+    },
+    {
+      "state": "verify",
+      "previousState": "retrieve",
+      "allowedTransition": true,
+      "transitionReason": "projected from runtime event",
+      "attemptCount": 1
+    }
+  ],
+  "toolTrace": [
+    {
+      "toolUseId": "dry-run-read-1",
+      "toolName": "Read",
+      "readonly": true,
+      "concurrencyGroup": "default",
+      "permissionDecision": "allow",
+      "resultPaired": true,
+      "outputChars": 25,
+      "ok": true,
+      "outputHash": "f486c74ebe27718a"
+    }
+  ],
+  "sourceTruth": {
+    "filesRead": [
+      "src/dsxu/engine/tool-protocol.ts"
+    ],
+    "rangesRead": [
+      "src/dsxu/engine/tool-protocol.ts:1-120"
+    ],
+    "readFreshness": "fresh",
+    "staleReadDetected": false,
+    "sourceBodyStored": false,
+    "evidenceHashes": [
+      "e9ed7c1803541f58"
+    ]
+  },
+  "verification": {
+    "commands": [
+      "bun test src/dsxu/training/__tests__/schema.test.ts"
+    ],
+    "passed": true,
+    "claimBound": true,
+    "localizedFeedbackPresent": false,
+    "artifactPaths": []
+  },
+  "contextMemory": {
+    "goalPreserved": true,
+    "resumePoint": "current-turn",
+    "openObligations": [
+      "create read-only exporter"
+    ],
+    "compactOccurred": false,
+    "sourceRereadAfterResume": false
+  },
+  "costRoute": {
+    "model": "deepseek-v4-flash",
+    "routeReason": "dry-run-no-provider-call",
+    "estimatedCostUsd": 0,
+    "cacheHitInputTokens": 0,
+    "cacheMissInputTokens": 0,
+    "proAdmissionJustified": false
+  },
+  "antiCheat": {
+    "oracleLeakFlag": false,
+    "solutionArtifactFlag": false,
+    "oldReportFlag": false,
+    "testOnlyFixFlag": false,
+    "publicClaimAllowed": true
+  },
+  "communication": {
+    "userVisibleSummary": "Dry-run trajectory export completed.",
+    "verifiedFacts": [
+      "schema shape was produced"
+    ],
+    "unverifiedRisks": [],
+    "overclaimDetected": false
+  },
+  "outcome": {
+    "status": "success",
+    "finalClaim": "dry-run exporter produced a valid trajectory",
+    "verified": true,
+    "publicClaimAllowed": false
+  },
+  "scores": {
+    "taskSuccessScore": 100,
+    "complexCodingScore": 60,
+    "longTaskScore": 60,
+    "verificationEvidenceScore": 100,
+    "recoveryScore": 80,
+    "toolDisciplineScore": 100,
+    "antiCheatScore": 100,
+    "communicationScore": 90,
+    "sees": 84
+  }
+}

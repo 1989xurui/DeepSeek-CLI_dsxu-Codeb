@@ -1,0 +1,180 @@
+{
+  "schemaVersion": "dsxu.agent-mcp-skill-boundary-acceptance.v1",
+  "generatedAt": "2026-05-18T16:24:11.980Z",
+  "status": "PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE",
+  "readyBoard": {
+    "schemaVersion": "dsxu.agent-mcp-skill-boundary.v1",
+    "generatedAt": "2026-05-18T16:24:11.980Z",
+    "status": "PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE",
+    "metrics": {
+      "agentWorkers": 2,
+      "completedOrPartialWorkers": 2,
+      "citedWorkers": 2,
+      "selectedSkills": 1,
+      "governedSkills": 2,
+      "mcpAdapters": 1,
+      "verifiedMcpAdapters": 1,
+      "maxReturnedTranscriptChars": 2000
+    },
+    "guards": [],
+    "allowedClaims": [
+      "DSXU agents may be described as serial/parallel workers only when parent finals cite summary/path/hash/evidence envelopes.",
+      "DSXU skills may be described as registry-governed extensions with priority and conflict evidence.",
+      "DSXU MCP may be described as Tool Gate governed adapter intake with schema verification and secret redaction evidence."
+    ],
+    "blockedClaims": [
+      "Do not claim swarm, agent-of-agents, manager mesh, or autonomous background polling runtime.",
+      "Do not claim arbitrary skill marketplace execution without DSXU registry priority/conflict and Tool Gate evidence.",
+      "Do not claim standalone MCP runtime or direct external-tool execution outside DSXU Tool Gate.",
+      "Do not claim worker PASS from uncited child transcript or raw transcript bloat."
+    ],
+    "ownerCoverage": {
+      "agentEvidenceEnvelope": true,
+      "parentSynthesisGuard": true,
+      "skillPriorityConflict": true,
+      "skillGovernance": true,
+      "mcpSchema": true,
+      "mcpSecretRedaction": true,
+      "dsxuToolGateBoundary": true,
+      "noStandaloneRuntime": true,
+      "sourceAndTests": true
+    },
+    "compactPanelLines": [
+      "Agent evidence: workers=2 cited=2/2",
+      "Skill registry: selected=1 governed=2/2",
+      "MCP adapters: verified=1/1",
+      "Boundary: toolGate=true standaloneRuntime=false",
+      "Status: PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE"
+    ],
+    "finalReportSection": {
+      "title": "Agent/MCP/Skill Boundary",
+      "status": "ready",
+      "summary": [
+        "status=PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE",
+        "agentWorkers=2",
+        "citedWorkers=2/2",
+        "selectedSkills=1",
+        "verifiedMcpAdapters=1/1",
+        "noStandaloneRuntime=true"
+      ],
+      "evidence": [
+        "src/tools/AgentTool/prompt.ts",
+        "src/dsxu/engine/forked-agent.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts",
+        "src/tools/MCPTool/MCPTool.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/real-mcp-server.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts",
+        "agent-envelope:agent-boundary-verifier",
+        "agent-envelope:agent-boundary-partial",
+        "skill-selection:dsxu-code-review",
+        "skill-governance:ready",
+        "skill-discarded:superpowers-review-helper",
+        "mcp-schema:v8_real_mcp",
+        "mcp-redaction:v8_real_mcp"
+      ]
+    }
+  },
+  "blockedBoard": {
+    "schemaVersion": "dsxu.agent-mcp-skill-boundary.v1",
+    "generatedAt": "2026-05-18T16:24:11.981Z",
+    "status": "NEEDS_AGENT_MCP_SKILL_BOUNDARY_EVIDENCE",
+    "metrics": {
+      "agentWorkers": 1,
+      "completedOrPartialWorkers": 1,
+      "citedWorkers": 0,
+      "selectedSkills": 1,
+      "governedSkills": 1,
+      "mcpAdapters": 1,
+      "verifiedMcpAdapters": 0,
+      "maxReturnedTranscriptChars": 2000
+    },
+    "guards": [
+      "agent:agent-boundary-verifier parent final does not cite worker evidence",
+      "agent:agent-boundary-verifier returned raw transcript exceeds boundary",
+      "skill:dsxu-code-review missing conflict policy",
+      "skill:dsxu-code-review missing discarded conflict evidence",
+      "mcp:v8_real_mcp/mcp__v8_real_mcp__lookup schema not verified",
+      "mcp:v8_real_mcp/mcp__v8_real_mcp__lookup secrets not redacted",
+      "mcp:v8_real_mcp/mcp__v8_real_mcp__lookup missing DSXU Tool Gate boundary",
+      "mcp:v8_real_mcp/mcp__v8_real_mcp__lookup claims standalone runtime"
+    ],
+    "allowedClaims": [],
+    "blockedClaims": [
+      "Do not claim swarm, agent-of-agents, manager mesh, or autonomous background polling runtime.",
+      "Do not claim arbitrary skill marketplace execution without DSXU registry priority/conflict and Tool Gate evidence.",
+      "Do not claim standalone MCP runtime or direct external-tool execution outside DSXU Tool Gate.",
+      "Do not claim worker PASS from uncited child transcript or raw transcript bloat."
+    ],
+    "ownerCoverage": {
+      "agentEvidenceEnvelope": true,
+      "parentSynthesisGuard": false,
+      "skillPriorityConflict": false,
+      "skillGovernance": true,
+      "mcpSchema": false,
+      "mcpSecretRedaction": false,
+      "dsxuToolGateBoundary": false,
+      "noStandaloneRuntime": false,
+      "sourceAndTests": true
+    },
+    "compactPanelLines": [
+      "Agent evidence: workers=1 cited=0/1",
+      "Skill registry: selected=1 governed=1/1",
+      "MCP adapters: verified=0/1",
+      "Boundary: toolGate=false standaloneRuntime=true",
+      "Status: NEEDS_AGENT_MCP_SKILL_BOUNDARY_EVIDENCE"
+    ],
+    "finalReportSection": {
+      "title": "Agent/MCP/Skill Boundary",
+      "status": "needs-evidence",
+      "summary": [
+        "status=NEEDS_AGENT_MCP_SKILL_BOUNDARY_EVIDENCE",
+        "agentWorkers=1",
+        "citedWorkers=0/1",
+        "selectedSkills=1",
+        "verifiedMcpAdapters=0/1",
+        "noStandaloneRuntime=false"
+      ],
+      "evidence": [
+        "src/tools/AgentTool/prompt.ts",
+        "src/dsxu/engine/forked-agent.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts",
+        "src/tools/MCPTool/MCPTool.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/real-mcp-server.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts",
+        "agent-envelope:agent-boundary-verifier",
+        "skill-selection:dsxu-code-review",
+        "skill-governance:ready",
+        "mcp-schema:v8_real_mcp",
+        "mcp-redaction:v8_real_mcp"
+      ]
+    }
+  },
+  "releaseClaimBoundary": {
+    "allowed": [
+      "DSXU agents may be described as serial/parallel workers only when parent finals cite summary/path/hash/evidence envelopes.",
+      "DSXU skills may be described as registry-governed extensions with priority and conflict evidence.",
+      "DSXU MCP may be described as Tool Gate governed adapter intake with schema verification and secret redaction evidence."
+    ],
+    "blocked": [
+      "Do not claim swarm, agent-of-agents, manager mesh, or autonomous background polling runtime.",
+      "Do not claim arbitrary skill marketplace execution without DSXU registry priority/conflict and Tool Gate evidence.",
+      "Do not claim standalone MCP runtime or direct external-tool execution outside DSXU Tool Gate.",
+      "Do not claim worker PASS from uncited child transcript or raw transcript bloat."
+    ],
+    "note": "Agent, MCP, and Skill claims are allowed only as DSXU-governed boundary capabilities. This does not prove swarm, standalone MCP runtime, or arbitrary external skill execution."
+  }
+}

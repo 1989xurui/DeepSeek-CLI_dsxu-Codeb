@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "dsxu.v24.c2-1902-source-file-evidence-join.v1",
+  "generatedAt": "2026-05-15T22:08:37.076Z",
+  "totalReferenceFiles": 1902,
+  "referenceSourceRoot": "D:\\源代码claude\\src",
+  "referenceSourceVerification": {
+    "actualReferenceSourceFiles": 1902,
+    "uniqueSignoffReferenceFiles": 1902,
+    "duplicateSignoffReferencePaths": 0,
+    "missingReferenceSourceFiles": 0,
+    "extraReferenceSourceFiles": 0,
+    "sampleMissingReferenceSourceFiles": [],
+    "sampleExtraReferenceSourceFiles": []
+  },
+  "inputFiles": {
+    "finalSignoffCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_20260515.csv",
+    "fileAuditCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLAUDE_SRC_FILE_AUDIT_20260514.csv",
+    "c2LoopJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json"
+  },
+  "outputFiles": {
+    "csv": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.csv",
+    "json": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json",
+    "markdown": "D:\\DSXU-code\\docs\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.md"
+  },
+  "c2Loop": {
+    "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+    "coverage": {
+      "totalRows": 51,
+      "primaryRows": 15,
+      "secondaryRows": 36,
+      "primaryPassed": 15,
+      "secondaryPassed": 36,
+      "passedRows": 51,
+      "openRows": 0
+    },
+    "flashReviewPass": true,
+    "commandRunCount": 6
+  },
+  "counts": {
+    "byDisposition": {
+      "absorbed_into_dsxu_mainline": 988,
+      "product_specific_adapt_or_exclude": 594,
+      "shared_utility_baseline_no_new_absorption": 201,
+      "shared_utility_imported_keep": 73,
+      "review_candidate_mapped_or_excluded": 42,
+      "shared_utility_reference_only_no_absorption": 4
+    },
+    "byOwnerPacket": {
+      "V20-OGR-06-ui-tui-visible-state": 682,
+      "V20-OGR-03-tool-permission-lifecycle": 310,
+      "V20-OGR-12-shared-platform-utilities": 242,
+      "V20-OGR-04-mcp-skill-plugin-registry": 185,
+      "V20-OGR-08-cli-command-transport": 176,
+      "V20-OGR-07-provider-migration-model-cost": 141,
+      "V20-OGR-05-agent-task-lifecycle": 111,
+      "V20-OGR-10-entry-query-tool-composition": 34,
+      "V20-OGR-09-dsxu-engine-mainline": 21
+    },
+    "byBehaviorEvidenceStatus": {
+      "OWNER_DISPOSITION_PLUS_OWNER_BEHAVIOR_EVIDENCE": 1103,
+      "OWNER_DISPOSITION_ONLY_PRODUCT_SPECIFIC_ADAPTATION_OR_EXCLUSION": 594,
+      "OWNER_DISPOSITION_ONLY_SHARED_BASELINE_NO_NEW_ABSORPTION": 201,
+      "OWNER_DISPOSITION_ONLY_REFERENCE_NOT_IMPORTED": 4
+    },
+    "productSpecificFiles": 594,
+    "productSpecificFilesWithDirectDsxuPath": 545,
+    "sharedUtilityFiles": 278,
+    "missingOwnerCatalogFiles": 0,
+    "missingTestEvidenceFilesForBehaviorLinkedOwners": 0
+  },
+  "focusFindings": {
+    "productSpecific": {
+      "files": 594,
+      "directDsxuPathPresentFiles": 545,
+      "rule": "Direct DSXU path presence does not mean verbatim product runtime is accepted; these source files remain adaptation/exclusion review unless a DSXU owner proves useful behavior."
+    },
+    "sharedUtility": {
+      "files": 278,
+      "importedKeep": 73,
+      "baselineNoNewAbsorption": 201,
+      "referenceOnlyNoAbsorption": 4
+    }
+  },
+  "rule": "This join proves C2 1902 Claude source-file owner-disposition plus owner-level evidence linkage. It does not claim every reference behavior has feature parity or that the final 95-point V24 target is complete.",
+  "nextAction": "Use this table to drive the 30-45 minute real senior-coding TUI window and any focused product-specific/shared-utility owner review."
+}

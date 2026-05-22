@@ -1,0 +1,22 @@
+[FSM] 初始状态: plan
+[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash
+[ContextBuilder] 更新令牌使用: input=880, output=130, total=1010
+[FSM] 状态转移: plan -> execute
+[FSM] 状态转移: execute -> edit
+[FSM] 状态转移: edit -> execute
+[FSM] 状态转移: execute -> verify
+[GearBox] test passed; reset to gear 1
+[EngineQueryLoop] Turn 2, gear=1, model=deepseek-v4-flash
+[ContextBuilder] 更新令牌使用: input=390, output=54, total=1454
+[FSM] 状态转移: verify -> review
+[FSM] 状态转移: review -> commit
+{
+  "schemaVersion": "dsxu.training-query-loop-capture.v1",
+  "output": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json",
+  "resultExitReason": "end_turn",
+  "validationStatus": "accepted",
+  "scoreStatus": "scored",
+  "averageSees": 90,
+  "eventCount": 28,
+  "publicClaimAllowed": false
+}

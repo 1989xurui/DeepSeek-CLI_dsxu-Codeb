@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "dsxu.v6.context-pressure-report.v1",
+  "generatedAt": "2026-05-19T07:34:55.815Z",
+  "status": "PASS_V6_CONTEXT_PRESSURE_REPORT",
+  "blockers": [],
+  "cacheEvidence": {
+    "status": "CACHE_PREFIX_READY",
+    "stablePrefixHash": "c95f05557cbd083923655ad4f272972489aa7cd5c87bdc261b25f844dae015cc",
+    "dynamicTailHash": "f6f381876bea8da5212043d4bde433ab97fd6968999b076fc7183388c20e8408",
+    "boundaryFound": true,
+    "cacheMissBudgetTokens": 8000
+  },
+  "largeToolResult": {
+    "artifacted": true,
+    "originalChars": 9000,
+    "previewChars": 2246
+  },
+  "rows": [
+    {
+      "level": 70,
+      "bucket": "70-84",
+      "risk": "medium",
+      "recommendedAction": "checkpoint_and_trim_dynamic_tail",
+      "cachePolicy": "keep_stable_prefix_fixed_and_move_volatiles_to_artifacts",
+      "sourceTruthReread": "required-before-edit-or-pass",
+      "activeFrameOpenObligations": [
+        "verification required:affected_tests",
+        "rerun focused context/cache strategy tests",
+        "attach cache evidence before final claim"
+      ],
+      "toolResultArtifacted": true,
+      "blockers": []
+    },
+    {
+      "level": 85,
+      "bucket": "85-94",
+      "risk": "high",
+      "recommendedAction": "snapshot_then_context_hygiene",
+      "cachePolicy": "keep_goal_plan_route_and_source_anchors_stable",
+      "sourceTruthReread": "required-before-edit-or-pass",
+      "activeFrameOpenObligations": [
+        "verification required:affected_tests",
+        "rerun focused context/cache strategy tests",
+        "attach cache evidence before final claim"
+      ],
+      "toolResultArtifacted": true,
+      "blockers": []
+    },
+    {
+      "level": 95,
+      "bucket": "95-98",
+      "risk": "critical",
+      "recommendedAction": "source_capsule_then_context_hygiene",
+      "cachePolicy": "freeze_route_tools_and_dynamic_tail_before_retry",
+      "sourceTruthReread": "required-before-edit-or-pass",
+      "activeFrameOpenObligations": [
+        "verification required:affected_tests",
+        "rerun focused context/cache strategy tests",
+        "attach cache evidence before final claim"
+      ],
+      "toolResultArtifacted": true,
+      "blockers": []
+    },
+    {
+      "level": 99,
+      "bucket": ">=99",
+      "risk": "emergency",
+      "recommendedAction": "prompt_too_long_recovery_or_source_truth_snapshot",
+      "cachePolicy": "preserve_stable_prefix_and_send_only_recovery_delta",
+      "sourceTruthReread": "required-before-edit-or-pass",
+      "activeFrameOpenObligations": [
+        "verification required:affected_tests",
+        "rerun focused context/cache strategy tests",
+        "attach cache evidence before final claim"
+      ],
+      "toolResultArtifacted": true,
+      "blockers": []
+    }
+  ]
+}

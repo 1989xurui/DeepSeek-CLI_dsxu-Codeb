@@ -1,0 +1,240 @@
+{
+  "id": "DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515",
+  "generatedAt": "2026-05-16T15:42:38.387Z",
+  "status": "PASS_COMPLEX_TASK_ACCEPTANCE_PACK_READY",
+  "commandPass": true,
+  "flashPass": true,
+  "publicPass": true,
+  "proWasRun": false,
+  "totalFlashCostUSD": 0.0140029288,
+  "totalDurationMs": 399392,
+  "continuousWindowSatisfied": false,
+  "final95ClaimAllowed": false,
+  "scoreFloor": 72,
+  "blockedClaims": [
+    "Do not claim final V24 95-point target is reached until fixed public benchmark/product demo data, six-stage tests, clean export artifact, and fresh install/release smoke are recorded.",
+    "Do not claim public benchmark superiority until a fixed comparable public task set has external baseline data.",
+    "Do not claim release completion until clean export artifact and fresh install/release smoke are created and pass."
+  ],
+  "commandRuns": [
+    {
+      "id": "query-loop-regression-batch",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-gear-box-recovery-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-recovery-bridge-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-visible-copy-v1.test.ts",
+        "src/dsxu/engine/__tests__/recovery-query-loop-v3.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 253,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\query-loop-regression-batch-2026-05-16T15-35-58-995Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\query-loop-regression-batch-2026-05-16T15-35-58-995Z.stderr.log"
+    },
+    {
+      "id": "release-surface-regression-batch",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/release-surface-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 10507,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\release-surface-regression-batch-2026-05-16T15-35-59-248Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\release-surface-regression-batch-2026-05-16T15-35-59-249Z.stderr.log"
+    },
+    {
+      "id": "public-challenge-product-replay",
+      "command": [
+        "bun",
+        "run",
+        "v24:public-challenge"
+      ],
+      "exitCode": 0,
+      "durationMs": 350452,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\public-challenge-product-replay-2026-05-16T15-36-09-755Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\public-challenge-product-replay-2026-05-16T15-36-09-755Z.stderr.log"
+    }
+  ],
+  "flashReviews": [
+    {
+      "id": "flash-source-truth-complex-task-review",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "--verbose",
+        "--model",
+        "deepseek-v4-flash",
+        "--max-turns",
+        "8",
+        "--output-format",
+        "stream-json",
+        "--tools",
+        "Read",
+        "--permission-mode",
+        "dontAsk",
+        "You are reviewing DSXU V24 complex task acceptance. Use only Read tool evidence. First read every file listed below, then output only compact JSON.\n\nFiles to read:\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLEX_TASK_ACCEPTANCE_REVIEW_INPUT_20260515.json\nD:\\DSXU-code\\src\\dsxu\\engine\\query-loop.ts\nD:\\DSXU-code\\src\\dsxu\\engine\\__tests__\\query-loop-run-query-v1.test.ts\nD:\\DSXU-code\\docs\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.md\nD:\\DSXU-code\\docs\\DSXU_V24_EXECUTION_PLAN_20260515.md\n\nReturn JSON keys exactly:\n{\n  \"did_read_source_truth\": true,\n  \"single_pass_bug_fixed\": true,\n  \"regression_evidence_present\": true,\n  \"public_challenge_package_ready\": true,\n  \"flash_first_policy_respected\": true,\n  \"pro_needed\": false,\n  \"no_second_runtime\": true,\n  \"claim_guard_correct\": true,\n  \"final_95_claim_allowed\": false,\n  \"score_0_100\": 0,\n  \"risks\": []\n}"
+      ],
+      "exitCode": 0,
+      "durationMs": 19180,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-source-truth-complex-task-review-2026-05-16T15-42-00-210Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-source-truth-complex-task-review-2026-05-16T15-42-00-210Z.stderr.log",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-source-truth-complex-task-review-2026-05-16T15-42-00-210Z.jsonl",
+      "resultJson": {
+        "did_read_source_truth": true,
+        "single_pass_bug_fixed": true,
+        "regression_evidence_present": true,
+        "public_challenge_package_ready": true,
+        "flash_first_policy_respected": true,
+        "pro_needed": false,
+        "no_second_runtime": true,
+        "claim_guard_correct": true,
+        "final_95_claim_allowed": false,
+        "score_0_100": 72,
+        "risks": [
+          "public challenge scoreFloor 72 is below 95; six-stage final tests pass at 20/20 but fixed benchmark raw transcript comparison is absent",
+          "does not claim external product superiority which is correct, but the 72 floor means V24 cannot claim 95-done"
+        ]
+      },
+      "costUSD": 0.0086048984,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 90163,
+          "outputTokens": 1393,
+          "cacheReadInputTokens": 32128,
+          "cacheCreationInputTokens": 58035,
+          "webSearchRequests": 0,
+          "costUSD": 0.0086048984,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    },
+    {
+      "id": "flash-public-benchmark-readiness-review",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "--verbose",
+        "--model",
+        "deepseek-v4-flash",
+        "--max-turns",
+        "8",
+        "--output-format",
+        "stream-json",
+        "--tools",
+        "Read",
+        "--permission-mode",
+        "dontAsk",
+        "You are auditing DSXU V24 public benchmark readiness. Use only Read tool evidence. First read every file listed below, then output only compact JSON.\n\nFiles to read:\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLEX_TASK_ACCEPTANCE_REVIEW_INPUT_20260515.json\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json\n\nJudge whether this is a real complex-task acceptance package, while keeping final 95-point claims blocked until the remaining gates are truly done.\nReturn JSON keys exactly:\n{\n  \"did_read_source_truth\": true,\n  \"complex_task_package_ready\": true,\n  \"fixed_benchmark_definition_present\": true,\n  \"c2_behavior_matrix_present\": true,\n  \"tui_replay_present\": true,\n  \"completed_reacceptance_present\": true,\n  \"clean_export_preflight_present\": true,\n  \"flash_first_policy_respected\": true,\n  \"pro_needed\": false,\n  \"no_second_runtime\": true,\n  \"final_95_claim_allowed\": false,\n  \"score_0_100\": 0,\n  \"risks\": []\n}"
+      ],
+      "exitCode": 0,
+      "durationMs": 18990,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-public-benchmark-readiness-review-2026-05-16T15-42-19-394Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-public-benchmark-readiness-review-2026-05-16T15-42-19-394Z.stderr.log",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\flash-public-benchmark-readiness-review-2026-05-16T15-42-19-394Z.jsonl",
+      "resultJson": {
+        "did_read_source_truth": true,
+        "complex_task_package_ready": true,
+        "fixed_benchmark_definition_present": true,
+        "c2_behavior_matrix_present": true,
+        "tui_replay_present": true,
+        "completed_reacceptance_present": true,
+        "clean_export_preflight_present": true,
+        "flash_first_policy_respected": true,
+        "pro_needed": false,
+        "no_second_runtime": true,
+        "final_95_claim_allowed": false,
+        "score_0_100": 72,
+        "risks": [
+          "Score floor 72 below the ~90 threshold needed for public 90 ability claim",
+          "No fixed public benchmark comparison data with raw task transcripts",
+          "12 deferred V18/V19 CLEAN items remain unclosed (R01/R02/S02/R04/R05/R06, PZ01-PZ08)",
+          "C2 capability loss board still OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED",
+          "Cache hit rate 66.8% below 70% target; no raw cache performance evidence included",
+          "594 adapted/excluded and 278 no-loss baseline rows in C2 owner implementation acceptance need review for substantive capability loss"
+        ]
+      },
+      "costUSD": 0.0053980304,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 76742,
+          "outputTokens": 1668,
+          "cacheReadInputTokens": 42368,
+          "cacheCreationInputTokens": 34374,
+          "webSearchRequests": 0,
+          "costUSD": 0.0053980304,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    }
+  ],
+  "evidenceReports": [
+    {
+      "id": "public-challenge",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+      "status": "PASS_PUBLIC_CHALLENGE_PACKAGE_READY",
+      "summary": {
+        "commandPass": true,
+        "flashPass": true,
+        "c2Pass": true,
+        "tuiPass": true,
+        "completedPass": true,
+        "cleanPass": true,
+        "scoreFloor": 72
+      }
+    },
+    {
+      "id": "c2-loop",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+      "summary": {
+        "flashReviewPass": true,
+        "primaryPassed": 15,
+        "secondaryPassed": 36,
+        "passedRows": 51,
+        "openRows": 0
+      }
+    },
+    {
+      "id": "interactive-tui",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+      "summary": {
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "completed-reacceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+      "summary": {}
+    },
+    {
+      "id": "senior-coding-window",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+      "summary": {}
+    },
+    {
+      "id": "clean-export-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "summary": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false,
+        "blockers": 0
+      }
+    }
+  ],
+  "reviewInputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLEX_TASK_ACCEPTANCE_REVIEW_INPUT_20260515.json"
+}

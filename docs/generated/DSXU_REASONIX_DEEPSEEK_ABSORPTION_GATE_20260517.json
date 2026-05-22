@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "dsxu.reasonix.deepseek-absorption-gate.v1",
+  "status": "RDX_ACCEPTANCE_GATE_PASS_READY_FOR_REAL_WINDOW",
+  "generatedAt": "2026-05-17T00:00:00.000Z",
+  "owner": "Evidence / DeepSeek route-cost-cache / Tool Gate",
+  "noNewRuntime": true,
+  "metrics": [
+    {
+      "name": "cacheHitRatePct",
+      "state": "measured",
+      "value": 66.8,
+      "unit": "percent",
+      "evidence": "public challenge ablation: cacheHitRatePct 45.5->66.8"
+    },
+    {
+      "name": "toolResultChars",
+      "state": "measured",
+      "value": 0,
+      "unit": "chars",
+      "evidence": "public challenge ablation: toolResultChars 316381->0"
+    },
+    {
+      "name": "tuiRenderResizeLatencyMs",
+      "state": "measured",
+      "value": 1102,
+      "unit": "ms",
+      "evidence": "RDX-F real TUI PTY resize subset passed 3/3 scenarios from \\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui; max resize-sequence latency 1102ms"
+    },
+    {
+      "name": "wallClockMs",
+      "state": "measured",
+      "value": 59263,
+      "unit": "ms",
+      "evidence": "DeepSeek runtime hard engineering benchmark deepseek-route-cost-cache: raw score 60 -> DSXU score 100, DSXU wall-clock 59263ms, trace .dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-dsxu-2026-05-17T13-57-40-350Z.jsonl"
+    },
+    {
+      "name": "proAdmissionCount",
+      "state": "measured",
+      "value": 0,
+      "unit": "count",
+      "evidence": "current RDX-A gate makes no Pro admission; future RDX-D must add ledger evidence"
+    },
+    {
+      "name": "artifactLogSizeBytes",
+      "state": "measured",
+      "value": 37414,
+      "unit": "bytes",
+      "evidence": "RDX-F real TUI trace/transcript/lifecycle artifacts for 3 scenarios from \\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui"
+    }
+  ],
+  "metricCoverage": {
+    "cacheHitRatePct": true,
+    "toolResultChars": true,
+    "tuiRenderResizeLatencyMs": true,
+    "wallClockMs": true,
+    "proAdmissionCount": true,
+    "artifactLogSizeBytes": true
+  },
+  "missingMetrics": [],
+  "packets": [
+    {
+      "packet": "RDX-CACHE-01",
+      "owner": "prompt-prefix-cache-builder / query-loop evidence",
+      "status": "implemented_baseline",
+      "evidence": [
+        "stablePrefixHash stays fixed when dynamic task state changes",
+        "dynamicTailHash changes as expected"
+      ],
+      "nextAction": "promote this baseline into drift-reason contract during RDX-E"
+    },
+    {
+      "packet": "RDX-CACHE-02",
+      "owner": "Context / recovery / compact owner",
+      "status": "implemented_baseline",
+      "evidence": [
+        "70/85/95/99 context pressure matrix preserves source truth reread and cache-safe recovery actions"
+      ],
+      "nextAction": "carry context pressure proof into RDX-F live window and release evidence"
+    },
+    {
+      "packet": "RDX-CACHE-03",
+      "owner": "DeepSeek adapter / history healing",
+      "status": "implemented_baseline",
+      "evidence": [
+        "thinking-mode history backfills empty reasoning_content only when thinking is enabled; non-thinking stable prefix stays unchanged"
+      ],
+      "nextAction": "verify in RDX-F live DeepSeek request trajectory"
+    },
+    {
+      "packet": "RDX-CACHE-04",
+      "owner": "Tool result storage / microCompact",
+      "status": "implemented_baseline",
+      "evidence": [
+        "tool result pressure now accounts for DeepSeek/CJK token density before artifact+preview replacement"
+      ],
+      "nextAction": "measure artifact/log size and cache effect during RDX-F real window"
+    },
+    {
+      "packet": "RDX-CACHE-05",
+      "owner": "DeepSeek API transport owner",
+      "status": "implemented_baseline",
+      "evidence": [
+        "retry boundary allows retryable initial fetch failures but blocks mid-stream replay after partial content/tool state"
+      ],
+      "nextAction": "wire live retry telemetry into trajectory before public benchmark claim"
+    },
+    {
+      "packet": "RDX-TOOL-01",
+      "owner": "Tool schema adapter / DeepSeek adapter",
+      "status": "implemented_baseline",
+      "evidence": [
+        "complex tool schemas are flattened in DeepSeek tool emission path and nested back before dispatch"
+      ],
+      "nextAction": "carry streaming/non-stream tool schema smoke into RDX-F real window"
+    },
+    {
+      "packet": "RDX-TOOL-02",
+      "owner": "DeepSeek adapter extraction path",
+      "status": "implemented_baseline",
+      "evidence": [
+        "existing XML/free-form DeepSeek tool extraction works",
+        "raw JSON/OpenAI-style reasoning/content tool-call scavenge is supported in bounded extraction path"
+      ],
+      "nextAction": "carry bounded scavenge through RDX-B performance smoke and Tool Gate integration"
+    },
+    {
+      "packet": "RDX-TOOL-03",
+      "owner": "DeepSeek adapter / schema validator",
+      "status": "implemented_baseline",
+      "evidence": [
+        "recoverable truncated JSON tool args are repaired before normalization"
+      ],
+      "nextAction": "add unrecoverable JSON fail-closed smoke before public claim"
+    },
+    {
+      "packet": "RDX-TOOL-04",
+      "owner": "query-loop gate / Tool Gate state",
+      "status": "implemented_baseline",
+      "evidence": [
+        "identical tool+args storm gate blocks repeated read-only loops and mutating tools reset the reread window"
+      ],
+      "nextAction": "carry storm repair signal into RDX-D Pro admission ledger"
+    },
+    {
+      "packet": "RDX-TOOL-05",
+      "owner": "DeepSeek cost router / trajectory store",
+      "status": "implemented_baseline",
+      "evidence": [
+        "repair/failure signal ledger allows Pro only after prior Flash and thresholded signals; blocks Pro without prior Flash"
+      ],
+      "nextAction": "wire ledger events into DeepSeek trajectory during live route execution"
+    }
+  ],
+  "guards": [],
+  "nextPackets": [
+    "RDX-B adapter repair",
+    "RDX-C query/tool gate",
+    "RDX-D route/cost admission",
+    "RDX-E cache hardening",
+    "RDX-F real window + benchmark"
+  ]
+}

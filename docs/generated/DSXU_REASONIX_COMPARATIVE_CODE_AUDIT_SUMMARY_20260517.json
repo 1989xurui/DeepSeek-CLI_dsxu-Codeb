@@ -1,0 +1,190 @@
+﻿{
+    "date":  "20260517",
+    "totalFiles":  2791,
+    "totalLines":  722409,
+    "ownerSummary":  [
+                         {
+                             "owner":  "Shared runtime utility owner",
+                             "files":  674,
+                             "lines":  198322
+                         },
+                         {
+                             "owner":  "Evidence / benchmark / DSXU engine owner",
+                             "files":  558,
+                             "lines":  159456
+                         },
+                         {
+                             "owner":  "TUI / visible-state owner",
+                             "files":  478,
+                             "lines":  103349
+                         },
+                         {
+                             "owner":  "Baseline product/runtime support owner",
+                             "files":  321,
+                             "lines":  71986
+                         },
+                         {
+                             "owner":  "Tool Gate / Permission owner",
+                             "files":  267,
+                             "lines":  75979
+                         },
+                         {
+                             "owner":  "CLI command owner",
+                             "files":  183,
+                             "lines":  18193
+                         },
+                         {
+                             "owner":  "DeepSeek route / cost / cache owner",
+                             "files":  91,
+                             "lines":  23286
+                         },
+                         {
+                             "owner":  "MCP / Skill / Plugin registry owner",
+                             "files":  76,
+                             "lines":  25942
+                         },
+                         {
+                             "owner":  "Agent / task lifecycle owner",
+                             "files":  59,
+                             "lines":  13957
+                         },
+                         {
+                             "owner":  "Context / recovery / compact owner",
+                             "files":  43,
+                             "lines":  12504
+                         },
+                         {
+                             "owner":  "Query loop / entrypoint owner",
+                             "files":  17,
+                             "lines":  15381
+                         },
+                         {
+                             "owner":  "Evidence / benchmark owner",
+                             "files":  14,
+                             "lines":  2474
+                         },
+                         {
+                             "owner":  "Archived boundary / replace-delete review owner",
+                             "files":  10,
+                             "lines":  1580
+                         }
+                     ],
+    "mechanismSummary":  [
+                             {
+                                 "mechanism":  "visible-work-state",
+                                 "files":  1621,
+                                 "lines":  570366
+                             },
+                             {
+                                 "mechanism":  "context-recovery",
+                                 "files":  1502,
+                                 "lines":  561297
+                             },
+                             {
+                                 "mechanism":  "mcp-skill-agent-envelope",
+                                 "files":  1003,
+                                 "lines":  405287
+                             },
+                             {
+                                 "mechanism":  "parallel-safe-dispatch",
+                                 "files":  798,
+                                 "lines":  392295
+                             },
+                             {
+                                 "mechanism":  "permission-tool-gate",
+                                 "files":  798,
+                                 "lines":  359118
+                             },
+                             {
+                                 "mechanism":  "evidence-release-claim",
+                                 "files":  758,
+                                 "lines":  337268
+                             },
+                             {
+                                 "mechanism":  "tool-call-repair",
+                                 "files":  409,
+                                 "lines":  232569
+                             },
+                             {
+                                 "mechanism":  "no-direct-reasonix-overlap",
+                                 "files":  353,
+                                 "lines":  20725
+                             },
+                             {
+                                 "mechanism":  "deepseek-route-cost-control",
+                                 "files":  338,
+                                 "lines":  176672
+                             },
+                             {
+                                 "mechanism":  "cache-first-loop",
+                                 "files":  198,
+                                 "lines":  147879
+                             }
+                         ],
+    "statusSummary":  [
+                          {
+                              "status":  "implemented-or-integrated-mainline",
+                              "files":  1959,
+                              "lines":  595600
+                          },
+                          {
+                              "status":  "test-or-evidence-support",
+                              "files":  412,
+                              "lines":  96750
+                          },
+                          {
+                              "status":  "partial-review-needed",
+                              "files":  190,
+                              "lines":  8121
+                          },
+                          {
+                              "status":  "baseline-support-no-direct-gap",
+                              "files":  181,
+                              "lines":  15117
+                          },
+                          {
+                              "status":  "review-replace-delete-or-archived-boundary",
+                              "files":  49,
+                              "lines":  6821
+                          }
+                      ],
+    "riskSummary":  [
+                        {
+                            "risk":  "pro-admission-boundary-check",
+                            "files":  1853,
+                            "lines":  412936
+                        },
+                        {
+                            "risk":  "cache-prefix-drift-check",
+                            "files":  695,
+                            "lines":  252873
+                        },
+                        {
+                            "risk":  "tool-result-budget-check",
+                            "files":  634,
+                            "lines":  250340
+                        },
+                        {
+                            "risk":  "none-static",
+                            "files":  570,
+                            "lines":  139996
+                        },
+                        {
+                            "risk":  "shell-side-effect-gate-check",
+                            "files":  372,
+                            "lines":  105125
+                        },
+                        {
+                            "risk":  "brand-or-reference-surface-review",
+                            "files":  64,
+                            "lines":  27459
+                        },
+                        {
+                            "risk":  "possible-old-or-second-layer-candidate",
+                            "files":  13,
+                            "lines":  1720
+                        }
+                    ],
+    "csvPath":  "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.csv",
+    "jsonPath":  "docs/generated/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.json"
+}

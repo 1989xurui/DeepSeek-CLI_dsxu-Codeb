@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "dsxu.v8.completion-audit.v1",
+  "generatedAt": "2026-05-20T00:46:03.3068991+08:00",
+  "owner": "V8 Adaptive Engineering Runtime",
+  "status": "PASS_V8_SIX_STAGE_FINAL_ACCEPTANCE",
+  "publicClaimAllowed": false,
+  "releaseReady": false,
+  "completed": [
+    {
+      "id": "v8-core-focused-contracts",
+      "status": "PASS",
+      "command": "bun test src/dsxu/engine/__tests__/v8-failure-driven-model-upgrade.test.ts src/dsxu/engine/__tests__/v8-tool-output-artifact-budget.test.ts src/dsxu/engine/__tests__/v8-long-task-work-memory.test.ts src/dsxu/engine/__tests__/prompt-section-router.test.ts src/dsxu/engine/__tests__/tool-window-ab-contract.test.ts src/dsxu/engine/__tests__/v8-cn-intent-classifier.test.ts src/dsxu/engine/__tests__/v8-route-contract-consistency.test.ts src/dsxu/engine/__tests__/v8-profile-tool-window-policy.test.ts src/dsxu/engine/__tests__/execution-contract-compiler.test.ts src/dsxu/engine/__tests__/tool-view-compiler.test.ts src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts",
+      "result": "40 pass / 0 fail / 191 expect"
+    },
+    {
+      "id": "v8-import-audit",
+      "status": "PASS",
+      "command": "bun -e \"await import('./src/dsxu/engine/progress-ledger.ts'); await import('./src/utils/toolResultStorage.ts'); await import('./src/query.ts'); await import('./src/components/PromptInput/PromptInputFooter.tsx'); console.log('PASS_V8_IMPORT_AUDIT')\"",
+      "result": "PASS_V8_IMPORT_AUDIT"
+    },
+    {
+      "id": "v8-resize-unit-contracts",
+      "status": "PASS",
+      "command": "bun test src/ink/__tests__/render-node-scroll-resize.test.ts src/hooks/__tests__/useVirtualScroll-resize.test.ts src/components/__tests__/tui-trust-surface.test.tsx",
+      "result": "13 pass / 0 fail / 30 expect"
+    },
+    {
+      "id": "v8-real-pty-resize-trust-permission",
+      "status": "PASS_AFTER_FIX",
+      "command": "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"resize|trust proof|permission review\"",
+      "result": "4 pass / 0 fail / 77 expect",
+      "bugFound": "Trust proof line was clipped by the fullscreen footer line cap after resize.",
+      "fix": "PromptInputFooter now allows four compact trust lines only on wide and tall fullscreen layouts, preserving short display on narrow or short terminals."
+    },
+    {
+      "id": "v8-tool-window-ab-mock",
+      "status": "PASS",
+      "command": "bun run scripts/dsxu-v8-tool-window-ab.ts --profiles \"single_file_edit,debug,long_task\" --windows \"8,12,16,20,24,27\" --suite \"mock-v8-smoke\"",
+      "result": "18 rows, publicClaimAllowed=false"
+    },
+    {
+      "id": "provider-readiness-gate",
+      "status": "READY_FOR_SCOPED_LIVE_REPLAY",
+      "command": "bun run scripts/dsxu-live-provider-gate.ts",
+      "result": "currentProcessStatus=READY, wslStatus=READY, didCallProvider=false"
+    },
+    {
+      "id": "live-cache-prefix-evidence-ingest",
+      "status": "DONE_EVIDENCED",
+      "command": "bun run scripts/dsxu-live-cache-prefix-smoke.ts",
+      "result": "sourceEvidenceExists=true, didCallProvider=false"
+    },
+    {
+      "id": "scoped-live-replay",
+      "status": "PASS_FLASH_FIRST_EVIDENCED",
+      "command": "$env:DSXU_V24_ALLOW_PRO_RESCUE='0'; bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "result": "finalMatchesSourceTruth=true, proWasRun=false, flashCostUSD=0.0021480256000000002",
+      "evidencePath": "docs/generated/DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+      "tracePath": ".dsxu/trace/v24-live-dsxu/v24-flash-first-pbt-source-truth-2026-05-19T15-10-33-329Z.jsonl"
+    },
+    {
+      "id": "v8-hard-engineering-benchmark-subset",
+      "status": "PASS_DSXU_HARD_ENGINEERING_LIFT",
+      "command": "$env:DSXU_HARD_BENCHMARK_TASK='deepseek-route-cost-cache,visible-product-timeline,release-claim-evidence-binder'; bun run scripts/dsxu-hard-engineering-benchmark.ts",
+      "result": "totalTasks=3, rawPassRatePct=0, dsxuPassRatePct=100, rawAverageScore=60, dsxuAverageScore=100, rawTotalCostUSD=0.0008274, dsxuTotalCostUSD=0.03608887520000001",
+      "evidencePath": "docs/generated/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache-visible-product-timeline-release-claim-evidence-binder.json",
+      "reportPath": "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache-visible-product-timeline-release-claim-evidence-binder.md",
+      "chartPath": "docs/assets/dsxu-hard-engineering-benchmark.svg",
+      "claimBoundary": "Internal hard-task workflow lift only; public 90/95 and external benchmark superiority claims remain blocked."
+    },
+    {
+      "id": "release-surface-owner-tests",
+      "status": "PASS_AFTER_PUBLIC_SURFACE_FIX",
+      "command": "bun test ./src/dsxu/engine/__tests__/release-test-gate-v1.test.ts ./src/dsxu/engine/__tests__/release-surface-v1.test.ts ./src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts",
+      "result": "13 pass / 0 fail / 88 expect",
+      "fix": "Removed public-surface hardcoded external brand/model-family wording from release governance scripts while preserving reference-risk detection through neutral registry patterns."
+    },
+    {
+      "id": "release-owner-gate",
+      "status": "PASS",
+      "command": "bun run test:dsxu:release",
+      "result": "514 pass / 0 fail / 3835 expect",
+      "claimBoundary": "Release owner focused gate is green and the full six-stage final has also passed after the TUI harness stability fix."
+    },
+    {
+      "id": "tui-harness-effect-stability",
+      "status": "PASS_AFTER_FIX",
+      "command": "bun test ./src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts ./src/dsxu/engine/__tests__/model-driven-tui-long-task-v1.test.ts ./src/dsxu/engine/__tests__/streaming-ui-visibility-v1.test.ts",
+      "result": "30 pass / 0 fail / 273 expect",
+      "bugFound": "In long six-stage runs, harness replay effects could miss a queryGuard.isActive transition because their dependency list used the queryGuard object instead of the active boolean.",
+      "fix": "REPL TUI harness replay effects now depend on queryGuard.isActive so no-progress, long-content resize, trust proof, auto-continue, resume, and background-task replay inject reliably after the guard becomes idle."
+    },
+    {
+      "id": "v8-default-chain-reachability",
+      "status": "PASS_V8_DEFAULT_CHAIN_REACHABILITY",
+      "command": "bun run scripts/dsxu-v8-default-chain-reachability.ts",
+      "result": "4 rows, 0 blockers",
+      "evidencePath": "docs/generated/DSXU_V8_DEFAULT_CHAIN_REACHABILITY_20260520.json",
+      "claimBoundary": "Internal reachability proof only; verifies existing DSXU owners and hidden expert/network tools, not public benchmark quality."
+    },
+    {
+      "id": "v8-cn-scenario-replay",
+      "status": "PASS_V8_CN_SCENARIO_REPLAY",
+      "command": "bun run scripts/dsxu-v8-cn-scenario-replay.ts",
+      "result": "5 Chinese scenarios, 0 blockers",
+      "evidencePath": "docs/generated/DSXU_V8_CN_SCENARIO_REPLAY_20260520.json",
+      "claimBoundary": "Internal Chinese intent/route/tool-window contract proof only."
+    },
+    {
+      "id": "v8-long-task-ledger-replay",
+      "status": "PASS_V8_LONG_TASK_LEDGER_REPLAY",
+      "command": "bun run scripts/dsxu-v8-long-task-ledger-replay.ts",
+      "result": "recoverable ledger projection, durable recovery proof, runtime event schema proof, 0 blockers",
+      "evidencePath": "docs/generated/DSXU_V8_LONG_TASK_LEDGER_REPLAY_20260520.json",
+      "claimBoundary": "Internal long-task ledger/recovery replay only; final public claims remain gated."
+    },
+    {
+      "id": "v8-provider-smoke-contract",
+      "status": "PASS_V8_PROVIDER_SMOKE_CONTRACT",
+      "command": "bun run scripts/dsxu-v8-live-provider-smoke.ts --dry-run",
+      "result": "dry-run provider contract, 6 checks, 0 blockers; current shell had no DeepSeek key for live one-call mode",
+      "evidencePath": "docs/generated/DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.json",
+      "claimBoundary": "Provider contract smoke only; no live benchmark or public model-quality claim."
+    },
+    {
+      "id": "six-stage-final",
+      "status": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+      "command": "bun run test:six-stage-final",
+      "result": "20/20 commands passed, 0 failed; fresh run completed naturally in about 14m49s with an outer timeout above the full suite duration",
+      "evidencePath": "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json",
+      "reportPath": "docs/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.md"
+    }
+  ],
+  "notCompleted": [
+    {
+      "id": "public-benchmark-claim",
+      "status": "BLOCKED_BY_EVIDENCE_BOUNDARY",
+      "reason": "V8 now has focused, PTY, scoped live, and internal hard benchmark subset evidence, but it still does not have an external public benchmark target manifest and raw transcript package."
+    },
+    {
+      "id": "clean-export-artifact",
+      "status": "NOT_CREATED",
+      "reason": "Clean export preflight is covered by six-stage final, but no export artifact was created in this execution."
+    }
+  ],
+  "claimBoundary": "V8 implementation, focused acceptance, V8 default-chain/CN/ledger/provider-contract anti-cheat scripts, scoped Flash-first live replay, internal hard benchmark subset, release surface tests, release owner gate, and full six-stage final are complete. Public/external benchmark, 90%+ external superiority claims, and final clean export artifact remain blocked unless paired target manifests/raw transcripts/cost evidence and a fresh export are added."
+}

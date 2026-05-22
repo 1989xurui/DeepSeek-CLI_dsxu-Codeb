@@ -1,0 +1,30 @@
+phase,item,owner,required_evidence,pass_condition,hard_gate
+Phase 1,schema.ts exists,Training Trajectory,src/dsxu/training/schema.ts,TypeScript schema defines dsxu.training-trajectory.v1,true
+Phase 1,exporter.ts exists,Training Trajectory,src/dsxu/training/exporter.ts,Exporter can create one valid trajectory from mocked runtime evidence,true
+Phase 1,redaction exists,Training Trajectory,src/dsxu/training/redaction.ts,Source bodies and secrets are removed,true
+Phase 1,dry-run export works,Training Trajectory,bun run scripts/dsxu-training-export.ts --dry-run,Command exits 0,true
+Phase 1,schema test passes,Training Trajectory,bun test src/dsxu/training/__tests__/schema.test.ts,Command exits 0,true
+Phase 1,exporter test passes,Training Trajectory,bun test src/dsxu/training/__tests__/exporter.test.ts,Command exits 0,true
+Phase 2,validator exists,Training Trajectory,src/dsxu/training/validator.ts,Validator rejects invalid schema,true
+Phase 2,false pass rejected,Training Trajectory,validator fixture,Final claim without verification is rejected,true
+Phase 2,oracle leak rejected,Training Trajectory,validator fixture,Solution/oracle/old report evidence is rejected,true
+Phase 2,agent fake pass rejected,Training Trajectory,validator fixture,Agent PARTIAL cannot become parent COMPLETE,true
+Phase 2,validator strict command passes,Training Trajectory,bun run scripts/dsxu-training-validate.ts --input .dsxu/training --strict,Command exits 0,true
+Phase 3,scorer exists,Training Trajectory,src/dsxu/training/scorer.ts,SEES fields are computed,true
+Phase 3,false pass caps score,Training Trajectory,scorer fixture,False pass caps SEES at <=80,true
+Phase 3,public claim caps score,Training Trajectory,scorer fixture,Public claim without raw evidence caps SEES at <=80,true
+Phase 3,score command writes report,Training Trajectory,bun run scripts/dsxu-training-score.ts --input .dsxu/training --output docs/generated/DSXU_TRAINING_TRAJECTORY_SCORE_20260520.json,Report exists,true
+Phase 4,60 golden samples exist,Training Trajectory,docs/training/golden,60 samples present,true
+Phase 4,golden schema pass,Training Trajectory,validator report,60/60 valid,true
+Phase 4,seeded false pass blocked,Training Trajectory,validator report,100% seeded false pass rejected,true
+Phase 4,seeded stale read blocked,Training Trajectory,validator report,100% stale read edits rejected,true
+Phase 4,seeded oracle leak blocked,Training Trajectory,validator report,100% oracle leak rejected,true
+Phase 5,300 replay samples exist,Training Trajectory,.dsxu/training/replay,300 samples present,false
+Phase 5,ablation report exists,Training Trajectory,docs/generated/DSXU_TRAINING_ABLATION_20260520.json,A0-A4 groups compared,false
+Phase 5,long task success,Training Trajectory,ablation report,long_task_resume_success >= 85%,false
+Phase 5,cost bounded,Training Trajectory,ablation report,cost_to_verified_completion <= baseline * 1.2,false
+Final,false pass zero,Release Gate,final report,false_pass_rate == 0,true
+Final,public claim safe,Release Gate,final report,public_claim_without_raw_evidence == 0,true
+Final,tool result paired,Tool Gate,final report,tool.result_paired == 100%,true
+Final,long task target,Runtime Ledger,final report,long_task_resume_success >= 90%,true
+Final,localized feedback target,Recovery,final report,localized_feedback_on_failure >= 95%,true

@@ -1,0 +1,978 @@
+{
+  "schemaVersion": "dsxu.v7.remaining-evidence-queue.v1",
+  "generatedAt": "2026-05-19T11:06:24.620Z",
+  "status": "PASS_DSXU_V7_REMAINING_EVIDENCE_QUEUE",
+  "sourceReachabilityPath": "docs/generated/DSXU_RUNTIME_REACHABILITY_MAP_20260519.json",
+  "sourceFocusedEvidencePath": "docs/generated/DSXU_V7_OWNER_FOCUSED_EVIDENCE_20260519.json",
+  "summary": {
+    "totalRows": 96,
+    "coveredByFocusedEvidence": 96,
+    "needsFocusedOwnerTest": 0,
+    "needsLiveOrReplayEvidence": 0,
+    "publicClaimAllowedRows": 0,
+    "p0PendingRows": 0
+  },
+  "blockers": [],
+  "rows": [
+    {
+      "path": "src/dsxu/control-plane/controlJwt.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/control-plane/controlMain.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/control-plane/controlMessaging.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/control-plane/inboundControlMessages.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/control-plane/operatorStateProjection.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/accessibility-tree.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/adapters/file-edit-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/adr-review.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/brief/brief-generator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/integration.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/checks-as-rules.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/circuit-breaker.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/classify/classifier.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/coding-task-runner.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/compact/compact-pipeline.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/debug-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/effort-routing.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/episode-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/file-watcher.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/formatters.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/frontmatter-parser.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/frontmatter-tool.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/git-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/graph/graph-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/graph/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/lifecycle-protocol-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/magic-docs-tool.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/magic-docs.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory-pipeline.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/episode-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-extractor.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-search.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-system.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/unified-memory-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/memory/utils.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/model-gateway-client.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/model-limits.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/parallel-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/patch-engine.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/profiles/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-cache-break-detection.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-profile.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-section-router.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/proxy-budget-guard.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/recovery/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "recovery-rollback",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/repo-brain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/retry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/reviewer-subagent.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/filesystem-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/memory-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/session/model.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/task/runner.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/session-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/session-os-control.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/session-output.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/session-state.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/session.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/slash-commands.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/streaming.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/task-queue.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/telemetry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/token-estimator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/tool-bus/middleware.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/tool-bus/types.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/transaction-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/ui-shell-contract-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/verify-review-chain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "verification-quality-gates",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/worktree-orchestrator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/dsxu/engine/wsl-execution-placement.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/embedding/chunker.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/embedding/contract.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/embedding/store.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/embedding/voyage.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/experience/self-rag.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P1",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/experience/store.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P1",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/experience/types.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P1",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/health/checks.ts",
+      "owner": "Doctor / Release Preflight Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/health/contract.ts",
+      "owner": "Doctor / Release Preflight Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/lsp/contract.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/lsp/server.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/mcp/adapters/base.ts",
+      "owner": "MCP / Skill Registry Owner",
+      "capability": "mcp-skill-workflow",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P1",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/mutation/contract.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/mutation/operators.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/sandbox/contract.ts",
+      "owner": "Sandbox / Permission Boundary Owner",
+      "capability": "permission-safety",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/services/sandbox/wsl2.ts",
+      "owner": "Sandbox / Permission Boundary Owner",
+      "capability": "permission-safety",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P0",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/utils/search/ast-grep.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/utils/search/bm25.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    },
+    {
+      "path": "src/utils/search/contract.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "status": "covered-by-focused-evidence",
+      "priority": "P2",
+      "publicClaimAllowed": false,
+      "nextAction": "Keep as internal owner evidence; do not promote to public claim without live/replay evidence."
+    }
+  ]
+}

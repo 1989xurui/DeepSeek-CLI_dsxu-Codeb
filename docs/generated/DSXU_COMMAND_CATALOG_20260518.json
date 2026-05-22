@@ -1,0 +1,1092 @@
+{
+  "schemaVersion": "dsxu.command-catalog.v1",
+  "generatedAt": "2026-05-19T02:12:00.813Z",
+  "status": "PASS_DSXU_COMMAND_CATALOG_READY",
+  "scriptCount": 124,
+  "categorySummary": {
+    "product-runtime": 3,
+    "mainline-validation": 15,
+    "release-only": 9,
+    "owner-review": 12,
+    "historical-evidence": 56,
+    "internal-benchmark": 4,
+    "live-provider": 8,
+    "toolchain": 4,
+    "supporting-utility": 13
+  },
+  "mainlineAliases": [
+    "evidence:dashboard",
+    "benchmark:swe-bench",
+    "health:runtime",
+    "cache:warm"
+  ],
+  "ownerFocusedVerificationGroups": [
+    {
+      "groupId": "tool-runtime-event-boundary",
+      "owner": "Tool Gate / Tool Result Contract owner",
+      "purpose": "prove legacy provider tool_result blocks normalize to canonical ToolCallResult, ledger event, and work-state event without a second tool runtime",
+      "testTier": "mainline",
+      "timeoutBudgetMs": 60000,
+      "liveProvider": false,
+      "commands": [
+        "bun test src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts -t \"provider\"",
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts -t \"canonical ToolCallResult\""
+      ],
+      "claimBoundary": "source-test-evidence-only"
+    },
+    {
+      "groupId": "verification-recovery-ledger",
+      "owner": "VerificationKernel / Recovery / GearBox owner",
+      "purpose": "prove verification policy, recovery decision, long-task ledger, and final-claim boundary share one evidence projection",
+      "testTier": "mainline",
+      "timeoutBudgetMs": 60000,
+      "liveProvider": false,
+      "commands": [
+        "bun test src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts",
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts -t \"long-task ledger\"",
+        "bun test src/dsxu/engine/__tests__/verify-gate.test.ts",
+        "bun test src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts"
+      ],
+      "claimBoundary": "source-test-evidence-only"
+    },
+    {
+      "groupId": "mainline-tool-permission-agent-skill",
+      "owner": "Tool Gate / Permission / Agent / MCP-Skill owner",
+      "purpose": "prove default tools, permission callbacks, agent handoff, MCP/Skill registry, and shell adapters stay on the DSXU mainline",
+      "testTier": "mainline",
+      "timeoutBudgetMs": 60000,
+      "liveProvider": false,
+      "commands": [
+        "bun test src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts"
+      ],
+      "claimBoundary": "source-test-evidence-only"
+    },
+    {
+      "groupId": "tui-trust-projection",
+      "owner": "TUI work-state / trust projection owner",
+      "purpose": "prove visible work-state, compact tool cards, ledger/agent panel, EvidenceLine, context advanced view, and resize behavior consume mainline evidence",
+      "testTier": "acceptance",
+      "timeoutBudgetMs": 180000,
+      "liveProvider": false,
+      "commands": [
+        "bun test src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts",
+        "bun test src/components/messages/UserToolResultMessage/__tests__/utils.test.ts",
+        "bun test src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts",
+        "bun test src/commands/context/__tests__/context-advanced.test.ts",
+        "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"preserves a middle scrollback\""
+      ],
+      "claimBoundary": "live-required"
+    },
+    {
+      "groupId": "release-trust-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "purpose": "prove dashboard, command catalog, release gates, public-comparable boundaries, and README claim evidence remain honest",
+      "testTier": "release-only",
+      "timeoutBudgetMs": 180000,
+      "liveProvider": false,
+      "commands": [
+        "bun test scripts/__tests__/dsxu-command-catalog.test.ts scripts/__tests__/dsxu-evidence-dashboard.test.ts",
+        "bun run scripts/dsxu-command-catalog.ts",
+        "bun run evidence:dashboard"
+      ],
+      "claimBoundary": "release-only"
+    }
+  ],
+  "entries": [
+    {
+      "name": "acceptance:c2-loop",
+      "command": "bun run scripts/dsxu-v24-c2-loop-real-acceptance.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "acceptance:complex-task",
+      "command": "bun run scripts/dsxu-v24-complex-task-acceptance.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "acceptance:interactive-tui",
+      "command": "bun run scripts/dsxu-v24-interactive-tui-acceptance.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "acceptance:live",
+      "command": "bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "acceptance:senior-coding-window",
+      "command": "bun run scripts/dsxu-v24-senior-coding-window.ts",
+      "category": "mainline-validation",
+      "owner": "Senior coding live acceptance owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "acl:closure-plan",
+      "command": "bun run scripts/dsxu-acl-residue-closure-plan.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "acl:preflight",
+      "command": "bun run scripts/dsxu-acl-residue-preflight.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "agent-mcp-skill:acceptance",
+      "command": "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "agent:orchestration-evidence",
+      "command": "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "audit:dsxu:health",
+      "command": "bun run scripts/dsxu-health-audit.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "benchmark:hard-engineering",
+      "command": "bun run scripts/dsxu-hard-engineering-benchmark.ts",
+      "category": "internal-benchmark",
+      "owner": "Evidence / benchmark owner",
+      "publicClaimUse": "internal-only",
+      "reason": "benchmark runner; public comparison claim requires real paired raw evidence and claim binder approval"
+    },
+    {
+      "name": "benchmark:product-data",
+      "command": "bun run scripts/dsxu-v24-product-benchmark-data-pack.ts",
+      "category": "internal-benchmark",
+      "owner": "Evidence / benchmark owner",
+      "publicClaimUse": "internal-only",
+      "reason": "benchmark runner; public comparison claim requires real paired raw evidence and claim binder approval"
+    },
+    {
+      "name": "benchmark:public-challenge",
+      "command": "bun run scripts/dsxu-v24-public-challenge-package.ts",
+      "category": "internal-benchmark",
+      "owner": "Evidence / benchmark owner",
+      "publicClaimUse": "internal-only",
+      "reason": "benchmark runner; public comparison claim requires real paired raw evidence and claim binder approval"
+    },
+    {
+      "name": "benchmark:raw-api-vs-dsxu",
+      "command": "bun run scripts/dsxu-raw-api-vs-dsxu-ab.ts",
+      "category": "internal-benchmark",
+      "owner": "Evidence / benchmark owner",
+      "publicClaimUse": "internal-only",
+      "reason": "benchmark runner; public comparison claim requires real paired raw evidence and claim binder approval"
+    },
+    {
+      "name": "benchmark:swe-bench",
+      "command": "bun run scripts/dsxu-swe-bench-runner.ts",
+      "category": "mainline-validation",
+      "owner": "Evidence / internal SWE-bench owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "cache:warm",
+      "command": "bun run scripts/dsxu-cache-warm.ts",
+      "category": "mainline-validation",
+      "owner": "DeepSeek route/cost/cache owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "capability:acceptance-audit",
+      "command": "bun run scripts/dsxu-capability-acceptance-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "capability:cost-crosswalk",
+      "command": "bun run scripts/dsxu-capability-cost-crosswalk.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "clean-export:preflight",
+      "command": "bun run scripts/dsxu-clean-export-preflight.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "commercial-ip:preflight",
+      "command": "bun run scripts/dsxu-commercial-ip-release-preflight.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "deepseek:cost-quality",
+      "command": "bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "dsxu",
+      "command": "bun --env-file=.env ./src/entrypoints/dsxu-code.tsx",
+      "category": "product-runtime",
+      "owner": "CLI/TUI product runtime owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "product launch surface; behavior must project through DSXU main query loop and work-state"
+    },
+    {
+      "name": "dsxu-code",
+      "command": "bun --env-file=.env ./src/entrypoints/dsxu-code.tsx",
+      "category": "product-runtime",
+      "owner": "CLI/TUI product runtime owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "product launch surface; behavior must project through DSXU main query loop and work-state"
+    },
+    {
+      "name": "evidence:agent-mcp-skill-boundary",
+      "command": "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:blocked-claim-corpus",
+      "command": "bun run scripts/dsxu-blocked-claim-corpus.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:brand-compat-risk",
+      "command": "bun run scripts/dsxu-brand-compat-risk-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:c2-1902-join",
+      "command": "bun run scripts/dsxu-v24-c2-1902-full-evidence-join.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:c2-capability-loss-board",
+      "command": "bun run scripts/dsxu-v26-c2-capability-loss-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:c2-owner-implementation-acceptance",
+      "command": "bun run scripts/dsxu-v26-c2-owner-implementation-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:c2-public-claim-closure",
+      "command": "bun run scripts/dsxu-v26-c2-public-claim-closure.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:capability-acceptance-audit",
+      "command": "bun run scripts/dsxu-capability-acceptance-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:capability-cost-crosswalk",
+      "command": "bun run scripts/dsxu-capability-cost-crosswalk.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:claim-boundary",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite claim-boundary",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:completed-reacceptance",
+      "command": "bun run scripts/dsxu-v24-completed-reacceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:dashboard",
+      "command": "bun run scripts/dsxu-evidence-dashboard.ts",
+      "category": "mainline-validation",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "evidence:deepseek-cost-quality",
+      "command": "bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:execution-batch",
+      "command": "bun run scripts/dsxu-v24-execution-batch.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:experience-loop-audit",
+      "command": "bun run scripts/dsxu-v24-section45-experience-loop-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:external-benchmark-adapter-proof",
+      "command": "bun run scripts/dsxu-external-benchmark-adapter-proof.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:hard-engineering",
+      "command": "bun run scripts/dsxu-hard-engineering-benchmark.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:naming-governance",
+      "command": "bun run scripts/dsxu-v26-naming-governance-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:public-challenge-ablation",
+      "command": "bun run scripts/dsxu-public-challenge-ablation-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:raw-api-vs-dsxu",
+      "command": "bun run scripts/dsxu-raw-api-vs-dsxu-ab.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:reference-experience-reverse-analysis",
+      "command": "bun run scripts/dsxu-v26-reference-experience-reverse-analysis.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:reference-mechanism-audit",
+      "command": "bun run scripts/dsxu-reference-mechanism-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:reference-scenario-backlog",
+      "command": "bun run scripts/dsxu-reference-scenario-backlog.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:reference-scenario-convergence",
+      "command": "bun run scripts/dsxu-reference-scenario-convergence.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:source-cache-acceptance",
+      "command": "bun run scripts/dsxu-source-cache-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:terminal-live-acceptance",
+      "command": "bun run scripts/dsxu-terminal-live-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "evidence:visible-state-acceptance",
+      "command": "bun run scripts/dsxu-visible-state-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "external-benchmark-adapter:proof",
+      "command": "bun run scripts/dsxu-external-benchmark-adapter-proof.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "health:runtime",
+      "command": "bun run scripts/dsxu-runtime-health.ts",
+      "category": "mainline-validation",
+      "owner": "Doctor / release preflight owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "lint-schema",
+      "command": "bun run src/tools/schema-lint.ts --fail-on-error",
+      "category": "toolchain",
+      "owner": "Toolchain / schema owner",
+      "publicClaimUse": "operator-only",
+      "reason": "developer maintenance command; keep outside product capability claims"
+    },
+    {
+      "name": "live:agent-parent-synthesis-smoke",
+      "command": "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:cache-prefix-smoke",
+      "command": "bun run scripts/dsxu-live-cache-prefix-smoke.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:flash-first-recovery-smoke",
+      "command": "bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:flash-smoke",
+      "command": "bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:planning-flash-max-smoke",
+      "command": "bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:pro-planning-smoke",
+      "command": "bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:provider-gate",
+      "command": "bun run scripts/dsxu-live-provider-gate.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "live:real-task-compare",
+      "command": "bun run scripts/dsxu-raw-api-vs-dsxu-ab.ts",
+      "category": "live-provider",
+      "owner": "DeepSeek provider live gate owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "live provider proof; evidence must redact secrets and distinguish model lane/cost/cache"
+    },
+    {
+      "name": "owner-git:authorization-board",
+      "command": "bun run scripts/dsxu-v20-owner-git-authorization-board.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "owner-git:mutation-command-plan",
+      "command": "bun run scripts/dsxu-owner-git-mutation-command-plan.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "owner-git:preflight",
+      "command": "bun run scripts/dsxu-owner-git-mutation-preflight.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "owner-git:product-stage-plan",
+      "command": "bun run scripts/dsxu-owner-git-product-stage-plan.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "owner-git:stage-plan",
+      "command": "bun run scripts/dsxu-owner-git-stage-plan.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "p12:raw-readiness",
+      "command": "bun run scripts/dsxu-p12-raw-readiness.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "p12:target-collection",
+      "command": "bun run scripts/dsxu-p12-target-reference-collection-pack.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "p12:target-contract",
+      "command": "bun run scripts/dsxu-p12-target-manifest-contract-board.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "p12:target-discovery",
+      "command": "bun run scripts/dsxu-p12-target-manifest-discovery.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "p12:target-intake",
+      "command": "bun run scripts/dsxu-p12-target-manifest-intake.ts",
+      "category": "owner-review",
+      "owner": "Owner/Git review and external input owner",
+      "publicClaimUse": "blocked-as-claim",
+      "reason": "closure or external-input workflow; must not be promoted to a user-facing feature claim"
+    },
+    {
+      "name": "prebuild",
+      "command": "bun run lint-schema",
+      "category": "toolchain",
+      "owner": "Toolchain / schema owner",
+      "publicClaimUse": "operator-only",
+      "reason": "developer maintenance command; keep outside product capability claims"
+    },
+    {
+      "name": "project:dev-proof",
+      "command": "bun run scripts/dsxu-external-benchmark-adapter-proof.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "public-challenge:ablation",
+      "command": "bun run scripts/dsxu-public-challenge-ablation-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "reference:mechanism-audit",
+      "command": "bun run scripts/dsxu-reference-mechanism-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "reference:scenario-backlog",
+      "command": "bun run scripts/dsxu-reference-scenario-backlog.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "reference:scenario-convergence",
+      "command": "bun run scripts/dsxu-reference-scenario-convergence.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "release:blocker-board",
+      "command": "bun run scripts/dsxu-v20-blocker-action-board.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:clean-export-artifact",
+      "command": "bun run scripts/dsxu-v24-clean-export-artifact.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:closure-batch",
+      "command": "bun run scripts/dsxu-v20-closure-batch-runner.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:final-preflight",
+      "command": "bun run scripts/dsxu-v20-final-preflight.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:fresh-install-smoke",
+      "command": "bun run scripts/dsxu-v24-fresh-install-release-smoke.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:github-launch-pack",
+      "command": "bun run scripts/dsxu-v24-github-open-source-launch-pack.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "release:post-authorization-plan",
+      "command": "bun run scripts/dsxu-v20-post-authorization-verification-plan.ts",
+      "category": "release-only",
+      "owner": "Release / clean export / compliance owner",
+      "publicClaimUse": "operator-only",
+      "reason": "release gate command; not a product capability claim by itself"
+    },
+    {
+      "name": "replay:regression",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite replay-regression",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "semantic:tool-gate-trace",
+      "command": "bun run scripts/dsxu-visible-state-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "source:cache-acceptance",
+      "command": "bun run scripts/dsxu-source-cache-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "start",
+      "command": "bun --env-file=.env ./src/entrypoints/dsxu-code.tsx",
+      "category": "product-runtime",
+      "owner": "CLI/TUI product runtime owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "product launch surface; behavior must project through DSXU main query loop and work-state"
+    },
+    {
+      "name": "terminal:live-acceptance",
+      "command": "bun run scripts/dsxu-terminal-live-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "test:dsxu:release",
+      "command": "bun run scripts/dsxu-release-gate.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "test:experience",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite experience",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "test:mainline",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite mainline",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "test:release-gates",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite release-gates",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "test:six-stage-final",
+      "command": "bun run scripts/dsxu-v24-six-stage-final-tests.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "mainline validation alias; claim text must cite generated evidence output"
+    },
+    {
+      "name": "test:six-stage-plan",
+      "command": "bun run scripts/dsxu-v20-six-stage-test-plan.ts",
+      "category": "mainline-validation",
+      "owner": "Acceptance / verification owner",
+      "publicClaimUse": "allowed-with-evidence",
+      "reason": "validation command; output can support claims only when raw evidence is generated and current"
+    },
+    {
+      "name": "toolchain:inventory",
+      "command": "bun run scripts/dsxu-toolchain-inventory.ts",
+      "category": "toolchain",
+      "owner": "Toolchain / schema owner",
+      "publicClaimUse": "operator-only",
+      "reason": "developer maintenance command; keep outside product capability claims"
+    },
+    {
+      "name": "toolchain:repair",
+      "command": "bun run scripts/dsxu-toolchain-repair.ts",
+      "category": "toolchain",
+      "owner": "Toolchain / schema owner",
+      "publicClaimUse": "operator-only",
+      "reason": "developer maintenance command; keep outside product capability claims"
+    },
+    {
+      "name": "v20:blocker-board",
+      "command": "bun run scripts/dsxu-v20-blocker-action-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v20:closure-batch",
+      "command": "bun run scripts/dsxu-v20-closure-batch-runner.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v20:final-preflight",
+      "command": "bun run scripts/dsxu-v20-final-preflight.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v20:post-auth-plan",
+      "command": "bun run scripts/dsxu-v20-post-authorization-verification-plan.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v20:six-stage-plan",
+      "command": "bun run scripts/dsxu-v20-six-stage-test-plan.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:batch",
+      "command": "bun run scripts/dsxu-v24-execution-batch.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:c2-1902-evidence-join",
+      "command": "bun run scripts/dsxu-v24-c2-1902-full-evidence-join.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:c2-loop-acceptance",
+      "command": "bun run scripts/dsxu-v24-c2-loop-real-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:clean-export-artifact",
+      "command": "bun run scripts/dsxu-v24-clean-export-artifact.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:completed-reacceptance",
+      "command": "bun run scripts/dsxu-v24-completed-reacceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:complex-task",
+      "command": "bun run scripts/dsxu-v24-complex-task-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:fresh-install-release-smoke",
+      "command": "bun run scripts/dsxu-v24-fresh-install-release-smoke.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:github-launch-pack",
+      "command": "bun run scripts/dsxu-v24-github-open-source-launch-pack.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:interactive-tui-acceptance",
+      "command": "bun run scripts/dsxu-v24-interactive-tui-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:live-acceptance",
+      "command": "bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:product-benchmark-data",
+      "command": "bun run scripts/dsxu-v24-product-benchmark-data-pack.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:public-challenge",
+      "command": "bun run scripts/dsxu-v24-public-challenge-package.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:section45-audit",
+      "command": "bun run scripts/dsxu-v24-section45-experience-loop-audit.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:senior-coding-window",
+      "command": "bun run scripts/dsxu-v24-senior-coding-window.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v24:six-stage-final-tests",
+      "command": "bun run scripts/dsxu-v24-six-stage-final-tests.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v26:c2-capability-loss-board",
+      "command": "bun run scripts/dsxu-v26-c2-capability-loss-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v26:c2-owner-implementation-acceptance",
+      "command": "bun run scripts/dsxu-v26-c2-owner-implementation-acceptance.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v26:c2-public-claim-closure",
+      "command": "bun run scripts/dsxu-v26-c2-public-claim-closure.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v26:naming-governance",
+      "command": "bun run scripts/dsxu-v26-naming-governance-board.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v26:reference-experience-reverse-analysis",
+      "command": "bun run scripts/dsxu-v26-reference-experience-reverse-analysis.ts",
+      "category": "historical-evidence",
+      "owner": "Evidence / release claim binder owner",
+      "publicClaimUse": "internal-only",
+      "reason": "historical or generated evidence command; may feed dashboard but is not a separate product surface"
+    },
+    {
+      "name": "v5:phase0",
+      "command": "bun run scripts/dsxu-v5-phase0-runner.ts --suite phase0",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    },
+    {
+      "name": "visible-state:acceptance",
+      "command": "bun run scripts/dsxu-visible-state-acceptance.ts",
+      "category": "supporting-utility",
+      "owner": "Supporting script owner",
+      "publicClaimUse": "operator-only",
+      "reason": "not part of the four mainline aliases; use only through owner-specific evidence"
+    }
+  ],
+  "rule": "Package scripts are cataloged by owner and claim boundary. Historical, owner-review, release-only, smoke, and live-provider commands must not be promoted into GitHub product claims without current source/test/live/raw/cost evidence."
+}

@@ -1,0 +1,1650 @@
+{
+  "schemaVersion": "dsxu.v7.runtime-reachability-map.v1",
+  "generatedAt": "2026-05-19T11:05:53.669Z",
+  "status": "PASS_DSXU_RUNTIME_REACHABILITY_MAP",
+  "sourceOwnerDecisionPath": "docs/generated/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.json",
+  "summary": {
+    "mainlineOwnerRows": 96,
+    "R0": 0,
+    "R1": 0,
+    "R2": 96,
+    "R3": 0,
+    "R4": 0,
+    "publicClaimAllowedRows": 0
+  },
+  "blockers": [],
+  "rows": [
+    {
+      "path": "src/dsxu/control-plane/controlJwt.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/control-plane/controlMain.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/control-plane/controlMessaging.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/control-plane/inboundControlMessages.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/control-plane/operatorStateProjection.ts",
+      "owner": "Control Plane / Operator State Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/accessibility-tree.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/accessibility-tree.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/adapters/file-edit-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/file-edit-adapter-atomic-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/adr-review.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/adr-review.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/brief/brief-generator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/integration.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/bug-brain/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 7,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/checks-as-rules.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-9a-c/checks-as-rules.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/circuit-breaker.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/circuit-breaker.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/classify/classifier.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/coding-task-runner.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/coding-pack-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/compact/compact-pipeline.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/debug-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/effort-routing.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-9a-e/effort-routing.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/episode-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/file-watcher.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-final.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/formatters.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave5-formatters.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/frontmatter-parser.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/frontmatter-parser.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/frontmatter-tool.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/git-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/graph/graph-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/graph/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/graph-memory.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/lifecycle-protocol-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/lifecycle-protocol-manager.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/magic-docs-tool.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/magic-docs.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/magic-docs.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/magic-docs.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory-pipeline.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/episode-memory.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-extractor.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-search.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/memory-system.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 7,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/unified-memory-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/memory/utils.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/model-gateway-client.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/api/__tests__/deepseek-strict-tool-gateway.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/model-limits.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/api/__tests__/deepseek-strict-tool-gateway.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/parallel-tools.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/patch-engine.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-h/patch-engine.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/profiles/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-e/profile-filtering.test.ts src/dsxu/engine/__tests__/work-package-e/query-loop-profile.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-cache-break-detection.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/api/__tests__/deepseek-strict-tool-gateway.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-profile.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-e/profile-filtering.test.ts src/dsxu/engine/__tests__/work-package-e/query-loop-profile.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/prompt-section-router.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/prompt-section-router.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/proxy-budget-guard.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/proxy-budget-guard.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/recovery/types.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "recovery-rollback",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts src/dsxu/engine/__tests__/recovery-decision-table.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/repo-brain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-9a-b/repo-brain.test.ts src/dsxu/engine/__tests__/work-package-9a-b/context-builder-repo-brain.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/retry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/retry-ratelimit.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/reviewer-subagent.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/reviewer-subagent.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/index.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 7,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/filesystem-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/persist/memory-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/session/model.ts",
+      "owner": "DeepSeek Provider / Cost Cache",
+      "capability": "provider-model-cost-cache",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 7,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/runtime/task/runner.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/session-adapter.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/session-os-control.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/session-output.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/session-state.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 6,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/session.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/slash-commands.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-final.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/streaming.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave4-final.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/task-queue.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "agent-task-orchestration",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave5-taskqueue.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/telemetry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave5-telemetry.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/token-estimator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wave2.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/tool-bus/middleware.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/tool-bus/types.ts",
+      "owner": "Tool Gate / Tool View",
+      "capability": "tool-system",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 7,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/transaction-manager.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/transaction-manager.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/ui-shell-contract-registry.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/ui-shell-contract-registry.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/verify-review-chain.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "verification-quality-gates",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/work-package-j/verify-review-chain.test.ts src/dsxu/engine/__tests__/work-package-j/query-loop-default-chain.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/worktree-orchestrator.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/worktree-orchestrator.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/dsxu/engine/wsl-execution-placement.ts",
+      "owner": "Query Loop / Execution Contract",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/dsxu/engine/__tests__/wsl-execution-placement-v1.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/embedding/chunker.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/embedding/__tests__/embedding.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/embedding/contract.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 4,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/embedding/__tests__/embedding.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/embedding/store.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/embedding/__tests__/embedding.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/embedding/voyage.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/embedding/__tests__/embedding.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/experience/self-rag.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/experience/__tests__/experience.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/experience/store.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/experience/__tests__/experience.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/experience/types.ts",
+      "owner": "Experience Evidence Owner",
+      "capability": "context-memory-compact",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/experience/__tests__/experience.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/health/checks.ts",
+      "owner": "Doctor / Release Preflight Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun run scripts/dsxu-runtime-health.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/health/contract.ts",
+      "owner": "Doctor / Release Preflight Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun run scripts/dsxu-runtime-health.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/lsp/contract.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/lsp/__tests__/lsp.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/lsp/server.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/lsp/__tests__/lsp.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/mcp/adapters/base.ts",
+      "owner": "MCP / Skill Registry Owner",
+      "capability": "mcp-skill-workflow",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/mcp/adapters/__tests__/adapters.test.ts src/services/mcp/adapters/__tests__/mcp-adapters.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/mutation/contract.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/mutation/__tests__/mutation.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/mutation/operators.ts",
+      "owner": "Runtime Service Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/mutation/__tests__/mutation.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/sandbox/contract.ts",
+      "owner": "Sandbox / Permission Boundary Owner",
+      "capability": "permission-safety",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 2,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/sandbox/__tests__/sandbox.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/services/sandbox/wsl2.ts",
+      "owner": "Sandbox / Permission Boundary Owner",
+      "capability": "permission-safety",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/services/sandbox/__tests__/sandbox.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/utils/search/ast-grep.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/utils/search/__tests__/search.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/utils/search/bm25.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 1,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/utils/search/__tests__/search.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    },
+    {
+      "path": "src/utils/search/contract.ts",
+      "owner": "Source Truth / Search Owner",
+      "capability": "core-or-unclear",
+      "reachability": "R2",
+      "publicClaimAllowed": false,
+      "internalCapabilityAllowed": false,
+      "activeImportCount": 3,
+      "testReferenceCount": 0,
+      "scriptReferenceCount": 0,
+      "missingEvidence": [
+        "focused owner test",
+        "live/replay/benchmark evidence"
+      ],
+      "verificationCommand": "bun test src/utils/search/__tests__/search.test.ts",
+      "reason": "V7 reachability R2: owner-retained behavior still needs claim-specific evidence before public use."
+    }
+  ]
+}

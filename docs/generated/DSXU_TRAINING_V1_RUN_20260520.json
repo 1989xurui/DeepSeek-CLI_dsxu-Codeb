@@ -1,0 +1,608 @@
+{
+  "schemaVersion": "dsxu.training-v1-runner.v1",
+  "generatedAt": "2026-05-20T09:45:53.265Z",
+  "status": "PASS",
+  "datasetKind": "training_v1_reality_run",
+  "publicClaimAllowed": false,
+  "steps": [
+    {
+      "id": "training-tests",
+      "label": "training module unit tests",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/training/__tests__"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 1582,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\training-tests.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\training-tests.stderr.log",
+      "stdoutPreview": "bun test v1.3.11 (af24e281)\n[FSM] 初始状态: plan\n[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash\n[ContextBuilder] 更新令牌使用: input=800, output=120, total=920\n[FSM] 状态转移: plan -> execute\n[FSM] 状态转移: execute -> edit\n[FSM] 状态转移: edit -> execute\n[FSM] 状态转移: execute -> verify\n[GearBox] test passed; reset to gear 1\n[EngineQueryLoop] Turn 2, gear=1, model=deepseek-v4-flash\n[ContextBuilder] 更新令牌使用: input=320, output=48, total=1288\n[FSM] 状态转移: verify -> review\n[FSM] 状态转移: review -> commit\n[FSM] 初始状态: plan\n[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash\n[ContextBuilder] 更新令牌使用: input=320, output=48, total=368\n[FSM] 状态转移: plan -> verify\n[FSM] 状态转移: verify -> review\n[FSM] 状态转移: review -> commit\n[FSM] 初始状态: plan\n[ContextBuilder] 更新令牌使用: input=1200, output=160, total=1360\n[FSM] 状态转移: plan -> execute\n[FSM] 状态转移: execute -> edit\n[FSM] 状态转移: edit -> execute\n[FSM] 状态转移: execute -> verify\n[GearBox] test passed; reset to gear 1\n[ContextBuilder] 更新令牌使用: input=700, output=90, total=2150\n[FSM] 状...",
+      "stderrPreview": "src\\dsxu\\training\\__tests__\\ablation.test.ts:\n(pass) DSXU training ablation report > compares A0-A4 and keeps public benchmark claim blocked [16.00ms]\n\nsrc\\dsxu\\training\\__tests__\\dashboard.test.ts:\n(pass) DSXU training evidence dashboard > allows only internal evidence claims and blocks public benchmark claims\n(pass) DSXU training evidence dashboard > marks live provider smoke as missing when no key artifact was produced\n(pass) DSXU training evidence dashboard > blocks internal replay claim when expected labels do not match\n(pass) DSXU training evidence dashboard > loads dashboard inputs from files and records parse state\n\nsrc\\dsxu\\training\\__tests__\\dataset-manifest.test.ts:\n(pass) DSXU training V2 dataset manifest > meets V2 dataset hard gates while keeping public claims blocked [16.00ms]\n\nsrc\\dsxu\\training\\__tests__\\exporter.test.ts:\n(pass) DSXU training trajectory exporter > exports mocked runtime evidence into a valid redacted trajectory [15.00ms]\n(pass) DSXU training trajectory ..."
+    },
+    {
+      "id": "dry-run-export",
+      "label": "dry-run trajectory export",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-export.ts",
+        "--dry-run",
+        "--output",
+        "docs/generated/DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 112,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-export.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-export.stderr.log",
+      "stdoutPreview": "Wrote D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+      "stderrPreview": ""
+    },
+    {
+      "id": "dry-run-validate",
+      "label": "dry-run trajectory validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_TRAJECTORY_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 138,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "dry-run-score",
+      "label": "dry-run trajectory scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_TRAJECTORY_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 173,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\dry-run-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "golden-generate",
+      "label": "golden fixture generation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-generate-golden.ts"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 164,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-generate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-generate.stderr.log",
+      "stdoutPreview": "{\n  \"schemaVersion\": \"dsxu.training-golden-generation.v1\",\n  \"outputDir\": \"D:\\\\DSXU-code\\\\docs\\\\training\\\\golden\",\n  \"fixtureCount\": 60,\n  \"categories\": [\n    \"anti-cheat\",\n    \"basic-edit\",\n    \"long-task\",\n    \"multi-file\",\n    \"recovery\",\n    \"verification\"\n  ]\n}",
+      "stderrPreview": ""
+    },
+    {
+      "id": "golden-validate",
+      "label": "golden fixture validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/training/golden",
+        "--output",
+        "docs/generated/DSXU_TRAINING_GOLDEN_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 150,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "golden-score",
+      "label": "golden fixture scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/training/golden",
+        "--output",
+        "docs/generated/DSXU_TRAINING_GOLDEN_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 165,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\golden-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "replay-generate",
+      "label": "internal replay generation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-generate-replay.ts"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 239,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-generate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-generate.stderr.log",
+      "stdoutPreview": "{\n  \"schemaVersion\": \"dsxu.training-replay-generation.v1\",\n  \"datasetKind\": \"internal_synthetic_replay\",\n  \"publicClaimAllowed\": false,\n  \"outputDir\": \"D:\\\\DSXU-code\\\\.dsxu\\\\training\\\\replay\",\n  \"fixtureCount\": 300,\n  \"categories\": [\n    \"agent-collab\",\n    \"anti-cheat\",\n    \"communication\",\n    \"error-recovery\",\n    \"long-task\",\n    \"multi-file\",\n    \"tool-discipline\",\n    \"verification\"\n  ]\n}",
+      "stderrPreview": ""
+    },
+    {
+      "id": "replay-validate",
+      "label": "internal replay validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        ".dsxu/training/replay",
+        "--output",
+        "docs/generated/DSXU_TRAINING_REPLAY_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 144,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "replay-score",
+      "label": "internal replay scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        ".dsxu/training/replay",
+        "--output",
+        "docs/generated/DSXU_TRAINING_REPLAY_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 151,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\replay-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "ablation",
+      "label": "internal synthetic ablation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-ablation.ts",
+        "--output",
+        "docs/generated/DSXU_TRAINING_ABLATION_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 146,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\ablation.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\ablation.stderr.log",
+      "stdoutPreview": "{\n  \"schemaVersion\": \"dsxu.training-ablation.v1\",\n  \"status\": \"PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE\",\n  \"datasetKind\": \"internal_synthetic_replay\",\n  \"publicClaimAllowed\": false,\n  \"replaySampleCount\": 300,\n  \"output\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_TRAINING_ABLATION_20260520.json\"\n}",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-import",
+      "label": "runtime sample import",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-export-runtime.ts",
+        "--input",
+        "docs/training/runtime-samples/sample-deepseek-trajectory-20260520.jsonl",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_20260520.json",
+        "--task-id",
+        "sample-runtime-import",
+        "--category",
+        "runtime-import",
+        "--intent",
+        "Import a redacted runtime trajectory sample"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 125,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import.stderr.log",
+      "stdoutPreview": "{\n  \"schemaVersion\": \"dsxu.training-runtime-import-artifact.v1\",\n  \"output\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_TRAINING_RUNTIME_IMPORT_20260520.json\",\n  \"validationStatus\": \"accepted\",\n  \"publicClaimAllowed\": false,\n  \"recordCount\": 4,\n  \"requestCount\": 1,\n  \"toolCallCount\": 2\n}",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-import-validate",
+      "label": "runtime import validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 126,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-import-score",
+      "label": "runtime import scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 130,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-import-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-capture",
+      "label": "runtime capture sample",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-capture.ts",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json",
+        "--task-id",
+        "sample-runtime-capture",
+        "--category",
+        "runtime-capture",
+        "--intent",
+        "Capture a command-generated redacted trajectory",
+        "--",
+        "bun",
+        "run",
+        "docs/training/runtime-samples/write-sample-trajectory.ts"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 262,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture.stderr.log",
+      "stdoutPreview": "{\n  \"schemaVersion\": \"dsxu.training-runtime-capture.v1\",\n  \"trajectoryCaptured\": true,\n  \"validationStatus\": \"accepted\",\n  \"publicClaimAllowed\": false,\n  \"exitCode\": 0,\n  \"timedOut\": false,\n  \"tracePath\": \"D:\\\\DSXU-code\\\\.dsxu\\\\training\\\\runtime-captures\\\\runtime-capture-2026-05-20T09-45-52-055Z-cebfc90f.trajectory.jsonl\",\n  \"outputPath\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json\"\n}",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-capture-validate",
+      "label": "runtime capture validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 128,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "runtime-capture-score",
+      "label": "runtime capture scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 126,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\runtime-capture-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "query-loop-reachability",
+      "label": "query-loop reachability probe",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-query-loop-reachability.ts",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 157,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability.stderr.log",
+      "stdoutPreview": "[FSM] 初始状态: plan\n[ContextBuilder] 更新令牌使用: input=1200, output=160, total=1360\n[FSM] 状态转移: plan -> execute\n[FSM] 状态转移: execute -> edit\n[FSM] 状态转移: edit -> execute\n[FSM] 状态转移: execute -> verify\n[GearBox] test passed; reset to gear 1\n[ContextBuilder] 更新令牌使用: input=700, output=90, total=2150\n[FSM] 状态转移: verify -> review\n[FSM] 状态转移: review -> commit\n{\n  \"schemaVersion\": \"dsxu.training-query-loop-reachability.v1\",\n  \"output\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json\",\n  \"validationStatus\": \"accepted\",\n  \"scoreStatus\": \"scored\",\n  \"eventCount\": 28,\n  \"requiredEventTypesPresent\": true,\n  \"exitReason\": \"end_turn\",\n  \"publicClaimAllowed\": false\n}",
+      "stderrPreview": "[CacheBreakDetection] 2026-05-20T09:45:52.571Z New query source registered {\n  querySource: \"repl_main_thread\",\n  model: \"deepseek-v4-flash\",\n  toolCount: 2,\n  systemCharCount: 0,\n  fastMode: false,\n  cacheStrategy: \"\",\n}\n[CacheBreakDetection] 2026-05-20T09:45:52.572Z First cache read for query source {\n  querySource: \"repl_main_thread\",\n  cacheReadTokens: 900,\n  callNumber: 1,\n}\n[CacheBreakDetection] 2026-05-20T09:45:52.574Z No significant cache break detected {\n  querySource: \"repl_main_thread\",\n  prevCacheRead: 900,\n  cacheReadTokens: 620,\n  tokenDrop: 280,\n  relativeDrop: \"68.9%\",\n  threshold: 0.95,\n}"
+    },
+    {
+      "id": "query-loop-reachability-validate",
+      "label": "query-loop reachability validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 118,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "query-loop-reachability-score",
+      "label": "query-loop reachability scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 124,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-reachability-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "query-loop-capture",
+      "label": "query-loop opt-in capture smoke",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-query-loop-capture-smoke.ts",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 161,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture.stderr.log",
+      "stdoutPreview": "[FSM] 初始状态: plan\n[EngineQueryLoop] Turn 1, gear=1, model=deepseek-v4-flash\n[ContextBuilder] 更新令牌使用: input=880, output=130, total=1010\n[FSM] 状态转移: plan -> execute\n[FSM] 状态转移: execute -> edit\n[FSM] 状态转移: edit -> execute\n[FSM] 状态转移: execute -> verify\n[GearBox] test passed; reset to gear 1\n[EngineQueryLoop] Turn 2, gear=1, model=deepseek-v4-flash\n[ContextBuilder] 更新令牌使用: input=390, output=54, total=1454\n[FSM] 状态转移: verify -> review\n[FSM] 状态转移: review -> commit\n{\n  \"schemaVersion\": \"dsxu.training-query-loop-capture.v1\",\n  \"output\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json\",\n  \"resultExitReason\": \"end_turn\",\n  \"validationStatus\": \"accepted\",\n  \"scoreStatus\": \"scored\",\n  \"averageSees\": 90,\n  \"eventCount\": 28,\n  \"publicClaimAllowed\": false\n}",
+      "stderrPreview": "[CacheBreakDetection] 2026-05-20T09:45:52.972Z New query source registered {\n  querySource: \"repl_main_thread\",\n  model: \"deepseek-v4-flash\",\n  toolCount: 2,\n  systemCharCount: 0,\n  fastMode: false,\n  cacheStrategy: \"\",\n}\n[CacheBreakDetection] 2026-05-20T09:45:52.972Z First cache read for query source {\n  querySource: \"repl_main_thread\",\n  cacheReadTokens: 690,\n  callNumber: 1,\n}\n[CacheBreakDetection] 2026-05-20T09:45:52.974Z No significant cache break detected {\n  querySource: \"repl_main_thread\",\n  prevCacheRead: 690,\n  cacheReadTokens: 340,\n  tokenDrop: 350,\n  relativeDrop: \"49.3%\",\n  threshold: 0.95,\n}"
+    },
+    {
+      "id": "query-loop-capture-validate",
+      "label": "query-loop opt-in capture validation",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-validate.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_VALIDATE_20260520.json",
+        "--strict"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 129,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture-validate.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture-validate.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    },
+    {
+      "id": "query-loop-capture-score",
+      "label": "query-loop opt-in capture scoring",
+      "command": [
+        "bun",
+        "run",
+        "scripts/dsxu-training-score.ts",
+        "--input",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json",
+        "--output",
+        "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_SCORE_20260520.json"
+      ],
+      "status": "success",
+      "exitCode": 0,
+      "durationMs": 129,
+      "stdoutPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture-score.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_LOGS_20260520\\query-loop-capture-score.stderr.log",
+      "stdoutPreview": "",
+      "stderrPreview": ""
+    }
+  ],
+  "gates": [
+    {
+      "id": "commands-succeeded",
+      "label": "all V1 commands exited successfully",
+      "passed": true,
+      "evidence": {
+        "failedSteps": [],
+        "stepCount": 23
+      }
+    },
+    {
+      "id": "unit-tests-passed",
+      "label": "training unit tests passed",
+      "passed": true,
+      "evidence": {
+        "step": "success"
+      }
+    },
+    {
+      "id": "dry-run-valid",
+      "label": "dry-run trajectory validates and scores",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "scoredCount": 1
+      }
+    },
+    {
+      "id": "golden-fixtures-valid",
+      "label": "golden fixture corpus matches expected accept/reject labels",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "sampleCount": 60,
+        "expectedMismatches": 0
+      }
+    },
+    {
+      "id": "golden-score-valid",
+      "label": "golden fixture scores stay within expected SEES ranges",
+      "passed": true,
+      "evidence": {
+        "sampleCount": 60,
+        "expectedScoreMismatchedCount": 0,
+        "averageSees": 76
+      }
+    },
+    {
+      "id": "replay-fixtures-valid",
+      "label": "internal replay corpus validates with expected negative examples",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "sampleCount": 300,
+        "expectedMismatches": 0
+      }
+    },
+    {
+      "id": "replay-score-valid",
+      "label": "internal replay scores remain calibrated",
+      "passed": true,
+      "evidence": {
+        "sampleCount": 300,
+        "expectedScoreMismatchedCount": 0,
+        "averageSees": 83
+      }
+    },
+    {
+      "id": "ablation-valid",
+      "label": "ablation baseline passes without public benchmark claim",
+      "passed": true,
+      "evidence": {
+        "status": "PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE",
+        "publicClaimAllowed": false,
+        "replaySampleCount": 300
+      }
+    },
+    {
+      "id": "runtime-import-valid",
+      "label": "runtime evidence import is accepted but not public-claimable",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "publicClaimAllowed": false,
+        "sampleCount": 1,
+        "averageSees": 65
+      }
+    },
+    {
+      "id": "runtime-capture-valid",
+      "label": "runtime capture command produced accepted evidence and stayed claim-bound",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "trajectoryCaptured": true,
+        "exitCode": 0,
+        "timedOut": false,
+        "publicClaimAllowed": false,
+        "averageSees": 62
+      }
+    },
+    {
+      "id": "query-loop-reachability-valid",
+      "label": "query-loop event stream can be exported as training trajectory",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "requiredEventTypesPresent": true,
+        "publicClaimAllowed": false,
+        "averageSees": 90
+      }
+    },
+    {
+      "id": "query-loop-opt-in-capture-valid",
+      "label": "runQuery opt-in capture writes accepted non-public training evidence",
+      "passed": true,
+      "evidence": {
+        "validationStatus": "PASS",
+        "captureMode": "env_opt_in",
+        "publicClaimAllowed": false,
+        "averageSees": 90
+      }
+    },
+    {
+      "id": "claim-boundary-clean",
+      "label": "synthetic/runtime artifacts cannot be used as public benchmark claims",
+      "passed": true,
+      "evidence": {
+        "ablationPublicClaimAllowed": false,
+        "runtimeImportPublicClaimAllowed": false,
+        "runtimeCapturePublicClaimAllowed": false,
+        "queryLoopReachabilityPublicClaimAllowed": false,
+        "queryLoopCapturePublicClaimAllowed": false
+      }
+    }
+  ],
+  "rule": "This runner verifies the DSXU training trajectory pipeline as offline/internal evidence only. It does not prove live provider quality, SWE-bench score, or public model superiority."
+}

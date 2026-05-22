@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "dsxu.training-evidence-dashboard.v1",
+  "generatedAt": "2026-05-20T09:46:07.525Z",
+  "datasetKind": "training_evidence_dashboard",
+  "publicClaimAllowed": false,
+  "evidenceCompletenessScore": 67,
+  "summary": {
+    "offlineV1Status": "PASS",
+    "replaySampleCount": 300,
+    "queryLoopReachability": true,
+    "queryLoopCapture": true,
+    "liveProviderStatus": "PASS_LIVE_PROVIDER_CAPTURE",
+    "liveProviderRecordCount": 4,
+    "publicBenchmarkEvidencePresent": false,
+    "superiorityEvidencePresent": false
+  },
+  "claimGates": [
+    {
+      "id": "offline-training-pipeline",
+      "label": "offline training pipeline evidence",
+      "status": "allowed-internal",
+      "claimAllowed": true,
+      "evidence": {
+        "v1Status": "PASS",
+        "publicClaimAllowed": false
+      },
+      "reason": "V1 runner must pass before internal pipeline quality can be cited.",
+      "nextAction": "Run bun run training:v1 and fix failed gates before using offline training evidence."
+    },
+    {
+      "id": "internal-replay-calibration",
+      "label": "internal replay and ablation calibration",
+      "status": "allowed-internal",
+      "claimAllowed": true,
+      "evidence": {
+        "replayValidationStatus": "PASS",
+        "replaySampleCount": 300,
+        "replayExpectedMismatches": 0,
+        "replayScoreSampleCount": 300,
+        "replayScoreMismatches": 0,
+        "ablationStatus": "PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE",
+        "ablationPublicClaimAllowed": false
+      },
+      "reason": "Internal replay can calibrate validators and scorer, but cannot be public benchmark evidence.",
+      "nextAction": "Regenerate replay, validation, score, and ablation artifacts if any mismatch appears."
+    },
+    {
+      "id": "query-loop-training-reachability",
+      "label": "query-loop event stream reaches training schema",
+      "status": "allowed-internal",
+      "claimAllowed": true,
+      "evidence": {
+        "requiredEventTypesPresent": true,
+        "reachabilityPublicClaimAllowed": false,
+        "reachabilityScoreCount": 1,
+        "captureMode": "env_opt_in",
+        "capturePublicClaimAllowed": false,
+        "captureScoreCount": 1
+      },
+      "reason": "Query-loop evidence proves reachability and opt-in capture, not default user-task quality.",
+      "nextAction": "Run training:reachability and training:capture-query-loop when this gate is missing or blocked."
+    },
+    {
+      "id": "live-provider-smoke",
+      "label": "DeepSeek live provider smoke evidence",
+      "status": "allowed-internal",
+      "claimAllowed": true,
+      "evidence": {
+        "liveStatus": "PASS_LIVE_PROVIDER_CAPTURE",
+        "liveValidationStatus": "PASS",
+        "liveScoreCount": 1,
+        "liveRecordCount": 4,
+        "publicClaimAllowed": false,
+        "liveProviderClaimAllowed": false
+      },
+      "reason": "Live provider smoke proves the DeepSeek adapter path can emit redacted evidence, not task success rate.",
+      "nextAction": "Run bun run training:live-provider-capture; use --require-live only in release preflight with a valid key."
+    },
+    {
+      "id": "public-benchmark-claim",
+      "label": "public benchmark or SWE-bench claim",
+      "status": "blocked",
+      "claimAllowed": false,
+      "evidence": {
+        "publicBenchmarkEvidencePresent": false,
+        "acceptedEvidenceTypes": [
+          "real benchmark run",
+          "raw task logs",
+          "reproducible judge output"
+        ]
+      },
+      "reason": "No real external benchmark artifact is part of the training evidence dashboard.",
+      "nextAction": "Run an explicitly scoped benchmark runner with raw evidence before making any public score claim."
+    },
+    {
+      "id": "superiority-claim",
+      "label": "claim DSXU exceeds target reference coding agents",
+      "status": "blocked",
+      "claimAllowed": false,
+      "evidence": {
+        "superiorityEvidencePresent": false,
+        "requiredEvidence": [
+          "same-task comparison",
+          "model/provider versions",
+          "judge protocol",
+          "raw logs"
+        ]
+      },
+      "reason": "Offline/internal/live-smoke evidence is insufficient for superiority claims.",
+      "nextAction": "Keep this claim blocked until a real comparable benchmark package exists."
+    }
+  ],
+  "missingEvidence": [
+    "public-benchmark-claim",
+    "superiority-claim"
+  ],
+  "recommendedNextActions": [
+    "Run an explicitly scoped benchmark runner with raw evidence before making any public score claim.",
+    "Keep this claim blocked until a real comparable benchmark package exists."
+  ],
+  "inputs": {
+    "v1Run": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_V1_RUN_20260520.json",
+      "present": true
+    },
+    "replayValidation": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_REPLAY_VALIDATE_20260520.json",
+      "present": true
+    },
+    "replayScore": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_REPLAY_SCORE_20260520.json",
+      "present": true
+    },
+    "ablation": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_ABLATION_20260520.json",
+      "present": true
+    },
+    "queryLoopReachability": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+      "present": true
+    },
+    "queryLoopReachabilityScore": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_SCORE_20260520.json",
+      "present": true
+    },
+    "queryLoopCapture": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json",
+      "present": true
+    },
+    "queryLoopCaptureScore": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_CAPTURE_SCORE_20260520.json",
+      "present": true
+    },
+    "liveProviderCapture": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_20260520.json",
+      "present": true
+    },
+    "liveProviderValidation": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_VALIDATE_20260520.json",
+      "present": true
+    },
+    "liveProviderScore": {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_SCORE_20260520.json",
+      "present": true
+    }
+  },
+  "rule": "This dashboard is a claim-boundary map for training/runtime evidence. It never permits public benchmark or model-superiority claims from internal replay, query-loop probes, or live provider smoke."
+}

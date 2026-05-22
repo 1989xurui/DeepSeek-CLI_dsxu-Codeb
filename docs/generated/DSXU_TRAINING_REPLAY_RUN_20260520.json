@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "dsxu.training-replay.v1",
+  "generatedAt": "2026-05-20T09:18:21.569Z",
+  "suite": "core-300",
+  "datasetKind": "internal_synthetic_replay",
+  "publicClaimAllowed": false,
+  "sampleCount": 300,
+  "acceptedCount": 268,
+  "rejectedCount": 32,
+  "expectedMatchedCount": 300,
+  "expectedMismatchedCount": 0,
+  "falsePassRate": 0,
+  "invalidToolCallRate": 0.02,
+  "longTaskResumeSuccess": 1,
+  "sameFailedActionRetryRate": 0.0167,
+  "status": "PASS_INTERNAL_SYNTHETIC_REPLAY",
+  "hardGates": {
+    "sampleCountAtLeast300": true,
+    "falsePassRateZero": true,
+    "invalidToolCallRateAtMostFivePercent": true,
+    "longTaskResumeAtLeastEightyFivePercent": true,
+    "expectedMatchesAllSamples": true
+  },
+  "rule": "Internal synthetic replay calibrates DSXU training gates. It is not a live provider benchmark or public score."
+}

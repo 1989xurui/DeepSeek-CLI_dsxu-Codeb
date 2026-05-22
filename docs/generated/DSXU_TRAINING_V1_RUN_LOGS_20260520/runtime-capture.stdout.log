@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "dsxu.training-runtime-capture.v1",
+  "trajectoryCaptured": true,
+  "validationStatus": "accepted",
+  "publicClaimAllowed": false,
+  "exitCode": 0,
+  "timedOut": false,
+  "tracePath": "D:\\DSXU-code\\.dsxu\\training\\runtime-captures\\runtime-capture-2026-05-20T09-45-52-055Z-cebfc90f.trajectory.jsonl",
+  "outputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json"
+}

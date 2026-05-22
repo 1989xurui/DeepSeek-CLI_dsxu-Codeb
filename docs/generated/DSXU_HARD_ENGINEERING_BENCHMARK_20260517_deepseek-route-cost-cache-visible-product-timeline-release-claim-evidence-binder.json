@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "dsxu.hard-engineering-benchmark.v1",
+  "generatedAt": "2026-05-19T15:17:26.493Z",
+  "status": "PASS_DSXU_HARD_ENGINEERING_LIFT",
+  "totalTasks": 3,
+  "rawPassRatePct": 0,
+  "dsxuPassRatePct": 100,
+  "rawAverageScore": 60,
+  "dsxuAverageScore": 100,
+  "rawTotalCostUSD": 0.0008274,
+  "dsxuTotalCostUSD": 0.03608887520000001,
+  "public90Allowed": false,
+  "externalBenchmarkClaimAllowed": false,
+  "chartPath": "docs/assets/dsxu-hard-engineering-benchmark.svg",
+  "claimBoundary": "This is a DSXU-owned hard internal benchmark inspired by public benchmark task shapes. It is not a SWE-bench, Terminal-Bench, OSWorld, or tau-bench score.",
+  "taskFilter": "deepseek-route-cost-cache,visible-product-timeline,release-claim-evidence-binder",
+  "tasks": [
+    {
+      "id": "visible-product-timeline",
+      "lane": "visible-product",
+      "title": "Repair visible work-state timeline across TUI, CLI, and final report",
+      "sourceFixtureHash": "ae944bfeae9dd2866f2b3bfe50b856508c55629d3f22eb77d6a56ebcd6c5d62a",
+      "expectedSignals": [
+        "canonical events",
+        "sorted timestamps",
+        "bounded detail",
+        "blocked state preserved"
+      ],
+      "raw": {
+        "pass": false,
+        "score": 70,
+        "durationMs": 4516,
+        "costUSD": 0.00020691999999999998,
+        "appliedFiles": [
+          "src/timeline.ts",
+          "src/projector.ts"
+        ],
+        "applyErrors": [],
+        "responsePath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-raw-2026-05-19T15-12-47-148Z.json",
+        "finalTestExitCode": 1,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-raw-final-test-2026-05-19T15-12-51-674Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-raw-final-test-2026-05-19T15-12-51-674Z.stderr.log"
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "durationMs": 103808,
+        "costUSD": 0.014750948800000002,
+        "tracePath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-dsxu-2026-05-19T15-12-51-746Z.jsonl",
+        "toolUseCounts": {
+          "Bash": 3,
+          "Glob": 1,
+          "Read": 11,
+          "Edit": 2
+        },
+        "finalTestExitCode": 0,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-dsxu-final-test-2026-05-19T15-14-35-557Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/visible-product-timeline-dsxu-final-test-2026-05-19T15-14-35-557Z.stderr.log",
+        "verificationSignals": [
+          "sorted timestamps",
+          "bounded detail",
+          "canonical projection",
+          "blocked state preserved"
+        ]
+      }
+    },
+    {
+      "id": "deepseek-route-cost-cache",
+      "lane": "deepseek-runtime",
+      "title": "Repair DeepSeek route, cost, cache, and admission truth table",
+      "sourceFixtureHash": "68c482fcbd6ff88e16a7c77ba7d04f62971e20a54c959ba30b406be7f6155f33",
+      "expectedSignals": [
+        "flash default",
+        "pro admission",
+        "fim lane lock",
+        "cache hit rate"
+      ],
+      "raw": {
+        "pass": false,
+        "score": 60,
+        "durationMs": 6930,
+        "costUSD": 0.00031332000000000007,
+        "appliedFiles": [
+          "src/route.ts",
+          "src/cache.ts"
+        ],
+        "applyErrors": [],
+        "responsePath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-raw-2026-05-19T15-14-35-625Z.json",
+        "finalTestExitCode": 1,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-raw-final-test-2026-05-19T15-14-42-563Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-raw-final-test-2026-05-19T15-14-42-563Z.stderr.log"
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "durationMs": 66084,
+        "costUSD": 0.010754150400000002,
+        "tracePath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-dsxu-2026-05-19T15-14-42-633Z.jsonl",
+        "toolUseCounts": {
+          "Bash": 2,
+          "Glob": 1,
+          "Read": 12,
+          "Edit": 2
+        },
+        "finalTestExitCode": 0,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-dsxu-final-test-2026-05-19T15-15-48-719Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/deepseek-route-cost-cache-dsxu-final-test-2026-05-19T15-15-48-719Z.stderr.log",
+        "verificationSignals": [
+          "flash default",
+          "pro admission",
+          "fim lane lock",
+          "cache hit rate"
+        ]
+      }
+    },
+    {
+      "id": "release-claim-evidence-binder",
+      "lane": "release-evidence",
+      "title": "Repair release claim evidence binding and no-overclaim README output",
+      "sourceFixtureHash": "f856c2b65a8d9c3387b19c675f2f65a7ba7154264bfbf820af5441ba6609fe8d",
+      "expectedSignals": [
+        "evidence binding",
+        "target manifest gate",
+        "no parity overclaim",
+        "claim limited README"
+      ],
+      "raw": {
+        "pass": false,
+        "score": 50,
+        "durationMs": 6642,
+        "costUSD": 0.00030716,
+        "appliedFiles": [
+          "src/claim.ts"
+        ],
+        "applyErrors": [
+          "blocked non-src replacement: tests/claim.public.test.ts"
+        ],
+        "responsePath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-2026-05-19T15-15-48-796Z.json",
+        "finalTestExitCode": 1,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-final-test-2026-05-19T15-15-55-443Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-raw-final-test-2026-05-19T15-15-55-443Z.stderr.log"
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "durationMs": 90901,
+        "costUSD": 0.010583776000000003,
+        "tracePath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-2026-05-19T15-15-55-515Z.jsonl",
+        "toolUseCounts": {
+          "Bash": 3,
+          "Glob": 1,
+          "Read": 4,
+          "Edit": 1
+        },
+        "finalTestExitCode": 0,
+        "finalTestStdoutPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-final-test-2026-05-19T15-17-26-418Z.stdout.log",
+        "finalTestStderrPath": ".dsxu/trace/hard-engineering-benchmark/release-claim-evidence-binder-dsxu-final-test-2026-05-19T15-17-26-418Z.stderr.log",
+        "verificationSignals": [
+          "evidence binding",
+          "target manifest gate",
+          "no parity overclaim",
+          "claim limited README"
+        ]
+      }
+    }
+  ]
+}

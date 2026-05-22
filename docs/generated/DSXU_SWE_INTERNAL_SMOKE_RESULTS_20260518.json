@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-05-18T06:28:00.258Z",
+  "owner": "Evidence / benchmark / public challenge",
+  "mode": "internal-smoke",
+  "requestedMode": "internal-smoke",
+  "evidenceClass": "internal-smoke",
+  "claimBoundary": "internal harness smoke only; not a public SWE-bench score or external comparison claim",
+  "rawEvidenceRequired": [],
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "model": "deepseek-v4-flash",
+  "timeoutMs": 60000,
+  "total": 2,
+  "pass": 2,
+  "fail": 0,
+  "timeout": 0,
+  "crash": 0,
+  "passRate": 1,
+  "records": [
+    {
+      "task": {
+        "id": "mock-001",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance mock-001",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "mock-001",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "mock-001",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    },
+    {
+      "task": {
+        "id": "mock-002",
+        "repo": "dsxu/internal-smoke",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance mock-002",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "mock-002",
+        "generatedPatch": "+ export const fixed = true;",
+        "testsPassed": true,
+        "passedTests": 1,
+        "totalTests": 1,
+        "durationMs": 12
+      },
+      "verdict": {
+        "instanceId": "mock-002",
+        "status": "PASS",
+        "testsPassed": true,
+        "patchMatch": 1,
+        "passedTests": 1,
+        "totalTests": 1,
+        "testOutput": ""
+      },
+      "turnsUsed": 3,
+      "costUsd": 0.001
+    }
+  ]
+}

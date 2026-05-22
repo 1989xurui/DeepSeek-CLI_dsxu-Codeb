@@ -1,0 +1,321 @@
+{
+  "schemaVersion": "dsxu.public-comparable-collection-pack.v1",
+  "generatedAt": "2026-05-21T21:16:35.012Z",
+  "status": "READY_COLLECTION_PACK_NO_RAW_EVIDENCE",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-raw-evidence",
+  "caseCount": 30,
+  "createdCaseCount": 30,
+  "rawEvidenceWritten": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "nextAction": "collect-public-comparable-raw-evidence",
+  "safeguards": [
+    "collection pack creates work orders and templates only; it does not create metrics.json, transcripts, api responses, or final reports",
+    "metrics.template.json is intentionally ignored by the raw-evidence importer",
+    "prompt-hash.expected.txt is an expected value for operators, not proof of executed raw evidence",
+    "public benchmark and external comparison claims remain blocked until real per-case raw artifacts are imported"
+  ],
+  "cases": [
+    {
+      "id": "permission-deny-replan",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "powershell-encoded-deny",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "grep-glob-tool-choice",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "governance-query-recovery-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "governance-skills-selection-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "todo-task-closeout",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "permission-matrix-contract",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "compact-state-preservation",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-workflow-recovery-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-multifile-bugfix-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-multistep-feature-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-feature-tests-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-review-fix-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-compact-resume-edit-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-compact-two-phase-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-permission-deny-replan-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-agent-worker-longrun-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-agent-failure-correction-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-real-mcp-task-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-reality-large-feature-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-reality-review-fix-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-reality-second-failure-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "product-review-to-fix-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "v8-real-review-fix",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "mutation-query-orphan-tool-use-deny-pass-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "tool-prompt-read-edit-cache-golden",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "mutation-tool-prompt-read-edit-cache-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "mutation-real-mcp-resource-guided-fix-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "experience-permission-ux-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    },
+    {
+      "id": "experience-agent-team-governance-live",
+      "status": "READY_COLLECTION_CASE_NO_RAW_EVIDENCE",
+      "caseDir": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live",
+      "workOrderPath": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live/work-order.json",
+      "metricsTemplatePath": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live/metrics.template.json",
+      "readmePath": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live/README.md",
+      "expectedPromptHashPath": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live/prompt-hash.expected.txt",
+      "rawEvidenceWritten": false
+    }
+  ]
+}

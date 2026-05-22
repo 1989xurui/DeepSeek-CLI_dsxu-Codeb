@@ -1,0 +1,2141 @@
+{
+  "generatedAt": "2026-05-16T15:40:00.857Z",
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proWasRun": false,
+    "noSecondRuntime": true,
+    "productEntrypointEvidence": "v24:interactive-tui-acceptance and DSXU -p Flash review"
+  },
+  "prerequisiteStatus": {
+    "interactiveTui": true,
+    "completedReacceptance": true,
+    "liveAcceptance": true,
+    "c2Matrix": true
+  },
+  "commandRuns": [
+    {
+      "id": "core-query-context-regression",
+      "exitCode": 0,
+      "durationMs": 1228,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log"
+    },
+    {
+      "id": "tool-permission-regression",
+      "exitCode": 0,
+      "durationMs": 3614,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+    },
+    {
+      "id": "agent-mcp-skill-regression",
+      "exitCode": 0,
+      "durationMs": 2297,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log"
+    },
+    {
+      "id": "model-cost-cache-regression",
+      "exitCode": 0,
+      "durationMs": 1109,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+    },
+    {
+      "id": "external-release-regression",
+      "exitCode": 0,
+      "durationMs": 21342,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log"
+    },
+    {
+      "id": "api-remote-evidence-regression",
+      "exitCode": 0,
+      "durationMs": 1947,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log"
+    }
+  ],
+  "coverage": {
+    "totalRows": 51,
+    "primaryRows": 15,
+    "secondaryRows": 36,
+    "primaryPassed": 15,
+    "secondaryPassed": 36,
+    "passedRows": 51,
+    "openRows": 0
+  },
+  "evidenceCatalog": [
+    {
+      "id": "agent-mcp-skill",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log"
+      ]
+    },
+    {
+      "id": "api-remote-evidence",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log"
+      ]
+    },
+    {
+      "id": "c2-matrix",
+      "passed": true,
+      "pathCount": 1,
+      "samplePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json"
+      ]
+    },
+    {
+      "id": "completed-reacceptance",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md"
+      ]
+    },
+    {
+      "id": "core-query-context",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log"
+      ]
+    },
+    {
+      "id": "external-release",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log"
+      ]
+    },
+    {
+      "id": "interactive-tui",
+      "passed": true,
+      "pathCount": 3,
+      "samplePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "id": "live-acceptance",
+      "passed": true,
+      "pathCount": 1,
+      "samplePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json"
+      ]
+    },
+    {
+      "id": "model-cost-cache",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "id": "tool-permission",
+      "passed": true,
+      "pathCount": 2,
+      "samplePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "rowId": "P01",
+      "loop": "Goal / Intent / Session Loop",
+      "owner": "Query Loop",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "P02",
+      "loop": "Visible Work-State Loop",
+      "owner": "UI/TUI Work-State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P03",
+      "loop": "Tool Lifecycle Loop",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P04",
+      "loop": "Permission / Safety Loop",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "external-release",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P05",
+      "loop": "Source Truth / Coding Loop",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "P06",
+      "loop": "Plan / Todo / Task Loop",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P07",
+      "loop": "Agent Delegation Loop",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "P08",
+      "loop": "Context / Memory / Compact Loop",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "P09",
+      "loop": "Failure / Recovery Loop",
+      "owner": "Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json"
+      ]
+    },
+    {
+      "rowId": "P10",
+      "loop": "Model / Cost / Cache Loop",
+      "owner": "DeepSeek Model Router",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P11",
+      "loop": "MCP / Skill / Plugin Loop",
+      "owner": "MCP/Skill Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "c2-matrix",
+        "external-release"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P12",
+      "loop": "IDE / Remote / API Loop",
+      "owner": "IDE/API Bridge",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P13",
+      "loop": "Browser / External Action Loop",
+      "owner": "External Tool Provider",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "external-release",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P14",
+      "loop": "Telemetry / Evidence / Report Loop",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "P15",
+      "loop": "Release / Doctor / Install Loop",
+      "owner": "Release",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "external-release"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S01",
+      "loop": "user intent and task boundary",
+      "owner": "Query Loop",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S02",
+      "loop": "repository orientation",
+      "owner": "Source Truth",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S03",
+      "loop": "real import/use evidence",
+      "owner": "Owner/Git Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S04",
+      "loop": "active plan state",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S05",
+      "loop": "todo verified before complete",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S06",
+      "loop": "file localization and edit boundary",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S07",
+      "loop": "diff risk explanation",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S08",
+      "loop": "tool schema selection",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S09",
+      "loop": "strict tool parameter validation",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S10",
+      "loop": "Bash/PowerShell lifecycle",
+      "owner": "Shell Adapter",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S11",
+      "loop": "write permission chain",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S12",
+      "loop": "destructive command guard",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S13",
+      "loop": "MCP server intake",
+      "owner": "MCP Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S14",
+      "loop": "skill and command intake",
+      "owner": "Skill Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S15",
+      "loop": "browser and external action",
+      "owner": "External Provider",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S16",
+      "loop": "IDE/API entry",
+      "owner": "IDE/API Bridge",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S17",
+      "loop": "agent ownership boundary",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S18",
+      "loop": "agent evidence synthesis",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S19",
+      "loop": "parallel cancel and recovery",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stderr.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S20",
+      "loop": "context compact",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S21",
+      "loop": "resume source reread",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S22",
+      "loop": "failure classification",
+      "owner": "Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S23",
+      "loop": "test failure repair path",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S24",
+      "loop": "provider retry/escalation",
+      "owner": "Model Router",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S25",
+      "loop": "thinking trajectory return",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S26",
+      "loop": "FIM edit lane",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S27",
+      "loop": "cache/prefix ROI",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S28",
+      "loop": "cost visibility",
+      "owner": "Cost Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_LIVE_ACCEPTANCE_ROUTER_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stderr.log"
+      ]
+    },
+    {
+      "rowId": "S29",
+      "loop": "progress visibility",
+      "owner": "Work-State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S30",
+      "loop": "UI/TUI input experience",
+      "owner": "UI/TUI",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S31",
+      "loop": "final answer evidence",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S32",
+      "loop": "telemetry and report",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S33",
+      "loop": "public challenge packaging",
+      "owner": "Product Data",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S34",
+      "loop": "performance and experience data",
+      "owner": "Product Data",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S35",
+      "loop": "license/IP/brand guard",
+      "owner": "Commercial/IP",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "rowId": "S36",
+      "loop": "release/install/doctor",
+      "owner": "Release",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePaths": [
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\api-remote-evidence-regression-2026-05-16T15-39-58-904Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stdout.log",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\external-release-regression-2026-05-16T15-39-37-562Z.stderr.log",
+        "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        "D:\\DSXU-code\\docs\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+        "D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance"
+      ]
+    }
+  ],
+  "compactBindings": [
+    {
+      "rowId": "P01",
+      "loop": "Goal / Intent / Session Loop",
+      "owner": "Query Loop",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "P02",
+      "loop": "Visible Work-State Loop",
+      "owner": "UI/TUI Work-State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 11
+    },
+    {
+      "rowId": "P03",
+      "loop": "Tool Lifecycle Loop",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "P04",
+      "loop": "Permission / Safety Loop",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "external-release",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 14
+    },
+    {
+      "rowId": "P05",
+      "loop": "Source Truth / Coding Loop",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "P06",
+      "loop": "Plan / Todo / Task Loop",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "P07",
+      "loop": "Agent Delegation Loop",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "P08",
+      "loop": "Context / Memory / Compact Loop",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "P09",
+      "loop": "Failure / Recovery Loop",
+      "owner": "Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 1
+    },
+    {
+      "rowId": "P10",
+      "loop": "Model / Cost / Cache Loop",
+      "owner": "DeepSeek Model Router",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "P11",
+      "loop": "MCP / Skill / Plugin Loop",
+      "owner": "MCP/Skill Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "c2-matrix",
+        "external-release"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 5
+    },
+    {
+      "rowId": "P12",
+      "loop": "IDE / Remote / API Loop",
+      "owner": "IDE/API Bridge",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 12
+    },
+    {
+      "rowId": "P13",
+      "loop": "Browser / External Action Loop",
+      "owner": "External Tool Provider",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "external-release",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 15
+    },
+    {
+      "rowId": "P14",
+      "loop": "Telemetry / Evidence / Report Loop",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "P15",
+      "loop": "Release / Doctor / Install Loop",
+      "owner": "Release",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "c2-matrix",
+        "external-release"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 3
+    },
+    {
+      "rowId": "S01",
+      "loop": "user intent and task boundary",
+      "owner": "Query Loop",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S02",
+      "loop": "repository orientation",
+      "owner": "Source Truth",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "S03",
+      "loop": "real import/use evidence",
+      "owner": "Owner/Git Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S04",
+      "loop": "active plan state",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S05",
+      "loop": "todo verified before complete",
+      "owner": "Task State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S06",
+      "loop": "file localization and edit boundary",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "S07",
+      "loop": "diff risk explanation",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "S08",
+      "loop": "tool schema selection",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S09",
+      "loop": "strict tool parameter validation",
+      "owner": "Tool Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S10",
+      "loop": "Bash/PowerShell lifecycle",
+      "owner": "Shell Adapter",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S11",
+      "loop": "write permission chain",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S12",
+      "loop": "destructive command guard",
+      "owner": "Permission Gate",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "tool-permission"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S13",
+      "loop": "MCP server intake",
+      "owner": "MCP Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S14",
+      "loop": "skill and command intake",
+      "owner": "Skill Registry",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S15",
+      "loop": "browser and external action",
+      "owner": "External Provider",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 11
+    },
+    {
+      "rowId": "S16",
+      "loop": "IDE/API entry",
+      "owner": "IDE/API Bridge",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S17",
+      "loop": "agent ownership boundary",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S18",
+      "loop": "agent evidence synthesis",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S19",
+      "loop": "parallel cancel and recovery",
+      "owner": "Agent Lifecycle",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "agent-mcp-skill",
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S20",
+      "loop": "context compact",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S21",
+      "loop": "resume source reread",
+      "owner": "Context Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S22",
+      "loop": "failure classification",
+      "owner": "Recovery",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S23",
+      "loop": "test failure repair path",
+      "owner": "Coding Workflow",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 10
+    },
+    {
+      "rowId": "S24",
+      "loop": "provider retry/escalation",
+      "owner": "Model Router",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "S25",
+      "loop": "thinking trajectory return",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "S26",
+      "loop": "FIM edit lane",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "completed-reacceptance",
+        "core-query-context",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 13
+    },
+    {
+      "rowId": "S27",
+      "loop": "cache/prefix ROI",
+      "owner": "DeepSeek Runtime",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "S28",
+      "loop": "cost visibility",
+      "owner": "Cost Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui",
+        "live-acceptance",
+        "model-cost-cache"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 9
+    },
+    {
+      "rowId": "S29",
+      "loop": "progress visibility",
+      "owner": "Work-State",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S30",
+      "loop": "UI/TUI input experience",
+      "owner": "UI/TUI",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S31",
+      "loop": "final answer evidence",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S32",
+      "loop": "telemetry and report",
+      "owner": "Evidence",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 6
+    },
+    {
+      "rowId": "S33",
+      "loop": "public challenge packaging",
+      "owner": "Product Data",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S34",
+      "loop": "performance and experience data",
+      "owner": "Product Data",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S35",
+      "loop": "license/IP/brand guard",
+      "owner": "Commercial/IP",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    },
+    {
+      "rowId": "S36",
+      "loop": "release/install/doctor",
+      "owner": "Release",
+      "status": "PASS_BEHAVIOR_EVIDENCE_LINKED",
+      "evidenceIds": [
+        "api-remote-evidence",
+        "c2-matrix",
+        "external-release",
+        "interactive-tui"
+      ],
+      "missingEvidenceIds": [],
+      "rawEvidencePathCount": 8
+    }
+  ],
+  "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+  "flashReviewPass": true,
+  "flashReview": {
+    "id": "flash-c2-loop-review",
+    "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\flash-c2-loop-review-2026-05-16T15-40-00-858Z.jsonl",
+    "exitCode": 0,
+    "durationMs": 12519,
+    "resultJson": {
+      "did_read_report": true,
+      "primary_loop_count": 15,
+      "secondary_loop_count": 36,
+      "all_rows_have_behavior_evidence": true,
+      "all_required_commands_passed": true,
+      "flash_first_policy_respected": true,
+      "no_second_runtime": true,
+      "pro_needed": false,
+      "blocking_gaps": [],
+      "evidence": [
+        "All 51 rows (15 primary, 36 secondary) status PASS_BEHAVIOR_EVIDENCE_LINKED — zero open rows",
+        "All 6 command runs exit code 0 (core-query-context, tool-permission, agent-mcp-skill, model-cost-cache, external-release, api-remote-evidence)",
+        "All 10 evidence catalog entries passed: true — every evidenceId referenced by bindings is satisfied",
+        "Every binding has missingEvidenceIds: [] — zero orphaned or unlinked evidence requirements",
+        "Policy enforces Flash-first: defaultModel deepseek-v4-flash, proWasRun false, noSecondRuntime true",
+        "Prerequisite status all true: interactiveTui, completedReacceptance, liveAcceptance, c2Matrix"
+      ]
+    },
+    "costUSD": 0.0015499008,
+    "modelUsage": {
+      "deepseek-v4-flash": {
+        "inputTokens": 29730,
+        "outputTokens": 831,
+        "cacheReadInputTokens": 20736,
+        "cacheCreationInputTokens": 8994,
+        "webSearchRequests": 0,
+        "costUSD": 0.0015499008,
+        "contextWindow": 1048576,
+        "maxOutputTokens": 32768
+      }
+    }
+  },
+  "failedCommands": [],
+  "openRows": [],
+  "remainingForV24Final": [
+    "30-45 minute complex senior-coding task",
+    "public challenge package with comparable benchmark data",
+    "six-stage final tests",
+    "clean export artifact"
+  ]
+}

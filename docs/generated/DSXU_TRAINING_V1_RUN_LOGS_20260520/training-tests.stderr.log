@@ -1,0 +1,181 @@
+
+src\dsxu\training\__tests__\ablation.test.ts:
+(pass) DSXU training ablation report > compares A0-A4 and keeps public benchmark claim blocked [16.00ms]
+
+src\dsxu\training\__tests__\dashboard.test.ts:
+(pass) DSXU training evidence dashboard > allows only internal evidence claims and blocks public benchmark claims
+(pass) DSXU training evidence dashboard > marks live provider smoke as missing when no key artifact was produced
+(pass) DSXU training evidence dashboard > blocks internal replay claim when expected labels do not match
+(pass) DSXU training evidence dashboard > loads dashboard inputs from files and records parse state
+
+src\dsxu\training\__tests__\dataset-manifest.test.ts:
+(pass) DSXU training V2 dataset manifest > meets V2 dataset hard gates while keeping public claims blocked [16.00ms]
+
+src\dsxu\training\__tests__\exporter.test.ts:
+(pass) DSXU training trajectory exporter > exports mocked runtime evidence into a valid redacted trajectory [15.00ms]
+(pass) DSXU training trajectory exporter > redacts secret-like text and stores only snapshots
+(pass) DSXU training trajectory exporter > can export an unpaired tool result for validator hard-gate testing
+
+src\dsxu\training\__tests__\golden-fixtures.test.ts:
+(pass) DSXU training golden fixtures > builds 60 fixtures across six categories
+(pass) DSXU training golden fixtures > matches expected validation status and score range
+
+src\dsxu\training\__tests__\live-provider-capture.test.ts:
+(pass) DSXU live provider capture smoke > writes an explicit skipped artifact when no API key is present [15.00ms]
+(pass) DSXU live provider capture smoke > imports redacted adapter trajectory from a mocked live provider response [16.00ms]
+[DSXU-API-ERR] 401: unauthorized
+[DSXU-EXEC-ERR] 1037 |       });
+1038 | 
+1039 |       if (!response.ok) {
+1040 |         const err = await response.text();
+1041 |         console.error(`[DSXU-API-ERR] ${response.status}: ${err}`);
+1042 |         throw new Error(`API ${response.status}`);
+                         ^
+error: API 401
+      at executeRequest (D:\DSXU-code\src\services\api\deepseek-adapter.ts:1042:19)
+
+(pass) DSXU live provider capture smoke > records failed live attempts without turning them into public claims
+
+src\dsxu\training\__tests__\package-scripts.test.ts:
+(pass) training package scripts > keeps the documented training entrypoints wired in package.json
+
+src\dsxu\training\__tests__\preference.test.ts:
+(pass) DSXU training preference pair generator > builds enough internal pairs with rejected reasons and public claims blocked
+
+src\dsxu\training\__tests__\quality-tier.test.ts:
+(pass) DSXU training quality tiering > classifies verified high-score samples as gold and hard-gate failures as rejected
+
+src\dsxu\training\__tests__\query-loop-capture.test.ts:
+[CacheBreakDetection] 2026-05-20T09:45:49.652Z New query source registered {
+  querySource: "repl_main_thread",
+  model: "deepseek-v4-flash",
+  toolCount: 2,
+  systemCharCount: 0,
+  fastMode: false,
+  cacheStrategy: "",
+}
+[CacheBreakDetection] 2026-05-20T09:45:49.652Z First cache read for query source {
+  querySource: "repl_main_thread",
+  cacheReadTokens: 600,
+  callNumber: 1,
+}
+[CacheBreakDetection] 2026-05-20T09:45:49.654Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 600,
+  cacheReadTokens: 280,
+  tokenDrop: 320,
+  relativeDrop: "46.7%",
+  threshold: 0.95,
+}
+(pass) query-loop opt-in training capture > writes a redacted training capture artifact when the env var is set [15.00ms]
+[CacheBreakDetection] 2026-05-20T09:45:49.661Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 280,
+  cacheReadTokens: 280,
+  tokenDrop: 0,
+  relativeDrop: "100.0%",
+  threshold: 0.95,
+}
+[TrainingCapture] failed to write DSXU_TRAINING_QUERY_LOOP_CAPTURE_FILE: EEXIST: file already exists, open 'C:\Users\h\AppData\Local\Temp\dsxu-training-query-loop-capture-blocked-uQhZnE'
+(pass) query-loop opt-in training capture > does not block runQuery when the capture path cannot be written
+
+src\dsxu\training\__tests__\query-loop-reachability.test.ts:
+[CacheBreakDetection] 2026-05-20T09:45:49.668Z Prompt state changed {
+  querySource: "repl_main_thread",
+  callNumber: 4,
+  changes: {
+    systemPromptChanged: false,
+    toolSchemasChanged: true,
+    modelChanged: false,
+    fastModeChanged: false,
+    cacheStrategyChanged: false,
+    betasChanged: false,
+    effortChanged: false,
+    extraBodyChanged: false,
+    addedToolCount: 0,
+    removedToolCount: 0,
+    systemCharDelta: 0,
+  },
+}
+[CacheBreakDetection] 2026-05-20T09:45:49.668Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 280,
+  cacheReadTokens: 900,
+  tokenDrop: -620,
+  relativeDrop: "321.4%",
+  threshold: 0.95,
+}
+[CacheBreakDetection] 2026-05-20T09:45:49.669Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 900,
+  cacheReadTokens: 620,
+  tokenDrop: 280,
+  relativeDrop: "68.9%",
+  threshold: 0.95,
+}
+(pass) query-loop training trajectory reachability > runs the real query-loop event stream into a valid training trajectory
+[CacheBreakDetection] 2026-05-20T09:45:49.671Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 620,
+  cacheReadTokens: 900,
+  tokenDrop: -280,
+  relativeDrop: "145.2%",
+  threshold: 0.95,
+}
+[CacheBreakDetection] 2026-05-20T09:45:49.672Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 900,
+  cacheReadTokens: 620,
+  tokenDrop: 280,
+  relativeDrop: "68.9%",
+  threshold: 0.95,
+}
+(pass) query-loop training trajectory reachability > keeps claim boundary closed if artifact is rebuilt from the event stream
+
+src\dsxu\training\__tests__\replay-fixtures.test.ts:
+(pass) DSXU training replay fixtures > builds 300 internal synthetic replay fixtures with expected category coverage [16.00ms]
+(pass) DSXU training replay fixtures > matches expected validation status and SEES ranges
+
+src\dsxu\training\__tests__\replay.test.ts:
+(pass) DSXU training replay report > passes the core-300 internal replay gates without public benchmark claim
+
+src\dsxu\training\__tests__\runtime-capture.test.ts:
+(pass) DSXU runtime capture runner > wraps a command with DSXU_DEEPSEEK_TRAJECTORY_FILE and imports captured evidence [157.00ms]
+
+src\dsxu\training\__tests__\runtime-importer.test.ts:
+(pass) DSXU runtime evidence importer > imports DeepSeek trajectory JSONL without storing raw content
+(pass) DSXU runtime evidence importer > defaults to partial outcome when verification evidence is absent
+(pass) DSXU runtime evidence importer > reads runtime evidence from file
+(pass) DSXU runtime evidence importer > summarizes unredacted records as risky evidence
+(pass) DSXU runtime evidence importer > validator and scorer can unwrap runtime import artifacts
+
+src\dsxu\training\__tests__\schema.test.ts:
+(pass) DSXU training trajectory schema > defines the v1 schema contract expected by the execution plan
+(pass) DSXU training trajectory schema > accepts a dry-run trajectory with no source body storage
+(pass) DSXU training trajectory schema > keeps schema validation focused on structure, not behavioral gates
+
+src\dsxu\training\__tests__\scorer.test.ts:
+(pass) DSXU training trajectory scorer > scores a valid trajectory
+(pass) DSXU training trajectory scorer > caps false pass at 80
+(pass) DSXU training trajectory scorer > caps public claim without raw evidence at 80
+(pass) DSXU training trajectory scorer > does not score schema invalid input
+
+src\dsxu\training\__tests__\v1-runner.test.ts:
+(pass) training v1 runner report > passes only when every command and hard gate passes [16.00ms]
+(pass) training v1 runner report > fails when runtime capture is claimable or command execution failed
+
+src\dsxu\training\__tests__\v2-runner.test.ts:
+(pass) DSXU training V2 flywheel runner > passes internal V2 stages and keeps external claims blocked [31.00ms]
+
+src\dsxu\training\__tests__\validator.test.ts:
+(pass) DSXU training trajectory validator > accepts valid dry-run trajectory
+(pass) DSXU training trajectory validator > rejects invalid schema
+(pass) DSXU training trajectory validator > rejects false pass final claim
+(pass) DSXU training trajectory validator > rejects analysis-only task edits
+(pass) DSXU training trajectory validator > rejects agent partial upgraded to parent complete
+(pass) DSXU training trajectory validator > rejects oracle or old report evidence flags
+
+ 46 pass
+ 0 fail
+ 224 expect() calls
+Ran 46 tests across 20 files. [1491.00ms]

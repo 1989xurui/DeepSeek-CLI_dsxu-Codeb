@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "dsxu.external-benchmark-adapter-proof-acceptance.v1",
+  "generatedAt": "2026-05-16T15:54:43.690Z",
+  "status": "PASS_EXTERNAL_ADAPTER_PROOF_PUBLIC_CLAIM_BLOCKED",
+  "board": {
+    "schemaVersion": "dsxu.external-benchmark-adapter-proof.v1",
+    "generatedAt": "2026-05-16T15:54:43.690Z",
+    "status": "READY_EXTERNAL_ADAPTER_PROOF_PUBLIC_CLAIM_BLOCKED",
+    "claimComparisonWinAllowed": true,
+    "claimPublic90Allowed": false,
+    "claimFullBrowserRuntimeAllowed": false,
+    "guards": [],
+    "allowedClaims": [
+      "DSXU may claim internal guarded Code-10/Code-30 style readiness only with explicit STOP boundaries.",
+      "DSXU may claim browser/dev-server proof as adapter evidence with screenshot or blocked evidence.",
+      "DSXU may claim external integrations as adapter boundaries governed by existing DSXU owners."
+    ],
+    "blockedClaims": [
+      "Do not broaden imported paired raw comparison evidence into a public 90% or universal external-victory claim.",
+      "Do not claim public 90% top-tier coding/complex-task ability from adapter proof or internal smoke tests.",
+      "Do not claim SWE Verified, Terminal-Bench, OSWorld, Toolathlon, or full browser runtime parity without raw evidence.",
+      "Do not claim standalone browser/MCP/IDE runtime outside DSXU Tool Gate and owner boundaries."
+    ],
+    "ownerCoverage": {
+      "benchmarkGuard": true,
+      "rawComparisonGuard": true,
+      "browserProof": true,
+      "providerGateRedacted": true,
+      "adapterBoundary": true,
+      "sourceAndTests": true
+    },
+    "metrics": {
+      "p12PairedRawLogCount": 14,
+      "p12MinimumPairedRawLogsForPass": 14,
+      "p12ReplayFamilyGapCount": 0,
+      "browserScreenshotBytes": 4847,
+      "adapterBoundaryCount": 5
+    }
+  },
+  "inputs": {
+    "rawReadinessPath": ".dsxu/trace/raw-evidence-readiness-register-v1/raw-evidence-readiness-register.evidence.json",
+    "rawReadinessFound": true,
+    "browserEvidencePath": ".dsxu/trace/external-benchmark-adapter-proof/ep08-external-adapter-proof.json",
+    "browserTracePath": ".dsxu/trace/external-benchmark-adapter-proof/ep08-external-adapter-proof.trace.json",
+    "providerGateEvidencePath": ".dsxu/trace/external-benchmark-adapter-proof/provider-gate.json"
+  },
+  "releaseClaimBoundary": {
+    "allowed": [
+      "DSXU may claim internal guarded Code-10/Code-30 style readiness only with explicit STOP boundaries.",
+      "DSXU may claim browser/dev-server proof as adapter evidence with screenshot or blocked evidence.",
+      "DSXU may claim external integrations as adapter boundaries governed by existing DSXU owners."
+    ],
+    "blocked": [
+      "Do not broaden imported paired raw comparison evidence into a public 90% or universal external-victory claim.",
+      "Do not claim public 90% top-tier coding/complex-task ability from adapter proof or internal smoke tests.",
+      "Do not claim SWE Verified, Terminal-Bench, OSWorld, Toolathlon, or full browser runtime parity without raw evidence.",
+      "Do not claim standalone browser/MCP/IDE runtime outside DSXU Tool Gate and owner boundaries."
+    ],
+    "note": "This closes adapter/browser/provider guard evidence only. Target-reference raw manifest remains mandatory before external comparison or public 90% claims."
+  }
+}

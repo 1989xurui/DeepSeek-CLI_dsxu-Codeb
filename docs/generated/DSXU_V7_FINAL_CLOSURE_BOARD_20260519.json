@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "dsxu.v7.final-closure-board.v1",
+  "generatedAt": "2026-05-19T11:54:12.411Z",
+  "status": "PASS_DSXU_V7_FINAL_CLOSURE_BOARD",
+  "summary": {
+    "checks": 8,
+    "passed": 8,
+    "blocked": 0,
+    "publicBenchmarkAllowed": false,
+    "deletionAllowed": false,
+    "promptHistoricalRawAllowed": false,
+    "safetyGatePassed": true
+  },
+  "blockers": [],
+  "inputs": {
+    "docsRegistry": "docs/generated/DSXU_DOCS_TRUTH_REGISTRY_20260519.json",
+    "signals": "docs/generated/DSXU_DOC_SIGNAL_EXTRACTION_20260519.json",
+    "promptAllowlist": "docs/generated/DSXU_PROMPT_INPUT_ALLOWLIST_20260519.json",
+    "reachability": "docs/generated/DSXU_RUNTIME_REACHABILITY_MAP_20260519.json",
+    "archiveWatchlist": "docs/generated/DSXU_ARCHIVE_WATCHLIST_20260519.json",
+    "deleteReview": "docs/generated/DSXU_DELETE_REVIEW_BOARD_20260519.json",
+    "deleteReviewReplacementEvidence": "docs/generated/DSXU_V7_DELETE_REVIEW_REPLACEMENT_EVIDENCE_20260519.json",
+    "replayBank": "docs/generated/DSXU_SCENARIO_REPLAY_BANK_20260519.json",
+    "replayLayerEvidence": "docs/generated/DSXU_V7_SCENARIO_REPLAY_LAYER_EVIDENCE_20260519.json",
+    "claimBoundary": "docs/generated/DSXU_CLAIM_BOUNDARY_GATE_20260519.json",
+    "ownerFocusedEvidence": "docs/generated/DSXU_V7_OWNER_FOCUSED_EVIDENCE_20260519.json",
+    "remainingEvidenceQueue": "docs/generated/DSXU_V7_REMAINING_EVIDENCE_QUEUE_20260519.json",
+    "ownerDecisions": "docs/generated/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.json",
+    "safetyGate": "docs/generated/DSXU_V7_SAFETY_GATE_20260519.json"
+  },
+  "checks": [
+    {
+      "id": "all-required-reports-present",
+      "status": "PASS",
+      "detail": "inputs=14"
+    },
+    {
+      "id": "docs-and-signals-classified",
+      "status": "PASS",
+      "detail": "docs=401, p0Signals=328/328"
+    },
+    {
+      "id": "owner-review-closed",
+      "status": "PASS",
+      "detail": "ownerRows=208/208, remaining=0"
+    },
+    {
+      "id": "prompt-historical-and-delete-review-blocked",
+      "status": "PASS",
+      "detail": "deleteReviewPromptItems=0, generatedHistoricalRawDocs=0, supersededPlanRawDocs=0"
+    },
+    {
+      "id": "mainline-owner-focused-evidence-closed",
+      "status": "PASS",
+      "detail": "rows=96/96, needsFocusedOwnerTest=0, focusedFailed=0"
+    },
+    {
+      "id": "archive-and-delete-remain-observe-only",
+      "status": "PASS",
+      "detail": "archiveDeleteNow=0, deleteRows=6/6, deleteReady=0, mutationAllowed=0"
+    },
+    {
+      "id": "scenario-replay-layered-and-claim-blocked",
+      "status": "PASS",
+      "detail": "rows=300/300, mock=251/251, externalBlocked=49/49, publicClaimReady=0"
+    },
+    {
+      "id": "claim-boundary-and-safety-gate-pass",
+      "status": "PASS",
+      "detail": "c3Below=0, public90=false, safety=PASS_DSXU_V7_SAFETY_GATE, safetyBlocked=0"
+    }
+  ],
+  "nextNonV7Gates": [
+    "external benchmark/public claim still requires fixed manifest plus paired target raw transcript, tool trace, final report, artifacts, metrics, and risks",
+    "delete-review mutation still requires owner/Git signoff and explicit user deletion approval",
+    "release/clean export still requires final release preflight, secret scan, fresh install smoke, and current git owner review",
+    "live-provider claims still require explicit DeepSeek live evidence with redacted raw logs"
+  ]
+}

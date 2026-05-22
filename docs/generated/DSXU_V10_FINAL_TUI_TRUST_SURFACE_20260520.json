@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "dsxu.v10.final-tui-trust-surface",
+  "generatedAt": "2026-05-20T08:52:28.890Z",
+  "owner": "TUI Trust Surface / Evidence / Release Claim Binder",
+  "status": "PASS_V10_FINAL_TUI_TRUST_SURFACE",
+  "publicClaimAllowed": false,
+  "checks": [
+    {
+      "id": "compact-trust-evidence-line-scroll-resize",
+      "command": [
+        "bun",
+        "test",
+        "src/components/__tests__/tui-trust-surface.test.tsx",
+        "src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts",
+        "src/ink/__tests__/render-node-scroll-resize.test.ts"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 1801,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\components\\__tests__\\tui-trust-surface.test.tsx:\n(pass) V6 TUI trust surface > renders route, verification, claim, ledger, cost/cache, and agent evidence as compact status lines\n(pass) V6 TUI trust surface > uses ASCII/English state tokens by default so CJK width does not break the footer\n(pass) V6 TUI trust surface > does not show completion when verification has not run\n(pass) V6 TUI trust surface > keeps proof rows short and traceable instead of repeating evidence lists\n\nsrc\\ink\\__tests__\\render-node-scroll-resize.test.ts:\n(pass) ScrollBox resize anchoring > keeps a middle scrollback position in the middle when resize expands range\n(pass) ScrollBox resize anchoring > keeps a middle scrollback position in the middle when resize shrinks range\n(pass) ScrollBox resize anchoring > clamps into the new range instead of falling to the top\n(pass) ScrollBox resize anchoring > does not treat non-sticky viewport resize as bottom-follow\n(pass) ScrollBox resize anchoring > keeps explicit sticky bottom-follow during viewport resize\n\nsrc\\components\\messages\\__tests__\\SystemTextMessage-evidence-line.test.ts:\n(pass) shouldSuppressDsxuFinalUsageEvidence > keeps final usage evidence out of normal chat rows\n(pass) shouldSuppressDsxuFinalUsageEvidence > keeps missing-usage evidence in trust state instead of chat rows\n(pass) shouldSuppressDsxuFinalUsageEvidence > suppresses short model cost/cache evidence rows from normal chat output\n(pass) shouldSuppressDsxuFinalUsageEvidence > does not suppress ordinary system text\n\n 13 pass\n 0 fail\n 29 expect() calls\nRan 13 tests across 3 files. [1.66s]\n"
+    },
+    {
+      "id": "terminal-reliability-pack",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 31194,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\dsxu\\engine\\__tests__\\tui-terminal-reliability-pack-v1.test.ts:\n(pass) V18 TUI/Terminal Reliability Pack > produces an Excel-aligned replay for terminal state, permission visibility, background lifecycle, and TUI trace [29234.00ms]\n\n 1 pass\n 0 fail\n 25 expect() calls\nRan 1 test across 1 file. [31.07s]\n"
+    },
+    {
+      "id": "streaming-and-model-driven-health",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/model-driven-tui-long-task-v1.test.ts",
+        "src/dsxu/engine/__tests__/streaming-ui-visibility-v1.test.ts"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 1964,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\dsxu\\engine\\__tests__\\model-driven-tui-long-task-v1.test.ts:\n(pass) model-driven TUI long task V1 > counts a completed provider task as stage-close eligible only with health trace and no manual continue loop\n(pass) model-driven TUI long task V1 > records explicit auth blocks as evidence but keeps stage-close closed\n(pass) model-driven TUI long task V1 > fails hidden stalls, mojibake, and repeated manual continue loops\n(pass) model-driven TUI long task V1 > does not treat a clean shell exit as provider completion when the task never progressed\n\nsrc\\dsxu\\engine\\__tests__\\streaming-ui-visibility-v1.test.ts:\n(pass) DSXU streaming UI visibility > thinking deltas update the visible streaming thinking buffer\n(pass) DSXU streaming UI visibility > text deltas keep partial lines available to the UI\n(pass) DSXU streaming UI visibility > tool-result-ended turns request one hidden UI auto-continue\n(pass) DSXU streaming UI visibility > skill meta content after a tool result still requests UI auto-continue\n(pass) DSXU streaming UI visibility > assistant final text after tool results suppresses UI auto-continue\n(pass) DSXU streaming UI visibility > permission fallback summary exposes the pending shell command [15.00ms]\n(pass) DSXU streaming UI visibility > TUI health monitor detects hidden permission and invisible loading states\n(pass) DSXU streaming UI visibility > TUI health monitor exposes distinct visible lifecycle states\n(pass) DSXU streaming UI visibility > auth blocked footer text is explicit instead of looking like passive waiting\n(pass) DSXU streaming UI visibility > user-visible auth and API error copy is mojibake-free\n(pass) DSXU streaming UI visibility > mojibake detector catches UTF-8 text decoded through the wrong codepage\n(pass) DSXU streaming UI visibility > mojibake detector catches Latin-1 decoded UTF-8 without flagging normal accents\n(pass) DSXU streaming UI visibility > mojibake detector catches user-visible terminal replacement glyphs [16.00ms]\n\n 17 pass\n 0 fail\n 62 expect() calls\nRan 17 tests across 2 files. [1.83s]\n"
+    },
+    {
+      "id": "real-pty-long-content-resize-tail",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "-t",
+        "long-content TUI output pinned",
+        "--timeout",
+        "120000"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 23518,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\dsxu\\engine\\__tests__\\real-tui-harness-v1.test.ts:\n(pass) real TUI harness V1 > keeps long-content TUI output pinned to the tail through real PTY resize [23328.00ms]\n\n 1 pass\n 12 filtered out\n 0 fail\n 19 expect() calls\nRan 1 test across 1 file. [23.43s]\n"
+    },
+    {
+      "id": "real-pty-permission-review-resize",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "-t",
+        "permission review visible",
+        "--timeout",
+        "120000"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 23642,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\dsxu\\engine\\__tests__\\real-tui-harness-v1.test.ts:\n(pass) real TUI harness V1 > keeps permission review visible after long-content PTY resize [23437.00ms]\n\n 1 pass\n 12 filtered out\n 0 fail\n 20 expect() calls\nRan 1 test across 1 file. [23.53s]\n"
+    },
+    {
+      "id": "real-pty-middle-scrollback-resize",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "-t",
+        "middle scrollback",
+        "--timeout",
+        "120000"
+      ],
+      "status": "PASS",
+      "exitCode": 0,
+      "elapsedMs": 23668,
+      "stdoutTail": "bun test v1.3.11 (af24e281)\n",
+      "stderrTail": "\nsrc\\dsxu\\engine\\__tests__\\real-tui-harness-v1.test.ts:\n(pass) real TUI harness V1 > preserves a middle scrollback reading position through real PTY resize [23453.00ms]\n\n 1 pass\n 12 filtered out\n 0 fail\n 17 expect() calls\nRan 1 test across 1 file. [23.58s]\n"
+    }
+  ],
+  "blockers": [],
+  "coverage": [
+    "compact trust status lines",
+    "final usage/evidence line suppression",
+    "scroll resize anchoring",
+    "terminal reliability pack",
+    "streaming UI health and auth/progress states",
+    "real PTY long-content resize sticky tail",
+    "real PTY permission review visibility after resize",
+    "real PTY middle scrollback resize anchoring"
+  ],
+  "rule": "This is focused TUI trust evidence. It does not replace final six-stage acceptance or live provider benchmark evidence."
+}

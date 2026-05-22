@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "dsxu.public-comparable-dsxu-lane.v1",
+  "generatedAt": "2026-05-21T10:30:52.546Z",
+  "status": "PASS",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521",
+  "workspaceRoot": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane",
+  "rawEvidenceComplete": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "caseCount": 30,
+  "attemptedCaseCount": 1,
+  "capturedCaseCount": 1,
+  "skippedCaseCount": 0,
+  "failedCaseCount": 0,
+  "passedCaseCount": 1,
+  "nonPassingCaseCount": 0,
+  "nextAction": "run evidence:public-comparable-raw to import DSXU lane evidence; expand only after low-risk probe cases are stable",
+  "safeguards": [
+    "DSXU lane runs in per-case isolated git worktrees or injected test workspaces, never in the dirty product working tree",
+    "top-level PASS means every selected case passed its rubric; captured evidence without rubric pass is PARTIAL",
+    "this runner captures transcript/tool/final/metrics evidence but does not judge public superiority",
+    "finalPass requires a clean CLI exit, a result event, no unsupported/budget violations, and a declared outcome that matches the case rubric; deny-PASS cases can pass with FAIL when FAIL is the requested outcome",
+    "public benchmark and external comparison claims remain controlled by the raw-evidence readiness gate"
+  ],
+  "cases": [
+    {
+      "id": "v8-real-review-fix",
+      "status": "PASS_DSXU_LANE_CAPTURED",
+      "model": "deepseek-v4-flash",
+      "promptHash": "97391f14691af5a48994ba79e61f0539ce5c6eec409bf8a74c4ec215ea95bec4",
+      "caseDir": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix",
+      "workspaceDir": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane/v8-real-review-fix-2026-05-21T10-30-15-393Z",
+      "rawTranscriptPath": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix/raw-transcript.jsonl",
+      "toolTracePath": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix/tool-trace.jsonl",
+      "finalReportPath": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix/final-report.json",
+      "metricsPath": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix/metrics.json",
+      "artifactDir": ".dsxu/trace/public-comparable-finalization-rerun29-v8-final-20260521/v8-real-review-fix/artifacts",
+      "exitCode": 0,
+      "wallClockMs": 32844,
+      "costUsd": 0.0021471856000000004,
+      "cacheHitRatePct": 78.07,
+      "toolUseCount": 4,
+      "finalPass": true
+    }
+  ]
+}

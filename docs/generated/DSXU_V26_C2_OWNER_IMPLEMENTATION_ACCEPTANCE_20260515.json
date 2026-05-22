@@ -1,0 +1,252 @@
+{
+  "schemaVersion": "dsxu.v26.c2-owner-implementation-acceptance.v1",
+  "generatedAt": "2026-05-16T12:29:59.173Z",
+  "status": "PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+  "inputs": {
+    "capabilityLossBoardCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.csv",
+    "capabilityLossBoardJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_CAPABILITY_LOSS_BOARD_20260515.json",
+    "finalSignoffCsv": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_20260515.csv",
+    "finalSignoffSummary": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_C2_FINAL_ABSORPTION_SIGNOFF_SUMMARY_20260515.json",
+    "publicClaimClosure": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json"
+  },
+  "outputs": {
+    "json": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+    "csv": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.csv",
+    "markdown": "D:\\DSXU-code\\docs\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.md"
+  },
+  "gates": {
+    "finalSignoffPass": true,
+    "publicClaimBoundaryClosed": true,
+    "referenceFeatureParityClaimAllowed": false,
+    "ownerImplementationAcceptanceDecisionsClosed": true,
+    "public95ClaimAllowed": false
+  },
+  "totals": {
+    "rows": 1902,
+    "implementedTestedRows": 1096,
+    "adaptedExcludedRows": 601,
+    "noLossBaselineRows": 205,
+    "needsRealCodeTestRows": 0,
+    "p0Rows": 170,
+    "p1Rows": 494,
+    "priorBlockedPublicClaimRows": 914,
+    "publicClaimClosureStatus": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+    "capabilityLossBoardStatus": "OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED"
+  },
+  "counts": {
+    "byAcceptanceDecision": {
+      "implemented+tested": 1096,
+      "adapted/excluded": 601,
+      "no-loss baseline": 205
+    },
+    "byOwnerPacket": {
+      "V20-OGR-06-ui-tui-visible-state": 682,
+      "V20-OGR-03-tool-permission-lifecycle": 310,
+      "V20-OGR-12-shared-platform-utilities": 242,
+      "V20-OGR-04-mcp-skill-plugin-registry": 185,
+      "V20-OGR-08-cli-command-transport": 176,
+      "V20-OGR-07-provider-migration-model-cost": 141,
+      "V20-OGR-05-agent-task-lifecycle": 111,
+      "V20-OGR-10-entry-query-tool-composition": 34,
+      "V20-OGR-09-dsxu-engine-mainline": 21
+    },
+    "byRiskPriority": {
+      "P3": 1103,
+      "P1": 494,
+      "P0": 170,
+      "P2": 135
+    },
+    "byFinalDecision": {
+      "C2_MAINLINE_ABSORPTION_SIGNED_BY_NAMED_OWNER": 988,
+      "C2_PRODUCT_SPECIFIC_REFERENCE_EXCLUDED_OR_ADAPTED": 594,
+      "C2_SHARED_UTILITY_BASELINE_PRESENT_NO_NEW_ABSORPTION": 201,
+      "C2_SHARED_UTILITY_KEEP_WITH_IMPORT_USE_EVIDENCE": 73,
+      "C2_REVIEW_CANDIDATE_MAPPED_TO_NAMED_OWNER": 35,
+      "C2_REVIEW_CANDIDATE_EXCLUDED_OR_ADAPTED_BY_OWNER": 7,
+      "C2_SHARED_UTILITY_NOT_IMPORTED_TO_DSXU_NO_ABSORPTION": 4
+    }
+  },
+  "loopAcceptanceOrder": [
+    {
+      "loop": "Visible Work-State",
+      "acceptanceOwner": "V26-2 Senior Programmer Work-State Timeline",
+      "rows": 1579,
+      "implementedTested": 911,
+      "adaptedExcluded": 541,
+      "noLossBaseline": 127,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 426,
+      "blockedPublicClaim": 754
+    },
+    {
+      "loop": "Tool/Permission",
+      "acceptanceOwner": "V26-4 Tool / Permission / Recovery Mainline",
+      "rows": 1520,
+      "implementedTested": 827,
+      "adaptedExcluded": 549,
+      "noLossBaseline": 144,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 443,
+      "blockedPublicClaim": 794
+    },
+    {
+      "loop": "Source Truth Repair",
+      "acceptanceOwner": "V26-4 Source Truth Repair Loop",
+      "rows": 1516,
+      "implementedTested": 815,
+      "adaptedExcluded": 543,
+      "noLossBaseline": 158,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 439,
+      "blockedPublicClaim": 801
+    },
+    {
+      "loop": "DeepSeek Runtime",
+      "acceptanceOwner": "V26-3 DeepSeek Runtime Excellence",
+      "rows": 1464,
+      "implementedTested": 747,
+      "adaptedExcluded": 586,
+      "noLossBaseline": 131,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 472,
+      "blockedPublicClaim": 807
+    },
+    {
+      "loop": "Context Recovery",
+      "acceptanceOwner": "V26-2/V26-4 Long Task Recovery",
+      "rows": 1394,
+      "implementedTested": 766,
+      "adaptedExcluded": 513,
+      "noLossBaseline": 115,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 396,
+      "blockedPublicClaim": 720
+    },
+    {
+      "loop": "MCP/Skill Ecosystem",
+      "acceptanceOwner": "V26-5 Ecosystem Compatibility Capability Pack",
+      "rows": 912,
+      "implementedTested": 408,
+      "adaptedExcluded": 445,
+      "noLossBaseline": 59,
+      "needsRealCodeTest": 0,
+      "p0": 170,
+      "p1": 308,
+      "blockedPublicClaim": 564
+    }
+  ],
+  "ownerAcceptanceMatrix": [
+    {
+      "ownerPacket": "V20-OGR-12-shared-platform-utilities",
+      "rows": 242,
+      "p0": 40,
+      "p1": 89,
+      "blockedPublicClaim": 242,
+      "implementedTested": 80,
+      "adaptedExcluded": 132,
+      "noLossBaseline": 30,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-06-ui-tui-visible-state",
+      "rows": 682,
+      "p0": 33,
+      "p1": 157,
+      "blockedPublicClaim": 253,
+      "implementedTested": 434,
+      "adaptedExcluded": 144,
+      "noLossBaseline": 104,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-03-tool-permission-lifecycle",
+      "rows": 310,
+      "p0": 33,
+      "p1": 57,
+      "blockedPublicClaim": 101,
+      "implementedTested": 209,
+      "adaptedExcluded": 89,
+      "noLossBaseline": 12,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-04-mcp-skill-plugin-registry",
+      "rows": 185,
+      "p0": 20,
+      "p1": 65,
+      "blockedPublicClaim": 96,
+      "implementedTested": 89,
+      "adaptedExcluded": 85,
+      "noLossBaseline": 11,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-07-provider-migration-model-cost",
+      "rows": 141,
+      "p0": 18,
+      "p1": 45,
+      "blockedPublicClaim": 90,
+      "implementedTested": 54,
+      "adaptedExcluded": 50,
+      "noLossBaseline": 37,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-08-cli-command-transport",
+      "rows": 176,
+      "p0": 8,
+      "p1": 43,
+      "blockedPublicClaim": 60,
+      "implementedTested": 124,
+      "adaptedExcluded": 49,
+      "noLossBaseline": 3,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-09-dsxu-engine-mainline",
+      "rows": 21,
+      "p0": 7,
+      "p1": 13,
+      "blockedPublicClaim": 21,
+      "implementedTested": 0,
+      "adaptedExcluded": 21,
+      "noLossBaseline": 0,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-10-entry-query-tool-composition",
+      "rows": 34,
+      "p0": 6,
+      "p1": 8,
+      "blockedPublicClaim": 17,
+      "implementedTested": 18,
+      "adaptedExcluded": 13,
+      "noLossBaseline": 3,
+      "needsRealCodeTest": 0
+    },
+    {
+      "ownerPacket": "V20-OGR-05-agent-task-lifecycle",
+      "rows": 111,
+      "p0": 5,
+      "p1": 17,
+      "blockedPublicClaim": 34,
+      "implementedTested": 88,
+      "adaptedExcluded": 18,
+      "noLossBaseline": 5,
+      "needsRealCodeTest": 0
+    }
+  ],
+  "rules": [
+    "Every row must resolve to exactly one of: implemented+tested, adapted/excluded, no-loss baseline, needs real code/test.",
+    "implemented+tested means DSXU owner evidence exists; it does not mean reference-product feature parity.",
+    "adapted/excluded rows must not copy product-specific source, prompts, UI copy, brand, subscription, or commercial behavior.",
+    "no-loss baseline rows may not be marketed as new product features.",
+    "public95ClaimAllowed remains false until fixed public raw benchmark and same-task external/target raw evidence raise the score floor to 95 or higher."
+  ],
+  "nextAction": "Proceed to public benchmark truth: fixed raw live tasks and same-task target/reference raw transcripts before any public 95 or superiority claim."
+}

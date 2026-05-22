@@ -1,0 +1,313 @@
+{
+  "schemaVersion": "dsxu.v3.cache-first.followup-tracker.v1",
+  "generatedAt": "2026-05-21",
+  "owner": "DeepSeek route/cost/cache + finalization + training V2",
+  "goal": "Prioritize cache-hit optimization closure, then run 14 finalization non-pass replays, then close V2 training/evidence gaps.",
+  "claimBoundary": "Dry-run cache reports and internal training reports are engineering evidence only. Real cache-hit claims require live provider A/B usage evidence; current live A/B proves one repeated stable prefix only, not whole-product long-task cost.",
+  "executionOrder": [
+    "cache_optimization_closure",
+    "finalization_14_non_pass_replay",
+    "training_v2_gap_closure",
+    "evidence_dashboard_refresh"
+  ],
+  "records": [
+    {
+      "id": "C1",
+      "track": "cache",
+      "status": "done",
+      "task": "cache:warm defaults to runtime stable prefix dry-run when no explicit prefix is provided",
+      "verification": "bun run cache:warm --dry-run",
+      "acceptance": "warmedKeys >= 1 and output redacts full prompt"
+    },
+    {
+      "id": "C2",
+      "track": "cache",
+      "status": "done",
+      "task": "refresh hash-only cache reality run",
+      "verification": "bun run cache:reality-run",
+      "acceptance": "PASS_CACHE_REALITY_DRY_RUN, boundaryFound=true, publicReportHashOnly=true"
+    },
+    {
+      "id": "C3",
+      "track": "cache",
+      "status": "done",
+      "task": "run cache live A/B dry-run before any provider execution",
+      "verification": "bun run cache:live-ab",
+      "acceptance": "DRY_RUN_CACHE_LIVE_AB and didCallProvider=false; live mode requires explicit --execute-live"
+    },
+    {
+      "id": "C4",
+      "track": "cache",
+      "status": "done",
+      "task": "default prompt chain includes stable/dynamic boundary and adapter strips marker",
+      "verification": "bun test src/services/__tests__/cache-warmer.test.ts src/services/api/deepseek-adapter-cache-prefix-v1.test.ts",
+      "acceptance": "stable prefix excludes dynamic cwd/env/task tail; adapter sends no boundary marker"
+    },
+    {
+      "id": "C5",
+      "track": "cache",
+      "status": "done",
+      "task": "sticky routing is observe by default and enforce only by opt-in",
+      "verification": "bun test src/dsxu/engine/__tests__/api-service.test.ts",
+      "acceptance": "default observe does not block Pro upgrade; explicit enforce locks the session model"
+    },
+    {
+      "id": "C6",
+      "track": "cache",
+      "status": "done_live_internal",
+      "task": "prove real cache behavior with provider usage for one repeated stable prefix",
+      "verification": "bun run scripts/dsxu-cache-live-ab.ts --execute-live --rounds 3 --timeout-ms 60000 --out docs/generated/DSXU_CACHE_LIVE_AB_20260521.json",
+      "acceptance": "PASS_CACHE_LIVE_AB, didCallProvider=true, firstHitRatePct=0, lastHitRatePct=99.6; supports internal cache tuning only, not public benchmark claims"
+    },
+    {
+      "id": "F1",
+      "track": "finalization",
+      "status": "ran_partial",
+      "task": "run 14 finalization non-pass replays",
+      "verification": "bun run evidence:public-comparable-dsxu",
+      "acceptance": "not yet met; latest run remains 16/30 pass and 14 non-pass"
+    },
+    {
+      "id": "F2",
+      "track": "finalization",
+      "status": "done",
+      "task": "focused finalization gate tests",
+      "verification": "bun test src/dsxu/engine/__tests__/query-message-shape-guard-v1.test.ts src/dsxu/engine/__tests__/tool-batch-gate-classification-v1.test.ts",
+      "acceptance": "focused finalization tests pass"
+    },
+    {
+      "id": "V2-1",
+      "track": "training_v2",
+      "status": "done",
+      "task": "add training:v2 script entrypoint",
+      "verification": "bun run training:v2",
+      "acceptance": "PASS_INTERNAL_TRAINING_FLYWHEEL"
+    },
+    {
+      "id": "V2-2",
+      "track": "training_v2",
+      "status": "open",
+      "task": "replace synthetic/internal-only V2 proof with real captured DSXU lane trajectories",
+      "verification": "run V2 against rawTranscriptPath/toolTracePath/finalReport/metrics.json",
+      "acceptance": "real captured trajectory pack passes without public claim overreach"
+    },
+    {
+      "id": "V2-3",
+      "track": "evidence",
+      "status": "open",
+      "task": "refresh evidence dashboard after cache/finalization/V2 checks",
+      "verification": "bun run evidence:dashboard",
+      "acceptance": "no new fail gates; remaining public/release blockers stay explicit"
+    },
+    {
+      "id": "C7",
+      "track": "cache",
+      "status": "done",
+      "task": "record onCacheMiss as dry-run ledger event only",
+      "verification": "bun test src/dsxu/engine/__tests__/wave2.test.ts",
+      "acceptance": "CacheMonitor stores dry-run warmup events after consecutive misses; no provider call, no synchronous warmup, no active-turn latency added"
+    },
+    {
+      "id": "C8",
+      "track": "cache",
+      "status": "done",
+      "task": "add querySource lane-level statistics and recommendations without forced merge",
+      "verification": "bun test src/services/__tests__/cache-prefix-registry.test.ts",
+      "acceptance": "lane stats expose sampleCount/statusCounts/querySources/workflowKinds/models and state no forced querySource merge"
+    },
+    {
+      "id": "C9",
+      "track": "cache",
+      "status": "done",
+      "task": "rename placeholder cache prefixes so they cannot be mistaken for runtime defaults",
+      "verification": "rg -n \"DEFAULT_PREFIXES|LEGACY_PLACEHOLDER_PREFIXES\" src scripts docs",
+      "acceptance": "DEFAULT_PREFIXES no longer exists; LEGACY_PLACEHOLDER_PREFIXES is opt-in via allowPlaceholderPrefixes only"
+    },
+    {
+      "id": "C10",
+      "track": "cache",
+      "status": "done_internal",
+      "task": "cache hit-rate closure report with live A/B evidence, dry-run safety, lane stats, and claim boundary",
+      "verification": "bun run cache:closure",
+      "acceptance": "PASS_CACHE_HIT_CLOSURE_INTERNAL, internalCacheClaimAllowed=true, publicClaimAllowed=false, blockers=[]"
+    }
+  ],
+  "latestRuns": [
+    {
+      "command": "bun run cache:warm --dry-run",
+      "status": "pass",
+      "summary": "warmedKeys=1, failedKeys=0, did not call provider, stable prefix hash 9c54e02b6ba96ca2"
+    },
+    {
+      "command": "bun run cache:live-ab",
+      "status": "pass_dry_run",
+      "summary": "DRY_RUN_CACHE_LIVE_AB, didCallProvider=false, blockers=[]"
+    },
+    {
+      "command": "bun run cache:reality-run",
+      "status": "pass_dry_run",
+      "summary": "PASS_CACHE_REALITY_DRY_RUN, stablePrefixApproxTokens=5963, dynamicTailApproxTokens=3483"
+    },
+    {
+      "command": "bun test cache/finalization focused suite",
+      "status": "pass",
+      "summary": "75 pass, 0 fail"
+    },
+    {
+      "command": "bun run training:v2",
+      "status": "pass_internal",
+      "summary": "PASS_INTERNAL_TRAINING_FLYWHEEL"
+    },
+    {
+      "command": "bun run evidence:public-comparable-dsxu",
+      "status": "partial",
+      "summary": "passedCaseCount=16, nonPassingCaseCount=14"
+    },
+    {
+      "command": "bun run evidence:dashboard",
+      "status": "release_blocked",
+      "summary": "scoreFloor=72, pass=136, fail=0, blocked=1, claimBlocked=3"
+    },
+    {
+      "command": "bun run scripts/dsxu-cache-live-ab.ts --execute-live --rounds 3 --timeout-ms 60000 --out docs/generated/DSXU_CACHE_LIVE_AB_20260521.json",
+      "status": "pass_live_internal",
+      "summary": "PASS_CACHE_LIVE_AB; didCallProvider=true; prefixHash=9c54e02b6ba96ca2; firstHitRatePct=0; lastHitRatePct=99.6; rounds=3"
+    },
+    {
+      "command": "bun test cache/route/monitor focused suite",
+      "status": "pass",
+      "summary": "99 pass, 0 fail across cache-prefix-registry, cache-monitor, cache-warmer, cache-live-ab, cache-reality-run, prompt-cache-break-detection, api-service, deepseek adapter tests"
+    },
+    {
+      "command": "bun run cache:closure",
+      "status": "pass_internal",
+      "summary": "PASS_CACHE_HIT_CLOSURE_INTERNAL; internalCacheClaimAllowed=true; publicClaimAllowed=false; lastHitRatePct=99.6; blockers=0"
+    }
+  ],
+  "nonPassingCases": [
+    {
+      "id": "governance-query-recovery-live",
+      "exitCode": 0,
+      "toolUseCount": 3,
+      "cacheHitRatePct": 63.58,
+      "initialOwner": "recovery evidence budget"
+    },
+    {
+      "id": "governance-skills-selection-live",
+      "exitCode": 0,
+      "toolUseCount": 5,
+      "cacheHitRatePct": 52.76,
+      "initialOwner": "skill selection evidence"
+    },
+    {
+      "id": "todo-task-closeout",
+      "exitCode": 0,
+      "toolUseCount": 3,
+      "cacheHitRatePct": 68.17,
+      "initialOwner": "closeout rubric"
+    },
+    {
+      "id": "compact-state-preservation",
+      "exitCode": 0,
+      "toolUseCount": 5,
+      "cacheHitRatePct": 41.82,
+      "initialOwner": "compact state evidence"
+    },
+    {
+      "id": "product-workflow-recovery-live",
+      "exitCode": 0,
+      "toolUseCount": 4,
+      "cacheHitRatePct": 80.55,
+      "initialOwner": "workflow recovery evidence"
+    },
+    {
+      "id": "product-compact-two-phase-live",
+      "exitCode": 1,
+      "toolUseCount": 10,
+      "cacheHitRatePct": 55.73,
+      "initialOwner": "strict final JSON / exit"
+    },
+    {
+      "id": "product-agent-worker-longrun-live",
+      "exitCode": 1,
+      "toolUseCount": 6,
+      "cacheHitRatePct": 77.58,
+      "initialOwner": "agent long-run exit"
+    },
+    {
+      "id": "product-agent-failure-correction-live",
+      "exitCode": 0,
+      "toolUseCount": 6,
+      "cacheHitRatePct": 77.41,
+      "initialOwner": "agent correction evidence"
+    },
+    {
+      "id": "product-real-mcp-task-live",
+      "exitCode": 1,
+      "toolUseCount": 13,
+      "cacheHitRatePct": 42.43,
+      "initialOwner": "real MCP task exit"
+    },
+    {
+      "id": "v8-real-review-fix",
+      "exitCode": 1,
+      "toolUseCount": 8,
+      "cacheHitRatePct": 72.23,
+      "initialOwner": "review fix exit"
+    },
+    {
+      "id": "tool-prompt-read-edit-cache-golden",
+      "exitCode": 1,
+      "toolUseCount": 12,
+      "cacheHitRatePct": 39.56,
+      "initialOwner": "read/edit/cache golden exit"
+    },
+    {
+      "id": "mutation-tool-prompt-read-edit-cache-live",
+      "exitCode": 0,
+      "toolUseCount": 11,
+      "cacheHitRatePct": 54.4,
+      "initialOwner": "mutation rubric"
+    },
+    {
+      "id": "mutation-real-mcp-resource-guided-fix-live",
+      "exitCode": 1,
+      "toolUseCount": 13,
+      "cacheHitRatePct": 56.33,
+      "initialOwner": "MCP resource-guided fix exit"
+    },
+    {
+      "id": "experience-agent-team-governance-live",
+      "exitCode": 1,
+      "toolUseCount": 23,
+      "cacheHitRatePct": 79.71,
+      "initialOwner": "agent team governance long task exit"
+    }
+  ],
+  "latestCacheLiveAb": {
+    "status": "PASS_CACHE_LIVE_AB",
+    "mode": "live",
+    "didCallProvider": true,
+    "prefixHash": "9c54e02b6ba96ca2",
+    "firstHitRatePct": 0,
+    "lastHitRatePct": 99.6,
+    "hitRateDeltaPct": 99.6,
+    "publicClaimAllowed": false,
+    "reportPath": "docs/generated/DSXU_CACHE_LIVE_AB_20260521.json"
+  },
+  "latestCacheHitClosure": {
+    "status": "PASS_CACHE_HIT_CLOSURE_INTERNAL",
+    "internalCacheClaimAllowed": true,
+    "publicClaimAllowed": false,
+    "firstHitRatePct": 0,
+    "lastHitRatePct": 99.6,
+    "hitRateDeltaPct": 99.6,
+    "sourceSafety": {
+      "dryRunDefault": true,
+      "placeholderPrefixesOptInOnly": true,
+      "onCacheMissDryRunLedgerOnly": true,
+      "laneStatsAvailable": true
+    },
+    "reportPath": "docs/generated/DSXU_CACHE_HIT_CLOSURE_20260521.json"
+  }
+}

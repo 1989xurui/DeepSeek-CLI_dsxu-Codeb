@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "dsxu.final-agent-tool-pairing.v10",
+  "generatedAt": "2026-05-20T08:50:41.578Z",
+  "owner": "Agent Evidence / Tool Gate / MCP Skill Boundary",
+  "status": "PASS_V10_FINAL_AGENT_TOOL_PAIRING",
+  "publicClaimAllowed": false,
+  "toolPack": {
+    "packId": "tool-evidence-v10-final-turn-agent-tool-toolu-v10-final-edit-1000",
+    "validation": {
+      "valid": true,
+      "missingFields": [],
+      "violations": []
+    },
+    "finalProjection": {
+      "toolId": "Edit",
+      "originalToolId": "Edit",
+      "status": "success",
+      "visibleState": "completed",
+      "permission": "granted",
+      "gate": "allow",
+      "traceId": "tool-approval-1779267041575",
+      "artifacts": [
+        "docs/generated/DSXU_V10_FINAL_AGENT_TOOL_PAIRING_20260520.json"
+      ],
+      "canonicalResultSchema": "dsxu.tool-call-result.v1",
+      "runtimeEventSchema": "dsxu.runtime-event.v1",
+      "toolResultBoundaryKind": "legacy",
+      "toolResultOutputChars": 53
+    }
+  },
+  "agentValidation": {
+    "schemaVersion": "dsxu.agent-worker-evidence-envelope-validation.v1",
+    "owner": "Agent Evidence Handoff",
+    "workerId": "worker-v10-evidence-verifier",
+    "valid": true,
+    "guards": [],
+    "evidenceIds": [
+      "agent-evidence:worker-v10-evidence-verifier"
+    ],
+    "parentFinalCitations": [
+      "agent-evidence:worker-v10-evidence-verifier"
+    ],
+    "returnedTranscriptChars": 640
+  },
+  "boundaryBoard": {
+    "schemaVersion": "dsxu.agent-mcp-skill-boundary.v1",
+    "generatedAt": "2026-05-20T08:50:41.577Z",
+    "status": "PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE",
+    "metrics": {
+      "agentWorkers": 1,
+      "completedOrPartialWorkers": 1,
+      "citedWorkers": 1,
+      "selectedSkills": 1,
+      "governedSkills": 2,
+      "mcpAdapters": 1,
+      "verifiedMcpAdapters": 1,
+      "maxReturnedTranscriptChars": 2000
+    },
+    "guards": [],
+    "allowedClaims": [
+      "DSXU agents may be described as serial/parallel workers only when parent finals cite summary/path/hash/evidence envelopes.",
+      "DSXU skills may be described as registry-governed extensions with priority and conflict evidence.",
+      "DSXU MCP may be described as Tool Gate governed adapter intake with schema verification and secret redaction evidence."
+    ],
+    "blockedClaims": [
+      "Do not claim swarm, agent-of-agents, manager mesh, or autonomous background polling runtime.",
+      "Do not claim arbitrary skill marketplace execution without DSXU registry priority/conflict and Tool Gate evidence.",
+      "Do not claim standalone MCP runtime or direct external-tool execution outside DSXU Tool Gate.",
+      "Do not claim worker PASS from uncited child transcript or raw transcript bloat."
+    ],
+    "ownerCoverage": {
+      "agentEvidenceEnvelope": true,
+      "parentSynthesisGuard": true,
+      "skillPriorityConflict": true,
+      "skillGovernance": true,
+      "mcpSchema": true,
+      "mcpSecretRedaction": true,
+      "dsxuToolGateBoundary": true,
+      "noStandaloneRuntime": true,
+      "sourceAndTests": true
+    },
+    "compactPanelLines": [
+      "Agent evidence: workers=1 cited=1/1",
+      "Skill registry: selected=1 governed=2/2",
+      "MCP adapters: verified=1/1",
+      "Boundary: toolGate=true standaloneRuntime=false",
+      "Status: PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE"
+    ],
+    "finalReportSection": {
+      "title": "Agent/MCP/Skill Boundary",
+      "status": "ready",
+      "summary": [
+        "status=PASS_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE",
+        "agentWorkers=1",
+        "citedWorkers=1/1",
+        "selectedSkills=1",
+        "verifiedMcpAdapters=1/1",
+        "noStandaloneRuntime=true"
+      ],
+      "evidence": [
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts",
+        "src/dsxu/engine/tool-evidence-pack-v1.ts",
+        "src/dsxu/engine/tool-protocol.ts",
+        "src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "src/dsxu/engine/__tests__/tool-evidence-pack-v1.test.ts",
+        "agent-evidence:worker-v10-evidence-verifier",
+        "skill-selection:dsxu-v10-evidence-review",
+        "skill-discarded:secondary-reference-helper",
+        "mcp-adapter:docs-search"
+      ]
+    }
+  },
+  "blockers": [],
+  "rule": "Agent/tool pairing evidence proves compact agent handoff plus canonical tool result projection. It does not create a swarm runtime, skill marketplace claim, or standalone MCP runtime."
+}

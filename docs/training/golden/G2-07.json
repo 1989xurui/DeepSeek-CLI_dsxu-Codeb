@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "dsxu.training-fixture.v1",
+  "fixtureId": "G2-07",
+  "category": "multi-file",
+  "description": "multi-file negative: verification catches missed import/call point",
+  "expected": {
+    "validationStatus": "accepted",
+    "seesRange": [
+      0,
+      80
+    ]
+  },
+  "trajectory": {
+    "schemaVersion": "dsxu.training-trajectory.v1",
+    "generatedAt": "2026-05-20T09:45:50.509Z",
+    "task": {
+      "taskId": "G2-07",
+      "category": "multi-file",
+      "intent": "Golden sample G2-07",
+      "riskLevel": "medium",
+      "acceptanceCriteria": [
+        "expected validation status matches",
+        "expected SEES range matches"
+      ],
+      "claimScope": "internal"
+    },
+    "intentUnderstanding": {
+      "interpretedGoal": "Golden sample G2-07",
+      "constraints": [],
+      "explicitNoEdit": false,
+      "missingInfo": [],
+      "riskClassification": "medium"
+    },
+    "stateTrace": [
+      {
+        "state": "plan",
+        "allowedTransition": true,
+        "transitionReason": "initial state",
+        "attemptCount": 1
+      },
+      {
+        "state": "retrieve",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "retrieve",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "verify",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      }
+    ],
+    "toolTrace": [
+      {
+        "toolUseId": "G2-07-tool-1",
+        "toolName": "Read",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "allow",
+        "resultPaired": true,
+        "outputChars": 29,
+        "ok": true,
+        "outputHash": "b7f2ba14d31b0d61"
+      }
+    ],
+    "sourceTruth": {
+      "filesRead": [
+        "src/example.ts"
+      ],
+      "rangesRead": [
+        "src/example.ts:1-80"
+      ],
+      "readFreshness": "fresh",
+      "staleReadDetected": false,
+      "sourceBodyStored": false,
+      "evidenceHashes": [
+        "97fe67fd468a60dc"
+      ]
+    },
+    "verification": {
+      "commands": [
+        "bun test src/example.test.ts"
+      ],
+      "passed": false,
+      "claimBound": false,
+      "failureSignature": "missing-import",
+      "localizedFeedbackPresent": true,
+      "artifactPaths": []
+    },
+    "recovery": {
+      "failureClass": "missing_import",
+      "localizedFiles": [
+        "src/example.ts"
+      ],
+      "changedStrategy": true,
+      "nextAction": "add missing import and rerun tests",
+      "recoveryDecision": "replan"
+    },
+    "contextMemory": {
+      "goalPreserved": true,
+      "resumePoint": "current-turn",
+      "openObligations": [
+        "build golden sample plan"
+      ],
+      "compactOccurred": false,
+      "sourceRereadAfterResume": false
+    },
+    "costRoute": {
+      "model": "deepseek-v4-flash",
+      "routeReason": "golden-fixture",
+      "estimatedCostUsd": 0.0001,
+      "cacheHitInputTokens": 100,
+      "cacheMissInputTokens": 20,
+      "proAdmissionJustified": false
+    },
+    "antiCheat": {
+      "oracleLeakFlag": false,
+      "solutionArtifactFlag": false,
+      "oldReportFlag": false,
+      "testOnlyFixFlag": false,
+      "publicClaimAllowed": true
+    },
+    "communication": {
+      "userVisibleSummary": "partial golden sample",
+      "verifiedFacts": [],
+      "unverifiedRisks": [
+        "verification not passed"
+      ],
+      "overclaimDetected": false
+    },
+    "outcome": {
+      "status": "partial",
+      "finalClaim": "partial golden sample",
+      "verified": false,
+      "publicClaimAllowed": false
+    },
+    "scores": {
+      "taskSuccessScore": 60,
+      "complexCodingScore": 60,
+      "longTaskScore": 60,
+      "verificationEvidenceScore": 20,
+      "recoveryScore": 30,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 90,
+      "sees": 59
+    }
+  }
+}

@@ -1,0 +1,496 @@
+{
+  "schemaVersion": "dsxu.v24.section-4-5-experience-loop-audit.v1",
+  "generatedAt": "2026-05-15T09:32:00.904Z",
+  "status": "PASS_SECTION_4_5_CODE_TEST_LIVE_AUDIT_WITH_LONG_WINDOW_BLOCKER",
+  "commandPass": true,
+  "loopPass": true,
+  "c2FileCountPass": true,
+  "flashPass": true,
+  "proWasRun": false,
+  "flashReviewCostUSD": 0.0056763280000000004,
+  "loopCount": 15,
+  "passedLoopCount": 15,
+  "continuousWindowSatisfied": false,
+  "final95ClaimAllowed": false,
+  "commandRuns": [
+    {
+      "id": "section45-completed-reacceptance",
+      "command": [
+        "bun",
+        "run",
+        "v24:completed-reacceptance"
+      ],
+      "exitCode": 0,
+      "durationMs": 55585,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-completed-reacceptance-2026-05-15T09-20-22-976Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-completed-reacceptance-2026-05-15T09-20-22-976Z.stderr.log"
+    },
+    {
+      "id": "section45-c2-loop-acceptance",
+      "command": [
+        "bun",
+        "run",
+        "v24:c2-loop-acceptance"
+      ],
+      "exitCode": 0,
+      "durationMs": 47807,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-c2-loop-acceptance-2026-05-15T09-21-18-561Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-c2-loop-acceptance-2026-05-15T09-21-18-561Z.stderr.log"
+    },
+    {
+      "id": "section45-c2-1902-file-join",
+      "command": [
+        "bun",
+        "run",
+        "v24:c2-1902-evidence-join"
+      ],
+      "exitCode": 0,
+      "durationMs": 856,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-c2-1902-file-join-2026-05-15T09-22-06-368Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-c2-1902-file-join-2026-05-15T09-22-06-368Z.stderr.log"
+    },
+    {
+      "id": "section45-complex-task-pack",
+      "command": [
+        "bun",
+        "run",
+        "v24:complex-task"
+      ],
+      "exitCode": 0,
+      "durationMs": 550836,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-complex-task-pack-2026-05-15T09-22-07-224Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-complex-task-pack-2026-05-15T09-22-07-224Z.stderr.log"
+    }
+  ],
+  "loopAudits": [
+    {
+      "id": "P01",
+      "loop": "Goal / Intent / Session Loop",
+      "owner": "Query Loop",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "2/2",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/query-loop.ts",
+        "src/QueryEngine.ts",
+        "src/dsxu/engine/query-loop-gate-state-v1.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts",
+        "src/dsxu/engine/__tests__/same-window-topic-boundary-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P02",
+      "loop": "Visible Work-State Loop",
+      "owner": "UI/TUI Work-State",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "2/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "2/2",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/integration/harness/real-tui-harness.ts",
+        "src/components/PromptInput.tsx",
+        "src/dsxu/engine/final-report-usage-evidence.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "src/dsxu/engine/__tests__/streaming-ui-visibility-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+        ".dsxu/trace/v24-interactive-tui-acceptance"
+      ]
+    },
+    {
+      "id": "P03",
+      "loop": "Tool Lifecycle Loop",
+      "owner": "Tool Gate",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "4/4",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/Tool.ts",
+        "src/tools.ts",
+        "src/dsxu/engine/tool-evidence-pack-v1.ts",
+        "src/dsxu/engine/adapters/bash-adapter.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts"
+      ],
+      "liveEvidence": [
+        ".dsxu/trace/v24-c2-loop-real-acceptance/tool-permission-regression-2026-05-15T07-18-27-204Z.stdout.log"
+      ]
+    },
+    {
+      "id": "P04",
+      "loop": "Permission / Safety Loop",
+      "owner": "Permission Gate",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/hooks/useCanUseTool.tsx",
+        "src/types/permissions.ts",
+        "src/dsxu/engine/permissions.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/permissions.test.ts",
+        "src/dsxu/engine/__tests__/allowed-tools-permission-floor-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P05",
+      "loop": "Source Truth / Coding Loop",
+      "owner": "Coding Workflow",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/engine/runtime-evidence-collector-v1.ts",
+        "src/dsxu/engine/release-test-gate.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-test-gate-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P06",
+      "loop": "Plan / Todo / Task Loop",
+      "owner": "Task State",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/runtime/task/model.ts",
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/engine/runtime-evidence-collector-v1.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/query-loop-visible-copy-v1.test.ts",
+        "src/dsxu/engine/__tests__/tool-use-summary-governance-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P07",
+      "loop": "Agent Delegation Loop",
+      "owner": "Agent Lifecycle",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/forked-agent.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/tools/AgentTool/forkSubagent.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts"
+      ],
+      "liveEvidence": [
+        ".dsxu/trace/v24-c2-loop-real-acceptance/agent-mcp-skill-regression-2026-05-15T07-18-31-377Z.stdout.log"
+      ]
+    },
+    {
+      "id": "P08",
+      "loop": "Context / Memory / Compact Loop",
+      "owner": "Context Recovery",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/dsxu-session-cache-control.ts",
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/integration/harness/real-tui-harness.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/context-hygiene-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-recovery-bridge-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P09",
+      "loop": "Failure / Recovery Loop",
+      "owner": "Recovery",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "2/2",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/integration/harness/recovery-query-loop-v3-harness.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/recovery-query-loop-v3.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-gear-box-recovery-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json"
+      ]
+    },
+    {
+      "id": "P10",
+      "loop": "Model / Cost / Cache Loop",
+      "owner": "DeepSeek Model Router",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "2/2",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/dsxu/engine/v19-cost-cache-live-task-evidence.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/v19-cost-cache-live-task-evidence-v1.test.ts",
+        "src/dsxu/engine/__tests__/cold-mode-cost-planning-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.json",
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json"
+      ]
+    },
+    {
+      "id": "P11",
+      "loop": "MCP / Skill / Plugin Loop",
+      "owner": "MCP/Skill Registry",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/services/mcp/client.ts",
+        "src/services/mcp/MCPConnectionManager.tsx",
+        "src/dsxu/engine/skills-registry-v1.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/mcp-client.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts"
+      ],
+      "liveEvidence": [
+        ".dsxu/trace/v24-c2-loop-real-acceptance/agent-mcp-skill-regression-2026-05-15T07-18-31-377Z.stdout.log"
+      ]
+    },
+    {
+      "id": "P12",
+      "loop": "IDE / Remote / API Loop",
+      "owner": "IDE/API Bridge",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/api-service.ts",
+        "src/services/mcp/vscodeSdkMcp.ts",
+        "src/dsxu/engine/release-surface-source-policy-review-v1.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/api-service.test.ts",
+        "src/dsxu/engine/__tests__/remote-lifecycle-v1.test.ts"
+      ],
+      "liveEvidence": [
+        ".dsxu/trace/v24-c2-loop-real-acceptance/api-remote-evidence-regression-2026-05-15T07-18-56-597Z.stdout.log"
+      ]
+    },
+    {
+      "id": "P13",
+      "loop": "Browser / External Action Loop",
+      "owner": "External Tool Provider",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/integration/harness/browser-dev-server-proof-v1-harness.ts",
+        "src/utils/browser.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/browser-dev-server-proof-v1.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner-v20.test.ts"
+      ],
+      "liveEvidence": [
+        ".dsxu/trace/v24-c2-loop-real-acceptance/external-release-regression-2026-05-15T07-18-36-039Z.stdout.log"
+      ]
+    },
+    {
+      "id": "P14",
+      "loop": "Telemetry / Evidence / Report Loop",
+      "owner": "Evidence",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/runtime-evidence-collector-v1.ts",
+        "src/dsxu/engine/final-report-usage-evidence.ts",
+        "src/dsxu/engine/raw-evidence-readiness-register-v1.ts"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/final-report-usage-evidence-v1.test.ts",
+        "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json"
+      ]
+    },
+    {
+      "id": "P15",
+      "loop": "Release / Doctor / Install Loop",
+      "owner": "Release",
+      "codeEvidencePresent": true,
+      "sourceFilesPresent": "3/3",
+      "testEvidencePresent": true,
+      "testFilesPresent": "2/2",
+      "liveEvidencePresent": true,
+      "liveEvidencePresentCount": "1/1",
+      "status": "PASS_CODE_TEST_LIVE_EVIDENCE_LINKED",
+      "sourceFiles": [
+        "src/dsxu/engine/release-test-gate.ts",
+        "src/dsxu/engine/v18-release-provenance-gate.ts",
+        "src/commands/doctor/doctor.tsx"
+      ],
+      "testFiles": [
+        "src/dsxu/engine/__tests__/release-surface-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+      ],
+      "liveEvidence": [
+        "docs/generated/DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json"
+      ]
+    }
+  ],
+  "flashReview": {
+    "id": "section45-flash-review",
+    "command": [
+      "bun",
+      "--env-file=.env",
+      "./src/entrypoints/dsxu-code.tsx",
+      "-p",
+      "--verbose",
+      "--model",
+      "deepseek-v4-flash",
+      "--max-turns",
+      "8",
+      "--output-format",
+      "stream-json",
+      "--tools",
+      "Read",
+      "--permission-mode",
+      "dontAsk",
+      "DSXU V24 section 4.5 full audit review. Use Read only. First read every file listed below, then output compact JSON only.\n\nFiles:\nD:\\DSXU-code\\docs\\generated\\DSXU_V24_SECTION_4_5_EXPERIENCE_LOOP_AUDIT_REVIEW_INPUT_20260515.json\nD:\\DSXU-code\\docs\\DSXU_V24_EXECUTION_PLAN_20260515.md\nD:\\DSXU-code\\docs\\DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.md\nD:\\DSXU-code\\docs\\DSXU_V24_COMPLEX_TASK_ACCEPTANCE_20260515.md\n\nReturn keys exactly:\n{\"did_read_section45_source_truth\":true,\"loop_count\":15,\"all_loops_have_code_test_live_evidence\":true,\"claude_1902_is_file_count_not_row_claim\":true,\"flash_first_policy_respected\":true,\"pro_needed\":false,\"no_second_runtime\":true,\"long_window_still_required\":true,\"final_95_claim_allowed\":false,\"score_0_100\":0,\"risks\":[]}"
+    ],
+    "exitCode": 0,
+    "durationMs": 42819,
+    "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-flash-review-2026-05-15T09-31-18-079Z.stdout.log",
+    "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-flash-review-2026-05-15T09-31-18-079Z.stderr.log",
+    "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-section45-experience-loop-audit\\section45-flash-review-2026-05-15T09-32-00-899Z.jsonl",
+    "resultJson": {
+      "did_read_section45_source_truth": true,
+      "loop_count": 15,
+      "all_loops_have_code_test_live_evidence": true,
+      "claude_1902_is_file_count_not_row_claim": true,
+      "flash_first_policy_respected": true,
+      "pro_needed": false,
+      "no_second_runtime": true,
+      "long_window_still_required": true,
+      "final_95_claim_allowed": false,
+      "score_0_100": 72,
+      "risks": [
+        "continuousWindowSatisfied=false (no 30-45 min senior-coding replay exists)",
+        "scoreFloor=72 below 95-point target threshold",
+        "final95ClaimAllowed=false prevented premature claiming",
+        "Flash model judgment risk flagged for PBT runner assessment",
+        "clean export artifact not yet created (didCreateExport=false)",
+        "public benchmark superiority not yet established"
+      ]
+    },
+    "costUSD": 0.0056763280000000004,
+    "modelUsage": {
+      "deepseek-v4-flash": {
+        "inputTokens": 65416,
+        "outputTokens": 2931,
+        "cacheReadInputTokens": 31360,
+        "cacheCreationInputTokens": 34056,
+        "webSearchRequests": 0,
+        "costUSD": 0.0056763280000000004,
+        "contextWindow": 1048576,
+        "maxOutputTokens": 32768
+      }
+    }
+  },
+  "reviewInputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SECTION_4_5_EXPERIENCE_LOOP_AUDIT_REVIEW_INPUT_20260515.json",
+  "remainingBlockers": [
+    "continuous 30-45 minute real DSXU TUI senior-coding window",
+    "fixed comparable public benchmark baseline data",
+    "six-stage final test chain",
+    "clean export artifact and fresh install smoke"
+  ]
+}

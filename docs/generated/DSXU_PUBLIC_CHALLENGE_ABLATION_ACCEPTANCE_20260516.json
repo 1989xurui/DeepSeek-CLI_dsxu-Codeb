@@ -1,0 +1,286 @@
+{
+  "schemaVersion": "dsxu.public-challenge-ablation-board.v1",
+  "generatedAt": "2026-05-17T12:30:08.754Z",
+  "status": "PASS_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE",
+  "claimAblationRunnerAllowed": true,
+  "claimObservedCacheTrendAllowed": true,
+  "claimHighCacheRoiAllowed": false,
+  "claimExternalComparisonAllowed": false,
+  "claimPublic90Allowed": false,
+  "sourceTruthPolicy": "source-truth capsule is the default public challenge input; Read tool is a bounded fallback, not the main path",
+  "currentPackagePath": "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+  "currentPackageStatus": "PASS_PUBLIC_CHALLENGE_PACKAGE_READY",
+  "gates": {
+    "sameReviewIds": true,
+    "afterAllPassed": true,
+    "scoreFloorNotLower": true,
+    "costReduced": true,
+    "cacheHitRateNotLower": true,
+    "readToolCallsReduced": true,
+    "toolResultCharsReduced": true,
+    "proUsageRemoved": true,
+    "systemPromptStable": true
+  },
+  "guards": [
+    "high-cache ROI claim remains blocked until public challenge cache hit rate reaches 70%"
+  ],
+  "allowedClaims": [
+    "DSXU may claim same-task public challenge ablation evidence for source capsule, no-Read default, route latch, and tool-result hygiene.",
+    "DSXU may claim cost/tool-result/pro-admission reduction on this three-review public challenge lane without score-floor regression.",
+    "DSXU may claim observed cache-hit improvement as an optimization trend, not as a fixed public cache ROI guarantee."
+  ],
+  "blockedClaims": [
+    "Do not claim external comparison win without same-task target-reference raw transcripts and target manifest intake.",
+    "Do not claim public 90% top-tier coding/complex-task ability from this internal ablation board.",
+    "Do not claim high-cache ROI until the public challenge lane reaches the configured cache target with repeated evidence.",
+    "Do not claim copied reference-product parity, standalone benchmark runtime, or standalone tool/provider/MCP runtime."
+  ],
+  "before": {
+    "label": "before",
+    "reviewIds": [
+      "flash-public-claim-guard-review",
+      "flash-release-ecosystem-review",
+      "flash-senior-coding-experience-review"
+    ],
+    "reviewCount": 3,
+    "passCount": 3,
+    "scoreFloor": 72,
+    "averageScore": 76.3,
+    "totalCostUSD": 0.0716986596,
+    "requestCount": 9,
+    "proRequestCount": 6,
+    "cacheHitInputTokens": 142976,
+    "cacheMissInputTokens": 170952,
+    "outputTokens": 5625,
+    "cacheHitRatePct": 45.5,
+    "readToolCallCount": 28,
+    "toolResultCount": 18,
+    "toolResultChars": 316381,
+    "maxUniqueSystemHashCount": 2,
+    "routeReasons": [
+      "fim_pro_beta_non_thinking",
+      "planning_flash_thinking_max"
+    ],
+    "models": [
+      "deepseek-v4-flash",
+      "deepseek-v4-pro"
+    ],
+    "traces": [
+      ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T02-30-16-637Z.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T02-30-58-996Z.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T02-31-44-887Z.jsonl"
+    ],
+    "trajectories": [
+      ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T02-30-16-637Z.trajectory.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T02-30-58-996Z.trajectory.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T02-31-44-887Z.trajectory.jsonl"
+    ]
+  },
+  "after": {
+    "label": "after",
+    "reviewIds": [
+      "flash-public-claim-guard-review",
+      "flash-release-ecosystem-review",
+      "flash-senior-coding-experience-review"
+    ],
+    "reviewCount": 3,
+    "passCount": 3,
+    "scoreFloor": 72,
+    "averageScore": 74.7,
+    "totalCostUSD": 0.0089982368,
+    "requestCount": 3,
+    "proRequestCount": 0,
+    "cacheHitInputTokens": 86656,
+    "cacheMissInputTokens": 42982,
+    "outputTokens": 9779,
+    "cacheHitRatePct": 66.8,
+    "readToolCallCount": 0,
+    "toolResultCount": 0,
+    "toolResultChars": 0,
+    "maxUniqueSystemHashCount": 1,
+    "routeReasons": [
+      "review_flash_thinking_max"
+    ],
+    "models": [
+      "deepseek-v4-flash"
+    ],
+    "traces": [
+      ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T15-41-34-584Z.jsonl"
+    ],
+    "trajectories": [
+      ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.trajectory.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.trajectory.jsonl",
+      ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.trajectory.jsonl"
+    ]
+  },
+  "deltas": {
+    "scoreFloorDelta": 0,
+    "totalCostUSDDelta": -0.0627004228,
+    "totalCostSavingsPct": 87.4,
+    "cacheHitRatePctDelta": 21.3,
+    "readToolCallDelta": -28,
+    "toolResultCountDelta": -18,
+    "toolResultCharsDelta": -316381,
+    "requestCountDelta": -6,
+    "proRequestCountDelta": -6,
+    "maxUniqueSystemHashCountDelta": -1
+  },
+  "reviews": {
+    "before": [
+      {
+        "id": "flash-public-claim-guard-review",
+        "score": 72,
+        "passed": true,
+        "totalCostUSD": 0.0200308486,
+        "requestCount": 2,
+        "proRequestCount": 1,
+        "cacheHitInputTokens": 10112,
+        "cacheMissInputTokens": 51917,
+        "outputTokens": 1620,
+        "cacheHitRatePct": 16.3,
+        "readToolCallCount": 2,
+        "toolResultCount": 1,
+        "toolResultChars": 48077,
+        "uniqueSystemHashCount": 2,
+        "routeReasons": [
+          "fim_pro_beta_non_thinking",
+          "planning_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T02-30-16-637Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T02-30-16-637Z.trajectory.jsonl"
+      },
+      {
+        "id": "flash-senior-coding-experience-review",
+        "score": 72,
+        "passed": true,
+        "totalCostUSD": 0.016638774,
+        "requestCount": 2,
+        "proRequestCount": 1,
+        "cacheHitInputTokens": 17664,
+        "cacheMissInputTokens": 44439,
+        "outputTokens": 1347,
+        "cacheHitRatePct": 28.4,
+        "readToolCallCount": 2,
+        "toolResultCount": 1,
+        "toolResultChars": 48077,
+        "uniqueSystemHashCount": 2,
+        "routeReasons": [
+          "fim_pro_beta_non_thinking",
+          "planning_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T02-30-58-996Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T02-30-58-996Z.trajectory.jsonl"
+      },
+      {
+        "id": "flash-release-ecosystem-review",
+        "score": 85,
+        "passed": true,
+        "totalCostUSD": 0.035029037,
+        "requestCount": 5,
+        "proRequestCount": 4,
+        "cacheHitInputTokens": 115200,
+        "cacheMissInputTokens": 74596,
+        "outputTokens": 2658,
+        "cacheHitRatePct": 60.7,
+        "readToolCallCount": 24,
+        "toolResultCount": 16,
+        "toolResultChars": 220227,
+        "uniqueSystemHashCount": 2,
+        "routeReasons": [
+          "fim_pro_beta_non_thinking",
+          "planning_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T02-31-44-887Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T02-31-44-887Z.trajectory.jsonl"
+      }
+    ],
+    "after": [
+      {
+        "id": "flash-public-claim-guard-review",
+        "score": 72,
+        "passed": true,
+        "totalCostUSD": 0.005574044,
+        "requestCount": 1,
+        "proRequestCount": 0,
+        "cacheHitInputTokens": 10880,
+        "cacheMissInputTokens": 32335,
+        "outputTokens": 3631,
+        "cacheHitRatePct": 25.2,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "uniqueSystemHashCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.trajectory.jsonl"
+      },
+      {
+        "id": "flash-senior-coding-experience-review",
+        "score": 80,
+        "passed": true,
+        "totalCostUSD": 0.0026433904,
+        "requestCount": 1,
+        "proRequestCount": 0,
+        "cacheHitInputTokens": 32768,
+        "cacheMissInputTokens": 10476,
+        "outputTokens": 3875,
+        "cacheHitRatePct": 75.8,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "uniqueSystemHashCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.trajectory.jsonl"
+      },
+      {
+        "id": "flash-release-ecosystem-review",
+        "score": 72,
+        "passed": true,
+        "totalCostUSD": 0.0007808024,
+        "requestCount": 1,
+        "proRequestCount": 0,
+        "cacheHitInputTokens": 43008,
+        "cacheMissInputTokens": 171,
+        "outputTokens": 2273,
+        "cacheHitRatePct": 99.6,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "uniqueSystemHashCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "models": [
+          "deepseek-v4-flash"
+        ],
+        "tracePath": ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T15-41-34-584Z.jsonl",
+        "trajectoryPath": ".dsxu/trace/v24-public-challenge-package/flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.trajectory.jsonl"
+      }
+    ]
+  }
+}

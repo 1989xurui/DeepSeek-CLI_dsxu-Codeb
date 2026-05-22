@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "dsxu.v7.delete-review-board.v1",
+  "generatedAt": "2026-05-19T10:14:45.211Z",
+  "status": "PASS_DSXU_DELETE_REVIEW_BOARD",
+  "sourceOwnerDecisionPath": "docs/generated/DSXU_V6_OWNER_REVIEW_DECISIONS_20260519.json",
+  "summary": {
+    "deleteReviewRows": 6,
+    "observeRows": 6,
+    "blockedRows": 0,
+    "deleteReadyRows": 0,
+    "ownerSignoffRows": 0,
+    "userDeletionApprovalRows": 0
+  },
+  "blockers": [],
+  "rows": [
+    {
+      "path": "src/commands/bridge/bridge.tsx",
+      "owner": "Runtime Service Owner",
+      "replacementOwner": "DSXU Provider Alias / Provider Contract",
+      "replacementEvidence": [
+        "src/dsxu/engine/provider-alias.ts",
+        "src/dsxu/engine/provider-contract.ts",
+        "src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "reverseScanEvidence": "rg \"bridge-kick|commands/bridge|handleDsxuProviderAliasCommand\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/persist.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "reverseScanEvidence": "rg \"coordinator/dag|planExecuteVerifyDag|PersistentDagRunner|runDag\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/templates.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "reverseScanEvidence": "rg \"coordinator/dag|planExecuteVerifyDag|PersistentDagRunner|runDag\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/types.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "reverseScanEvidence": "rg \"coordinator/dag|planExecuteVerifyDag|PersistentDagRunner|runDag\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/services/swe-bench/index.ts",
+      "owner": "Evidence / Eval SWE Owner",
+      "replacementOwner": "Evidence / Eval SWE Owner",
+      "replacementEvidence": [
+        "src/services/eval/swe-bench/index.ts",
+        "src/services/eval/swe-bench/runner.ts",
+        "src/services/eval/swe-bench/contract.ts"
+      ],
+      "reverseScanEvidence": "rg \"../swe-bench|src/services/swe-bench|SWEBenchRunner|createSWEBenchRunner\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/services/__tests__/swe-bench.test.ts src/services/eval/swe-bench/__tests__/contract.test.ts src/services/eval/swe-bench/__tests__/runner.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/services/swe-bench/types.ts",
+      "owner": "Evidence / Eval SWE Owner",
+      "replacementOwner": "Evidence / Eval SWE Owner",
+      "replacementEvidence": [
+        "src/services/eval/swe-bench/index.ts",
+        "src/services/eval/swe-bench/runner.ts",
+        "src/services/eval/swe-bench/contract.ts"
+      ],
+      "reverseScanEvidence": "rg \"../swe-bench|src/services/swe-bench|SWEBenchRunner|createSWEBenchRunner\" src scripts package.json",
+      "requiredTests": [
+        "bun test src/services/__tests__/swe-bench.test.ts src/services/eval/swe-bench/__tests__/contract.test.ts src/services/eval/swe-bench/__tests__/runner.test.ts"
+      ],
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "status": "observe",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    }
+  ]
+}

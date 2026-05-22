@@ -1,0 +1,521 @@
+{
+  "summary": {
+    "schemaVersion": "dsxu.reference-scenario-convergence.v1",
+    "generatedAt": "2026-05-16T15:29:11.498Z",
+    "sourceRows": 1174,
+    "rowsFrom174": 174,
+    "rowsFrom1000": 1000,
+    "P0": 257,
+    "P1": 451,
+    "P2": 466,
+    "packetCount": 8,
+    "capabilityGaps": 8,
+    "decision": "The 174 local scenarios and 1000 generated backlog rows converge into eight execution packets. Execute packets, not individual scenario rows."
+  },
+  "packets": [
+    {
+      "id": "EP-01",
+      "label": "Source Truth + Cache",
+      "owners": [
+        "Code-mode source truth owner",
+        "ContextCompiler / TokenFirewall owner",
+        "DeepSeek route / cost owner"
+      ],
+      "keywords": [
+        "source",
+        "capsule",
+        "read",
+        "cache",
+        "context",
+        "token",
+        "freshness",
+        "impact",
+        "blast",
+        "code mode"
+      ],
+      "areaHints": [
+        "Source Truth / Capsule",
+        "Context / Cache Hygiene",
+        "Impact / Blast Radius"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/context-builder.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/prompt-prefix-cache-builder.ts",
+        "src/dsxu/engine/route-cache-dynamic-tail.ts",
+        "src/tools/FileReadTool/FileReadTool.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/context-hygiene-v1.test.ts",
+        "src/dsxu/engine/__tests__/code-mode-source-cache-governor.test.ts",
+        "src/dsxu/engine/__tests__/compact-source-clean-v1.test.ts",
+        "src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts"
+      ],
+      "nextAction": "Code-mode source capsule and bounded Read fallback are accepted; rerun during final six-stage verification and continue with EP-02 visible-state evidence.",
+      "acceptance": "Code-mode source truth uses path/hash/anchor/excerpt with bounded fallback Read; cache and toolResultChars remain visible.",
+      "rowsFrom174": 61,
+      "rowsFrom1000": 150,
+      "p0Rows": 72,
+      "p1Rows": 94,
+      "p2Rows": 45,
+      "capabilityGaps": [],
+      "filesExisting": [
+        "src/dsxu/engine/context-builder.ts",
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/dsxu/engine/prompt-prefix-cache-builder.ts",
+        "src/dsxu/engine/route-cache-dynamic-tail.ts",
+        "src/tools/FileReadTool/FileReadTool.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/context-hygiene-v1.test.ts",
+        "src/dsxu/engine/__tests__/code-mode-source-cache-governor.test.ts",
+        "src/dsxu/engine/__tests__/compact-source-clean-v1.test.ts",
+        "src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "accepted-core"
+    },
+    {
+      "id": "EP-02",
+      "label": "Visible State + Tool/Permission",
+      "owners": [
+        "Work-state timeline owner",
+        "Tool Gate / ToolBus owner",
+        "Permission Gate owner"
+      ],
+      "keywords": [
+        "visible",
+        "timeline",
+        "tool",
+        "permission",
+        "side effect",
+        "causality",
+        "human signoff",
+        "state"
+      ],
+      "areaHints": [
+        "Visible Work-State Projection",
+        "Tool Lifecycle / Causality",
+        "Permission / Human Signoff"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/tool-gate-v1.ts",
+        "src/dsxu/engine/tool-mainline-runtime-v1.ts",
+        "src/dsxu/engine/permissions.ts",
+        "src/dsxu/engine/tool-evidence-pack-v1.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts",
+        "src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts",
+        "src/dsxu/engine/__tests__/permissions.test.ts",
+        "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts"
+      ],
+      "nextAction": "Visible-state projection contract is accepted for Tool/Permission/Agent/MCP/Skill evidence; rerun during final UI/TUI parity and continue EP-05 DeepSeek cost-quality gate.",
+      "acceptance": "Tool/Permission/Agent/MCP/Skill, DeepSeek route/cost/cache, source truth, and evidence share one DSXU-owned work-state projection.",
+      "rowsFrom174": 14,
+      "rowsFrom1000": 189,
+      "p0Rows": 83,
+      "p1Rows": 81,
+      "p2Rows": 39,
+      "capabilityGaps": [],
+      "filesExisting": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/tool-gate-v1.ts",
+        "src/dsxu/engine/tool-mainline-runtime-v1.ts",
+        "src/dsxu/engine/permissions.ts",
+        "src/dsxu/engine/tool-evidence-pack-v1.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts",
+        "src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts",
+        "src/dsxu/engine/__tests__/permissions.test.ts",
+        "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "accepted-core"
+    },
+    {
+      "id": "EP-03",
+      "label": "Terminal Live Acceptance",
+      "owners": [
+        "Terminal lifecycle owner",
+        "Failure taxonomy / recovery owner",
+        "VerificationKernel owner"
+      ],
+      "keywords": [
+        "terminal",
+        "shell",
+        "command",
+        "stdout",
+        "stderr",
+        "timeout",
+        "failure",
+        "repair",
+        "artifact"
+      ],
+      "areaHints": [
+        "Terminal / Shell Reliability",
+        "Failure / Repair Loop",
+        "Test Selection / Verification"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/code-terminal-runner.ts",
+        "src/dsxu/engine/terminal-hit-rate.ts",
+        "src/dsxu/engine/failure-taxonomy.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts",
+        "src/dsxu/engine/__tests__/code-terminal-runner.test.ts",
+        "src/dsxu/engine/__tests__/terminal-hit-rate.test.ts",
+        "src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts"
+      ],
+      "nextAction": "EP-03 live evidence is closed; keep B12/B13 as boundary-only claims and rerun during final six-stage verification.",
+      "acceptance": "Terminal live acceptance proves command plan, failure, timeout, repair, artifact checking, bounded preview, and result packaging without claiming Terminal-Bench 2.0.",
+      "rowsFrom174": 15,
+      "rowsFrom1000": 151,
+      "p0Rows": 62,
+      "p1Rows": 72,
+      "p2Rows": 32,
+      "capabilityGaps": [
+        "B12:TerminalBench Subset Adapter [adapted/subset+tested]",
+        "B13:Internal Terminal-10/30 Runner [adapted/subset+tested]"
+      ],
+      "filesExisting": [
+        "src/dsxu/engine/code-terminal-runner.ts",
+        "src/dsxu/engine/terminal-hit-rate.ts",
+        "src/dsxu/engine/failure-taxonomy.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts",
+        "src/dsxu/engine/__tests__/code-terminal-runner.test.ts",
+        "src/dsxu/engine/__tests__/terminal-hit-rate.test.ts",
+        "src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "accepted-core"
+    },
+    {
+      "id": "EP-04",
+      "label": "Agent/MCP/Skill Boundary",
+      "owners": [
+        "Agent lifecycle owner",
+        "MCP / Skill registry owner",
+        "External adapter boundary owner"
+      ],
+      "keywords": [
+        "agent",
+        "worker",
+        "mcp",
+        "skill",
+        "plugin",
+        "registry",
+        "handoff",
+        "envelope",
+        "conflict"
+      ],
+      "areaHints": [
+        "Agent / Worker Handoff",
+        "MCP / Skill Ecosystem",
+        "External Adapter / IDE / Browser Boundary"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/forked-agent.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts",
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts"
+      ],
+      "nextAction": "Agent/MCP/Skill boundary board is accepted; continue EP-08 external benchmark/adapter proof and keep final six-stage verification pending.",
+      "acceptance": "Workers return summary/path/hash/evidence; parent finals cite envelopes; MCP/Skill remains governed by DSXU registry and Tool Gate.",
+      "rowsFrom174": 12,
+      "rowsFrom1000": 100,
+      "p0Rows": 0,
+      "p1Rows": 48,
+      "p2Rows": 64,
+      "capabilityGaps": [
+        "PZ07:Multi-Agent Swarm/Coordinator [adapted/subset+tested]"
+      ],
+      "filesExisting": [
+        "src/dsxu/engine/forked-agent.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts",
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "accepted-core"
+    },
+    {
+      "id": "EP-05",
+      "label": "DeepSeek Cost Quality",
+      "owners": [
+        "DeepSeek route / cost owner",
+        "Provider gate / doctor owner"
+      ],
+      "keywords": [
+        "deepseek",
+        "flash",
+        "pro",
+        "route",
+        "cost",
+        "cache",
+        "provider",
+        "quality",
+        "pareto",
+        "token"
+      ],
+      "areaHints": [
+        "Model Route / Cost Evidence",
+        "Provider Health / First Run",
+        "Benchmark / Public Challenge Proof"
+      ],
+      "representativeFiles": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "src/dsxu/engine/cost-cache-live-task-evidence.ts",
+        "src/dsxu/engine/live-deepseek-benchmark-gate.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts",
+        "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts",
+        "src/dsxu/engine/__tests__/live-provider-gate-v1.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts"
+      ],
+      "nextAction": "Cost-quality board is accepted for Flash-first cost and evidenced Pro admission; continue EP-04 Agent/MCP/Skill Boundary while public 90 and high-cache ROI claims remain guarded.",
+      "acceptance": "Flash-first route, cache, cost, quality and Pro admission are visible in the same Pareto board; public 90/high-cache ROI claims stay blocked until raw runs prove them.",
+      "rowsFrom174": 28,
+      "rowsFrom1000": 100,
+      "p0Rows": 26,
+      "p1Rows": 57,
+      "p2Rows": 45,
+      "capabilityGaps": [
+        "M07:FIM local completion [adapted/subset+tested]",
+        "A14:Pro Reviewer [adapted/subset+tested]"
+      ],
+      "filesExisting": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "src/dsxu/engine/cost-cache-live-task-evidence.ts",
+        "src/dsxu/engine/live-deepseek-benchmark-gate.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts",
+        "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts",
+        "src/dsxu/engine/__tests__/live-provider-gate-v1.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "accepted-core"
+    },
+    {
+      "id": "EP-06",
+      "label": "Release Claim + Open Source",
+      "owners": [
+        "Release evidence owner",
+        "Open-source launch owner",
+        "Security / secret scan owner"
+      ],
+      "keywords": [
+        "release",
+        "claim",
+        "readme",
+        "github",
+        "open source",
+        "secret",
+        "license",
+        "brand",
+        "privacy"
+      ],
+      "areaHints": [
+        "Release Evidence / Claim Guard",
+        "Open Source Product / Maintainer Flow",
+        "Security / Privacy / Secret Safety"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/release-provenance-gate.ts",
+        "src/dsxu/engine/release-surface-source-policy-review-v1.ts",
+        "src/dsxu/engine/open-source-package-gate.ts",
+        "src/dsxu/engine/open-source-core.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/release-test-gate-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts",
+        "src/dsxu/engine/__tests__/open-source-package-gate.test.ts"
+      ],
+      "nextAction": "Rebuild GitHub launch pack only from strict public claims and real charts.",
+      "acceptance": "README, launch pack and release artifacts cite DSXU-owned source/test/live/raw/cost/cache evidence only.",
+      "rowsFrom174": 21,
+      "rowsFrom1000": 155,
+      "p0Rows": 3,
+      "p1Rows": 49,
+      "p2Rows": 124,
+      "capabilityGaps": [],
+      "filesExisting": [
+        "src/dsxu/engine/release-provenance-gate.ts",
+        "src/dsxu/engine/release-surface-source-policy-review-v1.ts",
+        "src/dsxu/engine/open-source-package-gate.ts",
+        "src/dsxu/engine/open-source-core.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/release-test-gate-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts",
+        "src/dsxu/engine/__tests__/open-source-package-gate.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "ready-for-execution"
+    },
+    {
+      "id": "EP-07",
+      "label": "Workspace/Owner/Git Hygiene",
+      "owners": [
+        "Workspace hygiene / owner review owner",
+        "Repo index / owner map owner"
+      ],
+      "keywords": [
+        "workspace",
+        "dirty",
+        "owner",
+        "git",
+        "duplicate",
+        "delete",
+        "stage",
+        "mutation",
+        "hygiene"
+      ],
+      "areaHints": [
+        "Workspace Hygiene / Dirty Attribution",
+        "Impact / Blast Radius"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/workspace-policy.ts",
+        "src/dsxu/engine/context-owner-rule-v1.ts",
+        "src/dsxu/engine/release-surface-source-policy-review-v1.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/context-owner-rule-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+      ],
+      "nextAction": "Use owner/Git packets for dirty attribution and replace/delete candidates; do not auto clean.",
+      "acceptance": "Every mutation candidate has owner, replacement evidence, risk, and explicit review state.",
+      "rowsFrom174": 13,
+      "rowsFrom1000": 50,
+      "p0Rows": 6,
+      "p1Rows": 25,
+      "p2Rows": 32,
+      "capabilityGaps": [],
+      "filesExisting": [
+        "src/dsxu/engine/workspace-policy.ts",
+        "src/dsxu/engine/context-owner-rule-v1.ts",
+        "src/dsxu/engine/release-surface-source-policy-review-v1.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/context-owner-rule-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "needs-owner-review"
+    },
+    {
+      "id": "EP-08",
+      "label": "External Benchmark/Adapter Proof",
+      "owners": [
+        "Benchmark evidence owner",
+        "External adapter boundary owner"
+      ],
+      "keywords": [
+        "benchmark",
+        "public challenge",
+        "target",
+        "manifest",
+        "adapter",
+        "ide",
+        "browser",
+        "external",
+        "raw"
+      ],
+      "areaHints": [
+        "Benchmark / Public Challenge Proof",
+        "External Adapter / IDE / Browser Boundary"
+      ],
+      "representativeFiles": [
+        "src/dsxu/engine/benchmark-readiness.ts",
+        "src/dsxu/engine/raw-evidence-readiness-register-v1.ts",
+        "src/dsxu/engine/external-benchmark-adapter-proof-board.ts",
+        "src/dsxu/engine/public-challenge-ablation-board.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/live-deepseek-benchmark-gate.ts"
+      ],
+      "representativeTests": [
+        "src/dsxu/engine/__tests__/benchmark-readiness.test.ts",
+        "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts",
+        "src/dsxu/engine/__tests__/external-benchmark-adapter-proof-board.test.ts",
+        "src/dsxu/engine/__tests__/public-challenge-ablation-board.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts"
+      ],
+      "nextAction": "Adapter/browser/provider proof is guarded; import real target manifest before external comparison, public 90, or clean export claims.",
+      "acceptance": "Adapter proof can be shown as DSXU boundary evidence; target raw, DSXU raw, metrics, risk and artifact manifests must be same-task before comparison claims.",
+      "rowsFrom174": 10,
+      "rowsFrom1000": 105,
+      "p0Rows": 5,
+      "p1Rows": 25,
+      "p2Rows": 85,
+      "capabilityGaps": [
+        "A16:Internal Code-10/30 Runner [adapted/subset+tested]",
+        "A17:SWE Smoke Runner [adapted/subset+tested]",
+        "PZ03:BrowserExecutor [adapted/subset+tested]"
+      ],
+      "filesExisting": [
+        "src/dsxu/engine/benchmark-readiness.ts",
+        "src/dsxu/engine/raw-evidence-readiness-register-v1.ts",
+        "src/dsxu/engine/external-benchmark-adapter-proof-board.ts",
+        "src/dsxu/engine/public-challenge-ablation-board.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/live-deepseek-benchmark-gate.ts"
+      ],
+      "filesMissing": [],
+      "testsExisting": [
+        "src/dsxu/engine/__tests__/benchmark-readiness.test.ts",
+        "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts",
+        "src/dsxu/engine/__tests__/external-benchmark-adapter-proof-board.test.ts",
+        "src/dsxu/engine/__tests__/public-challenge-ablation-board.test.ts",
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts"
+      ],
+      "testsMissing": [],
+      "status": "needs-live-evidence"
+    }
+  ]
+}

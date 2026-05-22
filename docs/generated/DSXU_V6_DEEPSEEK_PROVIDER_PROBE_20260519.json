@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "dsxu.v6.deepseek-provider-probe.v1",
+  "generatedAt": "2026-05-19T23:08:05.384Z",
+  "owner": "DeepSeek Provider Contract",
+  "status": "PASS_V6_DEEPSEEK_PROVIDER_CONTRACT",
+  "mode": "live",
+  "claimBoundary": "Live DeepSeek Flash provider probe. It proves basic API availability, response marker, usage/cache/cost fields for one fixed low-risk probe only. It is not a benchmark, not a full tool-call live replay, and not a public model-quality claim.",
+  "checks": [
+    {
+      "id": "live-api-key",
+      "status": "PASS",
+      "evidence": [
+        "DEEPSEEK_API_KEY=set:redacted"
+      ]
+    },
+    {
+      "id": "live-flash-response",
+      "status": "PASS",
+      "evidence": [
+        "model=deepseek-v4-flash",
+        "expected marker returned"
+      ]
+    },
+    {
+      "id": "live-usage-output-tokens",
+      "status": "PASS",
+      "evidence": [
+        "output_tokens=8"
+      ]
+    },
+    {
+      "id": "live-cache-usage-fields",
+      "status": "PASS",
+      "evidence": [
+        "cache_hit=0",
+        "cache_miss=25"
+      ]
+    },
+    {
+      "id": "live-cost-evidence",
+      "status": "PASS",
+      "evidence": [
+        "estimated_cost_usd=0.000005740000000000001"
+      ]
+    }
+  ],
+  "blockers": []
+}

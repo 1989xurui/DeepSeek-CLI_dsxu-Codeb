@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "dsxu.public-comparable-dsxu-lane.v1",
+  "generatedAt": "2026-05-21T14:13:18.324Z",
+  "status": "PASS",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521",
+  "workspaceRoot": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane",
+  "rawEvidenceComplete": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "caseCount": 30,
+  "attemptedCaseCount": 1,
+  "capturedCaseCount": 1,
+  "skippedCaseCount": 0,
+  "failedCaseCount": 0,
+  "passedCaseCount": 1,
+  "nonPassingCaseCount": 0,
+  "nextAction": "run evidence:public-comparable-raw to import DSXU lane evidence; expand only after low-risk probe cases are stable",
+  "safeguards": [
+    "DSXU lane runs in per-case isolated git worktrees or injected test workspaces, never in the dirty product working tree",
+    "top-level PASS means every selected case passed its rubric; captured evidence without rubric pass is PARTIAL",
+    "this runner captures transcript/tool/final/metrics evidence but does not judge public superiority",
+    "finalPass requires a clean CLI exit, a result event, no unsupported/budget violations, and a declared outcome that matches the case rubric; deny-PASS cases can pass with FAIL when FAIL is the requested outcome",
+    "Agent worker evidence lanes require at least one executed Agent result; parent task-board actions alone cannot satisfy worker evidence",
+    "public benchmark and external comparison claims remain controlled by the raw-evidence readiness gate"
+  ],
+  "cases": [
+    {
+      "id": "product-review-to-fix-live",
+      "status": "PASS_DSXU_LANE_CAPTURED",
+      "model": "deepseek-v4-flash",
+      "promptHash": "24850c59738d76cee2462ece32d2a928ae96045efd536345dcb25b7573f2bff9",
+      "caseDir": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live",
+      "workspaceDir": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane/product-review-to-fix-live-2026-05-21T14-12-51-764Z",
+      "rawTranscriptPath": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live/raw-transcript.jsonl",
+      "toolTracePath": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live/tool-trace.jsonl",
+      "finalReportPath": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live/final-report.json",
+      "metricsPath": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live/metrics.json",
+      "artifactDir": ".dsxu/trace/public-comparable-finalization-rerun47-full-14-agent-final-20260521/product-review-to-fix-live/artifacts",
+      "exitCode": 0,
+      "wallClockMs": 21299,
+      "costUsd": 0.004126556,
+      "cacheHitRatePct": 60.8,
+      "toolUseCount": 4,
+      "finalPass": true
+    }
+  ]
+}

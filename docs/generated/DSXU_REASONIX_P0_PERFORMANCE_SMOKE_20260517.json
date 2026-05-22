@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "dsxu.reasonix-p0-performance-smoke.v1",
+  "generatedAt": "2026-05-17",
+  "status": "BASELINE_MEASURED_NO_RUNTIME_MUTATION",
+  "p0Mechanisms": [
+    {
+      "id": "cache-first-loop",
+      "measuredBenefit": {
+        "sourceCacheAcceptance": {
+          "status": "PASS_SOURCE_CACHE_ACCEPTANCE",
+          "capsules": 2,
+          "toolResultCharsAvoided": 21809,
+          "stablePrefixHashUnchanged": true
+        },
+        "publicChallengeAblation": {
+          "scoreFloor": "72->72",
+          "costUSD": "0.0716986596->0.0089982368",
+          "costReductionPct": 87.45,
+          "cacheHitRatePct": "45.5->66.8",
+          "cacheHitRateDeltaPctPoints": 21.3
+        }
+      },
+      "executionDecision": "GO_FOR_HARDENING_ONLY",
+      "why": "Current DSXU evidence already shows lower cost and higher cache hit without score regression. Do not rebuild; harden as query-loop invariant."
+    },
+    {
+      "id": "tool-result-budget",
+      "measuredBenefit": {
+        "publicChallengeAblation": {
+          "readToolCallCount": "28->0",
+          "toolResultChars": "316381->0",
+          "toolResultCharsDelta": -316381
+        },
+        "sourceCacheAcceptance": {
+          "toolResultCharsAvoided": 21809
+        }
+      },
+      "executionDecision": "GO_FOR_COVERAGE_EXPANSION",
+      "why": "Large measured prompt/tool-result reduction. Expand acceptance across Read/Bash/PowerShell/MCP/Agent, but keep source-truth fallback."
+    },
+    {
+      "id": "tool-call-repair",
+      "measuredBenefit": {
+        "targetedTests": {
+          "normalizesDeepSeekBlocks": "2 pass / 0 fail",
+          "deepseekXmlRegistryPermissionToolLoop": "1 pass / 0 fail",
+          "steersDeepSeekEditToVerification": "1 pass / 0 fail"
+        },
+        "localParseMicrobench": {
+          "iterations": 20000,
+          "totalCalls": 80000,
+          "elapsedMs": 513.812,
+          "perIterationMs": 0.025691
+        }
+      },
+      "executionDecision": "CONDITIONAL_GO",
+      "why": "Parsing overhead is negligible and existing repair routing passes. Additional repair types need a bounded repair smoke proving fewer failed tool turns without open-ended retries."
+    },
+    {
+      "id": "failure-signal-pro-admission",
+      "measuredBenefit": {
+        "deepseekCostQualityAcceptance": {
+          "status": "PASS_DEEPSEEK_COST_QUALITY_ACCEPTANCE",
+          "flashTurnRatioPct": 90,
+          "savingsVsProOnlyPct": 63.3,
+          "cacheHitRatePct": 75.3,
+          "public90ClaimAllowed": false,
+          "cacheHighRoiClaimAllowed": false
+        },
+        "focusedTests": {
+          "deepseek-cost-quality-board": "2 pass / 0 fail",
+          "route-cache-roi-smoke": "2 pass / 0 fail",
+          "final-report-usage-evidence": "3 pass / 0 fail"
+        }
+      },
+      "executionDecision": "GO_WITH_STRICT_ADMISSION",
+      "why": "Flash-first already saves cost. Only add failure-signal ledger; do not increase Pro usage unless pass-after-escalation improves."
+    }
+  ],
+  "blockingRisksFound": [
+    {
+      "scope": "broad mainline-tool-adapter-v1 suite",
+      "result": "71 pass / 14 fail / 1 error",
+      "interpretation": "Not a Reasonix P0 proof. Failures concentrate in PowerShell timeout paths and an archived provider-migration env-string expectation. Do not use the broad suite as a green signal until those owner issues are closed."
+    },
+    {
+      "scope": "visible-state acceptance",
+      "result": "PASS_VISIBLE_STATE_ACCEPTANCE with blocked guard: side-effect tool path has blocked permission state",
+      "interpretation": "Projection works, but real TUI/permission path still needs resize/permission prompt regression coverage before public experience claim."
+    }
+  ],
+  "absorptionRule": "Do not implement a P0 mechanism unless the same-task smoke keeps quality/score stable and improves at least one measured vector: cost, cacheHitRatePct, toolResultChars, failedToolTurnCount, wallClockMs, or ProAdmissionCount."
+}

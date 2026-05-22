@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "dsxu.training-golden-generation.v1",
+  "outputDir": "D:\\DSXU-code\\docs\\training\\golden",
+  "fixtureCount": 60,
+  "categories": [
+    "anti-cheat",
+    "basic-edit",
+    "long-task",
+    "multi-file",
+    "recovery",
+    "verification"
+  ]
+}

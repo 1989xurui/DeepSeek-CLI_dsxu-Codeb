@@ -1,0 +1,173 @@
+{
+  "schemaVersion": "dsxu.v24.completed-reacceptance.v1",
+  "generatedAt": "2026-05-16T15:36:56.941Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proWasRun": false,
+    "interactiveTuiRequirement": "Not satisfied by this automated reacceptance. Completed function claims are reaccepted for source/test/model evidence; full V24 still requires V24_INTERACTIVE_TUI_ACCEPTANCE.",
+    "v24BatchReplayPolicy": "Context only. v24:batch may remain open while final V24 gates are intentionally blocked; it must not turn completed feature reacceptance into a circular final-gate dependency."
+  },
+  "sourceTruth": {
+    "pbtRealRunner": true,
+    "mutationRealRunner": true,
+    "tddRealRunner": true
+  },
+  "commandRuns": {
+    "localRegression": {
+      "exitCode": 0,
+      "durationMs": 1744,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\local-real-runner-regression-2026-05-16T15-36-09-950Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\local-real-runner-regression-2026-05-16T15-36-09-950Z.stderr.log"
+    },
+    "providerGate": {
+      "exitCode": 0,
+      "durationMs": 257,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\live-provider-gate-2026-05-16T15-36-22-675Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\live-provider-gate-2026-05-16T15-36-22-675Z.stderr.log"
+    },
+    "v24Batch": {
+      "exitCode": 0,
+      "durationMs": 32792,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\v24-batch-replay-2026-05-16T15-36-22-932Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\v24-batch-replay-2026-05-16T15-36-22-932Z.stderr.log",
+      "gateRole": "context-only-final-gate-snapshot"
+    },
+    "productHelp": {
+      "exitCode": 0,
+      "durationMs": 1216,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\product-entry-help-2026-05-16T15-36-55-724Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\product-entry-help-2026-05-16T15-36-55-724Z.stderr.log"
+    }
+  },
+  "liveChecks": [
+    {
+      "id": "flash-pbt-real-runner",
+      "model": "deepseek-v4-flash",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-pbt-real-runner-2026-05-16T15-36-11-694Z.jsonl",
+      "exitCode": 0,
+      "durationMs": 10980,
+      "resultJson": {
+        "did_read_source": true,
+        "did_read_tests": true,
+        "pbt_real_runner": true,
+        "evidence": [
+          "lines 62-97 (runPbt): non-mock path calls mkdtemp, writeFile, then runBunTest which spawns 'bun test'",
+          "lines 133-143: test 'real runner executes passing Bun test code' calls runPbt without mockRunner, verifying the temp-file + bun test path",
+          "lines 145-155: test 'real runner reports failing Bun test output' similarly exercises the non-mock path and checks for error content"
+        ],
+        "pro_needed": false
+      },
+      "costUSD": 0.0013394248000000001,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 52189,
+          "outputTokens": 453,
+          "cacheReadInputTokens": 44416,
+          "cacheCreationInputTokens": 7773,
+          "webSearchRequests": 0,
+          "costUSD": 0.0013394248000000001,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    },
+    {
+      "id": "flash-mutation-real-runner",
+      "model": "deepseek-v4-flash",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-mutation-real-runner-2026-05-16T15-36-11-707Z.jsonl",
+      "exitCode": 0,
+      "durationMs": 7934,
+      "resultJson": {
+        "did_read_source": true,
+        "did_read_tests": true,
+        "mutation_real_runner": true,
+        "restores_original_source": true,
+        "evidence": [
+          "src/services/mutation/index.ts:81-106 — runRealMutation reads original via readFileOrFallback, writes mutated file (line 91), runs shell test command (line 97), restores original in finally block (line 104).",
+          "src/services/mutation/__tests__/mutation.test.ts:180-215 — 'real runner mutates a file, runs tests, and restores source' integration test writes real source + test files, calls runMutationTests without mocks, asserts source is restored after (line 211).",
+          "index.ts:50-51 — else branch calls runRealMutation when config.mockTestRunner is not set, confirming the non-mock path is the real runner."
+        ],
+        "pro_needed": false
+      },
+      "costUSD": 0.0001803312,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 24858,
+          "outputTokens": 320,
+          "cacheReadInputTokens": 24704,
+          "cacheCreationInputTokens": 154,
+          "webSearchRequests": 0,
+          "costUSD": 0.0001803312,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    },
+    {
+      "id": "flash-tdd-gate-real-runner",
+      "model": "deepseek-v4-flash",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-tdd-gate-real-runner-2026-05-16T15-36-11-716Z.jsonl",
+      "exitCode": 0,
+      "durationMs": 8815,
+      "resultJson": {
+        "did_read_source": true,
+        "did_read_tests": true,
+        "tdd_gate_real_runner": true,
+        "red_green_semantics": true,
+        "evidence": [
+          "runner.ts:63-64: executeTest delegates to config.mockTestRunner when supplied, else falls through to real commands",
+          "runner.ts:67-74: when no mock, computes absolute path, formats 'bun test {file}', calls runShellCommand",
+          "runner.ts:88-127: runShellCommand spawns real bun (via powershell/bash) with pipes, timeout, and exited code check",
+          "test.ts:37-45: red phase test writes real .test.ts file to temp dir and calls runRedPhase with cwd — no mockTestRunner set, so real bun spawn",
+          "test.ts:55-63: green phase test similarly writes real file, calls runGreenPhase without mock — exercises real shell execution",
+          "test.ts:67-82: green phase blocking test also real-spawns bun with no mock — tests a deliberate failure"
+        ],
+        "pro_needed": false
+      },
+      "costUSD": 0.00019685680000000003,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 22835,
+          "outputTokens": 387,
+          "cacheReadInputTokens": 22656,
+          "cacheCreationInputTokens": 179,
+          "webSearchRequests": 0,
+          "costUSD": 0.00019685680000000003,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "id": "pbt-real-runner",
+      "status": "PASS_FLASH_FIRST_REACCEPTED",
+      "sourceTruth": true,
+      "localRegressionPass": true,
+      "flashLivePass": true,
+      "flashTracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-pbt-real-runner-2026-05-16T15-36-11-694Z.jsonl",
+      "proWasRun": false
+    },
+    {
+      "id": "mutation-real-runner",
+      "status": "PASS_FLASH_FIRST_REACCEPTED",
+      "sourceTruth": true,
+      "localRegressionPass": true,
+      "flashLivePass": true,
+      "flashTracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-mutation-real-runner-2026-05-16T15-36-11-707Z.jsonl",
+      "proWasRun": false
+    },
+    {
+      "id": "tdd-gate-real-runner",
+      "status": "PASS_FLASH_FIRST_REACCEPTED",
+      "sourceTruth": true,
+      "localRegressionPass": true,
+      "flashLivePass": true,
+      "flashTracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-completed-reacceptance\\flash-tdd-gate-real-runner-2026-05-16T15-36-11-716Z.jsonl",
+      "proWasRun": false
+    }
+  ]
+}

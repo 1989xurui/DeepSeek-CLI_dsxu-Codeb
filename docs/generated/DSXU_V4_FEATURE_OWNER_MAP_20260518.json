@@ -1,0 +1,522 @@
+{
+  "schemaVersion": "dsxu.v4.feature-owner-map.v1",
+  "generatedAt": "2026-05-19T02:12:00.813Z",
+  "status": "PASS_DSXU_V4_FEATURE_OWNER_MAP_READY",
+  "productCores": [
+    "provider-plan",
+    "work-ledger",
+    "tool-envelope",
+    "permission-decision",
+    "verification-envelope",
+    "recovery-decision",
+    "agent-evidence",
+    "trust-ui"
+  ],
+  "summary": {
+    "default-mainline": 22,
+    "on-demand": 2,
+    "frozen-experimental": 3,
+    "replace-delete-candidate": 0,
+    "release-only": 3
+  },
+  "entries": [
+    {
+      "id": "V4-F01",
+      "capability": "DeepSeek V4 model capability facts",
+      "productCore": "provider-plan",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/dsxu/engine/model-capability-v1.ts",
+        "src/dsxu/engine/model-config.ts"
+      ],
+      "workflowEntry": "query-loop/provider plan",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/model-capability-v1.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Keep as canonical model/context/thinking/FIM/cost/cache fact owner."
+    },
+    {
+      "id": "V4-F02",
+      "capability": "DeepSeek request body construction",
+      "productCore": "provider-plan",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/services/api/deepseek-adapter.ts",
+        "src/utils/model/deepseekV4Control.ts"
+      ],
+      "workflowEntry": "api-service/provider adapter",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "P1 must keep every chat/tool/thinking request behind the canonical provider helper."
+    },
+    {
+      "id": "V4-F03",
+      "capability": "Flash-first route, Flash-MAX/Pro admission",
+      "productCore": "provider-plan",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/dsxu/engine/model-routing-control.ts",
+        "src/dsxu/engine/deepseek-model-policy.ts"
+      ],
+      "workflowEntry": "route/cost/cache owner",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/real-task-route-plan.test.ts",
+        "bun test src/dsxu/engine/__tests__/deepseek-cost-quality-board.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Default Flash; require explicit evidence for Flash-MAX/Pro admission."
+    },
+    {
+      "id": "V4-F04",
+      "capability": "Usage, cost, and cache trajectory",
+      "productCore": "provider-plan",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/services/api/deepseek-trajectory-store.ts",
+        "src/dsxu/engine/final-report-usage-evidence.ts",
+        "src/dsxu/engine/cost-cache-live-task-evidence.ts"
+      ],
+      "workflowEntry": "final report / evidence dashboard",
+      "acceptanceEvidence": [
+        "bun test src/services/api/deepseek-trajectory-store.test.ts",
+        "bun test src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Project route/cost/cache into ledger, Trust UI, and release evidence."
+    },
+    {
+      "id": "V4-F05",
+      "capability": "Cache-first stable prefix and dynamic tail",
+      "productCore": "provider-plan",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/prompt-prefix-cache-builder.ts",
+        "src/dsxu/engine/prompt-prefix-cache-evidence.ts",
+        "src/dsxu/engine/route-cache-dynamic-tail.ts"
+      ],
+      "workflowEntry": "DeepSeek route/cost/cache owner",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts",
+        "bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P2 must preserve source truth while reducing prompt drift."
+    },
+    {
+      "id": "V4-F06",
+      "capability": "Cache warmer",
+      "productCore": "provider-plan",
+      "state": "on-demand",
+      "ownerFiles": [
+        "src/services/cache-warmer.ts",
+        "scripts/dsxu-cache-warm.ts"
+      ],
+      "workflowEntry": "operator dry-run",
+      "acceptanceEvidence": [
+        "bun run scripts/dsxu-cache-warm.ts --dry-run"
+      ],
+      "claimBoundary": "internal-only",
+      "action": "Keep dry-run by default; no startup background provider call without performance evidence."
+    },
+    {
+      "id": "V4-F07",
+      "capability": "Progress ledger and runtime event proof",
+      "productCore": "work-ledger",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/work-state-timeline.ts"
+      ],
+      "workflowEntry": "query-loop/tool/recovery/final report",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts",
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P5/P7 must make tool, verification, recovery, route, and agent events consume the same ledger shape."
+    },
+    {
+      "id": "V4-F08",
+      "capability": "Long task resume and checkpoint state",
+      "productCore": "work-ledger",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/coordinator/persist.ts",
+        "src/QueryEngine.ts"
+      ],
+      "workflowEntry": "long task query-loop/coordinator",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/memory-resume.test.ts",
+        "bun test src/dsxu/engine/__tests__/work-package-i/query-loop-progress-ledger.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "Keep one durable task ledger; do not keep separate visible-state and recovery ledgers."
+    },
+    {
+      "id": "V4-F09",
+      "capability": "Work-state timeline",
+      "productCore": "work-ledger",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/query.ts"
+      ],
+      "workflowEntry": "TUI/CLI/final report projection",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Use as projection source; do not create another UI state runtime."
+    },
+    {
+      "id": "V4-F10",
+      "capability": "Canonical ToolCallResult",
+      "productCore": "tool-envelope",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/tool-protocol.ts",
+        "src/dsxu/engine/tool-protocol-integration.ts"
+      ],
+      "workflowEntry": "Tool Gate",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P4 must keep provider/MCP/legacy shapes normalized before ledger/recovery/TUI."
+    },
+    {
+      "id": "V4-F11",
+      "capability": "Tool runtime event boundary",
+      "productCore": "tool-envelope",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/services/tools/toolLifecycle.ts",
+        "src/services/tools/toolExecution.ts"
+      ],
+      "workflowEntry": "tool execution lifecycle",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "Fold tool execution into ToolCallResult + ledger + work-state event; no second tool runtime."
+    },
+    {
+      "id": "V4-F12",
+      "capability": "Large tool result artifact and compact card",
+      "productCore": "tool-envelope",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/utils/toolResultStorage.ts",
+        "src/components/messages/UserToolResultMessage/utils.tsx"
+      ],
+      "workflowEntry": "tool result display/final report",
+      "acceptanceEvidence": [
+        "bun test src/components/messages/UserToolResultMessage/__tests__/utils.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Keep long output out of chat body; expose preview, risk, and artifact path."
+    },
+    {
+      "id": "V4-F13",
+      "capability": "Legacy ToolBus",
+      "productCore": "tool-envelope",
+      "state": "frozen-experimental",
+      "ownerFiles": [
+        "src/dsxu/engine/tool-bus",
+        "src/dsxu/engine/__tests__/wave5-telemetry.test.ts"
+      ],
+      "workflowEntry": "historical tests only",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts"
+      ],
+      "claimBoundary": "blocked-as-public-claim",
+      "action": "Freeze as historical/owner-review surface; new callers must use ToolCallResult boundary."
+    },
+    {
+      "id": "V4-F14",
+      "capability": "Permission gate and product-core guard",
+      "productCore": "permission-decision",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/utils/permissions/filesystem.ts",
+        "src/dsxu/engine/workspace-policy.ts"
+      ],
+      "workflowEntry": "FileEdit/FileWrite/shell/agent tool gates",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/product-core-guard.test.ts",
+        "bun test src/tools/__tests__/tool-permission-owner-gate.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Every side-effect must route through permission decision evidence."
+    },
+    {
+      "id": "V4-F15",
+      "capability": "Shell and command risk permission",
+      "productCore": "permission-decision",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/shell-gate.ts",
+        "src/dsxu/engine/adapters/bash-adapter.ts"
+      ],
+      "workflowEntry": "terminal/tool execution",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/terminal-hit-rate.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "Keep command purpose, risk, cwd/env, exit code, and output preview visible."
+    },
+    {
+      "id": "V4-F16",
+      "capability": "Owner/Git mutation and deletion review",
+      "productCore": "permission-decision",
+      "state": "on-demand",
+      "ownerFiles": [
+        "scripts/dsxu-owner-git-mutation-preflight.ts",
+        "src/dsxu/engine/replace-delete-owner-review.ts"
+      ],
+      "workflowEntry": "owner review packet",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/replace-delete-owner-review.test.ts"
+      ],
+      "claimBoundary": "internal-only",
+      "action": "Keep deletion/stage/commit decisions outside automatic runtime mutation."
+    },
+    {
+      "id": "V4-F17",
+      "capability": "Post-mutation verification envelope",
+      "productCore": "verification-envelope",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/post-mutation-verification-envelope.ts",
+        "src/coordinator/tdd-gate/post-write-hook.ts"
+      ],
+      "workflowEntry": "FileEdit/FileWrite post mutation",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/post-mutation-verification-envelope.test.ts",
+        "bun test src/coordinator/tdd-gate/__tests__/gate.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P3 must keep PASS/PARTIAL/SKIPPED/FAIL visible after every mutation."
+    },
+    {
+      "id": "V4-F18",
+      "capability": "Static analysis post-mutation envelope",
+      "productCore": "verification-envelope",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/services/static-analysis/tool-gate.ts",
+        "src/services/static-analysis/__tests__/bridge.test.ts"
+      ],
+      "workflowEntry": "FileEdit/FileWrite post mutation",
+      "acceptanceEvidence": [
+        "bun test src/services/static-analysis/__tests__/bridge.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "Keep static analysis inside verification evidence, not as a second permission runtime."
+    },
+    {
+      "id": "V4-F19",
+      "capability": "Six-stage final test gate",
+      "productCore": "verification-envelope",
+      "state": "release-only",
+      "ownerFiles": [
+        "scripts/dsxu-v24-six-stage-final-tests.ts"
+      ],
+      "workflowEntry": "release gate",
+      "acceptanceEvidence": [
+        "bun run test:six-stage-final"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Use for final release proof only; do not replace feature acceptance."
+    },
+    {
+      "id": "V4-F20",
+      "capability": "Recovery GearBox and decision state",
+      "productCore": "recovery-decision",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/gear-box.ts",
+        "src/dsxu/engine/recovery/index.ts"
+      ],
+      "workflowEntry": "query-loop failure handling",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/gear-box.test.ts",
+        "bun test src/dsxu/engine/__tests__/gear-box-recovery-link-v1.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P5 must make retry/replan/rollback/abort come from one decision table."
+    },
+    {
+      "id": "V4-F21",
+      "capability": "Failure taxonomy",
+      "productCore": "recovery-decision",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/dsxu/engine/controlled-failure-taxonomy.ts",
+        "src/dsxu/engine/recovery"
+      ],
+      "workflowEntry": "verification/tool/provider failure handling",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "Normalize failures into retry/replan/rollback/ask-human/abort/escalate-model."
+    },
+    {
+      "id": "V4-F22",
+      "capability": "Multiple recovery planners",
+      "productCore": "recovery-decision",
+      "state": "frozen-experimental",
+      "ownerFiles": [
+        "src/dsxu/engine/recovery/recovery-planner.ts",
+        "src/dsxu/engine/recovery/recovery-planner-v3.ts"
+      ],
+      "workflowEntry": "historical compatibility tests",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts"
+      ],
+      "claimBoundary": "blocked-as-public-claim",
+      "action": "Freeze variants; P5 must expose one mainline Recovery Decision Table."
+    },
+    {
+      "id": "V4-F23",
+      "capability": "Agent serial worker and parallel fanout evidence",
+      "productCore": "agent-evidence",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/tools/AgentTool",
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts"
+      ],
+      "workflowEntry": "AgentTool evidence handoff",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Agent may hand off evidence only; parent owns final claim."
+    },
+    {
+      "id": "V4-F24",
+      "capability": "Swarm/team/forked branch systems",
+      "productCore": "agent-evidence",
+      "state": "frozen-experimental",
+      "ownerFiles": [
+        "src/utils/swarm",
+        "src/utils/forkedAgent.ts",
+        "src/tools/AgentTool/forkSubagent.ts"
+      ],
+      "workflowEntry": "disabled or explicit owner-review only",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts"
+      ],
+      "claimBoundary": "blocked-as-public-claim",
+      "action": "Do not make swarm/forked branches default; reduce to serial worker or disjoint fanout."
+    },
+    {
+      "id": "V4-F25",
+      "capability": "MCP/Skill registry boundary",
+      "productCore": "agent-evidence",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/commands/mcp",
+        "src/tools/AgentTool/prompt.ts",
+        "src/dsxu/engine/skills-adapter.ts"
+      ],
+      "workflowEntry": "Tool Gate / registry",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "MCP/Skill is a governed tool boundary, not a standalone runtime."
+    },
+    {
+      "id": "V4-F26",
+      "capability": "Trust footer and compact state",
+      "productCore": "trust-ui",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/components/PromptInput",
+        "src/components/messages",
+        "src/query.ts"
+      ],
+      "workflowEntry": "Ink TUI / CLI display",
+      "acceptanceEvidence": [
+        "bun test src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P7 must keep route/verification/cost/cache/blocked state short and non-repetitive."
+    },
+    {
+      "id": "V4-F27",
+      "capability": "EvidenceLine suppression from normal chat",
+      "productCore": "trust-ui",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/components/messages/SystemTextMessage.tsx"
+      ],
+      "workflowEntry": "TUI message rendering",
+      "acceptanceEvidence": [
+        "bun test src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "Keep final usage evidence in trust/report surfaces, not duplicated as chat text."
+    },
+    {
+      "id": "V4-F28",
+      "capability": "Real TUI resize and long output harness",
+      "productCore": "trust-ui",
+      "state": "default-mainline",
+      "ownerFiles": [
+        "src/screens/REPL.tsx",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts"
+      ],
+      "workflowEntry": "TUI acceptance harness",
+      "acceptanceEvidence": [
+        "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts"
+      ],
+      "claimBoundary": "workflow-only",
+      "action": "P7 must keep resize, permission dialog, long output, and tail pin behavior stable."
+    },
+    {
+      "id": "V4-F29",
+      "capability": "Evidence dashboard and release claim binder",
+      "productCore": "trust-ui",
+      "state": "release-only",
+      "ownerFiles": [
+        "scripts/dsxu-evidence-dashboard.ts",
+        "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260518.json"
+      ],
+      "workflowEntry": "release evidence workbench",
+      "acceptanceEvidence": [
+        "bun run evidence:dashboard"
+      ],
+      "claimBoundary": "public-allowed-with-current-evidence",
+      "action": "P8 must only publish claims backed by current source/test/live/raw/cost evidence."
+    },
+    {
+      "id": "V4-F30",
+      "capability": "V-series historical evidence scripts",
+      "productCore": "trust-ui",
+      "state": "release-only",
+      "ownerFiles": [
+        "scripts/dsxu-v20-*",
+        "scripts/dsxu-v24-*",
+        "scripts/dsxu-v26-*"
+      ],
+      "workflowEntry": "historical evidence only",
+      "acceptanceEvidence": [
+        "bun run scripts/dsxu-command-catalog.ts"
+      ],
+      "claimBoundary": "internal-only",
+      "action": "Keep as evidence inputs; do not expose as product runtime or GitHub feature claims."
+    }
+  ],
+  "rule": "Every V4 capability must map to exactly one of the eight product cores. Experimental, release-only, and replace/delete candidates are not public product claims and must not become new mainline/runtime/provider/tool/agent/TUI surfaces."
+}

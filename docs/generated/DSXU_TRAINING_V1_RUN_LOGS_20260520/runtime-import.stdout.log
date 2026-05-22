@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "dsxu.training-runtime-import-artifact.v1",
+  "output": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_RUNTIME_IMPORT_20260520.json",
+  "validationStatus": "accepted",
+  "publicClaimAllowed": false,
+  "recordCount": 4,
+  "requestCount": 1,
+  "toolCallCount": 2
+}

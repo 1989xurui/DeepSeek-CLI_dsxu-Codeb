@@ -1,0 +1,1257 @@
+{
+  "schemaVersion": "dsxu.training-dataset-validation.v1",
+  "generatedAt": "2026-05-20T09:45:50.681Z",
+  "inputPath": "D:\\DSXU-code\\docs\\training\\golden",
+  "strict": true,
+  "sampleCount": 60,
+  "acceptedCount": 45,
+  "rejectedCount": 15,
+  "status": "PASS",
+  "items": [
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "stale_source_edit",
+            "message": "edit was attempted after stale source truth was detected",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "stale_source_edit"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "stale_source_edit"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "stale_source_edit",
+            "message": "edit was attempted after stale source truth was detected",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "stale_source_edit"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "stale_source_edit"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "stale_source_edit",
+            "message": "edit was attempted after stale source truth was detected",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "stale_source_edit"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "stale_source_edit"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "stale_source_edit",
+            "message": "edit was attempted after stale source truth was detected",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "stale_source_edit"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "stale_source_edit"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G1-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "stale_source_edit",
+            "message": "edit was attempted after stale source truth was detected",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "stale_source_edit"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "stale_source_edit"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G2-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "false_pass",
+            "message": "successful final claim is not bound to verification evidence",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "false_pass"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "false_pass"
+        ],
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "false_pass",
+            "message": "successful final claim is not bound to verification evidence",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "false_pass"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "false_pass"
+        ],
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "false_pass",
+            "message": "successful final claim is not bound to verification evidence",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "false_pass"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "false_pass"
+        ],
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "false_pass",
+            "message": "successful final claim is not bound to verification evidence",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "false_pass"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "false_pass"
+        ],
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G3-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "false_pass",
+            "message": "successful final claim is not bound to verification evidence",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "false_pass"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "false_pass"
+        ],
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G4-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          80
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          75
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          75
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          75
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          75
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G5-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          0,
+          75
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-01.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-02.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-03.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-04.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-05.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expected": {
+        "validationStatus": "accepted",
+        "seesRange": [
+          75,
+          100
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-06.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "oracle_or_solution_leak",
+            "message": "oracle, solution, or old report evidence is present",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-07.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "oracle_or_solution_leak",
+            "message": "oracle, solution, or old report evidence is present",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-08.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "oracle_or_solution_leak",
+            "message": "oracle, solution, or old report evidence is present",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-09.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "oracle_or_solution_leak",
+            "message": "oracle, solution, or old report evidence is present",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    },
+    {
+      "path": "D:\\DSXU-code\\docs\\training\\golden\\G6-10.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "rejected",
+        "errors": [],
+        "antiCheatFindings": [
+          {
+            "blocker": "oracle_or_solution_leak",
+            "message": "oracle, solution, or old report evidence is present",
+            "hardGate": true
+          }
+        ],
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ]
+      },
+      "expected": {
+        "validationStatus": "rejected",
+        "hardGateViolations": [
+          "oracle_or_solution_leak"
+        ],
+        "seesRange": [
+          0,
+          70
+        ]
+      },
+      "expectedMatched": true
+    }
+  ]
+}

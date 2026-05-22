@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "dsxu.public-comparable-dsxu-lane.v1",
+  "generatedAt": "2026-05-21T12:25:22.249Z",
+  "status": "PASS",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521",
+  "workspaceRoot": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane",
+  "rawEvidenceComplete": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "caseCount": 30,
+  "attemptedCaseCount": 1,
+  "capturedCaseCount": 1,
+  "skippedCaseCount": 0,
+  "failedCaseCount": 0,
+  "passedCaseCount": 1,
+  "nonPassingCaseCount": 0,
+  "nextAction": "run evidence:public-comparable-raw to import DSXU lane evidence; expand only after low-risk probe cases are stable",
+  "safeguards": [
+    "DSXU lane runs in per-case isolated git worktrees or injected test workspaces, never in the dirty product working tree",
+    "top-level PASS means every selected case passed its rubric; captured evidence without rubric pass is PARTIAL",
+    "this runner captures transcript/tool/final/metrics evidence but does not judge public superiority",
+    "finalPass requires a clean CLI exit, a result event, no unsupported/budget violations, and a declared outcome that matches the case rubric; deny-PASS cases can pass with FAIL when FAIL is the requested outcome",
+    "Agent worker evidence lanes require at least one executed Agent result; parent task-board actions alone cannot satisfy worker evidence",
+    "public benchmark and external comparison claims remain controlled by the raw-evidence readiness gate"
+  ],
+  "cases": [
+    {
+      "id": "product-agent-failure-correction-live",
+      "status": "PASS_DSXU_LANE_CAPTURED",
+      "model": "deepseek-v4-flash",
+      "promptHash": "d8593f7ac9c826fc49bd544dc7e59ce75b1f26bb5c44b55789a970ac6d58e0e1",
+      "caseDir": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live",
+      "workspaceDir": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane/product-agent-failure-correction-live-2026-05-21T12-24-30-216Z",
+      "rawTranscriptPath": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live/raw-transcript.jsonl",
+      "toolTracePath": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live/tool-trace.jsonl",
+      "finalReportPath": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live/final-report.json",
+      "metricsPath": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live/metrics.json",
+      "artifactDir": ".dsxu/trace/public-comparable-finalization-rerun46-agent-failure-correction-20260521/product-agent-failure-correction-live/artifacts",
+      "exitCode": 0,
+      "wallClockMs": 46579,
+      "costUsd": 0.005148567200000001,
+      "cacheHitRatePct": 83.63,
+      "toolUseCount": 8,
+      "finalPass": true
+    }
+  ]
+}

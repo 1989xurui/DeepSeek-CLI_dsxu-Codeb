@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "dsxu.final-live-provider-smoke.v10",
+  "generatedAt": "2026-05-20T08:50:43.696Z",
+  "owner": "DeepSeek Provider Contract / Release Claim Binder",
+  "mode": "dry-run",
+  "status": "PASS_V10_FINAL_PROVIDER_SMOKE",
+  "publicClaimAllowed": false,
+  "sourceStatus": "PASS_V8_PROVIDER_SMOKE_CONTRACT",
+  "sourceMode": "dry-run",
+  "sourceJson": "D:\\DSXU-code\\docs\\generated\\DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.json",
+  "checkCount": 6,
+  "skippedCheckCount": 0,
+  "failedCheckCount": 0,
+  "stdoutPreview": "{\n  \"status\": \"PASS_V8_PROVIDER_SMOKE_CONTRACT\",\n  \"mode\": \"dry-run\",\n  \"checkCount\": 6,\n  \"blockers\": [],\n  \"outputJson\": \"D:\\\\DSXU-code\\\\docs\\\\generated\\\\DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.json\",\n  \"outputMd\": \"D:\\\\DSXU-code\\\\docs\\\\DSXU_V8_LIVE_PROVIDER_SMOKE_20260520.md\"\n}\n",
+  "stderrPreview": "",
+  "blockers": [],
+  "rule": "Provider smoke validates DeepSeek request/response contract shape. Dry-run proves request projection; live mode proves one real provider call when a key is explicitly available. Neither mode is a benchmark."
+}

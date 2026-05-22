@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "dsxu.training-ablation.v1",
+  "status": "PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE",
+  "datasetKind": "internal_synthetic_replay",
+  "publicClaimAllowed": false,
+  "replaySampleCount": 300,
+  "output": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_ABLATION_20260520.json"
+}

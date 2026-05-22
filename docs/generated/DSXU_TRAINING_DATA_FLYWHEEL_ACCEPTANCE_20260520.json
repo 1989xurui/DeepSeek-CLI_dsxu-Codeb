@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "dsxu.training-data-flywheel-acceptance.v1",
+  "date": "2026-05-20",
+  "goal": "Build a DeepSeek-native DSXU training data flywheel for senior engineering experience.",
+  "stages": [
+    {
+      "id": "stage-0",
+      "name": "Freeze New Product Features",
+      "allowedScopes": [
+        "src/dsxu/training",
+        "scripts/dsxu-training-*",
+        "docs/generated",
+        "docs/training"
+      ],
+      "blockedScopes": [
+        "new tools",
+        "new agent team modes",
+        "large prompt rewrites",
+        "default query-loop behavior changes"
+      ],
+      "passConditions": [
+        "All changes are inside allowed scopes unless explicitly justified.",
+        "No new runtime feature is enabled before exporter and validator pass."
+      ]
+    },
+    {
+      "id": "stage-1",
+      "name": "Schema and Exporter",
+      "commands": [
+        "bun test src/dsxu/training/__tests__/schema.test.ts",
+        "bun test src/dsxu/training/__tests__/exporter.test.ts",
+        "bun run scripts/dsxu-training-export.ts --dry-run"
+      ],
+      "hardGates": {
+        "schemaValidRate": 1,
+        "sourceBodyStored": 0,
+        "secretStored": 0,
+        "exporterCrashAffectsMainline": 0
+      }
+    },
+    {
+      "id": "stage-2",
+      "name": "Validator",
+      "commands": [
+        "bun test src/dsxu/training/__tests__/validator.test.ts",
+        "bun run scripts/dsxu-training-validate.ts --input .dsxu/training --strict"
+      ],
+      "hardGates": {
+        "falsePassRejected": 1,
+        "oracleLeakRejected": 1,
+        "staleEditRejected": 1,
+        "agentFakePassRejected": 1,
+        "unpairedToolResultRejected": 1
+      }
+    },
+    {
+      "id": "stage-3",
+      "name": "SEES Scorer",
+      "commands": [
+        "bun test src/dsxu/training/__tests__/scorer.test.ts",
+        "bun run scripts/dsxu-training-score.ts --input .dsxu/training"
+      ],
+      "scoreCaps": {
+        "falsePassMaxScore": 80,
+        "publicClaimWithoutRawEvidenceMaxScore": 80,
+        "oracleLeakMaxScore": 70,
+        "sourceBodyLeakMaxScore": 60
+      }
+    },
+    {
+      "id": "stage-4",
+      "name": "Golden Dataset",
+      "commands": [
+        "bun run scripts/dsxu-training-validate.ts --input docs/training/golden --strict",
+        "bun run scripts/dsxu-training-score.ts --input docs/training/golden"
+      ],
+      "hardGates": {
+        "goldenCount": 60,
+        "schemaPassCount": 60,
+        "seededBlockerRejectRate": 1,
+        "expectedScoreRangeMatchRate": 1
+      }
+    },
+    {
+      "id": "stage-5",
+      "name": "Replay and Ablation",
+      "commands": [
+        "bun run scripts/dsxu-training-replay.ts --suite core-300",
+        "bun run scripts/dsxu-training-ablation.ts --suite core-300"
+      ],
+      "hardGates": {
+        "falsePassRate": 0,
+        "longTaskResumeSuccessMin": 0.85,
+        "invalidToolCallRateMax": 0.05,
+        "costToVerifiedCompletionMaxBaselineMultiplier": 1.2
+      }
+    },
+    {
+      "id": "stage-6",
+      "name": "V2 Dataset",
+      "hardGates": {
+        "trajectoryMin": 980,
+        "preferencePairsMin": 2000,
+        "goldRatioMin": 0.6,
+        "rejectedReasonCoverageMin": 0.95,
+        "goldHardGateViolations": 0
+      }
+    },
+    {
+      "id": "stage-7",
+      "name": "Training or Policy Use",
+      "entryConditions": [
+        "Stages 1-6 pass.",
+        "false_pass_rate == 0.",
+        "Replay and ablation show improvement over baseline.",
+        "Dataset tiering is stable."
+      ],
+      "priorityOrder": [
+        "router policy",
+        "few-shot pack",
+        "runtime validator tuning",
+        "SFT",
+        "DPO"
+      ]
+    }
+  ],
+  "globalHardGates": {
+    "schema_valid_rate": 1,
+    "tool_result_paired": 1,
+    "false_pass_rate": 0,
+    "false_edit_on_explain": 0,
+    "stale_read_edit_blocked": 1,
+    "localized_feedback_on_failure_min": 0.95,
+    "same_failed_action_retry_rate_max": 0.03,
+    "long_task_resume_success_min": 0.9,
+    "agent_parent_false_pass_rate": 0,
+    "public_claim_without_raw_evidence": 0,
+    "invalid_tool_call_rate_max": 0.05,
+    "cost_to_verified_completion_max_baseline_multiplier": 1.2,
+    "gold_hard_gate_violation": 0,
+    "source_body_leak": 0,
+    "secret_leak": 0
+  }
+}

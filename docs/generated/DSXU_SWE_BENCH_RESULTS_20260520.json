@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-05-20T14:01:46.369Z",
+  "status": "BLOCKED_PUBLIC_COMPARABLE_EVIDENCE",
+  "owner": "Evidence / benchmark / public challenge",
+  "mode": "real-benchmark",
+  "requestedMode": "public-comparable",
+  "evidenceClass": "public-comparable-candidate",
+  "claimBoundary": "real benchmark candidate; public claim still requires fixed manifest, raw transcript, rubric, and paired evidence",
+  "rawEvidenceRequired": [
+    "fixed public comparable task manifest",
+    "DSXU raw transcript",
+    "tool trace",
+    "final report",
+    "artifact directory",
+    "cost and cache metrics",
+    "scoring rubric",
+    "failure recovery notes",
+    "optional paired target/reference raw transcript for external comparison"
+  ],
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "model": "deepseek-v4-flash",
+  "timeoutMs": 60000,
+  "total": 1,
+  "pass": 0,
+  "fail": 0,
+  "timeout": 0,
+  "crash": 0,
+  "blocked": 1,
+  "passRate": 0,
+  "records": [
+    {
+      "task": {
+        "id": "sample1",
+        "repo": "external/swe-bench",
+        "baseCommit": "0000000",
+        "problemStatement": "Solve SWE-bench instance sample1",
+        "difficulty": "easy",
+        "languages": [
+          "typescript"
+        ],
+        "multiFile": false,
+        "testPatch": "+ test covers sample behavior",
+        "goldPatch": "+ export const fixed = true;"
+      },
+      "result": {
+        "taskId": "sample1",
+        "generatedPatch": "",
+        "testsPassed": false,
+        "passedTests": 0,
+        "totalTests": 0,
+        "durationMs": 0,
+        "error": "SWE_BENCH_ENV_NOT_READY: missing workDir: D:\\DSXU-code\\.swe-bench-work"
+      },
+      "verdict": {
+        "instanceId": "sample1",
+        "status": "BLOCKED",
+        "testsPassed": false,
+        "patchMatch": 0,
+        "passedTests": 0,
+        "totalTests": 0,
+        "testOutput": "SWE_BENCH_ENV_NOT_READY: missing workDir: D:\\DSXU-code\\.swe-bench-work",
+        "error": "SWE_BENCH_ENV_NOT_READY: missing workDir: D:\\DSXU-code\\.swe-bench-work"
+      },
+      "turnsUsed": 5,
+      "costUsd": 0.002
+    }
+  ]
+}

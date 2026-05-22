@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "dsxu.v6.prompt-diet-report.v1",
+  "generatedAt": "2026-05-19T08:42:02.576Z",
+  "baselinePromptSourceChars": 64471,
+  "plans": {
+    "singleFileEdit": {
+      "schemaVersion": "dsxu.prompt-section-plan.v6s",
+      "owner": "Prompt runtime",
+      "taskType": "single_file_edit",
+      "sections": [
+        {
+          "id": "identity",
+          "placement": "stable_core",
+          "included": true,
+          "reason": "stable DSXU identity and anti-false-claim discipline",
+          "text": "DSXU Code: DeepSeek-first local engineering runtime. Never claim PASS without verification evidence.",
+          "charCount": 100
+        },
+        {
+          "id": "task_contract",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "task-specific contract belongs in the dynamic tail",
+          "text": "Task type: single_file_edit. Risk: low. Return PASS / PARTIAL / FAIL honestly.",
+          "charCount": 78
+        },
+        {
+          "id": "tool_view",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "only current visible tools are exposed to DeepSeek",
+          "text": "Visible tools for this turn: Read, Edit, Bash, Grep. Hidden tools are unavailable unless the task contract explicitly activates them.",
+          "charCount": 133
+        },
+        {
+          "id": "verification_claim_gate",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "claim gate is always needed but short",
+          "text": "After edits, run the smallest relevant verification. If verification is not run, final claim is PARTIAL/not-run.",
+          "charCount": 112
+        },
+        {
+          "id": "recovery_short",
+          "placement": "dynamic_task_tail",
+          "included": false,
+          "reason": "ordinary task does not need long recovery tutorial",
+          "text": "",
+          "charCount": 0
+        },
+        {
+          "id": "agent_serial_worker",
+          "placement": "dynamic_task_tail",
+          "included": false,
+          "reason": "Agent sidecar hidden for ordinary task",
+          "text": "",
+          "charCount": 0
+        },
+        {
+          "id": "agent_parallel_fanout",
+          "placement": "dynamic_task_tail",
+          "included": false,
+          "reason": "parallel fanout hidden for ordinary task",
+          "text": "",
+          "charCount": 0
+        },
+        {
+          "id": "skill_match",
+          "placement": "dynamic_task_tail",
+          "included": false,
+          "reason": "skill list omitted by default",
+          "text": "",
+          "charCount": 0
+        },
+        {
+          "id": "mcp_context",
+          "placement": "dynamic_task_tail",
+          "included": false,
+          "reason": "MCP instructions omitted by default",
+          "text": "",
+          "charCount": 0
+        }
+      ],
+      "includedSectionIds": [
+        "identity",
+        "task_contract",
+        "tool_view",
+        "verification_claim_gate"
+      ],
+      "omittedSectionIds": [
+        "recovery_short",
+        "agent_serial_worker",
+        "agent_parallel_fanout",
+        "skill_match",
+        "mcp_context"
+      ],
+      "promptText": "DSXU Code: DeepSeek-first local engineering runtime. Never claim PASS without verification evidence.\nTask type: single_file_edit. Risk: low. Return PASS / PARTIAL / FAIL honestly.\nVisible tools for this turn: Read, Edit, Bash, Grep. Hidden tools are unavailable unless the task contract explicitly activates them.\nAfter edits, run the smallest relevant verification. If verification is not run, final claim is PARTIAL/not-run.",
+      "promptChars": 426,
+      "stablePrefixChars": 100,
+      "dynamicTailChars": 323,
+      "forbiddenLongSectionsPresent": [],
+      "cacheBoundary": {
+        "stablePrefixLocked": true,
+        "dynamicTailContainsTaskOnly": true
+      },
+      "guards": []
+    },
+    "longTaskWithExperts": {
+      "schemaVersion": "dsxu.prompt-section-plan.v6s",
+      "owner": "Prompt runtime",
+      "taskType": "long_task",
+      "sections": [
+        {
+          "id": "identity",
+          "placement": "stable_core",
+          "included": true,
+          "reason": "stable DSXU identity and anti-false-claim discipline",
+          "text": "DSXU Code: DeepSeek-first local engineering runtime. Never claim PASS without verification evidence.",
+          "charCount": 100
+        },
+        {
+          "id": "task_contract",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "task-specific contract belongs in the dynamic tail",
+          "text": "Task type: long_task. Risk: high. Return PASS / PARTIAL / FAIL honestly.",
+          "charCount": 72
+        },
+        {
+          "id": "tool_view",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "only current visible tools are exposed to DeepSeek",
+          "text": "Visible tools for this turn: Read, Grep, Todo, Agent, Bash. Hidden tools are unavailable unless the task contract explicitly activates them.",
+          "charCount": 140
+        },
+        {
+          "id": "verification_claim_gate",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "claim gate is always needed but short",
+          "text": "After edits, run the smallest relevant verification. If verification is not run, final claim is PARTIAL/not-run.",
+          "charCount": 112
+        },
+        {
+          "id": "recovery_short",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "debug/high-risk task needs short recovery decision rules",
+          "text": "On repeated failure: classify, retry once, replan, rollback or ask user. Do not loop silently.",
+          "charCount": 94
+        },
+        {
+          "id": "agent_serial_worker",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "Agent sidecar explicitly activated by task contract",
+          "text": "Agent mode: serial worker. Worker returns evidence envelope only; parent owns synthesis.",
+          "charCount": 88
+        },
+        {
+          "id": "agent_parallel_fanout",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "parallel fanout allowed only for independent scoped work",
+          "text": "Agent mode: parallel fanout for independent read-only or disjoint-scope work; no swarm/team mesh.",
+          "charCount": 97
+        },
+        {
+          "id": "skill_match",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "matched skill evidence activates the searchable skill layer",
+          "text": "Matched skills: code-review. Skill output is evidence, not final PASS.",
+          "charCount": 70
+        },
+        {
+          "id": "mcp_context",
+          "placement": "dynamic_task_tail",
+          "included": true,
+          "reason": "explicit MCP resource reference activates expert MCP context",
+          "text": "MCP resources: mcp://local/docs. MCP results must flow through Tool Gate and verification.",
+          "charCount": 90
+        }
+      ],
+      "includedSectionIds": [
+        "identity",
+        "task_contract",
+        "tool_view",
+        "verification_claim_gate",
+        "recovery_short",
+        "agent_serial_worker",
+        "agent_parallel_fanout",
+        "skill_match",
+        "mcp_context"
+      ],
+      "omittedSectionIds": [],
+      "promptText": "DSXU Code: DeepSeek-first local engineering runtime. Never claim PASS without verification evidence.\nTask type: long_task. Risk: high. Return PASS / PARTIAL / FAIL honestly.\nVisible tools for this turn: Read, Grep, Todo, Agent, Bash. Hidden tools are unavailable unless the task contract explicitly activates them.\nAfter edits, run the smallest relevant verification. If verification is not run, final claim is PARTIAL/not-run.\nOn repeated failure: classify, retry once, replan, rollback or ask user. Do not loop silently.\nAgent mode: serial worker. Worker returns evidence envelope only; parent owns synthesis.\nAgent mode: parallel fanout for independent read-only or disjoint-scope work; no swarm/team mesh.\nMatched skills: code-review. Skill output is evidence, not final PASS.\nMCP resources: mcp://local/docs. MCP results must flow through Tool Gate and verification.",
+      "promptChars": 871,
+      "stablePrefixChars": 100,
+      "dynamicTailChars": 763,
+      "forbiddenLongSectionsPresent": [],
+      "cacheBoundary": {
+        "stablePrefixLocked": true,
+        "dynamicTailContainsTaskOnly": true
+      },
+      "guards": []
+    }
+  },
+  "status": "PASS_V6_PROMPT_SECTION_ROUTER"
+}

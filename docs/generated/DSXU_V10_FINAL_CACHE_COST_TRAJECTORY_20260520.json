@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "dsxu.final-cache-cost-trajectory.v10",
+  "generatedAt": "2026-05-20T08:50:41.879Z",
+  "owner": "DeepSeek route/cost/cache / Evidence",
+  "status": "PASS_V10_FINAL_CACHE_COST_TRAJECTORY",
+  "publicClaimAllowed": false,
+  "cacheBreakAttribution": {
+    "stablePairNoBreak": true,
+    "breakDetected": true,
+    "reason": "model changed (deepseek-v4-flash -> deepseek-v4-pro), system prompt changed (+54 chars), tools changed (+1/-0), cache strategy changed (stable-prefix-latch -> volatile-prefix), effort changed (non-thinking -> max)",
+    "tokenDrop": 19200,
+    "changes": {
+      "systemPromptChanged": true,
+      "toolSchemasChanged": true,
+      "modelChanged": true,
+      "fastModeChanged": false,
+      "cacheStrategyChanged": true,
+      "betasChanged": false,
+      "effortChanged": true,
+      "extraBodyChanged": false,
+      "addedToolCount": 1,
+      "removedToolCount": 0,
+      "systemCharDelta": 54,
+      "changedToolSchemas": []
+    }
+  },
+  "costQuality": {
+    "sourcePath": "D:\\DSXU-code\\docs\\generated\\DSXU_V6_COST_TO_VERIFIED_COMPLETION_20260519.json",
+    "status": "PASS_V6_COST_TO_VERIFIED_COMPLETION_REPORT",
+    "boardStatus": "PASS_DEEPSEEK_COST_QUALITY_ACCEPTANCE",
+    "scenarioCount": 40,
+    "flashTurnRatioPct": 85.7,
+    "proTurnRatioPct": 14.3,
+    "cacheHitRatePct": 87.5,
+    "totalCostUsd": 0.042394295,
+    "proOnlyCostUsd": 0.085398845,
+    "savingsVsProOnlyPct": 50.4,
+    "public90ClaimAllowed": false
+  },
+  "trajectoryGovernance": {
+    "routeLatchEvidence": true,
+    "cacheBreakEvidence": true,
+    "costToVerifiedEvidence": true,
+    "publicClaimAllowed": false
+  },
+  "blockers": [],
+  "rule": "Cache/cost/trajectory evidence is internal release evidence. It may support cost-aware positioning, but not public model-quality or 90% parity claims."
+}

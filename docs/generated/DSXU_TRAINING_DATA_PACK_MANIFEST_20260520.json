@@ -1,0 +1,256 @@
+{
+  "schemaVersion": "dsxu.training-data-pack-manifest.v1",
+  "generatedAt": "2026-05-20T05:20:21.170Z",
+  "fileCount": 25,
+  "presentCount": 25,
+  "parseOkCount": 25,
+  "missing": [],
+  "publicClaimAllowed": false,
+  "rows": [
+    {
+      "file": "docs/generated/DSXU_TRAINING_V1_RUN_20260520.json",
+      "exists": true,
+      "bytes": 28113,
+      "sha256": "b58fb9a16f665abece2b1dff5800d0a7ae700243eacf34a256829c3277f98821",
+      "schemaVersion": "dsxu.training-v1-runner.v1",
+      "status": "PASS",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+      "exists": true,
+      "bytes": 3387,
+      "sha256": "ed45738576bf4775084267b8a63dd73879360e4f4e231403077466d1b55fe95d",
+      "schemaVersion": "dsxu.training-trajectory.v1",
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_TRAJECTORY_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 666,
+      "sha256": "751ee32f0cd8632242ebd3ce64d6714d3f3e896209ff647e39a369553df7e1f8",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_TRAJECTORY_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1725,
+      "sha256": "bc0f16eeec736d9987f82c9dbb0ce2b19ab62efa2b87348cec4a0996a3500139",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 84,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_GOLDEN_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 31419,
+      "sha256": "8102adea0de388243069895b57e4a9c7eac420c2583574f3c9b1c5f24bb3169b",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 60,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_GOLDEN_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 77354,
+      "sha256": "c14e10aab78a088a58dd17548a4103c0838a7ca51ddd90d01f3d9fc563b8df24",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 60,
+      "averageSees": 76,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_REPLAY_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 146997,
+      "sha256": "56adb3b1aadbf65882099bf960556d4cac8750af740342e9177f7cd5b34c0bfa",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 300,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_REPLAY_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 371754,
+      "sha256": "365e1ecb621b6cfbbc28568415bf57366d15559133e7485acdd8f005d084f3af",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 300,
+      "averageSees": 83,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_ABLATION_20260520.json",
+      "exists": true,
+      "bytes": 2036,
+      "sha256": "1b7e2b2d13728aa2d23c5931fab0b5a53d028bc39362d2b34ef157548ccc8d9b",
+      "schemaVersion": "dsxu.training-ablation.v1",
+      "status": "PASS_INTERNAL_SYNTHETIC_REPLAY_BASELINE",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_20260520.json",
+      "exists": true,
+      "bytes": 5679,
+      "sha256": "61173b72c8bda14e8f209781f019943b235b2717c69c746f9c1776d66428c9e2",
+      "schemaVersion": "dsxu.training-runtime-import-artifact.v1",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 658,
+      "sha256": "eadb4183b0765bf669da70e88fddb1f7f15f65f7bd47869c875be7d79a7325bd",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_IMPORT_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1707,
+      "sha256": "6959c2599f91a580a1687b896b4d80b9fbc891274a700b81b3679e2ab0a5ea92",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 65,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_20260520.json",
+      "exists": true,
+      "bytes": 6577,
+      "sha256": "5d49cce89fec0c2436d752f34185ddd3e8c5d70bdf77facd96cb0c1540eeb40c",
+      "schemaVersion": "dsxu.training-runtime-capture.v1",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 660,
+      "sha256": "e3f1b523fe343be16b58b3f697d2ed9fc90913d825b44ca21827e23197a6ed17",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_RUNTIME_CAPTURE_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1711,
+      "sha256": "c4bba32070d182aeb57e9b8b68ee1c942eb59bef4bda6a7a98ea0fae0252998c",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 62,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+      "exists": true,
+      "bytes": 6615,
+      "sha256": "a236a2d2d53c5600edff8749484632a80b59551228e8eb66760ed897d4e84e3b",
+      "schemaVersion": "dsxu.training-query-loop-reachability.v1",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 676,
+      "sha256": "17044f1c89f2172a6b32937f8100009cb0868cfaab7da6632594ccd6a4b45ee6",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_REACHABILITY_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1745,
+      "sha256": "525b82d9ed5af0cb03b4a760f244d6a9b790ed9f10c14388fb552599f1b41dfa",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 90,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_20260520.json",
+      "exists": true,
+      "bytes": 6531,
+      "sha256": "6c35196467ccaff598ae51f3f7add270f0d477a69ecf5b8a9864f26fa9026675",
+      "schemaVersion": "dsxu.training-query-loop-capture.v1",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 666,
+      "sha256": "bd3aeb110098e785aa4dd395d8e55639afb8a90b2a43804184e701893c933e9b",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_QUERY_LOOP_CAPTURE_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1725,
+      "sha256": "1e9db0d271cf1387dd4a8a8c7bff29bc7457cc369c6d9f2a8d9fa7e380ba33a2",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 90,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_20260520.json",
+      "exists": true,
+      "bytes": 6061,
+      "sha256": "a3f746772160d2fd85912f1d98956cef04daa49d9a833feebde1a943ef2f54df",
+      "schemaVersion": "dsxu.training-live-provider-capture.v1",
+      "status": "PASS_LIVE_PROVIDER_CAPTURE",
+      "publicClaimAllowed": false,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_VALIDATE_20260520.json",
+      "exists": true,
+      "bytes": 672,
+      "sha256": "951dbccddc3b4f9be23c2add8cf7e3c968845e079e019018143f3e36aae2f06f",
+      "schemaVersion": "dsxu.training-dataset-validation.v1",
+      "status": "PASS",
+      "sampleCount": 1,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_LIVE_PROVIDER_CAPTURE_SCORE_20260520.json",
+      "exists": true,
+      "bytes": 1737,
+      "sha256": "e415d6a15fba1e0bcb3c78fd971c398993a89d10a9f673d5413f52c8966bc654",
+      "schemaVersion": "dsxu.training-score-report.v1",
+      "sampleCount": 1,
+      "averageSees": 84,
+      "parseOk": true
+    },
+    {
+      "file": "docs/generated/DSXU_TRAINING_EVIDENCE_DASHBOARD_20260520.json",
+      "exists": true,
+      "bytes": 6519,
+      "sha256": "0aeaae723becf76d411026b9b52545ad9aa83e1df3fbd8ed99c6d8295cc8c81a",
+      "schemaVersion": "dsxu.training-evidence-dashboard.v1",
+      "publicClaimAllowed": false,
+      "liveProviderStatus": "PASS_LIVE_PROVIDER_CAPTURE",
+      "evidenceCompletenessScore": 67,
+      "parseOk": true
+    }
+  ]
+}

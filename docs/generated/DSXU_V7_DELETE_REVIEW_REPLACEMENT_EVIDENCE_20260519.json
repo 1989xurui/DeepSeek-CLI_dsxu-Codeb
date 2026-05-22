@@ -1,0 +1,533 @@
+{
+  "schemaVersion": "dsxu.v7.delete-review-replacement-evidence.v1",
+  "generatedAt": "2026-05-19T11:23:23.303Z",
+  "status": "PASS_DSXU_V7_DELETE_REVIEW_REPLACEMENT_EVIDENCE",
+  "sourceDeleteReviewPath": "docs/generated/DSXU_DELETE_REVIEW_BOARD_20260519.json",
+  "summary": {
+    "rows": 6,
+    "sourceDeleteReviewRows": 6,
+    "pathExistsRows": 6,
+    "replacementEvidenceRows": 6,
+    "activeRuntimeReferenceRows": 1,
+    "deleteReadyRows": 0,
+    "mutationAllowedRows": 0,
+    "commandCount": 3,
+    "passedCommands": 3,
+    "failedCommands": 0
+  },
+  "blockers": [],
+  "commands": [
+    {
+      "command": "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationMs": 1620,
+      "keyOutput": [
+        "(pass) DSXU provider contract V1 > redacts MCP credential-like fields recursively",
+        "(pass) DSXU provider contract V1 > permission callback is explicit and deny-by-default",
+        "(pass) DSXU provider contract V1 > default CLI path stays on DSXU local provider shell contract [109.00ms]",
+        "(pass) DSXU provider contract V1 > maps provider-migration shell aliases to the DSXU provider contract block result",
+        "(pass) DSXU provider contract V1 > DSXU local provider backend records events, task sync, permission decisions, and credential vault redaction",
+        "(pass) DSXU provider contract V1 > DSXU local provider backend owns remote sessions and peer messages without bridge shell",
+        "(pass) DSXU provider contract V1 > SendMessage routes provider: peers through DSXU provider backend by default",
+        "(pass) DSXU provider contract V1 > DSXU remote session manager replaces old remote WebSocket manager on default path [47.00ms]",
+        "(pass) DSXU provider contract V1 > default source imports DSXU remote manager instead of old src/remote manager [15.00ms]",
+        "11 pass",
+        "0 fail",
+        "Ran 11 tests across 1 file. [1.56s]"
+      ]
+    },
+    {
+      "command": "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationMs": 159,
+      "keyOutput": [
+        "(pass) DSXU senior work-state timeline > blocks fake completion when failure or side-effect permission is invisible",
+        "(pass) DSXU senior work-state timeline > projects tool, permission, agent, MCP, and skill evidence into one visible state timeline [16.00ms]",
+        "(pass) DSXU senior work-state timeline > projects plan-execute-verify templates into work-state instead of a second coordinator runtime",
+        "(pass) DSXU senior work-state timeline > keeps blocked permission and blocked registry evidence from looking ready",
+        "(pass) DSXU senior work-state timeline > stays a visible-state projection rather than a second runtime",
+        "(pass) DSXU senior work-state timeline > builds a small Runtime State Card that gates final claims from evidence, not model text",
+        "(pass) DSXU senior work-state timeline > projects canonical ToolCallResult and task evidence packets without a second tool runtime",
+        "(pass) DSXU senior work-state timeline > projects long-task ledger and stall recovery into work-state, TUI preview, and final report evidence",
+        "(pass) DSXU senior work-state timeline > projects tool-result and runtime-event consumption proofs into the same visible work-state timeline",
+        "31 pass",
+        "0 fail",
+        "Ran 31 tests across 3 files. [124.00ms]"
+      ]
+    },
+    {
+      "command": "bun test src/services/__tests__/swe-bench.test.ts src/services/eval/swe-bench/__tests__/contract.test.ts src/services/eval/swe-bench/__tests__/runner.test.ts",
+      "status": "PASS",
+      "exitCode": 0,
+      "durationMs": 117,
+      "keyOutput": [
+        "(pass) legacy SWE owner migration evidence > keeps report aggregation under the eval evidence owner",
+        "(pass) legacy SWE owner migration evidence > keeps default output paths claim-safe by mode",
+        "(pass) DSXU SWE benchmark replacement owner contract > creates a DSXU-owned internal smoke task without public benchmark claim semantics",
+        "(pass) DSXU SWE benchmark replacement owner contract > validates malformed benchmark tasks before they can enter evidence",
+        "(pass) DSXU SWE benchmark replacement owner contract > keeps owner-level reporting under eval evidence instead of the legacy service",
+        "(pass) DSXU SWE benchmark owner boundary > does not mark patch similarity as PASS when tests did not pass",
+        "(pass) DSXU SWE benchmark owner boundary > keeps internal smoke evidence out of public benchmark claims",
+        "(pass) DSXU SWE benchmark owner boundary > maps public-comparable into the real benchmark evidence lane without enabling claims [16.00ms]",
+        "(pass) DSXU SWE benchmark owner boundary > keeps public-comparable output paths in the benchmark result family",
+        "12 pass",
+        "0 fail",
+        "Ran 12 tests across 3 files. [85.00ms]"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "path": "src/commands/bridge/bridge.tsx",
+      "owner": "Runtime Service Owner",
+      "replacementOwner": "DSXU Provider Alias / Provider Contract",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/dsxu/engine/provider-alias.ts",
+        "src/dsxu/engine/provider-contract.ts",
+        "src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [
+        {
+          "pattern": "src/commands/bridge/bridge.tsx",
+          "file": "scripts/__tests__/dsxu-v7-delete-review-replacement-evidence.test.ts",
+          "line": 16,
+          "text": "path: 'src/commands/bridge/bridge.tsx',",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "src/commands/bridge/bridge.tsx",
+          "file": "scripts/__tests__/dsxu-v7-delete-review-replacement-evidence.test.ts",
+          "line": 55,
+          "text": "'src/commands/bridge/bridge.tsx': [",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "./bridge",
+          "file": "src/commands/bridge/index.ts",
+          "line": 14,
+          "text": "load: () => import('./bridge.js'),",
+          "classification": "runtime-source"
+        }
+      ],
+      "runtimeSourceReferences": 1,
+      "testSourceReferences": 2,
+      "legacyInternalReferences": 0,
+      "scriptOrPackageReferences": 0,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-active-runtime-reference",
+      "nextAction": "Keep observe-only: active runtime references still exist; owner must fold or remove references before mutation review.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/persist.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [],
+      "runtimeSourceReferences": 0,
+      "testSourceReferences": 0,
+      "legacyInternalReferences": 0,
+      "scriptOrPackageReferences": 0,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-replacement-covered",
+      "nextAction": "Keep observe-only: replacement evidence exists, but deletion still requires owner/Git signoff and explicit user deletion approval.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/templates.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [
+        {
+          "pattern": "./templates",
+          "file": "src/coordinator/dag/index.ts",
+          "line": 13,
+          "text": "} from './templates';",
+          "classification": "legacy-internal"
+        }
+      ],
+      "runtimeSourceReferences": 0,
+      "testSourceReferences": 0,
+      "legacyInternalReferences": 1,
+      "scriptOrPackageReferences": 0,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-replacement-covered",
+      "nextAction": "Keep observe-only: replacement evidence exists, but deletion still requires owner/Git signoff and explicit user deletion approval.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/coordinator/dag/types.ts",
+      "owner": "PlanGraph / Work-State Owner",
+      "replacementOwner": "PlanGraph / Work-State Owner",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts src/coordinator/dag/__tests__/dag.test.ts src/coordinator/dag/__tests__/persist.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [
+        {
+          "pattern": "./types",
+          "file": "src/coordinator/dag/templates.ts",
+          "line": 5,
+          "text": "import type { DagSpec, DagNode } from './types';",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/coordinator/dag/runner.ts",
+          "line": 5,
+          "text": "import type { DagSpec, DagNode, DagRunResult, NodeResult, DagRunConfig } from './types';",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/coordinator/dag/persist.ts",
+          "line": 8,
+          "text": "import type { DagSpec, DagRunResult, DagRunConfig, DagNode } from './types';",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/coordinator/dag/index.ts",
+          "line": 5,
+          "text": "export * from './types';",
+          "classification": "legacy-internal"
+        }
+      ],
+      "runtimeSourceReferences": 0,
+      "testSourceReferences": 0,
+      "legacyInternalReferences": 4,
+      "scriptOrPackageReferences": 0,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-replacement-covered",
+      "nextAction": "Keep observe-only: replacement evidence exists, but deletion still requires owner/Git signoff and explicit user deletion approval.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/services/swe-bench/index.ts",
+      "owner": "Evidence / Eval SWE Owner",
+      "replacementOwner": "Evidence / Eval SWE Owner",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/services/eval/swe-bench/index.ts",
+        "src/services/eval/swe-bench/runner.ts",
+        "src/services/eval/swe-bench/contract.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/services/__tests__/swe-bench.test.ts src/services/eval/swe-bench/__tests__/contract.test.ts src/services/eval/swe-bench/__tests__/runner.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [
+        {
+          "pattern": "src/services/swe-bench/index.ts",
+          "file": "scripts/__tests__/dsxu-v7-delete-review-replacement-evidence.test.ts",
+          "line": 28,
+          "text": "path: 'src/services/swe-bench/index.ts',",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "src/services/swe-bench/index.ts",
+          "file": "scripts/__tests__/dsxu-v7-delete-review-replacement-evidence.test.ts",
+          "line": 64,
+          "text": "'src/services/swe-bench/index.ts': [",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/__tests__/dsxu-v7-delete-review-replacement-evidence.test.ts",
+          "line": 66,
+          "text": "pattern: 'src/services/swe-bench',",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-v7-delete-review-replacement-evidence.ts",
+          "line": 190,
+          "text": "if (normalizedCandidate.startsWith('src/services/swe-bench/') && normalizedFile.startsWith('src/services/swe-bench/')) {",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-v6-owner-review-decisions.ts",
+          "line": 219,
+          "text": "if (row.path.startsWith('src/services/swe-bench/')) return 'Evidence / Eval SWE Owner'",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-legacy-swe-owner-review.ts",
+          "line": 15,
+          "text": "const LEGACY_OWNER = 'src/services/swe-bench'",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-legacy-swe-owner-review.ts",
+          "line": 24,
+          "text": "'src/services/swe-bench',",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-legacy-swe-owner-review.ts",
+          "line": 144,
+          "text": "title: 'Legacy src/services/swe-bench owner/Git replace-delete review',",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-legacy-swe-owner-review.ts",
+          "line": 181,
+          "text": "'rg \"../swe-bench|src/services/swe-bench|SWEBenchRunner|createSWEBenchRunner|runSWEBenchTask|runSWEBenchBatch|generateSWEBenchReport\" src scripts package.json --glob \"!scripts/dsxu-legacy-swe-owner-review.ts\"',",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-delete-review-board.ts",
+          "line": 109,
+          "text": "if (path.startsWith('src/services/swe-bench/')) {",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "scripts/dsxu-delete-review-board.ts",
+          "line": 120,
+          "text": "reverseScan: 'rg \"../swe-bench|src/services/swe-bench|SWEBenchRunner|createSWEBenchRunner\" src scripts package.json',",
+          "classification": "script-or-package"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "src/dsxu/engine/__tests__/replace-delete-owner-review.test.ts",
+          "line": 9,
+          "text": "targetOwner: 'src/services/swe-bench',",
+          "classification": "test-source"
+        },
+        {
+          "pattern": "src/services/swe-bench",
+          "file": "src/dsxu/engine/__tests__/replace-delete-owner-review.test.ts",
+          "line": 13,
+          "text": "path: 'src/services/swe-bench/runner.ts',",
+          "classification": "test-source"
+        }
+      ],
+      "runtimeSourceReferences": 0,
+      "testSourceReferences": 5,
+      "legacyInternalReferences": 0,
+      "scriptOrPackageReferences": 8,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-replacement-covered",
+      "nextAction": "Keep observe-only: replacement evidence exists, but deletion still requires owner/Git signoff and explicit user deletion approval.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    },
+    {
+      "path": "src/services/swe-bench/types.ts",
+      "owner": "Evidence / Eval SWE Owner",
+      "replacementOwner": "Evidence / Eval SWE Owner",
+      "pathExists": true,
+      "replacementEvidence": [
+        "src/services/eval/swe-bench/index.ts",
+        "src/services/eval/swe-bench/runner.ts",
+        "src/services/eval/swe-bench/contract.ts"
+      ],
+      "replacementEvidenceExists": true,
+      "requiredTests": [
+        "bun test src/services/__tests__/swe-bench.test.ts src/services/eval/swe-bench/__tests__/contract.test.ts src/services/eval/swe-bench/__tests__/runner.test.ts"
+      ],
+      "focusedTestStatus": "PASS",
+      "referenceEvidence": [
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/runner.ts",
+          "line": 1,
+          "text": "import { SWEBenchTask, SWEBenchResult, SWEBenchRunnerConfig, SWEBenchRunOptions } from './types.js';",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 7,
+          "text": "export * from './types.js';",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 15,
+          "text": "export function createSWEBenchRunner(config?: Partial<import('./types.js').SWEBenchRunnerConfig>): SWEBenchRunner {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 28,
+          "text": "task: string | import('./types.js').SWEBenchTask,",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 29,
+          "text": "options?: Partial<import('./types.js').SWEBenchRunOptions>",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 30,
+          "text": "): Promise<import('./types.js').SWEBenchResult> {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 38,
+          "text": "tasks: (string | import('./types.js').SWEBenchTask)[],",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 39,
+          "text": "options?: Partial<import('./types.js').SWEBenchRunOptions>",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 40,
+          "text": "): Promise<import('./types.js').SWEBenchResult[]> {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 47,
+          "text": "export function generateSWEBenchReport(results: import('./types.js').SWEBenchResult[]): string {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 54,
+          "text": "export function createExampleTask(id: string = 'swe-bench-example-001'): import('./types.js').SWEBenchTask {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 91,
+          "text": "export function validateTask(task: import('./types.js').SWEBenchTask): string[] {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 107,
+          "text": "export async function loadTasksFromFile(filePath: string): Promise<import('./types.js').SWEBenchTask[]> {",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 113,
+          "text": "return data as import('./types.js').SWEBenchTask[];",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 115,
+          "text": "return data.tasks as import('./types.js').SWEBenchTask[];",
+          "classification": "legacy-internal"
+        },
+        {
+          "pattern": "./types",
+          "file": "src/services/swe-bench/index.ts",
+          "line": 125,
+          "text": "results: import('./types.js').SWEBenchResult[],",
+          "classification": "legacy-internal"
+        }
+      ],
+      "runtimeSourceReferences": 0,
+      "testSourceReferences": 0,
+      "legacyInternalReferences": 16,
+      "scriptOrPackageReferences": 0,
+      "ownerSignoff": false,
+      "userDeletionApproval": false,
+      "deleteReady": false,
+      "mutationAllowed": false,
+      "status": "observe-replacement-covered",
+      "nextAction": "Keep observe-only: replacement evidence exists, but deletion still requires owner/Git signoff and explicit user deletion approval.",
+      "blockers": [
+        "owner signoff missing",
+        "user deletion approval missing"
+      ]
+    }
+  ]
+}

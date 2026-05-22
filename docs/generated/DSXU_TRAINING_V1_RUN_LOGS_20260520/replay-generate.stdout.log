@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "dsxu.training-replay-generation.v1",
+  "datasetKind": "internal_synthetic_replay",
+  "publicClaimAllowed": false,
+  "outputDir": "D:\\DSXU-code\\.dsxu\\training\\replay",
+  "fixtureCount": 300,
+  "categories": [
+    "agent-collab",
+    "anti-cheat",
+    "communication",
+    "error-recovery",
+    "long-task",
+    "multi-file",
+    "tool-discipline",
+    "verification"
+  ]
+}

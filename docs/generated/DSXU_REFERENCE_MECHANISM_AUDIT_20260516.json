@@ -1,0 +1,3868 @@
+{
+  "summary": {
+    "schemaVersion": "dsxu.reference-mechanism-audit.v1",
+    "generatedAt": "2026-05-16T15:29:18.323Z",
+    "referenceRoot": "D:\\源代码claude\\src",
+    "referenceFileCount": 1902,
+    "dsxuSourceFileCount": 2668,
+    "mechanismCount": 13,
+    "scenarioCount": 12,
+    "decisions": {
+      "implemented+tested": 9,
+      "needs-live-evidence": 2,
+      "implemented+tested-claim-limited": 2
+    },
+    "v18PassCapabilityLinks": 74,
+    "v18DeferredCapabilityLinks": 1,
+    "mechanismClasses": {
+      "cognitive-workflow: goal, source truth, repair, and recovery": 3,
+      "trust-and-visibility: user-visible state, evidence, and release confidence": 3,
+      "deepseek-runtime: model routing, context cache, and cost control": 2,
+      "execution-boundary: tools, permissions, agents, ecosystem, and external hosts": 5
+    },
+    "scenarioDecisions": {
+      "claim-limited": 6,
+      "implemented+tested": 4,
+      "needs-live-evidence": 2
+    },
+    "publicClaimPolicy": "Reference source analysis proves mechanism inspiration only. Public claims require DSXU-owned source/test/live/raw/cost/cache evidence and cannot copy reference branding or code."
+  },
+  "mechanisms": [
+    {
+      "id": "goal-plan-query-loop",
+      "label": "Goal / Plan / Query Loop",
+      "priority": "P0",
+      "referenceSignals": [
+        "query",
+        "plan",
+        "todo",
+        "task",
+        "mode",
+        "prompt",
+        "repl",
+        "status"
+      ],
+      "referencePathHints": [
+        "query",
+        "commands",
+        "tasks",
+        "screens"
+      ],
+      "dsxuOwner": "DSXU Query Loop / Entry Composition",
+      "dsxuFiles": [
+        "src/query.ts",
+        "src/QueryEngine.ts",
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/engine/query-loop-gate-state-v1.ts",
+        "src/tools/TodoWriteTool/TodoWriteTool.ts",
+        "src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+        "src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "S00",
+        "C01",
+        "C05",
+        "C10",
+        "C18"
+      ],
+      "deepseekAdaptation": "把目标、计划、当前行动和停止条件压缩进稳定任务状态；DeepSeek Flash 默认执行，复杂规划升 Flash max，不靠 Pro 常驻。",
+      "whatToAbsorb": [
+        "任务目标在每轮都可恢复",
+        "计划变更必须留下状态原因",
+        "下一步动作和停止条件进入 final report"
+      ],
+      "whatNotToCopy": [
+        "参考产品命令名、品牌 prompt、商业模式字段"
+      ],
+      "v26Action": "把 plan/nextAction/stopCondition 接入同一 work-state timeline，并让长任务恢复后先重建目标快照。",
+      "acceptance": "真实 DSXU 复杂任务窗口中，每轮都能看到 goal/plan/currentAction/nextAction/finalEvidence。",
+      "decision": "implemented+tested",
+      "mechanismClass": "cognitive-workflow: goal, source truth, repair, and recovery",
+      "seniorProgrammerLogic": [
+        "Keep the user goal stable across long turns and compaction.",
+        "Turn vague work into an executable plan graph with stop conditions.",
+        "Update nextAction only when source/test evidence changes, not after narration.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Dense command/session/task state around query entry, plan mode, todos, and status lines.",
+        "A task is not just a prompt: it has mode, history, plan slug, current session, and next action."
+      ],
+      "deepseekRebuildPlan": [
+        "Represent goal/plan/nextAction as compact stable state, with volatile details in dynamic tail.",
+        "Use Flash max for first-turn planning of truly complex tasks, then Flash high for normal coding execution.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 timeline goal/plan snapshot",
+        "P0 resume goal replay",
+        "P1 stop-condition guard"
+      ],
+      "acceptanceEvidence": [
+        "real DSXU senior-coding window has goal/plan/current/next events",
+        "resume keeps same goal"
+      ],
+      "referenceFileCount": 1420,
+      "referenceSignalHits": 44027,
+      "topReferenceDirs": {
+        "utils": 410,
+        "components": 244,
+        "commands": 207,
+        "tools": 155,
+        "services": 106,
+        "hooks": 71,
+        "ink": 37,
+        "bridge": 30
+      },
+      "topReferenceFiles": [
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 1237,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 899,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 800,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "components/PromptInput/PromptInput.tsx",
+          "bytes": 355032,
+          "score": 715,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "services/api/claude.ts",
+          "bytes": 125779,
+          "score": 682,
+          "matchedSignals": [
+            "query",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "utils/permissions/permissionSetup.ts",
+          "bytes": 53439,
+          "score": 568,
+          "matchedSignals": [
+            "plan",
+            "task",
+            "mode",
+            "prompt",
+            "repl"
+          ]
+        },
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 493,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "utils/tasks.ts",
+          "bytes": 26354,
+          "score": 482,
+          "matchedSignals": [
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "utils/messages.ts",
+          "bytes": 193203,
+          "score": 479,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "utils/hooks.ts",
+          "bytes": 159458,
+          "score": 468,
+          "matchedSignals": [
+            "query",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "tasks/RemoteAgentTask/RemoteAgentTask.tsx",
+          "bytes": 126389,
+          "score": 460,
+          "matchedSignals": [
+            "plan",
+            "todo",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        },
+        {
+          "path": "utils/swarm/inProcessRunner.ts",
+          "bytes": 53565,
+          "score": 416,
+          "matchedSignals": [
+            "query",
+            "plan",
+            "task",
+            "mode",
+            "prompt",
+            "repl",
+            "status"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/query.ts",
+        "src/QueryEngine.ts",
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/engine/query-loop-gate-state-v1.ts",
+        "src/tools/TodoWriteTool/TodoWriteTool.ts",
+        "src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+        "src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 5,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=66404; missing explicit evidence paths=0."
+    },
+    {
+      "id": "visible-work-state",
+      "label": "Visible Work-State Projection",
+      "priority": "P0",
+      "referenceSignals": [
+        "ink",
+        "message",
+        "spinner",
+        "progress",
+        "status",
+        "screen",
+        "render",
+        "notification"
+      ],
+      "referencePathHints": [
+        "components",
+        "screens",
+        "ink",
+        "hooks"
+      ],
+      "dsxuOwner": "UI/TUI Visible-State Projection",
+      "dsxuFiles": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/components/Message.tsx",
+        "src/components/messages/AssistantToolUseMessage.tsx",
+        "src/components/permissions/PermissionRequest.tsx",
+        "src/components/AgentProgressLine.tsx",
+        "src/commands/cost/cost.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-visible-copy-v1.test.ts",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "src/dsxu/engine/__tests__/tui-permission-fallback-health-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "C02",
+        "C03",
+        "C04",
+        "C15",
+        "C16"
+      ],
+      "deepseekAdaptation": "把 DeepSeek route/cost/cache、tool permission、source evidence 统一显示，避免用户只能看到长文本回答。",
+      "whatToAbsorb": [
+        "工具、权限、失败、恢复、成本、下一步全部可见",
+        "UI 和 final report 使用同一状态投影",
+        "长任务状态可继续操作"
+      ],
+      "whatNotToCopy": [
+        "参考产品视觉资产、品牌 UI 文案、语音/伙伴形象"
+      ],
+      "v26Action": "继续把 Tool/Permission/Agent/MCP evidence 接入 work-state timeline，不只停留在 final report。",
+      "acceptance": "TUI/CLI/stream-json/final report 四端字段一致，side-effect 无权限不可 READY。",
+      "decision": "implemented+tested",
+      "mechanismClass": "trust-and-visibility: user-visible state, evidence, and release confidence",
+      "seniorProgrammerLogic": [
+        "Make invisible cognitive work visible: current goal, files, tool, permission, cost, failure, recovery.",
+        "Show progress without flooding the user with raw transcripts.",
+        "Use one projection for TUI, CLI, stream-json, and final report.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Many UI components exist to make invisible work observable without exposing full internal transcript.",
+        "Status rendering is a product mechanism, not decoration."
+      ],
+      "deepseekRebuildPlan": [
+        "Project route/cost/cache/tool/permission/source/recovery events through one DSXU timeline.",
+        "Use short visible summaries and evidence ids so UI density does not become token bloat.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 tool/permission timeline event wiring",
+        "P1 agent/MCP timeline event wiring",
+        "P1 stream-json parity"
+      ],
+      "acceptanceEvidence": [
+        "TUI/CLI/stream-json/final report render same event ids",
+        "permission/cost/failure are visible"
+      ],
+      "referenceFileCount": 1471,
+      "referenceSignalHits": 42354,
+      "topReferenceDirs": {
+        "components": 389,
+        "utils": 363,
+        "tools": 139,
+        "services": 106,
+        "hooks": 104,
+        "commands": 102,
+        "ink": 96,
+        "bridge": 25
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/messages.ts",
+          "bytes": 193203,
+          "score": 1700,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "spinner",
+            "progress",
+            "status",
+            "screen",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 1276,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "spinner",
+            "progress",
+            "status",
+            "screen",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "utils/sessionStorage.ts",
+          "bytes": 180620,
+          "score": 760,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 724,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "services/api/claude.ts",
+          "bytes": 125779,
+          "score": 499,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "components/Messages.tsx",
+          "bytes": 147457,
+          "score": 489,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "screen",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "ink/ink.tsx",
+          "bytes": 251886,
+          "score": 450,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "spinner",
+            "progress",
+            "status",
+            "screen",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "tools/AgentTool/UI.tsx",
+          "bytes": 125359,
+          "score": 450,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "render"
+          ]
+        },
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 366,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "status",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 344,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "spinner",
+            "progress",
+            "status",
+            "screen",
+            "render",
+            "notification"
+          ]
+        },
+        {
+          "path": "utils/hooks.ts",
+          "bytes": 159458,
+          "score": 340,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "notification"
+          ]
+        },
+        {
+          "path": "services/compact/compact.ts",
+          "bytes": 60814,
+          "score": 340,
+          "matchedSignals": [
+            "ink",
+            "message",
+            "progress",
+            "status",
+            "render",
+            "notification"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/dsxu/engine/work-state-timeline.ts",
+        "src/components/Message.tsx",
+        "src/components/messages/AssistantToolUseMessage.tsx",
+        "src/components/permissions/PermissionRequest.tsx",
+        "src/components/AgentProgressLine.tsx",
+        "src/commands/cost/cost.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/work-state-timeline.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-visible-copy-v1.test.ts",
+        "src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts",
+        "src/dsxu/engine/__tests__/tui-permission-fallback-health-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 5,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=47596; missing explicit evidence paths=0."
+    },
+    {
+      "id": "source-truth-coding-repair",
+      "label": "Source Truth / Coding Repair",
+      "priority": "P0",
+      "referenceSignals": [
+        "read",
+        "grep",
+        "glob",
+        "file",
+        "edit",
+        "diff",
+        "patch",
+        "diagnostic",
+        "lsp",
+        "git"
+      ],
+      "referencePathHints": [
+        "tools",
+        "services",
+        "utils",
+        "commands"
+      ],
+      "dsxuOwner": "Source Truth / Code Repair Owner",
+      "dsxuFiles": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/tools/FileReadTool/FileReadTool.ts",
+        "src/tools/FileEditTool/FileEditTool.ts",
+        "src/tools/GrepTool/GrepTool.ts",
+        "src/tools/LSPTool/LSPTool.ts",
+        "src/dsxu/engine/lsp-tool.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/code-mode-surgical-loop-v1.test.ts",
+        "src/dsxu/engine/__tests__/file-edit-surgical-loop.test.ts",
+        "src/dsxu/engine/__tests__/blast-radius.test.ts",
+        "src/dsxu/engine/__tests__/phase12-senior-programmer-experience-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A15"
+      ],
+      "deepseekAdaptation": "DeepSeek 前缀缓存要求输入稳定，因此 source truth 必须被编译成 capsule；全文 Read 只能是范围化 fallback。",
+      "whatToAbsorb": [
+        "先搜索定位再范围读取",
+        "重复读取去重",
+        "patch 前后都必须有 focused verification",
+        "失败要回到 source truth 而不是空转复跑"
+      ],
+      "whatNotToCopy": [
+        "参考产品私有文件格式、内部 prompt、商业编辑策略名"
+      ],
+      "v26Action": "把 source-truth capsule 从 public challenge 推广到常规 code-mode 修复主线，并加 Read fallback governor。",
+      "acceptance": "复杂代码任务默认 search -> anchor/range read -> patch -> focused test；全文件 Read 必须带 fallback reason 和预算。",
+      "decision": "implemented+tested",
+      "mechanismClass": "cognitive-workflow: goal, source truth, repair, and recovery",
+      "seniorProgrammerLogic": [
+        "Search before Read, anchor before range, range before full file.",
+        "Patch only after the owner and source truth are known.",
+        "Focused verification is part of the repair loop, not a final optional step.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "File tools, search tools, edit tools, diagnostics, and git/diff tools are separate but composable.",
+        "The useful pattern is source-truth locality and verification, not any proprietary edit code."
+      ],
+      "deepseekRebuildPlan": [
+        "Compile source-truth capsules before model review; include path/hash/anchors/excerpts/risk tags.",
+        "Fallback Read must be range-limited and justified by missing capsule coverage.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 capsule in code-mode",
+        "P0 Read fallback governor",
+        "P1 source-overlap memory reread smoke"
+      ],
+      "acceptanceEvidence": [
+        "source capsule ids cited by final report",
+        "focused tests pass after patch"
+      ],
+      "referenceFileCount": 1734,
+      "referenceSignalHits": 47413,
+      "topReferenceDirs": {
+        "utils": 564,
+        "components": 321,
+        "commands": 207,
+        "tools": 184,
+        "services": 130,
+        "hooks": 74,
+        "ink": 60,
+        "bridge": 26
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 703,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "diagnostic",
+            "lsp"
+          ]
+        },
+        {
+          "path": "utils/sessionStorage.ts",
+          "bytes": 180620,
+          "score": 643,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "diff",
+            "patch",
+            "diagnostic",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/fileHistory.ts",
+          "bytes": 34660,
+          "score": 517,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "git"
+          ]
+        },
+        {
+          "path": "tools/FileReadTool/FileReadTool.ts",
+          "bytes": 39073,
+          "score": 473,
+          "matchedSignals": [
+            "read",
+            "file",
+            "edit",
+            "diff"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 464,
+          "matchedSignals": [
+            "read",
+            "grep",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic",
+            "lsp",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/git.ts",
+          "bytes": 30270,
+          "score": 434,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/plugins/marketplaceManager.ts",
+          "bytes": 93274,
+          "score": 412,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "diagnostic",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/config.ts",
+          "bytes": 63496,
+          "score": 391,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "diagnostic",
+            "lsp",
+            "git"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 380,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic",
+            "lsp",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/claudemd.ts",
+          "bytes": 46391,
+          "score": 361,
+          "matchedSignals": [
+            "read",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic",
+            "git"
+          ]
+        },
+        {
+          "path": "tools/FileEditTool/FileEditTool.ts",
+          "bytes": 20502,
+          "score": 357,
+          "matchedSignals": [
+            "read",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic",
+            "lsp",
+            "git"
+          ]
+        },
+        {
+          "path": "utils/messages.ts",
+          "bytes": 193203,
+          "score": 343,
+          "matchedSignals": [
+            "read",
+            "grep",
+            "glob",
+            "file",
+            "edit",
+            "diff",
+            "patch",
+            "diagnostic"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/dsxu/engine/code-mode-surgical-loop.ts",
+        "src/tools/FileReadTool/FileReadTool.ts",
+        "src/tools/FileEditTool/FileEditTool.ts",
+        "src/tools/GrepTool/GrepTool.ts",
+        "src/tools/LSPTool/LSPTool.ts",
+        "src/dsxu/engine/lsp-tool.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/code-mode-surgical-loop-v1.test.ts",
+        "src/dsxu/engine/__tests__/file-edit-surgical-loop.test.ts",
+        "src/dsxu/engine/__tests__/blast-radius.test.ts",
+        "src/dsxu/engine/__tests__/phase12-senior-programmer-experience-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 14,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=59198; missing explicit evidence paths=0."
+    },
+    {
+      "id": "tool-result-cache-hygiene",
+      "label": "Tool Result / Cache Hygiene",
+      "priority": "P0",
+      "referenceSignals": [
+        "tool result",
+        "truncate",
+        "limit",
+        "offset",
+        "range",
+        "cache",
+        "compact",
+        "microcompact",
+        "token"
+      ],
+      "referencePathHints": [
+        "tools",
+        "context",
+        "services",
+        "utils"
+      ],
+      "dsxuOwner": "Context Compiler / Token Firewall / DeepSeek Cache Owner",
+      "dsxuFiles": [
+        "src/tools/toolResultStorage.ts",
+        "src/tools/FileReadTool/FileReadTool.ts",
+        "src/dsxu/engine/prompt-prefix-cache-evidence.ts",
+        "src/dsxu/engine/route-cache-dynamic-tail.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "scripts/dsxu-v24-public-challenge-package.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts",
+        "src/services/api/deepseek-trajectory-store.test.ts"
+      ],
+      "v18Capabilities": [
+        "M06",
+        "C07",
+        "C08",
+        "C09",
+        "C16"
+      ],
+      "deepseekAdaptation": "把稳定前缀、动态尾部、source capsule、tool preview、trajectory attribution 绑定，尽量提高 DeepSeek cache 命中并保留真实数值。",
+      "whatToAbsorb": [
+        "大工具结果预览/落盘",
+        "microcompact 清旧工具结果",
+        "cache latch 避免 mid-session profile 漂移",
+        "cache miss attribution 解释为什么没命中"
+      ],
+      "whatNotToCopy": [
+        "参考产品特定 cache header、商业实验开关名"
+      ],
+      "v26Action": "完成 ablation rerun，并把 cache miss attribution 接进 GitHub 图表数据。",
+      "acceptance": "同题 before/after 显示 cost、toolResultChars、cacheHitRate、scoreFloor；score 不下降才允许写优化卖点。",
+      "decision": "implemented+tested",
+      "mechanismClass": "deepseek-runtime: model routing, context cache, and cost control",
+      "seniorProgrammerLogic": [
+        "Treat tool output as evidence, not conversation filler.",
+        "Persist or preview large results, then feed compact facts to the model.",
+        "Keep stable prefix stable so repeated review work gets cache benefit.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Tool results are budgeted, deduplicated, compacted, and sometimes persisted outside the prompt.",
+        "Cache latches and stable sections protect warm-cache behavior from mid-session setting drift."
+      ],
+      "deepseekRebuildPlan": [
+        "Put stable instructions and source capsules before dynamic findings; keep system/tool profile latched.",
+        "Persist large tool outputs and feed only preview/key facts, preserving DeepSeek prefix cache.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 public challenge ablation",
+        "P0 tool result preview budget",
+        "P1 cache chart data"
+      ],
+      "acceptanceEvidence": [
+        "toolResultChars reduced without scoreFloor regression",
+        "uniqueSystemHashes=1 for public challenge run"
+      ],
+      "referenceFileCount": 1492,
+      "referenceSignalHits": 26941,
+      "topReferenceDirs": {
+        "utils": 564,
+        "components": 292,
+        "tools": 184,
+        "services": 130,
+        "commands": 86,
+        "ink": 45,
+        "hooks": 44,
+        "bridge": 25
+      },
+      "topReferenceFiles": [
+        {
+          "path": "services/compact/compact.ts",
+          "bytes": 60814,
+          "score": 595,
+          "matchedSignals": [
+            "tool result",
+            "truncate",
+            "limit",
+            "cache",
+            "compact",
+            "token"
+          ]
+        },
+        {
+          "path": "services/mcp/auth.ts",
+          "bytes": 88879,
+          "score": 486,
+          "matchedSignals": [
+            "limit",
+            "cache",
+            "token"
+          ]
+        },
+        {
+          "path": "services/api/claude.ts",
+          "bytes": 125779,
+          "score": 468,
+          "matchedSignals": [
+            "tool result",
+            "limit",
+            "range",
+            "cache",
+            "compact",
+            "microcompact",
+            "token"
+          ]
+        },
+        {
+          "path": "utils/analyzeContext.ts",
+          "bytes": 42931,
+          "score": 422,
+          "matchedSignals": [
+            "truncate",
+            "limit",
+            "cache",
+            "compact",
+            "microcompact",
+            "token"
+          ]
+        },
+        {
+          "path": "utils/auth.ts",
+          "bytes": 65436,
+          "score": 373,
+          "matchedSignals": [
+            "limit",
+            "cache",
+            "token"
+          ]
+        },
+        {
+          "path": "query.ts",
+          "bytes": 68683,
+          "score": 338,
+          "matchedSignals": [
+            "tool result",
+            "limit",
+            "cache",
+            "compact",
+            "microcompact",
+            "token"
+          ]
+        },
+        {
+          "path": "services/compact/microCompact.ts",
+          "bytes": 19544,
+          "score": 276,
+          "matchedSignals": [
+            "tool result",
+            "cache",
+            "compact",
+            "microcompact",
+            "token"
+          ]
+        },
+        {
+          "path": "hooks/useTypeahead.tsx",
+          "bytes": 212610,
+          "score": 272,
+          "matchedSignals": [
+            "limit",
+            "offset",
+            "cache",
+            "token"
+          ]
+        },
+        {
+          "path": "services/mockRateLimits.ts",
+          "bytes": 29698,
+          "score": 237,
+          "matchedSignals": [
+            "limit"
+          ]
+        },
+        {
+          "path": "components/Stats.tsx",
+          "bytes": 152782,
+          "score": 235,
+          "matchedSignals": [
+            "truncate",
+            "offset",
+            "range",
+            "cache",
+            "token"
+          ]
+        },
+        {
+          "path": "utils/Cursor.ts",
+          "bytes": 46663,
+          "score": 227,
+          "matchedSignals": [
+            "truncate",
+            "offset",
+            "cache",
+            "token"
+          ]
+        },
+        {
+          "path": "utils/plugins/pluginLoader.ts",
+          "bytes": 110261,
+          "score": 217,
+          "matchedSignals": [
+            "cache"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/tools/FileReadTool/FileReadTool.ts",
+        "src/dsxu/engine/prompt-prefix-cache-evidence.ts",
+        "src/dsxu/engine/route-cache-dynamic-tail.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "scripts/dsxu-v24-public-challenge-package.ts"
+      ],
+      "dsxuFilesMissing": [
+        "src/tools/toolResultStorage.ts"
+      ],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+        "src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts",
+        "src/services/api/deepseek-trajectory-store.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 5,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=30289; missing explicit evidence paths=1."
+    },
+    {
+      "id": "tool-permission-lifecycle",
+      "label": "Tool / Permission Lifecycle",
+      "priority": "P0",
+      "referenceSignals": [
+        "permission",
+        "approval",
+        "sandbox",
+        "allowed",
+        "denied",
+        "policy",
+        "risk",
+        "tool"
+      ],
+      "referencePathHints": [
+        "permissions",
+        "tools",
+        "bridge",
+        "commands"
+      ],
+      "dsxuOwner": "Tool Gate / Permission Gate",
+      "dsxuFiles": [
+        "src/dsxu/engine/tool-gate-v1.ts",
+        "src/dsxu/engine/tool-mainline-runtime-v1.ts",
+        "src/dsxu/engine/permissions.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/dsxu/control-plane/permissionControlBridge.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts",
+        "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/permissions.test.ts",
+        "src/tools/__tests__/tool-permission-owner-gate.test.ts"
+      ],
+      "v18Capabilities": [
+        "C04",
+        "C11",
+        "B04",
+        "B07"
+      ],
+      "deepseekAdaptation": "权限不交给模型凭感觉判断；模型只看到结构化 permission evidence，真实执行仍走 DSXU Tool Gate。",
+      "whatToAbsorb": [
+        "权限请求必须说明目的、风险和结果",
+        "工具执行状态进入 UI",
+        "拒绝后给可恢复路径"
+      ],
+      "whatNotToCopy": [
+        "参考产品权限文案、品牌安全策略名"
+      ],
+      "v26Action": "把 permission/tool events 全量投影进 work-state timeline；拒绝、blocked、skipped 都不能被包装为 PASS。",
+      "acceptance": "side-effect tool 无 visible permission 时 guard 阻断；用户能看到拒绝后下一步。",
+      "decision": "implemented+tested",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "seniorProgrammerLogic": [
+        "Convert tool execution into purpose, risk, permission, result, and recovery.",
+        "A rejected permission is still useful state, not a hidden failure.",
+        "Never let adapters bypass the single Tool Gate.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Permission logic is repeated across bridge, tools, UI, and session state so side effects are explicit.",
+        "The mechanism is lifecycle accountability: request, user decision, execution, and result."
+      ],
+      "deepseekRebuildPlan": [
+        "Expose permission decisions as structured model-visible evidence after user/tool gate resolution.",
+        "Do not let the model infer permissions from natural language alone.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 blocked/skipped permission projection",
+        "P0 side-effect no-permission negative test",
+        "P1 adapter evidence parity"
+      ],
+      "acceptanceEvidence": [
+        "side-effect blocked without permission",
+        "permission denial has recovery nextAction"
+      ],
+      "referenceFileCount": 1179,
+      "referenceSignalHits": 37741,
+      "topReferenceDirs": {
+        "utils": 305,
+        "commands": 207,
+        "components": 205,
+        "tools": 184,
+        "services": 81,
+        "hooks": 35,
+        "bridge": 31,
+        "skills": 16
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/messages.ts",
+          "bytes": 193203,
+          "score": 1071,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "allowed",
+            "denied",
+            "risk",
+            "tool"
+          ]
+        },
+        {
+          "path": "services/tools/toolExecution.ts",
+          "bytes": 60309,
+          "score": 796,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 785,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "risk",
+            "tool"
+          ]
+        },
+        {
+          "path": "utils/permissions/permissions.ts",
+          "bytes": 52190,
+          "score": 666,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 615,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "tools.ts",
+          "bytes": 17294,
+          "score": 572,
+          "matchedSignals": [
+            "permission",
+            "allowed",
+            "denied",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "utils/hooks.ts",
+          "bytes": 159458,
+          "score": 563,
+          "matchedSignals": [
+            "permission",
+            "sandbox",
+            "allowed",
+            "denied",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "utils/permissions/permissionSetup.ts",
+          "bytes": 53439,
+          "score": 487,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "allowed",
+            "policy",
+            "tool"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 482,
+          "matchedSignals": [
+            "permission",
+            "sandbox",
+            "allowed",
+            "denied",
+            "policy",
+            "risk",
+            "tool"
+          ]
+        },
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 479,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "tool"
+          ]
+        },
+        {
+          "path": "tools/BashTool/bashPermissions.ts",
+          "bytes": 98756,
+          "score": 459,
+          "matchedSignals": [
+            "permission",
+            "approval",
+            "sandbox",
+            "allowed",
+            "denied",
+            "risk",
+            "tool"
+          ]
+        },
+        {
+          "path": "utils/analyzeContext.ts",
+          "bytes": 42931,
+          "score": 404,
+          "matchedSignals": [
+            "permission",
+            "tool"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/dsxu/engine/tool-gate-v1.ts",
+        "src/dsxu/engine/tool-mainline-runtime-v1.ts",
+        "src/dsxu/engine/permissions.ts",
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/dsxu/control-plane/permissionControlBridge.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/tool-gate-v1-clean.test.ts",
+        "src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/permissions.test.ts",
+        "src/tools/__tests__/tool-permission-owner-gate.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 4,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=55159; missing explicit evidence paths=0."
+    },
+    {
+      "id": "terminal-shell-reliability",
+      "label": "Terminal / Shell Reliability",
+      "priority": "P1",
+      "referenceSignals": [
+        "bash",
+        "shell",
+        "terminal",
+        "pty",
+        "stdout",
+        "stderr",
+        "timeout",
+        "exit",
+        "ansi"
+      ],
+      "referencePathHints": [
+        "tools",
+        "services",
+        "utils",
+        "commands"
+      ],
+      "dsxuOwner": "Terminal Tool Adapter / Result Pack",
+      "dsxuFiles": [
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/tools/RunNativeTestTool/RunNativeTestTool.ts",
+        "src/dsxu/engine/provider-service-shell-policy.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/subprocess-encoding-boundary-v1.test.ts",
+        "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts",
+        "src/tools/RunNativeTestTool/RunNativeTestTool.test.ts"
+      ],
+      "v18Capabilities": [
+        "B01",
+        "B02",
+        "B03",
+        "B05",
+        "B06",
+        "B08",
+        "B09",
+        "B10",
+        "B11",
+        "B12",
+        "B13",
+        "B14"
+      ],
+      "deepseekAdaptation": "Shell 输出必须先结构化摘要，再给模型；长输出落盘并带 preview，避免破坏 DeepSeek 前缀缓存。",
+      "whatToAbsorb": [
+        "命令前风险/目的/环境快照",
+        "命令后退出码、关键行、文件 delta、失败分类",
+        "超时和重试预算可见"
+      ],
+      "whatNotToCopy": [
+        "参考产品终端 UI 细节、私有 shell telemetry"
+      ],
+      "v26Action": "补 terminal reliability live demo，覆盖长命令、失败、超时、恢复、结果包。",
+      "acceptance": "真实 DSXU 窗口能展示 shell state before/after、failureType、recoveryAction、artifact path。",
+      "decision": "needs-live-evidence",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "seniorProgrammerLogic": [
+        "Before command: capture environment, purpose, timeout, risk, and expected proof.",
+        "After command: capture exit code, key lines, file delta, failure type, and next repair.",
+        "Avoid pushing full stdout/stderr into the model when a structured result pack is enough.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Terminal reliability is a full loop: command construction, process handling, output shaping, and failure semantics.",
+        "Raw terminal text is transformed into usable task evidence."
+      ],
+      "deepseekRebuildPlan": [
+        "Summarize stdout/stderr into bounded result packs; store full logs as artifacts.",
+        "Route failure analysis to Flash max before Pro unless high-risk side effects require Pro admission.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P1 long command demo",
+        "P1 timeout/failure recovery demo",
+        "P1 full-log artifact with bounded preview"
+      ],
+      "acceptanceEvidence": [
+        "long output stored as artifact with bounded preview",
+        "timeout/failure classified and recovered"
+      ],
+      "referenceFileCount": 1586,
+      "referenceSignalHits": 21963,
+      "topReferenceDirs": {
+        "utils": 564,
+        "components": 221,
+        "commands": 207,
+        "tools": 184,
+        "services": 130,
+        "ink": 71,
+        "hooks": 69,
+        "bridge": 24
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/hooks.ts",
+          "bytes": 159458,
+          "score": 565,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "tools/BashTool/bashSecurity.ts",
+          "bytes": 102561,
+          "score": 334,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "ansi"
+          ]
+        },
+        {
+          "path": "utils/bash/ast.ts",
+          "bytes": 112054,
+          "score": 320,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "tools/BashTool/bashPermissions.ts",
+          "bytes": 98756,
+          "score": 282,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "tools/PowerShellTool/PowerShellTool.tsx",
+          "bytes": 144624,
+          "score": 280,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit"
+          ]
+        },
+        {
+          "path": "ink/ink.tsx",
+          "bytes": 251886,
+          "score": 263,
+          "matchedSignals": [
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 260,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "tools/BashTool/BashTool.tsx",
+          "bytes": 160530,
+          "score": 245,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 222,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        },
+        {
+          "path": "utils/theme.ts",
+          "bytes": 26830,
+          "score": 194,
+          "matchedSignals": [
+            "bash",
+            "terminal",
+            "pty",
+            "ansi"
+          ]
+        },
+        {
+          "path": "utils/Shell.ts",
+          "bytes": 16929,
+          "score": 188,
+          "matchedSignals": [
+            "bash",
+            "shell",
+            "stdout",
+            "stderr",
+            "timeout",
+            "exit"
+          ]
+        },
+        {
+          "path": "utils/deepLink/terminalLauncher.ts",
+          "bytes": 17786,
+          "score": 175,
+          "matchedSignals": [
+            "shell",
+            "terminal",
+            "pty",
+            "stdout",
+            "timeout",
+            "exit",
+            "ansi"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/tools/BashTool/BashTool.tsx",
+        "src/tools/PowerShellTool/PowerShellTool.tsx",
+        "src/tools/RunNativeTestTool/RunNativeTestTool.ts",
+        "src/dsxu/engine/provider-service-shell-policy.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/subprocess-encoding-boundary-v1.test.ts",
+        "src/dsxu/engine/__tests__/tui-terminal-reliability-pack-v1.test.ts",
+        "src/tools/RunNativeTestTool/RunNativeTestTool.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 12,
+      "v18DeferredCount": 0,
+      "claimRisk": "Code/test exists, but live DSXU window or product smoke evidence is still required before public claim. DSXU signal hits=22914; missing explicit evidence paths=0."
+    },
+    {
+      "id": "context-memory-recovery",
+      "label": "Context / Memory / Recovery",
+      "priority": "P0",
+      "referenceSignals": [
+        "context",
+        "memory",
+        "compact",
+        "resume",
+        "history",
+        "session",
+        "checkpoint",
+        "recover"
+      ],
+      "referencePathHints": [
+        "context",
+        "history",
+        "state",
+        "commands",
+        "services"
+      ],
+      "dsxuOwner": "Context Builder / Recovery Mainline",
+      "dsxuFiles": [
+        "src/dsxu/engine/context-builder.ts",
+        "src/dsxu/engine/context-discipline-control.ts",
+        "src/dsxu/engine/experience-store.ts",
+        "src/dsxu/engine/recovery/index.ts",
+        "src/dsxu/engine/memory-context-compact/index.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/context-hygiene-v1.test.ts",
+        "src/dsxu/engine/__tests__/experience-store-smooth-resume-pack-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts",
+        "src/dsxu/engine/__tests__/local-memory-lite-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "C13",
+        "C14",
+        "C17",
+        "C18"
+      ],
+      "deepseekAdaptation": "记忆只做只读缩窄和恢复提示，不能替代 source truth；compact 后第一轮要重建稳定前缀和 source anchors。",
+      "whatToAbsorb": [
+        "resume 后保留目标、失败命令、文件风险",
+        "memory 必须有来源、时间、置信度",
+        "source overlap 时强制重读"
+      ],
+      "whatNotToCopy": [
+        "参考产品会话格式、专有记忆文件名"
+      ],
+      "v26Action": "把 compact/resume 后的 source reread 与 cache hygiene 纳入 senior-coding window 验收。",
+      "acceptance": "恢复任务不能丢 goal/files/failed command/risk；memory 不能绕过源码重读。",
+      "decision": "implemented+tested",
+      "mechanismClass": "cognitive-workflow: goal, source truth, repair, and recovery",
+      "seniorProgrammerLogic": [
+        "Memory narrows exploration but never replaces source truth.",
+        "Resume must restore goal, touched files, failed command, risk, and next step.",
+        "After compaction, first rebuild source anchors and cache hygiene before acting.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Session, history, compact, resume, project identity, and memory state are first-class.",
+        "Recovery is designed as a continuation of the same task, not a new chat restart."
+      ],
+      "deepseekRebuildPlan": [
+        "After compact/resume, regenerate stable source anchors and cache boundary evidence.",
+        "Use local memory only as retrieval hints, never as a replacement for file truth.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 compact/resume source reread",
+        "P1 long-task recovery replay",
+        "P1 memory confidence display"
+      ],
+      "acceptanceEvidence": [
+        "compact/resume replay keeps files/risk/failed command",
+        "memory overlap forces reread"
+      ],
+      "referenceFileCount": 1246,
+      "referenceSignalHits": 29982,
+      "topReferenceDirs": {
+        "utils": 326,
+        "commands": 207,
+        "components": 201,
+        "services": 130,
+        "tools": 102,
+        "hooks": 67,
+        "ink": 39,
+        "bridge": 29
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/sessionStorage.ts",
+          "bytes": 180620,
+          "score": 1074,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "bridge/bridgeMain.ts",
+          "bytes": 115571,
+          "score": 894,
+          "matchedSignals": [
+            "context",
+            "resume",
+            "session",
+            "recover"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 712,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 704,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "services/compact/compact.ts",
+          "bytes": 60814,
+          "score": 541,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session"
+          ]
+        },
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 474,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "recover"
+          ]
+        },
+        {
+          "path": "query.ts",
+          "bytes": 68683,
+          "score": 449,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "commands/insights.ts",
+          "bytes": 115949,
+          "score": 399,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "session"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 390,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "bridge/replBridge.ts",
+          "bytes": 100537,
+          "score": 370,
+          "matchedSignals": [
+            "context",
+            "compact",
+            "resume",
+            "history",
+            "session",
+            "checkpoint",
+            "recover"
+          ]
+        },
+        {
+          "path": "utils/hooks.ts",
+          "bytes": 159458,
+          "score": 342,
+          "matchedSignals": [
+            "context",
+            "memory",
+            "compact",
+            "resume",
+            "history",
+            "session"
+          ]
+        },
+        {
+          "path": "utils/teleport.tsx",
+          "bytes": 175779,
+          "score": 282,
+          "matchedSignals": [
+            "context",
+            "resume",
+            "session",
+            "recover"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/dsxu/engine/context-builder.ts",
+        "src/dsxu/engine/context-discipline-control.ts",
+        "src/dsxu/engine/experience-store.ts",
+        "src/dsxu/engine/recovery/index.ts",
+        "src/dsxu/engine/memory-context-compact/index.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/context-hygiene-v1.test.ts",
+        "src/dsxu/engine/__tests__/experience-store-smooth-resume-pack-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts",
+        "src/dsxu/engine/__tests__/local-memory-lite-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 4,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=44083; missing explicit evidence paths=0."
+    },
+    {
+      "id": "agent-orchestration-evidence",
+      "label": "Agent Orchestration / Parent Evidence",
+      "priority": "P1",
+      "referenceSignals": [
+        "agent",
+        "worker",
+        "coordinator",
+        "subagent",
+        "parallel",
+        "team",
+        "task"
+      ],
+      "referencePathHints": [
+        "tools/Agent",
+        "coordinator",
+        "commands/agents",
+        "tasks"
+      ],
+      "dsxuOwner": "Agent Lifecycle",
+      "dsxuFiles": [
+        "src/tools/AgentTool/AgentTool.tsx",
+        "src/tools/AgentTool/runAgent.ts",
+        "src/dsxu/engine/agent-role-router-v1.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/components/AgentProgressLine.tsx"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "PZ07",
+        "C12"
+      ],
+      "deepseekAdaptation": "Agent 返回 summary/path/hash/evidence，不回灌长 transcript；父任务合成时保持 DeepSeek stable prefix。",
+      "whatToAbsorb": [
+        "并行只给边界清晰的 sidecar work",
+        "父任务必须引用子任务 evidence",
+        "worker 输出不直接污染主上下文"
+      ],
+      "whatNotToCopy": [
+        "参考产品 agent 名称、团队/角色品牌设定"
+      ],
+      "v26Action": "补 agent parent/worker evidence pack，并接入 visible-state timeline。",
+      "acceptance": "父任务 final 不能引用未验证 worker 成功；子任务 transcript 不进入主线程长上下文。",
+      "decision": "implemented+tested-claim-limited",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "seniorProgrammerLogic": [
+        "Delegate only bounded sidecar work with clear ownership.",
+        "Workers return summary/path/hash/evidence, not unbounded transcript.",
+        "The parent remains responsible for final synthesis and verification.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Agents have identity, color/state, lifecycle, parent-child lineage, and preserved skills.",
+        "Parallelism is valuable only when the parent can safely integrate bounded evidence."
+      ],
+      "deepseekRebuildPlan": [
+        "Subagents return compressed evidence objects; parent context receives stable summaries only.",
+        "Keep ownership disjoint so parallel work does not create duplicate runtimes.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P1 worker evidence envelope",
+        "P1 parent synthesis guard",
+        "P1 no transcript bloat check"
+      ],
+      "acceptanceEvidence": [
+        "parent cites worker evidence ids",
+        "worker transcript not injected into parent prompt"
+      ],
+      "referenceFileCount": 732,
+      "referenceSignalHits": 28152,
+      "topReferenceDirs": {
+        "utils": 222,
+        "components": 140,
+        "tools": 100,
+        "services": 69,
+        "commands": 32,
+        "hooks": 29,
+        "bridge": 20,
+        "skills": 15
+      },
+      "topReferenceFiles": [
+        {
+          "path": "tools/AgentTool/AgentTool.tsx",
+          "bytes": 233734,
+          "score": 821,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "utils/tasks.ts",
+          "bytes": 26354,
+          "score": 589,
+          "matchedSignals": [
+            "agent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 556,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "utils/swarm/inProcessRunner.ts",
+          "bytes": 53565,
+          "score": 544,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "utils/sessionStorage.ts",
+          "bytes": 180620,
+          "score": 512,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 508,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "components/tasks/BackgroundTasksDialog.tsx",
+          "bytes": 116395,
+          "score": 505,
+          "matchedSignals": [
+            "agent",
+            "coordinator",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "tools/shared/spawnMultiAgent.ts",
+          "bytes": 35553,
+          "score": 499,
+          "matchedSignals": [
+            "agent",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "utils/attachments.ts",
+          "bytes": 127423,
+          "score": 480,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "components/PromptInput/PromptInput.tsx",
+          "bytes": 355032,
+          "score": 445,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 440,
+          "matchedSignals": [
+            "agent",
+            "worker",
+            "coordinator",
+            "subagent",
+            "parallel",
+            "team",
+            "task"
+          ]
+        },
+        {
+          "path": "tasks/LocalAgentTask/LocalAgentTask.tsx",
+          "bytes": 82910,
+          "score": 413,
+          "matchedSignals": [
+            "agent",
+            "coordinator",
+            "subagent",
+            "team",
+            "task"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/tools/AgentTool/AgentTool.tsx",
+        "src/tools/AgentTool/runAgent.ts",
+        "src/dsxu/engine/agent-role-router-v1.ts",
+        "src/dsxu/engine/subagent-protocol.ts",
+        "src/components/AgentProgressLine.tsx"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/agent-runtime-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts",
+        "src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 2,
+      "v18DeferredCount": 0,
+      "claimRisk": "Implementation exists, but public copy must be constrained to subset/adapted behavior. DSXU signal hits=39136; missing explicit evidence paths=0."
+    },
+    {
+      "id": "mcp-skill-ecosystem",
+      "label": "MCP / Skill Ecosystem",
+      "priority": "P1",
+      "referenceSignals": [
+        "mcp",
+        "plugin",
+        "skill",
+        "marketplace",
+        "resource",
+        "server",
+        "registry"
+      ],
+      "referencePathHints": [
+        "mcp",
+        "plugins",
+        "skills",
+        "commands"
+      ],
+      "dsxuOwner": "MCP / Skill Registry",
+      "dsxuFiles": [
+        "src/services/mcp/client.ts",
+        "src/services/mcp/doctor.ts",
+        "src/tools/MCPTool/MCPTool.ts",
+        "src/tools/SkillTool/SkillTool.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts"
+      ],
+      "dsxuTests": [
+        "src/services/mcp/__tests__/doctor.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/real-mcp-server.test.ts"
+      ],
+      "v18Capabilities": [
+        "C06"
+      ],
+      "deepseekAdaptation": "生态能力只通过 DSXU-owned registry 调度；skills/MCP 结果先结构化、授权、预算化，再给 DeepSeek。",
+      "whatToAbsorb": [
+        "技能选择、优先级和冲突规则",
+        "secret redaction 和 doctor",
+        "外部 server 只作为 adapter boundary"
+      ],
+      "whatNotToCopy": [
+        "参考产品 marketplace 文案、第三方品牌承诺、插件商业策略"
+      ],
+      "v26Action": "补 Superpowers 作为二级技能包的 priority/conflict/routing 任务卡，但不形成第二 skill runtime。",
+      "acceptance": "冲突时可解释选择/拒绝；MCP/skill 接入仍走 Tool Gate。",
+      "decision": "implemented+tested",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "seniorProgrammerLogic": [
+        "Skills/MCP are capability extensions, not parallel product runtimes.",
+        "Resolve priority and conflicts before exposing tool choices to the model.",
+        "Every external capability inherits DSXU permission and evidence rules.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "MCP, plugins, skills, hooks, resources, and commands share registry-like surfaces.",
+        "The mechanism is controlled extensibility with permission and conflict boundaries."
+      ],
+      "deepseekRebuildPlan": [
+        "Normalize MCP/skill outputs to DSXU evidence envelopes with permission, cost, secret redaction, and conflict metadata.",
+        "Superpowers-like packs can be secondary skills, never a second dispatcher.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P1 secondary skill priority rules",
+        "P1 MCP doctor evidence envelope",
+        "P1 secret redaction smoke"
+      ],
+      "acceptanceEvidence": [
+        "conflicting skills resolve by priority",
+        "MCP outputs include secret redaction and permission evidence"
+      ],
+      "referenceFileCount": 965,
+      "referenceSignalHits": 32748,
+      "topReferenceDirs": {
+        "utils": 267,
+        "commands": 207,
+        "components": 150,
+        "services": 87,
+        "tools": 75,
+        "hooks": 40,
+        "bridge": 22,
+        "skills": 20
+      },
+      "topReferenceFiles": [
+        {
+          "path": "commands/plugin/ManagePlugins.tsx",
+          "bytes": 321775,
+          "score": 1337,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "marketplace",
+            "server"
+          ]
+        },
+        {
+          "path": "utils/plugins/pluginLoader.ts",
+          "bytes": 110261,
+          "score": 1135,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "marketplace",
+            "server",
+            "registry"
+          ]
+        },
+        {
+          "path": "services/mcp/client.ts",
+          "bytes": 119060,
+          "score": 1057,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "resource",
+            "server",
+            "registry"
+          ]
+        },
+        {
+          "path": "services/mcp/config.ts",
+          "bytes": 51130,
+          "score": 1018,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "server"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 881,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "marketplace",
+            "resource",
+            "server",
+            "registry"
+          ]
+        },
+        {
+          "path": "services/mcp/auth.ts",
+          "bytes": 88879,
+          "score": 811,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "resource",
+            "server"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 781,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "marketplace",
+            "resource",
+            "server",
+            "registry"
+          ]
+        },
+        {
+          "path": "utils/plugins/marketplaceManager.ts",
+          "bytes": 93274,
+          "score": 722,
+          "matchedSignals": [
+            "plugin",
+            "marketplace",
+            "server"
+          ]
+        },
+        {
+          "path": "utils/plugins/schemas.ts",
+          "bytes": 58914,
+          "score": 600,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "skill",
+            "marketplace",
+            "server",
+            "registry"
+          ]
+        },
+        {
+          "path": "services/plugins/pluginOperations.ts",
+          "bytes": 35619,
+          "score": 563,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "marketplace",
+            "server"
+          ]
+        },
+        {
+          "path": "commands/plugin/BrowseMarketplace.tsx",
+          "bytes": 119562,
+          "score": 506,
+          "matchedSignals": [
+            "mcp",
+            "plugin",
+            "marketplace",
+            "server"
+          ]
+        },
+        {
+          "path": "utils/plugins/installedPluginsManager.ts",
+          "bytes": 41410,
+          "score": 495,
+          "matchedSignals": [
+            "plugin",
+            "marketplace",
+            "registry"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/services/mcp/client.ts",
+        "src/services/mcp/doctor.ts",
+        "src/tools/MCPTool/MCPTool.ts",
+        "src/tools/SkillTool/SkillTool.ts",
+        "src/dsxu/engine/skills-registry-v1.ts",
+        "src/dsxu/engine/skill-governance-v1.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/services/mcp/__tests__/doctor.test.ts",
+        "src/dsxu/engine/__tests__/skills-integration.test.ts",
+        "src/dsxu/engine/__tests__/skill-governance-contract-v1.test.ts",
+        "src/dsxu/engine/__tests__/real-mcp-server.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 1,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=36237; missing explicit evidence paths=0."
+    },
+    {
+      "id": "deepseek-model-cost-cache",
+      "label": "DeepSeek Model / Cost / Cache",
+      "priority": "P0",
+      "referenceSignals": [
+        "model",
+        "cost",
+        "token",
+        "usage",
+        "cache",
+        "rate",
+        "api",
+        "thinking",
+        "reasoning"
+      ],
+      "referencePathHints": [
+        "services",
+        "utils",
+        "cost",
+        "state"
+      ],
+      "dsxuOwner": "DeepSeek Runtime / Cost Evidence",
+      "dsxuFiles": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "src/commands/cost/cost.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts",
+        "src/services/api/deepseek-adapter-cache-prefix-v1.test.ts",
+        "src/services/api/deepseek-trajectory-store.test.ts",
+        "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts"
+      ],
+      "v18Capabilities": [
+        "M01",
+        "M02",
+        "M03",
+        "M06",
+        "M07",
+        "C09",
+        "C16",
+        "A14"
+      ],
+      "deepseekAdaptation": "Flash-first 是产品核心；普通 coding/bugfix 默认 Flash thinking high，review/recovery Flash max，Pro 只由 admission evidence 触发，FIM 独立 Flash non-thinking lane。",
+      "whatToAbsorb": [
+        "成本/usage 按任务归因",
+        "cache read/miss/output token 拆开",
+        "模型升级要有理由"
+      ],
+      "whatNotToCopy": [
+        "参考产品模型名、商业限额逻辑、供应商私有 header"
+      ],
+      "v26Action": "继续同步 public challenge 和 capability cost crosswalk；修正任何把 70 PASS 当作公开90能力的 claim。",
+      "acceptance": "所有公开成本卖点都有 route/cost/cache trajectory；默认大部分使用 deepseek-v4-flash。",
+      "decision": "implemented+tested",
+      "mechanismClass": "deepseek-runtime: model routing, context cache, and cost control",
+      "seniorProgrammerLogic": [
+        "Use Flash as the default working model, not a cheap fallback.",
+        "Escalate to Flash max or Pro only with route evidence.",
+        "Separate cache hit, cache miss, output, route reason, and admission evidence.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Cost, tokens, cache, request ids, and usage attribution live in session state and reporting paths.",
+        "The mechanism is continuous cost awareness, not only post-hoc billing."
+      ],
+      "deepseekRebuildPlan": [
+        "Route table: Flash high for coding/bugfix, Flash max for planning/review/recovery, Pro for explicit high-risk/failed-verification admission, FIM Flash non-thinking only for small completion lane.",
+        "Report cache hit/miss/output tokens and cost per solved task as product metrics.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 route latch regression",
+        "P0 Flash-first live route sample",
+        "P1 Pro admission negative/positive pack"
+      ],
+      "acceptanceEvidence": [
+        "default route uses deepseek-v4-flash",
+        "Pro appears only with admission evidence",
+        "cache/cost tokens reported"
+      ],
+      "referenceFileCount": 1506,
+      "referenceSignalHits": 34683,
+      "topReferenceDirs": {
+        "utils": 564,
+        "components": 301,
+        "services": 130,
+        "tools": 120,
+        "commands": 105,
+        "hooks": 59,
+        "ink": 46,
+        "bridge": 28
+      },
+      "topReferenceFiles": [
+        {
+          "path": "services/api/claude.ts",
+          "bytes": 125779,
+          "score": 1119,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking"
+          ]
+        },
+        {
+          "path": "utils/auth.ts",
+          "bytes": 65436,
+          "score": 655,
+          "matchedSignals": [
+            "model",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api"
+          ]
+        },
+        {
+          "path": "services/mcp/auth.ts",
+          "bytes": 88879,
+          "score": 496,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "cache",
+            "rate"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 459,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking"
+          ]
+        },
+        {
+          "path": "utils/analyzeContext.ts",
+          "bytes": 42931,
+          "score": 456,
+          "matchedSignals": [
+            "model",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api"
+          ]
+        },
+        {
+          "path": "cost-tracker.ts",
+          "bytes": 10706,
+          "score": 400,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api"
+          ]
+        },
+        {
+          "path": "utils/permissions/yoloClassifier.ts",
+          "bytes": 52160,
+          "score": 384,
+          "matchedSignals": [
+            "model",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking",
+            "reasoning"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 371,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking"
+          ]
+        },
+        {
+          "path": "services/compact/compact.ts",
+          "bytes": 60814,
+          "score": 364,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking"
+          ]
+        },
+        {
+          "path": "bootstrap/state.ts",
+          "bytes": 56109,
+          "score": 353,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking"
+          ]
+        },
+        {
+          "path": "utils/model/model.ts",
+          "bytes": 21409,
+          "score": 350,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "reasoning"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 329,
+          "matchedSignals": [
+            "model",
+            "cost",
+            "token",
+            "usage",
+            "cache",
+            "rate",
+            "api",
+            "thinking",
+            "reasoning"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/utils/model/deepseekV4Control.ts",
+        "src/utils/model/deepseekV4CostRouter.ts",
+        "src/services/api/deepseek-adapter.ts",
+        "src/services/api/deepseek-trajectory-store.ts",
+        "src/commands/cost/cost.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts",
+        "src/services/api/deepseek-adapter-cache-prefix-v1.test.ts",
+        "src/services/api/deepseek-trajectory-store.test.ts",
+        "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 8,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=45837; missing explicit evidence paths=0."
+    },
+    {
+      "id": "ide-remote-external-boundary",
+      "label": "IDE / Remote / External Host Boundary",
+      "priority": "P1",
+      "referenceSignals": [
+        "bridge",
+        "remote",
+        "ide",
+        "desktop",
+        "chrome",
+        "websocket",
+        "sse",
+        "transport"
+      ],
+      "referencePathHints": [
+        "bridge",
+        "remote",
+        "cli/transports",
+        "commands"
+      ],
+      "dsxuOwner": "External Host Adapter Boundary",
+      "dsxuFiles": [
+        "src/commands/ide/ide.tsx",
+        "src/commands/desktop/desktop.tsx",
+        "src/tools/RemoteTriggerTool/RemoteTriggerTool.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/mainline-tool-adapter.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts",
+        "src/dsxu/engine/__tests__/extension-runtime-owner.test.ts",
+        "src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "PZ03",
+        "PZ06"
+      ],
+      "deepseekAdaptation": "IDE/API/remote 只做 DSXU adapter boundary，不能绕过 query loop、Tool Gate、cost evidence。",
+      "whatToAbsorb": [
+        "远程/IDE 状态有 handshake、权限和结果投影",
+        "host adapter 不成为第二 runtime"
+      ],
+      "whatNotToCopy": [
+        "参考产品远程服务、认证协议、商业 bridge 文案"
+      ],
+      "v26Action": "补 IDE/API bridge product smoke 与 external adapter visible-state evidence。",
+      "acceptance": "外部 host 调用仍能看到 permission/cost/evidence；未做 smoke 前不当核心卖点。",
+      "decision": "needs-live-evidence",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "seniorProgrammerLogic": [
+        "External hosts are adapter boundaries, not new orchestrators.",
+        "Remote/IDE events must project into the same permission/cost/evidence state.",
+        "Handshake and secret boundaries are release gates.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Bridge/transport/remote files indicate external host integration is isolated behind protocols.",
+        "The useful idea is boundary discipline: host events enter the same session model."
+      ],
+      "deepseekRebuildPlan": [
+        "External host calls become Tool Gate events with route/cost/cache evidence.",
+        "Do not let IDE/API bridge start a second agent or permission runtime.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P1 API bridge smoke",
+        "P1 external adapter permission proof",
+        "P2 IDE extension product boundary"
+      ],
+      "acceptanceEvidence": [
+        "external trigger produces Tool Gate event",
+        "no second runtime entrypoint"
+      ],
+      "referenceFileCount": 1383,
+      "referenceSignalHits": 20886,
+      "topReferenceDirs": {
+        "utils": 400,
+        "components": 237,
+        "commands": 207,
+        "tools": 117,
+        "services": 105,
+        "hooks": 67,
+        "ink": 59,
+        "bridge": 31
+      },
+      "topReferenceFiles": [
+        {
+          "path": "bridge/replBridge.ts",
+          "bytes": 100537,
+          "score": 558,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 491,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "desktop",
+            "chrome",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 417,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "desktop",
+            "chrome",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "services/mcp/client.ts",
+          "bytes": 119060,
+          "score": 356,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "chrome",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "utils/ide.ts",
+          "bytes": 46585,
+          "score": 351,
+          "matchedSignals": [
+            "ide",
+            "desktop",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "commands/ide/ide.tsx",
+          "bytes": 77066,
+          "score": 329,
+          "matchedSignals": [
+            "ide",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "bridge/bridgeMain.ts",
+          "bytes": 115571,
+          "score": 325,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "bridge/remoteBridgeCore.ts",
+          "bytes": 39434,
+          "score": 286,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "hooks/useReplBridge.tsx",
+          "bytes": 115652,
+          "score": 248,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "tasks/RemoteAgentTask/RemoteAgentTask.tsx",
+          "bytes": 126389,
+          "score": 232,
+          "matchedSignals": [
+            "remote",
+            "ide",
+            "sse"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 220,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "websocket",
+            "sse",
+            "transport"
+          ]
+        },
+        {
+          "path": "utils/sessionStorage.ts",
+          "bytes": 180620,
+          "score": 172,
+          "matchedSignals": [
+            "bridge",
+            "remote",
+            "ide",
+            "sse"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/commands/ide/ide.tsx",
+        "src/commands/desktop/desktop.tsx",
+        "src/tools/RemoteTriggerTool/RemoteTriggerTool.ts",
+        "src/dsxu/engine/adapters/external-tool-adapter.ts",
+        "src/dsxu/engine/mainline-tool-adapter.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/external-integration-owner.test.ts",
+        "src/dsxu/engine/__tests__/extension-runtime-owner.test.ts",
+        "src/dsxu/engine/__tests__/mainline-tool-adapter-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 1,
+      "v18DeferredCount": 1,
+      "claimRisk": "Code/test exists, but live DSXU window or product smoke evidence is still required before public claim. DSXU signal hits=32529; missing explicit evidence paths=0."
+    },
+    {
+      "id": "first-run-trust-doctor",
+      "label": "First-Run Trust / Doctor / Secret Safety",
+      "priority": "P1",
+      "referenceSignals": [
+        "auth",
+        "setup",
+        "doctor",
+        "install",
+        "secret",
+        "key",
+        "onboarding",
+        "trusted"
+      ],
+      "referencePathHints": [
+        "commands",
+        "setup",
+        "services",
+        "bootstrap"
+      ],
+      "dsxuOwner": "Install / Auth / Doctor",
+      "dsxuFiles": [
+        "src/commands/config/config.tsx",
+        "src/commands/doctor/doctor.ts",
+        "src/dsxu/engine/public-surface-clean-gate.ts",
+        "scripts/dsxu-v24-fresh-install-release-smoke.ts",
+        "scripts/dsxu-commercial-ip-release-preflight.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/release-test-gate-v1.test.ts",
+        "src/dsxu/engine/__tests__/public-surface-clean-gate.test.ts"
+      ],
+      "v18Capabilities": [
+        "E06"
+      ],
+      "deepseekAdaptation": "首次使用必须安全填写 DeepSeek key；release pack 不能泄露 key，provider gate 要能解释 Flash-first 策略。",
+      "whatToAbsorb": [
+        "安装后即能自检",
+        "secret redaction 是 release gate",
+        "provider/key 错误有恢复路径"
+      ],
+      "whatNotToCopy": [
+        "参考产品账号体系、遥测服务、品牌授权流"
+      ],
+      "v26Action": "最终 fresh install/help/doctor/provider gate smoke 要检查无 key 泄露和首次 key wizard。",
+      "acceptance": "发布包不含用户 key；首次运行能引导 DEEPSEEK_API_KEY；doctor 输出可恢复建议。",
+      "decision": "implemented+tested",
+      "mechanismClass": "trust-and-visibility: user-visible state, evidence, and release confidence",
+      "seniorProgrammerLogic": [
+        "First run must quickly establish key, provider, workspace, and release trust.",
+        "Doctor output should be actionable and safe, not just diagnostic text.",
+        "Secrets must be excluded from release artifacts and evidence packs.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Setup, auth, trusted device, onboarding, config, and diagnostics form a first-run trust loop.",
+        "The user is guided to a working environment before complex tasks begin."
+      ],
+      "deepseekRebuildPlan": [
+        "First run collects DeepSeek key safely and validates provider route without writing secrets into release artifacts.",
+        "Doctor should output route policy, cache/cost readiness, and recoverable setup issues.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P1 no-key first run smoke",
+        "P1 secret scan release gate",
+        "P1 provider gate recovery copy"
+      ],
+      "acceptanceEvidence": [
+        "release artifact has no key",
+        "first run/provider doctor recovers no-key setup"
+      ],
+      "referenceFileCount": 1213,
+      "referenceSignalHits": 21277,
+      "topReferenceDirs": {
+        "utils": 325,
+        "components": 235,
+        "commands": 207,
+        "services": 130,
+        "tools": 74,
+        "hooks": 59,
+        "ink": 35,
+        "bridge": 24
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/auth.ts",
+          "bytes": 65436,
+          "score": 725,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "secret",
+            "key",
+            "trusted"
+          ]
+        },
+        {
+          "path": "services/mcp/auth.ts",
+          "bytes": 88879,
+          "score": 627,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "secret",
+            "key"
+          ]
+        },
+        {
+          "path": "utils/plugins/installedPluginsManager.ts",
+          "bytes": 41410,
+          "score": 321,
+          "matchedSignals": [
+            "install",
+            "key"
+          ]
+        },
+        {
+          "path": "commands/install-github-app/install-github-app.tsx",
+          "bytes": 87155,
+          "score": 320,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "install",
+            "secret",
+            "key"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 305,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "doctor",
+            "install",
+            "secret",
+            "key",
+            "onboarding",
+            "trusted"
+          ]
+        },
+        {
+          "path": "cli/print.ts",
+          "bytes": 212735,
+          "score": 251,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "install",
+            "key"
+          ]
+        },
+        {
+          "path": "services/plugins/pluginOperations.ts",
+          "bytes": 35619,
+          "score": 209,
+          "matchedSignals": [
+            "install",
+            "secret",
+            "key"
+          ]
+        },
+        {
+          "path": "components/mcp/MCPRemoteServerMenu.tsx",
+          "bytes": 102489,
+          "score": 195,
+          "matchedSignals": [
+            "auth",
+            "key"
+          ]
+        },
+        {
+          "path": "services/mcp/client.ts",
+          "bytes": 119060,
+          "score": 189,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "key"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 181,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "install",
+            "key",
+            "onboarding"
+          ]
+        },
+        {
+          "path": "utils/nativeInstaller/installer.ts",
+          "bytes": 54752,
+          "score": 179,
+          "matchedSignals": [
+            "setup",
+            "doctor",
+            "install",
+            "key"
+          ]
+        },
+        {
+          "path": "utils/config.ts",
+          "bytes": 63496,
+          "score": 176,
+          "matchedSignals": [
+            "auth",
+            "setup",
+            "doctor",
+            "install",
+            "key",
+            "onboarding",
+            "trusted"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "src/commands/config/config.tsx",
+        "src/dsxu/engine/public-surface-clean-gate.ts",
+        "scripts/dsxu-v24-fresh-install-release-smoke.ts",
+        "scripts/dsxu-commercial-ip-release-preflight.ts"
+      ],
+      "dsxuFilesMissing": [
+        "src/commands/doctor/doctor.ts"
+      ],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/release-test-gate-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [
+        "src/dsxu/engine/__tests__/public-surface-clean-gate.test.ts"
+      ],
+      "v18PassCount": 1,
+      "v18DeferredCount": 0,
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=21340; missing explicit evidence paths=2."
+    },
+    {
+      "id": "telemetry-evidence-release",
+      "label": "Telemetry / Evidence / Release Gate",
+      "priority": "P0",
+      "referenceSignals": [
+        "trace",
+        "telemetry",
+        "report",
+        "evidence",
+        "benchmark",
+        "release",
+        "metrics",
+        "audit"
+      ],
+      "referencePathHints": [
+        "services",
+        "commands",
+        "utils",
+        "state"
+      ],
+      "dsxuOwner": "Evidence / Benchmark / Release",
+      "dsxuFiles": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts",
+        "scripts/dsxu-capability-cost-crosswalk.ts",
+        "src/dsxu/engine/go-stop-decision.ts"
+      ],
+      "dsxuTests": [
+        "src/dsxu/engine/__tests__/evidence-eval-pack.test.ts",
+        "src/dsxu/engine/__tests__/eval-baseline-manifest.test.ts",
+        "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts"
+      ],
+      "v18Capabilities": [
+        "A16",
+        "A17",
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06",
+        "E07",
+        "R03",
+        "R07",
+        "R08"
+      ],
+      "deepseekAdaptation": "所有 public claim 必须绑定 raw task、route/cost/cache、failure/recovery、source/test/live evidence；不能用映射完成替代能力完成。",
+      "whatToAbsorb": [
+        "证据同源",
+        "claim guard",
+        "benchmark 和 release 分开",
+        "没有 raw 对照就不宣称外部胜出"
+      ],
+      "whatNotToCopy": [
+        "参考产品榜单表述、商业宣传 claim、未授权 benchmark 名义"
+      ],
+      "v26Action": "修 capability cost crosswalk 的 PASS 等级，补 public challenge ablation 和 GitHub 数据图。",
+      "acceptance": "70 PASS 不再等于完整功能 PASS；GitHub 只写真实验收卖点和真实数值。",
+      "decision": "implemented+tested-claim-limited",
+      "mechanismClass": "trust-and-visibility: user-visible state, evidence, and release confidence",
+      "seniorProgrammerLogic": [
+        "Evidence is a product feature: raw trace, cost, cache, failures, recovery, and claims all share lineage.",
+        "Separate internal pass, release candidate, and public benchmark claim.",
+        "Never let mapping completeness replace real public task proof.",
+        "Observe: gather the smallest source-truth signal that can answer the next question.",
+        "Orient: decide owner, risk, blast radius, and what evidence is needed before changing behavior.",
+        "Decide: choose one mainline action, not a compatibility holding path.",
+        "Act: execute through the named DSXU owner and keep side effects attributable.",
+        "Verify: run focused proof, record failure/recovery, and expose next action."
+      ],
+      "referenceMechanism": [
+        "Telemetry, cost hooks, traces, status, release commands, and reports connect product behavior to proof.",
+        "The mechanism is claim discipline: what happened, what it cost, what evidence supports it."
+      ],
+      "deepseekRebuildPlan": [
+        "Every public claim must point to raw task, DSXU live transcript, route/cost/cache trace, source/test evidence, and release gate status.",
+        "Publish real before/after charts and blocked claims, not inflated parity language.",
+        "Use DSXU-owned source/test/live evidence; do not copy reference code, prompt, brand, or private service behavior.",
+        "Keep Flash as the default route; use Pro only when admission evidence is explicit."
+      ],
+      "implementationSlices": [
+        "P0 capability acceptance audit",
+        "P0 public claim guard rewrite",
+        "P1 GitHub data chart rebuild"
+      ],
+      "acceptanceEvidence": [
+        "GitHub claims cite source/test/live/raw evidence",
+        "blocked claims remain visible"
+      ],
+      "referenceFileCount": 1070,
+      "referenceSignalHits": 5869,
+      "topReferenceDirs": {
+        "utils": 564,
+        "commands": 207,
+        "services": 130,
+        "tools": 38,
+        "components": 32,
+        "ink": 19,
+        ".": 13,
+        "hooks": 11
+      },
+      "topReferenceFiles": [
+        {
+          "path": "utils/telemetry/instrumentation.ts",
+          "bytes": 26741,
+          "score": 187,
+          "matchedSignals": [
+            "trace",
+            "telemetry",
+            "metrics"
+          ]
+        },
+        {
+          "path": "utils/telemetry/perfettoTracing.ts",
+          "bytes": 29792,
+          "score": 98,
+          "matchedSignals": [
+            "trace",
+            "metrics"
+          ]
+        },
+        {
+          "path": "utils/telemetry/sessionTracing.ts",
+          "bytes": 27991,
+          "score": 75,
+          "matchedSignals": [
+            "trace",
+            "telemetry"
+          ]
+        },
+        {
+          "path": "utils/releaseNotes.ts",
+          "bytes": 11813,
+          "score": 56,
+          "matchedSignals": [
+            "release"
+          ]
+        },
+        {
+          "path": "hooks/useVoice.ts",
+          "bytes": 45802,
+          "score": 51,
+          "matchedSignals": [
+            "report",
+            "release"
+          ]
+        },
+        {
+          "path": "utils/telemetry/bigqueryExporter.ts",
+          "bytes": 7806,
+          "score": 47,
+          "matchedSignals": [
+            "telemetry",
+            "metrics"
+          ]
+        },
+        {
+          "path": "entrypoints/init.ts",
+          "bytes": 13780,
+          "score": 45,
+          "matchedSignals": [
+            "trace",
+            "telemetry",
+            "metrics"
+          ]
+        },
+        {
+          "path": "main.tsx",
+          "bytes": 803924,
+          "score": 42,
+          "matchedSignals": [
+            "telemetry",
+            "report",
+            "benchmark",
+            "release",
+            "metrics"
+          ]
+        },
+        {
+          "path": "commands/insights.ts",
+          "bytes": 115949,
+          "score": 42,
+          "matchedSignals": [
+            "report",
+            "evidence"
+          ]
+        },
+        {
+          "path": "screens/REPL.tsx",
+          "bytes": 895850,
+          "score": 37,
+          "matchedSignals": [
+            "trace",
+            "telemetry",
+            "report",
+            "metrics"
+          ]
+        },
+        {
+          "path": "services/api/metricsOptOut.ts",
+          "bytes": 5355,
+          "score": 34,
+          "matchedSignals": [
+            "metrics"
+          ]
+        },
+        {
+          "path": "ink/components/App.tsx",
+          "bytes": 98330,
+          "score": 27,
+          "matchedSignals": [
+            "report",
+            "release"
+          ]
+        }
+      ],
+      "dsxuFilesExisting": [
+        "scripts/dsxu-v24-public-challenge-package.ts",
+        "scripts/dsxu-v24-product-benchmark-data-pack.ts",
+        "scripts/dsxu-v24-six-stage-final-tests.ts",
+        "scripts/dsxu-capability-cost-crosswalk.ts",
+        "src/dsxu/engine/go-stop-decision.ts"
+      ],
+      "dsxuFilesMissing": [],
+      "dsxuTestsExisting": [
+        "src/dsxu/engine/__tests__/evidence-eval-pack.test.ts",
+        "src/dsxu/engine/__tests__/eval-baseline-manifest.test.ts",
+        "src/dsxu/engine/__tests__/raw-evidence-readiness-register-v1.test.ts"
+      ],
+      "dsxuTestsMissing": [],
+      "v18PassCount": 12,
+      "v18DeferredCount": 0,
+      "claimRisk": "Implementation exists, but public copy must be constrained to subset/adapted behavior. DSXU signal hits=12843; missing explicit evidence paths=0."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ai-coding-multifile-feature",
+      "label": "AI coding: multi-file feature implementation",
+      "roleLens": "senior feature engineer",
+      "mechanismIds": [
+        "goal-plan-query-loop",
+        "source-truth-coding-repair",
+        "tool-permission-lifecycle",
+        "deepseek-model-cost-cache",
+        "telemetry-evidence-release"
+      ],
+      "deepseekStrategy": "Flash max for initial architecture and risk slicing, Flash high for implementation, Pro only after failed verification or high-risk permission evidence.",
+      "acceptance": "Real DSXU task reads source, patches multiple files, runs focused tests, reports route/cost/cache, and keeps next action visible.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "ai-coding-bugfix-regression",
+      "label": "AI coding: bugfix with regression guard",
+      "roleLens": "debugging engineer",
+      "mechanismIds": [
+        "source-truth-coding-repair",
+        "context-memory-recovery",
+        "tool-result-cache-hygiene",
+        "telemetry-evidence-release"
+      ],
+      "deepseekStrategy": "Search and diagnostic evidence form source capsule; Flash high repairs; Flash max handles failed verification before Pro admission.",
+      "acceptance": "Bug evidence, patch, regression blast radius, failed test recovery, and final proof are linked.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Tool Result / Cache Hygiene: P0 public challenge ablation",
+        "Tool Result / Cache Hygiene: P0 tool result preview budget",
+        "Tool Result / Cache Hygiene: P1 cache chart data",
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "complex-task-long-run",
+      "label": "Complex task: long-running goal preservation",
+      "roleLens": "technical lead",
+      "mechanismIds": [
+        "goal-plan-query-loop",
+        "visible-work-state",
+        "context-memory-recovery",
+        "deepseek-model-cost-cache"
+      ],
+      "deepseekStrategy": "Stable goal/plan prefix and dynamic tail keep DeepSeek cache useful while preserving task continuity.",
+      "acceptance": "30-45 minute window survives interruption/compact/resume without losing goal, files, risk, cost, or next action.",
+      "decision": "implemented+tested",
+      "missingClosures": []
+    },
+    {
+      "id": "terminal-ops-failure-recovery",
+      "label": "Terminal operations: command failure and recovery",
+      "roleLens": "terminal reliability engineer",
+      "mechanismIds": [
+        "terminal-shell-reliability",
+        "tool-permission-lifecycle",
+        "visible-work-state",
+        "deepseek-model-cost-cache"
+      ],
+      "deepseekStrategy": "Bounded command result packs feed Flash max for failure analysis; full logs stay as artifacts.",
+      "acceptance": "Long output, timeout, nonzero exit, file delta, failure type, and recovery action are visible.",
+      "decision": "needs-live-evidence",
+      "missingClosures": [
+        "Terminal / Shell Reliability: P1 long command demo",
+        "Terminal / Shell Reliability: P1 timeout/failure recovery demo",
+        "Terminal / Shell Reliability: P1 full-log artifact with bounded preview"
+      ]
+    },
+    {
+      "id": "agent-delegation-parent-synthesis",
+      "label": "Complex task: agent delegation and parent synthesis",
+      "roleLens": "agent lead",
+      "mechanismIds": [
+        "agent-orchestration-evidence",
+        "goal-plan-query-loop",
+        "visible-work-state",
+        "tool-result-cache-hygiene",
+        "telemetry-evidence-release"
+      ],
+      "deepseekStrategy": "Workers return evidence envelopes so parent prompt stays compact and cache-friendly.",
+      "acceptance": "Parent final cites worker evidence ids and rejects unverified worker success.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Agent Orchestration / Parent Evidence: P1 worker evidence envelope",
+        "Agent Orchestration / Parent Evidence: P1 parent synthesis guard",
+        "Agent Orchestration / Parent Evidence: P1 no transcript bloat check",
+        "Tool Result / Cache Hygiene: P0 public challenge ablation",
+        "Tool Result / Cache Hygiene: P0 tool result preview budget",
+        "Tool Result / Cache Hygiene: P1 cache chart data",
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "mcp-skill-ecosystem-routing",
+      "label": "Ecosystem: MCP/Skill priority and conflict routing",
+      "roleLens": "ecosystem integrator",
+      "mechanismIds": [
+        "mcp-skill-ecosystem",
+        "tool-permission-lifecycle",
+        "visible-work-state",
+        "first-run-trust-doctor"
+      ],
+      "deepseekStrategy": "Skill/MCP results are normalized to DSXU evidence envelopes before entering DeepSeek context.",
+      "acceptance": "Conflicting skills resolve by priority; external server outputs are permissioned, redacted, and bounded.",
+      "decision": "implemented+tested",
+      "missingClosures": []
+    },
+    {
+      "id": "large-repo-source-truth",
+      "label": "Large repo: source-truth without cache destruction",
+      "roleLens": "source-truth engineer",
+      "mechanismIds": [
+        "source-truth-coding-repair",
+        "tool-result-cache-hygiene",
+        "deepseek-model-cost-cache",
+        "context-memory-recovery"
+      ],
+      "deepseekStrategy": "Grep/anchor/range Read builds source capsules; full file fallback is bounded and attributed.",
+      "acceptance": "No repeated large Read in default lane; cache attribution explains any fallback.",
+      "decision": "implemented+tested",
+      "missingClosures": [
+        "Tool Result / Cache Hygiene: P0 public challenge ablation",
+        "Tool Result / Cache Hygiene: P0 tool result preview budget",
+        "Tool Result / Cache Hygiene: P1 cache chart data"
+      ]
+    },
+    {
+      "id": "release-public-proof",
+      "label": "Release: public proof and GitHub claims",
+      "roleLens": "release evidence owner",
+      "mechanismIds": [
+        "telemetry-evidence-release",
+        "first-run-trust-doctor",
+        "deepseek-model-cost-cache",
+        "visible-work-state"
+      ],
+      "deepseekStrategy": "Claims cite stable evidence pack, route/cost/cache trace, raw task data, and secret/IP gates.",
+      "acceptance": "README/GitHub charts use real numbers and keep blocked claims visible.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "first-run-provider-trust",
+      "label": "First run: DeepSeek key, provider, doctor",
+      "roleLens": "new user onboarding",
+      "mechanismIds": [
+        "first-run-trust-doctor",
+        "deepseek-model-cost-cache",
+        "visible-work-state"
+      ],
+      "deepseekStrategy": "Provider smoke should validate Flash-first routing and avoid logging secrets.",
+      "acceptance": "No-key and key-provided paths are recoverable; release artifact contains no user key.",
+      "decision": "implemented+tested",
+      "missingClosures": []
+    },
+    {
+      "id": "ide-api-host-boundary",
+      "label": "External host: IDE/API/remote boundary",
+      "roleLens": "platform integrator",
+      "mechanismIds": [
+        "ide-remote-external-boundary",
+        "tool-permission-lifecycle",
+        "visible-work-state",
+        "telemetry-evidence-release"
+      ],
+      "deepseekStrategy": "External host calls enter the same DSXU Tool Gate and evidence timeline, not a second orchestrator.",
+      "acceptance": "Adapter smoke proves permission, route/cost/cache evidence, and no second runtime entry.",
+      "decision": "needs-live-evidence",
+      "missingClosures": [
+        "IDE / Remote / External Host Boundary: P1 API bridge smoke",
+        "IDE / Remote / External Host Boundary: P1 external adapter permission proof",
+        "IDE / Remote / External Host Boundary: P2 IDE extension product boundary",
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "cost-cache-optimization",
+      "label": "Performance: cost and cache optimization",
+      "roleLens": "DeepSeek runtime engineer",
+      "mechanismIds": [
+        "tool-result-cache-hygiene",
+        "deepseek-model-cost-cache",
+        "telemetry-evidence-release"
+      ],
+      "deepseekStrategy": "Stable prefix, route latch, no-Read default, and bounded tool previews improve cost without hiding quality loss.",
+      "acceptance": "Same-task ablation shows scoreFloor not lower and observed cost/cache/tool-result metrics improved.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Tool Result / Cache Hygiene: P0 public challenge ablation",
+        "Tool Result / Cache Hygiene: P0 tool result preview budget",
+        "Tool Result / Cache Hygiene: P1 cache chart data",
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    },
+    {
+      "id": "anti-fake-completion",
+      "label": "Quality: anti-fake completion and evidence discipline",
+      "roleLens": "review lead",
+      "mechanismIds": [
+        "telemetry-evidence-release",
+        "visible-work-state",
+        "source-truth-coding-repair",
+        "tool-permission-lifecycle"
+      ],
+      "deepseekStrategy": "Flash review receives evidence capsules and claim guards, not raw unbounded transcripts.",
+      "acceptance": "Intent-only, dry-plan, denied-permission, missing-source, and failed-verification paths cannot PASS.",
+      "decision": "claim-limited",
+      "missingClosures": [
+        "Telemetry / Evidence / Release Gate: P0 capability acceptance audit",
+        "Telemetry / Evidence / Release Gate: P0 public claim guard rewrite",
+        "Telemetry / Evidence / Release Gate: P1 GitHub data chart rebuild"
+      ]
+    }
+  ],
+  "unfinished": [
+    {
+      "priority": "P0",
+      "id": "tool-result-cache-hygiene",
+      "label": "Tool Result / Cache Hygiene",
+      "decision": "implemented+tested",
+      "mechanismClass": "deepseek-runtime: model routing, context cache, and cost control",
+      "action": "完成 ablation rerun，并把 cache miss attribution 接进 GitHub 图表数据。",
+      "acceptance": "同题 before/after 显示 cost、toolResultChars、cacheHitRate、scoreFloor；score 不下降才允许写优化卖点。",
+      "implementationSlices": [
+        "P0 public challenge ablation",
+        "P0 tool result preview budget",
+        "P1 cache chart data"
+      ],
+      "claimRisk": "Can support DSXU-owned internal/release evidence; public 90 claim still requires public challenge raw proof. DSXU signal hits=30289; missing explicit evidence paths=1."
+    },
+    {
+      "priority": "P1",
+      "id": "terminal-shell-reliability",
+      "label": "Terminal / Shell Reliability",
+      "decision": "needs-live-evidence",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "action": "补 terminal reliability live demo，覆盖长命令、失败、超时、恢复、结果包。",
+      "acceptance": "真实 DSXU 窗口能展示 shell state before/after、failureType、recoveryAction、artifact path。",
+      "implementationSlices": [
+        "P1 long command demo",
+        "P1 timeout/failure recovery demo",
+        "P1 full-log artifact with bounded preview"
+      ],
+      "claimRisk": "Code/test exists, but live DSXU window or product smoke evidence is still required before public claim. DSXU signal hits=22914; missing explicit evidence paths=0."
+    },
+    {
+      "priority": "P1",
+      "id": "agent-orchestration-evidence",
+      "label": "Agent Orchestration / Parent Evidence",
+      "decision": "implemented+tested-claim-limited",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "action": "补 agent parent/worker evidence pack，并接入 visible-state timeline。",
+      "acceptance": "父任务 final 不能引用未验证 worker 成功；子任务 transcript 不进入主线程长上下文。",
+      "implementationSlices": [
+        "P1 worker evidence envelope",
+        "P1 parent synthesis guard",
+        "P1 no transcript bloat check"
+      ],
+      "claimRisk": "Implementation exists, but public copy must be constrained to subset/adapted behavior. DSXU signal hits=39136; missing explicit evidence paths=0."
+    },
+    {
+      "priority": "P1",
+      "id": "ide-remote-external-boundary",
+      "label": "IDE / Remote / External Host Boundary",
+      "decision": "needs-live-evidence",
+      "mechanismClass": "execution-boundary: tools, permissions, agents, ecosystem, and external hosts",
+      "action": "补 IDE/API bridge product smoke 与 external adapter visible-state evidence。",
+      "acceptance": "外部 host 调用仍能看到 permission/cost/evidence；未做 smoke 前不当核心卖点。",
+      "implementationSlices": [
+        "P1 API bridge smoke",
+        "P1 external adapter permission proof",
+        "P2 IDE extension product boundary"
+      ],
+      "claimRisk": "Code/test exists, but live DSXU window or product smoke evidence is still required before public claim. DSXU signal hits=32529; missing explicit evidence paths=0."
+    },
+    {
+      "priority": "P0",
+      "id": "telemetry-evidence-release",
+      "label": "Telemetry / Evidence / Release Gate",
+      "decision": "implemented+tested-claim-limited",
+      "mechanismClass": "trust-and-visibility: user-visible state, evidence, and release confidence",
+      "action": "修 capability cost crosswalk 的 PASS 等级，补 public challenge ablation 和 GitHub 数据图。",
+      "acceptance": "70 PASS 不再等于完整功能 PASS；GitHub 只写真实验收卖点和真实数值。",
+      "implementationSlices": [
+        "P0 capability acceptance audit",
+        "P0 public claim guard rewrite",
+        "P1 GitHub data chart rebuild"
+      ],
+      "claimRisk": "Implementation exists, but public copy must be constrained to subset/adapted behavior. DSXU signal hits=12843; missing explicit evidence paths=0."
+    }
+  ]
+}

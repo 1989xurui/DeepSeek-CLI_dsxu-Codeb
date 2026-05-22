@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "dsxu.v24.live-acceptance-router.v1",
+  "generatedAt": "2026-05-19T15:10:42.566Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_FLASH_FIRST_EVIDENCED",
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proAdmission": "Pro is not a default validation model. It is allowed only for high-risk permission/security, planning, recovery, failed verification, or Flash/source-truth conflict after Flash retry, and only when explicitly enabled.",
+    "allowProEnv": "DSXU_V24_ALLOW_PRO_RESCUE=1",
+    "proWasRun": false
+  },
+  "sourceTruth": {
+    "realRunnerSource": true,
+    "realRunnerTests": true
+  },
+  "localRegression": {
+    "exitCode": 0,
+    "durationMs": 539,
+    "passed": true
+  },
+  "expectedRealRunner": true,
+  "finalMatchesSourceTruth": true,
+  "steps": [
+    {
+      "step": "local-source-truth",
+      "status": "PASS",
+      "reason": "source and tests define the expected truth before model judgment"
+    },
+    {
+      "step": "local-regression",
+      "status": "PASS",
+      "reason": "local regression supports or rejects the source-truth claim"
+    },
+    {
+      "step": "flash-primary",
+      "model": "deepseek-v4-flash",
+      "status": "DONE",
+      "reason": "Flash is the default DSXU V24 live acceptance model",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-live-dsxu\\v24-flash-first-pbt-source-truth-2026-05-19T15-10-33-329Z.jsonl",
+      "costUSD": 0.0021480256000000002
+    },
+    {
+      "step": "pro-rescue",
+      "model": "deepseek-v4-pro",
+      "status": "NOT_NEEDED",
+      "reason": "flash-primary matched source truth",
+      "costUSD": 0
+    }
+  ],
+  "flashPrimary": {
+    "resultJson": {
+      "did_read_source": true,
+      "did_read_tests": true,
+      "real_non_mock_pbt_runner": true,
+      "source_evidence": [
+        "index.ts:67-97 — runPbt creates a temp directory, writes test code to disk, spawns 'bun test' via Bun.spawn with timeout and env, then cleans up. No mock mode used when config.mockRunner is absent.",
+        "index.ts:99-133 — runBunTest is the real child-process runner using Bun.spawn with pipe I/O and a timeout race. No mock/delegate.",
+        "index.ts:19-24 — suggestProperties uses real fs.readFile when config.mockSourceReader is absent.",
+        "index.ts:135-143 — defaultPurityCheck does real static analysis without mocks."
+      ],
+      "test_evidence": [
+        "pbt.test.ts:132-143 — test 'real runner executes passing Bun test code' calls runPbt with { runs: 17, timeoutMs: 10_000 } and no mockRunner, expects passed:true.",
+        "pbt.test.ts:145-155 — test 'real runner reports failing Bun test output' calls runPbt without mockRunner, expects passed:false with error text.",
+        "pbt.test.ts:99-130 — three tests that use mockRunner are isolated; the real-runner tests above run without mocks."
+      ],
+      "pro_needed": false,
+      "pro_admission_reason": "Source and tests verified. Two tests (lines 132, 145) execute runPbt with no mockRunner, exercising the real Bun.spawn-based child process runner that writes temp files and executes bun test. All evidence confirms a genuine real PBT runner exists."
+    },
+    "modelUsage": {
+      "deepseek-v4-flash": {
+        "inputTokens": 24904,
+        "outputTokens": 488,
+        "cacheReadInputTokens": 10752,
+        "cacheCreationInputTokens": 14152,
+        "webSearchRequests": 0,
+        "costUSD": 0.0021480256000000002,
+        "contextWindow": 1048576,
+        "maxOutputTokens": 32768
+      }
+    }
+  },
+  "flashRetry": null,
+  "pro": null
+}

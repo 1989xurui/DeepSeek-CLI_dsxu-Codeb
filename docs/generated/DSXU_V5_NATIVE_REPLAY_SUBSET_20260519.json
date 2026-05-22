@@ -1,0 +1,211 @@
+{
+  "schemaVersion": "dsxu.v5.native-replay-subset.v1",
+  "generatedAt": "2026-05-19T04:15:58.968Z",
+  "owner": "Replay Bank / Evidence",
+  "status": "PASS_V5_NATIVE_REPLAY_SUBSET_GENERATED",
+  "claimBoundary": "Internal V5 default-chain replay traces only. Not a public benchmark score, not a 90% external comparison claim.",
+  "caseCount": 20,
+  "traceDir": ".dsxu/trace/v5-native-replay-subset-20260519",
+  "cases": [
+    {
+      "id": "V5-NATIVE-001",
+      "layer": "L1",
+      "category": "default-query-contract",
+      "title": "verify V5 execution contract is attached to default query owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-001.jsonl",
+      "finalPass": true,
+      "recoveryPath": true,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-002",
+      "layer": "L2",
+      "category": "tool-window-hard-cap",
+      "title": "verify Tool View hard cap stays inside query-loop owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-002.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-003",
+      "layer": "L3",
+      "category": "active-frame-ledger",
+      "title": "verify Active Frame projects current obligations from the progress ledger",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-003.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-004",
+      "layer": "L4",
+      "category": "semantic-code-graph",
+      "title": "verify Semantic Code Graph selects affected tests for an edit",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-004.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-005",
+      "layer": "L5",
+      "category": "proof-carrying-edit",
+      "title": "verify proof-carrying edit blocks final claim until focused evidence exists",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-005.jsonl",
+      "finalPass": true,
+      "recoveryPath": true,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-006",
+      "layer": "L1",
+      "category": "default-query-contract",
+      "title": "verify V5 execution contract is attached to default query owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-006.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-007",
+      "layer": "L2",
+      "category": "tool-window-hard-cap",
+      "title": "verify Tool View hard cap stays inside query-loop owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-007.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-008",
+      "layer": "L3",
+      "category": "active-frame-ledger",
+      "title": "verify Active Frame projects current obligations from the progress ledger",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-008.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-009",
+      "layer": "L4",
+      "category": "semantic-code-graph",
+      "title": "verify Semantic Code Graph selects affected tests for an edit",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-009.jsonl",
+      "finalPass": true,
+      "recoveryPath": true,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-010",
+      "layer": "L5",
+      "category": "proof-carrying-edit",
+      "title": "verify proof-carrying edit blocks final claim until focused evidence exists",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-010.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-011",
+      "layer": "L1",
+      "category": "default-query-contract",
+      "title": "verify V5 execution contract is attached to default query owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-011.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-012",
+      "layer": "L2",
+      "category": "tool-window-hard-cap",
+      "title": "verify Tool View hard cap stays inside query-loop owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-012.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-013",
+      "layer": "L3",
+      "category": "active-frame-ledger",
+      "title": "verify Active Frame projects current obligations from the progress ledger",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-013.jsonl",
+      "finalPass": true,
+      "recoveryPath": true,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-014",
+      "layer": "L4",
+      "category": "semantic-code-graph",
+      "title": "verify Semantic Code Graph selects affected tests for an edit",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-014.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-015",
+      "layer": "L5",
+      "category": "proof-carrying-edit",
+      "title": "verify proof-carrying edit blocks final claim until focused evidence exists",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-015.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-016",
+      "layer": "L1",
+      "category": "default-query-contract",
+      "title": "verify V5 execution contract is attached to default query owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-016.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-017",
+      "layer": "L2",
+      "category": "tool-window-hard-cap",
+      "title": "verify Tool View hard cap stays inside query-loop owner",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-017.jsonl",
+      "finalPass": true,
+      "recoveryPath": true,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-018",
+      "layer": "L3",
+      "category": "active-frame-ledger",
+      "title": "verify Active Frame projects current obligations from the progress ledger",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-018.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-019",
+      "layer": "L4",
+      "category": "semantic-code-graph",
+      "title": "verify Semantic Code Graph selects affected tests for an edit",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-019.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    },
+    {
+      "id": "V5-NATIVE-020",
+      "layer": "L5",
+      "category": "proof-carrying-edit",
+      "title": "verify proof-carrying edit blocks final claim until focused evidence exists",
+      "rawTracePath": ".dsxu/trace/v5-native-replay-subset-20260519/V5-NATIVE-020.jsonl",
+      "finalPass": true,
+      "recoveryPath": false,
+      "evidenceOk": true
+    }
+  ]
+}

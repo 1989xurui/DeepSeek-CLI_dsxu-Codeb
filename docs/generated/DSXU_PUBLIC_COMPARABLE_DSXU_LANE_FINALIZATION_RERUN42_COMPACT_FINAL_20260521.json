@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "dsxu.public-comparable-dsxu-lane.v1",
+  "generatedAt": "2026-05-21T11:47:26.962Z",
+  "status": "PASS",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521",
+  "workspaceRoot": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane",
+  "rawEvidenceComplete": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "caseCount": 30,
+  "attemptedCaseCount": 1,
+  "capturedCaseCount": 1,
+  "skippedCaseCount": 0,
+  "failedCaseCount": 0,
+  "passedCaseCount": 1,
+  "nonPassingCaseCount": 0,
+  "nextAction": "run evidence:public-comparable-raw to import DSXU lane evidence; expand only after low-risk probe cases are stable",
+  "safeguards": [
+    "DSXU lane runs in per-case isolated git worktrees or injected test workspaces, never in the dirty product working tree",
+    "top-level PASS means every selected case passed its rubric; captured evidence without rubric pass is PARTIAL",
+    "this runner captures transcript/tool/final/metrics evidence but does not judge public superiority",
+    "finalPass requires a clean CLI exit, a result event, no unsupported/budget violations, and a declared outcome that matches the case rubric; deny-PASS cases can pass with FAIL when FAIL is the requested outcome",
+    "public benchmark and external comparison claims remain controlled by the raw-evidence readiness gate"
+  ],
+  "cases": [
+    {
+      "id": "product-compact-two-phase-live",
+      "status": "PASS_DSXU_LANE_CAPTURED",
+      "model": "deepseek-v4-flash",
+      "promptHash": "2a796fe6cc14ba60e4340c34d6a10ff9734dc2f5f1a918c90f829c4efe820c98",
+      "caseDir": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live",
+      "workspaceDir": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane/product-compact-two-phase-live-2026-05-21T11-46-51-836Z",
+      "rawTranscriptPath": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live/raw-transcript.jsonl",
+      "toolTracePath": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live/tool-trace.jsonl",
+      "finalReportPath": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live/final-report.json",
+      "metricsPath": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live/metrics.json",
+      "artifactDir": ".dsxu/trace/public-comparable-finalization-rerun42-compact-final-20260521/product-compact-two-phase-live/artifacts",
+      "exitCode": 0,
+      "wallClockMs": 30574,
+      "costUsd": 0.0036853824000000006,
+      "cacheHitRatePct": 49.16,
+      "toolUseCount": 3,
+      "finalPass": true
+    }
+  ]
+}

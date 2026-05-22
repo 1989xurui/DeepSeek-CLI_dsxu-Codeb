@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "dsxu.v6.live-tool-call-replay.v1",
+  "generatedAt": "2026-05-19T23:08:06.044Z",
+  "owner": "DeepSeek Provider / Tool Protocol",
+  "status": "PASS_V6_LIVE_TOOL_CALL_REPLAY",
+  "mode": "live",
+  "claimBoundary": "This proves one live DeepSeek Flash strict tool-call round trip plus local tool-result replay and fallback blocking evidence. It is not an external benchmark or public 90% model-quality claim.",
+  "route": {
+    "model": "deepseek-v4-flash",
+    "apiMode": "thinking",
+    "reasoningEffort": "low",
+    "toolSchemaPath": "strict_schema"
+  },
+  "checks": [
+    {
+      "id": "live-api-key",
+      "status": "PASS",
+      "evidence": [
+        "DEEPSEEK_API_KEY=set:redacted"
+      ]
+    },
+    {
+      "id": "live-strict-tool-call-returned",
+      "status": "PASS",
+      "evidence": [
+        "toolName=dsxu_live_echo",
+        "toolCallId=call_00_Mgsrb9ix4TcO0dRgCzhk0390",
+        "schemaPath=strict_schema"
+      ]
+    },
+    {
+      "id": "live-tool-result-replay-final",
+      "status": "PASS",
+      "evidence": [
+        "final marker returned after tool result replay"
+      ]
+    },
+    {
+      "id": "fallback-observable-not-strict",
+      "status": "PASS",
+      "evidence": [
+        "schemaPath=xml_fallback",
+        "DeepSeek response used XML/simple-tag fallback instead of strict function call"
+      ]
+    },
+    {
+      "id": "fallback-hidden-tool-blocked",
+      "status": "PASS",
+      "evidence": [
+        "MCPDocs fallback produced no allowed tool calls"
+      ]
+    }
+  ],
+  "blockers": [],
+  "metrics": {
+    "requestCount": 2,
+    "totalInputTokens": 524,
+    "totalOutputTokens": 78,
+    "totalCacheHitTokens": 384,
+    "totalCacheMissTokens": 140,
+    "totalEstimatedCostUsd": 0.000042515
+  },
+  "evidence": {
+    "toolCallId": "call_00_Mgsrb9ix4TcO0dRgCzhk0390",
+    "toolName": "dsxu_live_echo",
+    "toolArgs": {
+      "marker": "DSXU_V6_TOOL_REPLAY_OK",
+      "number": 7
+    },
+    "toolResultPreview": "{\"marker\":\"DSXU_V6_TOOL_REPLAY_OK\",\"number\":7,\"echoedBy\":\"dsxu-local-tool-simulator\"}",
+    "fallbackXmlSchemaPath": "xml_fallback",
+    "fallbackHiddenBlocked": true
+  }
+}

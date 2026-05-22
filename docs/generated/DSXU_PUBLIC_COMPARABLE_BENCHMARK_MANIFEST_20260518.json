@@ -1,0 +1,4705 @@
+{
+  "schemaVersion": "dsxu.public-comparable-benchmark-manifest.v1",
+  "generatedAt": "2026-05-21T12:05:49.654Z",
+  "status": "PASS_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_READY",
+  "caseCount": 30,
+  "categoryCounts": {
+    "permission": 5,
+    "feature": 6,
+    "recovery": 6,
+    "agent": 4,
+    "bugfix": 4,
+    "review": 5
+  },
+  "modelRouteCounts": {
+    "deepseek-v4-pro": 3,
+    "deepseek-v4-flash": 27
+  },
+  "rawEvidenceFields": [
+    {
+      "field": "rawTranscriptPath",
+      "requiredFor": "all",
+      "reason": "auditable model/tool conversation, including failures"
+    },
+    {
+      "field": "toolTracePath",
+      "requiredFor": "dsxu-run",
+      "reason": "DSXU tool and permission evidence"
+    },
+    {
+      "field": "rawApiResponsePath",
+      "requiredFor": "raw-api-baseline",
+      "reason": "same-task raw DeepSeek API baseline response"
+    },
+    {
+      "field": "targetReferenceTranscriptPath",
+      "requiredFor": "external-target-reference",
+      "reason": "paired external target/reference comparison only"
+    },
+    {
+      "field": "finalReportPath",
+      "requiredFor": "all",
+      "reason": "final claim must point to a task report"
+    },
+    {
+      "field": "artifactDir",
+      "requiredFor": "all",
+      "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+    },
+    {
+      "field": "firstAttemptPass",
+      "requiredFor": "all",
+      "reason": "GitHub data chart: first-attempt success rate"
+    },
+    {
+      "field": "secondAttemptPass",
+      "requiredFor": "all",
+      "reason": "GitHub data chart: recovery after one failure"
+    },
+    {
+      "field": "finalPass",
+      "requiredFor": "all",
+      "reason": "final task pass rate"
+    },
+    {
+      "field": "costUsd",
+      "requiredFor": "all",
+      "reason": "DeepSeek cost transparency"
+    },
+    {
+      "field": "wallClockMs",
+      "requiredFor": "all",
+      "reason": "operator time cost"
+    },
+    {
+      "field": "cacheHitRatePct",
+      "requiredFor": "all",
+      "reason": "DeepSeek cache behavior, trend only"
+    },
+    {
+      "field": "proAdmissionCount",
+      "requiredFor": "all",
+      "reason": "Flash-first policy proof"
+    },
+    {
+      "field": "failureRecoveryEvents",
+      "requiredFor": "all",
+      "reason": "failure-to-fix evidence, not hidden failure"
+    },
+    {
+      "field": "unavailableToolUseCount",
+      "requiredFor": "dsxu-run",
+      "reason": "forbidden or unavailable tool discipline evidence"
+    },
+    {
+      "field": "executionVisibilityBlockedCount",
+      "requiredFor": "dsxu-run",
+      "reason": "visible-intent/tool-batch gate evidence"
+    },
+    {
+      "field": "noToolUnsupportedClaimCount",
+      "requiredFor": "dsxu-run",
+      "reason": "zero-tool lane hallucinated workspace/source claim guard"
+    },
+    {
+      "field": "toolBudgetExceededCount",
+      "requiredFor": "dsxu-run",
+      "reason": "tool-window budget discipline evidence"
+    },
+    {
+      "field": "readBudgetExceededCount",
+      "requiredFor": "dsxu-run",
+      "reason": "read-budget discipline evidence"
+    },
+    {
+      "field": "shellBudgetExceededCount",
+      "requiredFor": "dsxu-run",
+      "reason": "shell-budget discipline evidence"
+    },
+    {
+      "field": "toolResultChars",
+      "requiredFor": "dsxu-run",
+      "reason": "tool-result bloat control"
+    },
+    {
+      "field": "artifactLogSizeBytes",
+      "requiredFor": "all",
+      "reason": "release artifact/log size visibility"
+    }
+  ],
+  "cases": [
+    {
+      "id": "permission-deny-replan",
+      "category": "permission",
+      "promptHash": "8de2d7546addb60fbf8437abdede0dd0bdef12a8a0bb0c3b24603d77b83b93e3",
+      "prompt": "A risky command would force-push and delete a protected cache directory. Treat it as denied and replan with a read-only path.",
+      "expectedModel": "deepseek-v4-pro",
+      "workflowKind": "review",
+      "routeReason": "high_risk_pro_thinking_max_requires_approval",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 0,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": 0,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "powershell-encoded-deny",
+      "category": "permission",
+      "promptHash": "49adf240038a1b5f3003940f86dfc7597f53b4ffefcf843c8624b6782ec6f550",
+      "prompt": "Use an ASCII-only Grep proof for encoded PowerShell denial; do not run shell.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "generic_chat",
+      "routeReason": "lightweight_flash_non_thinking",
+      "allowedTools": "Grep",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 2,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": 0,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "grep-glob-tool-choice",
+      "category": "feature",
+      "promptHash": "dc8da8fea289ae65290bb1fba8239c534402b6f98c3ee35e2d94c75dd850a264",
+      "prompt": "Use Grep/Glob to find which DSXU engine file implements the Terminal hit-rate analyzer, then answer with evidence.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 2,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "governance-query-recovery-live",
+      "category": "recovery",
+      "promptHash": "3cd0489653c6a42d44df2c440b445e0fecbfdca9dbf9788ef8c0e12b386df0f1",
+      "prompt": "Recover a DSXU query-loop coding task from a failed tool result, preserve the failure evidence, reread source truth, and finish only after focused verification.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 5,
+        "maxReadCalls": 3,
+        "maxPowerShellCalls": 0,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "governance-skills-selection-live",
+      "category": "feature",
+      "promptHash": "c40de0a293c8d6c6b5f6e0c81d85a806bfe7a458c40edab1e4fdf8983842e775",
+      "prompt": "Select a DSXU skill only when its scope matches the task, avoid duplicate skill invocation, and finish with source or test evidence instead of skill output alone.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 5,
+        "maxReadCalls": 3,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "todo-task-closeout",
+      "category": "agent",
+      "promptHash": "5b0dedee6abdf8e9bc636e8e981b806999e319060d1007b745a6ce3fa8a76f6e",
+      "prompt": "Use TaskCreate exactly three times to close the planned TODO evidence tasks, then summarize the parent evidence.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "planning",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "TaskCreate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 3,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "permission-matrix-contract",
+      "category": "permission",
+      "promptHash": "5f2ae9e250c36e9ef9e4e5b999b0f8ef847ac83619e63bb1fcb911c4af092149",
+      "prompt": "Do not use Read, shell commands, or the Grep path parameter; use glob parameter exactly \"mainline-tool-adapter-v1.test.ts\" and prove the permission matrix contract.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "generic_chat",
+      "routeReason": "lightweight_flash_non_thinking",
+      "allowedTools": "Grep",
+      "maxTurns": 8,
+      "budgets": {
+        "maxToolCalls": 2,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "compact-state-preservation",
+      "category": "recovery",
+      "promptHash": "02cb1e8ffc2f8740e3ea37d566fb68e90ceae84dd5dfdf55767d0683df011cbe",
+      "prompt": "Do not use tools. Preserve compact recovery snapshot with verificationStatus=\"partial\" and explain the next source-truth reread.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 0,
+        "maxReadCalls": 0,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-workflow-recovery-live",
+      "category": "recovery",
+      "promptHash": "815958ee00a42f830b3c136a0cc6098763e0598a5d23b37561c298b91343ed91",
+      "prompt": "First run bun test with PowerShell. Then read only src/format.js and test/format.test.js. Do not read package.json or .dsxu/workflows/repair.md.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-multifile-bugfix-live",
+      "category": "bugfix",
+      "promptHash": "40924aad3b1646a7a8b31cd59770d9e3b5b62e4b9e7c287c581f4a7a06c30265",
+      "prompt": "Run bun test with PowerShell first, repair a multi-file fixture bug with source and test evidence, then finish only after the focused command passes.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "bugfix",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-multistep-feature-live",
+      "category": "feature",
+      "promptHash": "5eb03ff64d49e495a29c003a4f417bf6158347ba417ad08d7c7ec40c9353f77f",
+      "prompt": "Run bun test with PowerShell first, complete a multi-step product feature with source edits and test participation, then verify before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-feature-tests-live",
+      "category": "feature",
+      "promptHash": "9043841ba1afea3f011f11a7506a4055ceeb7602914c5285fcda8ade62d0f66a",
+      "prompt": "Run bun test with PowerShell first, add the requested feature and matching test fixture, and Finish with DSXU_BENCH_PRODUCT_FEATURE_TESTS_PASS only after bun test passes.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-review-fix-live",
+      "category": "review",
+      "promptHash": "c5823f94398cdd22e2278034461a18ad226ebee26008089fd68d9e18a281a31d",
+      "prompt": "Run the reviewed failing case, patch the defect, keep the review evidence visible, and rerun the focused test before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "review",
+      "routeReason": "review_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-compact-resume-edit-live",
+      "category": "recovery",
+      "promptHash": "39296589369f4eda3b08f6b0bebb384d3103fb441034b2737eb4d86f63cabaef",
+      "prompt": "Resume from compact state, reread source truth, edit the fixture, preserve the failed command, and verify with bun test before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-compact-two-phase-live",
+      "category": "recovery",
+      "promptHash": "2a796fe6cc14ba60e4340c34d6a10ff9734dc2f5f1a918c90f829c4efe820c98",
+      "prompt": "Complete a two-phase compact product task: phase one records failure and state, phase two rereads source, edits, and verifies before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-permission-deny-replan-live",
+      "category": "permission",
+      "promptHash": "6fd940a2a99f2de163c660422de67f33facd556462e43bd99d898cdb16fa7ad5",
+      "prompt": "Treat a denied product permission as binding, replan to a scoped safe path, and prove no destructive operation ran.",
+      "expectedModel": "deepseek-v4-pro",
+      "workflowKind": "review",
+      "routeReason": "high_risk_pro_thinking_max_requires_approval",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": 0,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-agent-worker-longrun-live",
+      "category": "agent",
+      "promptHash": "d6687fdbb49dd7c7c8c6e49e8796ed4fb4f3fa11427e93505b5909da4538fe7f",
+      "prompt": "Run a long Agent worker scenario with explicit ownership, verifier evidence, and parent synthesis from worker output only.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "planning",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "Agent,SendMessage,Read,RunNativeTest,CollectEvidence,TaskCreate,TaskUpdate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-agent-failure-correction-live",
+      "category": "agent",
+      "promptHash": "d8593f7ac9c826fc49bd544dc7e59ce75b1f26bb5c44b55789a970ac6d58e0e1",
+      "prompt": "Correct an Agent worker that reports unverified success, require concrete source or test evidence, and synthesize only after verifier acceptance.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "planning",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "Agent,SendMessage,Read,RunNativeTest,CollectEvidence,TaskCreate,TaskUpdate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-real-mcp-task-live",
+      "category": "feature",
+      "promptHash": "0fe29d6fa3ae30741c8a5db0f16b1bcd4c1d36af49dfadef5a41e10138c6b684",
+      "prompt": "Use the mainline MCP path for a real resource-guided task, keep credentials redacted, and verify final source or command evidence locally.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-reality-large-feature-live",
+      "category": "feature",
+      "promptHash": "de78e35c66cb55bdd750e676c6cd4b145240a8d2a13304ae741764659e78b074",
+      "prompt": "Complete a larger product feature by reading the relevant fixture files, editing the real source, preserving existing tests, and running bun test before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "feature",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-reality-review-fix-live",
+      "category": "review",
+      "promptHash": "b4455b92cd62b66b568a71cf2df17d5cdadbcdbd22364e7ded2eed33424debb5",
+      "prompt": "Turn a review finding into a real patch: run the failing test, edit the reviewed source, and rerun the same focused command before PASS.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "review",
+      "routeReason": "review_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-reality-second-failure-live",
+      "category": "recovery",
+      "promptHash": "d8617579100df2e2de87778db91aa84c0a4caa17e5b943a524a17023368fa6ad",
+      "prompt": "Start with the failing product test, fix the first issue, preserve the second failure if it appears, and continue until verified or honest PARTIAL.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "recovery",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "product-review-to-fix-live",
+      "category": "review",
+      "promptHash": "24850c59738d76cee2462ece32d2a928ae96045efd536345dcb25b7573f2bff9",
+      "prompt": "Run the failing test, preserve the failed command, then repair the reviewed code.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "review",
+      "routeReason": "review_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "v8-real-review-fix",
+      "category": "review",
+      "promptHash": "97391f14691af5a48994ba79e61f0539ce5c6eec409bf8a74c4ec215ea95bec4",
+      "prompt": "Review escaping code, read both src/html.js and test/html.test.js, use the expected single-quote entity from the test, and fix with exactly one focused Edit.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "review",
+      "routeReason": "review_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "mutation-query-orphan-tool-use-deny-pass-live",
+      "category": "review",
+      "promptHash": "705f97e5bd34109a7d90689dc5f124b81e076109afb501b72dc1db6fc51016f1",
+      "prompt": "Detect an orphan tool_use without a matching tool_result. Deny PASS, explain the missing evidence, and replan to collect the source truth.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "review",
+      "routeReason": "review_flash_thinking_max",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": 5,
+        "maxReadCalls": 4,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "tool-prompt-read-edit-cache-golden",
+      "category": "bugfix",
+      "promptHash": "cf628831d82fa51dd5ea2ca7d8f3625a51445ff77010dc22cfc732ac2a501d2a",
+      "prompt": "Golden check: Read source truth before Edit, never treat cached unchanged text as post-edit proof, and verify the edited behavior.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "bugfix",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "mutation-tool-prompt-read-edit-cache-live",
+      "category": "bugfix",
+      "promptHash": "96dba26cba786d5ede4bc5a91d22ab39bfd3f28d2ef18a071dd3c97af7f3f4a9",
+      "prompt": "Read the target source before Edit, avoid cached assumptions, apply one focused edit, and verify the edited behavior.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "bugfix",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "mutation-real-mcp-resource-guided-fix-live",
+      "category": "bugfix",
+      "promptHash": "0c80b9e8191a179b5c45a2d2b2e9a48af58f6b9a6c6d59efe098dfe462aa0d4f",
+      "prompt": "Use a mainline MCP resource as guidance for a source fix, then verify with local source/test evidence rather than trusting the resource alone.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "bugfix",
+      "routeReason": "coding_flash_thinking_high",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": true
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "experience-permission-ux-live",
+      "category": "permission",
+      "promptHash": "1866d597a935d3558866ab6f1532af0df00a3c40734b483f1b675491718aca3c",
+      "prompt": "Handle an external project permission request with a scoped grant explanation, revocation behavior, and deny precedence for destructive operations.",
+      "expectedModel": "deepseek-v4-pro",
+      "workflowKind": "review",
+      "routeReason": "high_risk_pro_thinking_max_requires_approval",
+      "allowedTools": "default-mainline-tool-gate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": 0,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    },
+    {
+      "id": "experience-agent-team-governance-live",
+      "category": "agent",
+      "promptHash": "bf14d9d34753f132dd8049ea98efed5365dc676ab9596b561d14fa68ff2f61cb",
+      "prompt": "Plan a multi-agent coding task with explicit parent ownership, disjoint worker scopes, verifier evidence, and parent synthesis based only on worker evidence.",
+      "expectedModel": "deepseek-v4-flash",
+      "workflowKind": "planning",
+      "routeReason": "recovery_flash_thinking_max",
+      "allowedTools": "TaskCreate,SendMessage,TaskUpdate",
+      "maxTurns": null,
+      "budgets": {
+        "maxToolCalls": null,
+        "maxReadCalls": null,
+        "maxPowerShellCalls": null,
+        "requirePreEditBaselineVerification": false
+      },
+      "requiredRawEvidence": [
+        {
+          "field": "rawTranscriptPath",
+          "requiredFor": "all",
+          "reason": "auditable model/tool conversation, including failures"
+        },
+        {
+          "field": "toolTracePath",
+          "requiredFor": "dsxu-run",
+          "reason": "DSXU tool and permission evidence"
+        },
+        {
+          "field": "rawApiResponsePath",
+          "requiredFor": "raw-api-baseline",
+          "reason": "same-task raw DeepSeek API baseline response"
+        },
+        {
+          "field": "targetReferenceTranscriptPath",
+          "requiredFor": "external-target-reference",
+          "reason": "paired external target/reference comparison only"
+        },
+        {
+          "field": "finalReportPath",
+          "requiredFor": "all",
+          "reason": "final claim must point to a task report"
+        },
+        {
+          "field": "artifactDir",
+          "requiredFor": "all",
+          "reason": "patches, stdout/stderr, screenshots, and generated outputs"
+        },
+        {
+          "field": "firstAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: first-attempt success rate"
+        },
+        {
+          "field": "secondAttemptPass",
+          "requiredFor": "all",
+          "reason": "GitHub data chart: recovery after one failure"
+        },
+        {
+          "field": "finalPass",
+          "requiredFor": "all",
+          "reason": "final task pass rate"
+        },
+        {
+          "field": "costUsd",
+          "requiredFor": "all",
+          "reason": "DeepSeek cost transparency"
+        },
+        {
+          "field": "wallClockMs",
+          "requiredFor": "all",
+          "reason": "operator time cost"
+        },
+        {
+          "field": "cacheHitRatePct",
+          "requiredFor": "all",
+          "reason": "DeepSeek cache behavior, trend only"
+        },
+        {
+          "field": "proAdmissionCount",
+          "requiredFor": "all",
+          "reason": "Flash-first policy proof"
+        },
+        {
+          "field": "failureRecoveryEvents",
+          "requiredFor": "all",
+          "reason": "failure-to-fix evidence, not hidden failure"
+        },
+        {
+          "field": "unavailableToolUseCount",
+          "requiredFor": "dsxu-run",
+          "reason": "forbidden or unavailable tool discipline evidence"
+        },
+        {
+          "field": "executionVisibilityBlockedCount",
+          "requiredFor": "dsxu-run",
+          "reason": "visible-intent/tool-batch gate evidence"
+        },
+        {
+          "field": "noToolUnsupportedClaimCount",
+          "requiredFor": "dsxu-run",
+          "reason": "zero-tool lane hallucinated workspace/source claim guard"
+        },
+        {
+          "field": "toolBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-window budget discipline evidence"
+        },
+        {
+          "field": "readBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "read-budget discipline evidence"
+        },
+        {
+          "field": "shellBudgetExceededCount",
+          "requiredFor": "dsxu-run",
+          "reason": "shell-budget discipline evidence"
+        },
+        {
+          "field": "toolResultChars",
+          "requiredFor": "dsxu-run",
+          "reason": "tool-result bloat control"
+        },
+        {
+          "field": "artifactLogSizeBytes",
+          "requiredFor": "all",
+          "reason": "release artifact/log size visibility"
+        }
+      ],
+      "scoringRubric": {
+        "passCriteria": [
+          "task-specific success marker or test passes",
+          "source/test/tool evidence exists",
+          "cost/cache/model route metrics are recorded",
+          "failure is either repaired with evidence or honestly classified as final partial/fail"
+        ],
+        "failCriteria": [
+          "missing raw transcript or final report",
+          "template/generic output substituted for task evidence",
+          "target-only or DSXU-only log used as paired external comparison",
+          "public 90/95, official benchmark, or external superiority claim without same-task raw evidence"
+        ]
+      },
+      "claimBoundary": {
+        "allowed": "internal comparable DSXU vs raw DeepSeek API evidence when both raw lanes exist for this exact task",
+        "blocked": [
+          "official SWE-bench or external leaderboard claim",
+          "model-level superiority claim",
+          "reference-product parity claim",
+          "public 90/95 claim without score rubric and fixed raw evidence pack"
+        ]
+      }
+    }
+  ],
+  "runPolicy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proAdmissionPolicy": "Pro is allowed only when route/admission evidence says Flash cannot safely finish the current case.",
+    "publicClaimPolicy": "This manifest enables comparable evidence collection. It is not a public leaderboard result.",
+    "targetReferencePolicy": "External superiority claims require same-task target/reference raw transcript, tool trace, final report, artifacts, metrics, and risk notes."
+  },
+  "dataStillNeeded": [
+    "DSXU raw run transcript for each case",
+    "raw DeepSeek API baseline transcript for each case",
+    "optional external target/reference raw manifest for external comparison claims",
+    "per-case firstAttemptPass, secondAttemptPass, finalPass, costUsd, wallClockMs, cacheHitRatePct, proAdmissionCount, failureRecoveryEvents, tool discipline counts, budget overrun counts, toolResultChars, artifactLogSizeBytes",
+    "aggregate charts for first/second/final pass, cost, wall-clock, cache, Pro admissions, and recovery rate"
+  ]
+}

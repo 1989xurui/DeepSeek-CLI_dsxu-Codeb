@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "dsxu.training-runtime-import-artifact.v1",
+  "generatedAt": "2026-05-20T09:45:51.651Z",
+  "datasetKind": "runtime_evidence_import",
+  "publicClaimAllowed": false,
+  "summary": {
+    "schemaVersion": "dsxu.runtime-evidence-import-summary.v1",
+    "recordCount": 4,
+    "requestCount": 1,
+    "requestTags": [
+      "sample-runtime-1"
+    ],
+    "events": {
+      "request_plan": 1,
+      "request_messages": 1,
+      "stream_response": 1,
+      "response_usage": 1
+    },
+    "toolCallCount": 2,
+    "toolResultCount": 2,
+    "toolResultChars": 656,
+    "model": "deepseek-v4-flash",
+    "routeReason": "sample_runtime_import",
+    "cacheHitInputTokens": 2400,
+    "cacheMissInputTokens": 1200,
+    "outputTokens": 320,
+    "rawContentStored": false
+  },
+  "validation": {
+    "schemaVersion": "dsxu.training-validation.v1",
+    "status": "accepted",
+    "errors": [],
+    "antiCheatFindings": [],
+    "hardGateViolations": []
+  },
+  "trajectory": {
+    "schemaVersion": "dsxu.training-trajectory.v1",
+    "generatedAt": "2026-05-20T09:45:51.650Z",
+    "task": {
+      "taskId": "sample-runtime-import",
+      "category": "runtime-import",
+      "intent": "Import a redacted runtime trajectory sample",
+      "riskLevel": "medium",
+      "acceptanceCriteria": [
+        "runtime evidence is redacted",
+        "tool calls/results are summarized",
+        "verification claim remains partial unless explicit verification is supplied"
+      ],
+      "claimScope": "internal"
+    },
+    "intentUnderstanding": {
+      "interpretedGoal": "Import a redacted runtime trajectory sample",
+      "constraints": [
+        "no live API call",
+        "no source body storage",
+        "no public benchmark claim"
+      ],
+      "explicitNoEdit": false,
+      "missingInfo": [
+        "verification result not supplied by runtime trace"
+      ],
+      "riskClassification": "medium"
+    },
+    "stateTrace": [
+      {
+        "state": "plan",
+        "allowedTransition": true,
+        "transitionReason": "initial state",
+        "attemptCount": 1
+      },
+      {
+        "state": "plan",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "execute",
+        "previousState": "plan",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      },
+      {
+        "state": "verify",
+        "previousState": "execute",
+        "allowedTransition": true,
+        "transitionReason": "projected from runtime event",
+        "attemptCount": 1
+      }
+    ],
+    "toolTrace": [
+      {
+        "toolUseId": "tool-sample-1",
+        "toolName": "Read",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "unknown",
+        "resultPaired": true,
+        "outputChars": 49,
+        "outputHash": "74bde67c0a81f67f"
+      },
+      {
+        "toolUseId": "tool-sample-2",
+        "toolName": "Grep",
+        "readonly": true,
+        "concurrencyGroup": "default",
+        "permissionDecision": "unknown",
+        "resultPaired": true,
+        "outputChars": 54,
+        "outputHash": "27789b6bfc30516e"
+      }
+    ],
+    "sourceTruth": {
+      "filesRead": [
+        "runtime:redacted-read-tool-call"
+      ],
+      "rangesRead": [],
+      "readFreshness": "fresh",
+      "staleReadDetected": false,
+      "sourceBodyStored": false,
+      "evidenceHashes": [
+        "5ff89cd7f8a1f023",
+        "db0e2f599fde35c9",
+        "5a221f88c250c779",
+        "71fa7492d0490043"
+      ]
+    },
+    "verification": {
+      "commands": [],
+      "passed": false,
+      "claimBound": false,
+      "localizedFeedbackPresent": true,
+      "artifactPaths": []
+    },
+    "recovery": {
+      "failureClass": "missing_runtime_verification",
+      "localizedFiles": [],
+      "changedStrategy": true,
+      "nextAction": "attach real verification command output before marking success",
+      "recoveryDecision": "block-final-claim"
+    },
+    "contextMemory": {
+      "goalPreserved": true,
+      "resumePoint": "runtime-import",
+      "openObligations": [
+        "supply verification evidence"
+      ],
+      "compactOccurred": false,
+      "sourceRereadAfterResume": false
+    },
+    "costRoute": {
+      "model": "deepseek-v4-flash",
+      "routeReason": "sample_runtime_import",
+      "estimatedCostUsd": 0,
+      "cacheHitInputTokens": 2400,
+      "cacheMissInputTokens": 1200,
+      "proAdmissionJustified": false
+    },
+    "antiCheat": {
+      "oracleLeakFlag": false,
+      "solutionArtifactFlag": false,
+      "oldReportFlag": false,
+      "testOnlyFixFlag": false,
+      "publicClaimAllowed": false
+    },
+    "communication": {
+      "userVisibleSummary": "Runtime evidence import is partial and not release-claimable until verification is attached.",
+      "verifiedFacts": [
+        "4 redacted runtime records imported",
+        "2 tool calls summarized",
+        "2 tool results summarized"
+      ],
+      "unverifiedRisks": [
+        "no verification command result in imported runtime evidence"
+      ],
+      "overclaimDetected": false
+    },
+    "outcome": {
+      "status": "partial",
+      "finalClaim": "runtime evidence imported without final success claim",
+      "verified": false,
+      "publicClaimAllowed": false
+    },
+    "scores": {
+      "taskSuccessScore": 60,
+      "complexCodingScore": 75,
+      "longTaskScore": 80,
+      "verificationEvidenceScore": 20,
+      "recoveryScore": 30,
+      "toolDisciplineScore": 100,
+      "antiCheatScore": 100,
+      "communicationScore": 90,
+      "sees": 65
+    }
+  }
+}

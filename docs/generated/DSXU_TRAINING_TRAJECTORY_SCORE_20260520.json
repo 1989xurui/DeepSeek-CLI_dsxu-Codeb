@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "dsxu.training-score-report.v1",
+  "generatedAt": "2026-05-20T09:45:50.371Z",
+  "inputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+  "sampleCount": 1,
+  "scoredCount": 1,
+  "rejectedCount": 0,
+  "averageSees": 84,
+  "capsApplied": {},
+  "expectedScoreMatchedCount": 0,
+  "expectedScoreMismatchedCount": 0,
+  "validation": {
+    "schemaVersion": "dsxu.training-dataset-validation.v1",
+    "generatedAt": "2026-05-20T09:45:50.370Z",
+    "inputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+    "strict": false,
+    "sampleCount": 1,
+    "acceptedCount": 1,
+    "rejectedCount": 0,
+    "status": "PASS",
+    "items": [
+      {
+        "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+        "validation": {
+          "schemaVersion": "dsxu.training-validation.v1",
+          "status": "accepted",
+          "errors": [],
+          "antiCheatFindings": [],
+          "hardGateViolations": []
+        },
+        "expectedMatched": true
+      }
+    ]
+  },
+  "items": [
+    {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_TRAJECTORY_DRY_RUN_20260520.json",
+      "result": {
+        "schemaVersion": "dsxu.training-score.v1",
+        "status": "scored",
+        "scores": {
+          "taskSuccessScore": 100,
+          "complexCodingScore": 60,
+          "longTaskScore": 60,
+          "verificationEvidenceScore": 100,
+          "recoveryScore": 80,
+          "toolDisciplineScore": 100,
+          "antiCheatScore": 100,
+          "communicationScore": 90,
+          "sees": 84
+        },
+        "capsApplied": [],
+        "validationErrors": []
+      }
+    }
+  ]
+}

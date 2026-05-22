@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "dsxu.training-dataset-validation.v1",
+  "generatedAt": "2026-05-20T09:45:52.701Z",
+  "inputPath": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+  "strict": true,
+  "sampleCount": 1,
+  "acceptedCount": 1,
+  "rejectedCount": 0,
+  "status": "PASS",
+  "items": [
+    {
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_TRAINING_QUERY_LOOP_REACHABILITY_20260520.json",
+      "validation": {
+        "schemaVersion": "dsxu.training-validation.v1",
+        "status": "accepted",
+        "errors": [],
+        "antiCheatFindings": [],
+        "hardGateViolations": []
+      },
+      "expectedMatched": true
+    }
+  ]
+}

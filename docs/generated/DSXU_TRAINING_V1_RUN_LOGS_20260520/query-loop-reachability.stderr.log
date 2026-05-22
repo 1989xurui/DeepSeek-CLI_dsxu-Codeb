@@ -1,0 +1,21 @@
+[CacheBreakDetection] 2026-05-20T09:45:52.571Z New query source registered {
+  querySource: "repl_main_thread",
+  model: "deepseek-v4-flash",
+  toolCount: 2,
+  systemCharCount: 0,
+  fastMode: false,
+  cacheStrategy: "",
+}
+[CacheBreakDetection] 2026-05-20T09:45:52.572Z First cache read for query source {
+  querySource: "repl_main_thread",
+  cacheReadTokens: 900,
+  callNumber: 1,
+}
+[CacheBreakDetection] 2026-05-20T09:45:52.574Z No significant cache break detected {
+  querySource: "repl_main_thread",
+  prevCacheRead: 900,
+  cacheReadTokens: 620,
+  tokenDrop: 280,
+  relativeDrop: "68.9%",
+  threshold: 0.95,
+}

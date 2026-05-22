@@ -1,0 +1,659 @@
+{
+  "schemaVersion": "dsxu.v26.naming-governance-board.v1",
+  "generatedAt": "2026-05-15T16:19:29.925Z",
+  "status": "PASS_NAMING_GOVERNANCE_READY",
+  "totals": {
+    "scannedFiles": 2964,
+    "filesWithNamingSignals": 407,
+    "productRuntimeSourceRows": 0,
+    "productEvidenceSourceRows": 35,
+    "testEvidenceSourceRows": 79,
+    "integrationHarnessRows": 27,
+    "renameCandidates": 0,
+    "packageScriptsWithHistoricalSignals": 45,
+    "packageScriptsMissingStableAlias": 0,
+    "publicAssetRenameCandidates": 0,
+    "aclResidueRows": 3
+  },
+  "counts": {
+    "bySurface": {
+      "historical-evidence": 213,
+      "test-evidence-source": 79,
+      "automation-script": 40,
+      "product-evidence-source": 35,
+      "integration-evidence-harness": 27,
+      "other": 9,
+      "acl-residue": 3,
+      "package-entry": 1
+    },
+    "bySeverity": {
+      "allowed-evidence": 213,
+      "historical-test-copy": 79,
+      "evidence-content-review": 35,
+      "historical-harness-copy": 27,
+      "historical-script-shim": 23,
+      "watch-script-copy": 17,
+      "ok": 9,
+      "acl-external-closure": 3,
+      "stable-alias-audited": 1
+    }
+  },
+  "packageScripts": [
+    {
+      "script": "owner-git:authorization-board",
+      "command": "bun run scripts/dsxu-v20-owner-git-authorization-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "v20:six-stage-plan",
+      "command": "bun run scripts/dsxu-v20-six-stage-test-plan.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v20:final-preflight",
+      "command": "bun run scripts/dsxu-v20-final-preflight.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v20:blocker-board",
+      "command": "bun run scripts/dsxu-v20-blocker-action-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v20:closure-batch",
+      "command": "bun run scripts/dsxu-v20-closure-batch-runner.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v20:post-auth-plan",
+      "command": "bun run scripts/dsxu-v20-post-authorization-verification-plan.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:batch",
+      "command": "bun run scripts/dsxu-v24-execution-batch.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:live-acceptance",
+      "command": "bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:completed-reacceptance",
+      "command": "bun run scripts/dsxu-v24-completed-reacceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:interactive-tui-acceptance",
+      "command": "bun run scripts/dsxu-v24-interactive-tui-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:c2-loop-acceptance",
+      "command": "bun run scripts/dsxu-v24-c2-loop-real-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:public-challenge",
+      "command": "bun run scripts/dsxu-v24-public-challenge-package.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:product-benchmark-data",
+      "command": "bun run scripts/dsxu-v24-product-benchmark-data-pack.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:six-stage-final-tests",
+      "command": "bun run scripts/dsxu-v24-six-stage-final-tests.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:clean-export-artifact",
+      "command": "bun run scripts/dsxu-v24-clean-export-artifact.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:fresh-install-release-smoke",
+      "command": "bun run scripts/dsxu-v24-fresh-install-release-smoke.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:github-launch-pack",
+      "command": "bun run scripts/dsxu-v24-github-open-source-launch-pack.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:complex-task",
+      "command": "bun run scripts/dsxu-v24-complex-task-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:c2-1902-evidence-join",
+      "command": "bun run scripts/dsxu-v24-c2-1902-full-evidence-join.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:section45-audit",
+      "command": "bun run scripts/dsxu-v24-section45-experience-loop-audit.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v24:senior-coding-window",
+      "command": "bun run scripts/dsxu-v24-senior-coding-window.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v26:c2-capability-loss-board",
+      "command": "bun run scripts/dsxu-v26-c2-capability-loss-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "v26:naming-governance",
+      "command": "bun run scripts/dsxu-v26-naming-governance-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "keep historical alias for reproducibility but use stable capability alias in product/release docs"
+    },
+    {
+      "script": "evidence:c2-capability-loss-board",
+      "command": "bun run scripts/dsxu-v26-c2-capability-loss-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "evidence:naming-governance",
+      "command": "bun run scripts/dsxu-v26-naming-governance-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "evidence:c2-1902-join",
+      "command": "bun run scripts/dsxu-v24-c2-1902-full-evidence-join.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "evidence:experience-loop-audit",
+      "command": "bun run scripts/dsxu-v24-section45-experience-loop-audit.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "evidence:completed-reacceptance",
+      "command": "bun run scripts/dsxu-v24-completed-reacceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "evidence:execution-batch",
+      "command": "bun run scripts/dsxu-v24-execution-batch.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:github-launch-pack",
+      "command": "bun run scripts/dsxu-v24-github-open-source-launch-pack.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:clean-export-artifact",
+      "command": "bun run scripts/dsxu-v24-clean-export-artifact.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:fresh-install-smoke",
+      "command": "bun run scripts/dsxu-v24-fresh-install-release-smoke.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:final-preflight",
+      "command": "bun run scripts/dsxu-v20-final-preflight.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:blocker-board",
+      "command": "bun run scripts/dsxu-v20-blocker-action-board.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:closure-batch",
+      "command": "bun run scripts/dsxu-v20-closure-batch-runner.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "release:post-authorization-plan",
+      "command": "bun run scripts/dsxu-v20-post-authorization-verification-plan.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "test:six-stage-final",
+      "command": "bun run scripts/dsxu-v24-six-stage-final-tests.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "test:six-stage-plan",
+      "command": "bun run scripts/dsxu-v20-six-stage-test-plan.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "benchmark:product-data",
+      "command": "bun run scripts/dsxu-v24-product-benchmark-data-pack.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "benchmark:public-challenge",
+      "command": "bun run scripts/dsxu-v24-public-challenge-package.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "acceptance:interactive-tui",
+      "command": "bun run scripts/dsxu-v24-interactive-tui-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "acceptance:senior-coding-window",
+      "command": "bun run scripts/dsxu-v24-senior-coding-window.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "acceptance:c2-loop",
+      "command": "bun run scripts/dsxu-v24-c2-loop-real-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "acceptance:live",
+      "command": "bun run scripts/dsxu-v24-live-acceptance-router.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    },
+    {
+      "script": "acceptance:complex-task",
+      "command": "bun run scripts/dsxu-v24-complex-task-acceptance.ts",
+      "hasStableAlias": "yes",
+      "requiredAction": "stable alias may stay if it is capability-based"
+    }
+  ],
+  "topRows": [
+    {
+      "path": "src/dsxu/engine/baseline-failure-reporter.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18",
+      "lineHits": "5",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/benchmark-readiness.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18",
+      "lineHits": "7",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/code-terminal-runner.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;v8",
+      "lineHits": "7",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/controlled-failure-taxonomy.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/cost-cache-live-task-evidence.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;v19;V19",
+      "lineHits": "16",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/eval-baseline-manifest.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/evidence-eval-pack.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18",
+      "lineHits": "11",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/go-stop-decision.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18",
+      "lineHits": "11",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/goal-driven-optimization-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/goal-roadmap-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v11;V11",
+      "lineHits": "11",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/high-pressure-reference-absorption-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "V11;v8",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/live-real-task-compare.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;v8",
+      "lineHits": "4",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/model-public-surface-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/next-stage-productization-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10;v8",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/open-source-package-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18;V20",
+      "lineHits": "7",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/phase12-experience-oracle.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v12",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/product-reality-hardening-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "V11;v8",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/proprietary-code-risk-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18;V20",
+      "lineHits": "4",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/public-surface-clean-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18;V20",
+      "lineHits": "7",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/real-gap-acceptance.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v20;V20",
+      "lineHits": "12",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/real-task-route-plan.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/reference-absorption-completion-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10;v8;v9;V9",
+      "lineHits": "19",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/reference-behavior-productization-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10;V10;v8;V9",
+      "lineHits": "25",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/reference-experience-quality-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/reference-governance-absorption-contract.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v10;V10;v8",
+      "lineHits": "10",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/release-provenance-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18;V20",
+      "lineHits": "4",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/release-test-gate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "V18",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/route-cache-roi-smoke.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "4",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/semantic-tool-trace.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/stage-close-readiness.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18;V18",
+      "lineHits": "19",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/terminal-hit-rate.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "3",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/ui-shell-manifest.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v14",
+      "lineHits": "3",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/verify-review-chain.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "V18",
+      "lineHits": "1",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/wsl-execution-placement.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "3",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/engine/wsl-native-mirror-plan.ts",
+      "surface": "product-evidence-source",
+      "severity": "evidence-content-review",
+      "filenameHits": "",
+      "contentHits": "v18",
+      "lineHits": "2",
+      "requiredAction": "evidence source can keep historical evidence IDs only when outputs are traceable and public names stay capability-based"
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-context-budget-v1-harness.ts",
+      "surface": "acl-residue",
+      "severity": "acl-external-closure",
+      "filenameHits": "v10",
+      "contentHits": "",
+      "lineHits": "0",
+      "requiredAction": "owner-signed external ACL residue; do not import or restore runtime; delete only when filesystem permissions allow it"
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-longtask-stability-v1-harness.ts",
+      "surface": "acl-residue",
+      "severity": "acl-external-closure",
+      "filenameHits": "v10",
+      "contentHits": "",
+      "lineHits": "0",
+      "requiredAction": "owner-signed external ACL residue; do not import or restore runtime; delete only when filesystem permissions allow it"
+    },
+    {
+      "path": "src/dsxu/integration/harness/v10-model-gateway-v1-harness.ts",
+      "surface": "acl-residue",
+      "severity": "acl-external-closure",
+      "filenameHits": "v10",
+      "contentHits": "",
+      "lineHits": "0",
+      "requiredAction": "owner-signed external ACL residue; do not import or restore runtime; delete only when filesystem permissions allow it"
+    }
+  ],
+  "rule": "Vxx/vxx names are allowed in historical evidence and reproducible scripts, but product runtime source, public docs, package aliases, and assets should use stable capability names.",
+  "nextAction": "Keep historical test/evidence references traceable, but clean product-runtime source copy and public surface names before release."
+}

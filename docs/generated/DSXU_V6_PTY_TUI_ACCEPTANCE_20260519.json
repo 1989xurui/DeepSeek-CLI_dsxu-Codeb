@@ -1,0 +1,404 @@
+{
+  "schemaVersion": "dsxu.v6.pty-tui-acceptance.v1",
+  "generatedAt": "2026-05-19T09:19:07.843Z",
+  "owner": "TUI Trust Surface / PTY Harness",
+  "status": "PASS_V6_PTY_TUI_ACCEPTANCE",
+  "claimBoundary": "This is real PTY harness acceptance for resize, scrollback, permission dialog, and compact trust evidence. It is not a visual/manual product signoff by itself.",
+  "scenarios": [
+    {
+      "id": "v6-long-content-sticky-bottom-resize",
+      "status": "PASS",
+      "required": true,
+      "checks": [
+        {
+          "id": "exited-cleanly",
+          "pass": true,
+          "evidence": [
+            "status=exited",
+            "exitCode=0"
+          ]
+        },
+        {
+          "id": "sent-exit",
+          "pass": true,
+          "evidence": [
+            "sentExit=true"
+          ]
+        },
+        {
+          "id": "welcome-and-prompt-visible",
+          "pass": true,
+          "evidence": [
+            "sawWelcome=true",
+            "sawPrompt=true"
+          ]
+        },
+        {
+          "id": "no-terminal-mojibake",
+          "pass": true,
+          "evidence": [
+            "sawTerminalMojibake=false",
+            "sawInputEncodingLoss=false"
+          ]
+        },
+        {
+          "id": "artifacts-present",
+          "pass": true,
+          "evidence": [
+            "transcript=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-long-content-sticky-bottom-resize.transcript.txt",
+            "trace=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-long-content-sticky-bottom-resize.trace.jsonl",
+            "lifecycle=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-long-content-sticky-bottom-resize.lifecycle"
+          ]
+        },
+        {
+          "id": "resize-events-sent",
+          "pass": true,
+          "evidence": [
+            "resizeEventsSent=5"
+          ]
+        },
+        {
+          "id": "tail-marker-observed",
+          "pass": true,
+          "evidence": [
+            "sawLongContentResizeTailMarker=true"
+          ]
+        },
+        {
+          "id": "tail-visible-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawLongContentResizeTailAfterResize=true"
+          ]
+        },
+        {
+          "id": "prompt-visible-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawPromptAfterResize=true"
+          ]
+        },
+        {
+          "id": "resize-queued-trace",
+          "pass": true,
+          "evidence": [
+            "sawLongContentResizeQueuedTrace=true"
+          ]
+        }
+      ],
+      "blockers": [],
+      "result": {
+        "status": "exited",
+        "exitCode": 0,
+        "sentExit": true,
+        "sawWelcome": true,
+        "sawPrompt": true,
+        "sawLongContentResizeMarker": false,
+        "sawLongContentResizeTailMarker": true,
+        "sawLongContentResizeTailAfterResize": true,
+        "sawPromptAfterResize": true,
+        "sawLongContentResizeQueuedTrace": true,
+        "sawScrollbackResizeMiddleAfterResize": false,
+        "sawScrollbackResizeTopAfterResize": false,
+        "sawScrollbackResizeTailAfterResize": true,
+        "sawScrollbackResizePositionedTrace": false,
+        "sawPermissionDialogAfterResize": false,
+        "sawPermissionDialogBorderAfterResize": false,
+        "sawDsxuTrustProofLineAfterResize": false,
+        "sawDsxuTrustProofFlood": false,
+        "resizeEventsSent": 5,
+        "scrollbackPageUpsSent": 0,
+        "sawTerminalMojibake": false,
+        "sawInputEncodingLoss": false,
+        "transcriptPath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-long-content-sticky-bottom-resize.transcript.txt",
+        "tracePath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-long-content-sticky-bottom-resize.trace.jsonl",
+        "lifecycleTraceDir": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-long-content-sticky-bottom-resize.lifecycle",
+        "elapsedMs": 17836,
+        "error": null
+      }
+    },
+    {
+      "id": "v6-scrollback-resize-position",
+      "status": "PASS",
+      "required": true,
+      "checks": [
+        {
+          "id": "exited-cleanly",
+          "pass": true,
+          "evidence": [
+            "status=exited",
+            "exitCode=0"
+          ]
+        },
+        {
+          "id": "sent-exit",
+          "pass": true,
+          "evidence": [
+            "sentExit=true"
+          ]
+        },
+        {
+          "id": "welcome-and-prompt-visible",
+          "pass": true,
+          "evidence": [
+            "sawWelcome=true",
+            "sawPrompt=true"
+          ]
+        },
+        {
+          "id": "no-terminal-mojibake",
+          "pass": true,
+          "evidence": [
+            "sawTerminalMojibake=false",
+            "sawInputEncodingLoss=false"
+          ]
+        },
+        {
+          "id": "artifacts-present",
+          "pass": true,
+          "evidence": [
+            "transcript=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-scrollback-resize-position.transcript.txt",
+            "trace=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-scrollback-resize-position.trace.jsonl",
+            "lifecycle=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-scrollback-resize-position.lifecycle"
+          ]
+        },
+        {
+          "id": "scrollback-position-trace",
+          "pass": true,
+          "evidence": [
+            "sawScrollbackResizePositionedTrace=true"
+          ]
+        },
+        {
+          "id": "middle-visible-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawScrollbackResizeMiddleAfterResize=true"
+          ]
+        },
+        {
+          "id": "not-forced-to-top-or-tail-only",
+          "pass": true,
+          "evidence": [
+            "sawTop=false",
+            "sawMiddle=true",
+            "sawTail=false"
+          ]
+        }
+      ],
+      "blockers": [],
+      "result": {
+        "status": "exited",
+        "exitCode": 0,
+        "sentExit": true,
+        "sawWelcome": true,
+        "sawPrompt": true,
+        "sawLongContentResizeMarker": true,
+        "sawLongContentResizeTailMarker": true,
+        "sawLongContentResizeTailAfterResize": false,
+        "sawPromptAfterResize": true,
+        "sawLongContentResizeQueuedTrace": true,
+        "sawScrollbackResizeMiddleAfterResize": true,
+        "sawScrollbackResizeTopAfterResize": false,
+        "sawScrollbackResizeTailAfterResize": false,
+        "sawScrollbackResizePositionedTrace": true,
+        "sawPermissionDialogAfterResize": false,
+        "sawPermissionDialogBorderAfterResize": false,
+        "sawDsxuTrustProofLineAfterResize": false,
+        "sawDsxuTrustProofFlood": false,
+        "resizeEventsSent": 5,
+        "scrollbackPageUpsSent": 0,
+        "sawTerminalMojibake": false,
+        "sawInputEncodingLoss": false,
+        "transcriptPath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-scrollback-resize-position.transcript.txt",
+        "tracePath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-scrollback-resize-position.trace.jsonl",
+        "lifecycleTraceDir": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-scrollback-resize-position.lifecycle",
+        "elapsedMs": 20699,
+        "error": null
+      }
+    },
+    {
+      "id": "v6-permission-dialog-after-resize",
+      "status": "PASS",
+      "required": true,
+      "checks": [
+        {
+          "id": "modal-session-alive",
+          "pass": true,
+          "evidence": [
+            "status=timeout",
+            "exitCode=143"
+          ]
+        },
+        {
+          "id": "sent-exit-or-modal-held-input",
+          "pass": true,
+          "evidence": [
+            "sentExit=true",
+            "sawPermissionDialogAfterResize=true"
+          ]
+        },
+        {
+          "id": "welcome-visible-before-modal",
+          "pass": true,
+          "evidence": [
+            "sawWelcome=true"
+          ]
+        },
+        {
+          "id": "no-terminal-mojibake",
+          "pass": true,
+          "evidence": [
+            "sawTerminalMojibake=false",
+            "sawInputEncodingLoss=false"
+          ]
+        },
+        {
+          "id": "artifacts-present",
+          "pass": true,
+          "evidence": [
+            "transcript=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-permission-dialog-after-resize.transcript.txt",
+            "trace=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-permission-dialog-after-resize.trace.jsonl",
+            "lifecycle=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-permission-dialog-after-resize.lifecycle"
+          ]
+        },
+        {
+          "id": "permission-dialog-visible-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawPermissionDialogAfterResize=true"
+          ]
+        },
+        {
+          "id": "permission-dialog-border-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawPermissionDialogBorderAfterResize=true"
+          ]
+        }
+      ],
+      "blockers": [],
+      "result": {
+        "status": "timeout",
+        "exitCode": 143,
+        "sentExit": true,
+        "sawWelcome": true,
+        "sawPrompt": false,
+        "sawLongContentResizeMarker": false,
+        "sawLongContentResizeTailMarker": true,
+        "sawLongContentResizeTailAfterResize": true,
+        "sawPromptAfterResize": false,
+        "sawLongContentResizeQueuedTrace": true,
+        "sawScrollbackResizeMiddleAfterResize": false,
+        "sawScrollbackResizeTopAfterResize": false,
+        "sawScrollbackResizeTailAfterResize": true,
+        "sawScrollbackResizePositionedTrace": false,
+        "sawPermissionDialogAfterResize": true,
+        "sawPermissionDialogBorderAfterResize": true,
+        "sawDsxuTrustProofLineAfterResize": false,
+        "sawDsxuTrustProofFlood": false,
+        "resizeEventsSent": 5,
+        "scrollbackPageUpsSent": 0,
+        "sawTerminalMojibake": false,
+        "sawInputEncodingLoss": false,
+        "transcriptPath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-permission-dialog-after-resize.transcript.txt",
+        "tracePath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-permission-dialog-after-resize.trace.jsonl",
+        "lifecycleTraceDir": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-permission-dialog-after-resize.lifecycle",
+        "elapsedMs": 78522,
+        "error": null
+      }
+    },
+    {
+      "id": "v6-trust-proof-after-resize",
+      "status": "PASS",
+      "required": true,
+      "checks": [
+        {
+          "id": "exited-cleanly",
+          "pass": true,
+          "evidence": [
+            "status=exited",
+            "exitCode=0"
+          ]
+        },
+        {
+          "id": "sent-exit",
+          "pass": true,
+          "evidence": [
+            "sentExit=true"
+          ]
+        },
+        {
+          "id": "welcome-and-prompt-visible",
+          "pass": true,
+          "evidence": [
+            "sawWelcome=true",
+            "sawPrompt=true"
+          ]
+        },
+        {
+          "id": "no-terminal-mojibake",
+          "pass": true,
+          "evidence": [
+            "sawTerminalMojibake=false",
+            "sawInputEncodingLoss=false"
+          ]
+        },
+        {
+          "id": "artifacts-present",
+          "pass": true,
+          "evidence": [
+            "transcript=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-trust-proof-after-resize.transcript.txt",
+            "trace=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-trust-proof-after-resize.trace.jsonl",
+            "lifecycle=//wsl.localhost/Ubuntu/home/xurui/.dsxu/trace/v18-tui/v6-trust-proof-after-resize.lifecycle"
+          ]
+        },
+        {
+          "id": "trust-proof-line-after-resize",
+          "pass": true,
+          "evidence": [
+            "sawDsxuTrustProofLineAfterResize=true"
+          ]
+        },
+        {
+          "id": "trust-proof-not-flooded",
+          "pass": true,
+          "evidence": [
+            "sawDsxuTrustProofFlood=false"
+          ]
+        }
+      ],
+      "blockers": [],
+      "result": {
+        "status": "exited",
+        "exitCode": 0,
+        "sentExit": true,
+        "sawWelcome": true,
+        "sawPrompt": true,
+        "sawLongContentResizeMarker": false,
+        "sawLongContentResizeTailMarker": true,
+        "sawLongContentResizeTailAfterResize": true,
+        "sawPromptAfterResize": true,
+        "sawLongContentResizeQueuedTrace": true,
+        "sawScrollbackResizeMiddleAfterResize": false,
+        "sawScrollbackResizeTopAfterResize": false,
+        "sawScrollbackResizeTailAfterResize": true,
+        "sawScrollbackResizePositionedTrace": false,
+        "sawPermissionDialogAfterResize": false,
+        "sawPermissionDialogBorderAfterResize": false,
+        "sawDsxuTrustProofLineAfterResize": true,
+        "sawDsxuTrustProofFlood": false,
+        "resizeEventsSent": 5,
+        "scrollbackPageUpsSent": 0,
+        "sawTerminalMojibake": false,
+        "sawInputEncodingLoss": false,
+        "transcriptPath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-trust-proof-after-resize.transcript.txt",
+        "tracePath": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-trust-proof-after-resize.trace.jsonl",
+        "lifecycleTraceDir": "\\\\wsl.localhost\\Ubuntu\\home\\xurui\\.dsxu\\trace\\v18-tui\\v6-trust-proof-after-resize.lifecycle",
+        "elapsedMs": 18763,
+        "error": null
+      }
+    }
+  ],
+  "blockers": []
+}

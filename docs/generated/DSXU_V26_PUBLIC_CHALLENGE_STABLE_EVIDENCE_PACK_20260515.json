@@ -1,0 +1,2345 @@
+{
+  "schemaVersion": "dsxu.v26.public-challenge.stable-evidence-pack.v2",
+  "snapshotDate": "20260515",
+  "purpose": "One deterministic DSXU-owned source-truth capsule shared by all public challenge Flash reviews to reduce dynamic Read variance while preserving source-truth paths, hashes, anchors, and bounded excerpts.",
+  "guardrails": [
+    "Do not claim public 90 ability until scoreFloor reaches around 90 on fixed public challenge tasks with raw evidence.",
+    "Do not claim external superiority without same-task raw target transcripts.",
+    "Do not claim reference-product parity or copied branded behavior.",
+    "Do not create a second provider, tool, MCP, agent, or query runtime.",
+    "Use deepseek-v4-flash by default; Pro requires explicit admission evidence.",
+    "Use the embedded sourceTruthRefs/anchorCapsules as the default source-truth lane; do not call Read in the default public challenge lane.",
+    "Fallback raw reads are allowed only in an explicit fallback lane, must be anchor-local, and must keep total raw chars <= 24000."
+  ],
+  "sourceTruthRefs": [
+    {
+      "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md",
+      "path": "docs/DSXU_V26_MASTER_PLAN_20260515.md",
+      "exists": true,
+      "sha256": "825d71a4b8dfdbb31d489dfcfdd6c69fbc7104b73e02df187bb668bddcf2cba8",
+      "bytes": 255660,
+      "lineCount": 2519,
+      "anchors": [
+        "1: # DSXU V26 Master Plan - 2026-05-15",
+        "3: 目标：把 V18/V19/V20/V24 的能力、证据、未完成项和发布要求统一收口成一个可发布、可挑战、可复核的 DeepSeek-first 开源 AI 编程产品方案。V26 不再继续堆版本层，也不复制参考产品源码、文字、品牌或商业实现；V26 只吸收通用体验机制，并落回 DSXU 自有 owner、DeepSeek 调度、Tool Gate、Permission Gate、Evidence 和发布体系。",
+        "5: ## 1. 当前真实状态",
+        "9: | V18/V19 CLEAN | 82 项对齐中 `70 PASS / 0 FAIL / 12 未覆盖`；P0 shell/test/evidence、交互、FIM、Agent、浏览器主链证据已补齐大部分。 | 12 个 deferred 未覆盖仍不能当 PASS：`R01/R02/S02/R04/R05/R06` 等外部/扩大评测缺 raw live；`PZ01/PZ02/PZ04/PZ05/PZ06/PZ08` 等扩展入口缺主线产",
+        "10: | V20 owner/Git / C2 | C2 1902 文件 owner-disposition 已闭环；P12、Owner/Git product/deletion packets 后续已推进；V20 final preflight、clean export preflight 在后续证据中已被覆盖。 | C2 不能宣称逐文件逐行为 feature parity。`594` 个 product-specific adapt/ex",
+        "11: | V24 真实能力证明 | `C2_LOOP_REAL_ACCEPTANCE=51/51`；六阶段最终测试 `20/20`；TUI 场景 `7/7`；Senior coding window `30.48 min`；clean export artifact 已创建且 secret scan pass；fresh install smoke `7/7`；首次 key wizard 已落到 `auth login` / `--api-k",
+        "12: | GitHub open-source pack | 已生成产品定位、数据图、证据文件和 release-candidate 口径。 | 不能高粉低能：不能写“已达到对标 90% 能力”、不能写“领先外部产品”、不能把参考 1902 文件写成复制/品牌兼容卖点；cache 命中率只写真实值和优化趋势。 |",
+        "16: ## 2. V26 总目标",
+        "20: **基于 DeepSeek Flash-first 调度，把 DSXU 做成一个能长时间像高级程序员一样读代码、改代码、跑工具、处理失败、控制成本、留下证据，并能用公开数据证明能力的开源 AI 编程产品。**",
+        "26: | 能力 | 真实复杂任务可以连续 30-45 分钟以上运行，能读写代码、运行工具、恢复失败、生成 patch/test/risk/cost/evidence；公开挑战目标是达到 GPT-5.5 / Claude 4.7 编程与复杂任务能力 `90% 左右`。 |",
+        "28: | DeepSeek | 默认 `deepseek-v4-flash`，Pro 只在 admission evidence 满足时使用；所有 route/cost/cache/latency 可审计。 |",
+        "29: | 结构 | 不新增第二套 query/runtime/tool/provider/MCP/agent；所有入口回到 DSXU owner。 |",
+        "30: | 证据 | 每个卖点必须有 source truth、raw transcript、tool trace、测试结果、成本和失败样本。 |",
+        "31: | 发布 | clean export 不带 `.git`、`.dsxu`、`node_modules`、证据库、真实 key；fresh install/help/doctor/provider gate 可复跑。 |"
+      ],
+      "capsuleId": "docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V26 Master Plan - 2026-05-15",
+          "excerpt": "1: # DSXU V26 Master Plan - 2026-05-15\n2: ",
+          "excerptHash": "6ec63e6f4cfad904"
+        },
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L3",
+          "line": 3,
+          "title": "目标：把 V18/V19/V20/V24 的能力、证据、未完成项和发布要求统一收口成一个可发布、可挑战、可复核的 DeepSeek-first 开源 AI 编程产品方案。V26 不再继续堆版本层，也不复制参考产品源码、文字、品牌或商业实现；V26 只吸收通用体验机制，并落回 DSXU 自有 owner、DeepSeek",
+          "excerpt": "2: \n3: 目标：把 V18/V19/V20/V24 的能力、证据、未完成项和发布要求统一收口成一个可发布、可挑战、可复核的 DeepSeek-first 开源 AI 编程产品方案。V26 不再继续堆版本层，也不复制参考产品源码、文字、品牌或商业实现；V26 只吸收通用体验机制，并落回 DSXU 自有 owner、DeepSeek 调度、Tool Gate、Permission Gate、Evidence 和发布体系。\n4: ",
+          "excerptHash": "775be46cb6c714ad"
+        },
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L5",
+          "line": 5,
+          "title": "## 1. 当前真实状态",
+          "excerpt": "4: \n5: ## 1. 当前真实状态\n6: ",
+          "excerptHash": "1be298f588f49997"
+        },
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L9",
+          "line": 9,
+          "title": "| V18/V19 CLEAN | 82 项对齐中 `70 PASS / 0 FAIL / 12 未覆盖`；P0 shell/test/evidence、交互、FIM、Agent、浏览器主链证据已补齐大部分。 | 12 个 deferred 未覆盖仍不能当 PASS：`R01/R02/S02/R04/R05/R06` ",
+          "excerpt": "8: |---|---|---|\n9: | V18/V19 CLEAN | 82 项对齐中 `70 PASS / 0 FAIL / 12 未覆盖`；P0 shell/test/evidence、交互、FIM、Agent、浏览器主链证据已补齐大部分。 | 12 个 deferred 未覆盖仍不能当 PASS：`R01/R02/S02/R04/R05/R06` 等外部/扩大评测缺 raw live；`PZ01/PZ02/PZ04/PZ05/PZ06/PZ08` 等扩展入口缺...",
+          "excerptHash": "d73e76750f64b70a"
+        },
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L10",
+          "line": 10,
+          "title": "| V20 owner/Git / C2 | C2 1902 文件 owner-disposition 已闭环；P12、Owner/Git product/deletion packets 后续已推进；V20 final preflight、clean export preflight 在后续证据中已被覆盖。 | C2",
+          "excerpt": "9: | V18/V19 CLEAN | 82 项对齐中 `70 PASS / 0 FAIL / 12 未覆盖`；P0 shell/test/evidence、交互、FIM、Agent、浏览器主链证据已补齐大部分。 | 12 个 deferred 未覆盖仍不能当 PASS：`R01/R02/S02/R04/R05/R06` 等外部/扩大评测缺 raw live；`PZ01/PZ02/PZ04/PZ05/PZ06/PZ08` 等扩展入口缺主线产品实现或仍需 deferre...",
+          "excerptHash": "13492cd81ea8e4ed"
+        },
+        {
+          "id": "docs-DSXU-V26-MASTER-PLAN-20260515-md#L11",
+          "line": 11,
+          "title": "| V24 真实能力证明 | `C2_LOOP_REAL_ACCEPTANCE=51/51`；六阶段最终测试 `20/20`；TUI 场景 `7/7`；Senior coding window `30.48 min`；clean export artifact 已创建且 secret scan pass；fresh i",
+          "excerpt": "10: | V20 owner/Git / C2 | C2 1902 文件 owner-disposition 已闭环；P12、Owner/Git product/deletion packets 后续已推进；V20 final preflight、clean export preflight 在后续证据中已被覆盖。 | C2 不能宣称逐文件逐行为 feature parity。`594` 个 product-specific adapt/exclude、`278` 个...",
+          "excerptHash": "9c473a9f5c738f77"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md",
+      "path": "docs/DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.md",
+      "exists": true,
+      "sha256": "e3d13fd3b5d0fc0b086fb480b69af9f51ca19ecbc2be3ab8458d7bbc697a4d96",
+      "bytes": 2514,
+      "lineCount": 69,
+      "anchors": [
+        "1: # DSXU V26 C2 Public Claim Closure - 20260515",
+        "3: Status: PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+        "5: ## Purpose",
+        "7: This file closes the V26 C2 public-claim boundary without claiming reference-product parity. It converts rows that were previously blocked from public claims into explicit DSXU-owned boundaries: generic experience-loop e",
+        "9: ## Gates",
+        "13: | finalSignoffPass | true |",
+        "14: | loopAcceptancePass | true |",
+        "16: | referenceFeatureParityClaimAllowed | false |",
+        "17: | dsxuGenericExperienceClaimAllowed | true |",
+        "19: ## Totals",
+        "24: | priorBlockedPublicClaimRows | 914 |",
+        "25: | closedPublicClaimBoundaryRows | 914 |",
+        "26: | openPublicClaimBoundaryRows | 0 |",
+        "28: ## Closure States"
+      ],
+      "capsuleId": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V26 C2 Public Claim Closure - 20260515",
+          "excerpt": "1: # DSXU V26 C2 Public Claim Closure - 20260515\n2: ",
+          "excerptHash": "ca5a60efaf4ca21d"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L3",
+          "line": 3,
+          "title": "Status: PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+          "excerpt": "2: \n3: Status: PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED\n4: ",
+          "excerptHash": "798a594ffcbdb6d2"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L5",
+          "line": 5,
+          "title": "## Purpose",
+          "excerpt": "4: \n5: ## Purpose\n6: ",
+          "excerptHash": "22cf6e2c31d4ecb8"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L7",
+          "line": 7,
+          "title": "This file closes the V26 C2 public-claim boundary without claiming reference-product parity. It converts rows that were previously blocked from public claims in",
+          "excerpt": "6: \n7: This file closes the V26 C2 public-claim boundary without claiming reference-product parity. It converts rows that were previously blocked from public claims into explicit DSXU-owned boundaries: generic experience-loop evidence ma...",
+          "excerptHash": "e238823a2e32d0ec"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L9",
+          "line": 9,
+          "title": "## Gates",
+          "excerpt": "8: \n9: ## Gates\n10: ",
+          "excerptHash": "25dd4daae0fc93ab"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md#L13",
+          "line": 13,
+          "title": "| finalSignoffPass | true |",
+          "excerpt": "12: | --- | --- |\n13: | finalSignoffPass | true |\n14: | loopAcceptancePass | true |",
+          "excerptHash": "8b8c925d908f2c61"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md",
+      "path": "docs/DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.md",
+      "exists": true,
+      "sha256": "a1b3c59df5d4a80d9dd7767e5182bfaeed561301a7d379c635526e800f1e175f",
+      "bytes": 3974,
+      "lineCount": 83,
+      "anchors": [
+        "1: # DSXU V26 C2 Owner Implementation Acceptance - 20260515",
+        "3: Status: PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+        "5: ## Purpose",
+        "7: This board is stricter than the public-claim closure. It assigns every C2 1902 reference-file row to exactly one owner acceptance decision: implemented+tested, adapted/excluded, no-loss baseline, or needs real code/test.",
+        "9: ## Gates",
+        "13: | finalSignoffPass | true |",
+        "14: | publicClaimBoundaryClosed | true |",
+        "15: | referenceFeatureParityClaimAllowed | false |",
+        "17: | public95ClaimAllowed | false |",
+        "19: ## Totals",
+        "30: | priorBlockedPublicClaimRows | 914 |",
+        "31: | publicClaimClosureStatus | PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED |",
+        "32: | capabilityLossBoardStatus | OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED |",
+        "34: ## Acceptance Decisions"
+      ],
+      "capsuleId": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V26 C2 Owner Implementation Acceptance - 20260515",
+          "excerpt": "1: # DSXU V26 C2 Owner Implementation Acceptance - 20260515\n2: ",
+          "excerptHash": "0d24d21004deef99"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L3",
+          "line": 3,
+          "title": "Status: PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+          "excerpt": "2: \n3: Status: PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED\n4: ",
+          "excerptHash": "42ca714e956e9aa0"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L5",
+          "line": 5,
+          "title": "## Purpose",
+          "excerpt": "4: \n5: ## Purpose\n6: ",
+          "excerptHash": "22cf6e2c31d4ecb8"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L7",
+          "line": 7,
+          "title": "This board is stricter than the public-claim closure. It assigns every C2 1902 reference-file row to exactly one owner acceptance decision: implemented+tested, ",
+          "excerpt": "6: \n7: This board is stricter than the public-claim closure. It assigns every C2 1902 reference-file row to exactly one owner acceptance decision: implemented+tested, adapted/excluded, no-loss baseline, or needs real code/test. Passing t...",
+          "excerptHash": "d20789c233f3bf3a"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L9",
+          "line": 9,
+          "title": "## Gates",
+          "excerpt": "8: \n9: ## Gates\n10: ",
+          "excerptHash": "25dd4daae0fc93ab"
+        },
+        {
+          "id": "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md#L13",
+          "line": 13,
+          "title": "| finalSignoffPass | true |",
+          "excerpt": "12: | --- | --- |\n13: | finalSignoffPass | true |\n14: | publicClaimBoundaryClosed | true |",
+          "excerptHash": "e2881bc86a49ae00"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md",
+      "path": "docs/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.md",
+      "exists": true,
+      "sha256": "31347ac6802f5605bf349bff814803c655a3775bea5af161b2d157bbfc769a24",
+      "bytes": 5912,
+      "lineCount": 79,
+      "anchors": [
+        "1: # DSXU V24 Public Challenge Package - 20260515",
+        "3: Status: `PASS_PUBLIC_CHALLENGE_PACKAGE_READY`",
+        "5: This package turns current V24/V26 evidence into a GitHub-ready product claim guard and public challenge evidence pack. It does not claim public 90 ability or external superiority without fixed raw task evidence.",
+        "7: ## Summary",
+        "11: | command batches | 7/7 pass |",
+        "12: | Flash reviews | 3/3 pass |",
+        "13: | C2 behavior matrix | 51/51 pass |",
+        "14: | C2 public claim boundary | closed without reference parity claim |",
+        "16: | TUI replay | pass |",
+        "17: | completed reacceptance | pass |",
+        "18: | senior-coding window | 30-45 min real DSXU pass |",
+        "19: | release evidence | six-stage/export/fresh install pass |",
+        "20: | score floor from Flash reviews | 72 |",
+        "21: | Flash review cost USD | 0.010617280800000002 |"
+      ],
+      "capsuleId": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 Public Challenge Package - 20260515",
+          "excerpt": "1: # DSXU V24 Public Challenge Package - 20260515\n2: ",
+          "excerptHash": "6cf3fff52d6d24dd"
+        },
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L3",
+          "line": 3,
+          "title": "Status: `PASS_PUBLIC_CHALLENGE_PACKAGE_READY`",
+          "excerpt": "2: \n3: Status: `PASS_PUBLIC_CHALLENGE_PACKAGE_READY`\n4: ",
+          "excerptHash": "16dc04b7c1361146"
+        },
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L5",
+          "line": 5,
+          "title": "This package turns current V24/V26 evidence into a GitHub-ready product claim guard and public challenge evidence pack. It does not claim public 90 ability or e",
+          "excerpt": "4: \n5: This package turns current V24/V26 evidence into a GitHub-ready product claim guard and public challenge evidence pack. It does not claim public 90 ability or external superiority without fixed raw task evidence.\n6: ",
+          "excerptHash": "f2e2ae9baf08080a"
+        },
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L7",
+          "line": 7,
+          "title": "## Summary",
+          "excerpt": "6: \n7: ## Summary\n8: ",
+          "excerptHash": "5f8b6fcda9df3362"
+        },
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L11",
+          "line": 11,
+          "title": "| command batches | 7/7 pass |",
+          "excerpt": "10: | --- | --- |\n11: | command batches | 7/7 pass |\n12: | Flash reviews | 3/3 pass |",
+          "excerptHash": "725b1fe65588283e"
+        },
+        {
+          "id": "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md#L12",
+          "line": 12,
+          "title": "| Flash reviews | 3/3 pass |",
+          "excerpt": "11: | command batches | 7/7 pass |\n12: | Flash reviews | 3/3 pass |\n13: | C2 behavior matrix | 51/51 pass |",
+          "excerptHash": "a377a03042403c8d"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md",
+      "path": "docs/DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.md",
+      "exists": true,
+      "sha256": "fcb54e56d467207aa9fa2cc301d5cf0ba4a3975877f8e976075354596d47f302",
+      "bytes": 8547,
+      "lineCount": 82,
+      "anchors": [
+        "1: # DSXU V24 C2 Loop Real Acceptance - 20260515",
+        "5: Status: `PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH`",
+        "9: Policy: Flash-first; Pro not run; no second runtime; evidence is bound to DSXU TUI/product entry, focused regression, and Flash review.",
+        "14: - tool-permission-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+        "15: - agent-mcp-skill-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+        "16: - model-cost-cache-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.log",
+        "19: - Flash review: exit=0, trace=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\flash-c2-loop-review-2026-05-16T15-40-00-858Z.jsonl, costUSD=0.0015499008",
+        "24: | P01 | Query Loop | PASS_BEHAVIOR_EVIDENCE_LINKED | c2-matrix, core-query-context, interactive-tui |",
+        "25: | P02 | UI/TUI Work-State | PASS_BEHAVIOR_EVIDENCE_LINKED | c2-matrix, core-query-context, interactive-tui, live-acceptance, model-cost-cache, tool-permission |",
+        "26: | P03 | Tool Gate | PASS_BEHAVIOR_EVIDENCE_LINKED | api-remote-evidence, c2-matrix, interactive-tui, tool-permission |",
+        "27: | P04 | Permission Gate | PASS_BEHAVIOR_EVIDENCE_LINKED | agent-mcp-skill, c2-matrix, completed-reacceptance, core-query-context, external-release, interactive-tui, tool-permission |",
+        "28: | P05 | Coding Workflow | PASS_BEHAVIOR_EVIDENCE_LINKED | api-remote-evidence, c2-matrix, completed-reacceptance, core-query-context, interactive-tui |",
+        "29: | P06 | Task State | PASS_BEHAVIOR_EVIDENCE_LINKED | api-remote-evidence, c2-matrix, core-query-context, interactive-tui, tool-permission |",
+        "30: | P07 | Agent Lifecycle | PASS_BEHAVIOR_EVIDENCE_LINKED | agent-mcp-skill, api-remote-evidence, c2-matrix, interactive-tui |"
+      ],
+      "capsuleId": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 C2 Loop Real Acceptance - 20260515",
+          "excerpt": "1: # DSXU V24 C2 Loop Real Acceptance - 20260515\n2: ",
+          "excerptHash": "b64d1db904faa54f"
+        },
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L5",
+          "line": 5,
+          "title": "Status: `PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH`",
+          "excerpt": "4: \n5: Status: `PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH`\n6: ",
+          "excerptHash": "beae732d50623f62"
+        },
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L9",
+          "line": 9,
+          "title": "Policy: Flash-first; Pro not run; no second runtime; evidence is bound to DSXU TUI/product entry, focused regression, and Flash review.",
+          "excerpt": "8: \n9: Policy: Flash-first; Pro not run; no second runtime; evidence is bound to DSXU TUI/product entry, focused regression, and Flash review.\n10: ",
+          "excerptHash": "40d79a7ab725a56f"
+        },
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L14",
+          "line": 14,
+          "title": "- tool-permission-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log",
+          "excerpt": "13: - core-query-context-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\core-query-context-regression-2026-05-16T15-39-29-314Z.stdout.log\n14: - tool-permission-regression: exit=0, stdout=D:\\DSXU-code\\.dsx...",
+          "excerptHash": "f14b2060923dd45a"
+        },
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L15",
+          "line": 15,
+          "title": "- agent-mcp-skill-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log",
+          "excerpt": "14: - tool-permission-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\tool-permission-regression-2026-05-16T15-39-30-542Z.stdout.log\n15: - agent-mcp-skill-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trac...",
+          "excerptHash": "f24a716dc965af19"
+        },
+        {
+          "id": "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md#L16",
+          "line": 16,
+          "title": "- model-cost-cache-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\model-cost-cache-regression-2026-05-16T15-39-36-453Z.stdout.l",
+          "excerpt": "15: - agent-mcp-skill-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\trace\\v24-c2-loop-real-acceptance\\agent-mcp-skill-regression-2026-05-16T15-39-34-156Z.stdout.log\n16: - model-cost-cache-regression: exit=0, stdout=D:\\DSXU-code\\.dsxu\\tra...",
+          "excerptHash": "3df43e09994bce5d"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md",
+      "path": "docs/DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.md",
+      "exists": true,
+      "sha256": "93077f7c9ee73acb36e4b6fbc07bf273b4e513a39cd505b5f9428ba839b0e91e",
+      "bytes": 2764,
+      "lineCount": 32,
+      "anchors": [
+        "1: # DSXU V24 Interactive TUI Acceptance - 20260515",
+        "3: This report runs the real DSXU TUI through the existing WSL PTY harness and cross-checks it with Flash-first DSXU review.",
+        "5: Status: `PASS_INTERACTIVE_TUI_ACCEPTANCE`",
+        "7: Policy: default model `deepseek-v4-flash`; Pro not run; product entry is `bin/dsxu-code` through WSL PTY.",
+        "11: | startup-exit | startup-visible-state | PASS_TUI_EVIDENCED | true | Visible Work-State, Release/Doctor/Install | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-startup-exit.transcript.txt |",
+        "12: | permission-fallback | permission-visible-state | PASS_TUI_EVIDENCED | true | Permission/Safety, Visible Work-State | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-permission-fallback.transcript.txt |",
+        "13: | no-progress-recovery | failure-recovery-negative-path | PASS_NEGATIVE_RECOVERY_EVIDENCED | true | Failure/Recovery, Visible Work-State | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-no-progress-recovery.",
+        "14: | auto-continue | tool-result-auto-continue | PASS_TUI_EVIDENCED | true | Tool Lifecycle, Failure/Recovery | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-auto-continue.transcript.txt |",
+        "15: | compact-resume | context-resume-source-truth | PASS_TUI_EVIDENCED | true | Context/Memory/Compact, Source Truth/Coding, Failure/Recovery | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-compact-resume.tran",
+        "16: | background-task | agent-background-lifecycle | PASS_TUI_EVIDENCED | true | Agent Delegation, Visible Work-State, Telemetry/Evidence | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-background-task.transcri",
+        "17: | model-task-auth-or-progress | real-model-tui-task | PASS_TUI_EVIDENCED | true | Goal/Session, Model/Cost/Cache, Visible Work-State | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-model-task-auth-or-progre",
+        "22: - Flash review: exit=0, trace=D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\flash-review-2026-05-16T15-39-16-110Z.jsonl, costUSD=0.0007936992000000001",
+        "23: - Flash review input: D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_REVIEW_INPUT_20260515.json",
+        "24: - WSL provider gate: status=READY, evidence=D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\wsl-live-provider-gate.json"
+      ],
+      "capsuleId": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 Interactive TUI Acceptance - 20260515",
+          "excerpt": "1: # DSXU V24 Interactive TUI Acceptance - 20260515\n2: ",
+          "excerptHash": "38de1c137ba9b34a"
+        },
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L3",
+          "line": 3,
+          "title": "This report runs the real DSXU TUI through the existing WSL PTY harness and cross-checks it with Flash-first DSXU review.",
+          "excerpt": "2: \n3: This report runs the real DSXU TUI through the existing WSL PTY harness and cross-checks it with Flash-first DSXU review.\n4: ",
+          "excerptHash": "a2db97b393d7a918"
+        },
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L5",
+          "line": 5,
+          "title": "Status: `PASS_INTERACTIVE_TUI_ACCEPTANCE`",
+          "excerpt": "4: \n5: Status: `PASS_INTERACTIVE_TUI_ACCEPTANCE`\n6: ",
+          "excerptHash": "72b177bcc0b0047d"
+        },
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L7",
+          "line": 7,
+          "title": "Policy: default model `deepseek-v4-flash`; Pro not run; product entry is `bin/dsxu-code` through WSL PTY.",
+          "excerpt": "6: \n7: Policy: default model `deepseek-v4-flash`; Pro not run; product entry is `bin/dsxu-code` through WSL PTY.\n8: ",
+          "excerptHash": "c4389c4542b80dab"
+        },
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L11",
+          "line": 11,
+          "title": "| startup-exit | startup-visible-state | PASS_TUI_EVIDENCED | true | Visible Work-State, Release/Doctor/Install | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-a",
+          "excerpt": "10: | --- | --- | --- | --- | --- | --- |\n11: | startup-exit | startup-visible-state | PASS_TUI_EVIDENCED | true | Visible Work-State, Release/Doctor/Install | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-startup-exit.tran...",
+          "excerptHash": "064736c1dc6894c8"
+        },
+        {
+          "id": "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md#L12",
+          "line": 12,
+          "title": "| permission-fallback | permission-visible-state | PASS_TUI_EVIDENCED | true | Permission/Safety, Visible Work-State | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-",
+          "excerpt": "11: | startup-exit | startup-visible-state | PASS_TUI_EVIDENCED | true | Visible Work-State, Release/Doctor/Install | D:\\DSXU-code\\.dsxu\\trace\\v24-interactive-tui-acceptance\\v24-startup-exit.transcript.txt |\n12: | permission-fallback | p...",
+          "excerptHash": "1353964dceb769d7"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md",
+      "path": "docs/DSXU_V24_SENIOR_CODING_WINDOW_20260515.md",
+      "exists": true,
+      "sha256": "20ee65bb307bc72a82cc46055924700c9183907332f5ba959da58186d72a39c2",
+      "bytes": 3788,
+      "lineCount": 52,
+      "anchors": [
+        "1: # DSXU V24 Senior Coding Window - 20260515",
+        "3: Status: PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+        "5: ## Result",
+        "9: | Product entry | src/entrypoints/dsxu-code.tsx -p --output-format stream-json |",
+        "10: | Default model | deepseek-v4-flash |",
+        "11: | Pro usage | false |",
+        "16: | Final fixture test passed | true |",
+        "19: | Flash cost USD | 0.3239343576000001 |",
+        "20: | Final 95 claim allowed | false |",
+        "22: ## Evidence",
+        "46: ## Remaining",
+        "48: - Fixed public benchmark/product demo comparison data.",
+        "50: - Clean export artifact.",
+        "51: - Fresh install/help/doctor/provider gate smoke."
+      ],
+      "capsuleId": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 Senior Coding Window - 20260515",
+          "excerpt": "1: # DSXU V24 Senior Coding Window - 20260515\n2: ",
+          "excerptHash": "33c14eb4f5df653b"
+        },
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L3",
+          "line": 3,
+          "title": "Status: PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+          "excerpt": "2: \n3: Status: PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU\n4: ",
+          "excerptHash": "15dd99f9ca827da4"
+        },
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L5",
+          "line": 5,
+          "title": "## Result",
+          "excerpt": "4: \n5: ## Result\n6: ",
+          "excerptHash": "559796f8730c0332"
+        },
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L9",
+          "line": 9,
+          "title": "| Product entry | src/entrypoints/dsxu-code.tsx -p --output-format stream-json |",
+          "excerpt": "8: |---|---|\n9: | Product entry | src/entrypoints/dsxu-code.tsx -p --output-format stream-json |\n10: | Default model | deepseek-v4-flash |",
+          "excerptHash": "1eb14028e2b872f7"
+        },
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L10",
+          "line": 10,
+          "title": "| Default model | deepseek-v4-flash |",
+          "excerpt": "9: | Product entry | src/entrypoints/dsxu-code.tsx -p --output-format stream-json |\n10: | Default model | deepseek-v4-flash |\n11: | Pro usage | false |",
+          "excerptHash": "ff32ba07dce2b2d5"
+        },
+        {
+          "id": "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md#L11",
+          "line": 11,
+          "title": "| Pro usage | false |",
+          "excerpt": "10: | Default model | deepseek-v4-flash |\n11: | Pro usage | false |\n12: | Elapsed ms | 1835055 |",
+          "excerptHash": "dcac39a4f60240f8"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md",
+      "path": "docs/DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.md",
+      "exists": true,
+      "sha256": "1b3bac7ce03f649017b02564be20e68cf4ddebce17e5e2b88eb2ce097668d45e",
+      "bytes": 1097,
+      "lineCount": 43,
+      "anchors": [
+        "1: # DSXU V24 Clean Export Artifact - 2026-05-15",
+        "3: Status: PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+        "15: ## Secret Scan",
+        "17: Status: PASS_NO_RUNTIME_SECRET_VALUES_IN_EXPORT",
+        "19: Active env secret names checked: DEEPSEEK_API_KEY",
+        "21: Matched env secret names in export: none",
+        "23: ## Required Exclusions",
+        "34: ## Gate Evidence",
+        "36: - clean export preflight: PASS_READY_TO_CREATE_CLEAN_EXPORT",
+        "37: - six-stage final tests: PASS_V24_SIX_STAGE_FINAL_TESTS",
+        "38: - product benchmark/demo data: PASS_PRODUCT_BENCHMARK_DEMO_DATA_PACK_READY",
+        "40: ## Rule"
+      ],
+      "capsuleId": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 Clean Export Artifact - 2026-05-15",
+          "excerpt": "1: # DSXU V24 Clean Export Artifact - 2026-05-15\n2: ",
+          "excerptHash": "580c74244a659570"
+        },
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L3",
+          "line": 3,
+          "title": "Status: PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+          "excerpt": "2: \n3: Status: PASS_CLEAN_EXPORT_ARTIFACT_CREATED\n4: ",
+          "excerptHash": "8b332f7693027a72"
+        },
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L15",
+          "line": 15,
+          "title": "## Secret Scan",
+          "excerpt": "14: \n15: ## Secret Scan\n16: ",
+          "excerptHash": "d73baf906d38c6b5"
+        },
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L17",
+          "line": 17,
+          "title": "Status: PASS_NO_RUNTIME_SECRET_VALUES_IN_EXPORT",
+          "excerpt": "16: \n17: Status: PASS_NO_RUNTIME_SECRET_VALUES_IN_EXPORT\n18: ",
+          "excerptHash": "619f667d4daa3972"
+        },
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L19",
+          "line": 19,
+          "title": "Active env secret names checked: DEEPSEEK_API_KEY",
+          "excerpt": "18: \n19: Active env secret names checked: DEEPSEEK_API_KEY\n20: ",
+          "excerptHash": "41264a12e8a0ca06"
+        },
+        {
+          "id": "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md#L21",
+          "line": 21,
+          "title": "Matched env secret names in export: none",
+          "excerpt": "20: \n21: Matched env secret names in export: none\n22: ",
+          "excerptHash": "2369d827482147b5"
+        }
+      ]
+    },
+    {
+      "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md",
+      "path": "docs/DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.md",
+      "exists": true,
+      "sha256": "6fce3d498afa5deeec5dad37707dc4cb37147ed37d62a86bf577c5e026e4dcd3",
+      "bytes": 2667,
+      "lineCount": 25,
+      "anchors": [
+        "1: # DSXU V24 Fresh Install Release Smoke - 2026-05-15",
+        "3: Status: PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+        "9: ## Command Evidence",
+        "11: | id | passed | exitCode | durationMs | stdout | stderr |",
+        "14: | product-help | true | 0 | 1502 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-help-2026-05-16T15-28-23-926Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-help-2026-05",
+        "18: | product-doctor | true | 0 | 2019 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-doctor-2026-05-16T15-28-28-133Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-doctor-2",
+        "19: | mcp-doctor-json | true | 0 | 1276 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\mcp-doctor-json-2026-05-16T15-28-30-152Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\mcp-doctor-jso",
+        "20: | fresh-provider-gate | true | 0 | 263 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-provider-gate-2026-05-16T15-28-31-428Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-p",
+        "22: ## Rule",
+        "24: This smoke runs from the clean export directory after a fresh dependency install. It does not stage, commit, delete, reset, or mutate source workspace files."
+      ],
+      "capsuleId": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-truth-doc"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L1",
+          "line": 1,
+          "title": "# DSXU V24 Fresh Install Release Smoke - 2026-05-15",
+          "excerpt": "1: # DSXU V24 Fresh Install Release Smoke - 2026-05-15\n2: ",
+          "excerptHash": "96a5cb2077831553"
+        },
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L3",
+          "line": 3,
+          "title": "Status: PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+          "excerpt": "2: \n3: Status: PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE\n4: ",
+          "excerptHash": "8d5a8a9f3004bb0c"
+        },
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L9",
+          "line": 9,
+          "title": "## Command Evidence",
+          "excerpt": "8: \n9: ## Command Evidence\n10: ",
+          "excerptHash": "04da470fd562abf7"
+        },
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L11",
+          "line": 11,
+          "title": "| id | passed | exitCode | durationMs | stdout | stderr |",
+          "excerpt": "10: \n11: | id | passed | exitCode | durationMs | stdout | stderr |\n12: | --- | --- | --- | --- | --- | --- |",
+          "excerptHash": "74b5847eed8f016d"
+        },
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L14",
+          "line": 14,
+          "title": "| product-help | true | 0 | 1502 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-help-2026-05-16T15-28-23-926Z.stdout.log | D:\\DSXU-code\\.dsx",
+          "excerpt": "13: | fresh-bun-install | true | 0 | 353 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-bun-install-2026-05-16T15-28-23-573Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-bun-install-2026-0...",
+          "excerptHash": "3bbbc15f78e97990"
+        },
+        {
+          "id": "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md#L18",
+          "line": 18,
+          "title": "| product-doctor | true | 0 | 2019 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-doctor-2026-05-16T15-28-28-133Z.stdout.log | D:\\DSXU-code\\",
+          "excerpt": "17: | auth-login-key-wizard-stdin | true | 0 | 1337 | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\auth-login-key-wizard-stdin-2026-05-16T15-28-26-796Z.stdout.log | D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\aut...",
+          "excerptHash": "f2f3b7f778fc80de"
+        }
+      ]
+    },
+    {
+      "id": "scripts-dsxu-v24-public-challenge-package-ts",
+      "path": "scripts/dsxu-v24-public-challenge-package.ts",
+      "exists": true,
+      "sha256": "04b63a57c7320aa2587490c3c87fbe01871091888d673d27b3d8338d2ca15541",
+      "bytes": 55734,
+      "lineCount": 1233,
+      "anchors": [
+        "1: import { mkdir, readFile, writeFile } from 'node:fs/promises'",
+        "14: type FlashReview = CommandRun & {",
+        "15: promptPath: string",
+        "17: trajectoryPath: string",
+        "18: promptProfile: {",
+        "24: trajectoryAttribution: FlashTrajectoryAttribution",
+        "26: costUSD: number",
+        "27: modelUsage: Record<string, unknown> | null",
+        "30: type FlashCacheSummary = {",
+        "32: cacheHitInputTokens: number",
+        "33: cacheMissInputTokens: number",
+        "35: totalCostUSD: number",
+        "36: cacheHitRatePct: number",
+        "40: claimPolicy: string"
+      ],
+      "capsuleId": "scripts-dsxu-v24-public-challenge-package-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L1",
+          "line": 1,
+          "title": "import { mkdir, readFile, writeFile } from 'node:fs/promises'",
+          "excerpt": "1: import { mkdir, readFile, writeFile } from 'node:fs/promises'\n2: import { createHash } from 'node:crypto'",
+          "excerptHash": "0ae1f48bf7fb0118"
+        },
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L14",
+          "line": 14,
+          "title": "type FlashReview = CommandRun & {",
+          "excerpt": "13: \n14: type FlashReview = CommandRun & {\n15: promptPath: string",
+          "excerptHash": "b9832f75dfc6ab58"
+        },
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L15",
+          "line": 15,
+          "title": "promptPath: string",
+          "excerpt": "14: type FlashReview = CommandRun & {\n15: promptPath: string\n16: tracePath: string",
+          "excerptHash": "368de009777e0e12"
+        },
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L17",
+          "line": 17,
+          "title": "trajectoryPath: string",
+          "excerpt": "16: tracePath: string\n17: trajectoryPath: string\n18: promptProfile: {",
+          "excerptHash": "dbe704d14c3378cf"
+        },
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L18",
+          "line": 18,
+          "title": "promptProfile: {",
+          "excerpt": "17: trajectoryPath: string\n18: promptProfile: {\n19: stablePrefixHash: string",
+          "excerptHash": "0486db53857c473c"
+        },
+        {
+          "id": "scripts-dsxu-v24-public-challenge-package-ts#L24",
+          "line": 24,
+          "title": "trajectoryAttribution: FlashTrajectoryAttribution",
+          "excerpt": "23: }\n24: trajectoryAttribution: FlashTrajectoryAttribution\n25: resultJson: Record<string, unknown> | null",
+          "excerptHash": "f57e307f66c608c5"
+        }
+      ]
+    },
+    {
+      "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts",
+      "path": "scripts/dsxu-v24-github-open-source-launch-pack.ts",
+      "exists": true,
+      "sha256": "6be86e20d6daa8fe55abbd17d3c1cfd497b7056e8fe27e553aee1f50e3271ccd",
+      "bytes": 22284,
+      "lineCount": 400,
+      "anchors": [
+        "1: import { mkdir, readFile, writeFile } from 'node:fs/promises'",
+        "4: const ROOT = process.cwd()",
+        "14: async function readJson(path: string): Promise<Record<string, unknown>> {",
+        "82: async function main(): Promise<void> {",
+        "87: productBenchmark,",
+        "100: ] = await Promise.all([",
+        "101: readJson(join(GENERATED_DIR, 'DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json')),",
+        "109: readJson(join(GENERATED_DIR, 'DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json')),",
+        "116: const catalog = objectFrom(productBenchmark.benchmarkCatalog)",
+        "117: const routeCounts = objectFrom(catalog.routeCounts)",
+        "118: const flashRoutes = numberFrom(routeCounts['deepseek-v4-flash'])",
+        "119: const proRoutes = numberFrom(routeCounts['deepseek-v4-pro'])",
+        "128: publicChallengeAblation.claimAblationRunnerAllowed === true &&",
+        "129: publicChallengeAblation.claimExternalComparisonAllowed === false &&"
+      ],
+      "capsuleId": "scripts-dsxu-v24-github-open-source-launch-pack-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L1",
+          "line": 1,
+          "title": "import { mkdir, readFile, writeFile } from 'node:fs/promises'",
+          "excerpt": "1: import { mkdir, readFile, writeFile } from 'node:fs/promises'\n2: import { join } from 'node:path'",
+          "excerptHash": "6b9ae9a7fc063194"
+        },
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L4",
+          "line": 4,
+          "title": "const ROOT = process.cwd()",
+          "excerpt": "3: \n4: const ROOT = process.cwd()\n5: const GENERATED_DIR = join(ROOT, 'docs', 'generated')",
+          "excerptHash": "c81a07a5157353e7"
+        },
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L14",
+          "line": 14,
+          "title": "async function readJson(path: string): Promise<Record<string, unknown>> {",
+          "excerpt": "13: \n14: async function readJson(path: string): Promise<Record<string, unknown>> {\n15: return JSON.parse((await readFile(path, 'utf8')).replace(/^\\uFEFF/, '')) as Record<string, unknown>",
+          "excerptHash": "3d413b6b8485fd8b"
+        },
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L82",
+          "line": 82,
+          "title": "async function main(): Promise<void> {",
+          "excerpt": "81: \n82: async function main(): Promise<void> {\n83: await mkdir(GENERATED_DIR, { recursive: true })",
+          "excerptHash": "2863f74c29ee629e"
+        },
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L87",
+          "line": 87,
+          "title": "productBenchmark,",
+          "excerpt": "86: const [\n87: productBenchmark,\n88: publicChallenge,",
+          "excerptHash": "604851103795962b"
+        },
+        {
+          "id": "scripts-dsxu-v24-github-open-source-launch-pack-ts#L100",
+          "line": 100,
+          "title": "] = await Promise.all([",
+          "excerpt": "99: finalPreflight,\n100: ] = await Promise.all([\n101: readJson(join(GENERATED_DIR, 'DSXU_V24_PRODUCT_BENCHMARK_DATA_PACK_20260515.json')),",
+          "excerptHash": "e6b4f7666ac4ddc1"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-work-state-timeline-ts",
+      "path": "src/dsxu/engine/work-state-timeline.ts",
+      "exists": true,
+      "sha256": "5f41baf6a08312a95b9e6f2afa33f8357f4dfce4e98b1f02b72f4ce819f5ed46",
+      "bytes": 13625,
+      "lineCount": 375,
+      "anchors": [
+        "1: import type { DsxuToolEvidencePack } from './tool-evidence-pack-v1'",
+        "3: export type DSXUWorkStateEventKind =",
+        "7: | 'tool'",
+        "8: | 'permission'",
+        "10: | 'recovery'",
+        "11: | 'cost'",
+        "12: | 'agent'",
+        "13: | 'evidence'",
+        "16: export type DSXUWorkStateStatus =",
+        "19: | 'waiting_permission'",
+        "26: export type DSXUWorkStateRisk = 'low' | 'medium' | 'high'",
+        "28: export type DSXUWorkStatePermissionDecision = 'granted' | 'needs-escalation' | 'denied'",
+        "29: export type DSXUWorkStateGateDecision = 'allow' | 'warn' | 'block' | 'require_confirmation'",
+        "30: export type DSXUWorkStateRegistryDecision = 'registered' | 'selected' | 'discarded' | 'blocked' | 'adapted'"
+      ],
+      "capsuleId": "src-dsxu-engine-work-state-timeline-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "mainline-experience",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L1",
+          "line": 1,
+          "title": "import type { DsxuToolEvidencePack } from './tool-evidence-pack-v1'",
+          "excerpt": "1: import type { DsxuToolEvidencePack } from './tool-evidence-pack-v1'\n2: ",
+          "excerptHash": "60872acc822db465"
+        },
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L3",
+          "line": 3,
+          "title": "export type DSXUWorkStateEventKind =",
+          "excerpt": "2: \n3: export type DSXUWorkStateEventKind =\n4: | 'goal'",
+          "excerptHash": "e6ed11787a4f5915"
+        },
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L7",
+          "line": 7,
+          "title": "| 'tool'",
+          "excerpt": "6: | 'source_truth'\n7: | 'tool'\n8: | 'permission'",
+          "excerptHash": "6107e7d03bf9a40f"
+        },
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L8",
+          "line": 8,
+          "title": "| 'permission'",
+          "excerpt": "7: | 'tool'\n8: | 'permission'\n9: | 'failure'",
+          "excerptHash": "f226a281cb9aa08d"
+        },
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L10",
+          "line": 10,
+          "title": "| 'recovery'",
+          "excerpt": "9: | 'failure'\n10: | 'recovery'\n11: | 'cost'",
+          "excerptHash": "7c1ea66bee897b13"
+        },
+        {
+          "id": "src-dsxu-engine-work-state-timeline-ts#L11",
+          "line": 11,
+          "title": "| 'cost'",
+          "excerpt": "10: | 'recovery'\n11: | 'cost'\n12: | 'agent'",
+          "excerptHash": "e55d17cd3bbcddf0"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-code-mode-surgical-loop-ts",
+      "path": "src/dsxu/engine/code-mode-surgical-loop.ts",
+      "exists": true,
+      "sha256": "9ad962fb69454ba81521b8c035e70a35bb7a8d578132509fd2a211ee8e04b38e",
+      "bytes": 40680,
+      "lineCount": 1183,
+      "anchors": [
+        "2: import { execFile } from 'child_process'",
+        "3: import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'fs/promises'",
+        "5: import { promisify } from 'util'",
+        "7: buildDSXUWorkStateTimeline,",
+        "8: type DSXUWorkStateEvent,",
+        "9: type DSXUWorkStateTimeline,",
+        "10: } from './work-state-timeline'",
+        "13: const execFileAsync = promisify(execFile)",
+        "15: export type DSXUCodeFailureType = 'TEST' | 'PATCH' | 'COMMAND' | 'TIMEOUT' | 'CONTEXT' | 'UNKNOWN'",
+        "17: export type DSXURepoProfile = {",
+        "22: evidenceFiles: readonly string[]",
+        "25: export type DSXURepoIndex = {",
+        "33: export type DSXUIssueProfile = {",
+        "43: export type DSXULocalizationResult = {"
+      ],
+      "capsuleId": "src-dsxu-engine-code-mode-surgical-loop-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "mainline-experience",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L2",
+          "line": 2,
+          "title": "import { execFile } from 'child_process'",
+          "excerpt": "1: import { createHash } from 'crypto'\n2: import { execFile } from 'child_process'\n3: import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'fs/promises'",
+          "excerptHash": "026a942763ccc2ed"
+        },
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L3",
+          "line": 3,
+          "title": "import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'fs/promises'",
+          "excerpt": "2: import { execFile } from 'child_process'\n3: import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'fs/promises'\n4: import { basename, dirname, extname, join, relative } from 'path'",
+          "excerptHash": "b0ed3b4a11b07e29"
+        },
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L5",
+          "line": 5,
+          "title": "import { promisify } from 'util'",
+          "excerpt": "4: import { basename, dirname, extname, join, relative } from 'path'\n5: import { promisify } from 'util'\n6: import {",
+          "excerptHash": "d312623d8279ad95"
+        },
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L7",
+          "line": 7,
+          "title": "buildDSXUWorkStateTimeline,",
+          "excerpt": "6: import {\n7: buildDSXUWorkStateTimeline,\n8: type DSXUWorkStateEvent,",
+          "excerptHash": "e05f5b9b4593adf2"
+        },
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L8",
+          "line": 8,
+          "title": "type DSXUWorkStateEvent,",
+          "excerpt": "7: buildDSXUWorkStateTimeline,\n8: type DSXUWorkStateEvent,\n9: type DSXUWorkStateTimeline,",
+          "excerptHash": "779f5b959317372f"
+        },
+        {
+          "id": "src-dsxu-engine-code-mode-surgical-loop-ts#L9",
+          "line": 9,
+          "title": "type DSXUWorkStateTimeline,",
+          "excerpt": "8: type DSXUWorkStateEvent,\n9: type DSXUWorkStateTimeline,\n10: } from './work-state-timeline'",
+          "excerptHash": "70d513fca763410d"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-public-surface-clean-gate-ts",
+      "path": "src/dsxu/engine/public-surface-clean-gate.ts",
+      "exists": true,
+      "sha256": "c2dd3041f4cb7346dd01d008d351596ef83671afdf44451746b9c3afab043f35",
+      "bytes": 15292,
+      "lineCount": 374,
+      "anchors": [
+        "1: import { execFile } from 'child_process'",
+        "2: import { mkdir, readFile, writeFile } from 'fs/promises'",
+        "4: import { promisify } from 'util'",
+        "6: const execFileAsync = promisify(execFile)",
+        "8: export type V18PublicSurfaceCleanStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'",
+        "10: export type V18PublicSurfaceCleanBucket =",
+        "12: | 'provider_migration'",
+        "19: export type V18PublicSurfaceCleanViolation = {",
+        "29: export type V18PublicSurfaceCleanGate = {",
+        "39: providerMigrationModelAliasJustifiedCount: number",
+        "49: const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')",
+        "55: `\\u539f\\u4ee3\\u7801${SOURCE_REFERENCE_PRODUCT}/`,",
+        "63: new RegExp(`(^|/)(${SOURCE_REFERENCE_PRODUCT}|${SOURCE_REFERENCE_MASCOT}|${SOURCE_REFERENCE_VENDOR})([^/]*)$`, 'i'),",
+        "64: new RegExp(`(^|/)([^/]*)(${SOURCE_REFERENCE_PRODUCT}|${SOURCE_REFERENCE_MASCOT}|${SOURCE_REFERENCE_VENDOR})([^/]*)(/|$)`, 'i'),"
+      ],
+      "capsuleId": "src-dsxu-engine-public-surface-clean-gate-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L1",
+          "line": 1,
+          "title": "import { execFile } from 'child_process'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerptHash": "70f5bd406d67a36f"
+        },
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L2",
+          "line": 2,
+          "title": "import { mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { mkdir, readFile, writeFile } from 'fs/promises'\n3: import { join } from 'path'",
+          "excerptHash": "c3e84cfca88ef39d"
+        },
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L4",
+          "line": 4,
+          "title": "import { promisify } from 'util'",
+          "excerpt": "3: import { join } from 'path'\n4: import { promisify } from 'util'\n5: ",
+          "excerptHash": "ba2761ad6884b4a7"
+        },
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L6",
+          "line": 6,
+          "title": "const execFileAsync = promisify(execFile)",
+          "excerpt": "5: \n6: const execFileAsync = promisify(execFile)\n7: ",
+          "excerptHash": "59afc3c48e086f42"
+        },
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L8",
+          "line": 8,
+          "title": "export type V18PublicSurfaceCleanStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'",
+          "excerpt": "7: \n8: export type V18PublicSurfaceCleanStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'\n9: ",
+          "excerptHash": "2f32ce90d5fa6166"
+        },
+        {
+          "id": "src-dsxu-engine-public-surface-clean-gate-ts#L10",
+          "line": 10,
+          "title": "export type V18PublicSurfaceCleanBucket =",
+          "excerpt": "9: \n10: export type V18PublicSurfaceCleanBucket =\n11: | 'active_src'",
+          "excerptHash": "335da531733a3126"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-proprietary-code-risk-gate-ts",
+      "path": "src/dsxu/engine/proprietary-code-risk-gate.ts",
+      "exists": true,
+      "sha256": "a958fe73b57a80cbfb1cc692e3b928c1f57a5b7f3a9012f0040399be166e99c0",
+      "bytes": 24202,
+      "lineCount": 634,
+      "anchors": [
+        "1: import { execFile } from 'child_process'",
+        "2: import { access, mkdir, readFile, writeFile } from 'fs/promises'",
+        "4: import { promisify } from 'util'",
+        "6: const execFileAsync = promisify(execFile)",
+        "8: export type V18ProprietaryCodeRiskStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'",
+        "10: export type V18ProprietaryCodeRiskSeverity = 'blocker' | 'review' | 'justified'",
+        "12: export type V18ProprietaryCodeRiskBucket =",
+        "14: | 'provider_migration'",
+        "21: export type V18ProprietaryCodeRiskRuleId =",
+        "24: | 'vendor-secret-or-env'",
+        "28: | 'legacy-oauth-protocol'",
+        "31: export type V18ProprietaryCodeRiskIssue = {",
+        "32: severity: V18ProprietaryCodeRiskSeverity",
+        "33: ruleId: V18ProprietaryCodeRiskRuleId"
+      ],
+      "capsuleId": "src-dsxu-engine-proprietary-code-risk-gate-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L1",
+          "line": 1,
+          "title": "import { execFile } from 'child_process'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { access, mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerptHash": "ef0600fd7ac545b8"
+        },
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L2",
+          "line": 2,
+          "title": "import { access, mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { access, mkdir, readFile, writeFile } from 'fs/promises'\n3: import { join } from 'path'",
+          "excerptHash": "cf6a1f7b14162168"
+        },
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L4",
+          "line": 4,
+          "title": "import { promisify } from 'util'",
+          "excerpt": "3: import { join } from 'path'\n4: import { promisify } from 'util'\n5: ",
+          "excerptHash": "ba2761ad6884b4a7"
+        },
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L6",
+          "line": 6,
+          "title": "const execFileAsync = promisify(execFile)",
+          "excerpt": "5: \n6: const execFileAsync = promisify(execFile)\n7: ",
+          "excerptHash": "59afc3c48e086f42"
+        },
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L8",
+          "line": 8,
+          "title": "export type V18ProprietaryCodeRiskStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'",
+          "excerpt": "7: \n8: export type V18ProprietaryCodeRiskStatus = 'DONE_EVIDENCED' | 'BLOCKED_EVIDENCED'\n9: ",
+          "excerptHash": "6e05022b8cfd6784"
+        },
+        {
+          "id": "src-dsxu-engine-proprietary-code-risk-gate-ts#L10",
+          "line": 10,
+          "title": "export type V18ProprietaryCodeRiskSeverity = 'blocker' | 'review' | 'justified'",
+          "excerpt": "9: \n10: export type V18ProprietaryCodeRiskSeverity = 'blocker' | 'review' | 'justified'\n11: ",
+          "excerptHash": "0b457c7c98b76b12"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-release-provenance-gate-ts",
+      "path": "src/dsxu/engine/release-provenance-gate.ts",
+      "exists": true,
+      "sha256": "ef05b423cbe6c9160a0ab4fc8dee07af9cac6f5fd7df1737f05b31ce91ffb5d1",
+      "bytes": 7525,
+      "lineCount": 209,
+      "anchors": [
+        "1: import { execFile } from 'child_process'",
+        "2: import { mkdir, readFile, writeFile } from 'fs/promises'",
+        "4: import { promisify } from 'util'",
+        "6: const execFileAsync = promisify(execFile)",
+        "8: export type V18ReleaseProvenanceStatus =",
+        "12: export type V18ReleaseProvenanceIssue = {",
+        "21: export type V18ReleaseProvenanceGate = {",
+        "22: status: V18ReleaseProvenanceStatus",
+        "32: issues: readonly V18ReleaseProvenanceIssue[]",
+        "36: const SOURCE_REFERENCE_PRODUCT = ['cl', 'aude'].join('')",
+        "39: const ORIGINAL_REFERENCE_PREFIX = `\\u539f\\u4ee3\\u7801${SOURCE_REFERENCE_PRODUCT}/`",
+        "40: const LEGACY_PROXY_DIR = ['upstream', 'proxy'].join('')",
+        "53: new RegExp(`^src/${LEGACY_PROXY_DIR}/`, 'i'),",
+        "60: new RegExp(`${SOURCE_REFERENCE_PRODUCT}\\\\s+source`, 'i'),"
+      ],
+      "capsuleId": "src-dsxu-engine-release-provenance-gate-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "public-claim",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L1",
+          "line": 1,
+          "title": "import { execFile } from 'child_process'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerptHash": "70f5bd406d67a36f"
+        },
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L2",
+          "line": 2,
+          "title": "import { mkdir, readFile, writeFile } from 'fs/promises'",
+          "excerpt": "1: import { execFile } from 'child_process'\n2: import { mkdir, readFile, writeFile } from 'fs/promises'\n3: import { join } from 'path'",
+          "excerptHash": "c3e84cfca88ef39d"
+        },
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L4",
+          "line": 4,
+          "title": "import { promisify } from 'util'",
+          "excerpt": "3: import { join } from 'path'\n4: import { promisify } from 'util'\n5: ",
+          "excerptHash": "ba2761ad6884b4a7"
+        },
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L6",
+          "line": 6,
+          "title": "const execFileAsync = promisify(execFile)",
+          "excerpt": "5: \n6: const execFileAsync = promisify(execFile)\n7: ",
+          "excerptHash": "59afc3c48e086f42"
+        },
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L8",
+          "line": 8,
+          "title": "export type V18ReleaseProvenanceStatus =",
+          "excerpt": "7: \n8: export type V18ReleaseProvenanceStatus =\n9: | 'DONE_EVIDENCED'",
+          "excerptHash": "1d264fe2e4f6749e"
+        },
+        {
+          "id": "src-dsxu-engine-release-provenance-gate-ts#L12",
+          "line": 12,
+          "title": "export type V18ReleaseProvenanceIssue = {",
+          "excerpt": "11: \n12: export type V18ReleaseProvenanceIssue = {\n13: severity: 'blocker' | 'review' | 'justified'",
+          "excerptHash": "c941f5ac733fabec"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts",
+      "path": "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts",
+      "exists": true,
+      "sha256": "411d4dbcb1eacc450f58d8fedb2b841f2252d39d136e27a583cee5d789f8691a",
+      "bytes": 3020,
+      "lineCount": 87,
+      "anchors": [
+        "5: const root = process.cwd()",
+        "30: describe('product runtime owner map V1', () => {",
+        "31: test('product entry path runs through root QueryEngine and root query loop', () => {",
+        "42: expect(rootQuery).toContain('runTools')",
+        "44: expect(rootQuery).toContain('buildDsxuFinalGateState')",
+        "48: const productFiles = [",
+        "56: ...walk('src/tools'),",
+        "59: const offenders = productFiles",
+        "83: expect(importers).toContain('src/dsxu/engine/forked-agent.ts')"
+      ],
+      "capsuleId": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L5",
+          "line": 5,
+          "title": "const root = process.cwd()",
+          "excerpt": "4: \n5: const root = process.cwd()\n6: ",
+          "excerptHash": "76c1aef8cb0d01e1"
+        },
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L30",
+          "line": 30,
+          "title": "describe('product runtime owner map V1', () => {",
+          "excerpt": "29: \n30: describe('product runtime owner map V1', () => {\n31: test('product entry path runs through root QueryEngine and root query loop', () => {",
+          "excerptHash": "ac2aa4421e73229a"
+        },
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L31",
+          "line": 31,
+          "title": "test('product entry path runs through root QueryEngine and root query loop', () => {",
+          "excerpt": "30: describe('product runtime owner map V1', () => {\n31: test('product entry path runs through root QueryEngine and root query loop', () => {\n32: const entrypoint = read('src/entrypoints/dsxu-code.tsx')",
+          "excerptHash": "85892fea7d429deb"
+        },
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L42",
+          "line": 42,
+          "title": "expect(rootQuery).toContain('runTools')",
+          "excerpt": "41: expect(rootQuery).toContain('async function* queryLoop')\n42: expect(rootQuery).toContain('runTools')\n43: expect(rootQuery).toContain('handleStopHooks')",
+          "excerptHash": "2b1bab649ea80b60"
+        },
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L44",
+          "line": 44,
+          "title": "expect(rootQuery).toContain('buildDsxuFinalGateState')",
+          "excerpt": "43: expect(rootQuery).toContain('handleStopHooks')\n44: expect(rootQuery).toContain('buildDsxuFinalGateState')\n45: })",
+          "excerptHash": "fde3d10f0064bd8a"
+        },
+        {
+          "id": "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts#L48",
+          "line": 48,
+          "title": "const productFiles = [",
+          "excerpt": "47: test('CLI, TUI, and service entry files do not import the DSXU engine harness loop', () => {\n48: const productFiles = [\n49: 'src/entrypoints/dsxu-code.tsx',",
+          "excerptHash": "5d760b89c45fdae8"
+        }
+      ]
+    },
+    {
+      "id": "src-dsxu-engine-tests-query-engine-recovery-mainline-v1-test-ts",
+      "path": "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+      "exists": true,
+      "sha256": "17a2831545c4821d99e84189a32838609cff57934a77544a0c739c6265d41b42",
+      "bytes": 1149,
+      "lineCount": 22,
+      "anchors": [
+        "6: test('product QueryEngine terminal errors consume recovery v3 without opening another runtime', () => {",
+        "7: const source = readFileSync(join(process.cwd(), 'src/QueryEngine.ts'), 'utf8')"
+      ],
+      "capsuleId": "src-dsxu-engine-tests-query-engine-recovery-mainline-v1-test-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "mainline-experience",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-dsxu-engine-tests-query-engine-recovery-mainline-v1-test-ts#L6",
+          "line": 6,
+          "title": "test('product QueryEngine terminal errors consume recovery v3 without opening another runtime', () => {",
+          "excerpt": "5: describe('QueryEngine recovery mainline consumption', () => {\n6: test('product QueryEngine terminal errors consume recovery v3 without opening another runtime', () => {\n7: const source = readFileSync(join(process.cwd(), 'src/QueryEngi...",
+          "excerptHash": "3bdbe05ef934c6b1"
+        },
+        {
+          "id": "src-dsxu-engine-tests-query-engine-recovery-mainline-v1-test-ts#L7",
+          "line": 7,
+          "title": "const source = readFileSync(join(process.cwd(), 'src/QueryEngine.ts'), 'utf8')",
+          "excerpt": "6: test('product QueryEngine terminal errors consume recovery v3 without opening another runtime', () => {\n7: const source = readFileSync(join(process.cwd(), 'src/QueryEngine.ts'), 'utf8')\n8: ",
+          "excerptHash": "e6bd875039e2197c"
+        }
+      ]
+    },
+    {
+      "id": "src-QueryEngine-ts",
+      "path": "src/QueryEngine.ts",
+      "exists": true,
+      "sha256": "dcec618f9e73f3c7164e985269963de8a85c8a9e105ef03aac03435160248c95",
+      "bytes": 50819,
+      "lineCount": 1302,
+      "anchors": [
+        "2: import type { ContentBlockParam } from 'src/types/providerSdk.js'",
+        "10: PermissionMode,",
+        "13: SDKPermissionDenial,",
+        "16: } from 'src/entrypoints/agentSdkTypes.js'",
+        "17: import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'",
+        "18: import type { NonNullableUsage } from 'src/services/api/logging.js'",
+        "19: import { EMPTY_USAGE } from 'src/services/api/logging.js'",
+        "22: import { getSlashCommandToolSkills } from './commands.js'",
+        "28: getModelUsage,",
+        "30: getTotalCost,",
+        "31: } from './cost-tracker.js'",
+        "32: import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+        "33: import { loadMemoryPrompt } from './memdir/memdir.js'",
+        "37: import type { MCPServerConnection } from './services/mcp/types.js'"
+      ],
+      "capsuleId": "src-QueryEngine-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "mainline-experience",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-QueryEngine-ts#L2",
+          "line": 2,
+          "title": "import type { ContentBlockParam } from 'src/types/providerSdk.js'",
+          "excerpt": "1: import { feature } from 'bun:bundle'\n2: import type { ContentBlockParam } from 'src/types/providerSdk.js'\n3: import { randomUUID } from 'crypto'",
+          "excerptHash": "a1270f4ecd93a1cc"
+        },
+        {
+          "id": "src-QueryEngine-ts#L10",
+          "line": 10,
+          "title": "PermissionMode,",
+          "excerpt": "9: import type {\n10: PermissionMode,\n11: SDKCompactBoundaryMessage,",
+          "excerptHash": "83dfc97252c14cb0"
+        },
+        {
+          "id": "src-QueryEngine-ts#L13",
+          "line": 13,
+          "title": "SDKPermissionDenial,",
+          "excerpt": "12: SDKMessage,\n13: SDKPermissionDenial,\n14: SDKStatus,",
+          "excerptHash": "5ffcc3d5446de6e3"
+        },
+        {
+          "id": "src-QueryEngine-ts#L16",
+          "line": 16,
+          "title": "} from 'src/entrypoints/agentSdkTypes.js'",
+          "excerpt": "15: SDKUserMessageReplay,\n16: } from 'src/entrypoints/agentSdkTypes.js'\n17: import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'",
+          "excerptHash": "afc973b2daa2307b"
+        },
+        {
+          "id": "src-QueryEngine-ts#L17",
+          "line": 17,
+          "title": "import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'",
+          "excerpt": "16: } from 'src/entrypoints/agentSdkTypes.js'\n17: import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'\n18: import type { NonNullableUsage } from 'src/services/api/logging.js'",
+          "excerptHash": "a46c18bb1f0f4baf"
+        },
+        {
+          "id": "src-QueryEngine-ts#L18",
+          "line": 18,
+          "title": "import type { NonNullableUsage } from 'src/services/api/logging.js'",
+          "excerpt": "17: import { accumulateUsage, updateUsage } from 'src/services/api/dsxu.js'\n18: import type { NonNullableUsage } from 'src/services/api/logging.js'\n19: import { EMPTY_USAGE } from 'src/services/api/logging.js'",
+          "excerptHash": "8b2774aedd420cbe"
+        }
+      ]
+    },
+    {
+      "id": "src-query-ts",
+      "path": "src/query.ts",
+      "exists": true,
+      "sha256": "a3c8ade4c93d5c9f67277de8f4e88f8d3afbf948e9c678494bfc99ab63e28009",
+      "bytes": 192137,
+      "lineCount": 4979,
+      "anchors": [
+        "3: ToolResultBlockParam,",
+        "4: ToolUseBlock,",
+        "5: } from 'src/types/providerSdk.js'",
+        "6: import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+        "29: import { findToolByName, type ToolUseContext } from './Tool.js'",
+        "30: import { asSystemPrompt, type SystemPrompt } from './utils/systemPromptType.js'",
+        "37: ToolUseSummaryMessage,",
+        "43: PROMPT_TOO_LONG_ERROR_MESSAGE,",
+        "44: isPromptTooLongMessage,",
+        "48: decideDeepSeekV4Route,",
+        "49: decideDeepSeekV4RuntimeModelOverride,",
+        "50: estimateDeepSeekV4Cost,",
+        "51: formatDeepSeekV4ModelEvidence,",
+        "52: inferDeepSeekV4RouteInput,"
+      ],
+      "capsuleId": "src-query-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "mainline-experience",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-query-ts#L3",
+          "line": 3,
+          "title": "ToolResultBlockParam,",
+          "excerpt": "2: import type {\n3: ToolResultBlockParam,\n4: ToolUseBlock,",
+          "excerptHash": "b8edb24de71f1373"
+        },
+        {
+          "id": "src-query-ts#L4",
+          "line": 4,
+          "title": "ToolUseBlock,",
+          "excerpt": "3: ToolResultBlockParam,\n4: ToolUseBlock,\n5: } from 'src/types/providerSdk.js'",
+          "excerptHash": "5d608fe859f2a6d2"
+        },
+        {
+          "id": "src-query-ts#L5",
+          "line": 5,
+          "title": "} from 'src/types/providerSdk.js'",
+          "excerpt": "4: ToolUseBlock,\n5: } from 'src/types/providerSdk.js'\n6: import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+          "excerptHash": "b5cc4e57fc391772"
+        },
+        {
+          "id": "src-query-ts#L6",
+          "line": 6,
+          "title": "import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+          "excerpt": "5: } from 'src/types/providerSdk.js'\n6: import type { CanUseToolFn } from './hooks/useCanUseTool.js'\n7: import { FallbackTriggeredError } from './services/api/withRetry.js'",
+          "excerptHash": "0b30e050910f66d1"
+        },
+        {
+          "id": "src-query-ts#L29",
+          "line": 29,
+          "title": "import { findToolByName, type ToolUseContext } from './Tool.js'",
+          "excerpt": "28: import { ImageResizeError } from './utils/imageResizer.js'\n29: import { findToolByName, type ToolUseContext } from './Tool.js'\n30: import { asSystemPrompt, type SystemPrompt } from './utils/systemPromptType.js'",
+          "excerptHash": "fa9a367f7f1e3184"
+        },
+        {
+          "id": "src-query-ts#L30",
+          "line": 30,
+          "title": "import { asSystemPrompt, type SystemPrompt } from './utils/systemPromptType.js'",
+          "excerpt": "29: import { findToolByName, type ToolUseContext } from './Tool.js'\n30: import { asSystemPrompt, type SystemPrompt } from './utils/systemPromptType.js'\n31: import type {",
+          "excerptHash": "e396637de0098e50"
+        }
+      ]
+    },
+    {
+      "id": "src-cli-print-ts",
+      "path": "src/cli/print.ts",
+      "exists": true,
+      "sha256": "e56c68bd2a7feef26ca383f97a42f1de2fa1ccfbc05f9e49274b0c9f8d545bc8",
+      "bytes": 223422,
+      "lineCount": 5696,
+      "anchors": [
+        "3: import { readFile, stat } from 'fs/promises'",
+        "19: import type { ToolPermissionContext } from 'src/Tool.js'",
+        "21: import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'",
+        "24: import { mergeAndFilterTools } from 'src/utils/toolPool.js'",
+        "25: import { parseToolListFromCLI } from 'src/utils/permissions/permissionSetup.js'",
+        "30: import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'",
+        "36: import { toolMatchesName, type Tool, type Tools } from 'src/Tool.js'",
+        "38: type AgentDefinition,",
+        "39: isBuiltInAgent,",
+        "40: parseAgentsFromJson,",
+        "41: } from 'src/tools/AgentTool/loadAgentsDir.js'",
+        "53: import { notifyCommandLifecycle } from 'src/utils/commandLifecycle.js'",
+        "58: setPermissionModeChangedListener,",
+        "63: import { getInMemoryErrors, logError, logMCPDebug } from 'src/utils/log.js'"
+      ],
+      "capsuleId": "src-cli-print-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-cli-print-ts#L3",
+          "line": 3,
+          "title": "import { readFile, stat } from 'fs/promises'",
+          "excerpt": "2: import { feature } from 'bun:bundle'\n3: import { readFile, stat } from 'fs/promises'\n4: import { dirname } from 'path'",
+          "excerptHash": "8fa1c7307e615d6c"
+        },
+        {
+          "id": "src-cli-print-ts#L19",
+          "line": 19,
+          "title": "import type { ToolPermissionContext } from 'src/Tool.js'",
+          "excerpt": "18: import { installStreamJsonStdoutGuard } from 'src/utils/streamJsonStdoutGuard.js'\n19: import type { ToolPermissionContext } from 'src/Tool.js'\n20: import type { ThinkingConfig } from 'src/utils/thinking.js'",
+          "excerptHash": "f84b4bcc783ce628"
+        },
+        {
+          "id": "src-cli-print-ts#L21",
+          "line": 21,
+          "title": "import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'",
+          "excerpt": "20: import type { ThinkingConfig } from 'src/utils/thinking.js'\n21: import { assembleToolPool, filterToolsByDenyRules } from 'src/tools.js'\n22: import uniqBy from 'lodash-es/uniqBy.js'",
+          "excerptHash": "109aa31bd0ccebc8"
+        },
+        {
+          "id": "src-cli-print-ts#L24",
+          "line": 24,
+          "title": "import { mergeAndFilterTools } from 'src/utils/toolPool.js'",
+          "excerpt": "23: import { uniq } from 'src/utils/array.js'\n24: import { mergeAndFilterTools } from 'src/utils/toolPool.js'\n25: import { parseToolListFromCLI } from 'src/utils/permissions/permissionSetup.js'",
+          "excerptHash": "738573a1e1d16498"
+        },
+        {
+          "id": "src-cli-print-ts#L25",
+          "line": 25,
+          "title": "import { parseToolListFromCLI } from 'src/utils/permissions/permissionSetup.js'",
+          "excerpt": "24: import { mergeAndFilterTools } from 'src/utils/toolPool.js'\n25: import { parseToolListFromCLI } from 'src/utils/permissions/permissionSetup.js'\n26: import {",
+          "excerptHash": "179037c2861319cf"
+        },
+        {
+          "id": "src-cli-print-ts#L30",
+          "line": 30,
+          "title": "import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'",
+          "excerpt": "29: } from 'src/services/analytics/index.js'\n30: import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/featureFlags.js'\n31: import { logForDebugging } from 'src/utils/debug.js'",
+          "excerptHash": "b25b588da6db8f0b"
+        }
+      ]
+    },
+    {
+      "id": "src-Tool-ts",
+      "path": "src/Tool.ts",
+      "exists": true,
+      "sha256": "e5c9c09bc9005c9a27a6264496b1437382bee46816caf479e5ad9cb728f20fe6",
+      "bytes": 35130,
+      "lineCount": 906,
+      "anchors": [
+        "2: ToolResultBlockParam,",
+        "3: ToolUseBlockParam,",
+        "4: } from 'src/types/providerSdk.js'",
+        "8: } from '@modelcontextprotocol/sdk/types.js'",
+        "12: import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+        "14: export type ToolInputJSONSchema = {",
+        "17: properties?: {",
+        "23: MCPServerConnection,",
+        "25: } from './services/mcp/types.js'",
+        "26: import type { RuntimeWorkflowExecutionPolicy } from './services/tools/workflowExecutionPolicy.js'",
+        "28: AgentDefinition,",
+        "29: AgentDefinitionsResult,",
+        "30: } from './tools/AgentTool/loadAgentsDir.js'",
+        "35: ProgressMessage,"
+      ],
+      "capsuleId": "src-Tool-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code",
+        "tool-permission-runtime"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-Tool-ts#L2",
+          "line": 2,
+          "title": "ToolResultBlockParam,",
+          "excerpt": "1: import type {\n2: ToolResultBlockParam,\n3: ToolUseBlockParam,",
+          "excerptHash": "50db601f77f9aa08"
+        },
+        {
+          "id": "src-Tool-ts#L3",
+          "line": 3,
+          "title": "ToolUseBlockParam,",
+          "excerpt": "2: ToolResultBlockParam,\n3: ToolUseBlockParam,\n4: } from 'src/types/providerSdk.js'",
+          "excerptHash": "b440d5c389b4792b"
+        },
+        {
+          "id": "src-Tool-ts#L4",
+          "line": 4,
+          "title": "} from 'src/types/providerSdk.js'",
+          "excerpt": "3: ToolUseBlockParam,\n4: } from 'src/types/providerSdk.js'\n5: import type {",
+          "excerptHash": "50c11e6dba22a7cc"
+        },
+        {
+          "id": "src-Tool-ts#L8",
+          "line": 8,
+          "title": "} from '@modelcontextprotocol/sdk/types.js'",
+          "excerpt": "7: ElicitResult,\n8: } from '@modelcontextprotocol/sdk/types.js'\n9: import type { UUID } from 'crypto'",
+          "excerptHash": "084c9ab2dd59661a"
+        },
+        {
+          "id": "src-Tool-ts#L12",
+          "line": 12,
+          "title": "import type { CanUseToolFn } from './hooks/useCanUseTool.js'",
+          "excerpt": "11: import type { Command } from './commands.js'\n12: import type { CanUseToolFn } from './hooks/useCanUseTool.js'\n13: import type { ThinkingConfig } from './utils/thinking.js'",
+          "excerptHash": "384c6c27b7912050"
+        },
+        {
+          "id": "src-Tool-ts#L14",
+          "line": 14,
+          "title": "export type ToolInputJSONSchema = {",
+          "excerpt": "13: import type { ThinkingConfig } from './utils/thinking.js'\n14: export type ToolInputJSONSchema = {\n15: [x: string]: unknown",
+          "excerptHash": "5512cab74133554b"
+        }
+      ]
+    },
+    {
+      "id": "src-hooks-useCanUseTool-tsx",
+      "path": "src/hooks/useCanUseTool.tsx",
+      "exists": true,
+      "sha256": "2ca8f635188c361cbdd563cd97bd3db5a39b526141c51d547c67eff1cb9bd29b",
+      "bytes": 9867,
+      "lineCount": 204,
+      "anchors": [
+        "3: import { APIUserAbortError } from '../types/providerSdk.js';",
+        "7: import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js';",
+        "8: import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js';",
+        "10: import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../Tool.js';",
+        "11: import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/bashPermissions.js';",
+        "12: import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js';",
+        "15: import { clearClassifierChecking, setClassifierApproval, setYoloClassifierApproval } from '../utils/classifierApprovals.js';",
+        "19: import type { PermissionDecision } from '../utils/permissions/PermissionResult.js';",
+        "20: import { hasPermissionsToUseTool } from '../utils/permissions/permissions.js';",
+        "22: import { handleCoordinatorPermission } from './toolPermission/handlers/coordinatorHandler.js';",
+        "23: import { handleInteractivePermission } from './toolPermission/handlers/interactiveHandler.js';",
+        "24: import { handleSwarmWorkerPermission } from './toolPermission/handlers/swarmWorkerHandler.js';",
+        "25: import { createPermissionContext, createPermissionQueueOps } from './toolPermission/PermissionContext.js';",
+        "26: import { logPermissionDecision } from './toolPermission/permissionLogging.js';"
+      ],
+      "capsuleId": "src-hooks-useCanUseTool-tsx:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code",
+        "tool-permission-runtime"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L3",
+          "line": 3,
+          "title": "import { APIUserAbortError } from '../types/providerSdk.js';",
+          "excerpt": "2: import { feature } from 'bun:bundle';\n3: import { APIUserAbortError } from '../types/providerSdk.js';\n4: import * as React from 'react';",
+          "excerptHash": "00ad19af854a589a"
+        },
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L7",
+          "line": 7,
+          "title": "import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js';",
+          "excerpt": "6: import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';\n7: import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js';\n8: import type { ToolUs...",
+          "excerptHash": "b125a74eb6386be0"
+        },
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L8",
+          "line": 8,
+          "title": "import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js';",
+          "excerpt": "7: import { sanitizeToolNameForAnalytics } from 'src/services/analytics/metadata.js';\n8: import type { ToolUseConfirm } from '../components/permissions/PermissionRequest.js';\n9: import { Text } from '../ink.js';",
+          "excerptHash": "03df0e78523bf9b1"
+        },
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L10",
+          "line": 10,
+          "title": "import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../Tool.js';",
+          "excerpt": "9: import { Text } from '../ink.js';\n10: import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../Tool.js';\n11: import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/...",
+          "excerptHash": "e88a8efcf16b818e"
+        },
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L11",
+          "line": 11,
+          "title": "import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/bashPermissions.js';",
+          "excerpt": "10: import type { ToolPermissionContext, Tool as ToolType, ToolUseContext } from '../Tool.js';\n11: import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/bashPermissions.js';\n12: import { BAS...",
+          "excerptHash": "e2593d487dc84ff7"
+        },
+        {
+          "id": "src-hooks-useCanUseTool-tsx#L12",
+          "line": 12,
+          "title": "import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js';",
+          "excerpt": "11: import { consumeSpeculativeClassifierCheck, peekSpeculativeClassifierCheck } from '../tools/BashTool/bashPermissions.js';\n12: import { BASH_TOOL_NAME } from '../tools/BashTool/toolName.js';\n13: import type { AssistantMessage } from '...",
+          "excerptHash": "9c963411b64c121d"
+        }
+      ]
+    },
+    {
+      "id": "src-types-permissions-ts",
+      "path": "src/types/permissions.ts",
+      "exists": true,
+      "sha256": "fcd0c6ad10eea302a4ea68f9c39c93279985402fa5753dfcc9d91bb9c10927c8",
+      "bytes": 14287,
+      "lineCount": 467,
+      "anchors": [
+        "2: * Pure permission type definitions extracted to break import cycles.",
+        "5: * Implementation files remain in src/utils/permissions/ but can now import from here",
+        "10: import type { ContentBlockParam } from 'src/types/providerSdk.js'",
+        "13: // Permission Modes",
+        "16: export const EXTERNAL_PERMISSION_MODES = [",
+        "18: 'bypassPermissions',",
+        "24: export type ExternalPermissionMode = (typeof EXTERNAL_PERMISSION_MODES)[number]",
+        "27: // is INTERNAL_PERMISSION_MODES below.",
+        "28: export type InternalPermissionMode = ExternalPermissionMode | 'auto' | 'bubble'",
+        "29: export type PermissionMode = InternalPermissionMode",
+        "32: // defaultMode, --permission-mode CLI flag, conversation recovery).",
+        "33: export const INTERNAL_PERMISSION_MODES = [",
+        "34: ...EXTERNAL_PERMISSION_MODES,",
+        "36: ] as const satisfies readonly PermissionMode[]"
+      ],
+      "capsuleId": "src-types-permissions-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "source-code",
+        "tool-permission-runtime"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-types-permissions-ts#L2",
+          "line": 2,
+          "title": "* Pure permission type definitions extracted to break import cycles.",
+          "excerpt": "1: /**\n2: * Pure permission type definitions extracted to break import cycles.\n3: *",
+          "excerptHash": "9cd210d00d2d8918"
+        },
+        {
+          "id": "src-types-permissions-ts#L5",
+          "line": 5,
+          "title": "* Implementation files remain in src/utils/permissions/ but can now import from here",
+          "excerpt": "4: * This file contains only type definitions and constants with no runtime dependencies.\n5: * Implementation files remain in src/utils/permissions/ but can now import from here\n6: * to avoid circular dependencies.",
+          "excerptHash": "90ccbbd1bef48852"
+        },
+        {
+          "id": "src-types-permissions-ts#L10",
+          "line": 10,
+          "title": "import type { ContentBlockParam } from 'src/types/providerSdk.js'",
+          "excerpt": "9: import { feature } from 'bun:bundle'\n10: import type { ContentBlockParam } from 'src/types/providerSdk.js'\n11: ",
+          "excerptHash": "4b2c39a2c6b9a3bc"
+        },
+        {
+          "id": "src-types-permissions-ts#L13",
+          "line": 13,
+          "title": "// Permission Modes",
+          "excerpt": "12: // ============================================================================\n13: // Permission Modes\n14: // ============================================================================",
+          "excerptHash": "53fec417523cadb4"
+        },
+        {
+          "id": "src-types-permissions-ts#L16",
+          "line": 16,
+          "title": "export const EXTERNAL_PERMISSION_MODES = [",
+          "excerpt": "15: \n16: export const EXTERNAL_PERMISSION_MODES = [\n17: 'acceptEdits',",
+          "excerptHash": "6e77a2be37094b28"
+        },
+        {
+          "id": "src-types-permissions-ts#L18",
+          "line": 18,
+          "title": "'bypassPermissions',",
+          "excerpt": "17: 'acceptEdits',\n18: 'bypassPermissions',\n19: 'default',",
+          "excerptHash": "74a8442327a374a0"
+        }
+      ]
+    },
+    {
+      "id": "src-utils-model-deepseekV4Control-ts",
+      "path": "src/utils/model/deepseekV4Control.ts",
+      "exists": true,
+      "sha256": "5cac7dbaefa68583a2cca6f273c936aa35a85a602abb2a7b0c0a4b636d5295e1",
+      "bytes": 30378,
+      "lineCount": 885,
+      "anchors": [
+        "1: export const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash' as const",
+        "2: export const DEEPSEEK_V4_PRO_MODEL = 'deepseek-v4-pro' as const",
+        "4: export type DeepSeekV4Model =",
+        "5: | typeof DEEPSEEK_V4_FLASH_MODEL",
+        "6: | typeof DEEPSEEK_V4_PRO_MODEL",
+        "8: export type DeepSeekV4ApiMode = 'thinking' | 'non_thinking'",
+        "9: export type DeepSeekV4ReasoningEffort = 'high' | 'max'",
+        "10: export type DeepSeekV4EndpointKind = 'chat_completions' | 'fim_completion'",
+        "12: export type DeepSeekV4RouteRole =",
+        "22: export type DeepSeekV4WorkflowKind =",
+        "34: export type DeepSeekV4PolicyReason =",
+        "35: | 'fim_flash_beta_non_thinking'",
+        "36: | 'fim_pro_beta_non_thinking'",
+        "37: | 'lightweight_flash_non_thinking'"
+      ],
+      "capsuleId": "src-utils-model-deepseekV4Control-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "provider-cost-cache",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L1",
+          "line": 1,
+          "title": "export const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash' as const",
+          "excerpt": "1: export const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash' as const\n2: export const DEEPSEEK_V4_PRO_MODEL = 'deepseek-v4-pro' as const",
+          "excerptHash": "b5de3711e26dc292"
+        },
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L2",
+          "line": 2,
+          "title": "export const DEEPSEEK_V4_PRO_MODEL = 'deepseek-v4-pro' as const",
+          "excerpt": "1: export const DEEPSEEK_V4_FLASH_MODEL = 'deepseek-v4-flash' as const\n2: export const DEEPSEEK_V4_PRO_MODEL = 'deepseek-v4-pro' as const\n3: ",
+          "excerptHash": "e78b309a663ecc97"
+        },
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L4",
+          "line": 4,
+          "title": "export type DeepSeekV4Model =",
+          "excerpt": "3: \n4: export type DeepSeekV4Model =\n5: | typeof DEEPSEEK_V4_FLASH_MODEL",
+          "excerptHash": "5810e1ff18613b28"
+        },
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L5",
+          "line": 5,
+          "title": "| typeof DEEPSEEK_V4_FLASH_MODEL",
+          "excerpt": "4: export type DeepSeekV4Model =\n5: | typeof DEEPSEEK_V4_FLASH_MODEL\n6: | typeof DEEPSEEK_V4_PRO_MODEL",
+          "excerptHash": "376954fbdd5dfb81"
+        },
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L6",
+          "line": 6,
+          "title": "| typeof DEEPSEEK_V4_PRO_MODEL",
+          "excerpt": "5: | typeof DEEPSEEK_V4_FLASH_MODEL\n6: | typeof DEEPSEEK_V4_PRO_MODEL\n7: ",
+          "excerptHash": "5e9adef438895363"
+        },
+        {
+          "id": "src-utils-model-deepseekV4Control-ts#L8",
+          "line": 8,
+          "title": "export type DeepSeekV4ApiMode = 'thinking' | 'non_thinking'",
+          "excerpt": "7: \n8: export type DeepSeekV4ApiMode = 'thinking' | 'non_thinking'\n9: export type DeepSeekV4ReasoningEffort = 'high' | 'max'",
+          "excerptHash": "d5d97ce83ab10c43"
+        }
+      ]
+    },
+    {
+      "id": "src-utils-model-deepseekV4CostRouter-ts",
+      "path": "src/utils/model/deepseekV4CostRouter.ts",
+      "exists": true,
+      "sha256": "b4faa267636a8a4480416545f291590380d0d9c1ee8554be9470e26d1ddc5e20",
+      "bytes": 3965,
+      "lineCount": 129,
+      "anchors": [
+        "2: clampDeepSeekV4MaxTokens,",
+        "3: decideDeepSeekV4Route,",
+        "4: formatDeepSeekV4RequestEvidence,",
+        "5: normalizeDeepSeekV4Model,",
+        "6: type DeepSeekV4ApiMode,",
+        "7: type DeepSeekV4EndpointKind,",
+        "8: type DeepSeekV4ReasoningEffort,",
+        "9: type DeepSeekV4RouteDecision,",
+        "10: type DeepSeekV4RouteInput,",
+        "11: } from './deepseekV4Control.js'",
+        "13: export type DeepSeekV4CostRouterParams = {",
+        "20: export type DeepSeekV4CostRouterEnv = {",
+        "21: DEEPSEEK_MODEL?: string",
+        "22: DSXU_DEEPSEEK_THINKING?: string"
+      ],
+      "capsuleId": "src-utils-model-deepseekV4CostRouter-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "provider-cost-cache",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L2",
+          "line": 2,
+          "title": "clampDeepSeekV4MaxTokens,",
+          "excerpt": "1: import {\n2: clampDeepSeekV4MaxTokens,\n3: decideDeepSeekV4Route,",
+          "excerptHash": "91f2890940bae123"
+        },
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L3",
+          "line": 3,
+          "title": "decideDeepSeekV4Route,",
+          "excerpt": "2: clampDeepSeekV4MaxTokens,\n3: decideDeepSeekV4Route,\n4: formatDeepSeekV4RequestEvidence,",
+          "excerptHash": "2a7a60a86fdf896f"
+        },
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L4",
+          "line": 4,
+          "title": "formatDeepSeekV4RequestEvidence,",
+          "excerpt": "3: decideDeepSeekV4Route,\n4: formatDeepSeekV4RequestEvidence,\n5: normalizeDeepSeekV4Model,",
+          "excerptHash": "725d7eabd3e32ce5"
+        },
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L5",
+          "line": 5,
+          "title": "normalizeDeepSeekV4Model,",
+          "excerpt": "4: formatDeepSeekV4RequestEvidence,\n5: normalizeDeepSeekV4Model,\n6: type DeepSeekV4ApiMode,",
+          "excerptHash": "056ac6fd8272bd77"
+        },
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L6",
+          "line": 6,
+          "title": "type DeepSeekV4ApiMode,",
+          "excerpt": "5: normalizeDeepSeekV4Model,\n6: type DeepSeekV4ApiMode,\n7: type DeepSeekV4EndpointKind,",
+          "excerptHash": "77aab29615c93aa3"
+        },
+        {
+          "id": "src-utils-model-deepseekV4CostRouter-ts#L7",
+          "line": 7,
+          "title": "type DeepSeekV4EndpointKind,",
+          "excerpt": "6: type DeepSeekV4ApiMode,\n7: type DeepSeekV4EndpointKind,\n8: type DeepSeekV4ReasoningEffort,",
+          "excerptHash": "0652835428d11b33"
+        }
+      ]
+    },
+    {
+      "id": "src-services-api-deepseek-adapter-ts",
+      "path": "src/services/api/deepseek-adapter.ts",
+      "exists": true,
+      "sha256": "a4ffac0465022beeff56478e80163d326473ab02a09b167421570269baba4f9a",
+      "bytes": 41218,
+      "lineCount": 1050,
+      "anchors": [
+        "6: import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from '../../constants/prompts.js';",
+        "8: estimateDeepSeekV4Cost,",
+        "9: normalizeDeepSeekV4Model,",
+        "10: type DeepSeekV4ApiMode,",
+        "11: type DeepSeekV4EndpointKind,",
+        "12: type DeepSeekV4Model,",
+        "13: type DeepSeekV4ReasoningEffort,",
+        "14: type DeepSeekV4RouteDecision,",
+        "15: type DeepSeekV4RouteInput,",
+        "16: } from '../../utils/model/deepseekV4Control.js';",
+        "17: import { resolveDeepSeekV4CostRoute } from '../../utils/model/deepseekV4CostRouter.js';",
+        "18: import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';",
+        "20: export interface DeepSeekRequestPlan {",
+        "22: isOpenRouter: boolean"
+      ],
+      "capsuleId": "src-services-api-deepseek-adapter-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "provider-cost-cache",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L6",
+          "line": 6,
+          "title": "import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from '../../constants/prompts.js';",
+          "excerpt": "5: import { createHash } from 'crypto';\n6: import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from '../../constants/prompts.js';\n7: import {",
+          "excerptHash": "77164bd1148f0c76"
+        },
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L8",
+          "line": 8,
+          "title": "estimateDeepSeekV4Cost,",
+          "excerpt": "7: import {\n8: estimateDeepSeekV4Cost,\n9: normalizeDeepSeekV4Model,",
+          "excerptHash": "32037e6ffe082061"
+        },
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L9",
+          "line": 9,
+          "title": "normalizeDeepSeekV4Model,",
+          "excerpt": "8: estimateDeepSeekV4Cost,\n9: normalizeDeepSeekV4Model,\n10: type DeepSeekV4ApiMode,",
+          "excerptHash": "22fa7e89f41eb39a"
+        },
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L10",
+          "line": 10,
+          "title": "type DeepSeekV4ApiMode,",
+          "excerpt": "9: normalizeDeepSeekV4Model,\n10: type DeepSeekV4ApiMode,\n11: type DeepSeekV4EndpointKind,",
+          "excerptHash": "c8bd04c0ff04ff56"
+        },
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L11",
+          "line": 11,
+          "title": "type DeepSeekV4EndpointKind,",
+          "excerpt": "10: type DeepSeekV4ApiMode,\n11: type DeepSeekV4EndpointKind,\n12: type DeepSeekV4Model,",
+          "excerptHash": "7f76ce213f57d61f"
+        },
+        {
+          "id": "src-services-api-deepseek-adapter-ts#L12",
+          "line": 12,
+          "title": "type DeepSeekV4Model,",
+          "excerpt": "11: type DeepSeekV4EndpointKind,\n12: type DeepSeekV4Model,\n13: type DeepSeekV4ReasoningEffort,",
+          "excerptHash": "dfcfbb07795ba74e"
+        }
+      ]
+    },
+    {
+      "id": "src-services-api-deepseek-trajectory-store-ts",
+      "path": "src/services/api/deepseek-trajectory-store.ts",
+      "exists": true,
+      "sha256": "10da380d65e852011917dc053873907a2e3cd7d15e9022868ceb86cc0b2b97d1",
+      "bytes": 7033,
+      "lineCount": 209,
+      "anchors": [
+        "5: export type DeepSeekTrajectoryEvent =",
+        "6: | 'request_plan'",
+        "7: | 'request_messages'",
+        "10: | 'response_usage';",
+        "12: export interface DeepSeekTrajectoryRecord {",
+        "14: event: DeepSeekTrajectoryEvent;",
+        "15: requestTag: string;",
+        "16: requestId?: string;",
+        "17: redacted: true;",
+        "21: interface ToolSnapshot {",
+        "34: export class DeepSeekTrajectoryStore {",
+        "36: const path = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE?.trim();",
+        "40: static createRequestTag(): string {",
+        "42: return `dsxu-deepseek-${DeepSeekTrajectoryStore.shortHash(source)}`;"
+      ],
+      "capsuleId": "src-services-api-deepseek-trajectory-store-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "provider-cost-cache",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L5",
+          "line": 5,
+          "title": "export type DeepSeekTrajectoryEvent =",
+          "excerpt": "4: \n5: export type DeepSeekTrajectoryEvent =\n6: | 'request_plan'",
+          "excerptHash": "8212fcff6ff29aa1"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L6",
+          "line": 6,
+          "title": "| 'request_plan'",
+          "excerpt": "5: export type DeepSeekTrajectoryEvent =\n6: | 'request_plan'\n7: | 'request_messages'",
+          "excerptHash": "fcde186e027430e9"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L7",
+          "line": 7,
+          "title": "| 'request_messages'",
+          "excerpt": "6: | 'request_plan'\n7: | 'request_messages'\n8: | 'json_response'",
+          "excerptHash": "5429e1fbb2a03360"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L10",
+          "line": 10,
+          "title": "| 'response_usage';",
+          "excerpt": "9: | 'stream_response'\n10: | 'response_usage';\n11: ",
+          "excerptHash": "9fa1d108c9df67c1"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L12",
+          "line": 12,
+          "title": "export interface DeepSeekTrajectoryRecord {",
+          "excerpt": "11: \n12: export interface DeepSeekTrajectoryRecord {\n13: ts: string;",
+          "excerptHash": "2f2dd549c680989c"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-ts#L14",
+          "line": 14,
+          "title": "event: DeepSeekTrajectoryEvent;",
+          "excerpt": "13: ts: string;\n14: event: DeepSeekTrajectoryEvent;\n15: requestTag: string;",
+          "excerptHash": "5dd5e5e7f7763800"
+        }
+      ]
+    },
+    {
+      "id": "src-services-api-deepseek-trajectory-store-test-ts",
+      "path": "src/services/api/deepseek-trajectory-store.test.ts",
+      "exists": true,
+      "sha256": "5f1ba1638559fccd333d928dfdb20d0cb20038e3188afc066e9edf2d61966d3d",
+      "bytes": 6456,
+      "lineCount": 172,
+      "anchors": [
+        "5: import { DeepSeekAdapter } from './deepseek-adapter.js';",
+        "6: import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';",
+        "9: const originalApiKey = process.env.DEEPSEEK_API_KEY;",
+        "10: const originalBaseUrl = process.env.DEEPSEEK_BASE_URL;",
+        "11: const originalTrajectoryFile = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;",
+        "12: let tmpRoot: string | null = null;",
+        "16: if (originalApiKey === undefined) delete process.env.DEEPSEEK_API_KEY;",
+        "17: else process.env.DEEPSEEK_API_KEY = originalApiKey;",
+        "18: if (originalBaseUrl === undefined) delete process.env.DEEPSEEK_BASE_URL;",
+        "19: else process.env.DEEPSEEK_BASE_URL = originalBaseUrl;",
+        "20: if (originalTrajectoryFile === undefined) delete process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;",
+        "21: else process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE = originalTrajectoryFile;",
+        "22: if (tmpRoot && existsSync(tmpRoot)) rmSync(tmpRoot, { recursive: true, force: true });",
+        "23: tmpRoot = null;"
+      ],
+      "capsuleId": "src-services-api-deepseek-trajectory-store-test-ts:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [
+        "provider-cost-cache",
+        "source-code"
+      ],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L5",
+          "line": 5,
+          "title": "import { DeepSeekAdapter } from './deepseek-adapter.js';",
+          "excerpt": "4: import { join } from 'path';\n5: import { DeepSeekAdapter } from './deepseek-adapter.js';\n6: import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';",
+          "excerptHash": "97119a0ed0db3893"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L6",
+          "line": 6,
+          "title": "import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';",
+          "excerpt": "5: import { DeepSeekAdapter } from './deepseek-adapter.js';\n6: import { DeepSeekTrajectoryStore } from './deepseek-trajectory-store.js';\n7: ",
+          "excerptHash": "4345a6adfa5684e5"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L9",
+          "line": 9,
+          "title": "const originalApiKey = process.env.DEEPSEEK_API_KEY;",
+          "excerpt": "8: const originalFetch = globalThis.fetch;\n9: const originalApiKey = process.env.DEEPSEEK_API_KEY;\n10: const originalBaseUrl = process.env.DEEPSEEK_BASE_URL;",
+          "excerptHash": "10cabc8904ac8b52"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L10",
+          "line": 10,
+          "title": "const originalBaseUrl = process.env.DEEPSEEK_BASE_URL;",
+          "excerpt": "9: const originalApiKey = process.env.DEEPSEEK_API_KEY;\n10: const originalBaseUrl = process.env.DEEPSEEK_BASE_URL;\n11: const originalTrajectoryFile = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;",
+          "excerptHash": "63476d1596f121ff"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L11",
+          "line": 11,
+          "title": "const originalTrajectoryFile = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;",
+          "excerpt": "10: const originalBaseUrl = process.env.DEEPSEEK_BASE_URL;\n11: const originalTrajectoryFile = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;\n12: let tmpRoot: string | null = null;",
+          "excerptHash": "717bed9889ef7944"
+        },
+        {
+          "id": "src-services-api-deepseek-trajectory-store-test-ts#L12",
+          "line": 12,
+          "title": "let tmpRoot: string | null = null;",
+          "excerpt": "11: const originalTrajectoryFile = process.env.DSXU_DEEPSEEK_TRAJECTORY_FILE;\n12: let tmpRoot: string | null = null;\n13: ",
+          "excerptHash": "7720c128cb95738f"
+        }
+      ]
+    },
+    {
+      "id": "package-json",
+      "path": "package.json",
+      "exists": true,
+      "sha256": "4caa0486448a8d5014799b35edb38cd695059b62a42fedb27ee482f2e9d8a3d2",
+      "bytes": 12503,
+      "lineCount": 210,
+      "anchors": [
+        "5: \"description\": \"DeepSeek-first AI coding CLI/TUI with Flash-first routing, tool execution, recovery, cost evidence, and release gates.\",",
+        "24: \"test:dsxu:release\": \"bun run scripts/dsxu-release-gate.ts\",",
+        "32: \"owner-git:product-stage-plan\": \"bun run scripts/dsxu-owner-git-product-stage-plan.ts\",",
+        "45: \"v24:live-acceptance\": \"bun run scripts/dsxu-v24-live-acceptance-router.ts\",",
+        "50: \"v24:product-benchmark-data\": \"bun run scripts/dsxu-v24-product-benchmark-data-pack.ts\",",
+        "60: \"v26:c2-public-claim-closure\": \"bun run scripts/dsxu-v26-c2-public-claim-closure.ts\",",
+        "64: \"capability:cost-crosswalk\": \"bun run scripts/dsxu-capability-cost-crosswalk.ts\",",
+        "70: \"source:cache-acceptance\": \"bun run scripts/dsxu-source-cache-acceptance.ts\",",
+        "71: \"visible-state:acceptance\": \"bun run scripts/dsxu-visible-state-acceptance.ts\",",
+        "72: \"deepseek:cost-quality\": \"bun run scripts/dsxu-deepseek-cost-quality-acceptance.ts\",",
+        "73: \"agent-mcp-skill:acceptance\": \"bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts\",",
+        "74: \"external-benchmark-adapter:proof\": \"bun run scripts/dsxu-external-benchmark-adapter-proof.ts\",",
+        "77: \"evidence:c2-public-claim-closure\": \"bun run scripts/dsxu-v26-c2-public-claim-closure.ts\",",
+        "81: \"evidence:capability-cost-crosswalk\": \"bun run scripts/dsxu-capability-cost-crosswalk.ts\","
+      ],
+      "capsuleId": "package-json:capsule",
+      "excerptBudgetChars": 1400,
+      "riskTags": [],
+      "fallbackReadPolicy": "no-Read default; if raw source is explicitly needed, read only anchor-local ranges and keep total raw chars <= 24000",
+      "anchorCapsules": [
+        {
+          "id": "package-json#L5",
+          "line": 5,
+          "title": "\"description\": \"DeepSeek-first AI coding CLI/TUI with Flash-first routing, tool execution, recovery, cost evidence, and release gates.\",",
+          "excerpt": "4: \"private\": false,\n5: \"description\": \"DeepSeek-first AI coding CLI/TUI with Flash-first routing, tool execution, recovery, cost evidence, and release gates.\",\n6: \"license\": \"Apache-2.0\",",
+          "excerptHash": "147f7539e5d87994"
+        },
+        {
+          "id": "package-json#L24",
+          "line": 24,
+          "title": "\"test:dsxu:release\": \"bun run scripts/dsxu-release-gate.ts\",",
+          "excerpt": "23: \"start\": \"bun --env-file=.env ./src/entrypoints/dsxu-code.tsx\",\n24: \"test:dsxu:release\": \"bun run scripts/dsxu-release-gate.ts\",\n25: \"audit:dsxu:health\": \"bun run scripts/dsxu-health-audit.ts\",",
+          "excerptHash": "a6dc37b6761b8dff"
+        },
+        {
+          "id": "package-json#L32",
+          "line": 32,
+          "title": "\"owner-git:product-stage-plan\": \"bun run scripts/dsxu-owner-git-product-stage-plan.ts\",",
+          "excerpt": "31: \"owner-git:authorization-board\": \"bun run scripts/dsxu-v20-owner-git-authorization-board.ts\",\n32: \"owner-git:product-stage-plan\": \"bun run scripts/dsxu-owner-git-product-stage-plan.ts\",\n33: \"owner-git:stage-plan\": \"bun run scripts/ds...",
+          "excerptHash": "5ff6d25d8c38e122"
+        },
+        {
+          "id": "package-json#L45",
+          "line": 45,
+          "title": "\"v24:live-acceptance\": \"bun run scripts/dsxu-v24-live-acceptance-router.ts\",",
+          "excerpt": "44: \"v24:batch\": \"bun run scripts/dsxu-v24-execution-batch.ts\",\n45: \"v24:live-acceptance\": \"bun run scripts/dsxu-v24-live-acceptance-router.ts\",\n46: \"v24:completed-reacceptance\": \"bun run scripts/dsxu-v24-completed-reacceptance.ts\",",
+          "excerptHash": "ad068e66a37f90ee"
+        },
+        {
+          "id": "package-json#L50",
+          "line": 50,
+          "title": "\"v24:product-benchmark-data\": \"bun run scripts/dsxu-v24-product-benchmark-data-pack.ts\",",
+          "excerpt": "49: \"v24:public-challenge\": \"bun run scripts/dsxu-v24-public-challenge-package.ts\",\n50: \"v24:product-benchmark-data\": \"bun run scripts/dsxu-v24-product-benchmark-data-pack.ts\",\n51: \"v24:six-stage-final-tests\": \"bun run scripts/dsxu-v24-s...",
+          "excerptHash": "b4c42b940409da0d"
+        },
+        {
+          "id": "package-json#L60",
+          "line": 60,
+          "title": "\"v26:c2-public-claim-closure\": \"bun run scripts/dsxu-v26-c2-public-claim-closure.ts\",",
+          "excerpt": "59: \"v26:c2-capability-loss-board\": \"bun run scripts/dsxu-v26-c2-capability-loss-board.ts\",\n60: \"v26:c2-public-claim-closure\": \"bun run scripts/dsxu-v26-c2-public-claim-closure.ts\",\n61: \"v26:c2-owner-implementation-acceptance\": \"bun run ...",
+          "excerptHash": "3ce9588fcc4adc26"
+        }
+      ]
+    }
+  ],
+  "reportSummaries": [
+    {
+      "id": "completed-reacceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+      "summary": {}
+    },
+    {
+      "id": "interactive-tui",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+      "summary": {
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "c2-loop",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+      "summary": {
+        "primaryPassed": 15,
+        "secondaryPassed": 36,
+        "passedRows": 51,
+        "openRows": 0,
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "c2-public-claim-closure",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json",
+      "status": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+      "summary": {}
+    },
+    {
+      "id": "c2-owner-implementation-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+      "summary": {}
+    },
+    {
+      "id": "senior-coding-window",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+      "summary": {
+        "continuousWindowSatisfied": true,
+        "finalTestPassed": true
+      }
+    },
+    {
+      "id": "clean-export-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "summary": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false,
+        "blockers": 0
+      }
+    },
+    {
+      "id": "six-stage-final-tests",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json",
+      "status": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+      "summary": {}
+    },
+    {
+      "id": "clean-export-artifact",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json",
+      "status": "PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+      "summary": {}
+    },
+    {
+      "id": "fresh-install-release-smoke",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json",
+      "status": "PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+      "summary": {}
+    }
+  ],
+  "capabilityClaims": {
+    "c2LoopStatus": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+    "c2LoopCoverage": {
+      "totalRows": 51,
+      "primaryRows": 15,
+      "secondaryRows": 36,
+      "primaryPassed": 15,
+      "secondaryPassed": 36,
+      "passedRows": 51,
+      "openRows": 0
+    },
+    "c2PublicClaimBoundaryStatus": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+    "c2OwnerImplementationAcceptanceStatus": "PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+    "c2OwnerImplementationTotals": {
+      "rows": 1902,
+      "implementedTestedRows": 1096,
+      "adaptedExcludedRows": 601,
+      "noLossBaselineRows": 205,
+      "needsRealCodeTestRows": 0,
+      "p0Rows": 170,
+      "p1Rows": 494,
+      "priorBlockedPublicClaimRows": 914,
+      "publicClaimClosureStatus": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+      "capabilityLossBoardStatus": "OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED"
+    },
+    "interactiveTuiStatus": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+    "seniorCodingStatus": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+    "seniorCodingWindow": {
+      "continuousWindowSatisfied": true
+    },
+    "seniorCodingFinalTestPassed": true,
+    "workStateTimelineImplementation": {
+      "owner": "DSXU-owned visible-state projection",
+      "source": "src/dsxu/engine/work-state-timeline.ts",
+      "finalReportWiring": "src/dsxu/engine/code-mode-surgical-loop.ts",
+      "queryWiring": "src/query.ts"
+    },
+    "deepSeekRuntimeImplementation": {
+      "trajectoryStore": "src/services/api/deepseek-trajectory-store.ts",
+      "adapter": "src/services/api/deepseek-adapter.ts",
+      "costRouter": "src/utils/model/deepseekV4CostRouter.ts",
+      "controlPolicy": "src/utils/model/deepseekV4Control.ts"
+    }
+  },
+  "releaseClaims": {
+    "cleanExportPreflightStatus": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+    "sixStageFinalTestsStatus": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+    "cleanExportArtifactStatus": "PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+    "cleanExportZipPath": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-16T15-28-23-581Z.zip",
+    "cleanExportZipSha256": "b1388b134122808a4092bbfec1dd83ba2bc8c453a3e3f85c807875107ef81b33",
+    "freshInstallSmokeStatus": "PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+    "publicSurfacePolicy": "V24/V26 source-truth docs are allowed as audit evidence, not public parity claims."
+  },
+  "cacheOptimization": {
+    "optimizationReferenceHitRatePct": 70,
+    "targetHitRatePct": 70,
+    "targetIsReleaseGate": false,
+    "noReadDefault": true,
+    "fallbackReadMaxChars": 24000,
+    "fallbackReadPolicy": "Read is disabled in the default review lane; fallback raw reads require an explicit source gap, anchor-local range, and separate accounting.",
+    "strategy": "All Flash reviews share the same deterministic source-truth capsule and only vary a short task-specific verdict schema.",
+    "sourceTruthRefCount": 30,
+    "sourceTruthCapsuleCount": 176,
+    "missingSourceTruthRefs": []
+  }
+}

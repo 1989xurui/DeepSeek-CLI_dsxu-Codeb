@@ -1,0 +1,250 @@
+﻿{
+    "schemaVersion":  "dsxu.reasonix.performance-impact-summary.v1",
+    "generatedAt":  "2026-05-17",
+    "reasonixFilesCovered":  987,
+    "byKind":  [
+                   {
+                       "kind":  "runtime-source",
+                       "files":  389,
+                       "lines":  71453,
+                       "bytes":  2515109
+                   },
+                   {
+                       "kind":  "test",
+                       "files":  218,
+                       "lines":  44764,
+                       "bytes":  1614049
+                   },
+                   {
+                       "kind":  "other-support",
+                       "files":  98,
+                       "lines":  33957,
+                       "bytes":  2844848
+                   },
+                   {
+                       "kind":  "benchmark-evidence",
+                       "files":  78,
+                       "lines":  5789,
+                       "bytes":  712476
+                   },
+                   {
+                       "kind":  "docs",
+                       "files":  58,
+                       "lines":  23749,
+                       "bytes":  1671585
+                   },
+                   {
+                       "kind":  "asset",
+                       "files":  51,
+                       "lines":  0,
+                       "bytes":  335926
+                   },
+                   {
+                       "kind":  "rust-or-native-support",
+                       "files":  40,
+                       "lines":  10676,
+                       "bytes":  351010
+                   },
+                   {
+                       "kind":  "config-or-build",
+                       "files":  37,
+                       "lines":  12163,
+                       "bytes":  612188
+                   },
+                   {
+                       "kind":  "repo-governance",
+                       "files":  14,
+                       "lines":  779,
+                       "bytes":  25060
+                   },
+                   {
+                       "kind":  "example",
+                       "files":  4,
+                       "lines":  380,
+                       "bytes":  11076
+                   }
+               ],
+    "byMechanism":  [
+                        {
+                            "mechanism":  "visible-work-state",
+                            "files":  648,
+                            "lines":  173261,
+                            "bytes":  7132703
+                        },
+                        {
+                            "mechanism":  "context-recovery",
+                            "files":  547,
+                            "lines":  161710,
+                            "bytes":  6556080
+                        },
+                        {
+                            "mechanism":  "tool-call-repair",
+                            "files":  511,
+                            "lines":  156859,
+                            "bytes":  8121603
+                        },
+                        {
+                            "mechanism":  "tool-result-budget",
+                            "files":  502,
+                            "lines":  159889,
+                            "bytes":  8196164
+                        },
+                        {
+                            "mechanism":  "deepseek-route-cost-control",
+                            "files":  499,
+                            "lines":  145759,
+                            "bytes":  7716986
+                        },
+                        {
+                            "mechanism":  "cache-first-loop",
+                            "files":  449,
+                            "lines":  149648,
+                            "bytes":  6109013
+                        },
+                        {
+                            "mechanism":  "mcp-skill-agent-envelope",
+                            "files":  398,
+                            "lines":  140717,
+                            "bytes":  5351360
+                        },
+                        {
+                            "mechanism":  "evidence-release-claim",
+                            "files":  361,
+                            "lines":  128886,
+                            "bytes":  5397937
+                        },
+                        {
+                            "mechanism":  "permission-tool-gate",
+                            "files":  272,
+                            "lines":  113608,
+                            "bytes":  4591213
+                        },
+                        {
+                            "mechanism":  "parallel-safe-dispatch",
+                            "files":  168,
+                            "lines":  100667,
+                            "bytes":  3927818
+                        },
+                        {
+                            "mechanism":  "no-direct-performance-mechanism",
+                            "files":  85,
+                            "lines":  1159,
+                            "bytes":  559224
+                        }
+                    ],
+    "byPerformanceVector":  [
+                                {
+                                    "vector":  "ui-latency-risk",
+                                    "files":  648,
+                                    "lines":  173261,
+                                    "bytes":  7132703
+                                },
+                                {
+                                    "vector":  "token-cache-positive",
+                                    "files":  633,
+                                    "lines":  178986,
+                                    "bytes":  8869511
+                                },
+                                {
+                                    "vector":  "memory-io-risk",
+                                    "files":  547,
+                                    "lines":  161710,
+                                    "bytes":  6556080
+                                },
+                                {
+                                    "vector":  "quality-positive-latency-risk",
+                                    "files":  511,
+                                    "lines":  156859,
+                                    "bytes":  8121603
+                                },
+                                {
+                                    "vector":  "memory-positive",
+                                    "files":  502,
+                                    "lines":  159889,
+                                    "bytes":  8196164
+                                },
+                                {
+                                    "vector":  "cost-positive-routing-risk",
+                                    "files":  499,
+                                    "lines":  145759,
+                                    "bytes":  7716986
+                                },
+                                {
+                                    "vector":  "integration-risk",
+                                    "files":  398,
+                                    "lines":  140717,
+                                    "bytes":  5351360
+                                },
+                                {
+                                    "vector":  "observability-io-risk",
+                                    "files":  361,
+                                    "lines":  128886,
+                                    "bytes":  5397937
+                                },
+                                {
+                                    "vector":  "safety-positive-latency-risk",
+                                    "files":  272,
+                                    "lines":  113608,
+                                    "bytes":  4591213
+                                },
+                                {
+                                    "vector":  "latency-positive-ordering-risk",
+                                    "files":  168,
+                                    "lines":  100667,
+                                    "bytes":  3927818
+                                },
+                                {
+                                    "vector":  "neutral-or-reference-only",
+                                    "files":  85,
+                                    "lines":  1159,
+                                    "bytes":  559224
+                                }
+                            ],
+    "byAbsorptionDecision":  [
+                                 {
+                                     "decision":  "absorb-mechanism-into-existing-dsxu-owner",
+                                     "files":  389,
+                                     "lines":  71453
+                                 },
+                                 {
+                                     "decision":  "use-as-acceptance-pattern-not-product-runtime",
+                                     "files":  218,
+                                     "lines":  44764
+                                 },
+                                 {
+                                     "decision":  "review-only",
+                                     "files":  135,
+                                     "lines":  46120
+                                 },
+                                 {
+                                     "decision":  "use-as-benchmark-method-pattern-not-result-claim",
+                                     "files":  78,
+                                     "lines":  5789
+                                 },
+                                 {
+                                     "decision":  "use-as-reference-boundary-only",
+                                     "files":  58,
+                                     "lines":  23749
+                                 },
+                                 {
+                                     "decision":  "exclude-product-specific-asset",
+                                     "files":  51,
+                                     "lines":  0
+                                 },
+                                 {
+                                     "decision":  "review-native-performance-idea-only",
+                                     "files":  40,
+                                     "lines":  10676
+                                 },
+                                 {
+                                     "decision":  "use-as-open-source-process-pattern-only",
+                                     "files":  14,
+                                     "lines":  779
+                                 },
+                                 {
+                                     "decision":  "use-as-demo-pattern-only",
+                                     "files":  4,
+                                     "lines":  380
+                                 }
+                             ]
+}

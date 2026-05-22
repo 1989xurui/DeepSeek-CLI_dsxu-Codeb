@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "dsxu.final-result-dashboard.v10",
+  "generatedAt": "2026-05-20T08:52:41.057Z",
+  "owner": "Evidence / Release Claim Binder",
+  "status": "PASS_V10_FINAL_RESULT_DASHBOARD_READY",
+  "publicClaimAllowed": false,
+  "readyForOpenSourceStory": true,
+  "blockPublic90Claim": true,
+  "gates": {
+    "ownerGitPreflight": {
+      "status": "PASS_READY_FOR_RELEASE_CLOSURE",
+      "pass": true,
+      "present": true
+    },
+    "finalPreflight": {
+      "status": "PASS",
+      "pass": true,
+      "present": true
+    },
+    "cleanExportPreflight": {
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "pass": true,
+      "present": true
+    },
+    "sixStageFinalTests": {
+      "status": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+      "pass": true,
+      "present": true
+    },
+    "claimBoundaryGate": {
+      "status": "PASS_DSXU_CLAIM_BOUNDARY_GATE",
+      "pass": true,
+      "present": true
+    },
+    "blockedClaimCorpus": {
+      "status": "PASS_BLOCKED_CLAIM_CORPUS_GENERATED",
+      "pass": true,
+      "present": true
+    },
+    "rewardHacking": {
+      "status": "PASS_V10_REWARD_HACKING_SEEDED_GUARD",
+      "pass": true,
+      "present": true
+    },
+    "featureDeletion": {
+      "status": "PASS_V10_FEATURE_DELETION_TASK_PACK_READY",
+      "pass": true,
+      "present": true
+    },
+    "toolWindowAb": {
+      "status": "PASS_DSXU_V8_TOOL_WINDOW_AB_REPORT",
+      "pass": true,
+      "present": true
+    },
+    "cnReplay": {
+      "status": "PASS_V8_CN_SCENARIO_REPLAY",
+      "pass": true,
+      "present": true
+    },
+    "longTaskReplay": {
+      "status": "PASS_V8_LONG_TASK_LEDGER_REPLAY",
+      "pass": true,
+      "present": true
+    },
+    "costQuality": {
+      "status": "PASS_V6_COST_TO_VERIFIED_COMPLETION_REPORT",
+      "pass": true,
+      "present": true
+    },
+    "finalReachability": {
+      "status": "PASS_V10_FINAL_REACHABILITY",
+      "pass": true,
+      "present": true
+    },
+    "finalGoldenReplay": {
+      "status": "PASS_V10_FINAL_GOLDEN_REPLAY",
+      "pass": true,
+      "present": true
+    },
+    "finalAblation": {
+      "status": "PASS_V10_FINAL_ABLATION",
+      "pass": true,
+      "present": true
+    },
+    "finalLocalizedFeedback": {
+      "status": "PASS_V10_FINAL_LOCALIZED_FEEDBACK",
+      "pass": true,
+      "present": true
+    },
+    "finalCacheCostTrajectory": {
+      "status": "PASS_V10_FINAL_CACHE_COST_TRAJECTORY",
+      "pass": true,
+      "present": true
+    },
+    "finalAgentToolPairing": {
+      "status": "PASS_V10_FINAL_AGENT_TOOL_PAIRING",
+      "pass": true,
+      "present": true
+    },
+    "v10DocumentSyncAudit": {
+      "status": "PASS_V10_THREE_DOC_SYNC_AUDIT",
+      "pass": true,
+      "present": true
+    },
+    "finalTuiTrustSurface": {
+      "status": "PASS_V10_FINAL_TUI_TRUST_SURFACE",
+      "pass": true,
+      "present": true
+    },
+    "finalLongTaskReplay": {
+      "status": "PASS_V10_FINAL_LONG_TASK_REPLAY",
+      "pass": true,
+      "present": true
+    },
+    "finalProviderSmokeDry": {
+      "status": "PASS_V10_FINAL_PROVIDER_SMOKE",
+      "pass": true,
+      "present": true
+    }
+  },
+  "blockers": [],
+  "dirtySummary": {
+    "gitStatusShort": {
+      "total": 2827,
+      "modified": 1359,
+      "deleted": 164,
+      "untracked": 626
+    },
+    "registerRows": 1949,
+    "unregisteredPathCount": 919,
+    "ownerAcceptedOrConditionalPaths": 1746,
+    "deletionMutationReadyPaths": 147,
+    "canRunFinalSixStageTests": true,
+    "canCreateCleanExport": true
+  },
+  "allowedStory": "DSXU can describe evidence-first DeepSeek coding runtime, internal reality evaluation, anti-gaming guard, feature-deletion task pack, clean-export readiness, and claim boundaries.",
+  "blockedStory": "Do not claim external benchmark win, 90%+ top-tier parity, or GPT/Claude/Composer superiority without paired raw target-reference evidence."
+}

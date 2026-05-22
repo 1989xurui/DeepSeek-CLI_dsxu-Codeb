@@ -1,0 +1,757 @@
+# DSXU V7 Owner Focused Evidence - 20260519
+
+- status: `PASS_DSXU_V7_OWNER_FOCUSED_EVIDENCE`
+
+This report runs the focused owner verification commands referenced by the V7 runtime reachability map. It is owner evidence only; it does not create public benchmark claims or delete approval.
+
+## Summary
+
+| metric | value |
+|---|---:|
+| commands | 44 |
+| passed | 44 |
+| failed | 0 |
+| coveredRows | 96 |
+| coveredOwners | 10 |
+
+## Blockers
+
+- none
+
+## Commands
+
+| command | status | exit | rows | owners |
+|---|---|---:|---:|---:|
+| `bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts` | PASS | 0 | 5 | 1 |
+| `bun test src/dsxu/engine/__tests__/accessibility-tree.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/file-edit-adapter-atomic-v1.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/adr-review.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts` | PASS | 0 | 15 | 1 |
+| `bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts` | PASS | 0 | 4 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-9a-c/checks-as-rules.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/circuit-breaker.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/coding-pack-integration.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts` | PASS | 0 | 6 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-9a-e/effort-routing.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/wave4-final.test.ts` | PASS | 0 | 3 | 1 |
+| `bun test src/dsxu/engine/__tests__/wave5-formatters.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/frontmatter-parser.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/graph-memory.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/lifecycle-protocol-manager.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/magic-docs.test.ts` | PASS | 0 | 2 | 2 |
+| `bun test src/services/api/__tests__/deepseek-strict-tool-gateway.test.ts` | PASS | 0 | 3 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-h/patch-engine.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-e/profile-filtering.test.ts src/dsxu/engine/__tests__/work-package-e/query-loop-profile.test.ts` | PASS | 0 | 2 | 1 |
+| `bun test src/dsxu/engine/__tests__/prompt-section-router.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/proxy-budget-guard.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts src/dsxu/engine/__tests__/recovery-decision-table.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-9a-b/repo-brain.test.ts src/dsxu/engine/__tests__/work-package-9a-b/context-builder-repo-brain.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/retry-ratelimit.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/reviewer-subagent.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts` | PASS | 0 | 6 | 2 |
+| `bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts` | PASS | 0 | 5 | 1 |
+| `bun test src/dsxu/engine/__tests__/wave5-taskqueue.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/wave5-telemetry.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/wave2.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/transaction-manager.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/ui-shell-contract-registry.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/work-package-j/verify-review-chain.test.ts src/dsxu/engine/__tests__/work-package-j/query-loop-default-chain.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/worktree-orchestrator.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/dsxu/engine/__tests__/wsl-execution-placement-v1.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/services/embedding/__tests__/embedding.test.ts` | PASS | 0 | 4 | 1 |
+| `bun test src/services/experience/__tests__/experience.test.ts` | PASS | 0 | 3 | 1 |
+| `bun run scripts/dsxu-runtime-health.ts` | PASS | 0 | 2 | 1 |
+| `bun test src/services/lsp/__tests__/lsp.test.ts` | PASS | 0 | 2 | 1 |
+| `bun test src/services/mcp/adapters/__tests__/adapters.test.ts src/services/mcp/adapters/__tests__/mcp-adapters.test.ts` | PASS | 0 | 1 | 1 |
+| `bun test src/services/mutation/__tests__/mutation.test.ts` | PASS | 0 | 2 | 1 |
+| `bun test src/services/sandbox/__tests__/sandbox.test.ts` | PASS | 0 | 2 | 1 |
+| `bun test src/utils/search/__tests__/search.test.ts` | PASS | 0 | 3 | 1 |
+
+## Key Output
+
+### bun test src/dsxu/engine/__tests__/control-plane-v1.test.ts
+
+```text
+(pass) DSXU Control Plane V1 > default source tree does not import legacy control shell directories [469.00ms]
+(pass) DSXU Control Plane V1 > creates a shared session registry for control and remote sessions
+(pass) DSXU Control Plane V1 > maps inbound SDK control messages to visible permission state
+(pass) DSXU Control Plane V1 > decodes JWT metadata without granting authorization by itself
+(pass) DSXU Control Plane V1 > raw SDK control adapter returns typed errors for malformed and unsupported messages
+(pass) DSXU Control Plane V1 > remote manager writes lifecycle and permission state into shared control registry [16.00ms]
+(pass) DSXU Control Plane V1 > control plane facade stays thin and does not create a second query runtime
+(pass) DSXU Control Plane V1 > provider-migration facade does not own daemon, registry, spawn, or tool-loop state
+(pass) DSXU Control Plane V1 > replays SDK control session, visible permission, response, and close lifecycle [15.00ms]
+10 pass
+0 fail
+Ran 10 tests across 1 file. [650.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/accessibility-tree.test.ts
+
+```text
+(pass) checkA11yIssues > should detect empty buttons
+(pass) checkA11yIssues > should detect heading hierarchy skip
+(pass) checkA11yIssues > should detect missing lang
+(pass) checkA11yIssues > should report no issues for good HTML
+(pass) AccessibilityTreeTool > should have correct metadata
+(pass) AccessibilityTreeTool > should error when no input
+(pass) AccessibilityTreeTool > should parse HTML input
+(pass) AccessibilityTreeTool > should include issue check when requested
+(pass) AccessibilityTreeTool > should report clean HTML as no issues
+25 pass
+0 fail
+Ran 25 tests across 1 file. [72.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/file-edit-adapter-atomic-v1.test.ts
+
+```text
+(pass) FileEdit Adapter Atomic V1 > 应执行原子文件写入并返回结构化结果 [16.00ms]
+(pass) FileEdit Adapter Atomic V1 > 应检测冲突并返回冲突信息
+(pass) FileEdit Adapter Atomic V1 > 应拦截非法路径并返回权限检查结果
+(pass) FileEdit Adapter Atomic V1 > 应支持rollback-safe结果结构 [16.00ms]
+4 pass
+0 fail
+Ran 4 tests across 1 file. [93.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/adr-review.test.ts
+
+```text
+(pass) crossReview > should parse rejected JSON review with issues
+(pass) crossReview > should handle JSON embedded in markdown
+(pass) crossReview > should fallback to text analysis when no JSON
+(pass) crossReview > should approve when text has no issue keywords
+(pass) crossReview > should handle LLM call failure gracefully
+(pass) runADRWorkflow > should complete in one round when approved
+(pass) runADRWorkflow > should revise when first review has issues
+(pass) runADRWorkflow > should stop after 2 review rounds max
+(pass) runADRWorkflow > should select correct template based on task
+21 pass
+0 fail
+Ran 21 tests across 1 file. [70.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/compact-session-integration.test.ts
+
+```text
+(pass) Compact-Session 集成测试 > 1. Compact 流水线与 Session 集成 > 应该能够为 Session 运行 Compact
+(pass) Compact-Session 集成测试 > 1. Compact 流水线与 Session 集成 > 应该根据使用率选择正确的压缩策略
+(pass) Compact-Session 集成测试 > 2. Brief 生成与 Task 集成 > 应该能够为 Task 生成摘要 [15.00ms]
+(pass) Compact-Session 集成测试 > 3. Classify 与 Session/Task 集成 > 应该能够对 Session 内容进行分类
+(pass) Compact-Session 集成测试 > 3. Classify 与 Session/Task 集成 > 应该根据分类结果更新记忆标签
+(pass) Compact-Session 集成测试 > 4. 集成验证 > Compact/Brief/Classify 应该协同工作
+6 pass
+0 fail
+Ran 6 tests across 1 file. [90.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/bug-brain.test.ts src/dsxu/engine/__tests__/bug-brain-integration.test.ts
+
+```text
+(pass) BugBrain > 自动分类 > 应该自动分类包含review关键词的bug
+(pass) BugBrain > 自动分类 > 应该自动分类包含tool关键词的bug
+(pass) BugBrain > 自动分类 > 应该自动分类包含context关键词的bug
+(pass) BugBrain > 模式检测 > 应该检测重复出现的bug模式
+(pass) BugBrain > 模式检测 > 应该为模式生成修复模式
+(pass) BugBrain > Bug分析 > 应该能够分析bug并提供建议
+(pass) BugBrain > Bug分析 > 应该为相似bug提供分析
+(pass) BugBrain > 统计信息 > 应该提供准确的统计信息
+(pass) BugBrain > 清理功能 > 应该能够清理旧记录
+25 pass
+0 fail
+Ran 25 tests across 2 files. [89.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-9a-c/checks-as-rules.test.ts
+
+```text
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 2. rule category / severity / phase 取值有效 > appliesToPhase 至少支持 verify, review
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 3. rule result 结构有效 > createCheckRuleResult() 应该返回完整的结果结构
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 3. rule result 结构有效 > 可选字段可安全存在或缺省
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 4. 辅助创建函数有效 > createCheckRuleCondition() 应该创建完整的条件结构
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 4. 辅助创建函数有效 > createCheckRuleAction() 应该创建完整的动作结构
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 4. 辅助创建函数有效 > createCheckRuleResultSet() 应该创建完整的结果集结构
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 5. 示例规则函数有效 > createSyntaxCheckRule() 应该返回合法的语法检查规则
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 5. 示例规则函数有效 > createDangerousChangeCheckRule() 应该返回合法的危险变更检查规则
+(pass) 9A-C: Checks as Rules 核心结构定义验证 > 5. 示例规则函数有效 > createVerificationCheckRule() 应该返回合法的验证规则
+13 pass
+0 fail
+Ran 13 tests across 1 file. [73.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/circuit-breaker.test.ts
+
+```text
+(pass) CircuitBreaker > should stay closed until the failure threshold is reached
+(pass) CircuitBreaker > should deny requests while open before cooldown expires
+(pass) CircuitBreaker > should transition to half_open after cooldown and close on success
+(pass) CircuitBreaker > should reopen when a half_open probe fails
+4 pass
+0 fail
+Ran 4 tests across 1 file. [68.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/coding-pack-integration.test.ts
+
+```text
+[VerifyGate] Verification completed: score=100.0 passed=true
+[VerifyGate] Verification completed: score=100.0 passed=true
+(pass) Coding Pack integration > runs Verify before Reviewer with real post-edit evidence
+(pass) Coding Pack integration > keeps review usable when verification warns on missing evidence
+(pass) Coding Pack integration > marks rollback events as review risk
+(pass) Coding Pack integration > penalizes repeated circuit-breaker skips
+(pass) Coding Pack integration > completes the coding pack workflow with final verification evidence
+(pass) Coding Pack integration > keeps recoverable tool errors visible to review
+(pass) Coding Pack integration > rejects api-error exits in review
+7 pass
+0 fail
+Ran 7 tests across 1 file. [81.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/tool-protocol-owner-v6.test.ts
+
+```text
+(pass) V6 tool protocol ownership > marks legacy ToolBus as non-default and claim-blocked
+(pass) V6 tool protocol ownership > blocks explicit legacy ToolBus activation from the V6 default chain
+(pass) V6 tool protocol ownership > keeps query loop and Tool View off the legacy ToolBus import path [15.00ms]
+(pass) V6 tool protocol ownership > keeps ToolCallResult as the canonical owner contract
+4 pass
+0 fail
+Ran 4 tests across 1 file. [74.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-9a-e/effort-routing.test.ts
+
+```text
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > validateEffortRoutingInput > 应该验证合法输入
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > validateEffortRoutingInput > 应该拒绝非法复杂度
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > validateEffortRoutingInput > 应该拒绝非法风险等级
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > validateEffortRoutingInput > 应该拒绝非法token预算
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > validateEffortRoutingInput > 应该拒绝非法剖面类型
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > calculateEffortLevel > 应该计算正确的工作量等级
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > calculateReasoningPreference > 应该根据输入计算推理偏好
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > shouldUseDeepReviewPath > 应该正确判断是否使用深度审查路径
+(pass) Effort Routing 核心结构定义验证 > 5. 辅助函数有效 > calculateTokenAllocation > 应该计算合理的token分配
+22 pass
+0 fail
+Ran 22 tests across 1 file. [68.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wave4-final.test.ts
+
+```text
+(pass) executeSlashCommand > should return null for non-commands
+(pass) getRegisteredCommands > should return unique commands
+(pass) registerCommand > should register custom command
+(pass) deduplicateEvents > should keep only latest event per file
+(pass) FileWatcher > should create and start/stop [15.00ms]
+(pass) FileWatcher > should detect file changes [313.00ms]
+(pass) createWatcher > should create watcher
+(pass) getRecentlyModified > should find recently modified files
+(pass) getRecentlyModified > should skip missing files
+34 pass
+0 fail
+Ran 34 tests across 1 file. [399.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wave5-formatters.test.ts
+
+```text
+(pass) initProject > should create .dsxu directory and config
+(pass) initProject > should create DSXU.md
+(pass) initProject > should skip existing files [16.00ms]
+(pass) initProject > should force overwrite
+(pass) PluginManager > should register plugin
+(pass) PluginManager > should list plugins
+(pass) PluginManager > should activate/deactivate
+(pass) PluginManager > should return false for unknown plugin
+(pass) PluginManager > should get plugin by name
+36 pass
+0 fail
+Ran 36 tests across 1 file. [88.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/frontmatter-parser.test.ts
+
+```text
+(pass) Frontmatter Parser > parseFrontmatter > 处理只有 frontmatter 分隔符的文本
+(pass) Frontmatter Parser > parseFrontmatter > 处理未闭合的 frontmatter
+(pass) Frontmatter Parser > parseFrontmatter > 解析多行字符串
+(pass) Frontmatter Parser > parseFrontmatter > 解析折叠多行字符串
+(pass) Frontmatter Parser > parseFrontmatterFromFile > 处理文件读取失败（模拟）
+(pass) Frontmatter Parser > composeFrontmatter > 组合 frontmatter 和 body
+(pass) Frontmatter Parser > composeFrontmatter > 处理多行字符串
+(pass) Frontmatter Parser > composeFrontmatter > 处理空 frontmatter
+(pass) Frontmatter Parser > composeFrontmatter > 处理 null/undefined 值
+14 pass
+0 fail
+Ran 14 tests across 1 file. [66.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/graph-memory.test.ts
+
+```text
+(pass) Graph Memory 单元测试 > 1. 基础功能测试 > 应该能删除节点和相关的边
+(pass) Graph Memory 单元测试 > 1. 基础功能测试 > 应该能删除边
+(pass) Graph Memory 单元测试 > 2. 查询功能测试 > 应该能查找节点
+(pass) Graph Memory 单元测试 > 2. 查询功能测试 > 应该能查找边
+(pass) Graph Memory 单元测试 > 2. 查询功能测试 > 应该能获取节点的邻居
+(pass) Graph Memory 单元测试 > 3. 图构建测试 > 应该能模拟构建图
+(pass) Graph Memory 单元测试 > 3. 图构建测试 > 应该处理缺少 repo-brain 的情况
+(pass) Graph Memory 单元测试 > 4. 序列化测试 > 应该能正确序列化和反序列化
+(pass) Graph Memory 单元测试 > 5. 元数据更新测试 > 应该在添加节点和边时更新元数据
+12 pass
+0 fail
+Ran 12 tests across 1 file. [74.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/lifecycle-protocol-manager.test.ts
+
+```text
+(pass) LifecycleProtocolManager > checkpoint management > should validate checkpoint
+(pass) LifecycleProtocolManager > checkpoint management > should reject checkpoint validation in wrong state
+(pass) LifecycleProtocolManager > recovery strategies > should get applicable recovery strategies
+(pass) LifecycleProtocolManager > recovery strategies > should apply recovery strategy
+(pass) LifecycleProtocolManager > recovery strategies > should reject inapplicable recovery strategy
+(pass) LifecycleProtocolManager > metrics collection > should collect initial metrics
+(pass) LifecycleProtocolManager > metrics collection > should update metrics
+(pass) LifecycleProtocolManager > metrics collection > should calculate success rates
+(pass) LifecycleProtocolManager > factory function > should create manager via factory function
+17 pass
+0 fail
+Ran 17 tests across 1 file. [67.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/magic-docs.test.ts
+
+```text
+(pass) Magic Docs > updateMagicDoc > 处理更新错误
+(pass) Magic Docs > updateMagicDocs > 批量更新文档
+Failed to update magic doc /path/to/doc2.md: 161 |         manager.parseMagicDoc('/path/to/doc2.md', `# MAGIC DOC: 文档2\n内容2`)!,
+166 |         .mockRejectedValueOnce(new Error('更新失败'))
+error: 更新失败
+(pass) Magic Docs > updateMagicDocs > 处理批量更新中的错误
+(pass) Magic Docs > simpleUpdateFunction > 添加更新时间戳
+(pass) Magic Docs > simpleUpdateFunction > 更新现有时间戳
+(pass) Magic Docs > getStats > 获取处理统计
+12 pass
+0 fail
+Ran 12 tests across 1 file. [71.00ms]
+```
+
+### bun test src/services/api/__tests__/deepseek-strict-tool-gateway.test.ts
+
+```text
+(pass) DeepSeek strict tool gateway evidence > marks strict provider tool calls as strict_schema and fallback text calls as fallback [15.00ms]
+(pass) DeepSeek strict tool gateway evidence > bounded JSON scavenge is observable and cannot call hidden tools
+2 pass
+0 fail
+Ran 2 tests across 1 file. [1101.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-h/patch-engine.test.ts
+
+```text
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > str_replace 失败时应该允许回退到 diff_replace
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > diff_replace 失败时应该允许回退到 whole_file
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > whole_file 不应该允许继续回退
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > getNextFallbackStrategy() 应该返回正确的下一个策略
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > getFallbackChain() 应该返回完整的回退链
+(pass) Patch Engine - 策略定义与优先级 > 4. 回退规则有效 > 当某些策略不可用时，回退链应该跳过不可用策略
+(pass) Patch Engine - 策略定义与优先级 > 5. 优先级比较函数有效 > getPatchStrategyPriority() 应该返回正确的优先级数值
+(pass) Patch Engine - 策略定义与优先级 > 5. 优先级比较函数有效 > comparePatchStrategyPriority() 应该正确比较优先级
+(pass) Patch Engine - 策略定义与优先级 > 5. 优先级比较函数有效 > 优先级比较应该与默认优先级顺序一致
+19 pass
+0 fail
+Ran 19 tests across 1 file. [62.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-e/profile-filtering.test.ts src/dsxu/engine/__tests__/work-package-e/query-loop-profile.test.ts
+
+```text
+(pass) Profile Filtering > getProfileConfig > 应该返回正确的profile配置
+(pass) Profile Filtering > isToolAllowedInProfile > 应该正确过滤只读profile的工具
+(pass) Profile Filtering > isToolAllowedInProfile > 应该正确过滤编辑profile的工具
+(pass) Profile Filtering > isToolAllowedInProfile > 应该正确过滤审查profile的工具
+(pass) Profile Filtering > isToolAllowedInProfile > 应该正确过滤会话profile的工具
+(pass) Query Loop with Profile Integration > Plan Profile (只读) > 应该只选择只读工具 [31.00ms]
+(pass) Query Loop with Profile Integration > Edit Profile (允许写操作) > 应该允许读写工具
+(pass) Query Loop with Profile Integration > 自动profile推荐 > 应该根据任务描述自动推荐profile
+8 pass
+0 fail
+Ran 8 tests across 2 files. [133.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/prompt-section-router.test.ts
+
+```text
+(pass) V6-S Prompt Section Router > keeps ordinary single-file edit prompt thin and expert-free
+(pass) V6-S Prompt Section Router > injects only explicitly activated Agent, Skill, and MCP dynamic sections
+2 pass
+0 fail
+Ran 2 tests across 1 file. [72.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/proxy-budget-guard.test.ts
+
+```text
+(pass) ProxyBudgetGuard > should kill after two 400s during Beijing off-peak
+(pass) ProxyBudgetGuard > should build incident details with summarized messages
+(pass) ProxyBudgetGuard > should block proxy request when V4 budget remains over limit
+(pass) ProxyBudgetGuard > should build local budget exceeded error payload
+(pass) ProxyBudgetGuard > should build kill switch payload with guard metadata
+(pass) ProxyBudgetGuard > should include degradation strategy in budget guard
+(pass) ProxyBudgetGuard > should apply higher safety margin for reasoner model
+(pass) ProxyBudgetGuard > should include scenario-specific adjustments in safety margin [15.00ms]
+(pass) ProxyBudgetGuard > should apply reasoner-specific strategy for long outputs
+12 pass
+0 fail
+Ran 12 tests across 1 file. [88.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts src/dsxu/engine/__tests__/recovery-decision-table.test.ts
+
+```text
+(pass) V6 Recovery Decision Table > covers every known stall signal with a non-claiming decision
+(pass) V6 Recovery Decision Table > escalates repeated no-progress signals instead of allowing infinite loops
+(pass) V6 Recovery Decision Table > writes recovery decisions into the ledger and keeps final claim blocked
+(pass) V6 Recovery Decision Table > maps normalized failure categories through the same recovery table
+(pass) Recovery Mainline V3 > recovery/index.ts 当前主导出指向 v3 主实现
+(pass) Recovery Mainline V3 > v3 的 RecoveryReason / RecoveryAction / RecoveryDecision 可从主导出面获取
+(pass) Recovery Mainline V3 > V3 实现可正常实例化和使用
+(pass) Recovery Mainline V3 > 不依赖旧 recovery 测试 - 只验证 V3 接口完整性
+8 pass
+0 fail
+Ran 8 tests across 2 files. [72.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-9a-b/repo-brain.test.ts src/dsxu/engine/__tests__/work-package-9a-b/context-builder-repo-brain.test.ts
+
+```text
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 3. 预留字段可安全初始化 > entryPoints 可为空数组
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 3. 预留字段可安全初始化 > notes 可为空数组
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 4. 辅助创建函数有效 > createRepoMapNode() 应该创建完整的 RepoMapNode
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 4. 辅助创建函数有效 > createSymbolDefinition() 应该创建完整的 SymbolDefinition
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 4. 辅助创建函数有效 > createDependencyRelation() 应该创建完整的 DependencyRelation
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 4. 辅助创建函数有效 > createHotspotArea() 应该创建完整的 HotspotArea
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 5. config / repoRoot 透传正确 > 传入的 RepoBrainInput / config 被正确保留
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 5. config / repoRoot 透传正确 > repoRoot 正确进入 bundle
+(pass) 9A-B: Repo Brain 核心结构定义验证 > 5. config / repoRoot 透传正确 > 默认配置值被正确设置
+20 pass
+0 fail
+Ran 20 tests across 2 files. [69.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/retry-ratelimit.test.ts
+
+```text
+(pass) withRetry > should use custom isRetryable [31.00ms]
+(pass) RateLimiter > should allow requests within limit
+(pass) RateLimiter > should track request count [16.00ms]
+(pass) RateLimiter > should enforce rate limit
+(pass) RateLimiter > should enforce concurrent limit
+(pass) RateLimiter > should track token usage
+(pass) RateLimiter > should reset state
+(pass) withRateLimitAndRetry > should combine rate limiting and retry
+(pass) withRateLimitAndRetry > should retry through rate limiter [16.00ms]
+22 pass
+0 fail
+Ran 22 tests across 1 file. [318.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/reviewer-subagent.test.ts
+
+```text
+(pass) ReviewerSubagent > should approve clean runs
+(pass) ReviewerSubagent > should flag rollback-heavy runs
+(pass) ReviewerSubagent > should penalize max_turns exits
+(pass) ReviewerSubagent > 验证门禁集成 > 应该考虑验证结果
+(pass) ReviewerSubagent > 验证门禁集成 > 应该奖励高验证分数
+(pass) ReviewerSubagent > 失败路径测试 > 应该处理验证失败的情况
+(pass) ReviewerSubagent > 失败路径测试 > 应该处理多次回滚的情况
+(pass) ReviewerSubagent > 配置选项 > 应该支持不同的批准阈值
+(pass) ReviewerSubagent > 配置选项 > 应该支持禁用回滚失败
+9 pass
+0 fail
+Ran 9 tests across 1 file. [65.00ms]
+```
+
+### bun test src/dsxu/engine/runtime/__tests__/session-task.test.ts
+
+```text
+(pass) Runtime Core - Session/Task 模型测试 > 3. 持久化适配器测试 > 应该列出任务
+(pass) Runtime Core - Session/Task 模型测试 > 3. 持久化适配器测试 > 应该过滤会话
+(pass) Runtime Core - Session/Task 模型测试 > 3. 持久化适配器测试 > 应该删除会话和关联的任务
+(pass) Runtime Core - Session/Task 模型测试 > 4. 任务运行器测试 > 应该创建并运行任务 [125.00ms]
+(pass) Runtime Core - Session/Task 模型测试 > 4. 任务运行器测试 > 应该暂停和继续任务 [219.00ms]
+(pass) Runtime Core - Session/Task 模型测试 > 4. 任务运行器测试 > 应该处理任务失败 [110.00ms]
+(pass) Runtime Core - Session/Task 模型测试 > 4. 任务运行器测试 > 应该处理任务超时 [1515.00ms]
+(pass) Runtime Core - Session/Task 模型测试 > 4. 任务运行器测试 > 应该取消任务 [63.00ms]
+(pass) Runtime Core - Session/Task 模型测试 > 5. 集成测试 > 应该完成完整的会话-任务生命周期 [312.00ms]
+28 pass
+0 fail
+Ran 28 tests across 1 file. [2.43s]
+```
+
+### bun test src/dsxu/engine/__tests__/wave4-core.test.ts src/dsxu/engine/__tests__/abc-end-to-end.test.ts src/dsxu/engine/__tests__/agent-summary.test.ts src/dsxu/engine/__tests__/task-runtime-mainline-v1-clean.test.ts
+
+```text
+(pass) SessionStore > should update meta
+(pass) generateTitle > should use first user message
+(pass) generateTitle > should truncate long messages
+(pass) generateTitle > should return default for no user messages
+(pass) ContextWindowManager > should calculate available tokens
+(pass) ContextWindowManager > should detect over limit
+(pass) ContextWindowManager > should not truncate when within limit
+(pass) ContextWindowManager > should truncate old messages when over limit
+(pass) ContextWindowManager > should always keep system messages
+42 pass
+0 fail
+Ran 42 tests across 4 files. [126.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wave5-taskqueue.test.ts
+
+```text
+(pass) WorkspaceManager > should switch workspace
+(pass) WorkspaceManager > should fail to switch to unknown workspace
+(pass) WorkspaceManager > should list workspaces
+(pass) WorkspaceManager > should remove workspace
+(pass) analyzeWorkspace > should detect git repo
+(pass) analyzeWorkspace > should detect package.json
+(pass) analyzeWorkspace > should detect dsxu config
+(pass) discoverProjects > should find projects in subdirs [16.00ms]
+(pass) discoverProjects > should skip node_modules
+20 pass
+0 fail
+Ran 20 tests across 1 file. [414.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wave5-telemetry.test.ts
+
+```text
+(pass) P1-1: Hooks系统转换测试 > 单hook转换测试 > 应该支持Tool Bus中间件洋葱圈执行
+(pass) P1-1: Hooks系统转换测试 > 单hook转换测试 > 应该处理hook执行错误并继续执行
+(pass) P1-1: Hooks系统转换测试 > 单hook转换测试 > 应该支持事件映射配置
+(pass) P1-1: Hooks系统转换测试 > 单hook转换测试 > 应该更新配置并重新初始化
+(pass) P1-1: Hooks系统转换测试 > 单filter测试：信任检查中间件 > 应该注册信任检查中间件
+(pass) P1-1: Hooks系统转换测试 > 单filter测试：信任检查中间件 > 应该执行信任检查逻辑
+(pass) P1-1: Hooks系统转换测试 > P0: HookBus 清创与叠甲验收 > 应该切断双重执行（迁移事件只走ToolBus）
+(pass) P1-1: Hooks系统转换测试 > P0: HookBus 清创与叠甲验收 > 应该支持错误降级模式
+(pass) P1-1: Hooks系统转换测试 > P0: HookBus 清创与叠甲验收 > 应该按正确顺序装配中间件
+35 pass
+0 fail
+Ran 35 tests across 1 file. [76.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wave2.test.ts
+
+```text
+(pass) CacheMonitor > should detect L1 hash change
+(pass) CacheMonitor > should diagnose issues
+(pass) CacheMonitor > should report normal when healthy
+(pass) CacheMonitor > should calculate estimated savings
+(pass) AutoDreamIntegrator > should initialize with default config
+(pass) AutoDreamIntegrator > should start and stop integration
+(pass) AutoDreamIntegrator > should add memories for integration
+(pass) AutoDreamIntegrator > should update config
+(pass) AutoDreamIntegrator > should handle disabled state
+45 pass
+0 fail
+Ran 45 tests across 1 file. [273.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/transaction-manager.test.ts
+
+```text
+(pass) TransactionManager > should rollback tracked file to transaction start snapshot [16.00ms]
+(pass) TransactionManager > should keep file changes after commit
+(pass) TransactionManager > should enforce maxTrackedFilesPerTurn
+3 pass
+0 fail
+Ran 3 tests across 1 file. [104.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/ui-shell-contract-registry.test.ts
+
+```text
+(pass) DSXU UI shell contract registry > projects external UI shells into DSXU-owned contracts without granting orchestration ownership
+1 pass
+0 fail
+```
+
+### bun test src/dsxu/engine/__tests__/work-package-j/verify-review-chain.test.ts src/dsxu/engine/__tests__/work-package-j/query-loop-default-chain.test.ts
+
+```text
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > verify failure suggests rollback but does not execute it
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > low verify score suggests rollback but does not execute it
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > review rejection suggests rollback but does not execute it
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > low review score suggests rollback but does not execute it
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > execution failure suggests rollback but does not execute it
+(pass) Verify / Review / Rollback default chain contract > 4. rollback safety policy > passing execution, verification, and review continues
+(pass) Verify / Review / Rollback default chain contract > 5. helper functions > createPhaseResult() creates a valid phase result
+(pass) Verify / Review / Rollback default chain contract > 5. helper functions > createPhaseResult() supports error text
+(pass) Verify / Review / Rollback default chain contract > 5. helper functions > DEFAULT_CHAIN_CONFIG disables automatic rollback by default
+19 pass
+0 fail
+Ran 19 tests across 2 files. [125.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/worktree-orchestrator.test.ts
+
+```text
+(pass) WorktreeOrchestrator > should clamp parallelism to safe range
+(pass) WorktreeOrchestrator > should produce lane branches with codex prefix by default
+(pass) WorktreeOrchestrator > should balance estimated load across lanes
+3 pass
+0 fail
+Ran 3 tests across 1 file. [62.00ms]
+```
+
+### bun test src/dsxu/engine/__tests__/wsl-execution-placement-v1.test.ts
+
+```text
+(pass) WSL execution placement V1 > classifies Windows, drvfs, and native WSL workspace roots
+(pass) WSL execution placement V1 > prefers native WSL mirror for long TUI and container work on drvfs even when health is green
+(pass) WSL execution placement V1 > blocks WSL tasks before model/tool changes when drvfs health is red
+(pass) WSL execution placement V1 > blocks container tasks when Docker Desktop WSL proxy is broken
+(pass) WSL execution placement V1 > writes current placement evidence from WSL and Docker health artifacts [16.00ms]
+5 pass
+0 fail
+Ran 5 tests across 1 file. [72.00ms]
+```
+
+### bun test src/services/embedding/__tests__/embedding.test.ts
+
+```text
+(pass) chunkSourceCode > empty source returns at least one chunk
+(pass) VectorStore > init sets store to initialized state
+(pass) VectorStore > not-initialized error before init
+(pass) VectorStore > upsert adds chunks
+(pass) VectorStore > search returns results ranked by similarity [16.00ms]
+(pass) VectorStore > delete removes all chunks for a file
+(pass) VectorStore > stats returns correct sizeBytes > 0
+(pass) VectorStore > search on empty store returns empty array
+(pass) VectorStore > upsert with existing id overwrites
+12 pass
+0 fail
+Ran 12 tests across 1 file. [67.00ms]
+```
+
+### bun test src/services/experience/__tests__/experience.test.ts
+
+```text
+(pass) R5-26 ExperienceStore > stats reflects added records
+(pass) R5-26 ExperienceStore > retrieve returns results ranked by similarity
+(pass) R5-26 ExperienceStore > retrieve with outcome filter
+(pass) R5-26 ExperienceStore > feedback updates helpfulness
+(pass) R5-26 ExperienceStore > injectExperienceContext with records augments prompt
+(pass) R5-26 ExperienceStore > injectExperienceContext with empty store returns base prompt
+(pass) R5-26 ExperienceStore > not-initialized store throws
+(pass) R5-26 ExperienceStore > retrieve on empty store returns empty array
+(pass) R5-26 ExperienceStore > multiple adds produce unique ids
+10 pass
+0 fail
+Ran 10 tests across 1 file. [1215.00ms]
+```
+
+### bun run scripts/dsxu-runtime-health.ts
+
+```text
+"status": "PASS",
+"status": "PASS",
+Runtime health: PASS
+PASS bunRuntime: Bun 1.3.11 is available
+PASS packageJson: package dsxu-ai-coding parsed
+PASS fileSystemAccess: read/write probe passed
+PASS mainlineVerificationHealth: Tool Gate post-mutation verification and TDD module loaded
+PASS staticAnalysisBridge: static analysis bridge loaded
+PASS evidenceDirectory: docs/generated exists
+PASS publicChallengeEvidence: public challenge evidence exists
+PASS cacheDirectory: .dsxu cache directory is accessible
+PASS modelConnectivity: DeepSeek API key is present; live ping intentionally skipped by health dry path
+```
+
+### bun test src/services/lsp/__tests__/lsp.test.ts
+
+```text
+(pass) R5-31 LSP Server > hover returns markdown contents
+(pass) R5-31 LSP Server > completion returns items array
+(pass) R5-31 LSP Server > codeAction returns actions array
+(pass) R5-31 LSP Server > diagnostics returns diagnostics for uri
+(pass) R5-31 LSP Server > references returns array
+(pass) R5-31 LSP Server > definition returns location
+(pass) R5-31 LSP Server > mockHandler overrides default handling
+(pass) R5-31 LSP Server > all methods return durationMs >= 0
+8 pass
+0 fail
+Ran 8 tests across 1 file. [63.00ms]
+```
+
+### bun test src/services/mcp/adapters/__tests__/adapters.test.ts src/services/mcp/adapters/__tests__/mcp-adapters.test.ts
+
+```text
+(pass) R5-32: PostgresAdapter > name is postgres
+(pass) R5-32: PostgresAdapter > listTools returns >=3 tools
+(pass) R5-32: PostgresAdapter > invoke query
+(pass) R5-32: SlackAdapter > name is slack
+(pass) R5-32: SlackAdapter > has send tool
+(pass) R5-32: GithubAdapter > name is github
+(pass) R5-32: GithubAdapter > has issues tool
+(pass) R5-32: no-config fallback > FilesystemAdapter without mock returns status
+(pass) R5-32: no-config fallback > healthCheck without mock for filesystem returns true
+29 pass
+0 fail
+Ran 29 tests across 2 files. [68.00ms]
+```
+
+### bun test src/services/mutation/__tests__/mutation.test.ts
+
+```text
+(pass) generateMutations > IDs are sequential after reset
+(pass) runMutationTests > killRate = 1.0 when all tests fail (all killed)
+(pass) runMutationTests > killRate = 0 when all tests pass (all survived)
+(pass) runMutationTests > mixed results produce correct counts
+(pass) runMutationTests > budget maxMutations limits mutation count
+(pass) runMutationTests > survivors list contains only survived mutations
+(pass) runMutationTests > mock generator overrides built-in generation
+(pass) runMutationTests > timeout errors are counted correctly
+(pass) runMutationTests > real runner mutates a file, runs tests, and restores source [344.00ms]
+17 pass
+0 fail
+Ran 17 tests across 1 file. [416.00ms]
+```
+
+### bun test src/services/sandbox/__tests__/sandbox.test.ts
+
+```text
+(pass) R5-27 WSL2 Sandbox > checkWslAvailable returns true with mock
+(pass) R5-27 WSL2 Sandbox > happy path: command runs successfully
+(pass) R5-27 WSL2 Sandbox > timeout scenario
+(pass) R5-27 WSL2 Sandbox > OOM killed scenario
+(pass) R5-27 WSL2 Sandbox > network blocked returns result
+(pass) R5-27 WSL2 Sandbox > malicious rm command still returns result via mock
+(pass) R5-27 WSL2 Sandbox > env vars are passed through
+(pass) R5-27 WSL2 Sandbox > durationMs is reported
+8 pass
+0 fail
+Ran 8 tests across 1 file. [59.00ms]
+```
+
+### bun test src/utils/search/__tests__/search.test.ts
+
+```text
+(pass) BM25 > query with no matching tokens returns empty
+(pass) isAstGrepPattern > detects $$$ pattern
+(pass) isAstGrepPattern > detects $VAR metavariable
+(pass) isAstGrepPattern > plain identifier is not ast-grep pattern
+(pass) isAstGrepPattern > plain phrase is not ast-grep pattern
+(pass) search > ast-grep pattern triggers ast-grep tier
+(pass) search > single identifier triggers ripgrep tier
+(pass) search > forcedTier uses only that tier
+(pass) search > dedup keeps highest score for same file:line
+16 pass
+0 fail
+Ran 16 tests across 1 file. [65.00ms]
+```

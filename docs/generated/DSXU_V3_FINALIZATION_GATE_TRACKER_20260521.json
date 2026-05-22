@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "dsxu.v3.finalization-gate-tracker.v2",
+  "generatedAt": "2026-05-21T19:37:12.450Z",
+  "status": "PASS_30_CASE_PUBLIC_COMPARABLE_RAW_EVIDENCE_READY",
+  "latestDsxuLaneReports": [
+    "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_FINALIZATION_RERUN47_FULL_14_AGENT_FINAL_20260521.json",
+    "docs/generated/DSXU_PUBLIC_COMPARABLE_DSXU_LANE_RERUN51_FIX7_FINAL_20260521.json"
+  ],
+  "latestRawEvidenceReport": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_IMPORT_REPORT_FULL_30_RERUN51_20260521.json",
+  "latestEvidenceDashboard": "docs/generated/DSXU_EVIDENCE_DASHBOARD_20260521.json",
+  "summary": {
+    "finalizationSubsetCases": 14,
+    "finalizationSubsetPass": 14,
+    "remainingPublicComparableCases": 16,
+    "remainingInitialPass": 9,
+    "remainingFixBatchPass": 7,
+    "remainingNonPass": 0,
+    "fullPublicComparableCases": 30,
+    "rawEvidenceImportedCaseCount": 30,
+    "rawEvidenceReadyCaseCount": 30,
+    "rawEvidencePartialCaseCount": 0,
+    "rawEvidenceMissingCaseCount": 0,
+    "dashboardRuntimeBlockedGateCount": 0,
+    "dashboardClaimBlockedGateCount": 2,
+    "dashboardPublicComparableMissingCases": 0,
+    "dashboardExternalComparisonPendingCount": 1,
+    "dashboardTrustState": "evidence-incomplete",
+    "dashboardReleaseBlockedGateNames": [],
+    "staleDsxuLaneRerunReportsSuperseded": true,
+    "stalePartialImportReportsSuperseded": true,
+    "runtimeFinalizationGateOpenItems": 0,
+    "releaseExportPreflightOpenItems": 0,
+    "p12TargetReferenceReadiness": "PASS",
+    "p12PairedRawLogCount": 14,
+    "publicComparableExternalTargetMissingCaseCount": 30,
+    "structuralAgentOpenItems": 0,
+    "publicBenchmarkClaimAllowed": true,
+    "externalComparisonClaimAllowed": false
+  },
+  "hardConclusion": "Finalization runtime gate, DSXU lane raw evidence, P12 target/reference readiness, clean export preflight, and dashboard stale-rerun plus stale-partial-import projection are closed for the 30-case public-comparable set. Public-comparable DSXU lane evidence can be cited with this boundary. Public-comparable 30-case external target/reference comparison remains blocked until same-case targetReferenceTranscriptPath evidence is collected. Public 95/superiority claims remain blocked by scoreFloor and external-comparison boundaries."
+}

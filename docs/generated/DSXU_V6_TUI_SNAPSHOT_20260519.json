@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "dsxu.v6.tui-trust-surface.v1",
+  "generatedAt": "2026-05-19T08:41:22.431Z",
+  "status": "PASS_V6_TUI_TRUST_SURFACE",
+  "width": 80,
+  "blockers": [],
+  "renderedLines": [
+    {
+      "text": "DSXU: Flash | check:pass | $0.0003 | cache:93% | agent:1",
+      "color": "green",
+      "renderedText": "DSXU: Flash | check:pass | $0.0003 | cache:93% | agent:1",
+      "rawLength": 56,
+      "renderedLength": 56
+    },
+    {
+      "text": "task:verify | events:8 | frame:verify | risk:medium | open:1 | resume:verify | next:verify",
+      "dimColor": true,
+      "renderedText": "task:verify | events:8 | frame:verify | risk:medium | open:1 | resume:verify...",
+      "rawLength": 90,
+      "renderedLength": 79
+    },
+    {
+      "text": "agent:1 | running:1 | scope:verification | risk:compact",
+      "dimColor": true,
+      "renderedText": "agent:1 | running:1 | scope:verification | risk:compact",
+      "rawLength": 55,
+      "renderedLength": 55
+    },
+    {
+      "text": "proof:contract ok edit/flash | tool ok 5/5 | event ok 6/6",
+      "dimColor": true,
+      "renderedText": "proof:contract ok edit/flash | tool ok 5/5 | event ok 6/6",
+      "rawLength": 57,
+      "renderedLength": 57
+    }
+  ],
+  "noVerifyRendered": "DSXU: Flash | check:wait | claim:block | next:verify | $0.0003 | cache:93% |...\ntask:verify | events:8 | frame:verify | risk:medium | open:1 | resume:verify...\nagent:1 | running:1 | scope:verification | risk:compact\nproof:contract ok edit/flash | tool ok 5/5 | event ok 6/6"
+}

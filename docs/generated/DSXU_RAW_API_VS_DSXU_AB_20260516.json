@@ -1,0 +1,1337 @@
+{
+  "schemaVersion": "dsxu.raw-api-vs-dsxu-ab.v1",
+  "generatedAt": "2026-05-20T12:13:25.833Z",
+  "status": "PASS_DSXU_WORKFLOW_LIFT_OVER_RAW_API_BASELINE",
+  "totalTasks": 15,
+  "rawAverageScore": 85,
+  "dsxuAverageScore": 99.3,
+  "scoreLift": 14.3,
+  "rawPassRatePct": 0,
+  "dsxuPassRatePct": 100,
+  "passRateLiftPct": 100,
+  "rawTotalCostUSD": 0.0013314728,
+  "dsxuTotalCostUSD": 0.0955018232,
+  "dsxuToolCalls": 103,
+  "publicClaimAllowed": true,
+  "externalSuperiorityAllowed": false,
+  "public90Allowed": false,
+  "chartPath": "docs/assets/dsxu-raw-api-vs-dsxu-ab.svg",
+  "claimBoundary": "This proves DSXU workflow lift over a raw chat-completions baseline on isolated fixture tasks. It does not prove model superiority, external benchmark victory, or public 90/95 ability.",
+  "tasks": [
+    {
+      "id": "route-policy-flash-first",
+      "title": "Fix Flash-first route policy without overusing Pro",
+      "expectedEvidence": [
+        "flash max before pro",
+        "failed flash can use pro",
+        "tests pass"
+      ],
+      "sourceFixtureHash": "e5ea0a506961e58560309a7043ef51f42d68d3d5c21cb4c221d3e45d6daa86fa",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 3179,
+        "costUSD": 0.00017080000000000003,
+        "inputTokens": 692,
+        "outputTokens": 264,
+        "cacheHitInputTokens": 0,
+        "cacheMissInputTokens": 692,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-policy-flash-first-raw-api-2026-05-20T12-06-56-979Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The route policy currently routes long context (>120k tokens) directly to Pro instead of Flash Max, and does not handle flashFailed for high-risk tasks. The fix changes the long-context branch to use flash-max, adds a flashFailed check for high-risk tasks to route to Pro, and updates reasons and requiresEvidence accordingly.",
+          "expected_files": [
+            "src/routePolicy.ts",
+            "tests/routePolicy.test.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/routePolicy.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Original decideRoute sends long context to Pro, but spec says Flash Max first.",
+            "Original decideRoute ignores flashFailed for high-risk tasks; spec says Pro only for critical or failed high-risk Flash.",
+            "Test expects flash-first-default reason for low-risk, long-context-flash-max-before-pro for long context, and Pro only for critical or flashFailed high-risk."
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly.",
+            "Assumes flashFailed is only relevant for high-risk tasks per spec."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 25794,
+        "costUSD": 0.0074424616,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-policy-flash-first-dsxu-2026-05-20T12-07-00-161Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-policy-flash-first-2026-05-20T12-07-00-162Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-policy-flash-first-2026-05-20T12-07-00-162Z.stderr.log",
+        "toolUseCounts": {
+          "Bash": 2,
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1
+        },
+        "verificationSignals": [
+          "flash-max route implemented",
+          "flash default reason implemented",
+          "failed flash pro admission implemented"
+        ],
+        "resultJson": {
+          "task_id": "fix-flash-first-route-policy",
+          "edited_files": [
+            "src/routePolicy.ts"
+          ],
+          "tests_run": [
+            "bun test tests/routePolicy.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test v1.3.11 — 3 pass, 0 fail, 5 expect() calls, 47.00ms",
+            "Edited decideRoute(): added flashFailed handling for high-risk→Pro, changed long context to flash-max, updated default reason to 'flash-first-default'"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "terminal-result-pack",
+      "title": "Fix terminal result packaging for long output and failures",
+      "expectedEvidence": [
+        "bounded preview",
+        "full log artifact",
+        "failure type",
+        "recovery action"
+      ],
+      "sourceFixtureHash": "6f2b3a58e2147e082220bc1bdfca60c10a692c08975f911185de0057bf5b430a",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2870,
+        "costUSD": 0.0000892136,
+        "inputTokens": 525,
+        "outputTokens": 307,
+        "cacheHitInputTokens": 512,
+        "cacheMissInputTokens": 13,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/terminal-result-pack-raw-api-2026-05-20T12-07-26-050Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "packageResult must truncate stdout to ≤160 chars, set fullLogPath to 'artifact://terminal/full-log', count changedFiles, classify failureType as 'command_failed' for nonzero exitCode (unless timedOut), classify 'timeout' when timedOut is true, and set recoveryAction to 'rerun-with-smaller-output-or-longer-timeout' on timeout.",
+          "expected_files": [
+            "src/resultPack.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/resultPack.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current packageResult returns preview = result.stdout (unbounded), fullLogPath = null, changedFileCount = 0, failureType = 'none', recoveryAction = 'none'.",
+            "Tests expect preview length ≤ 160, fullLogPath = 'artifact://terminal/full-log', changedFileCount = 2, failureType = 'command_failed' for exitCode 1, failureType = 'timeout' and recoveryAction = 'rerun-with-smaller-output-or-longer-timeout' for timedOut true."
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk.",
+            "Cannot run tests to verify fix.",
+            "Assumes bun test environment matches provided test code."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 25384,
+        "costUSD": 0.005898144,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": false,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/terminal-result-pack-dsxu-2026-05-20T12-07-28-923Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/terminal-result-pack-2026-05-20T12-07-28-923Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/terminal-result-pack-2026-05-20T12-07-28-923Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "full log artifact path implemented",
+          "command failure classified",
+          "recovery action implemented"
+        ],
+        "resultJson": {
+          "task_id": "terminal-result-pack-fix",
+          "edited_files": [
+            "src/resultPack.ts"
+          ],
+          "tests_run": [
+            "tests/resultPack.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test v1.3.11: 2 pass, 0 fail, 6 expect() calls",
+            "preview truncated to ≤160 chars (from 500 'x')",
+            "fullLogPath set to 'artifact://terminal/full-log'",
+            "changedFileCount correctly counts changedFiles array",
+            "timeout classified with failureType='timeout' and recoveryAction='rerun-with-smaller-output-or-longer-timeout'",
+            "nonzero exitCode (non-timeout) classified as failureType='command_failed'"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "claim-boundary-guard",
+      "title": "Fix public claim boundary logic",
+      "expectedEvidence": [
+        "cost claim allowed with no regression",
+        "public90 blocked",
+        "external victory blocked"
+      ],
+      "sourceFixtureHash": "c9977a55b3e930ae4b2662dcb26bdbd799de354a1512dbcbf3a8e6cabc6d7620",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2620,
+        "costUSD": 0.00009103360000000001,
+        "inputTokens": 604,
+        "outputTokens": 274,
+        "cacheHitInputTokens": 512,
+        "cacheMissInputTokens": 92,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/claim-boundary-guard-raw-api-2026-05-20T12-07-54-408Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The buildClaimBoundary function must enforce that costOptimizationAllowed is true only when afterScore >= beforeScore (no regression). It must also set public90Allowed to false when scoreFloor < 90, and externalVictoryAllowed to false when hasExternalRawLogs is false. Additionally, the boundary string should reflect 'internal ablation only' when both public90Allowed and externalVictoryAllowed are false.",
+          "expected_files": [
+            "src/claimGuard.ts"
+          ],
+          "would_run_tests": [
+            "tests/claimGuard.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "costOptimizationAllowed must be afterCost < beforeCost && afterScore >= beforeScore",
+            "public90Allowed must be scoreFloor >= 90 (not 72)",
+            "externalVictoryAllowed must be hasExternalRawLogs === true",
+            "boundary string must be 'internal ablation only' when both public90Allowed and externalVictoryAllowed are false"
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk",
+            "Cannot run tests to verify fix",
+            "Cannot confirm exact boundary string format expected by test"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 34166,
+        "costUSD": 0.0069801872000000015,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": false,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/claim-boundary-guard-dsxu-2026-05-20T12-07-57-031Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/claim-boundary-guard-2026-05-20T12-07-57-031Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/claim-boundary-guard-2026-05-20T12-07-57-031Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "external raw gate implemented",
+          "boundary wording implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-claim-boundary-guard",
+          "edited_files": [
+            "src/claimGuard.ts"
+          ],
+          "tests_run": [
+            "bun test tests/claimGuard.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "2 pass, 0 fail, 5 expect() calls"
+          ],
+          "next_action": "done"
+        }
+      }
+    },
+    {
+      "id": "source-capsule-budget",
+      "title": "Build cache-safe source capsules instead of dumping large files",
+      "expectedEvidence": [
+        "bounded excerpt",
+        "source hash",
+        "range read fallback",
+        "no raw full content"
+      ],
+      "sourceFixtureHash": "35ec9de6807d0da5cc889f060abe09e8b47409b865b9268baab83300738e3abb",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2259,
+        "costUSD": 0.0000716352,
+        "inputTokens": 436,
+        "outputTokens": 226,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 52,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/source-capsule-budget-raw-api-2026-05-20T12-08-31-293Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "buildSourceCapsules must produce capsules with excerpt (≤120 chars), sourceHash (≥12 chars), anchors preserved, fallbackReadPolicy='range-read-required' for large files, and no rawContent key. Current implementation returns rawContent and lacks excerpt/hash/fallback logic.",
+          "expected_files": [
+            "src/contextPack.ts",
+            "tests/contextPack.test.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/contextPack.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current buildSourceCapsules returns rawContent and fallbackReadPolicy='none'",
+            "Test expects excerpt ≤120 chars, sourceHash ≥12 chars, anchors preserved, fallbackReadPolicy='range-read-required', no rawContent"
+          ],
+          "limitations": [
+            "Cannot edit files or run tests",
+            "Cannot verify hash algorithm or excerpt truncation details"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 32753,
+        "costUSD": 0.007705101600000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/source-capsule-budget-dsxu-2026-05-20T12-08-33-554Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/source-capsule-budget-2026-05-20T12-08-33-555Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/source-capsule-budget-2026-05-20T12-08-33-555Z.stderr.log",
+        "toolUseCounts": {
+          "Bash": 2,
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1
+        },
+        "verificationSignals": [
+          "bounded source excerpt implemented",
+          "source hash implemented",
+          "range-read fallback policy implemented",
+          "raw full content removed"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-source-capsule-budget-2026-05-20",
+          "edited_files": [
+            "src/contextPack.ts"
+          ],
+          "tests_run": [
+            "tests/contextPack.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test v1.3.11: 1 pass, 0 fail, 5 expect() calls",
+            "capsule.excerpt length ≤120 — 120 ≤ 120 ✓",
+            "capsule.sourceHash length ≥12 — 16 ≥ 12 ✓",
+            "capsule.anchors equals ['decideRoute'] ✓",
+            "capsule.fallbackReadPolicy equals 'range-read-required' ✓",
+            "'rawContent' in capsule is false ✓"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "permission-gate-decision",
+      "title": "Route risky actions through an explicit permission gate",
+      "expectedEvidence": [
+        "delete blocked",
+        "shell approval",
+        "secret write approval",
+        "safe read allowed"
+      ],
+      "sourceFixtureHash": "6558e8f777be1575324a7f3d11bb791b235226944c650fd7343be319169f3c83",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2190,
+        "costUSD": 0.00007905520000000001,
+        "inputTokens": 481,
+        "outputTokens": 230,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 97,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/permission-gate-decision-raw-api-2026-05-20T12-09-06-412Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The decidePermission function must return behavior 'ask' for delete, shell, network, and write actions that touch secrets (e.g., .env), and return behavior 'allow' with visibleState true and reason containing 'safe read' for read actions.",
+          "expected_files": [
+            "src/permissionGate.ts"
+          ],
+          "would_run_tests": [
+            "tests/permissionGate.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current implementation always returns behavior 'allow' and visibleState false, failing all test assertions.",
+            "Test expects delete, shell, network, and secret write to return behavior 'ask'.",
+            "Test expects read to return behavior 'allow', visibleState true, and reason containing 'safe read'."
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly.",
+            "Secret detection logic (e.g., .env path) is inferred from test; real secret paths may vary."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 15936,
+        "costUSD": 0.005628907200000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/permission-gate-decision-dsxu-2026-05-20T12-09-08-605Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/permission-gate-decision-2026-05-20T12-09-08-605Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/permission-gate-decision-2026-05-20T12-09-08-605Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "approval gate implemented",
+          "high-risk action rules implemented",
+          "visible permission state implemented",
+          "safe read reason implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-permission-gate-decision-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/permissionGate.ts"
+          ],
+          "tests_run": [
+            "bun test tests/permissionGate.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "2 tests passed, 0 failed, 7 expect() calls",
+            "decidePermission: delete/shell/network -> behavior='ask'",
+            "decidePermission: write .env -> behavior='ask' (secret-touching write)",
+            "decidePermission: read -> behavior='allow', visibleState=true, reason contains 'safe read'"
+          ],
+          "next_action": "complete"
+        }
+      }
+    },
+    {
+      "id": "failure-repair-taxonomy",
+      "title": "Classify failures and suggest a concrete repair action",
+      "expectedEvidence": [
+        "timeout repair",
+        "missing dependency repair",
+        "assertion repair",
+        "command failure repair"
+      ],
+      "sourceFixtureHash": "5737b915522ec36633f2a18a03d2298f5db46a49fc8dfa33e242741a18d63985",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2240,
+        "costUSD": 0.0000891352,
+        "inputTokens": 483,
+        "outputTokens": 265,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 99,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/failure-repair-taxonomy-raw-api-2026-05-20T12-09-24-680Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "Implement classifyFailure to detect timeout (exitCode 124 or timedOut flag), missing dependency (stderr contains 'Cannot find module'), assertion failure (stderr contains 'Expected' or 'assert'), and generic command failure (exitCode != 0). Return type and repairAction accordingly.",
+          "expected_files": [
+            "src/failureRepair.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/failureRepair.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current classifyFailure returns { type: 'unknown', repairAction: 'retry' } unconditionally.",
+            "Tests expect type 'timeout' for exitCode 124/timedOut, 'missing_dependency' for 'Cannot find module', 'assertion_failure' for 'Expected', 'command_failed' for exitCode 2.",
+            "Tests expect repairAction to contain 'timeout' for timeout and 'install' for missing dependency."
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly.",
+            "Implementation must be done manually in src/failureRepair.ts."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 26589,
+        "costUSD": 0.006026277600000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/failure-repair-taxonomy-dsxu-2026-05-20T12-09-26-922Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/failure-repair-taxonomy-2026-05-20T12-09-26-922Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/failure-repair-taxonomy-2026-05-20T12-09-26-922Z.stderr.log",
+        "toolUseCounts": {
+          "Bash": 2,
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1
+        },
+        "verificationSignals": [
+          "timeout classified",
+          "missing dependency classified",
+          "assertion failure classified",
+          "command failure classified"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-failure-repair-taxonomy",
+          "edited_files": [
+            "src/failureRepair.ts"
+          ],
+          "tests_run": [
+            "tests/failureRepair.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test: 2 pass, 0 fail, 6 expect() calls"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "agent-evidence-envelope",
+      "title": "Merge agent worker results through a bounded evidence envelope",
+      "expectedEvidence": [
+        "summary only",
+        "unique changed files",
+        "conflict detection",
+        "tests passed"
+      ],
+      "sourceFixtureHash": "ba84f94f29ad6da9c9ee5509d6805a307d0c1727ded5070f0a9794cdfcc85375",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2370,
+        "costUSD": 0.0000780752,
+        "inputTokens": 510,
+        "outputTokens": 212,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 126,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/agent-evidence-envelope-raw-api-2026-05-20T12-09-53-635Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The mergeWorkerResult function currently includes full transcripts and does not compute conflicts or a summary. It must return a bounded envelope with summaries, changed files, tests, conflicts, and transcript paths instead of full child transcripts.",
+          "expected_files": [
+            "src/agentEnvelope.ts"
+          ],
+          "would_run_tests": [
+            "tests/agentEnvelope.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "src/agentEnvelope.ts: mergeWorkerResult returns full transcript and missing summary, conflicts, transcriptPath",
+            "tests/agentEnvelope.test.ts: expects summary, changedFiles, testsPassed, conflicts, transcriptPath, and no transcript key"
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk",
+            "Cannot run tests or verify test outcomes",
+            "Cannot access external artifact paths or file system"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 19114,
+        "costUSD": 0.0057031072,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/agent-evidence-envelope-dsxu-2026-05-20T12-09-56-009Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/agent-evidence-envelope-2026-05-20T12-09-56-009Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/agent-evidence-envelope-2026-05-20T12-09-56-009Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "transcript artifact path implemented",
+          "unique changed files implemented",
+          "conflict detection implemented",
+          "full transcript omitted from parent envelope"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-agent-evidence-envelope-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/agentEnvelope.ts"
+          ],
+          "tests_run": [
+            "tests/agentEnvelope.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "summary contains both worker summaries ('fixed parser', 'fixed parser again')",
+            "changedFiles deduplicates to ['src/a.ts', 'src/b.ts']",
+            "testsPassed is true (both workers passed)",
+            "conflicts detects ['src/a.ts'] (appears in both workers)",
+            "transcript key is absent from envelope",
+            "transcriptPath is set to 'artifact://agent/full-transcripts'"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "mcp-skill-registry",
+      "title": "Resolve MCP/skill conflicts without creating a second runtime",
+      "expectedEvidence": [
+        "primary priority",
+        "secondary fallback",
+        "permission passthrough",
+        "adapter boundary"
+      ],
+      "sourceFixtureHash": "fef72989537bc48f14a47ab70a0faafa2fadb863d03384b1d16a6b1d549163f5",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 1947,
+        "costUSD": 0.0000580552,
+        "inputTokens": 433,
+        "outputTokens": 179,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 49,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/mcp-skill-registry-raw-api-2026-05-20T12-10-15-234Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "resolveSkill must filter duplicates, prefer primary, merge permissions, expose adapterBoundary, and avoid standalone runtime.",
+          "expected_files": [
+            "src/skillRegistry.ts",
+            "tests/skillRegistry.test.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/skillRegistry.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "resolveSkill currently returns standalone runtime and no adapterBoundary",
+            "Test expects adapterBoundary='dsxu-tool-gate', permissions=['read','network'], priority='primary', runtime !== 'standalone'"
+          ],
+          "limitations": [
+            "Cannot edit files or run tests",
+            "Cannot verify test passes without execution"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 17701,
+        "costUSD": 0.0060021136,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/mcp-skill-registry-dsxu-2026-05-20T12-10-17-184Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/mcp-skill-registry-2026-05-20T12-10-17-184Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/mcp-skill-registry-2026-05-20T12-10-17-184Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 2
+        },
+        "verificationSignals": [
+          "primary priority implemented",
+          "DSXU tool gate boundary implemented",
+          "permissions preserved",
+          "standalone runtime removed"
+        ],
+        "resultJson": {
+          "task_id": "raw-api-vs-dsxu-ab-skill-registry",
+          "edited_files": [
+            "src/skillRegistry.ts"
+          ],
+          "tests_run": [
+            "tests/skillRegistry.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test v1.3.11 — 1 pass, 0 fail, 4 expect() calls",
+            "resolveSkill now: prefers primary over secondary, carries permissions forward, sets adapterBoundary: 'dsxu-tool-gate', uses runtime: 'dsxu-adapter' (not 'standalone')"
+          ],
+          "next_action": "done"
+        }
+      }
+    },
+    {
+      "id": "json-schema-repair",
+      "title": "Repair common model JSON output before schema validation",
+      "expectedEvidence": [
+        "fenced JSON extraction",
+        "trailing comma repair",
+        "required field errors",
+        "no throw"
+      ],
+      "sourceFixtureHash": "8e53119241856db5e22dbdc435576d1300537617a51de45045a105ab9739eff1",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2978,
+        "costUSD": 0.00009381680000000001,
+        "inputTokens": 353,
+        "outputTokens": 284,
+        "cacheHitInputTokens": 256,
+        "cacheMissInputTokens": 97,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/json-schema-repair-raw-api-2026-05-20T12-10-34-979Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The current parseModelJson function uses JSON.parse directly, which throws on trailing commas and does not extract fenced JSON blocks. It also does not validate required fields (e.g., task_id) or return errors gracefully. The fix must: (1) extract JSON from fenced code blocks (```json ... ```), (2) remove trailing commas before parsing, (3) validate required fields (task_id, ok), (4) return { ok: boolean, errors: string[] } instead of throwing.",
+          "expected_files": [
+            "src/schemaRepair.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/schemaRepair.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current parseModelJson is a one-liner JSON.parse that throws on invalid input.",
+            "Test expects extraction from fenced block, trailing comma repair, and error return instead of throw.",
+            "Test expects returned object with ok and errors keys, not raw parsed JSON."
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly.",
+            "Only source excerpts provided; no access to full project or dependencies.",
+            "Cannot verify if bun test environment is set up."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 15461,
+        "costUSD": 0.0055391672,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/json-schema-repair-dsxu-2026-05-20T12-10-37-960Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/json-schema-repair-2026-05-20T12-10-37-961Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/json-schema-repair-2026-05-20T12-10-37-961Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "fenced JSON extraction implemented",
+          "trailing comma repair implemented",
+          "validation errors returned",
+          "parse no-throw guard implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-json-schema-repair-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/schemaRepair.ts"
+          ],
+          "tests_run": [
+            "tests/schemaRepair.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test: 2 pass, 0 fail, 4 expect() calls",
+            "parseModelJson now extracts fenced JSON, removes trailing commas, validates required fields (task_id), and returns error objects instead of throwing"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "workspace-hygiene-classifier",
+      "title": "Classify dirty workspace paths by owner and release policy",
+      "expectedEvidence": [
+        "source owner",
+        "evidence excluded",
+        "release artifact",
+        "permission residue",
+        "delete candidate"
+      ],
+      "sourceFixtureHash": "f5936f83b30dd90dc23d26b74a3b54fb94aaf43e5f7524bfb02a2122368ddf27",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2671,
+        "costUSD": 0.0001064168,
+        "inputTokens": 383,
+        "outputTokens": 314,
+        "cacheHitInputTokens": 256,
+        "cacheMissInputTokens": 127,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/workspace-hygiene-classifier-raw-api-2026-05-20T12-10-53-516Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "classifyPath must return correct owner, releaseIncluded, and action based on path patterns: source paths (src/), generated evidence (.dsxu/trace/), release artifacts (DSXU-code-release-artifacts), permission residue (locked/acl-residue), deletion candidates (.deleted).",
+          "expected_files": [
+            "src/workspaceHygiene.ts",
+            "tests/workspaceHygiene.test.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/workspaceHygiene.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "classifyPath currently returns hardcoded values",
+            "Test expects owner 'source' for 'src/query.ts'",
+            "Test expects releaseIncluded false for '.dsxu/trace/a.json'",
+            "Test expects owner 'release-artifact' for 'D:/DSXU-code-release-artifacts/a.zip'",
+            "Test expects action 'external-permission-review' for 'locked/acl-residue.tmp'",
+            "Test expects action 'owner-git-delete-review' for 'old/shim.ts.deleted'"
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk",
+            "Cannot run tests or verify implementation",
+            "Only source excerpts provided; no full file context"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 17875,
+        "costUSD": 0.005723687200000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/workspace-hygiene-classifier-dsxu-2026-05-20T12-10-56-188Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/workspace-hygiene-classifier-2026-05-20T12-10-56-189Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/workspace-hygiene-classifier-2026-05-20T12-10-56-189Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "source owner classified",
+          "evidence release exclusion implemented",
+          "release artifact classified",
+          "permission residue classified",
+          "deletion review classified"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-workspace-hygiene-classifier-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/workspaceHygiene.ts"
+          ],
+          "tests_run": [
+            "bun test tests/workspaceHygiene.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "classifyPath('src/query.ts').owner → 'source'",
+            "classifyPath('.dsxu/trace/a.json').releaseIncluded → false",
+            "classifyPath('D:/DSXU-code-release-artifacts/a.zip').owner → 'release-artifact'",
+            "classifyPath('locked/acl-residue.tmp').action → 'external-permission-review'",
+            "classifyPath('old/shim.ts.deleted').action → 'owner-git-delete-review'",
+            "bun test: 1 pass, 0 fail, 5 expect() calls"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "route-intent-lock",
+      "title": "Lock model route intent unless explicit admission changes it",
+      "expectedEvidence": [
+        "workflow lock",
+        "model lock",
+        "thinking lock",
+        "explicit admission"
+      ],
+      "sourceFixtureHash": "3448eaf077c45e3e9a7e1b6cf04cb3ed6c97fbbc2662a112e7244e3cbfd612e2",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2327,
+        "costUSD": 0.00007331520000000001,
+        "inputTokens": 464,
+        "outputTokens": 218,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 80,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-intent-lock-raw-api-2026-05-20T12-11-14-158Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The applyRouteEvent function currently unconditionally overwrites fields from the event, ignoring the requirement that model and thinking changes must be blocked unless explicitAdmission is true. The fix is to only apply model and thinking from the event when explicitAdmission is true, otherwise keep the existing state values.",
+          "expected_files": [
+            "src/routeIntentLock.ts"
+          ],
+          "would_run_tests": [
+            "tests/routeIntentLock.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "The test 'blocks accidental route drift' expects that passing model and thinking without explicitAdmission returns the original state unchanged.",
+            "The test 'allows explicit admission' expects that with explicitAdmission: true, the model and thinking are updated."
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly.",
+            "The fix is straightforward but requires modifying the source file."
+          ],
+          "confidence_0_100": 100
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 14741,
+        "costUSD": 0.005542107200000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": false,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-intent-lock-dsxu-2026-05-20T12-11-16-489Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-intent-lock-2026-05-20T12-11-16-489Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/route-intent-lock-2026-05-20T12-11-16-489Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "explicit admission implemented",
+          "model lock implemented",
+          "thinking lock implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-route-intent-lock-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/routeIntentLock.ts"
+          ],
+          "tests_run": [
+            "bun test tests/routeIntentLock.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "applyRouteEvent now blocks route drift when model/thinking change without explicitAdmission=true",
+            "2 tests pass: 'blocks accidental route drift' + 'allows explicit admission'"
+          ],
+          "next_action": "done"
+        }
+      }
+    },
+    {
+      "id": "read-fallback-governor",
+      "title": "Force search/range-read before large file reads",
+      "expectedEvidence": [
+        "grep first",
+        "range read",
+        "artifact preview",
+        "small read allowed"
+      ],
+      "sourceFixtureHash": "92a50db3ff2aaa20cfe66e35abe344252dc0caeff00ca5851c04b3b7b63d9fa4",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2305,
+        "costUSD": 0.00007205520000000001,
+        "inputTokens": 395,
+        "outputTokens": 248,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 11,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/read-fallback-governor-raw-api-2026-05-20T12-11-31-321Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "Update planRead to implement force search/range-read logic: for fileBytes > 500000, return action 'grep-first' when hasAnchor is false, and action 'range-read' with artifactPreview true when hasAnchor is true; otherwise return 'read-full' with artifactPreview false.",
+          "expected_files": [
+            "src/readGovernor.ts"
+          ],
+          "would_run_tests": [
+            "tests/readGovernor.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "Current planRead always returns { action: 'read-full', artifactPreview: false }",
+            "Test expects large file (900000 bytes) without anchor → action 'grep-first'",
+            "Test expects large file with anchor → action 'range-read' and artifactPreview true",
+            "Test expects small file (2000 bytes) → action 'read-full'"
+          ],
+          "limitations": [
+            "Cannot edit files or run tests directly",
+            "Threshold value (500000) inferred from test; not explicitly specified"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 13951,
+        "costUSD": 0.005498427200000001,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": false,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/read-fallback-governor-dsxu-2026-05-20T12-11-33-629Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/read-fallback-governor-2026-05-20T12-11-33-629Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/read-fallback-governor-2026-05-20T12-11-33-629Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "grep-first implemented",
+          "range read implemented",
+          "artifact preview implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-read-fallback-governor",
+          "edited_files": [
+            "src/readGovernor.ts"
+          ],
+          "tests_run": [
+            "tests/readGovernor.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test: 2 pass, 0 fail, 4 expect() calls"
+          ],
+          "next_action": "none"
+        }
+      }
+    },
+    {
+      "id": "secret-release-redaction",
+      "title": "Redact secrets and block release evidence leaks",
+      "expectedEvidence": [
+        "DeepSeek key redacted",
+        "Authorization redacted",
+        "safe summary preserved"
+      ],
+      "sourceFixtureHash": "a3164e3a3c8566a34667f833e51f6bf55387857f9269cdcd106a6017c94e7e21",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2935,
+        "costUSD": 0.00010039680000000001,
+        "inputTokens": 344,
+        "outputTokens": 312,
+        "cacheHitInputTokens": 256,
+        "cacheMissInputTokens": 88,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/secret-release-redaction-raw-api-2026-05-20T12-11-47-687Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "The redactReleaseText function currently returns secretFound: false unconditionally and does not redact any secrets. It must detect and redact DeepSeek keys (sk-...), generic API keys, and Authorization headers (Bearer ...) while preserving safe evidence text like 'PASS evidence'.",
+          "expected_files": [
+            "src/secretRedaction.ts",
+            "tests/secretRedaction.test.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/secretRedaction.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "src/secretRedaction.ts: redactReleaseText must detect and redact patterns: DEEPSEEK_API_KEY=sk-..., Authorization: Bearer ..., and generic API keys (e.g., key=...). Set secretFound: true when any redaction occurs. Preserve all other text including 'PASS evidence'.",
+            "tests/secretRedaction.test.ts: The existing test expects secretFound to be true and redacted text to not contain 'sk-1234567890' or 'Bearer abc', but to contain 'PASS evidence'."
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk.",
+            "Cannot run tests or verify test results.",
+            "Cannot provide the actual code fix; only the description of what needs to change."
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 37855,
+        "costUSD": 0.007137323200000002,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/secret-release-redaction-dsxu-2026-05-20T12-11-50-624Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/secret-release-redaction-2026-05-20T12-11-50-624Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/secret-release-redaction-2026-05-20T12-11-50-624Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 5,
+          "Edit": 1,
+          "Bash": 2
+        },
+        "verificationSignals": [
+          "secret patterns implemented",
+          "redaction marker implemented",
+          "secretFound flag implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-secret-release-redaction-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/secretRedaction.ts"
+          ],
+          "tests_run": [
+            "tests/secretRedaction.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "bun test v1.3.11: 1 pass, 0 fail, 4 expect() calls",
+            "Implemented regex patterns for DeepSeek keys (sk-*), Bearer tokens, and generic API keys",
+            "secretFound=true when secrets detected; safe 'PASS evidence' text preserved in output"
+          ],
+          "next_action": "done"
+        }
+      }
+    },
+    {
+      "id": "cost-quality-pareto",
+      "title": "Calculate cost-quality-cache Pareto evidence without overclaiming",
+      "expectedEvidence": [
+        "no score regression",
+        "cost reduction pct",
+        "cache lift pct",
+        "internal evidence boundary"
+      ],
+      "sourceFixtureHash": "25785c8a426ea2ce28456a5c5ebabe3d2e329cf9165b92d1277db91318fd6e03",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2747,
+        "costUSD": 0.0000859936,
+        "inputTokens": 544,
+        "outputTokens": 286,
+        "cacheHitInputTokens": 512,
+        "cacheMissInputTokens": 32,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/cost-quality-pareto-raw-api-2026-05-20T12-12-28-575Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "compareRuns must enforce costClaimAllowed only when after.score >= before.score, compute costReductionPct and cacheLiftPct as bounded internal evidence, and set boundary to 'internal ablation only' when score is equal.",
+          "expected_files": [
+            "src/costPareto.ts"
+          ],
+          "would_run_tests": [
+            "tests/costPareto.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "costClaimAllowed must be true only if after.score >= before.score and after.cost < before.cost",
+            "costReductionPct = ((before.cost - after.cost) / before.cost) * 100, clamped to 0-100",
+            "cacheLiftPct = ((after.cacheHitPct - before.cacheHitPct) / before.cacheHitPct) * 100, clamped to 0-100",
+            "boundary = 'internal ablation only' when after.score === before.score, else 'public win'"
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk",
+            "Cannot run tests or verify test outcomes",
+            "Cannot confirm TypeScript compilation or module resolution"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 90,
+        "exitCode": 0,
+        "durationMs": 36182,
+        "costUSD": 0.009207464000000002,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": false,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/cost-quality-pareto-dsxu-2026-05-20T12-12-31-324Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/cost-quality-pareto-2026-05-20T12-12-31-324Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/cost-quality-pareto-2026-05-20T12-12-31-324Z.stderr.log",
+        "toolUseCounts": {
+          "Bash": 3,
+          "Glob": 1,
+          "Read": 6,
+          "Edit": 2
+        },
+        "verificationSignals": [
+          "cost reduction metric implemented",
+          "cache lift metric implemented",
+          "internal boundary implemented"
+        ],
+        "resultJson": null
+      }
+    },
+    {
+      "id": "visible-state-projection",
+      "title": "Project work-state events consistently to TUI, CLI, and final report",
+      "expectedEvidence": [
+        "single event source",
+        "TUI projection",
+        "CLI projection",
+        "final report projection"
+      ],
+      "sourceFixtureHash": "0cacc2bf521dc73664691de9ab391afa955e10d254a704d1ea1e7144517ce7d2",
+      "raw": {
+        "pass": false,
+        "score": 85,
+        "durationMs": 2485,
+        "costUSD": 0.00007247520000000001,
+        "inputTokens": 412,
+        "outputTokens": 241,
+        "cacheHitInputTokens": 384,
+        "cacheMissInputTokens": 28,
+        "responsePath": ".dsxu/trace/raw-api-vs-dsxu-ab/visible-state-projection-raw-api-2026-05-20T12-13-07-595Z.json",
+        "limitations": [
+          "raw API produced a plan only; it did not edit files or run tests",
+          "conceptual fix signal found"
+        ],
+        "parsedJson": {
+          "identified_fix": "projectVisibleState must project goal, step, last tool, cost, risk, and evidence from each WorkEvent into tui, cli, and finalReport consistently. The current implementation returns empty objects. The fix populates each surface with the same derived summary object.",
+          "expected_files": [
+            "src/visibleState.ts"
+          ],
+          "would_run_tests": [
+            "bun test tests/visibleState.test.ts"
+          ],
+          "can_edit_files": false,
+          "can_run_tests": false,
+          "final_evidence": [
+            "projectVisibleState returns tui, cli, finalReport with identical content",
+            "Each surface contains goal, step, last tool, cost, risk, and evidence from the event source",
+            "Test expects tui === cli === finalReport and JSON contains 'fix cache' and 'tests pass'"
+          ],
+          "limitations": [
+            "Cannot read or edit files on disk",
+            "Cannot run tests to verify",
+            "Risk field is not defined in WorkEvent type; must be derived or added"
+          ],
+          "confidence_0_100": 95
+        }
+      },
+      "dsxu": {
+        "pass": true,
+        "score": 100,
+        "exitCode": 0,
+        "durationMs": 15659,
+        "costUSD": 0.0054673472,
+        "finalTestPassed": true,
+        "semanticVerificationPassed": true,
+        "finalTestExitCode": 0,
+        "tracePath": ".dsxu/trace/raw-api-vs-dsxu-ab/visible-state-projection-dsxu-2026-05-20T12-13-10-084Z.jsonl",
+        "stdoutPath": ".dsxu/trace/raw-api-vs-dsxu-ab/visible-state-projection-2026-05-20T12-13-10-084Z.stdout.log",
+        "stderrPath": ".dsxu/trace/raw-api-vs-dsxu-ab/visible-state-projection-2026-05-20T12-13-10-084Z.stderr.log",
+        "toolUseCounts": {
+          "Glob": 1,
+          "Read": 3,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "verificationSignals": [
+          "TUI projection implemented",
+          "CLI projection implemented",
+          "final report projection implemented"
+        ],
+        "resultJson": {
+          "task_id": "dsxu-visible-state-projection-2026-05-20T12-06-56-970Z",
+          "edited_files": [
+            "src/visibleState.ts"
+          ],
+          "tests_run": [
+            "bun test tests/visibleState.test.ts"
+          ],
+          "test_passed": true,
+          "evidence": [
+            "4 expect() calls passed — all three surfaces (tui, cli, finalReport) equal and contain goal 'fix cache' and evidence 'tests pass'"
+          ],
+          "next_action": "done"
+        }
+      }
+    }
+  ],
+  "safeguards": [
+    "Raw API baseline is plan-only and cannot edit files or run tests.",
+    "DSXU runs use isolated external fixture workspaces and do not mutate product source.",
+    "No API key or raw secret value is written to the public report.",
+    "External superiority and public 90/95 claims remain blocked."
+  ]
+}

@@ -1,0 +1,572 @@
+{
+  "schemaVersion": "dsxu.v26.public-challenge-package.v2",
+  "generatedAt": "2026-05-16T15:42:00.159Z",
+  "status": "PASS_PUBLIC_CHALLENGE_PACKAGE_READY",
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proWasRun": false,
+    "noSecondRuntime": true,
+    "didCreateExport": true
+  },
+  "commandPass": true,
+  "flashPass": true,
+  "c2Pass": true,
+  "c2PublicClaimBoundaryClosed": true,
+  "c2OwnerImplementationAcceptancePass": true,
+  "tuiPass": true,
+  "completedPass": true,
+  "seniorCodingPass": true,
+  "cleanPass": true,
+  "sixStagePass": true,
+  "cleanExportArtifactPass": true,
+  "freshInstallPass": true,
+  "releaseGatesPass": true,
+  "scoreFloor": 72,
+  "totalFlashCostUSD": 0.008998236800000002,
+  "flashCacheSummary": {
+    "reviewCount": 3,
+    "cacheHitInputTokens": 86656,
+    "cacheMissInputTokens": 42982,
+    "outputTokens": 9779,
+    "totalCostUSD": 0.008998236800000002,
+    "cacheHitRatePct": 66.8,
+    "targetHitRatePct": 70,
+    "targetMet": false,
+    "releaseBlocking": false,
+    "claimPolicy": "Cache hit rate is a public optimization metric and attribution signal, not a fixed release gate; claims must use observed values and before/after evidence.",
+    "readToolCallCount": 0,
+    "toolResultCount": 0,
+    "toolResultChars": 0,
+    "maxToolResultChars": 0,
+    "routeReasons": [
+      "review_flash_thinking_max"
+    ],
+    "uniqueSystemHashes": 1,
+    "uniqueStablePrefixHashes": 1,
+    "uniqueDynamicTailHashes": 3
+  },
+  "stableEvidencePack": {
+    "jsonPath": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.json",
+    "markdownPath": "D:\\DSXU-code\\docs\\DSXU_V26_PUBLIC_CHALLENGE_STABLE_EVIDENCE_PACK_20260515.md",
+    "sha256": "4ba9a97a65b658f698780f794c90901f8446e0372a7b421517e521e4b3e971e0",
+    "sourceTruthRefCount": 30,
+    "missingSourceTruthRefs": []
+  },
+  "publicClaimsAllowed": [
+    "Flash-first DSXU product-entry evidence is available; Pro was not required in this package.",
+    "C2 experience-loop behavior matrix is evidenced at 51/51 rows.",
+    "C2 public-claim boundary is closed as DSXU-owned generic experience evidence, not reference-product parity.",
+    "C2 owner implementation acceptance resolved 1902/1902 rows into implemented+tested, adapted/excluded, or no-loss baseline decisions.",
+    "DeepSeek trajectory tracing can record request plan, message/tool-result structure, redacted thinking/tool/use snapshots, usage, cache, route, and request id evidence when DSXU_DEEPSEEK_TRAJECTORY_FILE is enabled.",
+    "Public challenge review now respects DSXU no-Read source-truth capsule mode: 0 Read calls and 0 tool-result chars in the default review lane.",
+    "Real TUI replay evidence covers startup, permission visibility, recovery, compact resume, background task, and model task progress.",
+    "30-45 minute senior-coding window is evidenced through real DSXU product-entry runs, source edit, failed-to-passing test loop, sustained reviews, and Flash-only cost.",
+    "Clean export artifact is created and secret-scanned: D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-16T15-28-23-581Z.zip.",
+    "Fresh install/help/doctor/provider gate smoke is evidenced from the clean export.",
+    "Release public-surface gates recognize V24 source-truth docs without treating them as public product claims."
+  ],
+  "publicClaimsBlocked": [
+    "Do not claim public 90 ability until the public challenge score floor reaches around 90 with fixed raw task data.",
+    "Do not claim independent benchmark superiority until a comparable public challenge run is executed against a fixed task pack.",
+    "Do not claim high cache ROI yet; observed public challenge cache hit rate is 66.8% against a non-release reference of 70%.",
+    "Do not claim third-party product embedding; ecosystem compatibility must be framed as DSXU-owned intake/host contracts."
+  ],
+  "commandRuns": [
+    {
+      "id": "completed-reacceptance-replay",
+      "command": [
+        "bun",
+        "run",
+        "v24:completed-reacceptance"
+      ],
+      "exitCode": 0,
+      "durationMs": 47120,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\completed-reacceptance-replay-2026-05-16T15-36-09-856Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\completed-reacceptance-replay-2026-05-16T15-36-09-856Z.stderr.log"
+    },
+    {
+      "id": "interactive-tui-acceptance-replay",
+      "command": [
+        "bun",
+        "run",
+        "v24:interactive-tui-acceptance"
+      ],
+      "exitCode": 0,
+      "durationMs": 152255,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\interactive-tui-acceptance-replay-2026-05-16T15-36-56-976Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\interactive-tui-acceptance-replay-2026-05-16T15-36-56-976Z.stderr.log"
+    },
+    {
+      "id": "c2-loop-acceptance-replay",
+      "command": [
+        "bun",
+        "run",
+        "v24:c2-loop-acceptance"
+      ],
+      "exitCode": 0,
+      "durationMs": 44182,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\c2-loop-acceptance-replay-2026-05-16T15-39-29-231Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\c2-loop-acceptance-replay-2026-05-16T15-39-29-231Z.stderr.log"
+    },
+    {
+      "id": "product-runtime-owner-map-replay",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/product-runtime-owner-map-v1.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 401,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\product-runtime-owner-map-replay-2026-05-16T15-40-13-413Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\product-runtime-owner-map-replay-2026-05-16T15-40-13-413Z.stderr.log"
+    },
+    {
+      "id": "query-engine-recovery-mainline-replay",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/query-engine-recovery-mainline-v1.test.ts",
+        "src/dsxu/engine/__tests__/recovery-mainline-v3.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 96,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\query-engine-recovery-mainline-replay-2026-05-16T15-40-13-814Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\query-engine-recovery-mainline-replay-2026-05-16T15-40-13-815Z.stderr.log"
+    },
+    {
+      "id": "deepseek-trajectory-store-replay",
+      "command": [
+        "bun",
+        "test",
+        "src/services/api/deepseek-trajectory-store.test.ts",
+        "src/services/api/deepseek-adapter-cache-prefix-v1.test.ts",
+        "src/dsxu/engine/__tests__/deepseek-v4-control-v1.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 1107,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\deepseek-trajectory-store-replay-2026-05-16T15-40-13-910Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\deepseek-trajectory-store-replay-2026-05-16T15-40-13-910Z.stderr.log"
+    },
+    {
+      "id": "clean-export-preflight-replay",
+      "command": [
+        "bun",
+        "run",
+        "clean-export:preflight"
+      ],
+      "exitCode": 0,
+      "durationMs": 107,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\clean-export-preflight-replay-2026-05-16T15-40-15-017Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\clean-export-preflight-replay-2026-05-16T15-40-15-017Z.stderr.log"
+    }
+  ],
+  "flashReviews": [
+    {
+      "id": "flash-public-claim-guard-review",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "--verbose",
+        "--model",
+        "deepseek-v4-flash",
+        "--max-turns",
+        "3",
+        "--output-format",
+        "stream-json",
+        "--tools",
+        "",
+        "--permission-mode",
+        "dontAsk"
+      ],
+      "exitCode": 0,
+      "durationMs": 35204,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-public-claim-guard-review-2026-05-16T15-40-15-149Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-public-claim-guard-review-2026-05-16T15-40-15-149Z.stderr.log",
+      "promptPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.prompt.txt",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.jsonl",
+      "trajectoryPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-public-claim-guard-review-2026-05-16T15-40-15-148Z.trajectory.jsonl",
+      "promptProfile": {
+        "stablePrefixHash": "4b6e09f461721802",
+        "dynamicTailHash": "c2ff39208fdece90",
+        "stablePrefixChars": 100586,
+        "dynamicTailChars": 776
+      },
+      "trajectoryAttribution": {
+        "requestCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "systemHashes": [
+          "919f8d8b932a2c84"
+        ],
+        "uniqueSystemHashes": 1,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "maxToolResultChars": 0,
+        "cacheReadInputTokens": 10880,
+        "cacheMissInputTokens": 32335,
+        "outputTokens": 3631,
+        "noReadDefaultRespected": true
+      },
+      "resultJson": {
+        "did_use_source_truth_capsule": true,
+        "flash_first_policy_respected": true,
+        "no_second_runtime": true,
+        "pro_needed": false,
+        "package_ready": true,
+        "score_0_100": 72,
+        "sellable_metrics": [
+          "C2 loop real acceptance 51/51 pass - docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule",
+          "Senior coding window 30.48 min continuous real DSXU pass - docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule",
+          "TUI interactive replay 7/7 scenarios pass - docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md:capsule",
+          "Clean export artifact created with secret scan pass (no runtime secrets in export) - docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md:capsule",
+          "Fresh install help/doctor/provider smoke 7/7 pass from clean export directory - docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md:capsule",
+          "DeepSeek Flash-first routing with redacted trajectory traces and cost evidence - src-services-api-deepseek-trajectory-store-ts:capsule, src-utils-model-deepseekV4CostRouter-ts:capsule, src-utils-model-deepseekV4Control-ts:capsule",
+          "Flash review score floor 72 at cost USD 0.0106 - docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule"
+        ],
+        "claim_guard": [
+          "referenceFeatureParityClaimAllowed = false; reference product parity must not be claimed - docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md:capsule (anchors L13-L16)",
+          "public95ClaimAllowed = false; score floor 72 below 90 threshold; public 90 ability claim prohibited until score floor ~90 on fixed tasks - docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule (anchor L20), docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md:capsule (anchor L17)",
+          "External superiority claims require same-task raw target transcripts; no such comparison data in evidence pack - docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule (anchor L48)",
+          "No second provider, tool, MCP, agent, or query runtime created; DSXU single-entry architecture - docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule (anchor L29)",
+          "DeepSeek default flash-first; Pro requires explicit admission evidence not present in current evidence set - docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule (anchor L9)"
+        ],
+        "blocking_gaps": [
+          "C2 capability loss board status OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED - docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md:capsule (anchor L32)",
+          "Score floor 72 below public 90 ability target; cannot claim 90% parity - docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule (anchor L20)",
+          "12 deferred V18/V19 items remain unclosed (R01/R02/S02/R04/R05/R06 external evaluation, PZ extension entries) - docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule (anchor L9)",
+          "Missing fixed public benchmark/product demo comparison data - docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule (anchor L48)",
+          "Cache hit rate 70% is a target, not a measured actual; no raw cache performance evidence included - docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule (last row table line 12)"
+        ],
+        "evidence": [
+          "docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule",
+          "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md:capsule",
+          "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule",
+          "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule",
+          "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md:capsule",
+          "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md:capsule",
+          "src-services-api-deepseek-trajectory-store-ts:capsule",
+          "src-services-api-deepseek-adapter-ts:capsule",
+          "src-utils-model-deepseekV4Control-ts:capsule",
+          "src-utils-model-deepseekV4CostRouter-ts:capsule"
+        ]
+      },
+      "costUSD": 0.005574044,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 43215,
+          "outputTokens": 3631,
+          "cacheReadInputTokens": 10880,
+          "cacheCreationInputTokens": 32335,
+          "webSearchRequests": 0,
+          "costUSD": 0.005574044,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    },
+    {
+      "id": "flash-senior-coding-experience-review",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "--verbose",
+        "--model",
+        "deepseek-v4-flash",
+        "--max-turns",
+        "3",
+        "--output-format",
+        "stream-json",
+        "--tools",
+        "",
+        "--permission-mode",
+        "dontAsk"
+      ],
+      "exitCode": 0,
+      "durationMs": 44224,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.stderr.log",
+      "promptPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.prompt.txt",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.jsonl",
+      "trajectoryPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-senior-coding-experience-review-2026-05-16T15-40-50-357Z.trajectory.jsonl",
+      "promptProfile": {
+        "stablePrefixHash": "4b6e09f461721802",
+        "dynamicTailHash": "e95219fde54b1856",
+        "stablePrefixChars": 100586,
+        "dynamicTailChars": 968
+      },
+      "trajectoryAttribution": {
+        "requestCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "systemHashes": [
+          "919f8d8b932a2c84"
+        ],
+        "uniqueSystemHashes": 1,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "maxToolResultChars": 0,
+        "cacheReadInputTokens": 32768,
+        "cacheMissInputTokens": 10476,
+        "outputTokens": 3875,
+        "noReadDefaultRespected": true
+      },
+      "resultJson": {
+        "did_use_source_truth_capsule": true,
+        "flash_first_policy_respected": true,
+        "no_second_runtime": true,
+        "pro_needed": false,
+        "package_ready": true,
+        "score_0_100": 80,
+        "strengths": [
+          "Senior coding window 30–45 min real DSXU passed (continuousWindowSatisfied=true, finalTestPassed=true, flash cost $0.32, no Pro)",
+          "C2 loop real acceptance 51/51 with behavioral evidence linking across tool-permission, agent-mcp-skill, model-cost-cache, core-query-context regressions",
+          "Interactive TUI acceptance 7/7 passing startup-exit, permission-fallback, no-progress-recovery, auto-continue, compact-resume, background-task, model-task-auth-or-progress",
+          "Goal retention via DSXUWorkStateEventKind 'goal' in work-state-timeline.ts and timeline construction in code-mode-surgical-loop.ts",
+          "Source truth tracking via 'source_truth' event kind in work-state timeline",
+          "Permission/tool gate via useCanUseTool.tsx with classifier, coordinator, interactive, and swarm permission handlers",
+          "Recovery via QueryEngine terminal error consumption contract (recovery v3, no second runtime opening) – query-engine-recovery-mainline-v1 test",
+          "Cost evidence via deepseekV4CostRouter and senior coding window flash cost $0.3239",
+          "No duplicate product runtime: product-runtime-owner-map test enforces CLI/TUI/service entry files do not import the DSXU engine harness loop",
+          "Clean export artifact created with no runtime secrets, fresh install smoke 7/7 on product-help, auth-login, product-doctor, mcp-doctor, provider-gate"
+        ],
+        "remaining_gaps": [
+          "Score floor from Flash reviews is 72, not near 90 – public 90 ability cannot be claimed",
+          "No fixed public benchmark comparison data with raw transcripts (listed as remaining in senior coding window)",
+          "Senior coding window Final 95 claim allowed: false",
+          "C2 capability loss board still OPEN_V26_C2_CAPABILITY_LOSS_REVIEW_REQUIRED",
+          "594 product-specific adapt/exclude rows and 278 no-loss baseline rows in C2 owner implementation acceptance",
+          "12 deferred V18/V19 CLEAN items (R01/R02/S02/R04/R05/R06, PZ01-PZ08) still uncovered",
+          "No raw task transcripts in capsule – evidence is summary-level, not trace-level"
+        ],
+        "next_code_changes": [
+          "Generate fixed public benchmark comparison data with raw task transcripts and cost/cache evidence",
+          "Close V26 C2 capability loss board by reviewing the 594 adapted/excluded and 278 no-loss baseline rows for any substantive loss",
+          "Address deferred V18/V19 CLEAN items (external benchmarks R01-R06, extended entry points PZ01-PZ08) to close remaining P0 gaps",
+          "Collect raw QueryEngine recovery traces to strengthen the terminal-error consumption proof beyond unit-test evidence"
+        ],
+        "evidence": [
+          "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule",
+          "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule",
+          "src-dsxu-engine-tests-query-engine-recovery-mainline-v1-test-ts:capsule",
+          "src-dsxu-engine-work-state-timeline-ts:capsule",
+          "src-dsxu-engine-code-mode-surgical-loop-ts:capsule",
+          "src-dsxu-engine-tests-product-runtime-owner-map-v1-test-ts:capsule",
+          "src-hooks-useCanUseTool-tsx:capsule",
+          "src-utils-model-deepseekV4CostRouter-ts:capsule"
+        ]
+      },
+      "costUSD": 0.0026433904,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 43244,
+          "outputTokens": 3875,
+          "cacheReadInputTokens": 32768,
+          "cacheCreationInputTokens": 10476,
+          "webSearchRequests": 0,
+          "costUSD": 0.0026433904,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    },
+    {
+      "id": "flash-release-ecosystem-review",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "--verbose",
+        "--model",
+        "deepseek-v4-flash",
+        "--max-turns",
+        "3",
+        "--output-format",
+        "stream-json",
+        "--tools",
+        "",
+        "--permission-mode",
+        "dontAsk"
+      ],
+      "exitCode": 0,
+      "durationMs": 25571,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.stderr.log",
+      "promptPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.prompt.txt",
+      "tracePath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-release-ecosystem-review-2026-05-16T15-41-34-584Z.jsonl",
+      "trajectoryPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-public-challenge-package\\flash-release-ecosystem-review-2026-05-16T15-41-34-585Z.trajectory.jsonl",
+      "promptProfile": {
+        "stablePrefixHash": "4b6e09f461721802",
+        "dynamicTailHash": "0c22540486b4729e",
+        "stablePrefixChars": 100586,
+        "dynamicTailChars": 656
+      },
+      "trajectoryAttribution": {
+        "requestCount": 1,
+        "routeReasons": [
+          "review_flash_thinking_max"
+        ],
+        "systemHashes": [
+          "919f8d8b932a2c84"
+        ],
+        "uniqueSystemHashes": 1,
+        "readToolCallCount": 0,
+        "toolResultCount": 0,
+        "toolResultChars": 0,
+        "maxToolResultChars": 0,
+        "cacheReadInputTokens": 43008,
+        "cacheMissInputTokens": 171,
+        "outputTokens": 2273,
+        "noReadDefaultRespected": true
+      },
+      "resultJson": {
+        "did_use_source_truth_capsule": true,
+        "flash_first_policy_respected": true,
+        "no_second_runtime": true,
+        "pro_needed": false,
+        "package_ready": true,
+        "score_0_100": 72,
+        "release_ready_claims": [
+          "DSXU V26 C2 public claim boundary closed without reference-product parity claim",
+          "C2 loop real acceptance batch 51/51 passed",
+          "Senior coding window 30-45 min real DSXU continuous window satisfied with final test passed",
+          "Clean export preflight pass and clean export artifact created with secret scan pass (no runtime secrets in export)",
+          "Fresh install release smoke pass (help, doctor, provider gate, auth key wizard)",
+          "Interactive TUI acceptance pass (all 7 TUI scenarios evidenced)",
+          "Six-stage final tests pass",
+          "Commercial/IP/brand guard active: reference-product parity claim disallowed, proprietary code risk gate and public surface clean gate enforce DSXU-owned boundaries",
+          "No second runtime, no third-party embedding — all entry contracts are DSXU-owned QueryEngine, tool gate, permission gate, and evidence system"
+        ],
+        "blocked_claims": [
+          "Public 90 ability claim — score floor 72 is below the ~90 threshold and no fixed public benchmark same-task raw transcript evidence",
+          "Reference-product feature parity claim — referenceFeatureParityClaimAllowed is false by policy",
+          "External superiority claim — requires same-task raw target transcripts not present in the evidence pack"
+        ],
+        "evidence": [
+          "docs-DSXU-V24-PUBLIC-CHALLENGE-PACKAGE-20260515-md:capsule",
+          "docs-DSXU-V26-C2-PUBLIC-CLAIM-CLOSURE-20260515-md:capsule",
+          "docs-DSXU-V26-C2-OWNER-IMPLEMENTATION-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-C2-LOOP-REAL-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-SENIOR-CODING-WINDOW-20260515-md:capsule",
+          "docs-DSXU-V24-INTERACTIVE-TUI-ACCEPTANCE-20260515-md:capsule",
+          "docs-DSXU-V24-CLEAN-EXPORT-ARTIFACT-20260515-md:capsule",
+          "docs-DSXU-V24-FRESH-INSTALL-RELEASE-SMOKE-20260515-md:capsule",
+          "docs-DSXU-V26-MASTER-PLAN-20260515-md:capsule",
+          "src-dsxu-engine-public-surface-clean-gate-ts:capsule",
+          "src-dsxu-engine-proprietary-code-risk-gate-ts:capsule",
+          "src-dsxu-engine-release-provenance-gate-ts:capsule",
+          "src-dsxu-engine-work-state-timeline-ts:capsule",
+          "src-dsxu-engine-code-mode-surgical-loop-ts:capsule",
+          "src-QueryEngine-ts:capsule"
+        ]
+      },
+      "costUSD": 0.0007808024000000001,
+      "modelUsage": {
+        "deepseek-v4-flash": {
+          "inputTokens": 43179,
+          "outputTokens": 2273,
+          "cacheReadInputTokens": 43008,
+          "cacheCreationInputTokens": 171,
+          "webSearchRequests": 0,
+          "costUSD": 0.0007808024000000001,
+          "contextWindow": 1048576,
+          "maxOutputTokens": 32768
+        }
+      }
+    }
+  ],
+  "evidenceReports": [
+    {
+      "id": "completed-reacceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+      "summary": {}
+    },
+    {
+      "id": "interactive-tui",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+      "summary": {
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "c2-loop",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+      "summary": {
+        "primaryPassed": 15,
+        "secondaryPassed": 36,
+        "passedRows": 51,
+        "openRows": 0,
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "c2-public-claim-closure",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json",
+      "status": "PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED",
+      "summary": {}
+    },
+    {
+      "id": "c2-owner-implementation-acceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_DECISIONS_CLOSED",
+      "summary": {}
+    },
+    {
+      "id": "senior-coding-window",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+      "summary": {
+        "continuousWindowSatisfied": true,
+        "finalTestPassed": true
+      }
+    },
+    {
+      "id": "clean-export-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "summary": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false,
+        "blockers": 0
+      }
+    },
+    {
+      "id": "six-stage-final-tests",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json",
+      "status": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+      "summary": {}
+    },
+    {
+      "id": "clean-export-artifact",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json",
+      "status": "PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+      "summary": {}
+    },
+    {
+      "id": "fresh-install-release-smoke",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json",
+      "status": "PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+      "summary": {}
+    }
+  ],
+  "remainingForPublic90": [
+    "public challenge scoreFloor around 90 with fixed raw task data",
+    "same-task external/target raw transcript evidence before any superiority claim"
+  ]
+}

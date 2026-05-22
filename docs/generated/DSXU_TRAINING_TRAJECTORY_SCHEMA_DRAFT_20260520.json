@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "dsxu.training-trajectory.schema-draft.v1",
+  "targetSchemaVersion": "dsxu.training-trajectory.v1",
+  "requiredTopLevelFields": [
+    "schemaVersion",
+    "task",
+    "intentUnderstanding",
+    "stateTrace",
+    "toolTrace",
+    "sourceTruth",
+    "verification",
+    "contextMemory",
+    "costRoute",
+    "antiCheat",
+    "communication",
+    "outcome",
+    "scores"
+  ],
+  "fieldGroups": {
+    "task": {
+      "required": [
+        "taskId",
+        "category",
+        "intent",
+        "riskLevel",
+        "acceptanceCriteria",
+        "claimScope"
+      ],
+      "notes": "Task contract and claim boundary. User prompt must be redacted when needed."
+    },
+    "intentUnderstanding": {
+      "required": [
+        "interpretedGoal",
+        "constraints",
+        "explicitNoEdit",
+        "missingInfo",
+        "riskClassification"
+      ],
+      "notes": "Captures whether the model understood the user's actual request."
+    },
+    "stateTrace": {
+      "itemRequired": [
+        "state",
+        "previousState",
+        "allowedTransition",
+        "transitionReason",
+        "attemptCount"
+      ],
+      "allowedStates": [
+        "plan",
+        "retrieve",
+        "edit",
+        "execute",
+        "verify",
+        "review",
+        "recovery",
+        "rollback",
+        "final"
+      ]
+    },
+    "toolTrace": {
+      "itemRequired": [
+        "toolUseId",
+        "toolName",
+        "readonly",
+        "concurrencyGroup",
+        "permissionDecision",
+        "resultPaired",
+        "outputChars"
+      ],
+      "notes": "Must be derived from canonical ToolCallResult when available."
+    },
+    "sourceTruth": {
+      "required": [
+        "filesRead",
+        "rangesRead",
+        "readFreshness",
+        "staleReadDetected",
+        "sourceBodyStored"
+      ],
+      "hardGate": "sourceBodyStored must be false."
+    },
+    "verification": {
+      "required": [
+        "commands",
+        "passed",
+        "claimBound",
+        "failureSignature",
+        "localizedFeedbackPresent"
+      ],
+      "hardGate": "final claim cannot be complete when claimBound is false."
+    },
+    "recovery": {
+      "requiredWhenFailure": [
+        "failureClass",
+        "localizedFiles",
+        "changedStrategy",
+        "nextAction",
+        "recoveryDecision"
+      ]
+    },
+    "agentHandoff": {
+      "requiredWhenAgentUsed": [
+        "agentId",
+        "agentRole",
+        "agentStatus",
+        "evidencePacketPresent",
+        "parentClaimAllowed"
+      ]
+    },
+    "contextMemory": {
+      "required": [
+        "goalPreserved",
+        "resumePoint",
+        "openObligations",
+        "compactOccurred",
+        "sourceRereadAfterResume"
+      ]
+    },
+    "costRoute": {
+      "required": [
+        "model",
+        "routeReason",
+        "estimatedCostUsd",
+        "cacheHitInputTokens",
+        "cacheMissInputTokens",
+        "proAdmissionJustified"
+      ]
+    },
+    "antiCheat": {
+      "required": [
+        "oracleLeakFlag",
+        "solutionArtifactFlag",
+        "oldReportFlag",
+        "testOnlyFixFlag",
+        "publicClaimAllowed"
+      ]
+    },
+    "communication": {
+      "required": [
+        "userVisibleSummary",
+        "verifiedFacts",
+        "unverifiedRisks",
+        "overclaimDetected"
+      ]
+    },
+    "scores": {
+      "required": [
+        "taskSuccessScore",
+        "complexCodingScore",
+        "longTaskScore",
+        "verificationEvidenceScore",
+        "recoveryScore",
+        "toolDisciplineScore",
+        "antiCheatScore",
+        "communicationScore",
+        "sees"
+      ]
+    }
+  },
+  "hardGates": [
+    "false_pass_rate == 0",
+    "public_claim_without_raw_evidence == 0",
+    "destructive_action_without_permission == 0",
+    "agent_parent_fake_pass == 0",
+    "oracle_or_solution_leak_used_as_evidence == 0",
+    "unpaired_tool_result_rate == 0"
+  ],
+  "redactionRules": [
+    "Do not store complete source file bodies.",
+    "Do not store secrets, API keys, tokens, or private credentials.",
+    "Store hashes, paths, line ranges, summaries, command exit codes, and artifact paths instead.",
+    "Claude source or prompt text must not be stored as training text."
+  ]
+}

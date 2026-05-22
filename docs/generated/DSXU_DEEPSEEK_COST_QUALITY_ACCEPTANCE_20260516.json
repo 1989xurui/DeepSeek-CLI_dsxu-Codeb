@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "dsxu.deepseek-cost-quality-acceptance.v1",
+  "generatedAt": "2026-05-19T23:07:08.929Z",
+  "status": "PASS_DEEPSEEK_COST_QUALITY_ACCEPTANCE",
+  "board": {
+    "status": "PASS_DEEPSEEK_COST_QUALITY_ACCEPTANCE",
+    "generatedAt": "2026-05-19T23:07:08.929Z",
+    "scenarioCount": 4,
+    "solvedScenarioCount": 4,
+    "totalTurnCount": 10,
+    "flashTurnCount": 9,
+    "proTurnCount": 1,
+    "flashTurnRatioPct": 90,
+    "proTurnRatioPct": 10,
+    "cacheHitInputTokens": 173996,
+    "cacheMissInputTokens": 57032,
+    "outputTokens": 14291,
+    "cacheHitRatePct": 75.3,
+    "totalCostUsd": 0.013906969,
+    "proOnlyCostUsd": 0.037872826,
+    "savingsVsProOnlyPct": 63.3,
+    "public90ClaimAllowed": false,
+    "cacheHighRoiClaimAllowed": false,
+    "flashFirstCostClaimAllowed": true,
+    "proAdmissionClaimAllowed": true,
+    "allowedClaims": [
+      "Flash-first route/cost claim allowed: 90% turns on Flash/Flash-MAX; cost $0.013906969 vs Pro-only $0.037872826.",
+      "Pro admission claim allowed for evidenced rescue nodes only: every Pro turn has prior Flash attempt, admission reason, and saved-task evidence."
+    ],
+    "trendOnlyClaims": [
+      "Cache optimization is trend-only: aggregate hit rate 75.3%; use observed values, not a high-ROI claim.",
+      "Public 90% top-tier coding/complex-task ability claim remains blocked until fixed raw task score floor reaches around 90."
+    ],
+    "blockedClaims": [
+      "Do not claim public 90% coding/complex-task ability from this board.",
+      "Do not claim high cache ROI; publish exact observed cache hit rates and before/after trend only."
+    ],
+    "guards": [],
+    "scenarios": [
+      {
+        "id": "v19_phase5_fresh_non22_bugfix_recovery",
+        "label": "Fresh bugfix recovery with Pro admission after failed Flash verification plus high-risk recovery classification",
+        "source": "controlled-local-harness",
+        "solved": true,
+        "publicClaimScope": "internal-proof",
+        "turnCount": 4,
+        "flashTurnCount": 3,
+        "proTurnCount": 1,
+        "flashTurnRatioPct": 75,
+        "proTurnRatioPct": 25,
+        "cacheHitInputTokens": 56700,
+        "cacheMissInputTokens": 9800,
+        "outputTokens": 3050,
+        "cacheHitRatePct": 85.3,
+        "totalCostUsd": 0.00381858,
+        "proOnlyCostUsd": 0.007122038,
+        "savingsVsProOnlyPct": 46.4,
+        "proAdmissionViolations": [],
+        "cacheClaimStatus": "ALLOWED",
+        "public90ClaimStatus": "TREND_ONLY",
+        "claimStatus": "ALLOWED",
+        "evidencePaths": [
+          "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts",
+          ".dsxu/trace/deepseek-cost-quality-acceptance/pro-rescue"
+        ]
+      },
+      {
+        "id": "v19_phase5_flash_only_success_non22_feature",
+        "label": "Fresh feature solved by Flash/Flash-MAX without Pro",
+        "source": "controlled-local-harness",
+        "solved": true,
+        "publicClaimScope": "internal-proof",
+        "turnCount": 3,
+        "flashTurnCount": 3,
+        "proTurnCount": 0,
+        "flashTurnRatioPct": 100,
+        "proTurnRatioPct": 0,
+        "cacheHitInputTokens": 26800,
+        "cacheMissInputTokens": 4200,
+        "outputTokens": 1440,
+        "cacheHitRatePct": 86.5,
+        "totalCostUsd": 0.00106624,
+        "proOnlyCostUsd": 0.00317695,
+        "savingsVsProOnlyPct": 66.4,
+        "proAdmissionViolations": [],
+        "cacheClaimStatus": "ALLOWED",
+        "public90ClaimStatus": "TREND_ONLY",
+        "claimStatus": "ALLOWED",
+        "evidencePaths": [
+          "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts",
+          ".dsxu/trace/deepseek-cost-quality-acceptance/flash-only"
+        ]
+      },
+      {
+        "id": "public-challenge-flash-review",
+        "label": "Public challenge Flash review lane",
+        "source": "public-challenge",
+        "solved": true,
+        "publicClaimScope": "release-claim",
+        "turnCount": 1,
+        "flashTurnCount": 1,
+        "proTurnCount": 0,
+        "flashTurnRatioPct": 100,
+        "proTurnRatioPct": 0,
+        "cacheHitInputTokens": 86656,
+        "cacheMissInputTokens": 42982,
+        "outputTokens": 9779,
+        "cacheHitRatePct": 66.8,
+        "totalCostUsd": 0.008998237,
+        "proOnlyCostUsd": 0.027519028,
+        "savingsVsProOnlyPct": 67.3,
+        "proAdmissionViolations": [],
+        "cacheClaimStatus": "TREND_ONLY",
+        "public90ClaimStatus": "BLOCKED",
+        "claimStatus": "TREND_ONLY",
+        "evidencePaths": [
+          "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json"
+        ]
+      },
+      {
+        "id": "v19_phase5_live_provider_cache_prefix_billing",
+        "label": "Live provider cache prefix smoke",
+        "source": "live-provider",
+        "solved": true,
+        "publicClaimScope": "public-demo",
+        "turnCount": 2,
+        "flashTurnCount": 2,
+        "proTurnCount": 0,
+        "flashTurnRatioPct": 100,
+        "proTurnRatioPct": 0,
+        "cacheHitInputTokens": 3840,
+        "cacheMissInputTokens": 50,
+        "outputTokens": 22,
+        "cacheHitRatePct": 98.7,
+        "totalCostUsd": 0.000023912,
+        "proOnlyCostUsd": 0.00005481,
+        "savingsVsProOnlyPct": 56.4,
+        "proAdmissionViolations": [],
+        "cacheClaimStatus": "ALLOWED",
+        "public90ClaimStatus": "TREND_ONLY",
+        "claimStatus": "ALLOWED",
+        "evidencePaths": [
+          ".dsxu/trace/v18-live-provider/live-cache-prefix-payload-smoke.json",
+          "D:\\DSXU-code\\.dsxu\\trace\\v18-live-provider\\live-cache-prefix-payload-smoke.json"
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "publicChallengePath": "docs/generated/DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+    "publicChallengeFound": true,
+    "controlledHarnessTest": "src/dsxu/engine/__tests__/cost-cache-live-task-evidence.test.ts",
+    "liveProviderSourcePath": ".dsxu/trace/v18-live-provider/live-cache-prefix-payload-smoke.json",
+    "liveProviderSourceFound": true
+  },
+  "releaseClaimBoundary": {
+    "flashFirstCostClaimAllowed": true,
+    "proAdmissionClaimAllowed": true,
+    "public90ClaimAllowed": false,
+    "cacheHighRoiClaimAllowed": false,
+    "note": "Public GitHub copy may use Flash-first cost and evidenced Pro-admission claims. It must not claim public 90% ability or high cache ROI until fixed raw tasks prove those numbers."
+  }
+}

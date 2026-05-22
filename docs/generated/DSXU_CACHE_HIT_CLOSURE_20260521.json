@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "dsxu.cache-hit-closure.v1",
+  "owner": "DeepSeek route/cost/cache",
+  "generatedAt": "2026-05-21T19:44:32.590Z",
+  "status": "PASS_CACHE_HIT_CLOSURE_INTERNAL",
+  "internalCacheClaimAllowed": true,
+  "publicClaimAllowed": false,
+  "claimBoundary": "Internal cache-hit closure proves one repeated runtime stable prefix only; public product-wide cache, cost, or coding-quality claims still require long-task live trajectory evidence.",
+  "liveAb": {
+    "path": "D:\\DSXU-code\\docs\\generated\\DSXU_CACHE_LIVE_AB_20260521.json",
+    "status": "PASS_CACHE_LIVE_AB",
+    "didCallProvider": true,
+    "prefixHash": "9c54e02b6ba96ca2",
+    "firstHitRatePct": 0,
+    "lastHitRatePct": 99.6,
+    "hitRateDeltaPct": 99.6,
+    "roundsRequested": 3,
+    "observationCount": 3
+  },
+  "realityRun": {
+    "path": "D:\\DSXU-code\\docs\\generated\\DSXU_CACHE_REALITY_RUN_20260521.json",
+    "status": "PASS_CACHE_REALITY_DRY_RUN",
+    "boundaryFound": true,
+    "stablePrefixHash": "9c54e02b6ba96ca2",
+    "stablePrefixApproxTokens": 5963,
+    "dynamicTailApproxTokens": 3483,
+    "publicReportHashOnly": true
+  },
+  "sourceSafety": {
+    "dryRunDefault": true,
+    "placeholderPrefixesOptInOnly": true,
+    "onCacheMissDryRunLedgerOnly": true,
+    "laneStatsAvailable": true
+  },
+  "acceptance": {
+    "liveRepeatedPrefixPassed": true,
+    "dryRunBoundaryPreserved": true,
+    "redactionPreserved": true,
+    "performanceSafetyPreserved": true
+  },
+  "blockers": [],
+  "nextEvidenceNeeded": [
+    "Run 20+ minute or multi-case DSXU live trajectories and aggregate real task-level cache hit rate.",
+    "Join cache closure with finalization 14 non-pass replay before public performance claims.",
+    "Keep sticky model routing observe-by-default unless quality evidence proves enforced routing is safe for that lane."
+  ]
+}

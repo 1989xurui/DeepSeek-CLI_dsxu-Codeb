@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "dsxu.v7.safety-gate.v1",
+  "generatedAt": "2026-05-19T11:41:25.812Z",
+  "status": "PASS_DSXU_V7_SAFETY_GATE",
+  "summary": {
+    "checks": 14,
+    "passed": 14,
+    "blocked": 0
+  },
+  "blockers": [],
+  "checks": [
+    {
+      "id": "docs-registry-classified",
+      "status": "PASS",
+      "detail": "docs=401"
+    },
+    {
+      "id": "signals-p0-covered",
+      "status": "PASS",
+      "detail": "p0=328/328"
+    },
+    {
+      "id": "owner-decisions-closed",
+      "status": "PASS",
+      "detail": "ownerRows=208, expected=208, remaining=0"
+    },
+    {
+      "id": "prompt-delete-review-blocked",
+      "status": "PASS",
+      "detail": "deleteReviewPromptItems=0"
+    },
+    {
+      "id": "prompt-historical-raw-blocked",
+      "status": "PASS",
+      "detail": "generatedHistoricalRawDocs=0, supersededPlanRawDocs=0"
+    },
+    {
+      "id": "reachability-no-public-claim",
+      "status": "PASS",
+      "detail": "publicClaimAllowedRows=0"
+    },
+    {
+      "id": "archive-no-delete",
+      "status": "PASS",
+      "detail": "deleteNow=0, activeRows=0"
+    },
+    {
+      "id": "delete-review-observe-only",
+      "status": "PASS",
+      "detail": "rows=6, expected=6, deleteReady=0"
+    },
+    {
+      "id": "delete-review-replacement-evidence-observe-only",
+      "status": "PASS",
+      "detail": "rows=6, replacementEvidenceRows=6, failedCommands=0, deleteReady=0, mutationAllowed=0"
+    },
+    {
+      "id": "replay-bank-layered",
+      "status": "PASS",
+      "detail": "cases=300, publicBenchmarkClaimAllowed=0"
+    },
+    {
+      "id": "replay-layer-evidence-claim-blocked",
+      "status": "PASS",
+      "detail": "rows=300/300, missingSourceDocRows=0, publicBenchmarkClaimAllowedRows=0, publicClaimReadyRows=0"
+    },
+    {
+      "id": "claim-boundary-holds",
+      "status": "PASS",
+      "detail": "c3BelowPublicAllowed=0, public90Allowed=false"
+    },
+    {
+      "id": "owner-focused-evidence-pass",
+      "status": "PASS",
+      "detail": "commands=44, failed=0, coveredRows=96"
+    },
+    {
+      "id": "remaining-evidence-queue-claim-blocked",
+      "status": "PASS",
+      "detail": "rows=96/96, needsFocusedOwnerTest=0, publicClaimAllowedRows=0"
+    }
+  ]
+}

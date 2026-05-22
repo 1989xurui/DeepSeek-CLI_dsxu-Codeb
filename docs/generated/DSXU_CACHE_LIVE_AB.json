@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "dsxu.cache-live-ab.v1",
+  "owner": "DeepSeek route/cost/cache",
+  "generatedAt": "2026-05-21T04:54:38.278Z",
+  "status": "DRY_RUN_CACHE_LIVE_AB",
+  "mode": "dry-run",
+  "didCallProvider": false,
+  "publicClaimAllowed": false,
+  "claimBoundary": "cache live A/B dry-run only; stable prefix hash recorded, no provider call, no cache-hit improvement claim",
+  "model": "deepseek-v4-flash",
+  "baseUrl": "https://api.deepseek.com/v1",
+  "prefixHash": "9c54e02b6ba96ca2",
+  "prefixChars": 23849,
+  "prefixApproxTokens": 5963,
+  "roundsRequested": 2,
+  "observations": [],
+  "firstHitRatePct": 0,
+  "lastHitRatePct": 0,
+  "hitRateDeltaPct": 0,
+  "blockers": []
+}

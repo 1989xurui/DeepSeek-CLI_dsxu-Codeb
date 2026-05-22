@@ -1,0 +1,4 @@
+id,beforeScore,afterScore,beforeCostUSD,afterCostUSD,beforeCacheHitRatePct,afterCacheHitRatePct,beforeReadToolCalls,afterReadToolCalls,beforeToolResultChars,afterToolResultChars,beforeProRequests,afterProRequests
+flash-public-claim-guard-review,72,72,0.0200308486,0.005574044,16.3,25.2,2,0,48077,0,1,0
+flash-release-ecosystem-review,85,72,0.035029037,0.0007808024,60.7,99.6,24,0,220227,0,4,0
+flash-senior-coding-experience-review,72,80,0.016638774,0.0026433904,28.4,75.8,2,0,48077,0,1,0

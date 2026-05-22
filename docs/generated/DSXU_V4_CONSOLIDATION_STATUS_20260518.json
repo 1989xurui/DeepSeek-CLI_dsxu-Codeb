@@ -1,0 +1,322 @@
+{
+  "schemaVersion": "dsxu.v4.consolidation-status.v1",
+  "generatedAt": "2026-05-18T20:20:00.000Z",
+  "status": "LAUNCH_ACCEPTANCE_CLOSED_ENGINEERING_ONLY",
+  "engineeringReleaseGateStatus": "PASS_DSXU_V4_CONSOLIDATION_RELEASE_GATES",
+  "reAuditAt": "2026-05-19",
+  "reAuditStatus": "FOCUSED_REAUDIT_PATCHED_LAUNCH_ACCEPTANCE_CLOSED",
+  "launchAcceptanceStatus": "PASS",
+  "acceptanceTestIsCompletionProof": false,
+  "reAuditSummary": "2026-05-19 re-audit found that acceptance commands alone cannot prove V4 completion. Three focused gaps were patched first: FileWrite/FileEdit now surface post-mutation verification state to model-visible tool results; ToolProtocolIntegration is explicitly bounded as a disabled-by-default owner evidence harness and the missing legacy callId crash was fixed; query-loop final results now carry the long-task progress ledger and projection so final reports/API consumers can see the same ledger evidence. Launch-acceptance follow-up then closed 8/8 blockers: default visible tool hard cap, prompt/cache break ledger governance, unified edit lifecycle coverage for FileWrite/FileEdit/Notebook/Bash simulated sed write paths, GearBox verification recovery folded into the RECOVERY_DECISION_TABLE, Agent Evidence Envelope parent final gate acceptance, frozen experimental capability enforcement, focused real PTY trust UI resize/dialog regression, and the 20+ real task hit-rate/cost/cache raw pack.",
+  "v4HardBlockerClosure": {
+    "total": 8,
+    "closed": 8,
+    "status": "PASS",
+    "closedItems": [
+      {
+        "id": "V4-LA-01",
+        "name": "tool-window-hard-cap",
+        "owner": "Tool Window / Query Loop",
+        "evidence": [
+          "src/dsxu/engine/query-loop.ts emits tool_subset_selected.visibleToolHardCap and ledger owner Tool Window / Query Loop",
+          "src/dsxu/engine/__tests__/engine.test.ts enforces default visible tool hard cap"
+        ]
+      },
+      {
+        "id": "V4-LA-02",
+        "name": "prompt-cache-governance",
+        "owner": "DeepSeek Prompt/Cache Governance",
+        "evidence": [
+          "cache break events now append cost-cache ledger evidence with claim boundary",
+          "prompt-prefix/cache focused tests remain PASS"
+        ]
+      },
+      {
+        "id": "V4-LA-03",
+        "name": "unified-edit-lifecycle",
+        "owner": "Tool Gate / VerificationKernel",
+        "evidence": [
+          "FileWriteTool/FileEditTool already emit post-mutation verification envelopes and model-visible verification state",
+          "NotebookEditTool now emits the same post-mutation verification summary after notebook writes",
+          "BashTool simulated sed writes now emit the same post-mutation verification summary instead of bypassing the write lifecycle",
+          "src/dsxu/engine/__tests__/v4-edit-lifecycle.test.ts exercises real notebook and simulated sed file writes"
+        ]
+      },
+      {
+        "id": "V4-LA-04",
+        "name": "unified-recovery-decision-table",
+        "owner": "Recovery / GearBox",
+        "evidence": [
+          "GearBox reportVerificationSummary now consumes projectVerificationRecoveryDecision instead of a private verify-recovery branch",
+          "Recovery decisions carry sourceRecoveryDecisionTable=true plus the dsxu.stall-recovery-decision.v1 envelope",
+          "progress-ledger RECOVERY_DECISION_TABLE remains the single default table for stall/failure recovery projection"
+        ]
+      },
+      {
+        "id": "V4-LA-05",
+        "name": "agent-evidence-envelope-parent-final-gate",
+        "owner": "Agent Evidence / MCP Skill boundary owner",
+        "evidence": [
+          "validateDSXUAgentWorkerEvidenceEnvelope blocks missing summaries, scopes, output path/hash, evidence ids, uncited parent finals, and raw transcript bloat",
+          "Agent parent final gate replay blocks fake Done/PASS and allows evidence-cited or honest partial finals",
+          "query-loop and prompt governance focused tests block uncited or partial Agent evidence from becoming parent PASS"
+        ]
+      },
+      {
+        "id": "V4-LA-06",
+        "name": "freeze-experimental-capabilities",
+        "owner": "V4 Product Core Guard / Command Catalog",
+        "evidence": [
+          "V4 freeze register marks voting, forked branch, swarm/team mesh, legacy ToolBus, multiple recovery planners, prompt stacks, standalone MCP/Skill runtime, background cache warmer, internal smoke-as-public-benchmark, and generic package entrypoint expansion as frozen/default-disabled/release-gated/owner-review-only",
+          "Agent orchestration mode tests normalize swarm/debate/remote/fork/sendmessage requests to serial_worker or parallel_fanout with parent evidence gates",
+          "Tool Protocol consistency tests prove the protocol remains disabled by default and explicit use is only an owner evidence harness, not a second product ToolBus"
+        ]
+      },
+      {
+        "id": "V4-LA-07",
+        "name": "tui-trust-interface-slim-real-window-regression",
+        "owner": "Trust UI owner",
+        "evidence": [
+          "PromptInputFooter trust rows remain compact and hide idle ledger/agent rows",
+          "SystemTextMessage suppresses DSXU final usage and short DeepSeek cost/cache evidence from normal chat rows",
+          "Real PTY resize regression keeps long content pinned to tail, trust proof compact after resize, permission review/dialog border visible after resize, and middle scrollback anchored instead of snapping to top or tail"
+        ]
+      },
+      {
+        "id": "V4-LA-08",
+        "name": "20-plus-real-task-hit-rate-cost-cache-raw-pack",
+        "owner": "Evidence / benchmark / public challenge",
+        "evidence": [
+          "docs/generated/DSXU_V4_REAL_TASK_HIT_RATE_PACK_20260519.json aggregates 24 real DSXU stream-json task traces from hard-engineering and raw-api-vs-dsxu reports",
+          "pack reports finalPassRatePct=95.8, secondAttemptRecoveryRatePct=95.8, observed cacheHitRatePct=64.9, totalCostUsd=0.176034, toolResultChars=163134, proAdmissionCount=0",
+          "claimBoundary keeps the pack internal V4 launch evidence only and blocks external leaderboard, target-reference comparison, and 90/95 public claims"
+        ]
+      }
+    ],
+    "remainingItems": [],
+    "focusedVerificationCommands": [
+      "bun test src/dsxu/engine/__tests__/engine.test.ts",
+      "bun test src/dsxu/engine/__tests__/work-package-e/query-loop-profile.test.ts",
+      "bun test src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts src/dsxu/engine/__tests__/route-cache-roi-smoke.test.ts",
+      "bun test src/dsxu/engine/__tests__/v4-edit-lifecycle.test.ts",
+      "bun test src/dsxu/engine/__tests__/post-mutation-verification-envelope.test.ts",
+      "bun test src/dsxu/engine/__tests__/gear-box.test.ts",
+      "bun test src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts",
+      "bun test src/dsxu/engine/__tests__/gear-box-recovery-link-v1.test.ts",
+      "bun test src/dsxu/engine/__tests__/verify-gate.test.ts",
+      "bun test src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+      "bun test src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+      "bun test src/dsxu/engine/__tests__/direct-connect-and-query-contract-v1.test.ts -t \"parent final gate\"",
+      "bun test src/dsxu/engine/__tests__/prompt-governance-contract.test.ts -t \"Agent parent final gate\"",
+      "bun test scripts/__tests__/dsxu-command-catalog.test.ts",
+      "bun run scripts/dsxu-command-catalog.ts",
+      "bun test src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts",
+      "bun test src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts -t \"Tool Protocol\"",
+      "bun test src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts",
+      "bun test src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts",
+      "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"resize\"",
+      "bun test scripts/__tests__/dsxu-v4-real-task-hit-rate-pack.test.ts",
+      "bun run scripts/dsxu-v4-real-task-hit-rate-pack.ts"
+    ]
+  },
+  "claimBoundary": "Owner-folded V4 consolidation evidence. This is not a public benchmark score, not a 90/95 claim, and not a replacement for final release gates.",
+  "expectedStages": [
+    "P0",
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P7",
+    "P8"
+  ],
+  "completedStages": [
+    "P0",
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P7",
+    "P8"
+  ],
+  "releaseClaimBoundary": "V4 P0-P8 consolidation can support GitHub engineering claims about owner-folded mainline architecture, six-stage release gates, clean export artifact, and fresh-install smoke. Public benchmark, external comparison, or 90/95 capability claims still require paired raw evidence, score protocol, cost, cache, and failure-recovery proof.",
+  "publicReleaseClaimAllowed": false,
+  "stages": [
+    {
+      "stage": "P0",
+      "status": "DONE",
+      "owner": "V4 Product Core Guard / Command Catalog",
+      "summary": "Feature owner map, freeze register, complexity risk register, and script surface map generated without adding generic product entrypoints.",
+      "evidenceFiles": [
+        "docs/generated/DSXU_V4_FEATURE_OWNER_MAP_20260518.json",
+        "docs/generated/DSXU_V4_FREEZE_REGISTER_20260518.json",
+        "docs/generated/DSXU_V4_COMPLEXITY_RISK_REGISTER_20260518.json",
+        "docs/generated/DSXU_V4_SCRIPT_SURFACE_MAP_20260518.json"
+      ],
+      "verificationCommands": [
+        "bun test scripts/__tests__/dsxu-command-catalog.test.ts",
+        "bun test src/dsxu/engine/__tests__/product-core-guard.test.ts",
+        "bun run scripts/dsxu-command-catalog.ts"
+      ]
+    },
+    {
+      "stage": "P1",
+      "status": "DONE",
+      "owner": "Provider Plan owner",
+      "summary": "DeepSeek chat/tool/thinking request construction folded into DeepSeekAdapter canonical body builder and APIService DeepSeek path.",
+      "evidenceFiles": [
+        "src/services/api/deepseek-adapter.ts",
+        "src/dsxu/engine/api-service.ts",
+        "src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/services/api/deepseek-adapter-cache-prefix-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/model-capability-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/provider-contract-v1.test.ts"
+      ]
+    },
+    {
+      "stage": "P2",
+      "status": "DONE",
+      "owner": "DeepSeek route/cost/cache owner",
+      "summary": "StablePrefixLock, ToolSchemaFreeze, and CacheEpoch added to cache planning and evidence without background provider warmup.",
+      "evidenceFiles": [
+        "src/dsxu/engine/prompt-prefix-cache-builder.ts",
+        "src/dsxu/engine/prompt-prefix-cache-evidence.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/dsxu/engine/__tests__/prompt-prefix-cache-builder.test.ts",
+        "bun test src/dsxu/engine/__tests__/prompt-prefix-cache-evidence.test.ts",
+        "bun test src/dsxu/engine/__tests__/route-cache-dynamic-tail.test.ts",
+        "bun test src/dsxu/engine/__tests__/reasonix-cache-hardening.test.ts",
+        "bun run scripts/dsxu-live-cache-prefix-smoke.ts"
+      ],
+      "liveProviderBoundary": "didCallProvider=false in this stage; live provider cache data remains a later P8/public-comparable raw evidence input."
+    },
+    {
+      "stage": "P3",
+      "status": "DONE",
+      "owner": "Verification Envelope owner",
+      "summary": "Post-mutation verification final claim policy now distinguishes READY, NEEDS_FOCUSED_VERIFICATION, NEEDS_REVIEW, and BLOCKED. Re-audit patched the model-visible tool result path so success text also carries finalClaimAllowed/reviewRequired/rollback state.",
+      "evidenceFiles": [
+        "src/dsxu/engine/post-mutation-verification-envelope.ts",
+        "src/dsxu/engine/__tests__/post-mutation-verification-envelope.test.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/dsxu/engine/__tests__/post-mutation-verification-envelope.test.ts",
+        "bun test src/dsxu/engine/__tests__/verify-gate.test.ts",
+        "bun test src/coordinator/tdd-gate/__tests__/gate.test.ts",
+        "bun test src/services/static-analysis/__tests__/bridge.test.ts"
+      ]
+    },
+    {
+      "stage": "P4",
+      "status": "DONE",
+      "owner": "Tool Envelope / Permission Decision owner",
+      "summary": "ToolCallResult is the canonical post-boundary contract; provider/MCP/legacy tool shapes normalize only at Tool Gate boundary. Re-audit fixed the legacy wrapper fallback callId and added EngineHarness status evidence that Tool Protocol remains disabled by default and is not a second product ToolBus.",
+      "evidenceFiles": [
+        "src/dsxu/engine/tool-protocol.ts",
+        "src/dsxu/engine/tool-protocol-integration.ts",
+        "src/dsxu/engine/index.ts",
+        "src/services/tools/toolLifecycle.ts",
+        "src/dsxu/engine/tool-evidence-pack-v1.ts",
+        "src/dsxu/engine/work-state-timeline.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/dsxu/engine/__tests__/tool-protocol/consistency.test.ts",
+        "bun test src/dsxu/engine/__tests__/tool-evidence-pack-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/work-state-timeline.test.ts",
+        "bun test src/dsxu/engine/__tests__/tool-lifecycle-contract-v1.test.ts"
+      ]
+    },
+    {
+      "stage": "P5",
+      "status": "DONE",
+      "owner": "Recovery Decision / Work Ledger owner",
+      "summary": "Failure taxonomy, verification failure, stall signals, and recovery actions now project into one recovery decision table and progress ledger path. Re-audit patched query-loop final result metadata so the same progress ledger and long-task projection reach final report/API consumers.",
+      "evidenceFiles": [
+        "src/dsxu/engine/progress-ledger.ts",
+        "src/dsxu/engine/query-loop.ts",
+        "src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/dsxu/engine/__tests__/work-package-i/progress-ledger.test.ts",
+        "bun test src/dsxu/engine/__tests__/gear-box.test.ts",
+        "bun test src/dsxu/engine/__tests__/gear-box-recovery-link-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/controlled-failure-taxonomy.test.ts"
+      ]
+    },
+    {
+      "stage": "P6",
+      "status": "DONE",
+      "owner": "Agent Evidence / MCP Skill boundary owner",
+      "summary": "Agent handoff validates worker evidence envelope, parent citations, owned scope, output artifacts, and transcript budget.",
+      "evidenceFiles": [
+        "src/dsxu/engine/agent-mcp-skill-boundary-board.ts",
+        "src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "docs/generated/DSXU_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE_20260516.json"
+      ],
+      "verificationCommands": [
+        "bun test src/dsxu/engine/__tests__/agent-mcp-skill-boundary-board.test.ts",
+        "bun test src/dsxu/engine/__tests__/agent-parent-final-gate-replay-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/agent-orchestration-mode-v1.test.ts",
+        "bun run scripts/dsxu-agent-mcp-skill-boundary-acceptance.ts"
+      ]
+    },
+    {
+      "stage": "P7",
+      "status": "DONE",
+      "owner": "Trust UI owner",
+      "summary": "Trust UI uses compact projection, suppresses duplicate EvidenceLine rows, and preserves key PTY trust/permission/long-output states in focused real TUI tests.",
+      "evidenceFiles": [
+        "src/components/PromptInput/PromptInputFooter.tsx",
+        "src/components/messages/SystemTextMessage.tsx",
+        "src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts",
+        "src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts"
+      ],
+      "verificationCommands": [
+        "bun test src/components/PromptInput/__tests__/PromptInputFooter-trust.test.ts",
+        "bun test src/components/messages/__tests__/SystemTextMessage-evidence-line.test.ts",
+        "bun test src/dsxu/engine/__tests__/model-driven-tui-long-task-v1.test.ts",
+        "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"keeps DSXU trust proof\"",
+        "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"keeps permission review visible\"",
+        "bun test src/dsxu/engine/__tests__/real-tui-harness-v1.test.ts -t \"keeps long-content TUI output pinned\""
+      ],
+      "slowSuiteBoundary": "The full real-tui-harness file is slow and was not counted as a single full-suite PASS in this focused stage."
+    },
+    {
+      "stage": "P8",
+      "status": "DONE",
+      "owner": "Evidence / Release Claim Binder",
+      "summary": "Evidence dashboard reads V4 consolidation status; six-stage final tests passed 20/20; clean export artifact was created with secret scan PASS; fresh install/help/doctor/provider smoke passed 8/8. P8 is done for V4 engineering/release-gate consolidation, while public benchmark or 90/95 comparison claims remain outside this gate until paired raw comparable evidence exists.",
+      "evidenceFiles": [
+        "scripts/dsxu-evidence-dashboard.ts",
+        "scripts/__tests__/dsxu-evidence-dashboard.test.ts",
+        "docs/generated/DSXU_V4_CONSOLIDATION_STATUS_20260518.json",
+        "docs/generated/DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json",
+        "docs/generated/DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json",
+        "docs/generated/DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json"
+      ],
+      "verificationCommands": [
+        "bun test scripts/__tests__/dsxu-evidence-dashboard.test.ts",
+        "bun run scripts/dsxu-evidence-dashboard.ts",
+        "bun run test:six-stage-final",
+        "bun run release:clean-export-artifact",
+        "bun run release:fresh-install-smoke"
+      ],
+      "remainingPublicClaimInputs": [
+        "collect 30-case public comparable paired raw evidence before any public 90/95 or external benchmark comparison claim",
+        "bind public README charts to source/test/live/raw/cost/cache evidence only",
+        "keep scoreFloor at the dashboard-computed value until comparable benchmark evidence changes it"
+      ]
+    }
+  ],
+  "finalVerificationDeferred": [
+    "bun test",
+    "bun run acceptance:senior-coding-window",
+    "public comparable raw benchmark runs"
+  ]
+}

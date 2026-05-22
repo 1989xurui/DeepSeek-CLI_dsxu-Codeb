@@ -1,0 +1,127 @@
+{
+  "id": "DSXU_V24_COMPLEX_TASK_ACCEPTANCE_REVIEW_INPUT_20260515",
+  "generatedAt": "2026-05-16T15:42:00.210Z",
+  "policy": {
+    "defaultModel": "deepseek-v4-flash",
+    "proWasRun": false,
+    "proAdmission": "blocked unless Flash conflict or explicit rescue evidence exists",
+    "final95ClaimAllowed": false,
+    "reasonFinal95Blocked": [
+      "fixed public benchmark/product demo comparison data is not created by this runner",
+      "six-stage final tests, clean export artifact, and fresh install smoke are not created in this runner"
+    ]
+  },
+  "commandRuns": [
+    {
+      "id": "query-loop-regression-batch",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/query-loop-run-query-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-gate-state-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-gear-box-recovery-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-recovery-bridge-v1.test.ts",
+        "src/dsxu/engine/__tests__/query-loop-visible-copy-v1.test.ts",
+        "src/dsxu/engine/__tests__/recovery-query-loop-v3.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 253,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\query-loop-regression-batch-2026-05-16T15-35-58-995Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\query-loop-regression-batch-2026-05-16T15-35-58-995Z.stderr.log"
+    },
+    {
+      "id": "release-surface-regression-batch",
+      "command": [
+        "bun",
+        "test",
+        "src/dsxu/engine/__tests__/release-surface-v1.test.ts",
+        "src/dsxu/engine/__tests__/release-surface-source-policy-review-v1.test.ts"
+      ],
+      "exitCode": 0,
+      "durationMs": 10507,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\release-surface-regression-batch-2026-05-16T15-35-59-248Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\release-surface-regression-batch-2026-05-16T15-35-59-249Z.stderr.log"
+    },
+    {
+      "id": "public-challenge-product-replay",
+      "command": [
+        "bun",
+        "run",
+        "v24:public-challenge"
+      ],
+      "exitCode": 0,
+      "durationMs": 350452,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\public-challenge-product-replay-2026-05-16T15-36-09-755Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-complex-task-acceptance\\public-challenge-product-replay-2026-05-16T15-36-09-755Z.stderr.log"
+    }
+  ],
+  "evidenceReports": [
+    {
+      "id": "public-challenge",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_PUBLIC_CHALLENGE_PACKAGE_20260515.json",
+      "status": "PASS_PUBLIC_CHALLENGE_PACKAGE_READY",
+      "summary": {
+        "commandPass": true,
+        "flashPass": true,
+        "c2Pass": true,
+        "tuiPass": true,
+        "completedPass": true,
+        "cleanPass": true,
+        "scoreFloor": 72
+      }
+    },
+    {
+      "id": "c2-loop",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json",
+      "status": "PASS_C2_LOOP_REAL_ACCEPTANCE_BATCH",
+      "summary": {
+        "flashReviewPass": true,
+        "primaryPassed": 15,
+        "secondaryPassed": 36,
+        "passedRows": 51,
+        "openRows": 0
+      }
+    },
+    {
+      "id": "interactive-tui",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json",
+      "status": "PASS_INTERACTIVE_TUI_ACCEPTANCE",
+      "summary": {
+        "flashReviewPass": true
+      }
+    },
+    {
+      "id": "completed-reacceptance",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_COMPLETED_REACCEPTANCE_20260515.json",
+      "status": "PASS_COMPLETED_FEATURES_REACCEPTED_WITH_FLASH_FIRST_EVIDENCE",
+      "summary": {}
+    },
+    {
+      "id": "senior-coding-window",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V24_SENIOR_CODING_WINDOW_20260515.json",
+      "status": "PASS_SENIOR_CODING_WINDOW_30_45_MIN_REAL_DSXU",
+      "summary": {}
+    },
+    {
+      "id": "clean-export-preflight",
+      "path": "D:\\DSXU-code\\docs\\generated\\DSXU_V20_CLEAN_EXPORT_PREFLIGHT_20260515.json",
+      "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+      "summary": {
+        "canCreateCleanExport": true,
+        "didCreateExport": false,
+        "blockers": 0
+      }
+    }
+  ],
+  "fixedTaskDefinition": {
+    "id": "DSXU-BENCH-V24-01",
+    "name": "single-pass query loop, public product evidence, and release claim guard",
+    "expectedSeniorBehavior": [
+      "read source truth before claiming completion",
+      "catch duplicated model/runtime execution and prove it with a regression",
+      "keep public claims below the evidence floor",
+      "use Flash first and avoid Pro when Flash can finish the review",
+      "keep tool, permission, model cost, C2, TUI, and release evidence on DSXU-owned owners"
+    ]
+  }
+}

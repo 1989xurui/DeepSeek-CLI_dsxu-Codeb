@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "dsxu.v5.phase0.runner.v1",
+  "generatedAt": "2026-05-19T00:43:11.527Z",
+  "suite": "claim-boundary",
+  "status": "PASS_V5_PHASE0_SUITE",
+  "purpose": "Prove release-blocked, NOT_RUN, public-comparable, and score-floor boundaries are explicit.",
+  "owner": "Evidence / Release Claim Binder",
+  "commandCount": 1,
+  "passedCommandCount": 1,
+  "failedCommandCount": 0,
+  "timedOutCommandCount": 0,
+  "durationMs": 1176,
+  "maxDurationMs": 180000,
+  "withinDurationBudget": true,
+  "results": [
+    {
+      "id": "evidence-dashboard-claim-boundary",
+      "suite": "claim-boundary",
+      "owner": "Evidence / Release Claim Binder",
+      "command": "bun run evidence:dashboard",
+      "timeoutMs": 180000,
+      "liveProvider": false,
+      "claimBoundary": "claim-boundary",
+      "exitCode": 0,
+      "passed": true,
+      "timedOut": false,
+      "durationMs": 1173,
+      "stdoutPath": ".dsxu/trace/v5-phase0/claim-boundary/1779151391538-evidence-dashboard-claim-boundary-bun-run-evidence-dashboard.stdout.log",
+      "stderrPath": ".dsxu/trace/v5-phase0/claim-boundary/1779151391538-evidence-dashboard-claim-boundary-bun-run-evidence-dashboard.stderr.log",
+      "stdoutTail": "DSXU Evidence Workbench\nscoreFloor=72 trust=release-blocked releaseClaimAllowed=false\ngates: pass=51 fail=0 blocked=2 notRun=86 parseErrors=0\nv4Consolidation=PASS completed=9/9 launch=8/8 missing=none blocked=none\ncoverage: sourceTest=true live=true raw=true cost=true cache=true\npublicComparableMissingCases=30\nactionItems:\n- P0 Evidence / Release Claim Binder: release claim or external evidence gate is blocked (bun run release:github-launch-pack)\n- P1 Evidence / Benchmark / Public Comparable: 1 public-comparable manifest(s) still lack paired raw evidence (bun run benchmark:swe-bench -- --mode public-comparable)\n- P2 Evidence / Release Claim Binder: 86 gate(s) are NOT_RUN and cannot be used as GitHub claims\ndataStillNeeded:\n- release claim blocker resolution\n- public comparable raw evidence for 30 cases\n- not-run evidence cannot be used as GitHub claims\njson: docs\\generated\\DSXU_EVIDENCE_DASHBOARD_20260519.json\nUse --json to print the full dashboard.",
+      "stderrTail": "$ bun run scripts/dsxu-evidence-dashboard.ts"
+    }
+  ],
+  "claimBoundaryAssessment": {
+    "status": "PASS_CLAIM_BOUNDARY_HELD",
+    "scoreFloor": 72,
+    "releaseClaimAllowed": false,
+    "releaseTrustStatus": "blocked",
+    "publicComparableMissingCases": 30,
+    "blockedGateNames": [
+      "DSXU_HARD_ENGINEERING_BENCHMARK_20260517",
+      "DSXU_V24_GITHUB_OPEN_SOURCE_LAUNCH_PACK_20260515"
+    ],
+    "dataStillNeeded": [
+      "release claim blocker resolution",
+      "public comparable raw evidence for 30 cases",
+      "not-run evidence cannot be used as GitHub claims"
+    ]
+  },
+  "blockers": [],
+  "deferredFullReleaseCommands": [],
+  "outputJson": "docs/generated/DSXU_V5_PHASE0_CLAIM_BOUNDARY_20260519.json",
+  "outputMd": "docs/DSXU_V5_PHASE0_CLAIM_BOUNDARY_20260519.md",
+  "traceDir": ".dsxu/trace/v5-phase0/claim-boundary",
+  "rule": "V5 Phase 0 only aggregates existing owner tests/evidence. It does not add a product runtime, provider, ToolBus, permission layer, agent layer, or public benchmark claim."
+}

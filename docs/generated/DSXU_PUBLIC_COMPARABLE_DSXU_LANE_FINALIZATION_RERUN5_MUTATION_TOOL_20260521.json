@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "dsxu.public-comparable-dsxu-lane.v1",
+  "generatedAt": "2026-05-21T07:01:59.703Z",
+  "status": "PARTIAL",
+  "manifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json",
+  "rawRoot": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521",
+  "workspaceRoot": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane",
+  "rawEvidenceComplete": false,
+  "publicBenchmarkClaimAllowed": false,
+  "externalComparisonClaimAllowed": false,
+  "caseCount": 30,
+  "attemptedCaseCount": 1,
+  "capturedCaseCount": 1,
+  "skippedCaseCount": 0,
+  "failedCaseCount": 0,
+  "passedCaseCount": 0,
+  "nonPassingCaseCount": 1,
+  "nextAction": "run evidence:public-comparable-raw to import DSXU lane evidence; expand only after low-risk probe cases are stable",
+  "safeguards": [
+    "DSXU lane runs in per-case isolated git worktrees or injected test workspaces, never in the dirty product working tree",
+    "top-level PASS means every selected case passed its rubric; captured evidence without rubric pass is PARTIAL",
+    "this runner captures transcript/tool/final/metrics evidence but does not judge public superiority",
+    "finalPass requires a clean CLI exit, a result event, no unsupported/budget violations, and a declared outcome that matches the case rubric; deny-PASS cases can pass with FAIL when FAIL is the requested outcome",
+    "public benchmark and external comparison claims remain controlled by the raw-evidence readiness gate"
+  ],
+  "cases": [
+    {
+      "id": "mutation-tool-prompt-read-edit-cache-live",
+      "status": "PARTIAL_DSXU_LANE_CAPTURED",
+      "model": "deepseek-v4-flash",
+      "promptHash": "96dba26cba786d5ede4bc5a91d22ab39bfd3f28d2ef18a071dd3c97af7f3f4a9",
+      "caseDir": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live",
+      "workspaceDir": "D:/DSXU-code-evidence-workspaces/public-comparable-dsxu-lane/mutation-tool-prompt-read-edit-cache-live-2026-05-21T06-58-35-172Z",
+      "rawTranscriptPath": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live/raw-transcript.jsonl",
+      "toolTracePath": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live/tool-trace.jsonl",
+      "finalReportPath": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live/final-report.json",
+      "metricsPath": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live/metrics.json",
+      "artifactDir": ".dsxu/trace/public-comparable-finalization-rerun5-mutation-tool-20260521/mutation-tool-prompt-read-edit-cache-live/artifacts",
+      "exitCode": 0,
+      "wallClockMs": 202390,
+      "costUsd": 0.0290427592,
+      "cacheHitRatePct": 50.92,
+      "toolUseCount": 23,
+      "finalPass": false
+    }
+  ]
+}
