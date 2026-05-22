@@ -7,19 +7,21 @@ import { Box, Newline, Text, useTheme } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
 import { isProviderAuthEnabled } from '../utils/auth.js';
 import { getUsableApiKey, normalizeApiKeyForConfig } from '../utils/authPortable.js';
+import { getProviderApiKeyWithSource } from '../utils/auth.js';
 import { getCustomApiKeyStatus } from '../utils/config.js';
 import { env } from '../utils/env.js';
-import { isRunningOnHomespace } from '../utils/envUtils.js';
+import { isDsxuRuntimeMode, isRunningOnHomespace } from '../utils/envUtils.js';
 import { PreflightStep } from '../utils/preflightChecks.js';
 import type { ThemeSetting } from '../utils/theme.js';
 import { ApproveApiKey } from './ApproveApiKey.js';
 import { ConsoleOAuthFlow } from './ConsoleOAuthFlow.js';
 import { Select } from './CustomSelect/select.js';
+import { DsxuModelAccessSetup } from './DsxuModelAccessSetup.js';
 import { WelcomeV2 } from './LogoV2/WelcomeV2.js';
 import { PressEnterToContinue } from './PressEnterToContinue.js';
 import { ThemePicker } from './ThemePicker.js';
 import { OrderedList } from './ui/OrderedList.js';
-type StepId = 'preflight' | 'theme' | 'oauth' | 'api-key' | 'security' | 'terminal-setup';
+type StepId = 'preflight' | 'theme' | 'oauth' | 'api-key' | 'model-access' | 'security' | 'terminal-setup';
 interface OnboardingStep {
   id: StepId;
   component: React.ReactNode;
@@ -33,6 +35,7 @@ export function Onboarding({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [skipOAuth, setSkipOAuth] = useState(false);
   const [oauthEnabled] = useState(() => isProviderAuthEnabled());
+  const [dsxuRuntimeMode] = useState(() => isDsxuRuntimeMode());
   const [theme, setTheme] = useTheme();
   useEffect(() => {
     logEvent('tengu_began_setup', {
@@ -113,8 +116,23 @@ export function Onboarding({
       return customApiKeyTruncated;
     }
   }, []);
+  const needsDsxuModelAccessSetup = useMemo(() => {
+    if (!dsxuRuntimeMode) {
+      return false;
+    }
+    const { key, source } = getProviderApiKeyWithSource({
+      skipRetrievingKeyFromApiKeyHelper: true,
+    });
+    return !key && source !== 'apiKeyHelper';
+  }, [dsxuRuntimeMode]);
   function handleApiKeyDone(approved: boolean) {
     if (approved) {
+      setSkipOAuth(true);
+    }
+    goToNextStep();
+  }
+  function handleModelAccessDone(success: boolean) {
+    if (success) {
       setSkipOAuth(true);
     }
     goToNextStep();
@@ -136,7 +154,12 @@ export function Onboarding({
       component: <ApproveApiKey customApiKeyTruncated={apiKeyNeedingApproval} onDone={handleApiKeyDone} />
     });
   }
-  if (oauthEnabled) {
+  if (dsxuRuntimeMode && needsDsxuModelAccessSetup) {
+    steps.push({
+      id: 'model-access',
+      component: <DsxuModelAccessSetup onDone={handleModelAccessDone} />
+    });
+  } else if (oauthEnabled) {
     steps.push({
       id: 'oauth',
       component: <SkippableStep skip={skipOAuth} onSkip={goToNextStep}>

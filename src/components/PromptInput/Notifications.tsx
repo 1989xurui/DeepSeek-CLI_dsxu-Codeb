@@ -41,7 +41,7 @@ export const FOOTER_TEMPORARY_STATUS_TIMEOUT = 5000;
 export function getAuthBlockedNotificationText(isRemote: boolean): string {
   return isRemote
     ? 'Authentication blocked - Try again or run /login'
-    : 'Auth required - Run /login before model requests can continue';
+    : 'Auth required - submit any prompt or run /login to configure DeepSeek key';
 }
 type Props = {
   apiKeyStatus: VerificationStatus;

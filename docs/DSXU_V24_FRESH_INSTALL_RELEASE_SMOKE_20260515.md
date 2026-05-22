@@ -10,14 +10,14 @@ Commands: 8/8
 
 | id | passed | exitCode | durationMs | stdout | stderr |
 | --- | --- | --- | --- | --- | --- |
-| fresh-bun-install | true | 0 | 11162 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-bun-install-2026-05-22T00-01-56-967Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-bun-install-2026-05-22T00-01-56-967Z.stderr.log |
-| product-help | true | 0 | 1499 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-help-2026-05-22T00-02-08-129Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-help-2026-05-22T00-02-08-129Z.stderr.log |
-| slash-help-print | true | 0 | 108 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\slash-help-print-2026-05-22T00-02-09-628Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\slash-help-print-2026-05-22T00-02-09-628Z.stderr.log |
-| auth-login-no-key-guidance | true | 0 | 1502 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-no-key-guidance-2026-05-22T00-02-09-736Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-no-key-guidance-2026-05-22T00-02-09-736Z.stderr.log |
-| auth-login-key-wizard-stdin | true | 0 | 1423 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-key-wizard-stdin-2026-05-22T00-02-11-238Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-key-wizard-stdin-2026-05-22T00-02-11-238Z.stderr.log |
-| product-doctor | true | 0 | 3624 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-doctor-2026-05-22T00-02-12-661Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-doctor-2026-05-22T00-02-12-661Z.stderr.log |
-| mcp-doctor-json | true | 0 | 1374 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\mcp-doctor-json-2026-05-22T00-02-16-285Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\mcp-doctor-json-2026-05-22T00-02-16-285Z.stderr.log |
-| fresh-provider-gate | true | 0 | 490 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-provider-gate-2026-05-22T00-02-17-659Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-provider-gate-2026-05-22T00-02-17-659Z.stderr.log |
+| fresh-bun-install | true | 0 | 514 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-bun-install-2026-05-22T03-38-05-641Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-bun-install-2026-05-22T03-38-05-641Z.stderr.log |
+| product-help | true | 0 | 1642 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-help-2026-05-22T03-38-06-155Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-help-2026-05-22T03-38-06-155Z.stderr.log |
+| slash-help-print | true | 0 | 115 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\slash-help-print-2026-05-22T03-38-07-797Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\slash-help-print-2026-05-22T03-38-07-797Z.stderr.log |
+| auth-login-no-key-guidance | true | 0 | 1439 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-no-key-guidance-2026-05-22T03-38-07-912Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-no-key-guidance-2026-05-22T03-38-07-912Z.stderr.log |
+| auth-login-key-wizard-stdin | true | 0 | 1452 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-key-wizard-stdin-2026-05-22T03-38-09-352Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\auth-login-key-wizard-stdin-2026-05-22T03-38-09-352Z.stderr.log |
+| product-doctor | true | 0 | 4119 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-doctor-2026-05-22T03-38-10-803Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\product-doctor-2026-05-22T03-38-10-803Z.stderr.log |
+| mcp-doctor-json | true | 0 | 1376 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\mcp-doctor-json-2026-05-22T03-38-14-922Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\mcp-doctor-json-2026-05-22T03-38-14-922Z.stderr.log |
+| fresh-provider-gate | true | 0 | 498 | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-provider-gate-2026-05-22T03-38-16-298Z.stdout.log | D:\DSXU-code\.dsxu\trace\v24-fresh-install-release-smoke\fresh-provider-gate-2026-05-22T03-38-16-298Z.stderr.log |
 
 ## Rule
 

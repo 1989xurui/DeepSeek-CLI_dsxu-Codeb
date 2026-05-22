@@ -136,11 +136,66 @@ DSXU 有同题 before/after 证据，显示 source capsule、默认 no-Read、ro
 
 ## 安装
 
-```bash
-bun install
+### Windows 一键安装
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-通过环境变量或内置 auth flow 配置 DeepSeek：
+根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建桌面快捷方式 `DSXU Code`、创建 `DSXU Code WSL` 快捷方式，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。启动器会自动设置 UTF-8，避免中文和边框乱码。
+
+如果还没有 Bun：
+
+```powershell
+powershell -c "irm https://bun.sh/install.ps1 | iex"
+```
+
+重新打开 Windows Terminal 后再运行 DSXU 安装脚本。
+
+如果希望安装器同时检查或安装 WSL：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -InstallWsl
+```
+
+这个开关会检测已有 WSL distro；没有时执行 `wsl --install -d Ubuntu`。因为 WSL 可能需要管理员权限、Microsoft Store、重启和首次 Linux 用户初始化，所以不会默认静默强装。
+
+### macOS / Linux / WSL
+
+```bash
+bash ./install.sh
+```
+
+该脚本会安装依赖，创建 `~/.local/bin/dsxu-code`，并在可用时创建桌面启动入口。WSL 用户也可以从 Windows 侧运行：
+
+查看帮助不会触发安装：
+
+```bash
+bash ./install.sh --help
+```
+
+```powershell
+.\Start-DSXU-Code-WSL.cmd
+```
+
+它会自动检测 WSL distro，并把当前下载目录转换成 WSL 路径。
+
+### 手动安装
+
+```bash
+bun install --frozen-lockfile
+bun run dsxu-code
+```
+
+Windows 用户更推荐：
+
+```powershell
+.\Start-DSXU-Code.cmd
+```
+
+### 首次配置 DeepSeek key
+
+第一次启动如果没有 key，DSXU 会进入欢迎和本地模型访问配置界面。也可以通过命令配置：
 
 ```env
 DSXU_CODE_MODE=1
@@ -150,7 +205,7 @@ DSXU_API_KEY=your_key_here
 DSXU_MODEL=deepseek-v4-flash
 ```
 
-也可以运行：
+或者运行：
 
 ```bash
 bun ./src/entrypoints/dsxu-code.tsx auth login
@@ -165,6 +220,15 @@ bun ./src/entrypoints/dsxu-code.tsx auth login
 ```bash
 bun run dsxu-code
 ```
+
+桌面快捷方式：
+
+- `DSXU Code`：Windows 原生 PowerShell/Windows Terminal 启动。
+- `DSXU Code WSL`：通过 WSL 启动，适合习惯 Linux 工具链的用户。
+
+### 乱码修复
+
+如果看到中文、边框或欢迎界面乱码，优先使用 `Start-DSXU-Code.cmd`、桌面快捷方式或 Windows Terminal。DSXU 的 Windows 启动器会设置 `chcp 65001`、PowerShell UTF-8 输出、`LANG=zh_CN.UTF-8` 和 `LC_ALL=zh_CN.UTF-8`。不要用旧 cmd 手动执行 `bun run dsxu-code` 作为日常入口。
 
 Print-mode 任务：
 
@@ -202,6 +266,7 @@ Release checks：
 bun run test:six-stage-final
 bun run release:clean-export-artifact
 bun run release:fresh-install-smoke
+bun run release:fresh-install-windows-smoke
 ```
 
 Release checks 会比 owner-focused tests 慢。开发时先跑 focused owner tests；只有完成 release-facing batch 后再跑完整 release chain。

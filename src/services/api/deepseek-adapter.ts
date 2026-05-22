@@ -4,6 +4,7 @@ import { appendFileSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { createHash } from 'crypto';
 import { SYSTEM_PROMPT_DYNAMIC_BOUNDARY } from '../../constants/prompts.js';
+import { getProviderApiKey } from '../../utils/auth.js';
 import { recordCacheUsage } from '../cache-stats.js';
 import {
   estimateDeepSeekV4Cost,
@@ -76,6 +77,20 @@ export type DeepSeekChatCompletionBodyInput = {
   temperature?: number
   tool_choice?: any
   response_format?: any
+}
+
+function getConfiguredDeepSeekApiKey(options?: any): string | null {
+  if (typeof options?.apiKey === 'string' && options.apiKey.trim().length > 0) {
+    return options.apiKey
+  }
+  if (process.env.DEEPSEEK_API_KEY?.trim()) {
+    return process.env.DEEPSEEK_API_KEY
+  }
+  try {
+    return getProviderApiKey()
+  } catch {
+    return null
+  }
 }
 
 function appendDeepSeekRouteTrace(event: string, payload: Record<string, unknown>): void {
@@ -949,8 +964,8 @@ export class DeepSeekAdapter {
 
   private static async executeRequest(params: any, options?: any): Promise<{ data: any, response: Response, request_id: string }> {
     try {
-      const apiKey = options?.apiKey ?? process.env.DEEPSEEK_API_KEY;
-      if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set");
+      const apiKey = getConfiguredDeepSeekApiKey(options);
+      if (!apiKey) throw new Error("DSXU model access is not configured. Run /login to configure a DeepSeek API key.");
 
       const baseUrl = typeof options?.baseUrl === 'string' && options.baseUrl.trim().length > 0
         ? options.baseUrl.trim().replace(/\/+$/, '')

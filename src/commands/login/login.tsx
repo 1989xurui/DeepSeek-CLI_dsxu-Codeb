@@ -7,6 +7,7 @@ import type { LocalJSXCommandContext } from '../../commands.js';
 import { ConfigurableShortcutHint } from '../../components/ConfigurableShortcutHint.js';
 import { ConsoleOAuthFlow } from '../../components/ConsoleOAuthFlow.js';
 import { Dialog } from '../../components/design-system/Dialog.js';
+import { DsxuModelAccessSetupDialog } from '../../components/DsxuModelAccessSetup.js';
 import { useMainLoopModel } from '../../hooks/useMainLoopModel.js';
 import { Text } from '../../ink.js';
 import { refreshFeatureFlagsAfterAuthChange } from '../../services/analytics/featureFlags.js';
@@ -19,11 +20,18 @@ import { checkAndDisableAutoModeIfNeeded, checkAndDisableBypassPermissionsIfNeed
 import { resetUserCache } from '../../utils/user.js';
 export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXCommandContext): Promise<React.ReactNode> {
   if (isDsxuRuntimeMode()) {
-    context.onChangeAPIKey();
-    context.setMessages(stripSignatureBlocks);
-    resetCostState();
-    onDone('DSXU Code uses local provider credentials. Configure DeepSeek or other model providers in DSXU settings; provider OAuth login is isolated from DSXU runtime.');
-    return null;
+    return <DsxuModelAccessSetupDialog onDone={success => {
+      context.onChangeAPIKey();
+      context.setMessages(stripSignatureBlocks);
+      resetCostState();
+      if (success) {
+        context.setAppState(prev => ({
+          ...prev,
+          authVersion: prev.authVersion + 1
+        }));
+      }
+      onDone(success ? 'DSXU model access saved. DeepSeek requests can continue.' : 'DSXU model access setup cancelled.');
+    }} />;
   }
   return <Login onDone={async success => {
     context.onChangeAPIKey();

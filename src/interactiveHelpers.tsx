@@ -18,10 +18,11 @@ import { handleMcpjsonServerApprovals } from './services/mcpServerApproval.js';
 import { AppStateProvider } from './state/AppState.js';
 import { onChangeAppState } from './state/onChangeAppState.js';
 import { normalizeApiKeyForConfig } from './utils/authPortable.js';
+import { getProviderApiKeyWithSource } from './utils/auth.js';
 import { getExternalDsxuInstructionIncludes, getMemoryFiles, shouldShowDsxuInstructionExternalIncludesWarning } from './utils/dsxuInstructions.js';
 import { checkHasTrustDialogAccepted, getCustomApiKeyStatus, getGlobalConfig, saveGlobalConfig } from './utils/config.js';
 import { updateDeepLinkTerminalPreference } from './utils/deepLink/terminalPreference.js';
-import { isEnvTruthy, isRunningOnHomespace } from './utils/envUtils.js';
+import { isDsxuRuntimeMode, isEnvTruthy, isRunningOnHomespace } from './utils/envUtils.js';
 import { type FpsMetrics, FpsTracker } from './utils/fpsTracker.js';
 import { updateGithubRepoPathMapping } from './utils/githubRepoPathMapping.js';
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
@@ -120,6 +121,23 @@ export async function showSetupScreens(root: Root, permissionMode: PermissionMod
     }} />, {
       onChangeAppState
     });
+  }
+
+  if (isDsxuRuntimeMode()) {
+    const { key, source } = getProviderApiKeyWithSource({
+      skipRetrievingKeyFromApiKeyHelper: true,
+    });
+    if (!key && source !== 'apiKeyHelper') {
+      onboardingShown = true;
+      const {
+        DsxuModelAccessSetupDialog
+      } = await import('./components/DsxuModelAccessSetup.js');
+      await showSetupDialog(root, done => <DsxuModelAccessSetupDialog showWelcome onDone={() => {
+        void done();
+      }} />, {
+        onChangeAppState
+      });
+    }
   }
 
   // Always show the trust dialog in interactive sessions, regardless of permission mode.
