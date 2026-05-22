@@ -1,13 +1,13 @@
 {
   "schemaVersion": "dsxu.fresh-install-windows-smoke.v1",
-  "generatedAt": "2026-05-22T04:43:53.244Z",
+  "generatedAt": "2026-05-22T05:41:19.334Z",
   "status": "PASS_FRESH_INSTALL_WINDOWS_SMOKE",
   "repoRoot": "D:\\DSXU-code",
-  "staticCheckCount": 12,
+  "staticCheckCount": 14,
   "commandCheckCount": 3,
   "failedStaticChecks": [],
   "failedCommandChecks": [],
-  "evidenceRule": "This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, and isolated first-run key setup without storing or printing a real key.",
+  "evidenceRule": "This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, support QR assets, and isolated first-run key setup without storing or printing a real key.",
   "staticResults": [
     {
       "id": "root-install-dispatcher",
@@ -65,6 +65,16 @@
       "detail": "README files expose install, first-run, desktop, and encoding guidance"
     },
     {
+      "id": "readme-support-surface",
+      "passed": true,
+      "detail": "README files expose the support/friend section with fixed QR asset paths"
+    },
+    {
+      "id": "readme-support-qr-assets",
+      "passed": true,
+      "detail": "support QR image assets exist and are not empty placeholders"
+    },
+    {
       "id": "package-script-windows-smoke",
       "passed": true,
       "detail": "package.json exposes the Windows install smoke command"
@@ -87,9 +97,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 1739,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T04-43-45-655Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T04-43-45-655Z.stderr.log",
+      "durationMs": 2419,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T05-41-08-393Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T05-41-08-393Z.stderr.log",
       "stdoutTail": "999.0.0-local (DSXU Code)\n",
       "stderrTail": ""
     },
@@ -111,9 +121,9 @@
         1
       ],
       "passed": true,
-      "durationMs": 2966,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T04-43-47-394Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T04-43-47-394Z.stderr.log",
+      "durationMs": 4201,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T05-41-10-813Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T05-41-10-813Z.stderr.log",
       "stdoutTail": "Product: DSXU Code\nModel provider: deepseek\nModel gateway: direct\nModel access: missing. Configure DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\n",
       "stderrTail": ""
     },
@@ -135,9 +145,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 2883,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T04-43-50-361Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T04-43-50-361Z.stderr.log",
+      "durationMs": 4318,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T05-41-15-015Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T05-41-15-015Z.stderr.log",
       "stdoutTail": "DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n",
       "stderrTail": ""
     }

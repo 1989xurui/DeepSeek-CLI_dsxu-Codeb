@@ -56,10 +56,12 @@ The installer:
 - switches the install session to UTF-8;
 - verifies Bun is available;
 - runs `bun install --frozen-lockfile`;
-- creates `DSXU Code.lnk` on the desktop;
-- creates `DSXU Code WSL.lnk` on the desktop for users who prefer WSL;
+- creates `DSXU Code.lnk` on the desktop for the native Windows launch path;
+- creates `DSXU Code WSL.lnk` on the desktop as a ready WSL launch path for users who prefer Linux tooling;
 - creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`;
 - adds that shim directory to the user PATH if missing.
+
+For most Windows users, this is the recommended default: install once on Windows, then launch from the desktop. WSL is prepared as an optional entrypoint, but DSXU does not force every Windows user into WSL.
 
 Optional WSL bootstrap:
 
@@ -74,10 +76,12 @@ This checks for an existing WSL distro. If none exists, it runs `wsl --install -
 - 切换 UTF-8，避免中文和边框乱码；
 - 检查 Bun；
 - 执行 `bun install --frozen-lockfile`；
-- 创建桌面快捷方式 `DSXU Code.lnk`；
-- 创建 WSL 快捷方式 `DSXU Code WSL.lnk`；
+- 创建 Windows 原生桌面快捷方式 `DSXU Code.lnk`；
+- 创建可选 WSL 桌面快捷方式 `DSXU Code WSL.lnk`，方便习惯 Linux 工具链的用户直接进入；
 - 创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`；
 - 如果 PATH 缺失，会把该 shim 目录加入用户 PATH。
+
+对大部分 Windows 用户来说，推荐默认方案就是：在 Windows 一键安装，然后从桌面 `DSXU Code` 进入。WSL 入口会准备好，但不会强迫所有用户默认进 WSL。
 
 如果希望安装器顺手检查或安装 WSL：
 

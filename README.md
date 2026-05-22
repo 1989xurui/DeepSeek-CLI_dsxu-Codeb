@@ -142,7 +142,9 @@ These are the current GitHub-facing demos. They are chosen to show task complexi
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-The root installer enters the Windows install chain. It checks Bun, runs `bun install --frozen-lockfile`, creates desktop shortcuts for `DSXU Code` and `DSXU Code WSL`, creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`, and launches through a UTF-8 PowerShell wrapper to avoid garbled CJK text and border rendering.
+The root installer enters the Windows install chain. It checks Bun, runs `bun install --frozen-lockfile`, creates the native Windows desktop shortcut `DSXU Code`, creates the optional WSL shortcut `DSXU Code WSL`, creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`, and launches through a UTF-8 PowerShell wrapper to avoid garbled CJK text and border rendering.
+
+The recommended default for most Windows users is: run the one-command installer, then open `DSXU Code` from the desktop. Users who prefer Linux tooling can open `DSXU Code WSL`. DSXU does not force-install WSL by default; use `-InstallWsl` only when you want the installer to check or install WSL.
 
 If Bun is missing:
 
@@ -317,6 +319,17 @@ Blocked:
 - No claim that internal task adapters equal public benchmark passes.
 - No claim of standalone browser, MCP, IDE, or agent runtime outside DSXU gates.
 - No copied reference-product parity, branding, source, prompt, or commercial behavior claim.
+
+## Support And Say Hi
+
+If DSXU Code is useful to you, or if you simply find it useful and fun, you can leave a small tip or add me on WeChat and say hi.
+
+<p>
+  <img src="docs/assets/wechat-pay.jpg" alt="WeChat tip QR code" width="260" />
+  <img src="docs/assets/wechat-friend.jpg" alt="WeChat friend QR code" width="260" />
+</p>
+
+> If it is useful and fun, feel free to leave a tip or make a friend.
 
 ## Repository Map
 

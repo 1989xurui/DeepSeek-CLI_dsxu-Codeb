@@ -142,7 +142,9 @@ DSXU 有同题 before/after 证据，显示 source capsule、默认 no-Read、ro
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建桌面快捷方式 `DSXU Code`、创建 `DSXU Code WSL` 快捷方式，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。启动器会自动设置 UTF-8，避免中文和边框乱码。
+根安装器会自动进入 Windows 安装链。它会检查 Bun、执行 `bun install --frozen-lockfile`、创建 Windows 原生桌面快捷方式 `DSXU Code`、创建可选 WSL 快捷方式 `DSXU Code WSL`，并创建 `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`。启动器会自动设置 UTF-8，避免中文和边框乱码。
+
+默认推荐路径是 Windows 一键安装后直接从桌面 `DSXU Code` 进入；如果用户习惯 Linux 工具链，可以点 `DSXU Code WSL`。WSL 不会被默认强装，需要时使用下面的 `-InstallWsl` 开关。
 
 如果还没有 Bun：
 
@@ -317,6 +319,17 @@ Release checks 会比 owner-focused tests 慢。开发时先跑 focused owner te
 - 不能把内部 task adapters 说成公开 benchmark passes。
 - 不能声明 DSXU gates 外存在 standalone browser、MCP、IDE 或 agent runtime。
 - 不能声明复制参考产品 parity、branding、source、prompt 或 commercial behavior。
+
+## 打赏与认识一下
+
+如果 DSXU Code 对你有用，或者只是觉得好用好玩，可以打赏一下，也可以加个微信交个朋友。
+
+<p>
+  <img src="docs/assets/wechat-pay.jpg" alt="微信打赏二维码" width="260" />
+  <img src="docs/assets/wechat-friend.jpg" alt="微信好友二维码" width="260" />
+</p>
+
+> 如果好用好玩就打赏一下，也可以交个朋友。
 
 ## 仓库地图
 

@@ -39,6 +39,14 @@ async function readText(path: string): Promise<string> {
   return (await readFile(join(ROOT, path), 'utf8')).replace(/^\uFEFF/, '')
 }
 
+async function readBinary(path: string): Promise<Uint8Array | null> {
+  try {
+    return await readFile(join(ROOT, path))
+  } catch {
+    return null
+  }
+}
+
 function pass(id: string, detail: string): StaticCheck {
   return { id, passed: true, detail }
 }
@@ -113,8 +121,8 @@ async function runCommand(
     expectedExitCodes,
     passed:
       expectedExitCodes.includes(exitCode) &&
-      !stdout.includes('sk-test-windows-smoke') &&
-      !stderr.includes('sk-test-windows-smoke'),
+      !stdout.includes('dsxu-test-windows-smoke-token') &&
+      !stderr.includes('dsxu-test-windows-smoke-token'),
     durationMs: Date.now() - startedAt,
     stdoutPath,
     stderrPath,
@@ -136,6 +144,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
   const readme = await readText('README.md')
   const readmeCn = await readText('README.zh-CN.md')
   const packageJson = await readText('package.json')
+  const wechatPayQr = await readBinary('docs/assets/wechat-pay.jpg')
+  const wechatFriendQr = await readBinary('docs/assets/wechat-friend.jpg')
 
   const checks: StaticCheck[] = []
   checks.push(
@@ -206,6 +216,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
       includesIgnoreCase(installDoc, 'Windows one-command install') &&
       installDoc.includes('Windows 一键安装') &&
       installDoc.includes('-InstallWsl') &&
+      installDoc.includes('does not force every Windows user into WSL') &&
+      installDoc.includes('不会强迫所有用户默认进 WSL') &&
       installDoc.includes('乱码') &&
       includesIgnoreCase(installDoc, 'First-run DeepSeek key setup')
       ? pass('install-doc-bilingual-first-run', 'INSTALL.md covers bilingual install, encoding, and first-run key setup')
@@ -218,14 +230,35 @@ async function staticChecks(): Promise<StaticCheck[]> {
       readme.includes('bash ./install.sh --help') &&
       includesIgnoreCase(readme, 'First-run DeepSeek key setup') &&
       readme.includes('-InstallWsl') &&
+      readme.includes('does not force-install WSL by default') &&
       readmeCn.includes('Windows 一键安装') &&
       readmeCn.includes('.\\install.ps1') &&
       readmeCn.includes('bash ./install.sh') &&
       readmeCn.includes('bash ./install.sh --help') &&
       readmeCn.includes('-InstallWsl') &&
+      readmeCn.includes('WSL 不会被默认强装') &&
       readmeCn.includes('首次配置 DeepSeek key')
       ? pass('readme-install-surface', 'README files expose install, first-run, desktop, and encoding guidance')
       : fail('readme-install-surface', 'README install surface is incomplete'),
+  )
+  checks.push(
+    readme.includes('Support And Say Hi') &&
+      readme.includes('docs/assets/wechat-pay.jpg') &&
+      readme.includes('docs/assets/wechat-friend.jpg') &&
+      readmeCn.includes('打赏与认识一下') &&
+      readmeCn.includes('如果好用好玩就打赏一下，也可以交个朋友') &&
+      readmeCn.includes('docs/assets/wechat-pay.jpg') &&
+      readmeCn.includes('docs/assets/wechat-friend.jpg')
+      ? pass('readme-support-surface', 'README files expose the support/friend section with fixed QR asset paths')
+      : fail('readme-support-surface', 'README files are missing the support/friend section or QR asset paths'),
+  )
+  checks.push(
+    wechatPayQr !== null &&
+      wechatFriendQr !== null &&
+      wechatPayQr.byteLength > 10_000 &&
+      wechatFriendQr.byteLength > 10_000
+      ? pass('readme-support-qr-assets', 'support QR image assets exist and are not empty placeholders')
+      : fail('readme-support-qr-assets', 'expected exact QR assets at docs/assets/wechat-pay.jpg and docs/assets/wechat-friend.jpg'),
   )
   checks.push(
     packageJson.includes('"release:fresh-install-windows-smoke"')
@@ -301,7 +334,7 @@ async function main(): Promise<void> {
         'auth',
         'login',
         '--api-key-stdin',
-      ], [0], 'sk-test-windows-smoke-123456\n'),
+      ], [0], 'dsxu-test-windows-smoke-token\n'),
     )
   }
 
@@ -320,7 +353,7 @@ async function main(): Promise<void> {
     failedStaticChecks: failedStatic.map(row => row.id),
     failedCommandChecks: failedCommands.map(row => row.id),
     evidenceRule:
-      'This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, and isolated first-run key setup without storing or printing a real key.',
+      'This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, support QR assets, and isolated first-run key setup without storing or printing a real key.',
     staticResults,
     commandResults,
   }
