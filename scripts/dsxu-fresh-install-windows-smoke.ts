@@ -184,9 +184,11 @@ async function staticChecks(): Promise<StaticCheck[]> {
   checks.push(
     startCmd.includes('DSXU_ASCII_TUI') &&
       startCmd.includes('Windows Terminal was not detected') &&
+      startCmd.includes('DSXU_ALLOW_CONHOST') &&
+      startCmd.includes('Classic cmd/PowerShell can turn Chinese input into question marks') &&
       winStart.includes('DSXU_ASCII_TUI')
-      ? pass('windows-classic-console-ascii-fallback', 'Windows launchers force ASCII TUI fallback when classic console cannot render Chinese/Unicode safely')
-      : fail('windows-classic-console-ascii-fallback', 'Windows launchers do not protect classic console users from Unicode/CJK mojibake'),
+      ? pass('windows-classic-console-interactive-block', 'Windows launchers block interactive classic-console sessions unless explicitly allowed, preventing Chinese input from becoming question marks')
+      : fail('windows-classic-console-interactive-block', 'Windows launchers do not protect classic console users from Unicode/CJK input loss'),
   )
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
@@ -219,7 +221,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
       winInstall.includes('Start-DsxuCliWindow') &&
       winInstall.includes('wsl.exe --install -d') &&
       winInstall.includes('Microsoft.WindowsTerminal') &&
-      winInstall.includes('winget')
+      winInstall.includes('winget') &&
+      winInstall.includes('Microsoft\\WindowsApps\\wt.exe')
       ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, Windows Terminal path, and auto-opens CLI')
       : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, optional WSL path, PATH shim, Windows Terminal path, or auto-open CLI path'),
   )

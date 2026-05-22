@@ -56,7 +56,24 @@ function Get-DsxuWslDistro {
 }
 
 function Get-DsxuWindowsTerminal {
-  return Get-Command wt.exe -ErrorAction SilentlyContinue
+  $cmd = Get-Command wt.exe -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd }
+
+  $windowsAppsWt = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\wt.exe"
+  if (Test-Path -LiteralPath $windowsAppsWt) {
+    return [pscustomobject]@{ Source = $windowsAppsWt }
+  }
+
+  $packageRoots = @(
+    (Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps"),
+    (Join-Path $env:ProgramFiles "WindowsApps")
+  )
+  foreach ($root in $packageRoots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    $candidate = Get-ChildItem -LiteralPath $root -Filter "wt.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($candidate) { return [pscustomobject]@{ Source = $candidate.FullName } }
+  }
+  return $null
 }
 
 function Install-DsxuWindowsTerminalIfMissing {
@@ -78,6 +95,9 @@ function Install-DsxuWindowsTerminalIfMissing {
     return
   }
   Write-Host "[DSXU] Windows Terminal install finished. If Windows does not expose wt.exe immediately, reopen PowerShell and launch DSXU Code again."
+  if (-not (Get-DsxuWindowsTerminal)) {
+    Write-Warning "[DSXU] Windows Terminal installed, but wt.exe is not visible to this shell yet. Reopen PowerShell or sign out/in before launching DSXU Code."
+  }
 }
 
 function Ensure-DsxuWsl([string]$DistroName) {

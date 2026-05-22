@@ -42,6 +42,16 @@ Set-DsxuUtf8Console
 Add-DsxuBunPath
 
 if (-not $env:WT_SESSION -and -not (Get-Command wt.exe -ErrorAction SilentlyContinue)) {
+  $isInteractiveLaunch = $DsxuArgs.Count -eq 0
+  if ($isInteractiveLaunch -and -not $env:DSXU_ALLOW_CONHOST) {
+    Write-Host "[DSXU] Windows Terminal was not detected."
+    Write-Host "[DSXU] Interactive DSXU Code needs Windows Terminal for Chinese/Unicode input."
+    Write-Host "[DSXU] Classic console can turn Chinese input into '?' before DSXU receives it."
+    Write-Host "[DSXU] Run install.ps1 again or install Windows Terminal:"
+    Write-Host "       winget install --id Microsoft.WindowsTerminal -e"
+    Write-Host "[DSXU] For an English/ASCII emergency session only, set DSXU_ALLOW_CONHOST=1."
+    exit 2
+  }
   $env:DSXU_ASCII_TUI = if ($env:DSXU_ASCII_TUI) { $env:DSXU_ASCII_TUI } else { "1" }
 }
 
