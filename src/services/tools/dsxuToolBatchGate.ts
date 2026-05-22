@@ -9,6 +9,10 @@ import { FILE_WRITE_TOOL_NAME } from '../../tools/FileWriteTool/prompt.js'
 import { NOTEBOOK_EDIT_TOOL_NAME } from '../../tools/NotebookEditTool/constants.js'
 import { POWERSHELL_TOOL_NAME } from '../../tools/PowerShellTool/toolName.js'
 import { TASK_OUTPUT_TOOL_NAME } from '../../tools/TaskOutputTool/constants.js'
+import {
+  classifyDsxuLatestUserIntentOverride,
+  type DsxuLatestUserIntentOverride,
+} from '../../dsxu/engine/latest-user-intent-override-v1.js'
 
 const DSXU_MUTATION_TOOL_NAMES = new Set([
   FILE_EDIT_TOOL_NAME,
@@ -68,6 +72,7 @@ export type DsxuToolBatchGateClass =
   | 'CAPABILITY_NUDGE'
   | 'COST_SMELL'
   | 'BENCH_CONTRACT_ONLY'
+  | 'USER_INTENT_BLOCK'
   | 'RELAX_OR_REMOVE'
 
 export type DsxuToolBatchGateDecision = {
@@ -1079,6 +1084,31 @@ export function createUnsafeBatchVerificationBlockedMessage(
   })
 }
 
+export function createLatestUserIntentOverrideBlockedMessage(
+  block: ToolUseBlock,
+  assistantMessage: AssistantMessage,
+  override: DsxuLatestUserIntentOverride,
+): Message {
+  const content =
+    `DSXU latest-user-intent gate blocked this ${block.name} call because the latest real user message changed the task contract (${override.kind}). ` +
+    'Do not continue stale plans, retry old commands, drain old background results, or summarize the previous task as if it were current. ' +
+    `Answer only the latest user message in visible text. Required next action: ${override.nextAction}.\n` +
+    `DSXU tool state: tool_blocked_latest_user_intent; blocked=latest_user_${override.kind}; next=visible_answer_to_latest_user_only.`
+
+  return createUserMessage({
+    content: [
+      {
+        type: 'tool_result',
+        content,
+        is_error: true,
+        tool_use_id: block.id,
+      },
+    ],
+    toolUseResult: content,
+    sourceToolAssistantUUID: assistantMessage.uuid,
+  })
+}
+
 function buildDsxuToolBatchGateDecision({
   block,
   gateId,
@@ -1120,6 +1150,23 @@ export function getDsxuToolBatchGateDecision({
   toolUseBlocks: readonly ToolUseBlock[]
   block: ToolUseBlock
 }): DsxuToolBatchGateDecision | null {
+  const latestUserIntentOverride =
+    classifyDsxuLatestUserIntentOverride(messages)
+  if (latestUserIntentOverride?.blocksTools) {
+    return buildDsxuToolBatchGateDecision({
+      block,
+      gateId: 'dsxu_latest_user_intent_tool_gate',
+      gateClass: 'USER_INTENT_BLOCK',
+      reason: `latest_user_${latestUserIntentOverride.kind}`,
+      nextAction: 'visible_answer_to_latest_user_only',
+      createMessage: (blockedBlock, assistantMessage) =>
+        createLatestUserIntentOverrideBlockedMessage(
+          blockedBlock,
+          assistantMessage,
+          latestUserIntentOverride,
+        ),
+    })
+  }
   if (shouldBlockRepeatedSemanticToolInBatch(toolUseBlocks, block)) {
     return buildDsxuToolBatchGateDecision({
       block,

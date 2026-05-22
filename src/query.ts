@@ -156,6 +156,11 @@ import {
   type DsxuQueryLoopGateState,
 } from './dsxu/engine/query-loop-gate-state-v1.js'
 import {
+  buildDsxuLatestUserIntentContextView,
+  buildDsxuLatestUserIntentOverrideNudge,
+  classifyDsxuLatestUserIntentOverrideText,
+} from './dsxu/engine/latest-user-intent-override-v1.js'
+import {
   compileDSXUExecutionContract,
   type DSXUExecutionContract,
 } from './dsxu/engine/action-contract.js'
@@ -3713,6 +3718,9 @@ export function shouldAllowSystemQueuedCommandDrainForTurn(
 ): boolean {
   const latestHumanPrompt = getLatestRealUserPromptText(messages)
   if (!latestHumanPrompt) return true
+  if (classifyDsxuLatestUserIntentOverrideText(latestHumanPrompt)) {
+    return false
+  }
   return (
     isQueuedSystemDrainRequest(latestHumanPrompt) &&
     !isStaleTopicBoundaryComplaint(latestHumanPrompt)
@@ -3720,8 +3728,31 @@ export function shouldAllowSystemQueuedCommandDrainForTurn(
 }
 
 function isQueuedSystemDrainRequest(prompt: string): boolean {
+  if (
+    /(?:\u7ee7\u7eed\u5206\u6790|\u7ee7\u7eed\u8ba8\u8bba|\u7ee7\u7eed\u804a|\u7ee7\u7eed\u5ba1\u6838|\u7ee7\u7eed\u68b3\u7406|\u7ee7\u7eed\u8f93\u51fa\u65b9\u6848)/.test(
+      prompt,
+    ) &&
+    !/(?:\u540e\u53f0|\u8f93\u51fa|\u7ed3\u679c|\u4efb\u52a1\u72b6\u6001|\u72b6\u6001|\u8fd0\u884c|\u6267\u884c|\u9a8c\u8bc1|\u6d4b\u8bd5|\u7ec8\u7aef|\u65e5\u5fd7)/.test(
+      prompt,
+    )
+  ) {
+    return false
+  }
+  if (
+    /\b(continue|status|progress|background|task|agent|output|result|resume|wait|finish|notification|queue|log|terminal)\b/i.test(
+      prompt,
+    ) ||
+    /(?:\u7ee7\u7eed|\u72b6\u6001|\u8fdb\u5ea6|\u540e\u53f0|\u80cc\u666f|\u4efb\u52a1|\u667a\u80fd\u4f53|\u4ee3\u7406|\u8f93\u51fa|\u7ed3\u679c|\u6062\u590d|\u7b49\u5f85|\u5b8c\u6210|\u901a\u77e5|\u961f\u5217|\u6302\u8d77|\u8fd0\u884c\u4e2d|\u65e5\u5fd7|\u7ec8\u7aef)/.test(
+      prompt,
+    )
+  ) {
+    return true
+  }
   return (
     /\b(continue|status|progress|background|task|agent|output|result|resume|wait|finish|notification|queue|log|terminal)\b/i.test(
+      prompt,
+    ) ||
+    /(?:继续|状态|进度|后台|背景|任务|智能体|代理|输出|结果|恢复|等待|完成|通知|队列|挂起|运行中|日志|终端)/.test(
       prompt,
     ) ||
     /(?:继续|状态|进度|后台|背景|任务|代理|输出|结果|恢复|等待|完成|通知|队列|挂起|运行中|日志|终端)/.test(
@@ -3731,6 +3762,19 @@ function isQueuedSystemDrainRequest(prompt: string): boolean {
 }
 
 function isStaleTopicBoundaryComplaint(prompt: string): boolean {
+  if (
+    /\b(old|previous|stale|unrelated|wrong topic|new topic)\b/i.test(
+      prompt,
+    ) ||
+    /(?:\u65e7\u95ee\u9898|\u65e7\u8bdd\u9898|\u4ee5\u524d\u95ee\u9898|\u5386\u53f2\u95ee\u9898|\u4e0a\u4e2a\u95ee\u9898|\u4e0a\u4e00\u8f6e|\u65e0\u5173|\u4e0d\u76f8\u5173|\u9519\u8bdd\u9898|\u65b0\u8bdd\u9898|\u8bdd\u9898\u7ed3\u675f|\u4e0d\u8981\u56de\u590d\u4ee5\u524d|\u95ee\u975e\u6240\u7b54|\u975e\u6240\u7b54)/.test(
+      prompt,
+    ) ||
+    /\u4e3a\u4ec0\u4e48.*(?:\u56de\u590d|\u56de\u7b54|\u8f93\u51fa).*(?:\u4ee5\u524d|\u65e7|\u5386\u53f2|\u4e4b\u524d|\u4e0a\u9762)/.test(
+      prompt,
+    )
+  ) {
+    return true
+  }
   return (
     /\b(old|previous|stale|unrelated|wrong topic|new topic)\b/i.test(
       prompt,
@@ -4319,6 +4363,36 @@ async function* queryLoop(
           blocked: false,
           completionBlocked: false,
           nextAction: 'stay_within_remaining_tool_budget_or_finalize',
+        },
+      })
+    }
+
+    const latestUserIntentContextView =
+      buildDsxuLatestUserIntentContextView(messagesForQuery)
+    if (latestUserIntentContextView.pruned) {
+      messagesForQuery = [...latestUserIntentContextView.messages]
+    }
+    const latestUserIntentOverrideNudge =
+      buildDsxuLatestUserIntentOverrideNudge(messagesForQuery)
+    if (latestUserIntentOverrideNudge) {
+      messagesForQuery = [
+        ...messagesForQuery,
+        createUserMessage({
+          content: latestUserIntentOverrideNudge,
+          isMeta: true,
+        }),
+      ]
+      traceQueryLoopStateSnapshot({
+        lastEvent: 'latest_user_intent_override',
+        snapshotMessages: messagesForQuery,
+        gateState: {
+          owner: 'query_loop',
+          gateId: 'dsxu_latest_user_intent_override_gate',
+          gateKind: 'continuation',
+          gateClass: 'QUALITY_BLOCK',
+          blocked: true,
+          completionBlocked: false,
+          nextAction: 'answer_latest_user_message_without_old_task_continuation',
         },
       })
     }
