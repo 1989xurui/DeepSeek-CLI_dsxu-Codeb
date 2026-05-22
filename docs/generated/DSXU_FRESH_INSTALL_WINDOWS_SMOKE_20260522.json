@@ -1,10 +1,10 @@
 {
   "schemaVersion": "dsxu.fresh-install-windows-smoke.v1",
-  "generatedAt": "2026-05-22T05:41:19.334Z",
+  "generatedAt": "2026-05-22T10:03:30.466Z",
   "status": "PASS_FRESH_INSTALL_WINDOWS_SMOKE",
   "repoRoot": "D:\\DSXU-code",
-  "staticCheckCount": 14,
-  "commandCheckCount": 3,
+  "staticCheckCount": 16,
+  "commandCheckCount": 5,
   "failedStaticChecks": [],
   "failedCommandChecks": [],
   "evidenceRule": "This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, support QR assets, and isolated first-run key setup without storing or printing a real key.",
@@ -12,7 +12,7 @@
     {
       "id": "root-install-dispatcher",
       "passed": true,
-      "detail": "root install.ps1 dispatches Windows install and points non-Windows users to install.sh"
+      "detail": "root install.ps1 dispatches Windows install, optional WSL, Windows Terminal policy, and no-launch smoke mode"
     },
     {
       "id": "root-shell-install-dispatcher",
@@ -30,9 +30,14 @@
       "detail": "root Windows launcher switches code page to UTF-8"
     },
     {
-      "id": "wsl-launcher-autodetect",
+      "id": "windows-classic-console-interactive-block",
       "passed": true,
-      "detail": "WSL launcher auto-detects distro and converts the current repo path"
+      "detail": "Windows launchers relaunch trusted terminals or block interactive classic-console sessions unless explicitly allowed"
+    },
+    {
+      "id": "wsl-launcher-default-distro-current-path",
+      "passed": true,
+      "detail": "WSL launcher uses the default distro, converts the current repo path on Windows, and avoids nested Windows Terminal launches"
     },
     {
       "id": "wsl-inner-launcher-current-dir",
@@ -47,7 +52,12 @@
     {
       "id": "windows-installer-desktop-path-shim",
       "passed": true,
-      "detail": "Windows installer creates desktop shortcut, WSL option, and user PATH shim"
+      "detail": "Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, Windows Terminal path, and auto-opens CLI"
+    },
+    {
+      "id": "windows-wsl-optional-fallback",
+      "passed": true,
+      "detail": "WSL shortcut is optional by default and WSL launcher falls back to native DSXU when WSL is unavailable"
     },
     {
       "id": "unix-installer-shims",
@@ -57,12 +67,12 @@
     {
       "id": "install-doc-bilingual-first-run",
       "passed": true,
-      "detail": "INSTALL.md covers bilingual install, encoding, and first-run key setup"
+      "detail": "INSTALL.md covers bilingual install, auto-open, optional WSL, encoding, and first-run key setup"
     },
     {
       "id": "readme-install-surface",
       "passed": true,
-      "detail": "README files expose install, first-run, desktop, and encoding guidance"
+      "detail": "README files expose install, auto-open, first-run, desktop, and encoding guidance"
     },
     {
       "id": "readme-support-surface",
@@ -82,6 +92,46 @@
   ],
   "commandResults": [
     {
+      "id": "windows-launcher-classic-interactive-blocks-without-wt",
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/start-dsxu-windows.ps1"
+      ],
+      "exitCode": 2,
+      "expectedExitCodes": [
+        2
+      ],
+      "passed": true,
+      "durationMs": 659,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-03-24-871Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T10-03-24-871Z.stderr.log",
+      "stdoutTail": "[DSXU] Windows Terminal was not detected.\n[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input.\n[DSXU] Classic console can turn Chinese input into '?' before DSXU receives it.\n[DSXU] Run install.ps1 again or install Windows Terminal:\n       winget install --id Microsoft.WindowsTerminal -e\n[DSXU] For an English/ASCII emergency session only, set DSXU_ALLOW_CONHOST=1.\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "windows-product-entrypoint-classic-interactive-blocks",
+      "command": [
+        "bun",
+        "--env-file=.env",
+        "./src/entrypoints/dsxu-code.tsx"
+      ],
+      "exitCode": 2,
+      "expectedExitCodes": [
+        1,
+        2
+      ],
+      "passed": true,
+      "durationMs": 99,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-03-25-531Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T10-03-25-531Z.stderr.log",
+      "stdoutTail": "",
+      "stderrTail": "[DSXU] Windows Terminal was not detected.\n[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input.\n[DSXU] Classic cmd/PowerShell can turn Chinese input into '?' before DSXU receives it.\n\n[DSXU] Fix from this checkout:\n  powershell -NoProfile -ExecutionPolicy Bypass -File .\\install.ps1\n\n[DSXU] Or install Windows Terminal manually:\n  winget install --id Microsoft.WindowsTerminal -e\n\n[DSXU] English/ASCII emergency mode only:\n  set DSXU_ALLOW_CONHOST=1\n  bun run dsxu-code\n"
+    },
+    {
       "id": "windows-launcher-version",
       "command": [
         "powershell.exe",
@@ -97,9 +147,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 2419,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T05-41-08-393Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T05-41-08-393Z.stderr.log",
+      "durationMs": 695,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T10-03-25-631Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T10-03-25-631Z.stderr.log",
       "stdoutTail": "999.0.0-local (DSXU Code)\n",
       "stderrTail": ""
     },
@@ -121,9 +171,9 @@
         1
       ],
       "passed": true,
-      "durationMs": 4201,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T05-41-10-813Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T05-41-10-813Z.stderr.log",
+      "durationMs": 2078,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T10-03-26-326Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T10-03-26-326Z.stderr.log",
       "stdoutTail": "Product: DSXU Code\nModel provider: deepseek\nModel gateway: direct\nModel access: missing. Configure DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\n",
       "stderrTail": ""
     },
@@ -145,9 +195,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 4318,
-      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T05-41-15-015Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T05-41-15-015Z.stderr.log",
+      "durationMs": 2062,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T10-03-28-404Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T10-03-28-404Z.stderr.log",
       "stdoutTail": "DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n",
       "stderrTail": ""
     }

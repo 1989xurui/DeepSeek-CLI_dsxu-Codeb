@@ -70,6 +70,11 @@ function commandEnv(): Record<string, string | undefined> {
   delete env.DSXU_DEEPSEEK_API_KEY
   delete env.LITELLM_BASE_URL
   delete env.LITELLM_API_KEY
+  delete env.WT_SESSION
+  delete env.TERM_PROGRAM
+  delete env.VSCODE_PID
+  delete env.DSXU_ALLOW_CONHOST
+  delete env.DSXU_TEST_DISABLE_WT_LOOKUP
   return env
 }
 
@@ -82,6 +87,7 @@ async function runCommand(
   command: string[],
   expectedExitCodes: number[],
   stdin?: string,
+  extraEnv?: Record<string, string | undefined>,
 ): Promise<CommandCheck> {
   await mkdir(TRACE_DIR, { recursive: true })
   const startedAt = Date.now()
@@ -90,7 +96,10 @@ async function runCommand(
   const stderrPath = join(TRACE_DIR, `${base}.stderr.log`)
   const proc = Bun.spawn(command, {
     cwd: ROOT,
-    env: commandEnv(),
+    env: {
+      ...commandEnv(),
+      ...extraEnv,
+    },
     stdout: 'pipe',
     stderr: 'pipe',
     stdin: stdin === undefined ? 'ignore' : 'pipe',
@@ -184,13 +193,18 @@ async function staticChecks(): Promise<StaticCheck[]> {
   )
   checks.push(
     startCmd.includes('DSXU_ASCII_TUI') &&
+      startCmd.includes('Microsoft\\WindowsApps\\wt.exe') &&
       startCmd.includes('Windows Terminal was not detected') &&
       startCmd.includes('DSXU_ALLOW_CONHOST') &&
       startCmd.includes('Classic cmd/PowerShell can turn Chinese input into question marks') &&
+      winStart.includes('Get-DsxuWindowsTerminalPath') &&
+      winStart.includes('Start-DsxuInWindowsTerminal') &&
+      winStart.includes('DSXU_TEST_DISABLE_WT_LOOKUP') &&
+      winStart.includes('TERM_PROGRAM') &&
       winStart.includes('DSXU_ASCII_TUI') &&
       productEntrypoint.includes('isWindowsInteractiveConsoleUnsafe') &&
       productEntrypoint.includes('Classic cmd/PowerShell can turn Chinese input')
-      ? pass('windows-classic-console-interactive-block', 'Windows launchers and product entrypoint block interactive classic-console sessions unless explicitly allowed')
+      ? pass('windows-classic-console-interactive-block', 'Windows launchers relaunch trusted terminals or block interactive classic-console sessions unless explicitly allowed')
       : fail('windows-classic-console-interactive-block', 'Windows launchers or product entrypoint do not protect classic console users from Unicode/CJK input loss'),
   )
   checks.push(
@@ -343,6 +357,25 @@ async function main(): Promise<void> {
   const commandResults: CommandCheck[] = []
 
   if (process.platform === 'win32') {
+    commandResults.push(
+      await runCommand('windows-launcher-classic-interactive-blocks-without-wt', [
+        'powershell.exe',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        'scripts/start-dsxu-windows.ps1',
+      ], [2], undefined, {
+        DSXU_TEST_DISABLE_WT_LOOKUP: '1',
+      }),
+    )
+    commandResults.push(
+      await runCommand('windows-product-entrypoint-classic-interactive-blocks', [
+        'bun',
+        '--env-file=.env',
+        './src/entrypoints/dsxu-code.tsx',
+      ], [1, 2]),
+    )
     commandResults.push(
       await runCommand('windows-launcher-version', [
         'powershell.exe',

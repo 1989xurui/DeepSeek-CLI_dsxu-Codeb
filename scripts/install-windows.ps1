@@ -271,8 +271,8 @@ if (-not $NoLaunch) {
 
 Write-Host ""
 Write-Host "[DSXU] Install complete."
-Write-Host "[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code"
-Write-Host "[DSXU] Windows default is the native DSXU Code shortcut. WSL is optional and never required for first launch."
-Write-Host "[DSXU] Windows Terminal is recommended for Chinese/Unicode TUI. Classic console falls back to ASCII TUI mode."
-Write-Host "[DSXU] First launch without a key opens the DeepSeek key setup flow."
+  Write-Host "[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code"
+  Write-Host "[DSXU] Windows default is the native DSXU Code shortcut. WSL is optional and never required for first launch."
+  Write-Host "[DSXU] Interactive Chinese/Unicode TUI requires Windows Terminal or VS Code terminal. Classic console is only allowed for non-interactive or explicit ASCII emergency sessions."
+  Write-Host "[DSXU] First launch without a key opens the DeepSeek key setup flow."
 Write-Host "[DSXU] Optional VS Code adapter: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-vscode-extension.ps1"

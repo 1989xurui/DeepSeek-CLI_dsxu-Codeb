@@ -35,23 +35,64 @@ function Add-DsxuBunPath {
   }
 }
 
+function Get-DsxuWindowsTerminalPath {
+  if ($env:DSXU_TEST_DISABLE_WT_LOOKUP) { return $null }
+
+  $cmd = Get-Command wt.exe -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+
+  $windowsAppsWt = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\wt.exe"
+  if (Test-Path -LiteralPath $windowsAppsWt) { return $windowsAppsWt }
+
+  $packageRoots = @(
+    (Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps"),
+    (Join-Path $env:ProgramFiles "WindowsApps")
+  )
+  foreach ($root in $packageRoots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    $candidate = Get-ChildItem -LiteralPath $root -Filter "wt.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($candidate) { return $candidate.FullName }
+  }
+  return $null
+}
+
+function Start-DsxuInWindowsTerminal([string]$ResolvedRepoRoot) {
+  $wt = Get-DsxuWindowsTerminalPath
+  if (-not $wt) { return $false }
+
+  $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
+  if (-not (Test-Path -LiteralPath $launcher)) { return $false }
+
+  $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"set DSXU_FORCE_CONHOST=1&& call `"$launcher`"`""
+  Start-Process -FilePath $wt -ArgumentList $arguments | Out-Null
+  return $true
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location -LiteralPath $repoRoot
 
 Set-DsxuUtf8Console
 Add-DsxuBunPath
 
-if (-not $env:WT_SESSION -and -not (Get-Command wt.exe -ErrorAction SilentlyContinue)) {
-  $isInteractiveLaunch = $DsxuArgs.Count -eq 0
+$isInteractiveLaunch = $DsxuArgs.Count -eq 0
+$isTrustedTerminal = $env:WT_SESSION -or ($env:TERM_PROGRAM -and $env:TERM_PROGRAM.ToLowerInvariant() -eq "vscode") -or $env:VSCODE_PID
+
+if (-not $isTrustedTerminal) {
   if ($isInteractiveLaunch -and -not $env:DSXU_ALLOW_CONHOST) {
+    if (Start-DsxuInWindowsTerminal $repoRoot) {
+      Write-Host "[DSXU] Relaunched DSXU Code in Windows Terminal for Chinese/Unicode input."
+      exit 0
+    }
+
     Write-Host "[DSXU] Windows Terminal was not detected."
-    Write-Host "[DSXU] Interactive DSXU Code needs Windows Terminal for Chinese/Unicode input."
+    Write-Host "[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input."
     Write-Host "[DSXU] Classic console can turn Chinese input into '?' before DSXU receives it."
     Write-Host "[DSXU] Run install.ps1 again or install Windows Terminal:"
     Write-Host "       winget install --id Microsoft.WindowsTerminal -e"
     Write-Host "[DSXU] For an English/ASCII emergency session only, set DSXU_ALLOW_CONHOST=1."
     exit 2
   }
+
   $env:DSXU_ASCII_TUI = if ($env:DSXU_ASCII_TUI) { $env:DSXU_ASCII_TUI } else { "1" }
 }
 

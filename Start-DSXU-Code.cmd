@@ -15,6 +15,10 @@ if "%DSXU_FORCE_CONHOST%"=="" if "%WT_SESSION%"=="" (
     wt.exe -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" cmd.exe /k "set DSXU_FORCE_CONHOST=1&& call ""%~f0"" %*"
     exit /b %ERRORLEVEL%
   )
+  if exist "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" (
+    "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" cmd.exe /k "set DSXU_FORCE_CONHOST=1&& call ""%~f0"" %*"
+    exit /b %ERRORLEVEL%
+  )
 )
 
 if "%WT_SESSION%"=="" (
