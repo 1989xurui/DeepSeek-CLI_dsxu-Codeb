@@ -1,0 +1,5 @@
+"rule","status","detail"
+"final-preflight","PASS","final preflight must PASS before any export artifact is created"
+"evidence-directories","PASS",".dsxu trace/runs evidence remains source-side only and must not be included in release/export"
+"local-dependencies","PASS","node_modules is local build/test dependency and must not be included in release/export"
+"git-worktree","PASS","owner/Git packets are staged and post-stage verified; clean export must be built from tracked release surface and exclude physical ACL residues"

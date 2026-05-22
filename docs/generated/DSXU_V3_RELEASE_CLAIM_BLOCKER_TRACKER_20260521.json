@@ -1,0 +1,279 @@
+{
+  "schemaVersion": "dsxu.v3.release-claim-blocker-tracker.v1",
+  "generatedAt": "2026-05-21T23:54:43.815Z",
+  "status": "READY_RELEASE_CLAIM_BLOCKER_TRACKER",
+  "dashboard": {
+    "trustState": "evidence-incomplete",
+    "gateSummary": {
+      "total": 304,
+      "pass": 159,
+      "fail": 0,
+      "blocked": 0,
+      "claimBlocked": 1,
+      "notRun": 0,
+      "info": 144
+    },
+    "publicComparableMissingCases": 0,
+    "externalComparisonPendingCount": 1,
+    "claimBlockedGateNames": [
+      "DSXU_SWE_BENCH_RESULTS_20260520"
+    ]
+  },
+  "p12RawReadiness": {
+    "status": "PASS",
+    "p12Status": "PASS",
+    "deferredEvalStatus": "PASS",
+    "pairedRawLogCount": 14,
+    "minimumPairedRawLogsForPass": 14,
+    "note": "P12 target/reference readiness is closed only for the P12 raw-readiness lane; it is not a substitute for public-comparable same-case targetReferenceTranscriptPath evidence."
+  },
+  "publicComparableExternalComparison": {
+    "caseCount": 30,
+    "rawRoot": ".dsxu/trace/public-comparable-raw-evidence",
+    "rawManifestPath": "docs/generated/DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_20260518.json",
+    "publicBenchmarkClaimAllowed": true,
+    "externalComparisonClaimAllowed": false,
+    "externalTargetReadyCount": 0,
+    "missingTargetReferenceCaseCount": 30,
+    "requiredPerCaseFileCandidates": [
+      "target-reference-transcript.jsonl",
+      "target-reference.raw.jsonl",
+      "target.raw.jsonl",
+      "reference-transcript.jsonl"
+    ],
+    "missingTargetCases": [
+      {
+        "id": "permission-deny-replan",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/permission-deny-replan",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "powershell-encoded-deny",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/powershell-encoded-deny",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "grep-glob-tool-choice",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/grep-glob-tool-choice",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "governance-query-recovery-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/governance-query-recovery-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "governance-skills-selection-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/governance-skills-selection-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "todo-task-closeout",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/todo-task-closeout",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "permission-matrix-contract",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/permission-matrix-contract",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "compact-state-preservation",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/compact-state-preservation",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-workflow-recovery-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-workflow-recovery-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-multifile-bugfix-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-multifile-bugfix-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-multistep-feature-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-multistep-feature-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-feature-tests-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-feature-tests-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-review-fix-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-review-fix-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-compact-resume-edit-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-compact-resume-edit-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-compact-two-phase-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-compact-two-phase-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-permission-deny-replan-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-permission-deny-replan-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-agent-worker-longrun-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-agent-worker-longrun-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-agent-failure-correction-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-agent-failure-correction-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-real-mcp-task-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-real-mcp-task-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-reality-large-feature-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-large-feature-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-reality-review-fix-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-review-fix-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-reality-second-failure-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-reality-second-failure-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "product-review-to-fix-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/product-review-to-fix-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "v8-real-review-fix",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/v8-real-review-fix",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "mutation-query-orphan-tool-use-deny-pass-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-query-orphan-tool-use-deny-pass-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "tool-prompt-read-edit-cache-golden",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/tool-prompt-read-edit-cache-golden",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "mutation-tool-prompt-read-edit-cache-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-tool-prompt-read-edit-cache-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "mutation-real-mcp-resource-guided-fix-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/mutation-real-mcp-resource-guided-fix-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "experience-permission-ux-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/experience-permission-ux-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      },
+      {
+        "id": "experience-agent-team-governance-live",
+        "caseDir": ".dsxu/trace/public-comparable-raw-evidence/experience-agent-team-governance-live",
+        "missingExternalTargetFields": [
+          "targetReferenceTranscriptPath"
+        ]
+      }
+    ]
+  },
+  "public95ClaimBoundary": {
+    "actualScoreClaimAllowed": true,
+    "actualScorePublicWording": "DSXU public challenge score floor is 72/95 on the fixed evidenced task pack.",
+    "public95ClaimAllowed": false,
+    "scoreFloor": 72,
+    "status": "PASS_GITHUB_ACTUAL_SCORE_RELEASE_READY",
+    "blockedReason": "actual score wording is allowed; keep 90/95/superiority claims disabled until the higher threshold and external evidence pass."
+  },
+  "nextActions": [
+    "Collect same-case external target/reference transcript files for 30 public-comparable case(s).",
+    "Place each target/reference transcript in the matching caseDir using one of the requiredPerCaseFileCandidates names.",
+    "Rerun: bun run evidence:public-comparable-raw",
+    "Rerun: bun run release:github-launch-pack && bun run evidence:dashboard",
+    "Do not fabricate target/reference logs and do not convert DSXU/raw-API evidence into target/reference evidence."
+  ],
+  "safeguards": [
+    "This tracker is a release-claim blocker tracker, not runtime evidence and not a score source.",
+    "P12 readiness can close P12 raw-readiness but cannot unlock public-comparable external comparison without same-case targetReferenceTranscriptPath evidence.",
+    "A PASS public-comparable raw import permits DSXU/raw-API evidence claims only; external comparison requires target/reference evidence.",
+    "Actual score wording is allowed only when actualScoreClaimAllowed=true; do not round scoreFloor upward.",
+    "Public 90/95/superiority claims stay blocked while scoreFloor and external comparison boundaries are not satisfied."
+  ]
+}

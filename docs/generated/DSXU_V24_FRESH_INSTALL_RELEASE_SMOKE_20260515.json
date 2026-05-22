@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "dsxu.v24.fresh-install-release-smoke.v1",
+  "generatedAt": "2026-05-22T00:02:18.149Z",
+  "status": "PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE",
+  "repoRoot": "D:\\DSXU-code",
+  "exportDir": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+  "zipPath": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z.zip",
+  "commandCount": 8,
+  "passedCommandCount": 8,
+  "failedCommandCount": 0,
+  "failedCommands": [],
+  "evidenceRule": "This smoke runs from the clean export directory after a fresh dependency install. It does not stage, commit, delete, reset, or mutate source workspace files.",
+  "results": [
+    {
+      "id": "fresh-bun-install",
+      "purpose": "install dependencies from clean export without source node_modules",
+      "command": [
+        "bun",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 11162,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-bun-install-2026-05-22T00-01-56-967Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-bun-install-2026-05-22T00-01-56-967Z.stderr.log",
+      "stdoutTail": "bun install v1.3.11 (af24e281)\n\n+ @ast-grep/cli@0.42.1\n+ playwright@1.59.1\n+ repomix@1.13.1\n+ @aws-sdk/client-bedrock-runtime@3.1020.0\n+ @commander-js/extra-typings@14.0.0\n+ @growthbook/growthbook@1.6.5\n+ @homebridge/node-pty-prebuilt-multiarch@0.13.1\n+ @modelcontextprotocol/sdk@1.29.0\n+ @opentelemetry/api@1.9.1\n+ @opentelemetry/api-logs@0.214.0\n+ @opentelemetry/core@2.6.1\n+ @opentelemetry/resources@2.6.1\n+ @opentelemetry/sdk-logs@0.214.0\n+ @opentelemetry/sdk-metrics@2.6.1\n+ @opentelemetry/sdk-trace-base@2.6.1\n+ @opentelemetry/semantic-conventions@1.40.0\n+ ajv@8.18.0\n+ asciichart@1.5.25\n+ auto-bind@5.0.1\n+ axios@1.14.0\n+ bidi-js@1.0.3\n+ bun-types@1.3.12\n+ chalk@5.6.2\n+ chokidar@5.0.0\n+ cli-boxes@4.0.1\n+ code-excerpt@4.0.0\n+ diff@8.0.4\n+ emoji-regex@10.6.0\n+ env-paths@4.0.0\n+ execa@9.6.1\n+ figures@6.1.0\n+ fuse.js@7.1.0\n+ get-east-asian-width@1.5.0\n+ google-auth-library@10.6.2\n+ highlight.js@11.11.1\n+ https-proxy-agent@8.0.0\n+ ignore@7.0.5\n+ indent-string@5.0.0\n+ ink@6.8.0\n+ jsonc-parser@3.3.1\n+ lodash-es@4.17.23\n+ lru-cache@11.2.7\n+ marked@17.0.5\n+ p-map@7.0.4\n+ p-queue@9.1.2\n+ picomatch@4.0.4\n+ proper-lockfile@4.1.2\n+ qrcode@1.5.4\n+ react@19.2.4\n+ react-reconciler@0.33.0\n+ semver@7.7.4\n+ shell-quote@1.8.3\n+ signal-exit@4.1.0\n+ stack-utils@2.0.6\n+ strip-ansi@7.2.0\n+ supports-hyperlinks@4.4.0\n+ tree-kill@1.2.2\n+ turndown@7.2.4\n+ type-fest@5.5.0\n+ undici@7.24.6\n+ usehooks-ts@3.1.1\n+ uuid@14.0.0\n+ vscode-jsonrpc@8.2.1\n+ vscode-languageserver-types@3.17.5\n+ wrap-ansi@10.0.0\n+ ws@8.20.0\n+ xss@1.0.15\n+ xstate@5.30.0\n+ yaml@2.8.3\n+ zod@4.3.6\n\n461 packages installed [11.09s]\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "product-help",
+      "purpose": "product CLI help from clean export",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "--help"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1499,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-help-2026-05-22T00-02-08-129Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-help-2026-05-22T00-02-08-129Z.stderr.log",
+      "stdoutTail": "messages from stdin back on stdout for acknowledgment (only works with --input-format=stream-json and --output-format=stream-json)\n  -r, --resume [value]                              Resume a conversation by session ID, or open interactive picker with optional search term\n  --session-id <uuid>                               Use a specific session ID for the conversation (must be a valid UUID)\n  --setting-sources <sources>                       Comma-separated list of setting sources to load (user, project, local).\n  --settings <file-or-json>                         Path to a settings JSON file or a JSON string to load additional settings from\n  --strict-mcp-config                               Only use MCP servers from --mcp-config, ignoring all other MCP configurations\n  --system-prompt <prompt>                          System prompt to use for the session\n  --tmux                                            Create a tmux session for the worktree (requires --worktree). Uses iTerm2 native panes when available; use --tmux=classic for traditional tmux.\n  --tools <tools...>                                Specify the list of available tools from the built-in set. Use \"\" to disable all tools, \"default\" to use all tools, or specify tool names (e.g. \"Bash,Edit,Read\").\n  --verbose                                         Override verbose mode setting from config\n  -v, --version                                     Output the version number\n  -w, --worktree [name]                             Create a new git worktree for this session (optionally specify a name)\n\nCommands:\n  agents [options]                                  List configured agents\n  auth                                              Manage authentication\n  doctor                                            Check the health of your DSXU Code installation. Note: the workspace trust dialog is skipped and stdio servers from .mcp.json are spawned for health checks. Only use this command in directories you trust.\n  install [options] [target]                        Install DSXU Code native build. Use [target] to specify version (stable, latest, or specific version)\n  mcp                                               Configure and manage MCP servers\n  plugin|plugins                                    Manage DSXU Code plugins\n  setup-token                                       Set up a DSXU long-lived model/session token\n  update|upgrade                                    Check for updates and install if available\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "slash-help-print",
+      "purpose": "slash /help dispatcher from clean export print mode",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "-p",
+        "/help",
+        "--output-format",
+        "json"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 108,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\slash-help-print-2026-05-22T00-02-09-628Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\slash-help-print-2026-05-22T00-02-09-628Z.stderr.log",
+      "stdoutTail": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"duration_ms\":0,\"duration_api_ms\":0,\"num_turns\":0,\"result\":\"DSXU Code available commands: help, model, compact, resume. Print mode is connected to the DSXU slash dispatcher.\",\"stop_reason\":\"slash_command\",\"session_id\":\"dsxu-code-slash-1779408129720\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":0,\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0}},\"modelUsage\":{},\"permission_denials\":[],\"uuid\":\"dsxu-code-slash-1779408129720\"}\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "auth-login-no-key-guidance",
+      "purpose": "first-run missing-key guidance without bundling provider secrets",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "auth",
+        "login"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1502,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\auth-login-no-key-guidance-2026-05-22T00-02-09-736Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\auth-login-no-key-guidance-2026-05-22T00-02-09-736Z.stderr.log",
+      "stdoutTail": "DSXU Code uses DeepSeek/DSXU model access instead of provider cloud /login.\nConfigure DSXU model access with DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\nFor interactive setup, run dsxu-code auth login in a terminal.\nFor scripts, pipe a key into: dsxu-code auth login --api-key-stdin\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "auth-login-key-wizard-stdin",
+      "purpose": "first-run key wizard stdin path saves a DSXU managed local key without echoing the key",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "auth",
+        "login",
+        "--api-key-stdin"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1423,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\auth-login-key-wizard-stdin-2026-05-22T00-02-11-238Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\auth-login-key-wizard-stdin-2026-05-22T00-02-11-238Z.stderr.log",
+      "stdoutTail": "DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "product-doctor",
+      "purpose": "product doctor command from clean export",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "doctor"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 3624,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-doctor-2026-05-22T00-02-12-661Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\product-doctor-2026-05-22T00-02-12-661Z.stderr.log",
+      "stdoutTail": "{\n  \"product\": \"DSXU Code\",\n  \"status\": \"PASS_DOCTOR_NON_INTERACTIVE_DIAGNOSTIC\",\n  \"installationType\": \"unknown\",\n  \"version\": \"999.0.0-local\",\n  \"installationPath\": \"C:\\\\Users\\\\h\\\\.bun\\\\bin\\\\bun.exe\",\n  \"invokedBinary\": \"D:\\\\DSXU-code-release-artifacts\\\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z\\\\src\\\\entrypoints\\\\dsxu-code.tsx\",\n  \"configInstallMethod\": \"unknown\",\n  \"packageManager\": null,\n  \"ripgrepStatus\": {\n    \"working\": true,\n    \"mode\": \"builtin\",\n    \"systemPath\": null\n  },\n  \"warningCount\": 0,\n  \"warnings\": [],\n  \"recommendation\": null\n}\n\u001b[?2026h\n\u001b[?2026l",
+      "stderrTail": ""
+    },
+    {
+      "id": "mcp-doctor-json",
+      "purpose": "MCP doctor JSON command from clean export",
+      "command": [
+        "bun",
+        "./src/entrypoints/dsxu-code.tsx",
+        "mcp",
+        "doctor",
+        "--json"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1374,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\mcp-doctor-json-2026-05-22T00-02-16-285Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\mcp-doctor-json-2026-05-22T00-02-16-285Z.stderr.log",
+      "stdoutTail": "{\n  \"runtime\": \"DSXU MCP Doctor\",\n  \"summary\": {\n    \"totalServers\": 0,\n    \"byScope\": {},\n    \"byTransport\": {},\n    \"configErrors\": 0,\n    \"registryConfigured\": false,\n    \"nonessentialTrafficDisabled\": false\n  },\n  \"registry\": {\n    \"runtime\": \"DSXU Official MCP Registry\",\n    \"registryEnv\": \"DSXU_MCP_REGISTRY_URL\",\n    \"disableTrafficEnv\": [\n      \"DSXU_CODE_DISABLE_NONESSENTIAL_TRAFFIC\",\n      \"archived disable-nonessential-traffic alias\"\n    ],\n    \"lookupPolicy\": \"undefined or failed registry fetch is fail-closed: isOfficialMcpUrl returns false\",\n    \"activationEvidence\": [\n      \"prefetchOfficialMcpUrls reads DSXU registry URL only when configured\",\n      \"remote URLs are normalized by stripping query string and trailing slash\",\n      \"registry fetch is nonessential and skipped when DSXU traffic disable env is set\"\n    ],\n    \"configured\": false\n  },\n  \"configRuntime\": {\n    \"runtime\": \"DSXU MCP Config\",\n    \"defaultProviderMode\": true,\n    \"archivedMcpEnabled\": false,\n    \"providerPolicy\": {\n      \"provider\": \"dsxu\",\n      \"defaultMainline\": \"dsxu-mcp-configs-only\",\n      \"identityProvider\": \"DSXU Identity Provider\",\n      \"connectorProvider\": \"DSXU MCP/Connector Provider\",\n      \"remoteSessionProvider\": \"DSXU Remote Session Provider\",\n      \"archivedConnectors\": \"blocked\"\n    },\n    \"configLayers\": [\n      \".mcp.json project config\",\n      \"user settings\",\n      \"project settings\",\n      \"managed settings\",\n      \"plugin MCP servers\",\n      \"DSXU provider defaults\"\n    ],\n    \"activationEvidence\": [\n      \"DSXU default mode returns getDsxuCodeMcpConfigs without loading archived discovery\",\n      \"enterprise MCP config takes exclusive control over managed server loading\",\n      \"writeMcpjsonFile uses atomic temp file, fsync, chmod preservation, and rename\",\n      \"dedup signatures normalize command/url configs before plugin/server merge\"\n    ]\n  },\n  \"servers\": [],\n  \"errors\": [],\n  \"releaseGate\": {\n    \"status\": \"WARN\",\n    \"blockers\": [],\n    \"warnings\": [\n      \"DSXU_MCP_REGISTRY_URL is not configured; official registry lookup is fail-closed\",\n      \"No MCP servers configured; install/status UX can only be smoke-tested\"\n    ],\n    \"nextActions\": [\n      \"Configure DSXU_MCP_REGISTRY_URL for official registry checks, or sign off registry-disabled release scope\",\n      \"Add a project or local MCP server and rerun mcp doctor for live registry/status evidence\"\n    ]\n  }\n}\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "fresh-provider-gate",
+      "purpose": "provider readiness gate from clean export",
+      "command": [
+        "bun",
+        "run",
+        "live:provider-gate"
+      ],
+      "cwd": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 490,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-provider-gate-2026-05-22T00-02-17-659Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\v24-fresh-install-release-smoke\\fresh-provider-gate-2026-05-22T00-02-17-659Z.stderr.log",
+      "stdoutTail": "{\n  \"status\": \"READY_FOR_SCOPED_LIVE_REPLAY\",\n  \"currentProcessStatus\": \"READY\",\n  \"wslStatus\": \"READY\",\n  \"didCallProvider\": false,\n  \"outputJson\": \"D:\\\\DSXU-code-release-artifacts\\\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z\\\\docs\\\\generated\\\\DSXU_V20_LIVE_PROVIDER_GATE_20260515.json\"\n}\n",
+      "stderrTail": "$ bun run scripts/dsxu-live-provider-gate.ts\n"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="410" viewBox="0 0 920 410" role="img" aria-label="DSXU Public Challenge Ablation">
+<rect width="920" height="410" fill="#fbfcfd"/>
+<text x="32" y="42" font-size="26" font-weight="700" fill="#172026">DSXU Public Challenge Ablation</text>
+<text x="32" y="70" font-size="14" fill="#5f6b73">Same-task before/after evidence: quality held while tool-result bloat and cost dropped.</text>
+<text x="32" y="118" font-size="16" fill="#172026">score floor before</text>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="96" width="402" height="28" rx="6" fill="#5f6b73"/>
+<text x="816" y="117" font-size="15" fill="#172026">72</text>
+<text x="270" y="144" font-size="12" fill="#5f6b73">72/95 claim threshold</text>
+<text x="32" y="176" font-size="16" fill="#172026">score floor after</text>
+<rect x="270" y="154" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="154" width="402" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="175" font-size="15" fill="#172026">72</text>
+<text x="270" y="202" font-size="12" fill="#5f6b73">72/95 claim threshold</text>
+<text x="32" y="234" font-size="16" fill="#172026">cost savings percent</text>
+<rect x="270" y="212" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="212" width="463" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="233" font-size="15" fill="#172026">87.4</text>
+<text x="270" y="260" font-size="12" fill="#5f6b73">0.0716986596-&gt;0.0089982368 USD</text>
+<text x="32" y="292" font-size="16" fill="#172026">cache hit rate delta</text>
+<rect x="270" y="270" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="270" width="113" height="28" rx="6" fill="#3a6ea5"/>
+<text x="816" y="291" font-size="15" fill="#172026">21.3</text>
+<text x="270" y="318" font-size="12" fill="#5f6b73">45.5%-&gt;66.8%</text>
+<text x="32" y="350" font-size="16" fill="#172026">toolResultChars removed</text>
+<rect x="270" y="328" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="328" width="530" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="349" font-size="15" fill="#172026">316381</text>
+<text x="270" y="376" font-size="12" fill="#5f6b73">316381-&gt;0</text>
+</svg>

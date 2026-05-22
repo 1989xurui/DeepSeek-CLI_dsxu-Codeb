@@ -1,0 +1,4 @@
+"gate","status","count","nextAction"
+"active-review-required","PASS_ADJUDICATED_ZERO","0","keep release copy neutral"
+"public-release-third-party","PASS_ZERO_PUBLIC_THIRD_PARTY_ROWS","0","final notice review still required"
+"notice-and-license-review","PENDING_FINAL_RELEASE_NOTICE_REVIEW","1","review license/vendor notices/package metadata during final preflight"

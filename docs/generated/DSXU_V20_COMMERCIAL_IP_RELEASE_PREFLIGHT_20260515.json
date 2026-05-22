@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "dsxu.v20.commercial-ip-release-preflight.v1",
+  "generatedAt": "2026-05-21T23:59:06.343Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "ADJUDICATED_ACTIVE_BLOCKERS_0_RELEASE_NOTICE_PENDING",
+  "scannedFiles": 2699,
+  "scanRows": 374,
+  "reviewRequiredRows": 63,
+  "publicReleaseThirdPartyRows": 0,
+  "adjudicatedSourceRows": 98,
+  "activeReviewRequiredRows": 0,
+  "productCopyNeutralizedThisRound": 15,
+  "inlineSourceMapsRemoved": 6,
+  "didRewriteSource": false,
+  "gates": [
+    {
+      "gate": "active-review-required",
+      "status": "PASS_ADJUDICATED_ZERO",
+      "count": 0,
+      "nextAction": "keep release copy neutral"
+    },
+    {
+      "gate": "public-release-third-party",
+      "status": "PASS_ZERO_PUBLIC_THIRD_PARTY_ROWS",
+      "count": 0,
+      "nextAction": "final notice review still required"
+    },
+    {
+      "gate": "notice-and-license-review",
+      "status": "PENDING_FINAL_RELEASE_NOTICE_REVIEW",
+      "count": 1,
+      "nextAction": "review license/vendor notices/package metadata during final preflight"
+    }
+  ],
+  "blockers": [
+    "notice-and-license-review: review license/vendor notices/package metadata during final preflight"
+  ],
+  "nextAction": "perform final release notice/license/package metadata review after owner/Git and P12 gates close",
+  "rule": "This is release hygiene evidence, not legal advice or patent clearance. It does not rewrite source or create export artifacts."
+}

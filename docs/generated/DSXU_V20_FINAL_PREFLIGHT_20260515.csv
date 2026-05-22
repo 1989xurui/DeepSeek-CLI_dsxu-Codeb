@@ -1,0 +1,8 @@
+"gate","status","canProceed","count","requiredAction"
+"owner-git-register","PASS_STAGED_POST_STAGE_INDEX_VERIFIED","true","1893","owner/Git packets are staged; keep post-stage index evidence instead of pre-stage register alignment"
+"product-stage-plan","PASS_STAGED","true","1746","product packets staged under Owner/Git execution report"
+"deletion-stage-plan","PASS_STAGED","true","147","deletion packets staged under Owner/Git execution report"
+"acl-residue","PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME","true","7","ACL residues are owner-signed external non-runtime residue; keep excluded from release/export"
+"p12-target-reference-manifest","PASS_RAW_READY","true","14","paired raw logs imported; keep delta review evidence before any comparison win claim"
+"six-stage-test-plan","READY_FOR_RELEASE_CLOSURE_TESTS","true","6","run release closure tests and keep evidence before clean export"
+"clean-export","READY_AFTER_RELEASE_CLOSURE_TESTS","true","1","run clean-export preflight after release closure tests; do not create export artifact unless explicitly requested"

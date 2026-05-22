@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "dsxu.v20.final-preflight.v1",
+  "generatedAt": "2026-05-21T23:41:06.034Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS",
+  "gitStatusShort": {
+    "total": 2949,
+    "modified": 1370,
+    "deleted": 164,
+    "untracked": 737
+  },
+  "canRunProductValidationTests": true,
+  "canRunFinalSixStageTests": true,
+  "canCreateCleanExport": true,
+  "didRunFinalTests": false,
+  "didCreateExport": false,
+  "gates": [
+    {
+      "gate": "owner-git-register",
+      "status": "PASS_STAGED_POST_STAGE_INDEX_VERIFIED",
+      "canProceed": true,
+      "count": 1893,
+      "requiredAction": "owner/Git packets are staged; keep post-stage index evidence instead of pre-stage register alignment"
+    },
+    {
+      "gate": "product-stage-plan",
+      "status": "PASS_STAGED",
+      "canProceed": true,
+      "count": 1746,
+      "requiredAction": "product packets staged under Owner/Git execution report"
+    },
+    {
+      "gate": "deletion-stage-plan",
+      "status": "PASS_STAGED",
+      "canProceed": true,
+      "count": 147,
+      "requiredAction": "deletion packets staged under Owner/Git execution report"
+    },
+    {
+      "gate": "acl-residue",
+      "status": "PASS_EXTERNAL_RESIDUE_SIGNED_NO_PRODUCT_RUNTIME",
+      "canProceed": true,
+      "count": 7,
+      "requiredAction": "ACL residues are owner-signed external non-runtime residue; keep excluded from release/export"
+    },
+    {
+      "gate": "p12-target-reference-manifest",
+      "status": "PASS_RAW_READY",
+      "canProceed": true,
+      "count": 14,
+      "requiredAction": "paired raw logs imported; keep delta review evidence before any comparison win claim"
+    },
+    {
+      "gate": "six-stage-test-plan",
+      "status": "READY_FOR_RELEASE_CLOSURE_TESTS",
+      "canProceed": true,
+      "count": 6,
+      "requiredAction": "run release closure tests and keep evidence before clean export"
+    },
+    {
+      "gate": "clean-export",
+      "status": "READY_AFTER_RELEASE_CLOSURE_TESTS",
+      "canProceed": true,
+      "count": 1,
+      "requiredAction": "run clean-export preflight after release closure tests; do not create export artifact unless explicitly requested"
+    }
+  ],
+  "blockers": [],
+  "nextAction": "run release closure tests and clean-export preflight; create export only on explicit release action",
+  "rule": "This final preflight is a gate report only. It does not stage, commit, delete, reset, clean, run final tests, or create export artifacts."
+}

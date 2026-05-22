@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "dsxu.v24.clean-export-artifact.v1",
+  "generatedAt": "2026-05-22T00:01:47.665Z",
+  "status": "PASS_CLEAN_EXPORT_ARTIFACT_CREATED",
+  "repoRoot": "D:\\DSXU-code",
+  "exportRoot": "D:\\DSXU-code-release-artifacts",
+  "exportDir": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z",
+  "zipPath": "D:\\DSXU-code-release-artifacts\\dsxu-code-v24-clean-export-20260515-2026-05-22T00-01-03-492Z.zip",
+  "zipSizeBytes": 15124683,
+  "zipSha256": "05d5baea52b0714ec125a2f2e6dcf74848d402ae84c5e02a9bd6a2732ce4b5e3",
+  "exportedFileCount": 3122,
+  "exportedTotalBytes": 42679434,
+  "releaseSurfacePolicy": {
+    "status": "PASS_RELEASE_SURFACE_POLICY_APPLIED",
+    "candidateFileCount": 3824,
+    "shippedFileCount": 3122,
+    "excludedFileCount": 702,
+    "rewriteOrExcludeCount": 625,
+    "pendingDeleteCount": 0,
+    "releaseBlockerCount": 0,
+    "internalEvidenceExcludedCount": 625,
+    "publicDocsShippedCount": 17,
+    "blockedPaths": [],
+    "sampleExcludedInternalEvidence": [
+      "docs/DSXU_AGENT_MCP_SKILL_BOUNDARY_ACCEPTANCE_20260516.md",
+      "docs/DSXU_ARCHIVE_WATCHLIST_20260519.md",
+      "docs/DSXU_BLOCKED_CLAIM_CORPUS_20260517.md",
+      "docs/DSXU_BRAND_COMPAT_RISK_BOARD_20260517.md",
+      "docs/DSXU_CACHE_HIT_CLOSURE_20260521_CN.md",
+      "docs/DSXU_CAPABILITY_ACCEPTANCE_AUDIT_20260516.md",
+      "docs/DSXU_CAPABILITY_COST_CROSSWALK_20260516.md",
+      "docs/DSXU_CAPABILITY_TRUTH_MATRIX_20260519.md",
+      "docs/DSXU_CLAIM_BOUNDARY_GATE_20260519.md",
+      "docs/DSXU_COMMAND_CATALOG_20260518.md",
+      "docs/DSXU_DAG_OWNER_REVIEW_20260517.md",
+      "docs/DSXU_DEEPSEEK_COST_QUALITY_ACCEPTANCE_20260516.md",
+      "docs/DSXU_DELETE_REVIEW_BOARD_20260519.md",
+      "docs/DSXU_DOC_SIGNAL_EXTRACTION_20260519.md",
+      "docs/DSXU_DOCS_TRUTH_REGISTRY_20260519.md",
+      "docs/DSXU_EXTERNAL_BENCHMARK_ADAPTER_PROOF_20260516.md",
+      "docs/DSXU_FINAL_REALITY_RUN_PLAN_20260520_CN.md",
+      "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache-visible-product-timeline-release-claim-evidence-binder.md",
+      "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_deepseek-route-cost-cache.md",
+      "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517_release-claim-evidence-binder.md",
+      "docs/DSXU_HARD_ENGINEERING_BENCHMARK_20260517.md",
+      "docs/DSXU_KARPATHY_SKILLS_ABSORPTION_PLAN_20260517.md",
+      "docs/DSXU_LEGACY_SWE_OWNER_REVIEW_20260517.md",
+      "docs/DSXU_OPTIMIZATION_FOR_CODEX_20260517.md",
+      "docs/DSXU_PIPELINE_SUPPORT_OWNER_REVIEW_20260517.md",
+      "docs/DSXU_PROMPT_INPUT_ALLOWLIST_20260519.md",
+      "docs/DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.md",
+      "docs/DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.md",
+      "docs/DSXU_RAW_API_VS_DSXU_AB_20260516.md",
+      "docs/DSXU_REASONIX_COMPARATIVE_CODE_AUDIT_20260517.md"
+    ]
+  },
+  "requiredExclusions": [
+    ".git",
+    ".dsxu",
+    "node_modules",
+    "outputs",
+    ".env/.env.* except .env.example",
+    ".trash",
+    ".dsevo",
+    "tmp",
+    "internal DSXU planning/audit/owner-review docs",
+    "docs/generated evidence corpus"
+  ],
+  "gateEvidence": {
+    "cleanExportPreflightStatus": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+    "sixStageFinalTestsStatus": "PASS_V24_SIX_STAGE_FINAL_TESTS",
+    "productBenchmarkDataStatus": "PASS_PRODUCT_BENCHMARK_DEMO_DATA_PACK_READY"
+  },
+  "secretScan": {
+    "status": "PASS_NO_RUNTIME_SECRET_VALUES_IN_EXPORT",
+    "scannedFileCount": 3108,
+    "activeEnvSecretNamesPresent": [
+      "DEEPSEEK_API_KEY"
+    ],
+    "forbiddenPathMatches": [],
+    "matchedEnvSecretNames": []
+  },
+  "rule": "This script creates a release artifact outside the source tree by default. It does not stage, commit, delete, reset, clean source files, or include local evidence/dependency directories.",
+  "sampleFiles": [
+    {
+      "path": ".env.example",
+      "sizeBytes": 533
+    },
+    {
+      "path": ".gitignore",
+      "sizeBytes": 472
+    },
+    {
+      "path": "bin/dsxu-code",
+      "sizeBytes": 1595
+    },
+    {
+      "path": "bin/dsxu-code-wsl-launch",
+      "sizeBytes": 2187
+    },
+    {
+      "path": "bun.lock",
+      "sizeBytes": 137503
+    },
+    {
+      "path": "bunfig.toml",
+      "sizeBytes": 103
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sizeBytes": 738
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "sizeBytes": 521
+    },
+    {
+      "path": "docs/assets/dsxu-acceptance-evidence.svg",
+      "sizeBytes": 1908
+    },
+    {
+      "path": "docs/assets/dsxu-hard-engineering-benchmark.svg",
+      "sizeBytes": 1551
+    },
+    {
+      "path": "docs/assets/dsxu-public-challenge-ablation.svg",
+      "sizeBytes": 2260
+    },
+    {
+      "path": "docs/assets/dsxu-raw-api-vs-dsxu-ab.svg",
+      "sizeBytes": 1994
+    },
+    {
+      "path": "docs/assets/dsxu-release-readiness.svg",
+      "sizeBytes": 1886
+    },
+    {
+      "path": "docs/assets/dsxu-routing-mix.svg",
+      "sizeBytes": 1529
+    },
+    {
+      "path": "docs/BENCHMARK.md",
+      "sizeBytes": 10026
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "sizeBytes": 2732
+    },
+    {
+      "path": "docs/CONTRIBUTING.md",
+      "sizeBytes": 1552
+    },
+    {
+      "path": "docs/DEEPSEEK_V4_CAPABILITIES.md",
+      "sizeBytes": 3511
+    },
+    {
+      "path": "docs/DOCTOR_HEALTH.md",
+      "sizeBytes": 2292
+    },
+    {
+      "path": "docs/evidence/assets/legacy-v24/dsxu-v24-acceptance-gates.svg",
+      "sizeBytes": 1904
+    },
+    {
+      "path": "docs/evidence/assets/legacy-v24/dsxu-v24-release-readiness.svg",
+      "sizeBytes": 1888
+    },
+    {
+      "path": "docs/evidence/assets/legacy-v24/dsxu-v24-routing-mix.svg",
+      "sizeBytes": 1537
+    },
+    {
+      "path": "docs/evidence/README.md",
+      "sizeBytes": 3365
+    },
+    {
+      "path": "docs/INSTALL.md",
+      "sizeBytes": 1756
+    },
+    {
+      "path": "docs/product/DSXU_PUBLIC_FEATURE_TEST_MATRIX_20260522_CN.md",
+      "sizeBytes": 12830
+    },
+    {
+      "path": "docs/product/OPEN_SOURCE_RELEASE_PAGE_20260521_CN.md",
+      "sizeBytes": 12377
+    },
+    {
+      "path": "docs/product/README.md",
+      "sizeBytes": 5398
+    },
+    {
+      "path": "docs/RELEASE_RUNBOOK.md",
+      "sizeBytes": 1884
+    },
+    {
+      "path": "docs/release/README.md",
+      "sizeBytes": 4874
+    },
+    {
+      "path": "docs/SECURITY_PERMISSION.md",
+      "sizeBytes": 1626
+    },
+    {
+      "path": "docs/TOOL_SURFACE.md",
+      "sizeBytes": 2810
+    },
+    {
+      "path": "docs/training/golden/G1-01.json",
+      "sizeBytes": 4047
+    },
+    {
+      "path": "docs/training/golden/G1-02.json",
+      "sizeBytes": 4047
+    },
+    {
+      "path": "docs/training/golden/G1-03.json",
+      "sizeBytes": 4047
+    },
+    {
+      "path": "docs/training/golden/G1-04.json",
+      "sizeBytes": 4047
+    },
+    {
+      "path": "docs/training/golden/G1-05.json",
+      "sizeBytes": 4047
+    },
+    {
+      "path": "docs/training/golden/G1-06.json",
+      "sizeBytes": 4176
+    },
+    {
+      "path": "docs/training/golden/G1-07.json",
+      "sizeBytes": 4176
+    },
+    {
+      "path": "docs/training/golden/G1-08.json",
+      "sizeBytes": 4176
+    },
+    {
+      "path": "docs/training/golden/G1-09.json",
+      "sizeBytes": 4176
+    }
+  ]
+}

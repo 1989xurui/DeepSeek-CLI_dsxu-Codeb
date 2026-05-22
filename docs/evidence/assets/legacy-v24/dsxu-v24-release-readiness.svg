@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="352" viewBox="0 0 920 352" role="img" aria-label="DSXU V24 Release Readiness vs Claim Guard">
+<rect width="920" height="352" fill="#fbfcfd"/>
+<text x="32" y="42" font-size="26" font-weight="700" fill="#172026">DSXU V24 Release Readiness vs Claim Guard</text>
+<text x="32" y="70" font-size="14" fill="#5f6b73">Release artifact is ready; 95-point public claim remains blocked until score evidence reaches target.</text>
+<text x="32" y="118" font-size="16" fill="#172026">fresh install smoke</text>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="117" font-size="15" fill="#172026">7</text>
+<text x="270" y="144" font-size="12" fill="#5f6b73">7/7</text>
+<text x="32" y="176" font-size="16" fill="#172026">public challenge floor</text>
+<rect x="270" y="154" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="154" width="402" height="28" rx="6" fill="#b45309"/>
+<text x="816" y="175" font-size="15" fill="#172026">72</text>
+<text x="270" y="202" font-size="12" fill="#5f6b73">72/95 claim threshold</text>
+<text x="32" y="234" font-size="16" fill="#172026">senior window minutes</text>
+<rect x="270" y="212" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="212" width="353" height="28" rx="6" fill="#3a6ea5"/>
+<text x="816" y="233" font-size="15" fill="#172026">30</text>
+<text x="270" y="260" font-size="12" fill="#5f6b73">30.48 min</text>
+<text x="32" y="292" font-size="16" fill="#172026">clean export zip MB</text>
+<rect x="270" y="270" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="270" width="265" height="28" rx="6" fill="#5f6b73"/>
+<text x="816" y="291" font-size="15" fill="#172026">15</text>
+<text x="270" y="318" font-size="12" fill="#5f6b73">14.88 MB</text>
+</svg>

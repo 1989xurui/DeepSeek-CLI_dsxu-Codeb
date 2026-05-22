@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="294" viewBox="0 0 920 294" role="img" aria-label="DSXU Model Routing Mix">
+<rect width="920" height="294" fill="#fbfcfd"/>
+<text x="32" y="42" font-size="26" font-weight="700" fill="#172026">DSXU Model Routing Mix</text>
+<text x="32" y="70" font-size="14" fill="#5f6b73">Fixed benchmark catalog: Flash-first by default; Pro only for admitted high-risk planning/recovery.</text>
+<text x="32" y="118" font-size="16" fill="#172026">deepseek-v4-flash cases</text>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="96" width="508" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="117" font-size="15" fill="#172026">94</text>
+<text x="270" y="144" font-size="12" fill="#5f6b73">94/98 catalog cases</text>
+<text x="32" y="176" font-size="16" fill="#172026">deepseek-v4-pro cases</text>
+<rect x="270" y="154" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="154" width="22" height="28" rx="6" fill="#99582a"/>
+<text x="816" y="175" font-size="15" fill="#172026">4</text>
+<text x="270" y="202" font-size="12" fill="#5f6b73">4/98 catalog cases</text>
+<text x="32" y="234" font-size="16" fill="#172026">fixed public demo tasks</text>
+<rect x="270" y="212" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="212" width="54" height="28" rx="6" fill="#3a6ea5"/>
+<text x="816" y="233" font-size="15" fill="#172026">10</text>
+<text x="270" y="260" font-size="12" fill="#5f6b73">public replay/demo set</text>
+</svg>

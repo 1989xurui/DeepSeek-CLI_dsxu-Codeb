@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "dsxu.v20.clean-export-preflight.v1",
+  "generatedAt": "2026-05-21T23:39:27.363Z",
+  "repoRoot": "D:\\DSXU-code",
+  "status": "PASS_READY_TO_CREATE_CLEAN_EXPORT",
+  "canCreateCleanExport": true,
+  "didCreateExport": false,
+  "requiredExclusions": [
+    ".git",
+    ".dsxu",
+    "node_modules",
+    "local trace/runs evidence",
+    "permission-blocked residues"
+  ],
+  "rules": [
+    {
+      "rule": "final-preflight",
+      "status": "PASS",
+      "detail": "final preflight must PASS before any export artifact is created"
+    },
+    {
+      "rule": "evidence-directories",
+      "status": "PASS",
+      "detail": ".dsxu trace/runs evidence remains source-side only and must not be included in release/export"
+    },
+    {
+      "rule": "local-dependencies",
+      "status": "PASS",
+      "detail": "node_modules is local build/test dependency and must not be included in release/export"
+    },
+    {
+      "rule": "git-worktree",
+      "status": "PASS",
+      "detail": "owner/Git packets are staged and post-stage verified; clean export must be built from tracked release surface and exclude physical ACL residues"
+    }
+  ],
+  "blockers": [],
+  "nextAction": "clean export may be created by an explicit release/export action; this preflight did not create artifacts",
+  "rule": "This clean export preflight is evidence-only. It does not create archives, copy files, clean directories, delete files, stage, commit, or reset."
+}

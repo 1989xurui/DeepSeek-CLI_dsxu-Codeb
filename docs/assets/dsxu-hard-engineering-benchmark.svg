@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="260" viewBox="0 0 780 260">
+<rect width="780" height="260" fill="#ffffff"/>
+<text x="24" y="34" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">DSXU Hard Engineering Benchmark</text>
+<text x="24" y="58" font-family="Arial, sans-serif" font-size="13" fill="#4b5563">Raw API replacement baseline vs DSXU read/edit/test repair loop on hidden-test tasks.</text>
+<text x="24" y="105" font-family="Arial, sans-serif" font-size="14" fill="#18212f">Raw API pass rate</text>
+<rect x="220" y="90" width="400" height="22" fill="#edf1f7" rx="5"/>
+<rect x="220" y="90" width="0" height="22" fill="#9ca3af" rx="5"/>
+<text x="230" y="106" font-family="Arial, sans-serif" font-size="12" fill="#18212f">0%</text>
+<text x="24" y="145" font-family="Arial, sans-serif" font-size="14" fill="#18212f">DSXU pass rate</text>
+<rect x="220" y="130" width="400" height="22" fill="#edf1f7" rx="5"/>
+<rect x="220" y="130" width="400" height="22" fill="#2563eb" rx="5"/>
+<text x="630" y="146" font-family="Arial, sans-serif" font-size="12" fill="#18212f">100%</text>
+<text x="24" y="192" font-family="Arial, sans-serif" font-size="12" fill="#4b5563">Raw baseline can replace files once from visible context. DSXU can inspect workspace, run tests, repair, and rerun.</text>
+<text x="24" y="216" font-family="Arial, sans-serif" font-size="12" fill="#4b5563">Not an external benchmark claim. Public 90/95 claims remain blocked without target manifests and public task raw logs.</text>
+</svg>

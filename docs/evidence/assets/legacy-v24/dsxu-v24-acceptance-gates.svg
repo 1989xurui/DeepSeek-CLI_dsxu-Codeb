@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="352" viewBox="0 0 920 352" role="img" aria-label="DSXU V24 Acceptance Evidence">
+<rect width="920" height="352" fill="#fbfcfd"/>
+<text x="32" y="42" font-size="26" font-weight="700" fill="#172026">DSXU V24 Acceptance Evidence</text>
+<text x="32" y="70" font-size="14" fill="#5f6b73">Real local tests, real TUI replay, C2 mapping, and senior coding window evidence.</text>
+<text x="32" y="118" font-size="16" fill="#172026">six-stage commands passed</text>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="96" width="530" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="117" font-size="15" fill="#172026">20</text>
+<text x="270" y="144" font-size="12" fill="#5f6b73">20/20</text>
+<text x="32" y="176" font-size="16" fill="#172026">real TUI scenarios passed</text>
+<rect x="270" y="154" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="154" width="530" height="28" rx="6" fill="#3a6ea5"/>
+<text x="816" y="175" font-size="15" fill="#172026">7</text>
+<text x="270" y="202" font-size="12" fill="#5f6b73">permission/recovery/background/model task</text>
+<text x="32" y="234" font-size="16" fill="#172026">C2 reference files mapped</text>
+<rect x="270" y="212" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="212" width="530" height="28" rx="6" fill="#6f5aa7"/>
+<text x="816" y="233" font-size="15" fill="#172026">1902</text>
+<text x="270" y="260" font-size="12" fill="#5f6b73">owner/evidence join</text>
+<text x="32" y="292" font-size="16" fill="#172026">C2 loop checks passed</text>
+<rect x="270" y="270" width="530" height="28" rx="6" fill="#e8edf0"/>
+<rect x="270" y="270" width="530" height="28" rx="6" fill="#2f7d68"/>
+<text x="816" y="291" font-size="15" fill="#172026">51</text>
+<text x="270" y="318" font-size="12" fill="#5f6b73">real acceptance batch</text>
+</svg>
