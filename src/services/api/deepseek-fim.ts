@@ -3,6 +3,7 @@ import {
   DEEPSEEK_V4_MAX_FIM_OUTPUT_TOKENS,
   clampDeepSeekV4MaxTokens,
 } from '../../utils/model/deepseekV4Control.js'
+import { getProviderApiKey } from '../../utils/auth.js'
 
 export type DeepSeekFIMRequest = {
   prompt: string
@@ -24,13 +25,24 @@ function getBaseUrl(): string {
   return (fromEnv && fromEnv.length > 0 ? fromEnv : 'https://api.deepseek.com').replace(/\/+$/, '')
 }
 
+function getConfiguredDeepSeekFimApiKey(): string | null {
+  if (process.env.DEEPSEEK_API_KEY?.trim()) {
+    return process.env.DEEPSEEK_API_KEY
+  }
+  try {
+    return getProviderApiKey()
+  } catch {
+    return null
+  }
+}
+
 export async function runDeepSeekFIMCompletion(
   input: DeepSeekFIMRequest,
   fetchImpl: typeof fetch = fetch,
 ): Promise<DeepSeekFIMResult> {
-  const apiKey = process.env.DEEPSEEK_API_KEY
+  const apiKey = getConfiguredDeepSeekFimApiKey()
   if (!apiKey) {
-    throw new Error('DEEPSEEK_API_KEY not set')
+    throw new Error('DSXU model access is not configured. Run /login to configure a DeepSeek API key.')
   }
 
   const model = input.model || process.env.DSXU_DEEPSEEK_FIM_MODEL || DEEPSEEK_V4_FLASH_MODEL

@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "dsxu.fresh-install-windows-smoke.v1",
+  "generatedAt": "2026-05-22T04:43:53.244Z",
+  "status": "PASS_FRESH_INSTALL_WINDOWS_SMOKE",
+  "repoRoot": "D:\\DSXU-code",
+  "staticCheckCount": 12,
+  "commandCheckCount": 3,
+  "failedStaticChecks": [],
+  "failedCommandChecks": [],
+  "evidenceRule": "This focused smoke verifies Windows source-install launchers, UTF-8 setup, WSL path detection, README/INSTALL surface, and isolated first-run key setup without storing or printing a real key.",
+  "staticResults": [
+    {
+      "id": "root-install-dispatcher",
+      "passed": true,
+      "detail": "root install.ps1 dispatches Windows install and points non-Windows users to install.sh"
+    },
+    {
+      "id": "root-shell-install-dispatcher",
+      "passed": true,
+      "detail": "root install.sh dispatches Unix install and points Windows Git Bash users to install.ps1"
+    },
+    {
+      "id": "root-start-cmd-current-dir",
+      "passed": true,
+      "detail": "root Windows launcher delegates to repo-local PowerShell script"
+    },
+    {
+      "id": "root-start-cmd-utf8",
+      "passed": true,
+      "detail": "root Windows launcher switches code page to UTF-8"
+    },
+    {
+      "id": "wsl-launcher-autodetect",
+      "passed": true,
+      "detail": "WSL launcher auto-detects distro and converts the current repo path"
+    },
+    {
+      "id": "wsl-inner-launcher-current-dir",
+      "passed": true,
+      "detail": "WSL inner launcher resolves repo from its own location"
+    },
+    {
+      "id": "powershell-launcher-utf8-bun",
+      "passed": true,
+      "detail": "PowerShell launcher owns UTF-8 setup and DSXU product entrypoint"
+    },
+    {
+      "id": "windows-installer-desktop-path-shim",
+      "passed": true,
+      "detail": "Windows installer creates desktop shortcut, WSL option, and user PATH shim"
+    },
+    {
+      "id": "unix-installer-shims",
+      "passed": true,
+      "detail": "Unix/WSL installer creates command shim and WSL desktop command when available"
+    },
+    {
+      "id": "install-doc-bilingual-first-run",
+      "passed": true,
+      "detail": "INSTALL.md covers bilingual install, encoding, and first-run key setup"
+    },
+    {
+      "id": "readme-install-surface",
+      "passed": true,
+      "detail": "README files expose install, first-run, desktop, and encoding guidance"
+    },
+    {
+      "id": "package-script-windows-smoke",
+      "passed": true,
+      "detail": "package.json exposes the Windows install smoke command"
+    }
+  ],
+  "commandResults": [
+    {
+      "id": "windows-launcher-version",
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/start-dsxu-windows.ps1",
+        "--version"
+      ],
+      "exitCode": 0,
+      "expectedExitCodes": [
+        0
+      ],
+      "passed": true,
+      "durationMs": 1739,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T04-43-45-655Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T04-43-45-655Z.stderr.log",
+      "stdoutTail": "999.0.0-local (DSXU Code)\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "windows-launcher-missing-key-status",
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/start-dsxu-windows.ps1",
+        "auth",
+        "status",
+        "--text"
+      ],
+      "exitCode": 1,
+      "expectedExitCodes": [
+        1
+      ],
+      "passed": true,
+      "durationMs": 2966,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T04-43-47-394Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T04-43-47-394Z.stderr.log",
+      "stdoutTail": "Product: DSXU Code\nModel provider: deepseek\nModel gateway: direct\nModel access: missing. Configure DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\n",
+      "stderrTail": ""
+    },
+    {
+      "id": "windows-launcher-key-stdin",
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/start-dsxu-windows.ps1",
+        "auth",
+        "login",
+        "--api-key-stdin"
+      ],
+      "exitCode": 0,
+      "expectedExitCodes": [
+        0
+      ],
+      "passed": true,
+      "durationMs": 2883,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T04-43-50-361Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T04-43-50-361Z.stderr.log",
+      "stdoutTail": "DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n",
+      "stderrTail": ""
+    }
+  ]
+}

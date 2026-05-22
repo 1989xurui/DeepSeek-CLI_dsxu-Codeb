@@ -6,12 +6,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dsxu-code/dsxu-code.git"
+    "url": "https://github.com/1989xurui/DeepSeek-CLI_dsxu-Codeb.git"
   },
   "bugs": {
-    "url": "https://github.com/dsxu-code/dsxu-code/issues"
+    "url": "https://github.com/1989xurui/DeepSeek-CLI_dsxu-Codeb/issues"
   },
-  "homepage": "https://github.com/dsxu-code/dsxu-code#readme",
+  "homepage": "https://github.com/1989xurui/DeepSeek-CLI_dsxu-Codeb#readme",
   "type": "module",
   "bin": {
     "dsxu": "./bin/dsxu-code",
@@ -107,6 +107,7 @@
     "release:claim-blocker-tracker": "bun run scripts/dsxu-v3-release-claim-blocker-tracker.ts",
     "release:clean-export-artifact": "bun run scripts/dsxu-v24-clean-export-artifact.ts",
     "release:fresh-install-smoke": "bun run scripts/dsxu-v24-fresh-install-release-smoke.ts",
+    "release:fresh-install-windows-smoke": "bun run scripts/dsxu-fresh-install-windows-smoke.ts",
     "release:final-preflight": "bun run scripts/dsxu-v20-final-preflight.ts",
     "release:blocker-board": "bun run scripts/dsxu-v20-blocker-action-board.ts",
     "release:closure-batch": "bun run scripts/dsxu-v20-closure-batch-runner.ts",

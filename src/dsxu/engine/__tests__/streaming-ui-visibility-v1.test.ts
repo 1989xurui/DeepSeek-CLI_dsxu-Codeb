@@ -318,7 +318,7 @@ describe('DSXU streaming UI visibility', () => {
 
   test('auth blocked footer text is explicit instead of looking like passive waiting', () => {
     expect(getAuthBlockedNotificationText(false)).toBe(
-      'Auth required - Run /login before model requests can continue',
+      'Auth required - submit any prompt or run /login to configure DeepSeek key',
     )
     expect(getAuthBlockedNotificationText(true)).toBe(
       'Authentication blocked - Try again or run /login',

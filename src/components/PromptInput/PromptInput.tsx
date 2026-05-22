@@ -1027,6 +1027,13 @@ function PromptInput({
       });
       return;
     }
+    if (isDsxuRuntimeMode() && (apiKeyStatus === 'missing' || apiKeyStatus === 'invalid' || apiKeyStatus === 'error') && !isSubmittingSlashCommand && !inputParam.trim().startsWith('/')) {
+      traceDsxuLifecycle('prompt_input_submit_blocked', {
+        reason: 'auth_required',
+      });
+      await onSubmit('/login', true);
+      return;
+    }
     // PromptInput UX: Check if suggestions dropdown is showing
     // For directory suggestions, allow submission (Tab is used for completion)
     const hasDirectorySuggestions = suggestionsState.suggestions.length > 0 && suggestionsState.suggestions.every(s => s.description === 'directory');
@@ -1064,7 +1071,7 @@ function PromptInput({
     traceDsxuLifecycle('prompt_input_submit_dispatched', {
       inputLength: inputParam.length,
     });
-  }, [promptSuggestionState, speculation, speculationSessionTimeSavedMs, teamContext, store, footerItems, suggestionsState.suggestions, onSubmitProp, onAgentSubmit, clearBuffer, resetHistory, logOutcomeAtSubmission, setAppState, markAccepted, pastedContents, removeNotification]);
+  }, [promptSuggestionState, speculation, speculationSessionTimeSavedMs, teamContext, store, footerItems, suggestionsState.suggestions, onSubmitProp, onAgentSubmit, clearBuffer, resetHistory, logOutcomeAtSubmission, setAppState, markAccepted, pastedContents, removeNotification, apiKeyStatus]);
   const {
     suggestions,
     selectedSuggestion,

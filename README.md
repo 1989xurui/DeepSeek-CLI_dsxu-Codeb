@@ -136,11 +136,66 @@ These are the current GitHub-facing demos. They are chosen to show task complexi
 
 ## Install
 
-```bash
-bun install
+### Windows one-command install
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-Configure DeepSeek access with environment variables or the built-in auth flow:
+The root installer enters the Windows install chain. It checks Bun, runs `bun install --frozen-lockfile`, creates desktop shortcuts for `DSXU Code` and `DSXU Code WSL`, creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`, and launches through a UTF-8 PowerShell wrapper to avoid garbled CJK text and border rendering.
+
+If Bun is missing:
+
+```powershell
+powershell -c "irm https://bun.sh/install.ps1 | iex"
+```
+
+Reopen Windows Terminal, then rerun the DSXU installer.
+
+Optional WSL bootstrap:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -InstallWsl
+```
+
+This checks for an existing WSL distro. If none exists, it runs `wsl --install -d Ubuntu`. WSL may require administrator approval, Microsoft Store access, a reboot, and first-run Linux user setup, so DSXU does not silently force it by default.
+
+### macOS / Linux / WSL
+
+```bash
+bash ./install.sh
+```
+
+The script installs dependencies, creates `~/.local/bin/dsxu-code`, and creates a desktop launcher when available. Windows users who prefer WSL can run:
+
+Show help without installing:
+
+```bash
+bash ./install.sh --help
+```
+
+```powershell
+.\Start-DSXU-Code-WSL.cmd
+```
+
+It auto-detects the WSL distro and converts the current checkout path.
+
+### Manual source install
+
+```bash
+bun install --frozen-lockfile
+bun run dsxu-code
+```
+
+On Windows, prefer:
+
+```powershell
+.\Start-DSXU-Code.cmd
+```
+
+### First-run DeepSeek key setup
+
+On first launch without a key, DSXU opens the welcome and local model-access setup flow. You can also configure DeepSeek access with environment variables or the built-in auth command:
 
 ```env
 DSXU_CODE_MODE=1
@@ -150,7 +205,7 @@ DSXU_API_KEY=your_key_here
 DSXU_MODEL=deepseek-v4-flash
 ```
 
-You can also run:
+or:
 
 ```bash
 bun ./src/entrypoints/dsxu-code.tsx auth login
@@ -165,6 +220,15 @@ Interactive CLI/TUI:
 ```bash
 bun run dsxu-code
 ```
+
+Desktop shortcuts:
+
+- `DSXU Code`: native Windows PowerShell/Windows Terminal launch.
+- `DSXU Code WSL`: WSL launch for users who prefer Linux tooling.
+
+### Garbled text fix
+
+If CJK text, borders, or the welcome screen look garbled, use `Start-DSXU-Code.cmd`, the desktop shortcut, or Windows Terminal. The Windows launcher sets `chcp 65001`, PowerShell UTF-8 output, `LANG=zh_CN.UTF-8`, and `LC_ALL=zh_CN.UTF-8`. Avoid using old `cmd.exe` plus raw `bun run dsxu-code` as the daily entrypoint.
 
 Print-mode task:
 
@@ -202,6 +266,7 @@ Release checks:
 bun run test:six-stage-final
 bun run release:clean-export-artifact
 bun run release:fresh-install-smoke
+bun run release:fresh-install-windows-smoke
 ```
 
 Release checks are intentionally slower than owner-focused tests. During development, run focused owner tests first; rerun the full release chain only after a release-facing batch is complete.

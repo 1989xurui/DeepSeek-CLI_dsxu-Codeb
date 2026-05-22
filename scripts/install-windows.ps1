@@ -1,0 +1,174 @@
+param(
+  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")),
+  [string]$WslDistro = "Ubuntu",
+  [switch]$InstallWsl,
+  [switch]$NoDependencies,
+  [switch]$NoDesktopShortcut,
+  [switch]$NoWslShortcut,
+  [switch]$NoPathShim
+)
+
+$ErrorActionPreference = "Stop"
+
+function Set-DsxuUtf8Console {
+  try {
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [Console]::InputEncoding = $utf8NoBom
+    [Console]::OutputEncoding = $utf8NoBom
+    $script:OutputEncoding = $utf8NoBom
+  } catch {
+    Write-Warning "[DSXU] Could not set console encoding: $($_.Exception.Message)"
+  }
+  try { chcp.com 65001 > $null } catch {}
+}
+
+function Add-UserPathIfMissing([string]$PathToAdd) {
+  if (-not $PathToAdd) { return }
+  $current = [Environment]::GetEnvironmentVariable("Path", "User")
+  $parts = @()
+  if ($current) {
+    $parts = $current -split ";" | Where-Object { $_ -ne "" }
+  }
+  if ($parts -notcontains $PathToAdd) {
+    $newPath = if ($current) { "$current;$PathToAdd" } else { $PathToAdd }
+    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Write-Host "[DSXU] Added to user PATH: $PathToAdd"
+  }
+}
+
+function Get-DsxuWslDistro {
+  $preferred = $env:DSXU_WSL_DISTRO
+  if ($preferred) { return $preferred }
+  $distros = @(wsl.exe -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+  if ($distros.Count -gt 0) { return $distros[0] }
+  return $null
+}
+
+function Ensure-DsxuWsl([string]$DistroName) {
+  if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
+    throw "[DSXU] wsl.exe was not found. Enable WSL from an elevated PowerShell: wsl --install -d $DistroName"
+  }
+
+  $existing = Get-DsxuWslDistro
+  if ($existing) {
+    Write-Host "[DSXU] WSL distro detected: $existing"
+    return
+  }
+
+  Write-Host "[DSXU] Installing WSL distro: $DistroName"
+  Write-Host "[DSXU] This may require administrator approval, Microsoft Store access, or a reboot."
+  wsl.exe --install -d $DistroName
+  if ($LASTEXITCODE -ne 0) {
+    throw "[DSXU] WSL install command failed with exit code $LASTEXITCODE. You can retry later with: wsl --install -d $DistroName"
+  }
+  Write-Host "[DSXU] WSL install command finished. If Windows asks for a reboot or first-run Linux user setup, complete that before launching DSXU Code WSL."
+}
+
+function New-DsxuShortcut(
+  [string]$ShortcutName,
+  [string]$ResolvedRepoRoot,
+  [string]$Target,
+  [string]$Arguments,
+  [string]$Description
+) {
+  $desktop = [Environment]::GetFolderPath("Desktop")
+  if (-not $desktop) {
+    Write-Warning "[DSXU] Desktop folder not found; shortcut skipped."
+    return
+  }
+
+  $shortcutPath = Join-Path $desktop $ShortcutName
+  $shell = New-Object -ComObject WScript.Shell
+  $shortcut = $shell.CreateShortcut($shortcutPath)
+  $shortcut.TargetPath = $Target
+  $shortcut.Arguments = $Arguments
+  $shortcut.WorkingDirectory = $ResolvedRepoRoot
+  $shortcut.Description = $Description
+  $shortcut.Save()
+  Write-Host "[DSXU] Desktop shortcut created: $shortcutPath"
+}
+
+function New-DsxuDesktopShortcut([string]$ResolvedRepoRoot) {
+  $launcher = Join-Path $ResolvedRepoRoot "scripts\start-dsxu-windows.ps1"
+  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+
+  if ($wt) {
+    $target = $wt.Source
+    $arguments = "-w 0 nt --title `"DSXU Code`" -d `"$ResolvedRepoRoot`" powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$launcher`""
+  } else {
+    $target = "powershell.exe"
+    $arguments = "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$launcher`""
+  }
+
+  New-DsxuShortcut "DSXU Code.lnk" $ResolvedRepoRoot $target $arguments "Launch DSXU Code with UTF-8 terminal setup"
+}
+
+function New-DsxuWslDesktopShortcut([string]$ResolvedRepoRoot) {
+  $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code-WSL.cmd"
+  if (-not (Test-Path -LiteralPath $launcher)) {
+    Write-Warning "[DSXU] WSL launcher not found; WSL shortcut skipped."
+    return
+  }
+
+  $wt = Get-Command wt.exe -ErrorAction SilentlyContinue
+  if ($wt) {
+    $target = $wt.Source
+    $arguments = "-w 0 nt --title `"DSXU Code WSL`" -d `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+  } else {
+    $target = "cmd.exe"
+    $arguments = "/k `"$launcher`""
+  }
+
+  New-DsxuShortcut "DSXU Code WSL.lnk" $ResolvedRepoRoot $target $arguments "Launch DSXU Code through WSL with auto-detected distro/path"
+}
+
+function New-DsxuPathShim([string]$ResolvedRepoRoot) {
+  $binDir = Join-Path $env:LOCALAPPDATA "DSXU Code\bin"
+  New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+  $shimPath = Join-Path $binDir "dsxu-code.cmd"
+  $startPs1 = Join-Path $ResolvedRepoRoot "scripts\start-dsxu-windows.ps1"
+  @"
+@echo off
+setlocal
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$startPs1" %*
+exit /b %ERRORLEVEL%
+"@ | Set-Content -LiteralPath $shimPath -Encoding ASCII
+  Add-UserPathIfMissing $binDir
+  Write-Host "[DSXU] Command shim created: $shimPath"
+}
+
+Set-DsxuUtf8Console
+$resolvedRepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
+Set-Location -LiteralPath $resolvedRepoRoot
+
+if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
+  throw "[DSXU] Bun was not found. Install Bun first: powershell -c `"irm https://bun.sh/install.ps1 | iex`", reopen PowerShell, then rerun scripts\install-windows.ps1."
+}
+
+if ($InstallWsl) {
+  Ensure-DsxuWsl $WslDistro
+}
+
+if (-not $NoDependencies) {
+  Write-Host "[DSXU] Installing dependencies with Bun..."
+  bun install --frozen-lockfile
+  if ($LASTEXITCODE -ne 0) {
+    throw "[DSXU] bun install failed with exit code $LASTEXITCODE"
+  }
+}
+
+if (-not $NoPathShim) {
+  New-DsxuPathShim $resolvedRepoRoot
+}
+
+if (-not $NoDesktopShortcut) {
+  New-DsxuDesktopShortcut $resolvedRepoRoot
+  if (-not $NoWslShortcut) {
+    New-DsxuWslDesktopShortcut $resolvedRepoRoot
+  }
+}
+
+Write-Host ""
+Write-Host "[DSXU] Install complete."
+Write-Host "[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code"
+Write-Host "[DSXU] First launch without a key opens the DeepSeek key setup flow."
