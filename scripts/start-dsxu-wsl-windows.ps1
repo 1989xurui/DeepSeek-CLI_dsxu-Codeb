@@ -97,17 +97,18 @@ function Test-DsxuWslRepo([string]$Distro, [string]$WslRepo) {
 
 function Start-DsxuWslInline([string]$Distro, [string]$WslRepo, [string[]]$ArgsToForward) {
   $quotedRepo = Quote-DsxuBashSingle $WslRepo
-  $command = "cd $quotedRepo && exec bash ./bin/dsxu-code-wsl-launch ""`$@"""
-  $wslArgs = @('-d', $Distro, '--', 'bash', '-lc', $command, 'dsxu-code-wsl')
+  $quotedArgs = ''
   if ($ArgsToForward.Count -gt 0) {
-    $wslArgs += $ArgsToForward
+    $quotedArgs = ' ' + (($ArgsToForward | ForEach-Object { Quote-DsxuBashSingle $_ }) -join ' ')
   }
-  & wsl.exe @wslArgs
-  return $LASTEXITCODE
+  $command = "cd $quotedRepo && exec bash ./bin/dsxu-code-wsl-launch$quotedArgs"
+  $wslArgLine = "-d `"$Distro`" -- bash -lc `"$command`""
+  $process = Start-Process -FilePath "wsl.exe" -ArgumentList $wslArgLine -NoNewWindow -Wait -PassThru
+  return $process.ExitCode
 }
 
 function Start-DsxuWslInWindowsTerminal([string]$ResolvedRepoRoot, [string[]]$ArgsToForward) {
-  if ($env:WT_SESSION -or $env:DSXU_WSL_FORCE_INLINE) { return $false }
+  if ($env:WT_SESSION -or $env:DSXU_WSL_FORCE_INLINE -or $ArgsToForward.Count -gt 0) { return $false }
   $wt = Get-DsxuWindowsTerminalPath
   if (-not $wt) { return $false }
 
@@ -117,7 +118,7 @@ function Start-DsxuWslInWindowsTerminal([string]$ResolvedRepoRoot, [string[]]$Ar
     $argTail = ' ' + (($ArgsToForward | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }) -join ' ')
   }
   $psCommand = "set DSXU_WSL_FORCE_INLINE=1&& powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$script`"$argTail"
-  $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$psCommand`""
+  $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" -- cmd.exe /k `"$psCommand`""
   Start-Process -FilePath $wt -ArgumentList $arguments | Out-Null
   return $true
 }

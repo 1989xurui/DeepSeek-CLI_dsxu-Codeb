@@ -166,6 +166,9 @@
     "training:dashboard": "bun run scripts/dsxu-training-dashboard.ts",
     "training:v1": "bun run scripts/dsxu-training-v1-runner.ts",
     "training:v2": "bun run scripts/dsxu-training-v2-runner.ts",
+    "ide:vscode-smoke": "bun run scripts/dsxu-vscode-extension-smoke.ts",
+    "ide:vscode-install:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-vscode-extension.ps1",
+    "ide:vscode-install:unix": "bash scripts/install-vscode-extension.sh",
     "prebuild": "bun run lint-schema"
   },
   "dependencies": {

@@ -154,9 +154,11 @@ async function staticChecks(): Promise<StaticCheck[]> {
   const startCmd = await readText('Start-DSXU-Code.cmd')
   const wslCmd = await readText('Start-DSXU-Code-WSL.cmd')
   const wslLaunch = await readText('bin/dsxu-code-wsl-launch')
+  const attributes = await readText('.gitattributes')
   const winStart = await readText('scripts/start-dsxu-windows.ps1')
   const wslWinStart = await readText('scripts/start-dsxu-wsl-windows.ps1')
   const productEntrypoint = await readText('src/entrypoints/dsxu-code.tsx')
+  const mainEntrypoint = await readText('src/main.tsx')
   const rootInstall = await readText('install.ps1')
   const rootShellInstall = await readText('install.sh')
   const winInstall = await readText('scripts/install-windows.ps1')
@@ -171,8 +173,10 @@ async function staticChecks(): Promise<StaticCheck[]> {
     startCmd,
     wslCmd,
     wslLaunch,
+    attributes,
     winStart,
     wslWinStart,
+    mainEntrypoint,
     rootInstall,
     rootShellInstall,
     winInstall,
@@ -224,6 +228,8 @@ async function staticChecks(): Promise<StaticCheck[]> {
   )
   checks.push(
     startCmd.includes('DSXU_ASCII_TUI') &&
+      startCmd.includes('if "%DSXU_HAS_ARGS%"=="0"') &&
+      startCmd.includes('-- cmd.exe /k') &&
       startCmd.includes('Microsoft\\WindowsApps\\wt.exe') &&
       startCmd.includes('Windows Terminal was not detected') &&
       startCmd.includes('DSXU_ALLOW_CONHOST') &&
@@ -240,24 +246,41 @@ async function staticChecks(): Promise<StaticCheck[]> {
   )
   checks.push(
     !wslCmd.includes('--cd /mnt/d/DSXU-code') &&
-      !wslCmd.includes('wsl.exe -d Ubuntu') &&
       !wslCmd.includes('wsl.exe --cd') &&
-      !wslCmd.includes('bash ./bin/dsxu-code-wsl-launch') &&
-      wslCmd.includes('scripts\\start-dsxu-wsl-windows.ps1') &&
+      wslCmd.includes('where wsl.exe') &&
+      wslCmd.includes('DSXU_SELECTED_DISTRO') &&
+      wslCmd.includes('DSXU_WSL_REPO=/mnt/') &&
+      wslCmd.includes("test -f '%DSXU_WSL_REPO%/bin/dsxu-code-wsl-launch'") &&
+      wslCmd.includes('wsl.exe -d %DSXU_SELECTED_DISTRO% -- bash -lc') &&
+      wslCmd.includes('exec bash ./bin/dsxu-code-wsl-launch') &&
+      wslCmd.includes('Falling back to the Windows native DSXU launcher') &&
+      wslCmd.includes('Start-DSXU-Code.cmd') &&
+      !wslCmd.includes('scripts\\start-dsxu-wsl-windows.ps1') &&
       wslWinStart.includes('Test-DsxuWslListLine') &&
       wslWinStart.includes('Test-DsxuWslDistroCandidate') &&
       wslWinStart.includes('ConvertTo-DsxuWslPath') &&
       wslWinStart.includes('Test-DsxuWslRepo') &&
       wslWinStart.includes('Start-DsxuNativeFallback') &&
       wslWinStart.includes('DSXU_TEST_DISABLE_WSL') &&
-      wslWinStart.includes('Start-DsxuWslInWindowsTerminal')
-      ? pass('wsl-launcher-default-distro-current-path', 'WSL launcher delegates to PowerShell for repo truth, distro probing, WT relaunch, and native fallback')
-      : fail('wsl-launcher-default-distro-current-path', 'WSL launcher still hardcodes distro/path, embeds fragile WSL command lines, or lacks native fallback'),
+      !wslWinStart.includes('& wsl.exe @wslArgs')
+      ? pass('wsl-launcher-default-distro-current-path', 'WSL root launcher owns distro probing, repo path conversion, native fallback, and direct inherited-console WSL launch without PowerShell stdout capture')
+      : fail('wsl-launcher-default-distro-current-path', 'WSL launcher still hardcodes repo path, uses stale PowerShell delegation, captures WSL stdout through PowerShell, or lacks native fallback'),
   )
   checks.push(
-    !wslLaunch.includes('ROOT_DIR="/mnt/d/DSXU-code"')
-      ? pass('wsl-inner-launcher-current-dir', 'WSL inner launcher resolves repo from its own location')
-      : fail('wsl-inner-launcher-current-dir', 'WSL inner launcher still hardcodes repo path'),
+    !wslLaunch.includes('ROOT_DIR="/mnt/d/DSXU-code"') &&
+      wslLaunch.includes('DSXU_FORCE_INTERACTIVE') &&
+      wslLaunch.includes('DSXU_WSL_STARTUP_RESIZE_DELAYS') &&
+      wslLaunch.includes('for delay in') &&
+      wslLaunch.includes('kill -WINCH "$dsxu_launcher_pid"') &&
+      wslLaunch.includes('kill -WINCH 0') &&
+      wslLaunch.includes('< /dev/tty') &&
+      wslLaunch.includes('exec ./bin/dsxu-code "$@"') &&
+      attributes.includes('bin/dsxu-code-wsl-launch text eol=lf') &&
+      attributes.includes('scripts/*.sh text eol=lf') &&
+      mainEntrypoint.includes('DSXU_FORCE_INTERACTIVE') &&
+      mainEntrypoint.includes('(!forceInteractive && !process.stdout.isTTY)')
+      ? pass('wsl-inner-launcher-current-dir', 'WSL inner launcher resolves repo from its own location, forces interactive mode, and nudges startup resize so no-arg WSL launch does not fall into --print or blank initial render')
+      : fail('wsl-inner-launcher-current-dir', 'WSL inner launcher still hardcodes repo path, can misclassify no-arg WSL launch as print mode, or can blank the first TUI render before resize'),
   )
   checks.push(
     winStart.includes('UTF8Encoding') &&
@@ -269,6 +292,9 @@ async function staticChecks(): Promise<StaticCheck[]> {
   checks.push(
     winInstall.includes('Desktop shortcut created') &&
       winInstall.includes('DSXU Code\\bin') &&
+      winInstall.includes('New-DsxuDesktopCommand') &&
+      winInstall.includes('DSXU Code WSL.cmd') &&
+      winInstall.includes('Start-DSXU-Code-WSL.cmd') &&
       winInstall.includes('InstallWsl') &&
       winInstall.includes('CreateWslShortcut') &&
       winInstall.includes('NoWindowsTerminalInstall') &&
@@ -277,9 +303,23 @@ async function staticChecks(): Promise<StaticCheck[]> {
       winInstall.includes('wsl.exe --install -d') &&
       winInstall.includes('Microsoft.WindowsTerminal') &&
       winInstall.includes('winget') &&
-      winInstall.includes('Microsoft\\WindowsApps\\wt.exe')
-      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native desktop shortcut, optional WSL path, user PATH shim, Windows Terminal path, and auto-opens CLI')
-      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, optional WSL path, PATH shim, Windows Terminal path, or auto-open CLI path'),
+      winInstall.includes('Microsoft\\WindowsApps\\wt.exe') &&
+      winInstall.includes('-- cmd.exe /k')
+      ? pass('windows-installer-desktop-path-shim', 'Windows installer creates native shortcut, regenerated WSL lnk/cmd launchers, user PATH shim, Windows Terminal path, and auto-opens CLI')
+      : fail('windows-installer-desktop-path-shim', 'Windows installer does not create native shortcut, regenerated WSL lnk/cmd launchers, PATH shim, Windows Terminal path, or auto-open CLI path'),
+  )
+  checks.push(
+    winInstall.includes('New-DsxuDesktopCommand "DSXU Code WSL.cmd"') &&
+      winInstall.includes('set "DSXU_REPO_ROOT=$ResolvedRepoRoot"') &&
+      winInstall.includes('set "DSXU_LAUNCHER=$Launcher"') &&
+      winInstall.includes('start "" wt.exe -w new new-tab') &&
+      winInstall.includes('cmd.exe /k ""%DSXU_LAUNCHER%""') &&
+      winInstall.includes('call "%DSXU_LAUNCHER%" %*') &&
+      !winInstall.includes('wsl.exe -d "%DSXU_WSL_DISTRO%"') &&
+      !winInstall.includes('wsl.exe --cd') &&
+      !winInstall.includes('bash ./bin/dsxu-code-wsl-launch')
+      ? pass('windows-installer-overwrites-stale-wsl-cmd', 'Windows installer overwrites stale desktop WSL .cmd with a Windows Terminal trampoline plus root-launcher delegate')
+      : fail('windows-installer-overwrites-stale-wsl-cmd', 'Windows installer can leave or regenerate stale direct-wsl desktop command content or a foreground-pausing cmd wrapper'),
   )
   checks.push(
     winInstall.includes('WSL shortcut skipped') &&
@@ -397,6 +437,36 @@ async function main(): Promise<void> {
   const commandResults: CommandCheck[] = []
 
   if (process.platform === 'win32') {
+    const desktopInstallCheck = `
+$ErrorActionPreference = 'Stop'
+& .\\scripts\\install-windows.ps1 -NoDependencies -NoLaunch -CreateWslShortcut -NoWindowsTerminalInstall
+$desktop = [Environment]::GetFolderPath('Desktop')
+$cmdPath = Join-Path $desktop 'DSXU Code WSL.cmd'
+$lnkPath = Join-Path $desktop 'DSXU Code WSL.lnk'
+if (-not (Test-Path -LiteralPath $cmdPath)) { throw 'missing DSXU Code WSL.cmd' }
+if (-not (Test-Path -LiteralPath $lnkPath)) { throw 'missing DSXU Code WSL.lnk' }
+$cmdText = Get-Content -LiteralPath $cmdPath -Raw
+if ($cmdText -match 'wsl\\.exe\\s+-d|wsl\\.exe\\s+--cd|--cd\\s+"?/mnt/d/DSXU-code|bash\\s+-lc\\s+"exec bash') { throw 'stale WSL desktop command content' }
+if ($cmdText -notmatch 'Start-DSXU-Code-WSL\\.cmd') { throw 'WSL desktop command does not delegate to the root launcher' }
+if ($cmdText -notmatch 'wt\\.exe -w new new-tab') { throw 'WSL desktop command does not trampoline no-arg double-clicks into Windows Terminal' }
+if ($cmdText -notmatch 'cmd\\.exe /k') { throw 'WSL desktop command missing Windows Terminal cmd.exe /k launch shape' }
+if ($cmdText -notmatch 'call "%DSXU_LAUNCHER%" %\\*') { throw 'WSL desktop command does not preserve argument forwarding fallback' }
+$shell = New-Object -ComObject WScript.Shell
+$shortcut = $shell.CreateShortcut($lnkPath)
+if ($shortcut.Arguments -notmatch '--\\s+cmd\\.exe\\s+/k') { throw 'WSL shortcut missing Windows Terminal command separator' }
+if ($shortcut.Arguments -notmatch 'Start-DSXU-Code-WSL\\.cmd') { throw 'WSL shortcut does not call root launcher' }
+Write-Host 'PASS: desktop WSL entrypoints regenerated'
+`
+    commandResults.push(
+      await runCommand('windows-installer-regenerates-desktop-wsl-entrypoints', [
+        'powershell.exe',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-Command',
+        desktopInstallCheck,
+      ], [0]),
+    )
     commandResults.push(
       await runCommand('windows-wsl-launcher-disabled-falls-back-to-native-version', [
         'powershell.exe',

@@ -9,14 +9,14 @@ cd /d "%DSXU_REPO_ROOT%"
 set "DSXU_HAS_ARGS=0"
 if not "%~1"=="" set "DSXU_HAS_ARGS=1"
 
-if "%DSXU_FORCE_CONHOST%"=="" if "%WT_SESSION%"=="" (
+if "%DSXU_FORCE_CONHOST%"=="" if "%WT_SESSION%"=="" if "%DSXU_HAS_ARGS%"=="0" (
   where wt.exe >nul 2>nul
   if "%ERRORLEVEL%"=="0" (
-    wt.exe -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" cmd.exe /k "set DSXU_FORCE_CONHOST=1&& call ""%~f0"" %*"
+    wt.exe -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" -- cmd.exe /k "set ""DSXU_FORCE_CONHOST=1"" && call ""%~f0"""
     exit /b %ERRORLEVEL%
   )
   if exist "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" (
-    "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" cmd.exe /k "set DSXU_FORCE_CONHOST=1&& call ""%~f0"" %*"
+    "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" -w new new-tab --title "DSXU Code" --startingDirectory "%DSXU_REPO_ROOT%" -- cmd.exe /k "set ""DSXU_FORCE_CONHOST=1"" && call ""%~f0"""
     exit /b %ERRORLEVEL%
   )
 )

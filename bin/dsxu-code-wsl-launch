@@ -28,6 +28,7 @@ export LC_ALL="${LC_ALL:-C.UTF-8}"
 export TERM="${TERM:-xterm-256color}"
 export COLORTERM="${COLORTERM:-truecolor}"
 export FORCE_COLOR="${FORCE_COLOR:-1}"
+export DSXU_FORCE_INTERACTIVE="${DSXU_FORCE_INTERACTIVE:-1}"
 export DSXU_CODE_MODE=1
 export DSXU_MODEL_PROVIDER="${DSXU_MODEL_PROVIDER:-deepseek}"
 export DSXU_MODEL_GATEWAY="${DSXU_MODEL_GATEWAY:-direct}"
@@ -50,8 +51,26 @@ if ! command -v bun >/dev/null 2>&1; then
   exit 127
 fi
 
-./bin/dsxu-code "$@"
-status=$?
+if [ "$#" -eq 0 ] && [ -t 0 ]; then
+  dsxu_launcher_pid=$$
+  (
+    for delay in ${DSXU_WSL_STARTUP_RESIZE_DELAYS:-1 2 3 4 5 5 5}; do
+      sleep "$delay"
+      if ! kill -0 "$dsxu_launcher_pid" >/dev/null 2>&1; then
+        exit 0
+      fi
+      if command -v stty >/dev/null 2>&1; then
+        stty rows "${DSXU_WSL_FALLBACK_ROWS:-40}" cols "${DSXU_WSL_FALLBACK_COLS:-120}" < /dev/tty 2>/dev/null || true
+      fi
+      kill -WINCH "$dsxu_launcher_pid" >/dev/null 2>&1 || true
+      kill -WINCH 0 >/dev/null 2>&1 || true
+    done
+  ) &
+  exec ./bin/dsxu-code "$@"
+else
+  ./bin/dsxu-code "$@"
+  status=$?
+fi
 
 echo
 if [ "$status" -eq 0 ]; then

@@ -144,7 +144,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 
 The root installer enters the Windows install chain. It checks Bun, runs `bun install --frozen-lockfile`, creates the native Windows desktop shortcut `DSXU Code`, creates `%LOCALAPPDATA%\DSXU Code\bin\dsxu-code.cmd`, and opens the DSXU CLI in a UTF-8 terminal so first-time users immediately see the welcome/key setup flow.
 
-The recommended default for most Windows users is: run the one-command installer, then open `DSXU Code` from the desktop. The installer prefers Windows Terminal and, when it is missing, tries to install Microsoft Windows Terminal with `winget`. If that is not possible, DSXU automatically enables ASCII TUI fallback so classic console users do not see broken border glyphs. DSXU does not force-install WSL and does not create a WSL desktop shortcut by default on machines without a ready distro. Users who prefer Linux tooling can opt in with `-InstallWsl` or `-CreateWslShortcut`.
+The recommended default for most Windows users is: run the one-command installer, then open `DSXU Code` from the desktop. The installer prefers Windows Terminal and, when it is missing, tries to install Microsoft Windows Terminal with `winget`. Interactive Chinese/Unicode sessions are allowed only in Windows Terminal or the VS Code terminal; classic cmd/PowerShell is limited to non-interactive commands or explicit English/ASCII emergency mode. DSXU does not force-install WSL and does not create a WSL desktop shortcut by default on machines without a ready distro. Users who prefer Linux tooling can opt in with `-InstallWsl` or `-CreateWslShortcut`.
 
 If Bun is missing:
 
@@ -180,7 +180,7 @@ If your environment does not allow automatic Windows Terminal installation:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoWindowsTerminalInstall
 ```
 
-DSXU still runs, but classic console falls back to ASCII TUI. Install Windows Terminal for the best Chinese/Unicode experience.
+DSXU still installs, but interactive DSXU Code requires Windows Terminal or VS Code terminal for Chinese/Unicode. Classic console is only for non-interactive commands or explicit English/ASCII emergency sessions.
 
 ### macOS / Linux / WSL
 
@@ -200,7 +200,7 @@ bash ./install.sh --help
 .\Start-DSXU-Code-WSL.cmd
 ```
 
-It auto-detects the WSL distro and converts the current checkout path.
+It auto-detects the WSL distro, verifies that the downloaded checkout is reachable inside WSL, and falls back to the native Windows launcher if WSL is not initialized yet.
 
 ### Manual source install
 
@@ -286,7 +286,7 @@ bun run ide:vscode-smoke
 
 ### Garbled text fix
 
-If CJK text, borders, or the welcome screen look garbled, use `Start-DSXU-Code.cmd`, the desktop shortcut, or Windows Terminal. The Windows launcher sets `chcp 65001`, PowerShell UTF-8 output, `LANG=zh_CN.UTF-8`, and `LC_ALL=zh_CN.UTF-8`. When Windows Terminal is missing, it sets `DSXU_ASCII_TUI=1` so classic console remains readable. Avoid using old `cmd.exe` plus raw `bun run dsxu-code` as the daily entrypoint.
+If CJK text, borders, or the welcome screen look garbled, use the desktop `DSXU Code` shortcut, Windows Terminal, or the VS Code terminal. The Windows launchers set `chcp 65001`, PowerShell UTF-8 output, `LANG=zh_CN.UTF-8`, and `LC_ALL=zh_CN.UTF-8`; interactive classic cmd/PowerShell sessions are blocked or relaunched because they can turn Chinese input into `?` before DSXU receives it. Avoid using old `cmd.exe` plus raw `bun run dsxu-code` as the daily entrypoint.
 
 Print-mode task:
 

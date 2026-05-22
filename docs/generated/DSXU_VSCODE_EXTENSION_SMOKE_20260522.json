@@ -1,0 +1,53 @@
+{
+  "status": "PASS_DSXU_VSCODE_EXTENSION_SMOKE",
+  "generatedAt": "2026-05-22T13:46:00.098Z",
+  "extensionDir": "integrations/vscode",
+  "boundary": {
+    "modelProvider": "DSXU CLI mainline only",
+    "toolRuntime": "DSXU Tool Gate only",
+    "permissionRuntime": "DSXU Permission Gate only",
+    "vscodeRole": "editor commands, terminal launch, prompt artifact handoff"
+  },
+  "checks": [
+    {
+      "name": "extension package declares dsxu commands",
+      "pass": true,
+      "detail": "6 commands"
+    },
+    {
+      "name": "extension delegates to DSXU CLI mainline",
+      "pass": true,
+      "detail": "uses launch terminal and DSXU entrypoint"
+    },
+    {
+      "name": "extension does not implement provider calls",
+      "pass": true,
+      "detail": "no direct model provider HTTP client found"
+    },
+    {
+      "name": "extension writes prompt artifacts instead of long command payloads",
+      "pass": true,
+      "detail": "selection/file prompts are artifact handoffs"
+    },
+    {
+      "name": "windows installer copies VS Code adapter only",
+      "pass": true,
+      "detail": "source-copy default with optional VSIX and obsolete-marker cleanup present"
+    },
+    {
+      "name": "unix installer copies VS Code adapter only",
+      "pass": true,
+      "detail": "source-copy installer with obsolete-marker cleanup present"
+    },
+    {
+      "name": "package exposes owner-specific VS Code scripts",
+      "pass": true,
+      "detail": "owner-specific scripts checked"
+    },
+    {
+      "name": "public docs mention VS Code adapter",
+      "pass": true,
+      "detail": "README and install guide updated"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "name": "dsxu-code",
+  "displayName": "DSXU Code",
+  "description": "VS Code adapter for the DSXU Code DeepSeek-first engineering runtime.",
+  "version": "0.1.0",
+  "publisher": "dsxu-code",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onUri",
+    "onCommand:dsxuCode.open",
+    "onCommand:dsxuCode.askSelection",
+    "onCommand:dsxuCode.explainFile",
+    "onCommand:dsxuCode.configureKey",
+    "onCommand:dsxuCode.doctor",
+    "onCommand:dsxuCode.openInstallGuide"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dsxuCode.open",
+        "title": "DSXU Code: Open"
+      },
+      {
+        "command": "dsxuCode.askSelection",
+        "title": "DSXU Code: Ask About Selection"
+      },
+      {
+        "command": "dsxuCode.explainFile",
+        "title": "DSXU Code: Explain Current File"
+      },
+      {
+        "command": "dsxuCode.configureKey",
+        "title": "DSXU Code: Configure DeepSeek Key"
+      },
+      {
+        "command": "dsxuCode.doctor",
+        "title": "DSXU Code: Run Doctor"
+      },
+      {
+        "command": "dsxuCode.openInstallGuide",
+        "title": "DSXU Code: Open Install Guide"
+      }
+    ],
+    "configuration": {
+      "title": "DSXU Code",
+      "properties": {
+        "dsxuCode.repoPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the DSXU Code checkout. Leave empty to auto-detect from the workspace or extension folder."
+        },
+        "dsxuCode.bunPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Bun. Leave empty to use PATH or the default user Bun install."
+        },
+        "dsxuCode.defaultModel": {
+          "type": "string",
+          "default": "deepseek-v4-flash",
+          "description": "Default DSXU model passed to the CLI environment."
+        },
+        "dsxuCode.openTerminalOnStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the DSXU terminal after launching a DSXU command."
+        },
+        "dsxuCode.promptArtifactDir": {
+          "type": "string",
+          "default": ".dsxu/vscode-prompts",
+          "description": "Workspace-relative folder used for VS Code selection prompt artifacts."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "dsxuCode.open"
+        },
+        {
+          "command": "dsxuCode.askSelection"
+        },
+        {
+          "command": "dsxuCode.explainFile"
+        },
+        {
+          "command": "dsxuCode.configureKey"
+        },
+        {
+          "command": "dsxuCode.doctor"
+        },
+        {
+          "command": "dsxuCode.openInstallGuide"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "dsxuCode.askSelection",
+          "group": "navigation@90"
+        },
+        {
+          "command": "dsxuCode.explainFile",
+          "group": "navigation@91"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "dsxuCode.open",
+          "group": "navigation@90"
+        }
+      ]
+    }
+  }
+}

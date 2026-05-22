@@ -167,13 +167,59 @@ function New-DsxuShortcut(
   Write-Host "[DSXU] Desktop shortcut created: $shortcutPath"
 }
 
+function Write-DsxuUtf8NoBomFile([string]$Path, [string]$Content) {
+  $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+  [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
+
+function New-DsxuDesktopCommand(
+  [string]$CommandName,
+  [string]$Launcher,
+  [string]$ResolvedRepoRoot
+) {
+  $desktop = [Environment]::GetFolderPath("Desktop")
+  if (-not $desktop) {
+    Write-Warning "[DSXU] Desktop folder not found; command launcher skipped."
+    return
+  }
+
+  if (-not (Test-Path -LiteralPath $Launcher)) {
+    Write-Warning "[DSXU] Desktop command launcher target not found; skipped: $Launcher"
+    return
+  }
+
+  $commandPath = Join-Path $desktop $CommandName
+  $content = @"
+@echo off
+setlocal
+chcp 65001 >nul
+set "DSXU_REPO_ROOT=$ResolvedRepoRoot"
+set "DSXU_LAUNCHER=$Launcher"
+if "%~1"=="" (
+  where wt.exe >nul 2>nul
+  if "%ERRORLEVEL%"=="0" (
+    start "" wt.exe -w new new-tab --title "DSXU Code WSL" --startingDirectory "%DSXU_REPO_ROOT%" -- cmd.exe /k ""%DSXU_LAUNCHER%""
+    exit /b 0
+  )
+  if exist "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" (
+    start "" "%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe" -w new new-tab --title "DSXU Code WSL" --startingDirectory "%DSXU_REPO_ROOT%" -- cmd.exe /k ""%DSXU_LAUNCHER%""
+    exit /b 0
+  )
+)
+call "%DSXU_LAUNCHER%" %*
+exit /b %ERRORLEVEL%
+"@
+  Write-DsxuUtf8NoBomFile $commandPath ($content + [Environment]::NewLine)
+  Write-Host "[DSXU] Desktop command created: $commandPath"
+}
+
 function New-DsxuDesktopShortcut([string]$ResolvedRepoRoot) {
   $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
   $wt = Get-DsxuWindowsTerminal
 
   if ($wt) {
     $target = $wt.Source
-    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" -- cmd.exe /k `"$launcher`""
   } else {
     $target = "cmd.exe"
     $arguments = "/k `"$launcher`""
@@ -192,13 +238,14 @@ function New-DsxuWslDesktopShortcut([string]$ResolvedRepoRoot) {
   $wt = Get-DsxuWindowsTerminal
   if ($wt) {
     $target = $wt.Source
-    $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+    $arguments = "-w new new-tab --title `"DSXU Code WSL`" --startingDirectory `"$ResolvedRepoRoot`" -- cmd.exe /k `"$launcher`""
   } else {
     $target = "cmd.exe"
     $arguments = "/k `"$launcher`""
   }
 
   New-DsxuShortcut "DSXU Code WSL.lnk" $ResolvedRepoRoot $target $arguments "Launch DSXU Code through WSL with auto-detected distro/path"
+  New-DsxuDesktopCommand "DSXU Code WSL.cmd" $launcher $ResolvedRepoRoot
 }
 
 function New-DsxuPathShim([string]$ResolvedRepoRoot) {
@@ -236,7 +283,7 @@ function Start-DsxuCliWindow([string]$ResolvedRepoRoot) {
 
   $wt = Get-DsxuWindowsTerminal
   if ($wt) {
-    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"$launcher`""
+    $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" -- cmd.exe /k `"$launcher`""
     Start-Process -FilePath $wt.Source -ArgumentList $arguments | Out-Null
   } else {
     Start-Process -FilePath "cmd.exe" -WorkingDirectory $ResolvedRepoRoot -ArgumentList @("/k", $launcher) | Out-Null

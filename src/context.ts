@@ -18,6 +18,7 @@ import { shouldIncludeGitInstructions } from './utils/gitSettings.js'
 import { logError } from './utils/log.js'
 
 const MAX_STATUS_CHARS = 2000
+const STARTUP_GIT_TIMEOUT_MS = 1500
 
 // System prompt injection for cache breaking (dsxu internal, ephemeral debugging state)
 let systemPromptInjection: string | null = null
@@ -61,18 +62,35 @@ export const getGitStatus = memoize(async (): Promise<string | null> => {
     const [branch, mainBranch, status, log, userName] = await Promise.all([
       getBranch(),
       getDefaultBranch(),
-      execFileNoThrow(gitExe(), ['--no-optional-locks', 'status', '--short'], {
-        preserveOutputOnError: false,
-      }).then(({ stdout }) => stdout.trim()),
+      // Startup context must never block the first interactive render. Large
+      // generated/untracked trees can make plain `git status --short` hang for
+      // a long time on Windows/WSL checkouts, so the prompt snapshot uses a
+      // bounded tracked-file view. Users/tools can still request full git
+      // status explicitly after the TUI is live.
+      execFileNoThrow(
+        gitExe(),
+        [
+          '--no-optional-locks',
+          'status',
+          '--short',
+          '--untracked-files=no',
+        ],
+        {
+          preserveOutputOnError: false,
+          timeout: STARTUP_GIT_TIMEOUT_MS,
+        },
+      ).then(({ stdout }) => stdout.trim()),
       execFileNoThrow(
         gitExe(),
         ['--no-optional-locks', 'log', '--oneline', '-n', '5'],
         {
           preserveOutputOnError: false,
+          timeout: STARTUP_GIT_TIMEOUT_MS,
         },
       ).then(({ stdout }) => stdout.trim()),
       execFileNoThrow(gitExe(), ['config', 'user.name'], {
         preserveOutputOnError: false,
+        timeout: STARTUP_GIT_TIMEOUT_MS,
       }).then(({ stdout }) => stdout.trim()),
     ])
 

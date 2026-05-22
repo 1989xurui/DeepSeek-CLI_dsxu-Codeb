@@ -63,7 +63,17 @@ function Start-DsxuInWindowsTerminal([string]$ResolvedRepoRoot) {
   $launcher = Join-Path $ResolvedRepoRoot "Start-DSXU-Code.cmd"
   if (-not (Test-Path -LiteralPath $launcher)) { return $false }
 
-  $arguments = "-w new new-tab --title `"DSXU Code`" --startingDirectory `"$ResolvedRepoRoot`" cmd.exe /k `"set DSXU_FORCE_CONHOST=1&& call `"$launcher`"`""
+  $cmdLine = "set `"DSXU_FORCE_CONHOST=1`" && call `"$launcher`""
+  $arguments = @(
+    '-w', 'new',
+    'new-tab',
+    '--title', 'DSXU Code',
+    '--startingDirectory', $ResolvedRepoRoot,
+    '--',
+    'cmd.exe',
+    '/k',
+    $cmdLine
+  )
   Start-Process -FilePath $wt -ArgumentList $arguments | Out-Null
   return $true
 }
