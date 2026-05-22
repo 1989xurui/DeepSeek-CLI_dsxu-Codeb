@@ -2,9 +2,28 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-DSXU Code is a DeepSeek-first AI coding CLI/TUI for real engineering work. It adds an engineering runtime around raw model calls: source-truth code reading, tool execution, permission gates, recovery loops, visible work-state, agent and skill boundaries, cost/cache tracking, and evidence-backed release checks.
+DSXU is currently positioned as open source: on top of a DeepSeek V4 Flash / Flash-MAX / Pro hybrid-model foundation, it uses strong orchestration, tools, permissions, context management, recovery, Agent execution, cost control, and evidence systems to provide a low-cost AI coding and complex-task execution tool with long-running Agent task execution and a senior-engineer-style working experience.
 
-DSXU is being prepared as an open-source release-candidate product. The public positioning is: **DeepSeek-first engineering runtime with internal reality/evidence gates passed**. It is not published as a public 90% or 95-point benchmark claim, and it does not claim external model or product superiority. Public claims in this README are limited to the evidence listed below.
+DSXU Code is built for real engineering work, not as a thin chat wrapper. It adds an engineering runtime around raw model calls: source-truth code reading, tool execution, permission gates, recovery loops, visible work-state, agent and skill boundaries, cost/cache tracking, and evidence-backed release checks. The public positioning is: **DeepSeek-first engineering runtime with internal reality/evidence gates passed**. It is not published as a public 90% or 95-point benchmark claim, and it does not claim external model or product superiority. Public claims in this README are limited to the evidence listed below.
+
+## DSXU Feature Overview
+
+| Capability area | What DSXU provides | Why it matters | Public boundary |
+|---|---|---|---|
+| DeepSeek hybrid routing | DeepSeek V4 Flash by default, with Flash-MAX / Pro admitted only for complex, review-heavy, or high-risk tasks; every admission records a reason | Keeps everyday work low-cost while preserving an escalation path for harder tasks | No claim that the model itself beats external models |
+| Strong orchestration / Query Loop | Task Classifier, PlanGraph, work-state projection, route latch, and final gate | Connects code reading, planning, execution, verification, recovery, and reporting into one engineering loop | No second runtime is introduced |
+| Tool system | Read / Edit / Write / Bash / Search / evidence tools run through one Tool Gate | Gives every model tool action purpose, permission, result, and evidence | Tools must not bypass DSXU Tool Gate |
+| Permission system | Permission Gate, risky command detection, file-write / external-execution / high-risk action auditing | Prevents silent edits, unsafe execution, and accidental destructive behavior | User authorization and evidence records stay first-class |
+| Context system | Source capsules, bounded reads, tool-result artifacts, prompt/cache layering | Reduces repeated large-file reads and prevents huge tool outputs from flooding model context | Cache is an optimization metric, not an external-win claim |
+| Recovery system | Failure taxonomy, repair loop, replan, retry, rollback/checkpoint, and stall recovery | Failed commands, failed tests, and long-task stalls can be diagnosed, repaired, rerun, and reported | Failures are not hidden as PASS |
+| Long-running Agent tasks | Agent evidence envelopes, worker handoff, parent/worker boundaries, and long-task ledger | Supports task decomposition, parallel analysis, bounded evidence return, and recovery | Agent workers do not become a second orchestrator |
+| Skills system | Skill registry, priority rules, conflict handling, and secondary skill-package boundaries | Lets reusable capabilities join the DSXU mainline without stealing control from it | Skills cannot override mainline routing or permissions |
+| MCP / external ecosystem | MCP client, registry, adapter boundary, and doctor checks | Allows external tools to connect while staying inside DSXU-owned governance | No bundled third-party product or standalone MCP runtime claim |
+| Cost system | CostRouter, CostReporter, route/cost/cache trajectory, Pro admission ledger | Makes model choice, cost, cache, and escalation reasons visible | GitHub copy uses only recorded data |
+| Evidence system | Evidence dashboard, release claim binder, blocked-claim corpus, raw evidence manifests | Makes features, tests, costs, failures, and release claims auditable | External comparison claims stay blocked without paired raw evidence |
+| TUI trust surface | Goal, plan, tool, permission, cost, recovery, background task, and final report projection | Lets users see the AI working like a senior engineer instead of a black box | UI displays real runtime state only |
+| Coding capability | Source truth, patch planner, edit lifecycle, static analysis, focused tests, final patch report | Supports bugfix, feature work, refactors, test repair, and engineering reports | Tests prove behavior; they do not replace functional judgment |
+| Testing and release | Six-stage tests, senior coding window, fresh install smoke, clean export, and secret scan | Proves function, experience, recovery, performance, evaluation, and release gates before publishing | Current status is release-candidate, not a public 95-point claim |
 
 ## Why DSXU Exists
 
