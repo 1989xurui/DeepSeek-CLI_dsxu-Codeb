@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname, join, resolve } from 'path'
+import { setTimeout as delay } from 'timers/promises'
 
 const GENERATED_DIR = join(process.cwd(), 'docs', 'generated')
 const FINAL_PREFLIGHT_PATH = join(GENERATED_DIR, 'DSXU_V20_FINAL_PREFLIGHT_20260515.json')
@@ -41,6 +42,22 @@ function toCsv(rows: readonly CleanExportRule[]): string {
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
   return JSON.parse((await readFile(path, 'utf8')).replace(/^\uFEFF/, '')) as Record<string, unknown>
+}
+
+async function writeFileWithRetry(path: string, content: string, attempts = 5): Promise<void> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await writeFile(path, content, 'utf8')
+      return
+    } catch (error) {
+      const code = typeof error === 'object' && error && 'code' in error ? String((error as { code?: unknown }).code) : ''
+      if (!['EUNKNOWN', 'EBUSY', 'EPERM'].includes(code) || attempt === attempts) throw error
+      lastError = error
+      await delay(50 * attempt)
+    }
+  }
+  throw lastError
 }
 
 async function main(): Promise<void> {
@@ -87,10 +104,8 @@ async function main(): Promise<void> {
       'This clean export preflight is evidence-only. It does not create archives, copy files, clean directories, delete files, stage, commit, or reset.',
   }
   await mkdir(dirname(OUTPUT_JSON_PATH), { recursive: true })
-  await Promise.all([
-    writeFile(OUTPUT_JSON_PATH, JSON.stringify(report, null, 2) + '\n'),
-    writeFile(OUTPUT_CSV_PATH, toCsv(rules)),
-  ])
+  await writeFileWithRetry(OUTPUT_JSON_PATH, JSON.stringify(report, null, 2) + '\n')
+  await writeFileWithRetry(OUTPUT_CSV_PATH, toCsv(rules))
   console.log(JSON.stringify({
     status: report.status,
     canCreateCleanExport: report.canCreateCleanExport,

@@ -90,13 +90,13 @@ elif grep -qi microsoft /proc/version 2>/dev/null; then
     if [ -d "$WIN_DESKTOP" ]; then
       CMD_PATH="$WIN_DESKTOP/DSXU Code WSL.cmd"
       WSL_REPO="$(wslpath -w "$ROOT_DIR")"
-      cat > "$CMD_PATH" <<EOF
-@echo off
-setlocal
-chcp 65001 >nul
-call "$WSL_REPO\\Start-DSXU-Code-WSL.cmd" %*
-exit /b %ERRORLEVEL%
-EOF
+      {
+        printf '@echo off\r\n'
+        printf 'setlocal\r\n'
+        printf 'chcp 65001 >nul\r\n'
+        printf 'call "%s\\\\Start-DSXU-Code-WSL.cmd" %%*\r\n' "$WSL_REPO"
+        printf 'exit /b %%ERRORLEVEL%%\r\n'
+      } > "$CMD_PATH"
       echo "[DSXU] WSL desktop command created: $CMD_PATH"
       echo "[DSXU] Windows repo path: $WSL_REPO"
     fi

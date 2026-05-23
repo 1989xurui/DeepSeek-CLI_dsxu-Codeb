@@ -1,6 +1,14 @@
+# WSL/Linux entrypoints must stay LF. If Windows checkout rewrites these to
+# CRLF, /usr/bin/env sees "bash\r" and WSL launch fails before DSXU starts.
 *.sh text eol=lf
+*.bash text eol=lf
 bin/dsxu-code text eol=lf
 bin/dsxu-code-wsl-launch text eol=lf
 scripts/*.sh text eol=lf
+scripts/**/*.sh text eol=lf
+scripts/*.ts text eol=lf
+scripts/**/*.ts text eol=lf
+
+# Windows launchers stay native to Windows.
 *.cmd text eol=crlf
 *.ps1 text eol=crlf

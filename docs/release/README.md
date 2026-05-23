@@ -17,7 +17,7 @@ This directory is the stable release-facing index. Historical versioned reports 
 
 ## Current Decision
 
-The current codebase is suitable as a release-candidate evidence pack and may publish the actual evidenced score floor: `72/95`. V2/V3 finalization closed the runtime/release blockers and moved the dashboard to `blocked=0`. It is still not suitable for a 90/95-point public launch claim or external-comparison claim because `public95ClaimAllowed=false` and same-case external target/reference transcripts are still missing.
+The current codebase is suitable for open-source product release review, but public score wording is intentionally disabled. V2/V3 finalization closed the runtime/release blockers and moved the dashboard to `blocked=0`; the product gate is separate from public benchmark/external-comparison claims. Internal score-floor evidence remains audit-only and must not be used as a GitHub/community selling point.
 
 Latest internal evidence can be cited only with boundaries: full repo regression is `3075` pass / `1` skip / `0` fail across `434` test files, six-stage final is `22/22`, DSXU release gate tests are `531` pass / `0` fail, the 30.48-minute senior coding window passed with `33` DSXU product-entry runs on Flash-only cost of about `$0.3617`, V2/V3 closed the original `14/14` non-pass finalization subset and imported `30/30` DSXU raw evidence, the real-task hit-rate pack reports `24/24` final PASS with `0%` first-attempt PASS and `100%` second-attempt recovery, and the internal replay hit-rate gate reports `100/100` final PASS. These are DSXU-owned internal product proofs, not external leaderboard claims.
 
@@ -31,8 +31,8 @@ Latest internal evidence can be cited only with boundaries: full repo regression
 | Training V1 | 23 steps, 13 gates, 0 failed | Internal training/evidence pipeline proof; public claim remains blocked. |
 | SWE internal smoke | 5/5 PASS | Internal smoke only; not a public benchmark score. |
 | V2/V3 finalization closeout | 14/14 non-pass subset closed; 16/16 remaining raw API baseline captured; 30/30 DSXU raw evidence ready | Runtime/release blocker closure; not an external comparison claim. |
-| Evidence dashboard | pass=159, fail=0, blocked=0, claimBlocked=1, notRun=0, scoreFloor=72 | Runtime/release blockers closed; actual score `72/95` can be published; public 90/95 and external comparison claims still blocked. |
-| GitHub launch pack | `PASS_GITHUB_ACTUAL_SCORE_RELEASE_READY` | Launch pack can publish the actual score with boundaries; it is not permission for 90/95 or external superiority claims. |
+| Evidence dashboard | productReleaseAllowed=true, externalClaimAllowed=false, releaseClaimAllowed=false | Runtime/release blockers closed; product release review is allowed while public score and external comparison claims remain blocked. |
+| GitHub launch pack | `PASS_GITHUB_OPEN_SOURCE_PRODUCT_RELEASE_READY` | Launch pack can publish product capabilities with boundaries; it is not permission for public score, benchmark, or external superiority claims. |
 | Clean export artifact | `PASS_CLEAN_EXPORT_ARTIFACT_CREATED`; exact zip path, size, and SHA-256 are recorded in `docs/generated/DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json` | Release candidate artifact exists and passed secret scan. |
 | Fresh install smoke | `PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE`; 8/8 commands passed | Clean export can install dependencies and run help/auth/doctor/provider smoke paths. |
 | Brand / compatibility risk board | public surface blockers 0; runtime cleanup candidates 0 | Public release surface is clean for current brand/compatibility policy. |
@@ -40,8 +40,9 @@ Latest internal evidence can be cited only with boundaries: full repo regression
 
 ## Hard Rules
 
-- Do publish only the actual evidenced score when `actualScoreClaimAllowed=true`; currently that score is `72/95`.
-- Do not publish a 90/95-point claim until the corresponding high-score gate is true.
+- Do publish product capabilities only when `productReleaseAllowed=true`.
+- Do not publish public score wording from internal score-floor evidence.
+- Do not publish high-score claims until the corresponding high-score gate is intentionally re-enabled and true.
 - Do not publish external superiority claims without same-task external raw transcripts.
 - Do not include `.env`, `.dsxu`, `.git`, `node_modules`, `outputs`, or user runtime secrets in release artifacts.
 - Do not include internal DSXU audit, owner-review, generated evidence, or local absolute-path material in release artifacts unless it is rewritten into a curated public document.

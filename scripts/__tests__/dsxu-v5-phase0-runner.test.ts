@@ -58,9 +58,51 @@ describe('dsxu-v5-phase0-runner', () => {
     expect(assessment).toMatchObject({
       status: 'PASS_CLAIM_BOUNDARY_HELD',
       scoreFloor: 72,
+      productReleaseAllowed: false,
+      externalClaimAllowed: false,
       releaseClaimAllowed: false,
       releaseTrustStatus: 'blocked',
       publicComparableMissingCases: 30,
+    });
+  });
+
+  test('treats product release ready and external claim blocked as a valid claim boundary state', () => {
+    const assessment = assessClaimBoundary({
+      scoreFloor: 72,
+      workbench: {
+        productReleaseAllowed: true,
+        externalClaimAllowed: false,
+        releaseClaimAllowed: false,
+      },
+      releaseTrustPanel: {
+        status: 'ready-for-review',
+        productReleaseAllowed: true,
+        externalClaimAllowed: false,
+        releaseClaimAllowed: false,
+        publicComparableMissingCases: 0,
+        blockedGateNames: [],
+        dataStillNeeded: [],
+        externalClaimDataStillNeeded: [
+          'public 90/95 or external comparison claim evidence',
+          'target reference raw evidence for 1 public comparable manifest(s)',
+        ],
+      },
+    });
+
+    expect(assessment).toMatchObject({
+      status: 'PASS_RELEASE_READY',
+      scoreFloor: 72,
+      productReleaseAllowed: true,
+      externalClaimAllowed: false,
+      releaseClaimAllowed: false,
+      releaseTrustStatus: 'ready-for-review',
+      publicComparableMissingCases: 0,
+      blockedGateNames: [],
+      dataStillNeeded: [],
+      externalClaimDataStillNeeded: [
+        'public 90/95 or external comparison claim evidence',
+        'target reference raw evidence for 1 public comparable manifest(s)',
+      ],
     });
   });
 

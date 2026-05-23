@@ -6,9 +6,9 @@ DSXU Code is a DeepSeek-first AI coding CLI/TUI for long-running engineering tas
 
 | Area | Status |
 |---|---|
-| Release posture | Release candidate evidence pack with actual-score wording allowed; not a 90/95-point public benchmark or external superiority claim. |
-| Current launch gate | `PASS_GITHUB_ACTUAL_SCORE_RELEASE_READY`; publish `72/95` exactly, with no rounding-up or external-win wording. |
-| Current score floor | `72/95` publishable as the actual evidenced score |
+| Release posture | Open-source product release review is allowed; public score and external superiority wording remain disabled. |
+| Current launch gate | `PASS_GITHUB_OPEN_SOURCE_PRODUCT_RELEASE_READY`; publish product capabilities only, with no score or external-win wording. |
+| Current score floor | Internal audit evidence only; not a public/community selling point |
 | Full repo regression | `3075` pass / `1` skip / `0` fail across `434` test files |
 | Six-stage tests | `22/22` command batches passed |
 | DSXU release gate tests | `531` pass / `0` fail after V2/V3 finalization closeout |
@@ -23,7 +23,7 @@ DSXU Code is a DeepSeek-first AI coding CLI/TUI for long-running engineering tas
 | V2/V3 finalization closeout | Original `14/14` non-pass subset closed, remaining `16/16` raw API baseline captured, `30/30` DSXU raw evidence ready |
 | Cache live A/B | `PASS_CACHE_LIVE_AB`; repeated stable-prefix lane hit `99.6%` on rounds 2/3, internal tuning proof only |
 | P12 raw readiness | PASS, `14/14` paired raw logs for the P12 readiness lane |
-| Evidence dashboard | `trust=evidence-incomplete`, pass=`159`, fail=`0`, blocked=`0`, claimBlocked=`1`, notRun=`0`, scoreFloor=`72`, releaseClaimAllowed=`false` |
+| Evidence dashboard | `trust=ready-for-release-review`, productReleaseAllowed=`true`, externalClaimAllowed=`false`, releaseClaimAllowed=`false` |
 | Public comparable DSXU lane | `30/30` DSXU raw evidence ready; external target/reference transcripts still missing, so external comparison remains blocked |
 | V8/V10 final acceptance | PASS for DSXU-owned final reality lanes; public external benchmark remains blocked until paired target/reference evidence exists |
 | Release/export public surface policy | Focused release-surface tests pass; public docs/assets are separated from internal audit/generated evidence docs |
@@ -33,8 +33,8 @@ DSXU Code is a DeepSeek-first AI coding CLI/TUI for long-running engineering tas
 
 ## Claim Rules
 
-- Allowed: DeepSeek-first, Flash-first, release-candidate, actual public challenge score floor `72/95`, evidence-backed demo pack, release/export public surface policy, real TUI acceptance, senior coding window, training/evidence pipeline proof, DSXU release gate proof, and internal replay/SWE-smoke evidence with explicit claim boundaries.
-- Blocked: rounded-up 90/95-point completion, external product/model superiority, copied reference feature parity, brand compatibility claims, or any claim not backed by DSXU-owned evidence.
+- Allowed: DeepSeek-first, Flash-first, release-candidate/product-release review, evidence-backed demo pack, release/export public surface policy, real TUI acceptance, senior coding window, training/evidence pipeline proof, DSXU release gate proof, and internal replay/SWE-smoke evidence with explicit claim boundaries.
+- Blocked: public score wording from internal score-floor evidence, rounded-up completion scores, external product/model superiority, copied reference feature parity, brand compatibility claims, or any claim not backed by DSXU-owned evidence.
 - Blocked: public SWE benchmark score; the latest SWE public-comparable lane is a blocked/crashed raw-evidence candidate, not a result.
 - Separate benchmark workstream: the 30-case DSXU raw lane is ready, but same-case external target/reference transcripts must be collected before any external comparison claim.
 - Roadmap-only: VS Code/API bridge, Desktop/App suite, Voice/Buddy/Team, full external benchmark claims, and complete first-run key wizard until release evidence closes them.

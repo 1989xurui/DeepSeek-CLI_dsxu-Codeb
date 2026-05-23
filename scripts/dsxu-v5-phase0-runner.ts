@@ -50,11 +50,14 @@ export interface V5Phase0CommandResult extends V5Phase0CommandSpec {
 export interface V5ClaimBoundaryAssessment {
   status: 'PASS_CLAIM_BOUNDARY_HELD' | 'PASS_RELEASE_READY' | 'FAIL_CLAIM_BOUNDARY_UNKNOWN';
   scoreFloor?: number;
+  productReleaseAllowed?: boolean;
+  externalClaimAllowed?: boolean;
   releaseClaimAllowed?: boolean;
   releaseTrustStatus?: string;
   publicComparableMissingCases?: number;
   blockedGateNames: string[];
   dataStillNeeded: string[];
+  externalClaimDataStillNeeded: string[];
 }
 
 export interface V5ReplayRegressionAssessment {
@@ -233,13 +236,29 @@ export function assessClaimBoundary(dashboard: any): V5ClaimBoundaryAssessment {
   const dataStillNeeded = Array.isArray(releaseTrustPanel.dataStillNeeded)
     ? releaseTrustPanel.dataStillNeeded.map(String)
     : [];
+  const externalClaimDataStillNeeded = Array.isArray(releaseTrustPanel.externalClaimDataStillNeeded)
+    ? releaseTrustPanel.externalClaimDataStillNeeded.map(String)
+    : [];
+  const productReleaseAllowed = Boolean(dashboard?.workbench?.productReleaseAllowed ?? releaseTrustPanel.productReleaseAllowed);
+  const externalClaimAllowed = Boolean(
+    dashboard?.workbench?.externalClaimAllowed ??
+    releaseTrustPanel.externalClaimAllowed ??
+    dashboard?.workbench?.releaseClaimAllowed ??
+    releaseTrustPanel.releaseClaimAllowed,
+  );
   const releaseClaimAllowed = Boolean(dashboard?.workbench?.releaseClaimAllowed ?? releaseTrustPanel.releaseClaimAllowed);
   const releaseTrustStatus = typeof releaseTrustPanel.status === 'string' ? releaseTrustPanel.status : undefined;
 
-  if (releaseClaimAllowed || releaseTrustStatus === 'ready-for-release-review') {
+  if (
+    productReleaseAllowed ||
+    releaseTrustStatus === 'ready-for-review' ||
+    releaseTrustStatus === 'ready-for-release-review'
+  ) {
     return {
       status: 'PASS_RELEASE_READY',
       scoreFloor: typeof dashboard?.scoreFloor === 'number' ? dashboard.scoreFloor : undefined,
+      productReleaseAllowed,
+      externalClaimAllowed,
       releaseClaimAllowed,
       releaseTrustStatus,
       publicComparableMissingCases: typeof releaseTrustPanel.publicComparableMissingCases === 'number'
@@ -247,13 +266,22 @@ export function assessClaimBoundary(dashboard: any): V5ClaimBoundaryAssessment {
         : undefined,
       blockedGateNames,
       dataStillNeeded,
+      externalClaimDataStillNeeded,
     };
   }
 
-  if (releaseTrustStatus === 'blocked' || dataStillNeeded.length > 0 || blockedGateNames.length > 0) {
+  if (
+    releaseTrustStatus === 'blocked' ||
+    releaseTrustStatus === 'needs-evidence' ||
+    dataStillNeeded.length > 0 ||
+    externalClaimDataStillNeeded.length > 0 ||
+    blockedGateNames.length > 0
+  ) {
     return {
       status: 'PASS_CLAIM_BOUNDARY_HELD',
       scoreFloor: typeof dashboard?.scoreFloor === 'number' ? dashboard.scoreFloor : undefined,
+      productReleaseAllowed,
+      externalClaimAllowed,
       releaseClaimAllowed,
       releaseTrustStatus,
       publicComparableMissingCases: typeof releaseTrustPanel.publicComparableMissingCases === 'number'
@@ -261,12 +289,15 @@ export function assessClaimBoundary(dashboard: any): V5ClaimBoundaryAssessment {
         : undefined,
       blockedGateNames,
       dataStillNeeded,
+      externalClaimDataStillNeeded,
     };
   }
 
   return {
     status: 'FAIL_CLAIM_BOUNDARY_UNKNOWN',
     scoreFloor: typeof dashboard?.scoreFloor === 'number' ? dashboard.scoreFloor : undefined,
+    productReleaseAllowed,
+    externalClaimAllowed,
     releaseClaimAllowed,
     releaseTrustStatus,
     publicComparableMissingCases: typeof releaseTrustPanel.publicComparableMissingCases === 'number'
@@ -274,6 +305,7 @@ export function assessClaimBoundary(dashboard: any): V5ClaimBoundaryAssessment {
       : undefined,
     blockedGateNames,
     dataStillNeeded,
+    externalClaimDataStillNeeded,
   };
 }
 
@@ -552,11 +584,14 @@ function renderMarkdown(result: V5Phase0RunResult): string {
       ? [
           `- status: ${result.claimBoundaryAssessment.status}`,
           `- scoreFloor: ${result.claimBoundaryAssessment.scoreFloor ?? 'unknown'}`,
+          `- productReleaseAllowed: ${result.claimBoundaryAssessment.productReleaseAllowed}`,
+          `- externalClaimAllowed: ${result.claimBoundaryAssessment.externalClaimAllowed}`,
           `- releaseClaimAllowed: ${result.claimBoundaryAssessment.releaseClaimAllowed}`,
           `- releaseTrustStatus: ${result.claimBoundaryAssessment.releaseTrustStatus ?? 'unknown'}`,
           `- publicComparableMissingCases: ${result.claimBoundaryAssessment.publicComparableMissingCases ?? 'unknown'}`,
           `- blockedGateNames: ${result.claimBoundaryAssessment.blockedGateNames.join(', ') || 'none'}`,
           `- dataStillNeeded: ${result.claimBoundaryAssessment.dataStillNeeded.join('; ') || 'none'}`,
+          `- externalClaimDataStillNeeded: ${result.claimBoundaryAssessment.externalClaimDataStillNeeded.join('; ') || 'none'}`,
         ].join('\n')
       : '- not assessed in this suite',
     '',

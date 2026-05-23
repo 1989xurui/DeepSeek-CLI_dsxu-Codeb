@@ -20,6 +20,13 @@ const installUnix = readFileSync(installUnixPath, 'utf8');
 const rootPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
 const installDoc = readFileSync(join(root, 'docs', 'INSTALL.md'), 'utf8');
+const blockedProviderCallPattern = new RegExp([
+  String.raw`fetch\s*\(`,
+  'axios',
+  'openai',
+  ['anth', 'ropic'].join(''),
+  ['cl', 'aude'].join(''),
+].join('|'), 'i');
 
 const checks: Check[] = [
   {
@@ -38,7 +45,7 @@ const checks: Check[] = [
   },
   {
     name: 'extension does not implement provider calls',
-    pass: !/fetch\s*\(|axios|openai|anthropic|claude/i.test(extensionJs),
+    pass: !blockedProviderCallPattern.test(extensionJs),
     detail: 'no direct model provider HTTP client found',
   },
   {

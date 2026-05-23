@@ -52,8 +52,12 @@ interface EvidenceDashboard {
   };
   workbench: {
     trustState: 'ready-for-release-review' | 'runtime-failing' | 'release-blocked' | 'evidence-incomplete';
+    productReleaseAllowed: boolean;
+    externalClaimAllowed: boolean;
     releaseClaimAllowed: boolean;
     blockingReasons: string[];
+    productBlockingReasons: string[];
+    externalClaimBlockingReasons: string[];
     nextActions: string[];
     failedOwnerCount: number;
     publicComparablePendingCount: number;
@@ -96,6 +100,9 @@ interface EvidenceDashboard {
   releaseTrustPanel: {
     status: 'ready-for-review' | 'blocked' | 'needs-evidence' | 'runtime-failing';
     scoreFloor: number | null;
+    productReleaseAllowed: boolean;
+    externalClaimAllowed: boolean;
+    releaseClaimAllowed: boolean;
     mainlineAliasesReady: boolean;
     v4ConsolidationReady: boolean;
     blockedGateNames: string[];
@@ -105,6 +112,7 @@ interface EvidenceDashboard {
     externalComparisonPendingCount: number;
     recommendedCommands: string[];
     dataStillNeeded: string[];
+    externalClaimDataStillNeeded: string[];
   };
   benchmarkResults: Array<{ name: string; passRate: number; sampleCount: number; date: string }>;
   publicComparableReadiness: Array<{
@@ -157,8 +165,12 @@ export async function aggregateEvidence(
     },
     workbench: {
       trustState: 'evidence-incomplete',
+      productReleaseAllowed: false,
+      externalClaimAllowed: false,
       releaseClaimAllowed: false,
       blockingReasons: [],
+      productBlockingReasons: [],
+      externalClaimBlockingReasons: [],
       nextActions: [],
       failedOwnerCount: 0,
       publicComparablePendingCount: 0,
@@ -168,6 +180,9 @@ export async function aggregateEvidence(
     releaseTrustPanel: {
       status: 'needs-evidence',
       scoreFloor: null,
+      productReleaseAllowed: false,
+      externalClaimAllowed: false,
+      releaseClaimAllowed: false,
       mainlineAliasesReady: false,
       v4ConsolidationReady: false,
       blockedGateNames: [],
@@ -177,6 +192,7 @@ export async function aggregateEvidence(
       externalComparisonPendingCount: 0,
       recommendedCommands: [],
       dataStillNeeded: [],
+      externalClaimDataStillNeeded: [],
     },
     benchmarkResults: [],
     publicComparableReadiness: [],
@@ -330,12 +346,13 @@ function hasNestedNumericKey(value: unknown, keys: readonly string[], depth = 0)
 }
 
 function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard['workbench'] {
-  const blockingReasons: string[] = [];
+  const productBlockingReasons: string[] = [];
+  const externalClaimBlockingReasons: string[] = [];
   const nextActions: string[] = [];
   const actionItems: EvidenceDashboard['workbench']['actionItems'] = [];
 
   if (dashboard.gateSummary.fail > 0) {
-    blockingReasons.push('runtime-or-acceptance-gate-failing');
+    productBlockingReasons.push('runtime-or-acceptance-gate-failing');
     nextActions.push('fix failing owner commands before release claim update');
     for (const owner of dashboard.ownerFailureSummary) {
       actionItems.push({
@@ -350,7 +367,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     }
   }
   if (dashboard.gateSummary.blocked > 0) {
-    blockingReasons.push('runtime-or-release-gate-blocked');
+    productBlockingReasons.push('runtime-or-release-gate-blocked');
     nextActions.push('resolve blocked runtime/release gates before release review');
     actionItems.push({
       id: 'runtime-release-gate-blocked',
@@ -365,14 +382,14 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     });
   }
   if (dashboard.gateSummary.claimBlocked > 0) {
-    blockingReasons.push('public-claim-boundary-evidence-incomplete');
+    externalClaimBlockingReasons.push('public-claim-boundary-evidence-incomplete');
     nextActions.push('keep public 90/95 and external comparison claims disabled until paired raw evidence exists');
     actionItems.push({
       id: 'public-claim-boundary-blocked',
       priority: 'P1',
       owner: 'Evidence / Release Claim Binder',
       reason: `${dashboard.gateSummary.claimBlocked} gate(s) block public 90/95 or external comparison claims only`,
-      nextAction: 'publish only the actual evidenced score; keep public 90/95 and external comparison claims disabled until paired raw evidence exists',
+      nextAction: 'publish product capabilities only; keep public score and external comparison claims disabled until paired raw evidence exists',
       command: 'bun run release:github-launch-pack',
       evidenceFiles: dashboard.gates
         .filter(gate => gate.status === 'CLAIM_BLOCKED')
@@ -383,7 +400,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     .filter(row => !row.publicBenchmarkClaimAllowed)
     .length;
   if (publicComparablePendingCount > 0) {
-    blockingReasons.push('public-comparable-raw-evidence-incomplete');
+    externalClaimBlockingReasons.push('public-comparable-raw-evidence-incomplete');
     nextActions.push('collect DSXU public-comparable raw evidence before public benchmark charts');
     actionItems.push({
       id: 'public-comparable-raw-evidence',
@@ -401,7 +418,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     .filter(row => row.publicBenchmarkClaimAllowed && !row.externalComparisonClaimAllowed)
     .length;
   if (externalComparisonPendingCount > 0) {
-    blockingReasons.push('external-target-raw-evidence-incomplete');
+    externalClaimBlockingReasons.push('external-target-raw-evidence-incomplete');
     nextActions.push('collect target reference raw evidence before external comparison claims');
     actionItems.push({
       id: 'external-comparison-target-raw-evidence',
@@ -416,7 +433,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     });
   }
   if (dashboard.gateSummary.notRun > 0) {
-    blockingReasons.push('not-run-evidence-present');
+    externalClaimBlockingReasons.push('not-run-evidence-present');
     nextActions.push('keep not-run evidence out of README claims or rerun the owner command');
     actionItems.push({
       id: 'not-run-evidence',
@@ -431,7 +448,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     });
   }
   if (dashboard.evidenceCoverage.missingAreas.length > 0) {
-    blockingReasons.push('release-evidence-coverage-incomplete');
+    productBlockingReasons.push('release-evidence-coverage-incomplete');
     nextActions.push('collect source/test/live/raw/cost/cache evidence before upgrading public claims');
     actionItems.push({
       id: 'release-evidence-coverage',
@@ -450,7 +467,7 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
     });
   }
   if (dashboard.v4Consolidation && dashboard.v4Consolidation.status !== 'PASS') {
-    blockingReasons.push('v4-consolidation-incomplete');
+    productBlockingReasons.push('v4-consolidation-incomplete');
     nextActions.push('finish V4 P0-P8 owner-folded consolidation before release claim update');
     actionItems.push({
       id: 'v4-consolidation-incomplete',
@@ -466,13 +483,21 @@ function buildEvidenceWorkbench(dashboard: EvidenceDashboard): EvidenceDashboard
   const trustState =
     dashboard.gateSummary.fail > 0 ? 'runtime-failing'
       : dashboard.gateSummary.blocked > 0 ? 'release-blocked'
-        : blockingReasons.length === 0 ? 'ready-for-release-review'
+        : productBlockingReasons.length === 0 ? 'ready-for-release-review'
           : 'evidence-incomplete';
+  const productReleaseAllowed = trustState === 'ready-for-release-review';
+  const externalClaimAllowed = productReleaseAllowed && externalClaimBlockingReasons.length === 0;
 
   return {
     trustState,
-    releaseClaimAllowed: trustState === 'ready-for-release-review',
-    blockingReasons: unique(blockingReasons),
+    productReleaseAllowed,
+    externalClaimAllowed,
+    // Backward-compatible legacy field: this remains strict and means "public/external claim allowed",
+    // not "the product can be released".
+    releaseClaimAllowed: externalClaimAllowed,
+    blockingReasons: unique([...productBlockingReasons, ...externalClaimBlockingReasons]),
+    productBlockingReasons: unique(productBlockingReasons),
+    externalClaimBlockingReasons: unique(externalClaimBlockingReasons),
     nextActions: unique(nextActions),
     failedOwnerCount: dashboard.ownerFailureSummary.length,
     publicComparablePendingCount,
@@ -506,6 +531,7 @@ function buildReleaseTrustPanel(dashboard: EvidenceDashboard): EvidenceDashboard
   );
   const v4ConsolidationReady = dashboard.v4Consolidation?.status === 'PASS';
   const dataStillNeeded: string[] = [];
+  const externalClaimDataStillNeeded: string[] = [];
   const recommendedCommands: string[] = [];
   if (!mainlineAliasesReady) {
     dataStillNeeded.push('command catalog with four mainline aliases');
@@ -520,19 +546,19 @@ function buildReleaseTrustPanel(dashboard: EvidenceDashboard): EvidenceDashboard
     recommendedCommands.push('bun run release:github-launch-pack');
   }
   if (claimBlockedGateNames.length > 0) {
-    dataStillNeeded.push('public 90/95 or external comparison claim evidence');
+    externalClaimDataStillNeeded.push('public 90/95 or external comparison claim evidence');
     recommendedCommands.push('bun run release:github-launch-pack');
   }
   if (publicComparableMissingCases > 0) {
-    dataStillNeeded.push(`public comparable raw evidence for ${publicComparableMissingCases} cases`);
+    externalClaimDataStillNeeded.push(`public comparable raw evidence for ${publicComparableMissingCases} cases`);
     recommendedCommands.push('bun run benchmark:swe-bench -- --mode public-comparable');
   }
   if (externalComparisonPendingCount > 0) {
-    dataStillNeeded.push(`target reference raw evidence for ${externalComparisonPendingCount} public comparable manifest(s)`);
+    externalClaimDataStillNeeded.push(`target reference raw evidence for ${externalComparisonPendingCount} public comparable manifest(s)`);
     recommendedCommands.push('bun run evidence:public-comparable-raw');
   }
   if (dashboard.gateSummary.notRun > 0) {
-    dataStillNeeded.push('not-run evidence cannot be used as GitHub claims');
+    externalClaimDataStillNeeded.push('not-run evidence cannot be used as GitHub claims');
   }
   if (dashboard.gateSummary.fail > 0) {
     recommendedCommands.push('bun run test:six-stage-final');
@@ -547,10 +573,16 @@ function buildReleaseTrustPanel(dashboard: EvidenceDashboard): EvidenceDashboard
       : dashboard.gateSummary.blocked > 0 ? 'blocked'
         : dataStillNeeded.length > 0 ? 'needs-evidence'
           : 'ready-for-review';
+  const productReleaseAllowed = status === 'ready-for-review';
+  const externalClaimAllowed = productReleaseAllowed && externalClaimDataStillNeeded.length === 0;
 
   return {
     status,
     scoreFloor: dashboard.scoreFloor,
+    productReleaseAllowed,
+    externalClaimAllowed,
+    // Backward-compatible legacy field: this remains strict and means "public/external claim allowed".
+    releaseClaimAllowed: externalClaimAllowed,
     mainlineAliasesReady,
     v4ConsolidationReady,
     blockedGateNames,
@@ -560,6 +592,7 @@ function buildReleaseTrustPanel(dashboard: EvidenceDashboard): EvidenceDashboard
     externalComparisonPendingCount,
     recommendedCommands: unique(recommendedCommands),
     dataStillNeeded: unique(dataStillNeeded),
+    externalClaimDataStillNeeded: unique(externalClaimDataStillNeeded),
   };
 }
 
@@ -874,6 +907,7 @@ function inferGateStatus(json: any): GateStatus {
     .find(Boolean) ?? '';
   if (isPublicComparableRawEvidenceImportReport(json)) return status === 'PASS' ? 'PASS' : 'CLAIM_BLOCKED';
   if (isClaimBoundaryStatus(status)) return 'CLAIM_BLOCKED';
+  if (isProviderCredentialBoundaryStatus(status)) return 'INFO';
   if (status.includes('TARGET_RAW_STILL_EXTERNAL')) return 'CLAIM_BLOCKED';
   if (status.includes('LIVE_INPUT_REQUIRED')) return 'BLOCKED';
   if (status.includes('DELIVERY_PARTIAL') || status.includes('PARTIAL')) return 'BLOCKED';
@@ -918,6 +952,13 @@ function isClaimBoundaryStatus(status: string): boolean {
     status.includes('BLOCKED_PUBLIC_COMPARABLE_EVIDENCE') ||
     status.includes('PUBLIC_COMPARABLE_EVIDENCE_BLOCKED') ||
     status.includes('EXTERNAL_COMPARISON_CLAIM_BLOCKED');
+}
+
+function isProviderCredentialBoundaryStatus(status: string): boolean {
+  return status.includes('NO_PROVIDER_CREDENTIAL') ||
+    status.includes('PROVIDER_AUTH_EVIDENCED') ||
+    status.includes('PROVIDER_CREDENTIAL') ||
+    status.includes('PROVIDER_AUTH');
 }
 
 function isSupersededTargetRawGap(
@@ -1141,9 +1182,12 @@ function formatDashboardCliSummary(dashboard: EvidenceDashboard): string {
   const dataLines = dashboard.releaseTrustPanel.dataStillNeeded
     .slice(0, 4)
     .map(item => `- ${item}`);
+  const externalClaimDataLines = dashboard.releaseTrustPanel.externalClaimDataStillNeeded
+    .slice(0, 4)
+    .map(item => `- ${item}`);
   return [
     'DSXU Evidence Workbench',
-    `scoreFloor=${dashboard.scoreFloor ?? 'not-explicit'} trust=${dashboard.workbench.trustState} releaseClaimAllowed=${dashboard.workbench.releaseClaimAllowed}`,
+    `scoreFloor=${dashboard.scoreFloor ?? 'not-explicit'} trust=${dashboard.workbench.trustState} productReleaseAllowed=${dashboard.workbench.productReleaseAllowed} externalClaimAllowed=${dashboard.workbench.externalClaimAllowed} releaseClaimAllowed=${dashboard.workbench.releaseClaimAllowed}`,
     `gates: pass=${dashboard.gateSummary.pass} fail=${dashboard.gateSummary.fail} blocked=${dashboard.gateSummary.blocked} claimBlocked=${dashboard.gateSummary.claimBlocked} notRun=${dashboard.gateSummary.notRun} info=${dashboard.gateSummary.info} parseErrors=${dashboard.parseErrors.length}`,
     dashboard.v4Consolidation
       ? `v4Consolidation=${dashboard.v4Consolidation.status} completed=${dashboard.v4Consolidation.completedStageCount}/${dashboard.v4Consolidation.expectedStageCount} launch=${dashboard.v4Consolidation.hardBlockerClosedCount ?? 0}/${dashboard.v4Consolidation.hardBlockerTotal ?? 0} missing=${dashboard.v4Consolidation.missingStages.join(',') || 'none'} blocked=${dashboard.v4Consolidation.blockedStages.join(',') || 'none'}`
@@ -1154,6 +1198,8 @@ function formatDashboardCliSummary(dashboard: EvidenceDashboard): string {
     ...actionLines,
     dataLines.length > 0 ? 'dataStillNeeded:' : 'dataStillNeeded: none',
     ...dataLines,
+    externalClaimDataLines.length > 0 ? 'externalClaimDataStillNeeded:' : 'externalClaimDataStillNeeded: none',
+    ...externalClaimDataLines,
     `json: ${createDashboardOutputPath()}`,
     'Use --json to print the full dashboard.',
   ].join('\n');

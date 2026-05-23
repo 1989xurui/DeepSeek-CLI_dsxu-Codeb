@@ -171,6 +171,8 @@ describe('dsxu-evidence-dashboard', () => {
     expect(dashboard.workbench).toMatchObject({
       publicComparablePendingCount: 0,
       externalComparisonPendingCount: 1,
+      productReleaseAllowed: false,
+      externalClaimAllowed: false,
     })
     expect(dashboard.workbench.blockingReasons).not.toContain('public-comparable-raw-evidence-incomplete')
     expect(dashboard.workbench.blockingReasons).toContain('external-target-raw-evidence-incomplete')
@@ -185,7 +187,8 @@ describe('dsxu-evidence-dashboard', () => {
       externalComparisonPendingCount: 1,
     })
     expect(dashboard.releaseTrustPanel.dataStillNeeded).not.toContain('public comparable raw evidence for 1 cases')
-    expect(dashboard.releaseTrustPanel.dataStillNeeded).toContain('target reference raw evidence for 1 public comparable manifest(s)')
+    expect(dashboard.releaseTrustPanel.dataStillNeeded).not.toContain('target reference raw evidence for 1 public comparable manifest(s)')
+    expect(dashboard.releaseTrustPanel.externalClaimDataStillNeeded).toContain('target reference raw evidence for 1 public comparable manifest(s)')
   })
 
   test('selects the most complete public comparable raw evidence manifest instead of lexicographically newest partial', async () => {
@@ -404,6 +407,91 @@ describe('dsxu-evidence-dashboard', () => {
       blockedGateNames: [],
       claimBlockedGateNames: ['DSXU_GITHUB_LAUNCH_PACK'],
     })
+  })
+
+  test('allows product release review while keeping external comparison claims blocked', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsxu-evidence-dashboard-'))
+    const evidenceDir = join(dir, 'generated')
+    const outputPath = join(evidenceDir, 'dashboard.json')
+    await mkdir(evidenceDir, { recursive: true })
+    await writeFile(join(evidenceDir, 'DSXU_COMMAND_CATALOG_20260518.json'), JSON.stringify({
+      schemaVersion: 'dsxu.command-catalog.v1',
+      status: 'PASS_DSXU_COMMAND_CATALOG_READY',
+      scriptCount: 118,
+      mainlineAliases: ['evidence:dashboard', 'benchmark:swe-bench', 'health:runtime', 'cache:warm'],
+      categorySummary: { 'mainline-validation': 12 },
+    }), 'utf8')
+    await writeFile(join(evidenceDir, 'DSXU_LIVE_RAW_COST_CACHE_ACCEPTANCE_20260524.json'), JSON.stringify({
+      schemaVersion: 'dsxu.live-raw-cost-cache-acceptance.v1',
+      status: 'PASS_LIVE_RAW_COST_CACHE_ACCEPTANCE',
+      costUsd: 0.01,
+      cacheHitRatePct: 72,
+    }), 'utf8')
+    await writeFile(join(evidenceDir, 'DSXU_GITHUB_LAUNCH_PACK.json'), JSON.stringify({
+      schemaVersion: 'dsxu.github-open-source-launch-pack.v1',
+      status: 'BLOCKED_FOR_PUBLIC_95_RELEASE_CLAIM',
+      public95ClaimAllowed: false,
+    }), 'utf8')
+
+    const dashboard = await aggregateEvidence(evidenceDir, outputPath)
+    const written = JSON.parse(await readFile(outputPath, 'utf8'))
+
+    expect(dashboard.gateSummary).toMatchObject({ fail: 0, blocked: 0, claimBlocked: 1 })
+    expect(dashboard.workbench).toMatchObject({
+      trustState: 'ready-for-release-review',
+      productReleaseAllowed: true,
+      externalClaimAllowed: false,
+      releaseClaimAllowed: false,
+      productBlockingReasons: [],
+    })
+    expect(dashboard.workbench.externalClaimBlockingReasons).toContain('public-claim-boundary-evidence-incomplete')
+    expect(dashboard.releaseTrustPanel).toMatchObject({
+      status: 'ready-for-review',
+      productReleaseAllowed: true,
+      externalClaimAllowed: false,
+      releaseClaimAllowed: false,
+      dataStillNeeded: [],
+      externalClaimDataStillNeeded: ['public 90/95 or external comparison claim evidence'],
+    })
+    expect(written.workbench.productReleaseAllowed).toBe(true)
+  })
+
+  test('treats evidenced missing provider credentials as live-claim boundaries, not product release blockers', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dsxu-evidence-dashboard-'))
+    const evidenceDir = join(dir, 'generated')
+    const outputPath = join(evidenceDir, 'dashboard.json')
+    await mkdir(evidenceDir, { recursive: true })
+    await writeFile(join(evidenceDir, 'DSXU_V20_LIVE_PROVIDER_GATE_20260515.json'), JSON.stringify({
+      schemaVersion: 'dsxu.v20.live-provider-gate.v1',
+      status: 'BLOCKED_EVIDENCED_NO_PROVIDER_CREDENTIAL',
+      didCallProvider: false,
+      didFabricateLiveResult: false,
+      benchmarkGate: {
+        status: 'blocked',
+        evidenceMode: 'config_probe_only',
+        reason: 'No provider credential is available, so live benchmark must not be reported as run.',
+      },
+    }), 'utf8')
+    await writeFile(join(evidenceDir, 'DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json'), JSON.stringify({
+      status: 'BLOCKED_PROVIDER_AUTH_EVIDENCED',
+      providerGate: {
+        ok: false,
+        status: 'BLOCKED-EVIDENCED',
+        probe: { DSXU_API_KEY: false, DEEPSEEK_API_KEY: false },
+      },
+      scenarios: [
+        { id: 'startup-exit', status: 'PASS_TUI_EVIDENCED', ok: true },
+      ],
+    }), 'utf8')
+
+    const dashboard = await aggregateEvidence(evidenceDir, outputPath)
+    const liveProviderGate = dashboard.gates.find(item => item.name === 'DSXU_V20_LIVE_PROVIDER_GATE_20260515')
+    const tuiGate = dashboard.gates.find(item => item.name === 'DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515')
+
+    expect(liveProviderGate?.status).toBe('INFO')
+    expect(tuiGate?.status).toBe('INFO')
+    expect(dashboard.gateSummary).toMatchObject({ fail: 0, blocked: 0 })
+    expect(dashboard.workbench.productBlockingReasons).not.toContain('runtime-or-release-gate-blocked')
   })
 
   test('treats blocked public comparable raw import reports as claim blockers, not runtime blockers', async () => {

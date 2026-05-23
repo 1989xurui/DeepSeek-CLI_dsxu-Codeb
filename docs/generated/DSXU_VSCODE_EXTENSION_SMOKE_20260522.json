@@ -1,6 +1,6 @@
 {
   "status": "PASS_DSXU_VSCODE_EXTENSION_SMOKE",
-  "generatedAt": "2026-05-22T13:46:00.098Z",
+  "generatedAt": "2026-05-23T22:29:59.252Z",
   "extensionDir": "integrations/vscode",
   "boundary": {
     "modelProvider": "DSXU CLI mainline only",

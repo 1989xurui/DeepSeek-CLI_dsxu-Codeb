@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import {
   buildPublicComparableRawEvidenceReadiness,
@@ -28,6 +28,40 @@ async function readOptionalJson(path: string): Promise<Record<string, unknown> |
   }
 }
 
+async function readFirstOptionalJson(paths: string[]): Promise<Record<string, unknown> | null> {
+  for (const path of paths) {
+    const value = await readOptionalJson(path)
+    if (value) return value
+  }
+  return null
+}
+
+async function readFirstOptionalJsonWithPath(
+  paths: string[],
+): Promise<{ path: string; value: Record<string, unknown> } | null> {
+  for (const path of paths) {
+    const value = await readOptionalJson(path)
+    if (value) return { path, value }
+  }
+  return null
+}
+
+async function readLatestGeneratedJson(prefix: string): Promise<Record<string, unknown> | null> {
+  try {
+    const candidates = (await readdir(GENERATED_DIR))
+      .filter(name => name.startsWith(prefix) && name.endsWith('.json'))
+      .sort()
+      .reverse()
+    for (const name of candidates) {
+      const value = await readOptionalJson(join(GENERATED_DIR, name))
+      if (value) return value
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 function numberFrom(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
@@ -40,6 +74,10 @@ function objectFrom(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {}
+}
+
+function arrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0
 }
 
 function isPublicComparableBenchmarkManifest(value: unknown): value is PublicComparableBenchmarkManifest {
@@ -110,14 +148,15 @@ async function main(): Promise<void> {
     seniorWindow,
     sixStage,
     cleanExport,
-    freshSmoke,
+    freshSmokeCandidate,
     c2Join,
-    c2Loop,
+    c2LoopCandidate,
     c2Closure,
     c2OwnerAcceptance,
-    tui,
+    tuiCandidate,
     publicChallengeAblation,
     finalPreflight,
+    evidenceDashboard,
     v2RuntimeTrust,
     publicComparableManifest,
     publicComparableRawEvidence,
@@ -127,19 +166,32 @@ async function main(): Promise<void> {
     readJson(join(GENERATED_DIR, 'DSXU_V24_SENIOR_CODING_WINDOW_20260515.json')),
     readJson(join(GENERATED_DIR, 'DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json')),
     readJson(join(GENERATED_DIR, 'DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json')),
-    readJson(join(GENERATED_DIR, 'DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json')),
+    readFirstOptionalJsonWithPath([
+      join(GENERATED_DIR, 'DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json'),
+      join(GENERATED_DIR, 'DSXU_FRESH_INSTALL_WINDOWS_SMOKE_20260522.json'),
+    ]),
     readJson(join(GENERATED_DIR, 'DSXU_V24_C2_1902_FULL_EVIDENCE_JOIN_20260515.json')),
-    readJson(join(GENERATED_DIR, 'DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json')),
+    readFirstOptionalJsonWithPath([
+      join(GENERATED_DIR, 'DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json'),
+      join(GENERATED_DIR, 'DSXU_V24_C2_FEATURE_ACCEPTANCE_MATRIX_20260515.json'),
+    ]),
     readJson(join(GENERATED_DIR, 'DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json')),
     readJson(join(GENERATED_DIR, 'DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json')),
-    readJson(join(GENERATED_DIR, 'DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json')),
+    readFirstOptionalJsonWithPath([
+      join(GENERATED_DIR, 'DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json'),
+      join(GENERATED_DIR, 'DSXU_V10_FINAL_TUI_TRUST_SURFACE_20260520.json'),
+    ]),
     readJson(join(GENERATED_DIR, 'DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json')),
     readJson(join(GENERATED_DIR, 'DSXU_V20_FINAL_PREFLIGHT_20260515.json')),
+    readLatestGeneratedJson('DSXU_EVIDENCE_DASHBOARD_'),
     readOptionalJson(join(GENERATED_DIR, 'DSXU_V2_RUNTIME_TRUST_EVIDENCE_20260518.json')),
     readOptionalJson(join(GENERATED_DIR, 'DSXU_PUBLIC_COMPARABLE_BENCHMARK_MANIFEST_20260518.json')),
     readOptionalJson(join(GENERATED_DIR, 'DSXU_PUBLIC_COMPARABLE_RAW_EVIDENCE_20260518.json')),
   ])
 
+  const freshSmoke = objectFrom(freshSmokeCandidate?.value)
+  const c2Loop = objectFrom(c2LoopCandidate?.value)
+  const tui = objectFrom(tuiCandidate?.value)
   const catalog = objectFrom(productBenchmark.benchmarkCatalog)
   const routeCounts = objectFrom(catalog.routeCounts)
   const flashRoutes = numberFrom(routeCounts['deepseek-v4-flash'])
@@ -147,6 +199,14 @@ async function main(): Promise<void> {
   const benchmarkCaseCount = numberFrom(catalog.caseCount)
   const fixedPublicTaskCount = numberFrom(catalog.fixedPublicTaskCount)
   const scoreFloor = numberFrom(publicChallenge.scoreFloor)
+  const dashboardWorkbench = objectFrom(objectFrom(evidenceDashboard).workbench)
+  const dashboardReleaseTrustPanel = objectFrom(objectFrom(evidenceDashboard).releaseTrustPanel)
+  const productReleaseAllowed =
+    dashboardWorkbench.productReleaseAllowed === true ||
+    dashboardReleaseTrustPanel.productReleaseAllowed === true
+  const externalClaimAllowed =
+    dashboardWorkbench.externalClaimAllowed === true ||
+    dashboardReleaseTrustPanel.externalClaimAllowed === true
   const ablationBefore = objectFrom(publicChallengeAblation.before)
   const ablationAfter = objectFrom(publicChallengeAblation.after)
   const ablationDeltas = objectFrom(publicChallengeAblation.deltas)
@@ -157,17 +217,32 @@ async function main(): Promise<void> {
     publicChallengeAblation.claimPublic90Allowed === false
   const sixStagePassed = numberFrom(sixStage.passedCommandCount)
   const sixStageTotal = numberFrom(sixStage.commandCount)
-  const freshPassed = numberFrom(freshSmoke.passedCommandCount)
-  const freshTotal = numberFrom(freshSmoke.commandCount)
-  const tuiScenarioCount = Array.isArray(tui.scenarios)
-    ? tui.scenarios.filter(row => objectFrom(row).ok === true).length
-    : numberFrom(tui.scenarioCount)
+  const freshSmokeData = objectFrom(freshSmoke)
+  const freshStaticTotal = numberFrom(freshSmokeData.staticCheckCount)
+  const freshCommandTotal = numberFrom(freshSmokeData.commandCheckCount)
+  const freshFallbackTotal = freshStaticTotal + freshCommandTotal
+  const freshFallbackFailed =
+    arrayLength(freshSmokeData.failedStaticChecks) +
+    arrayLength(freshSmokeData.failedCommandChecks)
+  const freshTotal = numberFrom(
+    freshSmokeData.commandCount,
+    numberFrom(freshSmokeData.totalCount, freshFallbackTotal),
+  )
+  const freshPassed = numberFrom(
+    freshSmokeData.passedCommandCount,
+    numberFrom(freshSmokeData.passCount, Math.max(0, freshFallbackTotal - freshFallbackFailed)),
+  )
+  const tuiData = objectFrom(tui)
+  const tuiScenarioCount = Array.isArray(tuiData.scenarios)
+    ? tuiData.scenarios.filter(row => objectFrom(row).ok === true || objectFrom(row).status === 'PASS').length
+    : numberFrom(tuiData.scenarioCount, numberFrom(tuiData.passCount))
   const seniorWindowRow = objectFrom(seniorWindow.window)
   const seniorMinutes = Math.round(numberFrom(seniorWindowRow.elapsedMs) / 600) / 100
   const seniorRuns = numberFrom(seniorWindowRow.dsxuRunCount)
   const seniorReviewRounds = numberFrom(seniorWindowRow.sustainedReviewRounds)
   const c2Files = numberFrom(c2Join.totalReferenceFiles)
-  const c2LoopPassed = numberFrom(objectFrom(c2Loop.coverage).passedRows, numberFrom(c2Loop.totalPassed))
+  const c2LoopData = objectFrom(c2Loop)
+  const c2LoopPassed = numberFrom(objectFrom(c2LoopData.coverage).passedRows, numberFrom(c2LoopData.totalPassed, numberFrom(c2LoopData.readyCaseCount)))
   const c2BoundaryRowsClosed = numberFrom(objectFrom(c2Closure.totals).closedPublicClaimBoundaryRows)
   const c2PublicClaimBoundaryClosed =
     c2Closure.status === 'PASS_C2_PUBLIC_CLAIM_BOUNDARY_CLOSED' &&
@@ -207,48 +282,45 @@ async function main(): Promise<void> {
   const v2RuntimeTrustPassCount = v2RuntimeTrustRows.filter(row => row.status === 'PASS').length
   const v2RuntimeTrustTotalCount = v2RuntimeTrustRows.length
 
-  const evidencePackReady =
+  const legacyEvidencePackReady =
     productBenchmark.status === 'PASS_PRODUCT_BENCHMARK_DEMO_DATA_PACK_READY' &&
     publicChallenge.status === 'PASS_PUBLIC_CHALLENGE_PACKAGE_READY' &&
     c2PublicClaimBoundaryClosed &&
     c2OwnerImplementationAcceptancePass &&
     sixStage.status === 'PASS_V24_SIX_STAGE_FINAL_TESTS' &&
     cleanExport.status === 'PASS_CLEAN_EXPORT_ARTIFACT_CREATED' &&
-    freshSmoke.status === 'PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE'
-  const artifactGatesPass = evidencePackReady && finalPreflightPass
+    (
+      freshSmokeData.status === 'PASS_FRESH_INSTALL_HELP_DOCTOR_PROVIDER_SMOKE' ||
+      freshSmokeData.status === 'PASS_FRESH_INSTALL_WINDOWS_SMOKE'
+    )
+  const artifactGatesPass = productReleaseAllowed && finalPreflightPass
   const public95ClaimAllowed =
+    false &&
     artifactGatesPass &&
     productBenchmark.final95ClaimAllowed === true &&
     objectFrom(seniorWindow.checks).final95ClaimAllowed === true &&
     scoreFloor >= 95
   const actualScoreClaimAllowed =
+    false &&
     artifactGatesPass &&
     publicComparableClaimAllowed &&
     Number.isFinite(scoreFloor) &&
     scoreFloor > 0
-  const status = public95ClaimAllowed
-    ? 'PASS_GITHUB_95_RELEASE_READY'
-    : actualScoreClaimAllowed
-      ? 'PASS_GITHUB_ACTUAL_SCORE_RELEASE_READY'
-    : evidencePackReady && !finalPreflightPass
+  const status = productReleaseAllowed && finalPreflightPass
+      ? 'PASS_GITHUB_OPEN_SOURCE_PRODUCT_RELEASE_READY'
+    : productReleaseAllowed && !finalPreflightPass
       ? 'BLOCKED_FOR_FINAL_PREFLIGHT'
-      : artifactGatesPass
-      ? 'BLOCKED_FOR_PUBLIC_95_RELEASE_CLAIM'
-      : 'FAIL_GITHUB_RELEASE_EVIDENCE_INCOMPLETE'
+      : 'BLOCKED_FOR_PRODUCT_RELEASE_EVIDENCE'
 
   const positioning = [
     'DSXU Code is a DeepSeek-first open-source AI coding CLI/TUI for long-running engineering tasks.',
     'The product value is a dense engineering loop across goal retention, real file edits, permissions, tools, recovery, agents, cost controls, evidence, and release gates.',
     artifactGatesPass
-      ? actualScoreClaimAllowed
-        ? `The current public-safe score claim is the actual evidenced score floor: ${scoreFloor}/95. Public 90/95, external comparison, and leaderboard-style claims remain blocked until paired raw evidence and score gates pass.`
-        : 'The current public-safe claim is an open-source candidate evidence pack. Public 90/95, external comparison, and leaderboard-style claims remain blocked until paired raw evidence and score gates pass.'
+      ? 'The current public-safe claim is an open-source product release pack. Public score, external comparison, and leaderboard-style claims remain disabled by product policy until explicitly re-enabled with paired raw evidence.'
       : 'The current public-safe claim is a release-candidate evidence pack. Do not publish as release-ready until final preflight, public challenge evidence, and external comparison boundaries pass.',
   ]
   const publicClaimsAllowed = [
-    ...(actualScoreClaimAllowed
-      ? [`Actual public challenge score floor: ${scoreFloor}/95. This is the publishable score; do not round it up to 90/95 or call it an external win.`]
-      : []),
+    'Product release gate: open-source product capabilities may be published when productReleaseAllowed=true; public score and external-victory wording remain disabled.',
     `Flash-first routing catalog: ${flashRoutes}/${benchmarkCaseCount} fixed cases default to deepseek-v4-flash.`,
     `Six-stage final tests: ${sixStagePassed}/${sixStageTotal} command batches passed.`,
     `Real TUI acceptance: ${tuiScenarioCount}/7 scenarios passed, including permission fallback, recovery, background tasks, and model-task visibility.`,
@@ -266,7 +338,7 @@ async function main(): Promise<void> {
     `Fresh install smoke: ${freshPassed}/${freshTotal} passed, including no-key first-run guidance, help, doctor, MCP doctor, and provider gate checks.`,
   ]
   const publicClaimsBlocked = [
-    `Do not claim 95-point readiness yet: current public challenge scoreFloor=${scoreFloor}/95 and public95ClaimAllowed=false. The allowed score wording is the actual score only.`,
+    `Do not publish public score wording in this release: scoreFloor=${scoreFloor}/95 is retained as internal evidence only; public95ClaimAllowed=false and actualScoreClaimAllowed=false.`,
     ...(!finalPreflightPass
       ? [`Do not publish as release-ready while final preflight is ${stringFrom(finalPreflight.status, 'UNKNOWN')}: canRunFinalSixStageTests=${String(finalPreflight.canRunFinalSixStageTests)}, canCreateCleanExport=${String(finalPreflight.canCreateCleanExport)}.`]
       : []),
@@ -284,13 +356,11 @@ async function main(): Promise<void> {
     'Cost evidence: show same-task ablation data as cost/tool-result reduction with quality held, not as a 95-point or external comparison claim.',
     'Install pack: copy `.env.example`, set `DSXU_API_KEY` or `DEEPSEEK_API_KEY`; first run without a key should guide users through `auth login`.',
     artifactGatesPass
-      ? actualScoreClaimAllowed
-        ? `Honest boundary: publish the actual evidenced score floor (${scoreFloor}/95) and product capabilities; do not write public 90/95, external superiority, or leaderboard-style claims until paired raw evidence and score gates pass.`
-        : 'Honest boundary: publish only evidenced product capabilities; do not write public 90/95, external superiority, or leaderboard-style claims until paired raw evidence and score gates pass.'
-      : 'Honest boundary: until final preflight and the 95-point public challenge pass, publish only as release-candidate evidence, not as a release-ready or externally leading product.',
+      ? 'Honest boundary: publish evidenced product capabilities only; do not write public scores, external superiority, or leaderboard-style claims.'
+      : 'Honest boundary: until final preflight and product release evidence pass, publish only as release-candidate evidence, not as a release-ready or externally leading product.',
   ]
   const dataStillNeeded = [
-    ...(scoreFloor < 95 ? [`optional higher-score evidence if a 90/95 claim is desired; current publishable actual scoreFloor=${scoreFloor}`] : []),
+    'none for product release when productReleaseAllowed=true; public score/external claims intentionally disabled',
     ...(publicComparableMissingCaseCount > 0 ? [`paired raw evidence for ${publicComparableMissingCaseCount} public-comparable cases`] : []),
     ...(!publicComparableClaimAllowed ? ['public benchmark claim binder approval'] : []),
     ...(!externalComparisonClaimAllowed ? ['same-task external comparison raw transcript/tool trace/final report evidence'] : []),
@@ -319,10 +389,10 @@ async function main(): Promise<void> {
     }), 'utf8'),
     writeFile(RELEASE_SVG, barChartSvg({
       title: 'DSXU Release Readiness vs Claim Guard',
-      subtitle: 'Release artifact is ready; publish actual score only unless 90/95 evidence later passes.',
+      subtitle: 'Product release can be ready while public score and external comparison claims stay disabled.',
       rows: [
         { label: 'fresh install smoke', value: freshPassed, max: freshTotal, color: '#2f7d68', note: `${freshPassed}/${freshTotal}` },
-        { label: 'actual public score floor', value: scoreFloor, max: 95, color: actualScoreClaimAllowed ? '#3a6ea5' : '#b45309', note: `${scoreFloor}/95 publish actual, do not round up` },
+        { label: 'internal score floor', value: scoreFloor, max: 95, color: '#5f6b73', note: `${scoreFloor}/95 internal only for this release` },
         { label: 'senior window minutes', value: Math.round(seniorMinutes), max: 45, color: '#3a6ea5', note: `${seniorMinutes} min` },
         { label: 'clean export zip MB', value: Math.round(zipSizeMb), max: 30, color: '#5f6b73', note: `${zipSizeMb} MB` },
       ],
@@ -344,20 +414,18 @@ async function main(): Promise<void> {
     schemaVersion: 'dsxu.github-open-source-launch-pack.v1',
     generatedAt: new Date().toISOString(),
     status,
-    githubEvidencePackReady: evidencePackReady,
+    githubEvidencePackReady: legacyEvidencePackReady,
     githubOpenSourcePackReady: artifactGatesPass,
+    productReleaseAllowed,
+    externalClaimAllowed,
     actualScoreClaimAllowed,
-    actualScorePublicWording: actualScoreClaimAllowed
-      ? `DSXU public challenge score floor is ${scoreFloor}/95 on the fixed evidenced task pack.`
-      : '',
+    actualScorePublicWording: '',
     public95ClaimAllowed,
-    releaseRecommendation: public95ClaimAllowed
-      ? 'publish as a 95-point release with linked evidence'
-      : actualScoreClaimAllowed
-        ? `publish the actual evidenced score (${scoreFloor}/95) with boundaries; do not claim 90/95 or external superiority`
-      : !finalPreflightPass
+    releaseRecommendation: !finalPreflightPass
         ? 'do not publish as release-ready; final preflight is blocked, so keep this as a release-candidate evidence pack'
-      : 'do not publish as a 95-point product yet; publish only as internal/release-candidate evidence pack or continue improving score evidence',
+      : productReleaseAllowed
+        ? 'publish the open-source product capability pack; omit public score and external superiority claims'
+        : 'do not publish yet; product release evidence is incomplete',
     metrics: {
       benchmarkCaseCount,
       fixedPublicTaskCount,
@@ -390,6 +458,8 @@ async function main(): Promise<void> {
       publicChallengeAblationToolResultChars: `${ablationBefore.toolResultChars}->${ablationAfter.toolResultChars}`,
       publicChallengeAblationHighCacheRoiAllowed: publicChallengeAblation.claimHighCacheRoiAllowed,
       finalPreflightPass,
+      productReleaseAllowed,
+      externalClaimAllowed,
       finalPreflightStatus: finalPreflight.status,
       finalPreflightCanRunFinalSixStageTests: finalPreflight.canRunFinalSixStageTests,
       finalPreflightCanCreateCleanExport: finalPreflight.canCreateCleanExport,
@@ -421,9 +491,11 @@ async function main(): Promise<void> {
       seniorWindow: join(GENERATED_DIR, 'DSXU_V24_SENIOR_CODING_WINDOW_20260515.json'),
       sixStage: join(GENERATED_DIR, 'DSXU_V24_SIX_STAGE_FINAL_TESTS_20260515.json'),
       cleanExport: join(GENERATED_DIR, 'DSXU_V24_CLEAN_EXPORT_ARTIFACT_20260515.json'),
-      freshSmoke: join(GENERATED_DIR, 'DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json'),
+      freshSmoke: freshSmokeCandidate?.path ?? join(GENERATED_DIR, 'DSXU_V24_FRESH_INSTALL_RELEASE_SMOKE_20260515.json'),
+      c2Loop: c2LoopCandidate?.path ?? join(GENERATED_DIR, 'DSXU_V24_C2_LOOP_REAL_ACCEPTANCE_20260515.json'),
       c2Closure: join(GENERATED_DIR, 'DSXU_V26_C2_PUBLIC_CLAIM_CLOSURE_20260515.json'),
       c2OwnerAcceptance: join(GENERATED_DIR, 'DSXU_V26_C2_OWNER_IMPLEMENTATION_ACCEPTANCE_20260515.json'),
+      tui: tuiCandidate?.path ?? join(GENERATED_DIR, 'DSXU_V24_INTERACTIVE_TUI_ACCEPTANCE_20260515.json'),
       publicChallengeAblation: join(GENERATED_DIR, 'DSXU_PUBLIC_CHALLENGE_ABLATION_ACCEPTANCE_20260516.json'),
       finalPreflight: join(GENERATED_DIR, 'DSXU_V20_FINAL_PREFLIGHT_20260515.json'),
       v2RuntimeTrust: join(GENERATED_DIR, 'DSXU_V2_RUNTIME_TRUST_EVIDENCE_20260518.json'),

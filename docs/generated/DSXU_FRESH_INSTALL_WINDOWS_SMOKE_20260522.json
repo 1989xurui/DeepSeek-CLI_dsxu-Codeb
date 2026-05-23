@@ -1,9 +1,9 @@
 {
   "schemaVersion": "dsxu.fresh-install-windows-smoke.v1",
-  "generatedAt": "2026-05-22T13:44:13.740Z",
+  "generatedAt": "2026-05-22T23:18:30.066Z",
   "status": "PASS_FRESH_INSTALL_WINDOWS_SMOKE",
-  "repoRoot": "D:\\DSXU-code-main-upload",
-  "staticCheckCount": 19,
+  "repoRoot": "D:\\DSXU-code",
+  "staticCheckCount": 21,
   "commandCheckCount": 7,
   "failedStaticChecks": [],
   "failedCommandChecks": [],
@@ -12,7 +12,7 @@
     {
       "id": "workspace-identity-root-files",
       "passed": true,
-      "detail": "smoke root has package.json, Windows launchers, and DSXU product entrypoint: D:\\DSXU-code-main-upload"
+      "detail": "smoke root has package.json, Windows launchers, and DSXU product entrypoint: D:\\DSXU-code"
     },
     {
       "id": "launcher-path-drift-no-hardcoded-repo",
@@ -53,6 +53,16 @@
       "id": "wsl-inner-launcher-current-dir",
       "passed": true,
       "detail": "WSL inner launcher resolves repo from its own location, forces interactive mode, and nudges startup resize so no-arg WSL launch does not fall into --print or blank initial render"
+    },
+    {
+      "id": "wsl-package-line-ending-guard",
+      "passed": true,
+      "detail": "WSL/Linux package entrypoints are LF-only and launchers repair stale CRLF before exec: .gitattributes:14LF, bin/dsxu-code:44LF, bin/dsxu-code-wsl-launch:109LF, install.sh:43LF, scripts/install.sh:129LF, scripts/install-vscode-extension.sh:46LF"
+    },
+    {
+      "id": "clean-export-installer-line-ending-policy",
+      "passed": true,
+      "detail": "clean export ships required install/launcher files and normalizes WSL LF plus Windows CRLF line endings"
     },
     {
       "id": "powershell-launcher-utf8-bun",
@@ -121,9 +131,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 3451,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-installer-regenerates-desktop-wsl-entrypoints-2026-05-22T13-44-02-486Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-installer-regenerates-desktop-wsl-entrypoints-2026-05-22T13-44-02-486Z.stderr.log",
+      "durationMs": 6269,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-installer-regenerates-desktop-wsl-entrypoints-2026-05-22T23-18-14-170Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-installer-regenerates-desktop-wsl-entrypoints-2026-05-22T23-18-14-170Z.stderr.log",
       "stdoutTail": "[DSXU] Command shim created: C:\\Users\\h\\AppData\\Local\\DSXU Code\\bin\\dsxu-code.cmd\n[DSXU] Desktop shortcut created: C:\\Users\\h\\Desktop\\DSXU Code.lnk\n[DSXU] Desktop shortcut created: C:\\Users\\h\\Desktop\\DSXU Code WSL.lnk\n[DSXU] Desktop command created: C:\\Users\\h\\Desktop\\DSXU Code WSL.cmd\n[DSXU] Auto-open skipped because -NoLaunch was specified.\n\n[DSXU] Install complete.\n[DSXU] Start from desktop shortcut, Start-DSXU-Code.cmd, or: dsxu-code\n[DSXU] Windows default is the native DSXU Code shortcut. WSL is optional and never required for first launch.\n[DSXU] Interactive Chinese/Unicode TUI requires Windows Terminal or VS Code terminal. Classic console is only allowed for non-interactive or explicit ASCII emergency sessions.\n[DSXU] First launch without a key opens the DeepSeek key setup flow.\n[DSXU] Optional VS Code adapter: powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\install-vscode-extension.ps1\nPASS: desktop WSL entrypoints regenerated\n",
       "stderrTail": ""
     },
@@ -143,10 +153,10 @@
         0
       ],
       "passed": true,
-      "durationMs": 1646,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-wsl-launcher-disabled-falls-back-to-native-version-2026-05-22T13-44-05-937Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-wsl-launcher-disabled-falls-back-to-native-version-2026-05-22T13-44-05-937Z.stderr.log",
-      "stdoutTail": "[DSXU] WSL launcher repo: D:\\DSXU-code-main-upload\n[DSXU] WSL is not available in this Windows session.\n[DSXU] Falling back to the Windows native DSXU launcher.\n",
+      "durationMs": 1976,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-wsl-launcher-disabled-falls-back-to-native-version-2026-05-22T23-18-20-440Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-wsl-launcher-disabled-falls-back-to-native-version-2026-05-22T23-18-20-440Z.stderr.log",
+      "stdoutTail": "[DSXU] WSL launcher repo: D:\\DSXU-code\n[DSXU] WSL is not available in this Windows session.\n[DSXU] Falling back to the Windows native DSXU launcher.\n",
       "stderrTail": ""
     },
     {
@@ -164,9 +174,9 @@
         2
       ],
       "passed": true,
-      "durationMs": 934,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T13-44-07-584Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T13-44-07-584Z.stderr.log",
+      "durationMs": 909,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T23-18-22-416Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-classic-interactive-blocks-without-wt-2026-05-22T23-18-22-416Z.stderr.log",
       "stdoutTail": "[DSXU] Windows Terminal was not detected.\n[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input.\n[DSXU] Classic console can turn Chinese input into '?' before DSXU receives it.\n[DSXU] Run install.ps1 again or install Windows Terminal:\n       winget install --id Microsoft.WindowsTerminal -e\n[DSXU] For an English/ASCII emergency session only, set DSXU_ALLOW_CONHOST=1.\n",
       "stderrTail": ""
     },
@@ -183,9 +193,9 @@
         2
       ],
       "passed": true,
-      "durationMs": 103,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T13-44-08-519Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T13-44-08-519Z.stderr.log",
+      "durationMs": 122,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T23-18-23-325Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-product-entrypoint-classic-interactive-blocks-2026-05-22T23-18-23-325Z.stderr.log",
       "stdoutTail": "",
       "stderrTail": "[DSXU] Windows Terminal was not detected.\n[DSXU] Interactive DSXU Code needs Windows Terminal or VS Code terminal for Chinese/Unicode input.\n[DSXU] Classic cmd/PowerShell can turn Chinese input into '?' before DSXU receives it.\n\n[DSXU] Fix from this checkout:\n  powershell -NoProfile -ExecutionPolicy Bypass -File .\\install.ps1\n\n[DSXU] Or install Windows Terminal manually:\n  winget install --id Microsoft.WindowsTerminal -e\n\n[DSXU] English/ASCII emergency mode only:\n  set DSXU_ALLOW_CONHOST=1\n  bun run dsxu-code\n"
     },
@@ -205,9 +215,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 828,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T13-44-08-622Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T13-44-08-622Z.stderr.log",
+      "durationMs": 995,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T23-18-23-448Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-version-2026-05-22T23-18-23-448Z.stderr.log",
       "stdoutTail": "999.0.0-local (DSXU Code)\n",
       "stderrTail": ""
     },
@@ -229,9 +239,9 @@
         1
       ],
       "passed": true,
-      "durationMs": 2306,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T13-44-09-450Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T13-44-09-450Z.stderr.log",
+      "durationMs": 2864,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T23-18-24-443Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-missing-key-status-2026-05-22T23-18-24-443Z.stderr.log",
       "stdoutTail": "Product: DSXU Code\nModel provider: deepseek\nModel gateway: direct\nModel access: missing. Configure DSXU_API_KEY, DEEPSEEK_API_KEY, DSXU_DEEPSEEK_API_KEY, or LITELLM_BASE_URL.\n",
       "stderrTail": ""
     },
@@ -253,9 +263,9 @@
         0
       ],
       "passed": true,
-      "durationMs": 1984,
-      "stdoutPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T13-44-11-756Z.stdout.log",
-      "stderrPath": "D:\\DSXU-code-main-upload\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T13-44-11-756Z.stderr.log",
+      "durationMs": 2759,
+      "stdoutPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T23-18-27-307Z.stdout.log",
+      "stderrPath": "D:\\DSXU-code\\.dsxu\\trace\\fresh-install-windows-smoke\\windows-launcher-key-stdin-2026-05-22T23-18-27-307Z.stderr.log",
       "stdoutTail": "DSXU model access saved from stdin. Run dsxu-code auth status --text or dsxu-code doctor to verify the workspace.\n",
       "stderrTail": ""
     }

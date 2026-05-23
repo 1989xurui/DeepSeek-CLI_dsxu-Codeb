@@ -69,6 +69,7 @@ if /I "%DSXU_DRIVE%"=="Z" set "DSXU_DRIVE_LC=z"
 set "DSXU_REST=%DSXU_REPO_ROOT:~2%"
 set "DSXU_REST=%DSXU_REST:\=/%"
 set "DSXU_WSL_REPO=/mnt/%DSXU_DRIVE_LC%%DSXU_REST%"
+set "DSXU_WSL_LF_REPAIR=for f in ./bin/dsxu-code ./bin/dsxu-code-wsl-launch ./install.sh ./scripts/install.sh ./scripts/install-vscode-extension.sh; do if [ -f $f ]; then sed -i 's/\r$//' $f 2>/dev/null || true; fi; done"
 
 if "%DSXU_DRIVE_LC%"=="" (
   echo [DSXU] Could not convert this checkout path to WSL: %DSXU_REPO_ROOT%
@@ -89,9 +90,9 @@ if not "%ERRORLEVEL%"=="0" (
 
 if "%~1"=="" (
   echo [DSXU] Starting DSXU Code WSL in %DSXU_SELECTED_DISTRO%: %DSXU_WSL_REPO%
-  wsl.exe -d %DSXU_SELECTED_DISTRO% -- bash -lc "cd '%DSXU_WSL_REPO%' && exec bash ./bin/dsxu-code-wsl-launch"
+  wsl.exe -d %DSXU_SELECTED_DISTRO% -- bash -lc "cd '%DSXU_WSL_REPO%' && %DSXU_WSL_LF_REPAIR% && exec bash ./bin/dsxu-code-wsl-launch"
   exit /b %ERRORLEVEL%
 )
 
-wsl.exe -d %DSXU_SELECTED_DISTRO% -- bash -lc "cd '%DSXU_WSL_REPO%' && exec bash ./bin/dsxu-code-wsl-launch %*"
+wsl.exe -d %DSXU_SELECTED_DISTRO% -- bash -lc "cd '%DSXU_WSL_REPO%' && %DSXU_WSL_LF_REPAIR% && exec bash ./bin/dsxu-code-wsl-launch %*"
 exit /b %ERRORLEVEL%
